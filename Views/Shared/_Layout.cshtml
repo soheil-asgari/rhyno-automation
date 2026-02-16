@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - پنل مدیریت راینو</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/dist/font-face.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+
+    <style>
+        :root { --primary-color: #0f172a; --accent-color: #3b82f6; }
+        body { font-family: Vazirmatn, sans-serif; background-color: #f1f5f9; color: #1e293b; overflow-x: hidden; }
+        
+        /* انیمیشن ورود صفحه */
+        
+       /* استفاده از دو عدد @@ برای فرار از خطای Razor */
+@@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(15px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+main { animation: fadeIn 0.8s ease-out; }
+
+        /* نوار بالای صفحه مدرن */
+        .navbar { background-color: var(--primary-color) !important; padding: 0.8rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .navbar-brand { font-weight: 800; letter-spacing: -1px; color: #fff !important; font-size: 1.4rem; }
+        .nav-link { color: #cbd5e1 !important; font-weight: 500; margin: 0 5px; transition: 0.3s; border-radius: 8px; }
+        .nav-link:hover { color: #fff !important; background: rgba(255,255,255,0.1); }
+        
+        /* استایل کارت‌ها و دکمه‌ها */
+        .card { border: none; border-radius: 20px; transition: all 0.3s cubic-bezier(.4,0,.2,1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1) !important; }
+        
+        .btn { transition: all 0.3s ease; border-radius: 10px; font-weight: 600; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        /* استایل جداول */
+        .table { background: white; border-radius: 12px; overflow: hidden; vertical-align: middle; }
+        .dataTables_wrapper .dataTables_filter input { border-radius: 20px; padding: 5px 15px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-box-seam-fill text-info me-2"></i> سیستم راینو
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i> داشبورد</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope me-1"></i> نامه‌ها</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar-check me-1"></i> مرخصی</a></li>
+                    </ul>
+                    <div class="d-flex align-items-center">
+                         @await Html.PartialAsync("_LoginPartial")
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container py-4">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="mt-5 py-4 text-center text-muted border-top bg-white">
+        <div class="container">
+            <small>طراحی شده برای پورتال سازمانی آلفا &copy; 2026</small>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // فعال‌سازی جستجوی فارسی و هوشمند برای تمام جداول
+            $('.table').DataTable({
+                "language": {
+                    "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/fa.json"
+                },
+                "pageLength": 5,
+                "lengthMenu": [5, 10, 25]
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,32 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using OfficeAutomation.Models
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+
+<ul class="navbar-nav align-items-center">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var user = await UserManager.GetUserAsync(User);
+        var displayName = !string.IsNullOrEmpty(user?.FullName) ? user.FullName : User.Identity?.Name;
+
+        <li class="nav-item me-3">
+            <span class="nav-link text-white shadow-sm border border-secondary rounded-pill px-3 py-1 bg-dark">
+                <i class="bi bi-person-circle me-1 text-info"></i> خوش آمدید، @displayName
+            </span>
+        </li>
+        <li class="nav-item">
+            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-4">خروج</button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="btn btn-info text-dark fw-bold rounded-pill px-4 me-2" asp-area="Identity" asp-page="/Account/Login">ورود</a>
+        </li>
+        <li class="nav-item">
+            <a class="btn btn-outline-light rounded-pill px-4" asp-area="Identity" asp-page="/Account/Register">ثبت‌نام</a>
+        </li>
+    }
+</ul>

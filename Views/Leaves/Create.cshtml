@@ -1,0 +1,56 @@
+﻿@model OfficeAutomation.Models.Leave
+
+@{
+    ViewData["Title"] = "درخواست مرخصی جدید";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">ثبت درخواست مرخصی</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                @* UserId مخفی می‌شود چون سیستم خودش آن را پر می‌کند *@
+                <input type="hidden" asp-for="UserId" />
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StartDate" class="control-label">تاریخ شروع</label>
+                        <input asp-for="StartDate" type="date" class="form-control" />
+                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EndDate" class="control-label">تاریخ پایان</label>
+                        <input asp-for="EndDate" type="date" class="form-control" />
+                        <span asp-validation-for="EndDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">تاریخ شروع</label>
+                    @* نوع را از date به text تغییر دادیم تا تقویم فارسی باز شود *@
+                    <input asp-for="StartDate" type="text" class="form-control pdate" readonly />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">تاریخ پایان</label>
+                    <input asp-for="EndDate" type="text" class="form-control pdate" readonly />
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                </div>
+
+                @* فیلد Status هم مخفی می‌شود چون در ابتدا همیشه "Pending" است *@
+                <input type="hidden" asp-for="Status" value="Pending" />
+
+                <div class="form-group mb-3">
+                    <label class="control-label">تاریخ شروع</label>
+                    <input asp-for="StartDate" type="date" class="form-control" />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
