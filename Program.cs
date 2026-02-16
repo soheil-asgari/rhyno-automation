@@ -57,4 +57,20 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// خودکارسازی دیتابیس
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate(); // این خط معادل Update-Database است
+    }
+    catch (Exception ex)
+    {
+        // مدیریت خطا در صورت عدم اتصال به دیتابیس
+        Console.WriteLine("خطا در آپدیت دیتابیس: " + ex.Message);
+    }
+}
+
 app.Run();
