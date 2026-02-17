@@ -1,0 +1,35 @@
+﻿<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0">تعریف همکار جدید</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="All" class="text-danger small"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">نام و نام خانوادگی</label>
+                        <input name="fullName" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">نام کاربری (کد پرسنلی یا نام)</label>
+                        <input name="email" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">رمز عبور پیش‌فرض</label>
+                        <input name="password" type="password" class="form-control" required />
+                        <small class="text-muted">حداقل ۶ کاراکتر، شامل عدد و حروف بزرگ</small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">ذخیره و ایجاد اکانت</button>
+                        <a asp-action="Index" class="btn btn-light">انصراف</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

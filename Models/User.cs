@@ -10,5 +10,9 @@ namespace OfficeAutomation.Models
 
         public string? Role { get; set; }
         // دقت کن: دیگر نیازی به نوشتن Username و Password نیست، چون در IdentityUser وجود دارند.
+        public string? SignaturePath { get; set; }
     }
 }
+
+
+

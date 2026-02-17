@@ -1,76 +1,104 @@
 ﻿@{
     ViewData["Title"] = "میز کار";
 }
-
-<div class="row mb-5">
-    <div class="col-12 border-start border-primary border-5 ps-4">
-        <h1 class="display-5 fw-bold">میز کار مرکزی</h1>
-        <p class="lead text-muted">تمام درخواست‌ها و نامه‌های شما در یک نگاه</p>
-    </div>
-</div>
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="p-3 bg-white shadow-sm rounded-4 border-end border-primary border-5">
-            <small class="text-muted d-block">نامه‌های جدید</small>
-            <span class="h4 fw-bold">۵</span> <i class="bi bi-arrow-up-short text-success"></i>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="p-3 bg-white shadow-sm rounded-4 border-end border-warning border-5">
-            <small class="text-muted d-block">مرخصی مانده</small>
-            <span class="h4 fw-bold">۱۲</span> <small>روز</small>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="p-3 bg-white shadow-sm rounded-4 border-end border-info border-5">
-            <small class="text-muted d-block">نامه‌های ارسالی</small>
-            <span class="h4 fw-bold">۲۴</span>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="p-3 bg-white shadow-sm rounded-4 border-end border-danger border-5">
-            <small class="text-muted d-block">پیام‌های سیستمی</small>
-            <span class="h4 fw-bold text-danger">۲</span>
-        </div>
-    </div>
-</div>
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm border-0">
-            <div class="card-body text-center p-5">
-                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex p-4 mb-4">
-                    <i class="bi bi-envelope-paper-fill fs-1"></i>
-                </div>
-                <h3 class="fw-bold">نامه‌های اداری</h3>
-                <p class="text-muted mb-4">مشاهده نامه‌های دریافتی و ارسال نامه جدید به همکاران</p>
-                <a asp-controller="Letters" asp-action="Index" class="btn btn-primary w-100 rounded-pill py-2">ورود به کارتابل</a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
-            <div class="card-body text-center p-5">
-                <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex p-4 mb-4">
-                    <i class="bi bi-calendar-check fs-1"></i>
-                </div>
-                <h3 class="fw-bold">درخواست مرخصی</h3>
-                <p class="text-muted mb-4">ثبت مرخصی و پیگیری وضعیت تایید توسط مدیریت</p>
-                <a asp-controller="Leaves" asp-action="Index" class="btn btn-success w-100 rounded-pill py-2">ثبت درخواست</a>
-            </div>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="search-box-glass">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="جستجو...">
     </div>
 
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm border-0">
-            <div class="card-body text-center p-5">
-                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-inline-flex p-4 mb-4">
-                    <i class="bi bi-shield-lock fs-1"></i>
-                </div>
-                <h3 class="fw-bold">امنیت و پروفایل</h3>
-                <p class="text-muted mb-4">تغییر رمز عبور و ویرایش اطلاعات شخصی حساب کاربر</p>
-                <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-outline-warning w-100 rounded-pill py-2">تنظیمات کاربری</a>
+    <div class="bg-glass-pill px-3 py-1 rounded-pill shadow-sm border small text-muted">
+        <span id="current-persian-date"></span> | <span id="current-time-persian"></span>
+    </div>
+</div>
+
+
+<div class="container py-5">
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-4 fw-black text-dark">میز کار <span class="text-primary">مرکزی</span></h1>
+            <p class="fs-5 text-secondary">گزارش لحظه‌ای فعالیت‌های شما در پورتال راینو</p>
+        </div>
+        @* <div class="col-md-4 text-md-end">
+            <div class="badge bg-white shadow-sm text-dark p-3 rounded-4">
+                <i class="bi bi-clock-history me-2 text-primary"></i> آخرین بازدید: امروز ساعت ۱۰:۳۰
+            </div>
+        </div> *@
+    </div>
+
+    <div class="stats-grid mb-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-soft-primary"><i class="bi bi-envelope-paper"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">نامه‌های جدید</span>
+                <h3 class="stat-value">۵</h3>
+            </div>
+            <div class="stat-badge text-success">+۲</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-soft-success"><i class="bi bi-calendar2-check"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">مرخصی مانده</span>
+                <h3 class="stat-value">۱۲</h3>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-soft-warning"><i class="bi bi-bell"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">پیام سیستم</span>
+                <h3 class="stat-value">۲</h3>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-soft-info"><i class="bi bi-send"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">ارسالی ماه</span>
+                <h3 class="stat-value">۲۴</h3>
             </div>
         </div>
     </div>
-</div>
+
+    <div class="welcome-banner-mini">
+        <div class="banner-content">
+            <h2>پورتال هوشمند <span class="text-primary">راینو</span></h2>
+            <p>خوش آمدید! امروز همه چیز برای مدیریت بهتر آماده است.</p>
+            <button class="btn btn-primary-light">مشاهده اطلاعیه‌ها</button>
+        </div>
+    </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card p-4 border-0 shadow-sm rounded-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">سرمایه انسانی</h5>
+                        <span class="badge bg-soft-success text-success p-2">فعال</span>
+                    </div>
+                    <canvas id="chartDemo" style="height: 100px;"></canvas> <p class="text-muted small mt-2">گزارش وضعیت حضور و غیاب پرسنل در ماه جاری</p>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm rounded-5 p-4">
+                    <h5 class="fw-bold mb-4">آخرین اسناد ثبت شده</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>نوع سند</th>
+                                    <th>تاریخ</th>
+                                    <th>وضعیت</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>فاکتور خرید</td><td>۱۴۰۲/۱۱/۲۸</td><td><span class="badge bg-info">درحال بررسی</span></td></tr>
+                                <tr><td>حکم کارگزینی</td><td>۱۴۰۲/۱۱/۲۵</td><td><span class="badge bg-success">تایید نهایی</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>

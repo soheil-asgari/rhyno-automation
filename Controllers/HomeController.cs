@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using OfficeAutomation.Models;
 using System.Diagnostics;
-
+using Microsoft.AspNetCore.Authorization; // این خط را اضافه کنید
 namespace OfficeAutomation.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         public IActionResult Index()

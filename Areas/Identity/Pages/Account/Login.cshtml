@@ -1,83 +1,122 @@
 ﻿@page
 @model LoginModel
-
 @{
-    ViewData["Title"] = "Log in";
+    Layout = null;
 }
 
-<h1>@ViewData["Title"]</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <form id="account" method="post">
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label asp-for="Input.Email" class="form-label">Email</label>
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
-                </div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label asp-for="Input.Password" class="form-label">Password</label>
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
-                <div class="checkbox mb-3">
-                    <label asp-for="Input.RememberMe" class="form-label">
-                        <input class="form-check-input" asp-for="Input.RememberMe" />
-                        @Html.DisplayNameFor(m => m.Input.RememberMe)
-                    </label>
-                </div>
-                <div>
-                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </form>
-        </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>ورود به سیستم راینو</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        @@font-face {
+            font-family: 'Vazirmatn';
+            src: url('/fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: linear-gradient(45deg, #0f172a, #1e293b, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        @@keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
             }
-        </section>
-    </div>
-</div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-icon {
+            width: 80px;
+            height: 80px;
+            background: #3b82f6;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 22px;
+            font-size: 40px;
+            color: white;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            border-radius: 15px;
+            padding: 15px;
+        }
+
+            .form-control:focus {
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+                border-color: #3b82f6 !important;
+            }
+
+        .btn-login {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+            .btn-login:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4);
+                color: white;
+            }
+    </style>
+</head>
+<body>
+    <div class="glass-card">
+        <div class="login-icon"><i class="bi bi-cpu-fill"></i></div>
+        <h2 class="fw-bold text-white mb-2">سیستم راینو</h2>
+        <p class="text-white-50 mb-5">خوش آمدید، لطفا وارد حساب خود شوید</p>
+
+        <form method="post">
+            <div asp-validation-summary="All" class="text-danger mb-3 small"></div>
+            <div class="mb-4 text-start">
+                <label class="text-white-50 ms-2 mb-2 small">نام کاربری</label>
+                <input asp-for="Input.Email" class="form-control" placeholder="نام کاربری..." />
+            </div>
+            <div class="mb-4 text-start">
+                <label class="text-white-50 ms-2 mb-2 small">رمز عبور</label>
+                <input asp-for="Input.Password" class="form-control" type="password" placeholder="••••••••" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-login w-100 mt-2">ورود به پنل مدیریت</button>
+        </form>
+    </div>
+</body>
+</html>

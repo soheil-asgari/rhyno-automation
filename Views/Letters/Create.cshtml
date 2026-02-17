@@ -36,6 +36,13 @@
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <div class="mb-3 p-3 bg-light border rounded">
+                                <label class="form-label fw-bold text-muted">امضای شما (پیش‌فرض):</label>
+                                <div class="text-center">
+                                    <img src="@ViewBag.UserSignature" style="max-height: 80px; mix-blend-mode: multiply;" alt="هنوز امضایی ثبت نشده است" />
+                                    <p class="small text-muted">این امضا به صورت خودکار پای نامه درج خواهد شد.</p>
+                                </div>
+                            </div>
                             <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
                             <button type="submit" class="btn btn-primary px-5">ارسال نامه</button>
                         </div>

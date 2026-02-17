@@ -1,0 +1,402 @@
+﻿/* ۱. تنظیمات کلی و پس‌زمینه */
+
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+    font-weight: 500;
+}
+
+:root {
+    --sidebar-width: 280px;
+    --primary-color: #3b82f6;
+    --glass-bg: rgba(255, 255, 255, 0.75);
+}
+
+body {
+    font-family: 'Vazirmatn', sans-serif !important;
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    overflow-x: hidden;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* ۲. اصلاح ساختار اصلی (Sidebar & Main) */
+.sidebar-right {
+    width: var(--sidebar-width);
+    background: #0f172a; /* تم تیره و مدرن برای سایدبار */
+    height: 100vh;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 1000;
+}
+
+.main-content {
+    margin-right: var(--sidebar-width); /* ایجاد فضا برای سایدبار ثابت */
+    min-height: 100vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ۳. المان‌های شیشه‌ای (Glassmorphism) */
+.search-box-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    padding: 6px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .search-box-glass input {
+        background: transparent;
+        border: none;
+        outline: none;
+        font-size: 13px;
+        width: 200px;
+    }
+
+.bg-glass-pill {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ۴. کارت‌های آمار (Stats Grid) */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.stat-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: none;
+    transition: transform 0.2s;
+}
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-left: 15px;
+}
+
+.bg-soft-primary {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.bg-soft-success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.bg-soft-warning {
+    background: #fef9c3;
+    color: #a16207;
+}
+
+.bg-soft-info {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #64748b;
+    display: block;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.stat-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+/* ۵. بنر خوش‌آمدگویی */
+.welcome-banner-mini {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 25px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255,255,255,0.5);
+    text-align: center;
+}
+
+    .welcome-banner-mini h2 {
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .welcome-banner-mini p {
+        font-size: 14px;
+        color: #475569;
+    }
+
+.btn-primary-light {
+    background: #3b82f6;
+    color: white;
+    border-radius: 10px;
+    padding: 8px 20px;
+    font-size: 13px;
+    border: none;
+    margin-top: 10px;
+}
+
+/* ۶. جداول و کارت‌های محتوا */
+.card {
+    border-radius: 24px !important;
+    border: none !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03) !important;
+}
+
+.table thead th {
+    background: #f8fafc;
+    border: none;
+    font-size: 12px;
+    color: #64748b;
+    padding: 15px;
+}
+
+.table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+/* اصلاح تداخل Bootstrap */
+.display-4 {
+    font-size: 2.2rem !important;
+    font-weight: 900 !important;
+}
+
+.nav-link {
+    color: rgba(255,255,255,0.7);
+    transition: 0.3s;
+}
+
+    .nav-link:hover, .nav-link.active {
+        color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+
+/* ۱. بلور کردن پس‌زمینه و کاهش وضوح عکس */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* مقدار بلور را اینجا تنظیم کن - ۸ پیکسل عالی است */
+    filter: blur(10px) brightness(0.9);
+    background-image: inherit; /* عکس را از body می‌گیرد */
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+body {
+    background-image: url('/images/backgrounds/bg-1.jpg'); /* آدرس عکس اصلی */
+    background-attachment: fixed;
+    overflow: hidden; /* حذف اسکرول کل صفحه */
+}
+
+/* ۲. پررنگ کردن نوشته‌های محو در سایدبار */
+.sidebar-content small.text-muted {
+    color: #cbd5e1 !important; /* رنگ روشن‌تر و واضح‌تر */
+    opacity: 1 !important;
+    font-size: 11px;
+    margin-top: 15px;
+    display: block;
+    font-weight: 700;
+}
+
+/* ۳. کوچک‌سازی باکس‌های آمار (Stats) */
+.stat-card {
+    padding: 10px 15px; /* کاهش پدینگ */
+    height: 75px; /* ارتفاع کمتر */
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    margin-left: 10px;
+}
+
+.stat-value {
+    font-size: 18px; /* کوچک‌تر کردن عدد */
+}
+
+.stat-label {
+    font-size: 10.5px; /* کوچک‌تر کردن متن */
+}
+
+/* ۴. فشرده‌سازی بنر خوش‌آمدگویی */
+.welcome-banner-mini {
+    padding: 12px 20px; /* کاهش فضای داخلی */
+    margin-bottom: 15px;
+}
+
+    .welcome-banner-mini h2 {
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+
+    .welcome-banner-mini p {
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+
+/* ۵. کوچک کردن تیتر اصلی صفحه */
+.display-4 {
+    font-size: 1.6rem !important; /* خیلی جمع و جورتر */
+    margin-bottom: 5px;
+}
+
+.fs-5 {
+    font-size: 13px !important; /* متن زیر تیتر */
+}
+
+/* ۶. تنظیم جداول برای جا شدن در صفحه */
+.card {
+    padding: 15px !important;
+}
+
+.table td, .table th {
+    padding: 8px 12px !important; /* فشرده کردن ردیف‌های جدول */
+    font-size: 12px;
+}
+
+
+
+/* استایل سفارشی برای نشان‌های (Badges) ملایم */
+.badge {
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+/* رنگ سبز ملایم (تایید شده) */
+.bg-soft-success {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+/* رنگ آبی ملایم (در حال بررسی) */
+.bg-soft-info {
+    background-color: #e0f2fe !important;
+    color: #075985 !important;
+}
+
+/* رنگ زرد/نارنجی ملایم (انتظار) */
+.bg-soft-warning {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+/* رنگ قرمز ملایم (رد شده) */
+.bg-soft-danger {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+/* فشرده‌سازی بیشتر سایدبار برای جلوگیری از شلوغی */
+.nav-link {
+    padding: 6px 20px !important; /* کاهش فاصله عمودی گزینه‌های منو */
+    font-size: 13px;
+}
+
+.sidebar-header {
+    padding: 15px 20px !important; /* کوچک‌تر کردن هدر سایدبار */
+}
+
+
+/* تنظیم ارتفاع خودکار برای بخش‌های اصلی */
+.container-fluid {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 40px); /* کسر کردن پدینگ‌های بالا و پایین */
+    justify-content: space-between;
+}
+
+.row.g-4 {
+    flex-grow: 1;
+    margin-top: 0;
+}
+
+.card {
+    height: 100%; /* کارت‌ها تمام ارتفاع ردیف خود را پر کنند */
+    margin-bottom: 0 !important;
+}
+
+.table-responsive {
+    max-height: 200px; /* اگر تعداد ردیف‌ها زیاد شد، فقط داخل جدول اسکرول بخورد */
+    overflow-y: auto;
+}
+
+/* اصلاح دکمه‌های فرم ارسال نامه */
+.d-grid.gap-2.d-md-flex {
+    display: flex !important;
+    flex-direction: row !important; /* چیدمان افقی دکمه‌ها */
+    align-items: center;
+    justify-content: flex-end; /* بردن دکمه‌ها به سمت چپ (در حالت RTL) */
+    gap: 10px !important;
+    width: auto !important;
+}
+
+.btn-primary.px-5, .btn-outline-secondary {
+    width: auto !important; /* جلوگیری از کشیده شدن دکمه */
+    height: 40px !important; /* ارتفاع استاندارد */
+    padding: 0 25px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px !important;
+}
+
+/* اصلاح باکس امضا */
+.mb-3.p-3.bg-light.border.rounded {
+    max-width: 400px; /* محدود کردن عرض باکس امضا */
+    margin-right: 0; /* چسباندن به راست */
+    padding: 10px !important;
+    font-size: 12px;
+}
+
+.signature-img-preview {
+    max-height: 60px !important; /* کوچک کردن پیش‌نمایش امضا */
+    width: auto;
+}

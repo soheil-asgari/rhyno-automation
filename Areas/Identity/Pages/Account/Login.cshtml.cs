@@ -61,27 +61,15 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
         /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
+            [Required(ErrorMessage = "نام کاربری الزامی است")]
+            // [EmailAddress] <--- این خط را پاک کن تا "soheil" خطا ندهد
             public string Email { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
+            [Required(ErrorMessage = "رمز عبور الزامی است")]
             [DataType(DataType.Password)]
             public string Password { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Display(Name = "Remember me?")]
+            [Display(Name = "مرا به خاطر بسپار")]
             public bool RememberMe { get; set; }
         }
 
@@ -129,7 +117,7 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
                 }
                 else
                 {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    ModelState.AddModelError(string.Empty, "نام کاربری یا رمز عبور اشتباه است.");
                     return Page();
                 }
             }
