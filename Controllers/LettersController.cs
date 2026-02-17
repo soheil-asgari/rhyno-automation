@@ -56,10 +56,27 @@ namespace OfficeAutomation.Controllers
         }
 
         // GET: Letters/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            // اصلاح لیست گیرنده‌ها: نمایش FullName به جای Id
-            ViewData["ReceiverId"] = new SelectList(_context.Users, "Id", "FullName");
+            // ۱. دریافت یوزری که لاگین کرده به روش ایمن
+            var currentUser = await _userManager.GetUserAsync(User);
+
+            // مقداردهی برای امضا (حتی اگر کاربر پیدا نشد، سیستم کرش نکند)
+            ViewBag.SenderFullName = currentUser?.FullName ?? "نامشخص";
+            ViewBag.SenderRole = currentUser?.JobTitle ?? "کاربر سیستم";
+            ViewBag.UserSignature = currentUser?.SignaturePath;
+
+            // ۲. دریافت لیست کاربران به همراه جنسیت
+            var rawUsers = await _context.Users
+                .Select(u => new { u.Id, u.FullName, u.Gender })
+                .ToListAsync();
+
+            // جلوگیری از ارور SelectList در صورت خالی بودن دیتابیس
+            ViewData["ReceiverId"] = new SelectList(rawUsers, "Id", "FullName");
+
+            // تبدیل به JSON برای اسکریپت پیشوند هوشمند
+            ViewBag.UsersData = System.Text.Json.JsonSerializer.Serialize(rawUsers);
+
             return View();
         }
 

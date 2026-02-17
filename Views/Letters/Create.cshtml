@@ -1,54 +1,163 @@
 ﻿@model OfficeAutomation.Models.Letter
 
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "ارسال نامه جدید";
+    var pc = new System.Globalization.PersianCalendar();
+    var now = DateTime.Now;
+    string persianDate = $"{pc.GetYear(now)}/{pc.GetMonth(now):D2}/{pc.GetDayOfMonth(now):D2}";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow border-0">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> نوشتن نامه جدید</h4>
+<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+
+<style>
+    .word-processor-container { background-color: #f0f2f5; min-height: 100vh; display: flex; flex-direction: column; }
+    .top-toolbar { background: white; border-bottom: 1px solid #ddd; padding: 10px 20px; position: sticky; top: 0; z-index: 1000; }
+    .paper-wrapper { flex-grow: 1; padding: 40px 20px; display: flex; justify-content: center; overflow-y: auto; }
+    .paper { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 0 15px rgba(0,0,0,0.1); position: relative; display: block !important; }
+
+    /* حذف خط زیر نام گیرنده */
+    #display-receiver { border-bottom: none !important; text-decoration: none !important; display: inline-block; }
+
+    @@media print {
+        header, footer, aside, nav, .sidebar, .top-toolbar, .no-print { display: none !important; }
+        body * { visibility: hidden; }
+        #paper, #paper * { visibility: visible; }
+        #paper { position: absolute; left: 0; top: 0; width: 100% !important; margin: 0 !important; padding: 15mm !important; box-shadow: none !important; }
+    }
+</style>
+
+<div class="word-processor-container">
+    <div class="top-toolbar no-print">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <div class="input-group" style="width: 300px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                    <select id="receiverSelect" class="form-select" asp-items="ViewBag.ReceiverId">
+                        <option value="">انتخاب گیرنده یا واحد...</option>
+                    </select>
                 </div>
-                <div class="card-body p-4">
-                    <form asp-action="Create">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="text" id="subjectInput" class="form-control" placeholder="موضوع نامه..." style="width: 350px;">
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-dark" onclick="window.print()"><i class="bi bi-printer"></i> چاپ نامه</button>
+                <button class="btn btn-primary fw-bold" onclick="submitLetter()">ارسال نهایی</button>
+            </div>
+        </div>
+    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">موضوع نامه</label>
-                            <input asp-for="Title" class="form-control" placeholder="موضوع را وارد کنید..." />
-                            <span asp-validation-for="Title" class="text-danger"></span>
-                        </div>
+    <div class="paper-wrapper">
+        <div id="paper" class="paper">
+            <div class="d-flex justify-content-between mb-5">
+                <div style="font-size: 12px;">
+                    <div>تاریخ: @persianDate</div>
+                    <div>شماره: RH-@now.Ticks.ToString().Substring(12)</div>
+                    <div>پیوست: ندارد</div>
+                </div>
+                <div class="text-center">
+                    <h5 class="fw-bold">بسمه تعالی</h5>
+                    <div class="mt-2 fw-bold">شرکت فنی مهندسی راینو</div>
+                </div>
+                <div style="width: 60px; height: 60px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-weight: bold;">RH</div>
+            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">گیرنده نامه</label>
-                            <select asp-for="ReceiverId" class="form-select" asp-items="ViewBag.ReceiverId">
-                                <option value="">--- انتخاب همکار ---</option>
-                            </select>
-                            <span asp-validation-for="ReceiverId" class="text-danger"></span>
-                        </div>
+            <div class="mb-5" style="font-size: 1.1rem;">
+                <div class="fw-bold mb-3">
+                    <span id="gender-prefix">جناب آقای / سرکار خانم</span>
+                    <span id="display-receiver">....................</span>
+                </div>
+                <div class="fw-bold">
+                    موضوع: <span id="display-subject" style="font-weight: normal;">....................</span>
+                </div>
+            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">متن نامه</label>
-                            <textarea asp-for="Body" class="form-control" rows="6" placeholder="متن نامه را اینجا بنویسید..."></textarea>
-                            <span asp-validation-for="Body" class="text-danger"></span>
-                        </div>
+            <div id="editor-container" class="mb-5">
+                <div id="editor">
+                    <p>با سلام و احترام،</p>
+                    <p>به استحضار می‌رساند...</p>
+                </div>
+            </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <div class="mb-3 p-3 bg-light border rounded">
-                                <label class="form-label fw-bold text-muted">امضای شما (پیش‌فرض):</label>
-                                <div class="text-center">
-                                    <img src="@ViewBag.UserSignature" style="max-height: 80px; mix-blend-mode: multiply;" alt="هنوز امضایی ثبت نشده است" />
-                                    <p class="small text-muted">این امضا به صورت خودکار پای نامه درج خواهد شد.</p>
-                                </div>
-                            </div>
-                            <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
-                            <button type="submit" class="btn btn-primary px-5">ارسال نامه</button>
-                        </div>
-                    </form>
+            <div style="margin-top: 100px; display: flex; justify-content: flex-end;">
+                <div class="text-center" style="min-width: 200px;">
+                    <p class="fw-bold mb-1">با تقدیم احترام</p>
+                    <p class="fw-bold mb-0">@ViewBag.SenderFullName</p>
+                    <p class="small text-muted mb-2">@ViewBag.SenderRole</p>
+                    @if (ViewBag.UserSignature != null)
+                    {
+                        <img src="@ViewBag.UserSignature" style="max-height: 80px; mix-blend-mode: multiply;">
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<form id="finalForm" asp-action="Create" method="post" style="display:none;">
+    <input type="hidden" name="Title" id="hTitle">
+    <input type="hidden" name="Content" id="hContent">
+    <input type="hidden" name="ReceiverId" id="hReceiver">
+</form>
+
+@section Scripts {
+    <script>
+        let myEditor;
+        
+        // ۱. راه اندازی ادیتور
+        ClassicEditor.create(document.querySelector('#editor'), {
+            language: 'fa', 
+            contentsLangDirection: 'rtl'
+        }).then(editor => { 
+            myEditor = editor; 
+        }).catch(err => console.error("Editor Error:", err));
+
+        // ۲. دریافت دیتا با چک کردن عدم وجود خطا
+        const rawData = '@Html.Raw(ViewBag.UsersData)';
+        const allUsers = rawData ? JSON.parse(rawData) : [];
+
+        // ۳. منطق هوشمند پیشوند و حذف خط زیر نام
+        document.getElementById('receiverSelect').addEventListener('change', function() {
+            const selectedId = this.value;
+            const prefix = document.getElementById('gender-prefix');
+            const receiver = document.getElementById('display-receiver');
+
+            if (!selectedId) {
+                prefix.innerText = "جناب آقای / سرکار خانم";
+                receiver.innerText = "....................";
+                return;
+            }
+
+            const user = allUsers.find(u => u.Id == selectedId);
+            if (user) {
+                receiver.innerText = user.FullName;
+                
+                // 0=آقا، 1=خانم، 2=واحد
+                if (user.Gender === 0) prefix.innerText = "جناب آقای";
+                else if (user.Gender === 1) prefix.innerText = "سرکار خانم";
+                else if (user.Gender === 2) prefix.innerText = "مدیریت محترم / ریاست محترم";
+                else prefix.innerText = "جناب آقای / سرکار خانم";
+            }
+        });
+
+        // ۴. آپدیت موضوع
+        document.getElementById('subjectInput').addEventListener('input', function() {
+            document.getElementById('display-subject').innerText = this.value || "....................";
+        });
+
+        // ۵. ارسال فرم بدون خطا
+        function submitLetter() {
+            const rec = document.getElementById('receiverSelect').value;
+            const sub = document.getElementById('subjectInput').value;
+            
+            if (!rec || !sub) {
+                alert("لطفاً گیرنده و موضوع را وارد کنید.");
+                return;
+            }
+
+            document.getElementById('hTitle').value = sub;
+            document.getElementById('hContent').value = myEditor.getData();
+            document.getElementById('hReceiver').value = rec;
+            document.getElementById('finalForm').submit();
+        }
+    </script>
+}

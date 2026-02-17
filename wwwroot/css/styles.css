@@ -32,13 +32,23 @@ body {
     top: 0;
     z-index: 1000;
 }
-
-.main-content {
-    margin-right: var(--sidebar-width); /* ایجاد فضا برای سایدبار ثابت */
-    min-height: 100vh;
-    padding: 0;
+.content-wrapper {
+    width: 100%;
+    max-width: 1400px; /* عرض طلایی برای مانیتورهای بزرگ */
     display: flex;
     flex-direction: column;
+    gap: 20px;
+}
+.main-content {
+    /* فضا برای سایدبار در سمت راست */
+    margin-right: var(--sidebar-width);
+    margin-left: 0; /* مقدار قبلی auto را حذف کن */
+
+    min-height: 100vh;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* محتوا را در محور افقی وسط می‌آورد */
 }
 
 /* ۳. المان‌های شیشه‌ای (Glassmorphism) */
@@ -70,11 +80,18 @@ body {
 /* ۴. کارت‌های آمار (Stats Grid) */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* در مانیتور بزرگ ۴ ستون و در کوچک‌ترها کمتر */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
     width: 100%;
+    margin-bottom: 25px;
 }
-
+@media (min-width: 1200px) {
+    .stat-card {
+        max-width: none;
+        height: 100px; /* کمی ارتفاع بیشتر برای خوانایی */
+    }
+}
 .stat-card {
     background: #ffffff;
     border-radius: 20px;
@@ -228,9 +245,11 @@ body::before {
 }
 
 body {
-    background-image: url('/images/backgrounds/bg-1.jpg'); /* آدرس عکس اصلی */
+    background-image: url('/images/backgrounds/bg-1.jpg');
     background-attachment: fixed;
-    overflow: hidden; /* حذف اسکرول کل صفحه */
+    /* overflow: hidden; <--- این خط را کاملا پاک کن */
+    overflow-x: hidden; /* جلوگیری از اسکرول افقی اضافی */
+    overflow-y: auto; /* اجازه اسکرول عمودی */
 }
 
 /* ۲. پررنگ کردن نوشته‌های محو در سایدبار */
@@ -349,8 +368,8 @@ body {
 .container-fluid {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 40px); /* کسر کردن پدینگ‌های بالا و پایین */
-    justify-content: space-between;
+    min-height: calc(100vh - 40px); /* تغییر height به min-height */
+    /* justify-content: space-between; <-- این خط را پاک کن چون باعث فاصله‌های عجیب در اسکرول میشه */
 }
 
 .row.g-4 {
@@ -359,8 +378,9 @@ body {
 }
 
 .card {
-    height: 100%; /* کارت‌ها تمام ارتفاع ردیف خود را پر کنند */
-    margin-bottom: 0 !important;
+    /* height: 100%; <-- این را پاک کن تا ارتفاع کارت‌ها داینامیک شود */
+    height: auto !important;
+    margin-bottom: 20px !important; /* به جای 0، کمی فاصله پایین کارت‌ها بده */
 }
 
 .table-responsive {
@@ -399,4 +419,155 @@ body {
 .signature-img-preview {
     max-height: 60px !important; /* کوچک کردن پیش‌نمایش امضا */
     width: auto;
+}
+
+
+/* ---- کدهای مربوط به ریسپانسیو (تبلت و موبایل) ---- */
+
+@media (max-width: 992px) {
+    /* مخفی کردن سایدبار در تبلت و موبایل به سمت راست */
+    .sidebar-right {
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    /* تمام‌صفحه کردن محتوای اصلی وقتی سایدبار نیست */
+    .main-content {
+        margin-right: 0 !important;
+        padding: 15px; /* پدینگ کمتر برای موبایل */
+    }
+
+    /* کارت‌های آمار در تبلت ۲ ستونه و در موبایل ۱ ستونه شوند */
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    /* در موبایل، باکس سرچ تمام عرض را بگیرد */
+    .search-box-glass input {
+        width: 100%;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr; /* کارت های آمار کاملا زیر هم */
+    }
+}
+
+
+
+/* تنظیمات کاغذ برای پیش‌نمایش نامه */
+#paper {
+    background: white;
+    margin: 0 auto;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    transform-origin: top center;
+    transition: transform 0.2s ease;
+}
+
+/* این کلاس‌ها ابعاد استاندارد چاپ هستند */
+.paper-a4 {
+    width: 210mm;
+    min-height: 297mm;
+}
+
+.paper-a5 {
+    width: 148mm;
+    min-height: 210mm;
+}
+
+/* برای اینکه در مانیتورهای کوچک کل کاغذ دیده شود */
+@media (max-width: 1200px) {
+    #paper {
+        transform: scale(0.7);
+    }
+}
+
+@media (max-width: 900px) {
+    #paper {
+        transform: scale(0.5);
+    }
+}
+
+/* تنظیمات پایه برای محیط نامه نگاری */
+.word-processor-container {
+    background-color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px); /* کسر ارتفاع فوتر یا هدر احتمالی */
+    position: relative;
+}
+
+.top-toolbar {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 25px;
+    z-index: 100;
+    flex-shrink: 0;
+}
+
+.paper-wrapper {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    background: #e2e8f0;
+}
+
+.paper {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    margin-bottom: 40px;
+}
+
+.size-a4 {
+    width: 210mm;
+}
+
+.size-a5 {
+    width: 148mm;
+    min-height: 210mm;
+}
+
+/* استایل هدر نامه داخل کاغذ */
+.letter-header {
+    border-bottom: 2px solid #333;
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+}
+
+
+@media print {
+    /* مخفی کردن کل ساختار سایت */
+    body * {
+        visibility: hidden;
+    }
+    /* نمایش فقط بخش کاغذ */
+    .paper-wrapper, .paper-wrapper * {
+        visibility: visible;
+    }
+
+    .paper-wrapper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        background: none !important;
+    }
+
+    .paper {
+        box-shadow: none !important;
+        margin: 0 !important;
+        border: none !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
 }
