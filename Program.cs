@@ -10,7 +10,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 2. تنظیمات Identity (بهینه‌سازی شده برای تست راحت‌تر)
-builder.Services.AddDefaultIdentity<User>(options => {
+// 2. تنظیمات Identity (اصلاح شده برای پشتیبانی از نقش‌ها)
+builder.Services.AddIdentity<User, IdentityRole>(options => {
     options.Password.RequireDigit = false;
     options.Password.RequiredLength = 4;
     options.Password.RequireNonAlphanumeric = false;
@@ -21,9 +22,13 @@ builder.Services.AddDefaultIdentity<User>(options => {
     options.User.RequireUniqueEmail = false;
     options.SignIn.RequireConfirmedAccount = false;
 })
-
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddDefaultUI(); // این متد برای سازگاری با Razor Pages هویت (Identity) اضافه شده است
+
+
+
+
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -53,21 +58,31 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 // 6. خودکارسازی دیتابیس و ساخت کاربر ادمین برای اولین بار
+// 6. خودکارسازی دیتابیس و ساخت نقش و کاربر ادمین
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate(); // آپدیت خودکار دیتابیس
+        context.Database.Migrate();
 
         var userManager = services.GetRequiredService<UserManager<User>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        // ساخت یوزر ادمین اگر وجود نداشته باشد
-        var adminEmail = "admin@alpha.com";
-        if (await userManager.FindByEmailAsync(adminEmail) == null)
+        // الف) ساخت نقش Admin اگر وجود ندارد
+        if (!await roleManager.RoleExistsAsync("Admin"))
         {
-            var adminUser = new User
+            await roleManager.CreateAsync(new IdentityRole("Admin"));
+        }
+
+        // ب) ساخت یوزر ادمین
+        var adminEmail = "admin@alpha.com";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+        if (adminUser == null)
+        {
+            adminUser = new User
             {
                 UserName = adminEmail,
                 Email = adminEmail,
@@ -76,11 +91,16 @@ using (var scope = app.Services.CreateScope())
             };
             await userManager.CreateAsync(adminUser, "1234");
         }
+
+        // ج) مطمئن شویم یوزر ادمین، نقش Admin را دارد
+        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
     }
     catch (Exception ex)
     {
         Console.WriteLine("خطا در راه‌اندازی اولیه: " + ex.Message);
     }
 }
-
 app.Run();

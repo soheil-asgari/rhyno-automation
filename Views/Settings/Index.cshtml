@@ -1,0 +1,175 @@
+﻿@model OfficeAutomation.Models.User
+@{
+    ViewData["Title"] = "تنظیمات سیستم";
+}
+
+<div class="container-fluid mt-4" style="direction: rtl; text-align: right;">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="mx-auto" style="width: 100px; height: 100px; border-radius: 50%; background: #f8f9fa; border: 2px solid #eee; display: flex; align-items: center; justify-content: center;">
+                            @if (!string.IsNullOrEmpty(Model.SignaturePath))
+                            {
+                                <img src="@Model.SignaturePath" style="max-width: 80px;" id="side-sig-preview" />
+                            }
+                            else
+                            {
+                                <i class="bi bi-person text-muted" style="font-size: 2rem;"></i>
+                            }
+                        </div>
+                    </div>
+                    <h6 class="fw-bold">@Model.FullName</h6>
+                    <small class="text-muted d-block mb-3">@Model.JobTitle</small>
+                    
+                    <div class="nav flex-column nav-pills pr-0" id="settings-tabs" role="tablist">
+                        <button class="nav-link active text-end mb-2" data-bs-toggle="pill" data-bs-target="#tab-profile">
+                            <i class="bi bi-person-circle ms-2"></i> اطلاعات کاربری
+                        </button>
+                        <button class="nav-link text-end mb-2" data-bs-toggle="pill" data-bs-target="#tab-signature">
+                            <i class="bi bi-pencil-square ms-2"></i> امضای دیجیتال
+                        </button>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <button class="nav-link text-end mb-2 text-danger" data-bs-toggle="pill" data-bs-target="#tab-admin" id="btn-load-users">
+                                <i class="bi bi-shield-lock ms-2"></i> مدیریت کاربران
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="tab-content card shadow-sm p-4 border-0" style="min-height: 400px;">
+                
+                <div class="tab-pane fade show active" id="tab-profile">
+                    <h5 class="border-bottom pb-2 mb-4">ویرایش مشخصات شخصی</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">نام و نام خانوادگی</label>
+                            <input type="text" class="form-control" value="@Model.FullName" id="p_name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">سمت شغلی</label>
+                            <input type="text" class="form-control" value="@Model.JobTitle" id="p_job">
+                        </div>
+                        <div class="col-md-12">
+                            <button class="btn btn-primary" onclick="alert('به زودی...')">ذخیره تغییرات</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-signature">
+                    <h5 class="border-bottom pb-2 mb-4">ثبت امضای دیجیتال</h5>
+                    <canvas id="sig-pad" class="border rounded w-100" style="height: 200px; background: #fafafa;"></canvas>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-secondary" id="sig-clear">پاک کردن</button>
+                        <button class="btn btn-sm btn-success" id="sig-save">ذخیره امضا</button>
+                    </div>
+                </div>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="tab-pane fade" id="tab-admin">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5 class="text-danger">لیست کاربران سیستم</h5>
+                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modal-add-user">کاربر جدید +</button>
+                        </div>
+                        <table class="table table-striped table-hover border">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>نام</th>
+                                    <th>سمت</th>
+                                    <th>ایمیل</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-list-body">
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-add-user" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content text-end" style="direction:rtl;">
+            <div class="modal-header"><h5>افزودن کاربر جدید</h5></div>
+            <div class="modal-body">
+                <input type="text" id="add_name" class="form-control mb-2" placeholder="نام کامل">
+                <input type="text" id="add_job" class="form-control mb-2" placeholder="سمت">
+                <input type="email" id="add_email" class="form-control mb-2" placeholder="ایمیل (نام کاربری)">
+                <input type="password" id="add_pass" class="form-control mb-2" placeholder="رمز عبور">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary w-100" onclick="createUser()">ساخت حساب کاربری</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script>
+        // ۱. امضا
+        const canvas = document.getElementById('sig-pad');
+        const pad = new SignaturePad(canvas);
+        document.getElementById('sig-clear').addEventListener('click', () => pad.clear());
+        document.getElementById('sig-save').addEventListener('click', function() {
+        if (pad.isEmpty()) return;
+        fetch('/Settings/SaveSignature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData: pad.toDataURL() })
+        }).then(() => location.reload());
+        });
+
+        // ۲. بارگذاری کاربران (رفع خطای ستون‌ها)
+        const btnLoad = document.getElementById('btn-load-users');
+        if(btnLoad) {
+        btnLoad.addEventListener('shown.bs.tab', function() {
+        fetch('/Settings/GetAllUsers')
+        .then(res => res.json())
+        .then(users => {
+        let html = '';
+        users.forEach(u => {
+        // دقیقاً ۴ ستون مطابق با هدر
+        html += `<tr>
+        <td>${u.fullName || '---'}</td>
+        <td>${u.jobTitle || '---'}</td>
+        <td>${u.userName}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">حذف</button></td>
+        </tr>`;
+        });
+        document.getElementById('users-list-body').innerHTML = html;
+        });
+        });
+        }
+
+        // ۳. توابع ادمین
+        function createUser() {
+        const params = new URLSearchParams();
+        params.append('fullName', document.getElementById('add_name').value);
+        params.append('jobTitle', document.getElementById('add_job').value);
+        params.append('email', document.getElementById('add_email').value);
+        params.append('password', document.getElementById('add_pass').value);
+
+        fetch('/Settings/CreateUser', { method: 'POST', body: params })
+        .then(res => res.json())
+        .then(data => { alert(data.message); if(data.success) location.reload(); });
+        }
+
+        function deleteUser(id) {
+        if(confirm("آیا حذف شود؟")) {
+        const params = new URLSearchParams();
+        params.append('userId', id);
+        fetch('/Settings/DeleteUser', { method: 'POST', body: params }).then(() => location.reload());
+        }
+        }
+    </script>
+}

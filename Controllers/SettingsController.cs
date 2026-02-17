@@ -1,62 +1,121 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OfficeAutomation.Models;
-using System.Threading.Tasks;
 using System;
+using System.Linq; // برای Select و ToList الزامی است
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace OfficeAutomation.Controllers
 {
     public class SettingsController : Controller
     {
         private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager; // اضافه شد
 
-        public SettingsController(UserManager<User> userManager)
+        // تزریق هر دو سرویس در سازنده
+        public SettingsController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
-        // ۱. نمایش صفحه تنظیمات
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
-
             return View(user);
         }
 
-        // ۲. متد ذخیره امضا به صورت رشته Base64 (بسیار سریع و بدون نیاز به آپلود فایل پیچیده)
         [HttpPost]
         public async Task<IActionResult> SaveSignature([FromBody] SignatureUploadModel model)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Json(new { success = false, message = "کاربر یافت نشد" });
-
-            if (string.IsNullOrEmpty(model.ImageData))
-                return Json(new { success = false, message = "داده تصویر خالی است" });
+            if (string.IsNullOrEmpty(model.ImageData)) return Json(new { success = false, message = "داده تصویر خالی است" });
 
             try
             {
-                // ذخیره مستقیم رشته تصویر در دیتابیس (فیلد SignaturePath)
                 user.SignaturePath = model.ImageData;
                 var result = await _userManager.UpdateAsync(user);
+                return Json(new { success = result.Succeeded });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
 
-                if (result.Succeeded)
-                {
-                    return Json(new { success = true, message = "امضا با موفقیت ذخیره شد" });
-                }
-                return Json(new { success = false, message = "خطا در بروزرسانی دیتابیس" });
-            }
-            catch (Exception ex)
+        // مدیریت کاربران - مخصوص ادمین
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public IActionResult GetAllUsers()
+        {
+            var users = _userManager.Users.Select(u => new {
+                u.Id,
+                u.FullName,
+                u.UserName,
+                u.JobTitle,
+                u.Email
+            }).ToList();
+            return Json(users);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateUser(string email, string fullName, string jobTitle, string password)
+        {
+            var user = new User
             {
-                return Json(new { success = false, message = ex.Message });
+                UserName = email,
+                Email = email,
+                FullName = fullName,
+                JobTitle = jobTitle,
+                EmailConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(user, password);
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "User");
+                return Json(new { success = true, message = "کاربر با موفقیت ساخته شد." });
             }
+
+            // استخراج تمام خطاهای Identity و فرستادن به کلاینت
+            var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
+            return Json(new { success = false, message = "خطای سیستم: " + errors });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return Json(new { success = false });
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser.Id == userId) return Json(new { success = false, message = "خودتان را نمی‌توانید حذف کنید." });
+
+            var result = await _userManager.DeleteAsync(user);
+            return Json(new { success = result.Succeeded });
+        }
+
+        // متد نجات‌بخش برای ادمین کردن اکانت شما
+        [HttpGet]
+        public async Task<string> CreateTestAdmin()
+        {
+            var roleName = "Admin";
+            if (!await _roleManager.RoleExistsAsync(roleName))
+                await _roleManager.CreateAsync(new IdentityRole(roleName));
+
+            var user = await _userManager.FindByEmailAsync("admin@alpha.com");
+            if (user != null)
+            {
+                await _userManager.AddToRoleAsync(user, roleName);
+                return "تبریک! شما الان ادمین هستید. صفحه تنظیمات را رفرش کنید.";
+            }
+            return "کاربر admin@alpha.com پیدا نشد.";
         }
     }
 
-    // مدل کمکی برای دریافت داده‌های امضا
-    public class SignatureUploadModel
-    {
-        public string ImageData { get; set; }
-    }
+    public class SignatureUploadModel { public string ImageData { get; set; } }
 }
