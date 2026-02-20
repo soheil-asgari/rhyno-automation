@@ -52,6 +52,20 @@ namespace OfficeAutomation.Controllers
 
             if (letter == null) return NotFound();
 
+            // تعیین پیشوند هوشمند
+            string prefix = "جناب آقای / سرکار خانم";
+            if (letter.Receiver != null)
+            {
+                prefix = letter.Receiver.Gender switch
+                {
+                    "Male" => "جناب آقای",
+                    "Female" => "سرکار خانم",
+                    "Department" => "واحد محترم",
+                    _ => "جناب آقای / سرکار خانم"
+                };
+            }
+            ViewBag.Prefix = prefix;
+
             return View(letter);
         }
 
@@ -63,7 +77,7 @@ namespace OfficeAutomation.Controllers
 
             // مقداردهی برای امضا (حتی اگر کاربر پیدا نشد، سیستم کرش نکند)
             ViewBag.SenderFullName = currentUser?.FullName ?? "نامشخص";
-            ViewBag.SenderRole = currentUser?.JobTitle ?? "کاربر سیستم";
+            ViewBag.SenderRole = currentUser?.JobTitle ;
             ViewBag.UserSignature = currentUser?.SignaturePath;
 
             // ۲. دریافت لیست کاربران به همراه جنسیت
@@ -83,18 +97,17 @@ namespace OfficeAutomation.Controllers
         // POST: Letters/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Title,Content,ReceiverId")] Letter letter)
+        // تغییر مهم: فیلد Content به Body تغییر یافت تا با مدل همخوانی داشته باشد
+        public async Task<IActionResult> Create([Bind("Title,Body,ReceiverId")] Letter letter)
         {
-            // ۱. گرفتن ID کاربر لاگین شده با استفاده از _userManager تزریق شده
-            var userId = _userManager.GetUserId(User);
+            var currentUser = await _userManager.GetUserAsync(User);
 
-            // ۲. مقداردهی خودکار فیلدها
-#pragma warning disable CS8601 // Possible null reference assignment.
-            letter.SenderId = _userManager.GetUserId(User);
-#pragma warning restore CS8601 // Possible null reference assignment.
+            if (currentUser == null) return Unauthorized();
+
+            letter.SenderId = currentUser.Id;
             letter.SentDate = DateTime.Now;
 
-            // حذف خطاهای احتمالی مربوط به فیلدهایی که خودمان پر کردیم
+            // حذف مواردی که نباید توسط کاربر پر شوند از اعتبارسنجی
             ModelState.Remove("SenderId");
             ModelState.Remove("Sender");
             ModelState.Remove("Receiver");
@@ -106,7 +119,10 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // اگر خطا داشت، دوباره لیست را با FullName پر کن
+            // بازگرداندن اطلاعات در صورت بروز خطا
+            ViewBag.SenderFullName = currentUser.FullName;
+            ViewBag.SenderRole = currentUser.JobTitle;
+            ViewBag.UserSignature = currentUser.SignaturePath;
             ViewData["ReceiverId"] = new SelectList(_context.Users, "Id", "FullName", letter.ReceiverId);
             return View(letter);
         }

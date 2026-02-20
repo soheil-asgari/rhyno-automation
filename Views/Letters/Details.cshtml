@@ -1,84 +1,251 @@
 ﻿@model OfficeAutomation.Models.Letter
 
 @{
-    Layout = null; // برای اینکه منوهای سایت دور نامه نیفتند
+    Layout = null;
+    string receiverPrefix = ViewBag.Prefix ?? "جناب آقای / سرکار خانم";
+    string senderName = Model.Sender?.FullName ?? "نامشخص";
+    string senderJob = Model.Sender?.JobTitle ?? "سمت نامشخص";
 }
 
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+    <meta charset="utf-8" />
+    <title>نامه شماره @Model.Id</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
     <style>
+    @@font-face {
+        font-family: 'Vazirmatn';
+        src: url('/fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        background-color: #525659;
+        font-family: 'Vazirmatn', Tahoma, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* استایل نمایش در مانیتور */
+    .letter-container {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 20px auto;
+        padding: 15mm 20mm;
+        background: white;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .letter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .header-info p { margin: 0; font-size: 13px; line-height: 1.5; }
+
+  .letter-body {
+    flex-grow: 0; /* تغییر از 1 به 0 */
+    margin-bottom: 50px; /* ایجاد یک فاصله معقول تا امضا */
+    line-height: 1.8;
+    text-align: justify;
+}
+    .letter-content { font-size: 16px; text-align: justify; }
+
+  .letter-footer {
+    margin-top: 20px; /* امضا بلافاصله با فاصله کمی از متن قرار می‌گیرد */
+    display: flex;
+    justify-content: flex-end;
+}
+
+    .signature-area { text-align: center; min-width: 200px; }
+    .signature-img { max-width: 150px; max-height: 70px; mix-blend-mode: multiply; }
+
+    /* --- تنظیمات جادویی چاپ --- */
+    @@media print {
+        @@page {
+            margin: 10mm; /* اجازه بده مرورگر حاشیه را مدیریت کند */
+        }
+
+        body {
+            background: white !important;
+        }
+
+        .no-print { display: none !important; }
+
         .letter-container {
-            width: 210mm; /* سایز A4 */
-            margin: auto;
-            padding: 30px;
-            background: white;
-            font-family: 'Vazirmatn', Tahoma;
-            border: 1px solid #eee;
+            width: 100% !important; /* به جای میلی‌متر ثابت، از درصد استفاده کن */
+            height: auto !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important; /* حاشیه را به @@page سپردیم */
+            box-shadow: none !important;
+            border: none !important;
+            display: block !important; /* خروج از حالت فلکس برای جلوگیری از شکست صفحه */
         }
-        .letter-header {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
+
+        /* جلوگیری از نصف شدن امضا یا پاراگراف‌ها در مرز صفحه */
+        .letter-header, .letter-footer, .letter-body {
+            page-break-inside: avoid;
         }
-        .letter-body {
-            min-height: 500px;
-            line-height: 2;
-            text-align: justify;
-        }
-        .letter-footer {
-            display: flex;
-            justify-content: flex-end; /* امضا سمت چپ پایین */
-            margin-top: 50px;
-        }
-        .signature-area {
-            text-align: center;
-            width: 200px;
-        }
-        .signature-img {
-            max-width: 150px;
-            mix-blend-mode: multiply;
-        }
-        @@media print {
-            .no-print { display: none; }
-            .letter-container { border: none; }
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
-    <div class="no-print" style="text-align:center; padding:10px;">
-        <button onclick="window.print()" class="btn btn-success">چاپ نامه / خروجی PDF</button>
+
+    <div class="no-print d-flex justify-content-center gap-2 py-3 bg-dark">
+        <button onclick="window.print()" class="btn btn-success btn-sm">
+            چاپ یا ذخیره PDF
+        </button>
+        <a href="/Letters/Index" class="btn btn-outline-light btn-sm">بازگشت به لیست</a>
     </div>
 
     <div class="letter-container">
         <div class="letter-header">
-            <div>
-                <p>شماره: @Model.Id</p>
-                <p>تاریخ: @DateTime.Now.ToShortDateString()</p>
+            <div class="header-info">
+    <p><strong>شماره:</strong> @Model.Id.ToString("0000")</p>
+    <p><strong>تاریخ:</strong> 
+        @{
+            // تعریف تقویم فارسی
+            var pc = new System.Globalization.PersianCalendar();
+            // استخراج اجزای تاریخ و فرمت‌بندی دستی
+            string shamsiDate = $"{pc.GetYear(Model.SentDate)}/{pc.GetMonth(Model.SentDate):D2}/{pc.GetDayOfMonth(Model.SentDate):D2}";
+        }
+        @shamsiDate
+    </p>
+    <p><strong>پیوست:</strong> ندارد</p>
+</div>
+            <div class="text-center">
+                <h5 class="fw-bold mb-1">بسمه تعالی </h5>
+                <h4 class="fw-bold">پورتال سازمانی راینو </h4>
             </div>
-            <div style="text-align:center">
-                <h3>بسمه تعالی</h3>
-                <h2>نام سازمان شما</h2>
-            </div>
             <div>
-                <img src="/logo.png" width="60">
+                <img src="/images/logo.png" width="80" alt="لوگو">
             </div>
         </div>
 
         <div class="letter-body">
-            <h4>موضوع: @Model.Title</h4>
-            <p>@Model.Body</p>
+            <h5 class="fw-bold mb-4">
+                @receiverPrefix @(Model.Receiver?.FullName ?? "....................")
+            </h5>
+    
+            <h6 class="fw-bold mb-3">موضوع: @Model.Title </h6>
+    
+            <div class="letter-content">
+                @Html.Raw(Model.Body) 
+            </div>
         </div>
 
         <div class="letter-footer">
             <div class="signature-area">
-                <p>با احترام</p>
-                <strong>@Model.Sender?.FullName</strong> <br />
-                <img src="@Model.Sender?.SignaturePath" class="signature-img" />
+                <p class="mb-1">با احترام </p>
+                <p class="fw-bold mb-0">@senderName </p>
+                <p class="small text-muted mb-2">@senderJob </p>
+        
+                @if (!string.IsNullOrEmpty(Model.Sender?.SignaturePath))
+                {
+                    <img src="@Model.Sender.SignaturePath" class="signature-img" alt="امضا" />
+                }
             </div>
         </div>
     </div>
 </body>
 </html>
+<script>
+    const allUsers = @Html.Raw(ViewBag.UsersData ?? "[]");
+
+
+
+    // ۳. تغییر خودکار القاب و نام گیرنده
+
+    document.getElementById('receiverSelect').addEventListener('change', function() {
+
+        const selectedId = this.value;
+
+        const prefix = document.getElementById('gender-prefix');
+
+        const receiverDisplay = document.getElementById('display-receiver');
+
+
+
+        if (!selectedId) {
+
+            prefix.innerText = "جناب آقای / سرکار خانم";
+
+            receiverDisplay.innerText = "....................";
+
+            return;
+
+        }
+
+
+
+        const user = allUsers.find(u => u.Id == selectedId);
+
+        if (user) {
+
+            receiverDisplay.innerText = user.FullName;
+
+            const gender = String(user.Gender).trim();
+
+            if (gender === "Male") prefix.innerText = "جناب آقای";
+
+            else if (gender === "Female") prefix.innerText = "سرکار خانم";
+
+            else if (gender === "Department") prefix.innerText = "واحد محترم";
+
+            else prefix.innerText = "جناب آقای / سرکار خانم";
+
+        }
+
+    });
+
+
+
+    // ۴. موضوع زنده
+
+    document.getElementById('subjectInput').addEventListener('input', function() {
+
+        document.getElementById('display-subject').innerText = this.value || "....................";
+
+    });
+
+
+
+    // ۵. ارسال فرم
+
+    function submitLetter() {
+
+        const rec = document.getElementById('receiverSelect').value;
+
+        const sub = document.getElementById('subjectInput').value;
+
+            
+
+        if (!rec || !sub) {
+
+            alert("لطفاً گیرنده و موضوع نامه را مشخص کنید.");
+
+            return;
+
+        }
+
+
+
+        document.getElementById('hTitle').value = sub;
+
+        document.getElementById('hContent').value = myEditor.getData();
+
+        document.getElementById('hReceiver').value = rec;
+
+        document.getElementById('finalForm').submit();
+
+    }
+</script>

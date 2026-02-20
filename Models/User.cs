@@ -15,7 +15,8 @@ namespace OfficeAutomation.Models
 
         public string? SignaturePath { get; set; }
 
-        // فیلد جدید: 0=آقا، 1=خانم، 2=واحد سازمانی
-        public int Gender { get; set; }
+        public string Gender { get; set; } // قبلاً احتمالاً int بوده، حتماً string کن
+
+
     }
 }

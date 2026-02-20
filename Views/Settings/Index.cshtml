@@ -75,7 +75,9 @@
                     <div class="tab-pane fade" id="tab-admin">
                         <div class="d-flex justify-content-between mb-3">
                             <h5 class="text-danger">لیست کاربران سیستم</h5>
-                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modal-add-user">کاربر جدید +</button>
+                            <button type="button" class="btn btn-sm btn-success" id="btn-manual-add-user">
+                                کاربر جدید +
+                            </button>
                         </div>
                         <table class="table table-striped table-hover border">
                             <thead class="table-dark">
@@ -96,18 +98,52 @@
     </div>
 </div>
 
-<div class="modal fade" id="modal-add-user" tabindex="-1">
+<div class="modal fade" id="modal-add-user" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content text-end" style="direction:rtl;">
-            <div class="modal-header"><h5>افزودن کاربر جدید</h5></div>
+            <div class="modal-header">
+                <h5 class="modal-title">افزودن کاربر جدید</h5>
+            </div>
             <div class="modal-body">
-                <input type="text" id="add_name" class="form-control mb-2" placeholder="نام کامل">
-                <input type="text" id="add_job" class="form-control mb-2" placeholder="سمت">
-                <input type="email" id="add_email" class="form-control mb-2" placeholder="ایمیل (نام کاربری)">
-                <input type="password" id="add_pass" class="form-control mb-2" placeholder="رمز عبور">
+                <div class="mb-3">
+                    <label class="small mb-1">نام کامل یا عنوان واحد سازمانی</label>
+                    <input type="text" id="add_name" class="form-control" placeholder="مثلاً: واحد حسابداری">
+                </div>
+                <div class="mb-3">
+                    <label class="small mb-1">سمت / نوع واحد</label>
+                    <select id="add_job" class="form-select">
+                        <option value="شخصی">شخصی</option>
+                        <option value="واحد سازمانی">واحد سازمانی</option>
+                        <option value="مدیریت">مدیریت</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="small mb-1">نام کاربری</label>
+                    <input type="email" id="add_email" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="small mb-1">نوع مخاطب / جنسیت</label>
+                    <select id="add_gender" class="form-select">
+                        <option value="Male">آقا</option>
+                        <option value="Female">خانم</option>
+                        <option value="Department">واحد سازمانی / پست ثابت</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="small mb-1">رمز عبور</label>
+                    <input type="password" id="add_pass" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="small mb-1">سطح دسترسی</label>
+                    <select id="add_role" class="form-select">
+                        <option value="User">کاربر معمولی</option>
+                        <option value="Admin">مدیر سیستم</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary w-100" onclick="createUser()">ساخت حساب کاربری</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="createUser()">ذخیره کاربر</button>
             </div>
         </div>
     </div>
@@ -116,60 +152,123 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script>
-        // ۱. امضا
+        // ۱. تابع ساخت کاربر جدید
+        window.createUser = function() {
+        const params = new URLSearchParams();
+            
+        // گرفتن مقادیر از ورودی‌ها
+        const name = document.getElementById('add_name').value;
+        const job = document.getElementById('add_job').value;
+        const email = document.getElementById('add_email').value;
+        const gender = document.getElementById('add_gender').value; // اضافه شد
+        const pass = document.getElementById('add_pass').value;
+        const role = document.getElementById('add_role').value;
+
+        // پر کردن پارامترها برای ارسال به سرور
+        params.append('fullName', name);
+        params.append('jobTitle', job);
+        params.append('email', email);
+        params.append('gender', gender); // این خط بسیار حیاتی بود
+        params.append('password', pass);
+        params.append('role', role);
+
+        fetch('/Settings/CreateUser', {
+        method: 'POST',
+        body: params
+        })
+        .then(res => {
+        if (!res.ok) throw new Error('خطا در پاسخ سرور');
+        return res.json();
+        })
+        .then(data => {
+        if (data.success) {
+        alert("کاربر با موفقیت ساخته شد.");
+        window.location.reload();
+        } else {
+        alert("خطا: " + data.message);
+        }
+        })
+        .catch(err => {
+        console.error("Fetch error:", err);
+        alert("خطا در ارتباط با سرور");
+        });
+        };
+
+        // ۲. تابع حذف کاربر
+        window.deleteUser = function(id) {
+        if(confirm("آیا از حذف این کاربر اطمینان دارید؟")) {
+        const params = new URLSearchParams();
+        params.append('userId', id);
+        fetch('/Settings/DeleteUser', {
+        method: 'POST',
+        body: params
+        }).then(() => location.reload());
+        }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+        // ۳. مدیریت امضا
         const canvas = document.getElementById('sig-pad');
+        if (canvas) {
         const pad = new SignaturePad(canvas);
-        document.getElementById('sig-clear').addEventListener('click', () => pad.clear());
-        document.getElementById('sig-save').addEventListener('click', function() {
-        if (pad.isEmpty()) return;
+        const clearBtn = document.getElementById('sig-clear');
+        const saveBtn = document.getElementById('sig-save');
+                
+        if(clearBtn) clearBtn.addEventListener('click', () => pad.clear());
+                
+        if(saveBtn) {
+        saveBtn.addEventListener('click', function() {
+        if (pad.isEmpty()) {
+        alert("ابتدا امضا را ترسیم کنید.");
+        return;
+        }
         fetch('/Settings/SaveSignature', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageData: pad.toDataURL() })
-        }).then(() => location.reload());
+        }).then(() => {
+        alert("امضا با موفقیت ذخیره شد.");
+        location.reload();
         });
+        });
+        }
+        }
 
-        // ۲. بارگذاری کاربران (رفع خطای ستون‌ها)
+        // ۴. لود لیست کاربران برای ادمین
         const btnLoad = document.getElementById('btn-load-users');
         if(btnLoad) {
-        btnLoad.addEventListener('shown.bs.tab', function() {
+        btnLoad.addEventListener('click', function() {
         fetch('/Settings/GetAllUsers')
         .then(res => res.json())
         .then(users => {
         let html = '';
+        const listBody = document.getElementById('users-list-body');
+        if(listBody) {
         users.forEach(u => {
-        // دقیقاً ۴ ستون مطابق با هدر
         html += `<tr>
         <td>${u.fullName || '---'}</td>
         <td>${u.jobTitle || '---'}</td>
         <td>${u.userName}</td>
-        <td><button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">حذف</button></td>
+        <td>
+        <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">حذف</button>
+        </td>
         </tr>`;
         });
-        document.getElementById('users-list-body').innerHTML = html;
+        listBody.innerHTML = html;
+        }
         });
         });
         }
 
-        // ۳. توابع ادمین
-        function createUser() {
-        const params = new URLSearchParams();
-        params.append('fullName', document.getElementById('add_name').value);
-        params.append('jobTitle', document.getElementById('add_job').value);
-        params.append('email', document.getElementById('add_email').value);
-        params.append('password', document.getElementById('add_pass').value);
-
-        fetch('/Settings/CreateUser', { method: 'POST', body: params })
-        .then(res => res.json())
-        .then(data => { alert(data.message); if(data.success) location.reload(); });
+        // ۵. باز کردن مودال افزودن کاربر
+        const btnManual = document.getElementById('btn-manual-add-user');
+        if (btnManual) {
+        btnManual.addEventListener('click', function () {
+        const modalElement = document.getElementById('modal-add-user');
+        const myModal = new bootstrap.Modal(modalElement);
+        myModal.show();
+        });
         }
-
-        function deleteUser(id) {
-        if(confirm("آیا حذف شود؟")) {
-        const params = new URLSearchParams();
-        params.append('userId', id);
-        fetch('/Settings/DeleteUser', { method: 'POST', body: params }).then(() => location.reload());
-        }
-        }
+        });
     </script>
 }

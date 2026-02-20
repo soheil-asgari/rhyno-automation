@@ -28,6 +28,51 @@ namespace OfficeAutomation.Controllers
             if (user == null) return NotFound();
             return View(user);
         }
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateUser(string email, string fullName, string jobTitle, string password, string role, string gender)
+        {
+            // ۱. چک کردن تکراری نبودن کاربر قبل از هر عملیاتی
+            var existingUser = await _userManager.FindByEmailAsync(email);
+            if (existingUser != null)
+            {
+                return Json(new { success = false, message = "این نام کاربری (ایمیل) قبلاً ثبت شده است." });
+            }
+
+            var user = new User
+            {
+                UserName = email,
+                Email = email,
+                FullName = fullName,
+                JobTitle = jobTitle,
+                Gender = gender,
+                EmailConfirmed = true
+            };
+
+            // ۲. ساخت کاربر
+            var result = await _userManager.CreateAsync(user, password);
+
+            if (result.Succeeded)
+            {
+                // ۳. بخش حیاتی: بررسی و ساخت نقش (Role) اگر وجود نداشته باشد
+                if (string.IsNullOrEmpty(role)) role = "User"; // پیش‌فرض
+
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(role));
+                }
+
+                // ۴. اضافه کردن کاربر به نقش بدون ترس از کرش کردن
+                await _userManager.AddToRoleAsync(user, role);
+
+                return Json(new { success = true, message = "کاربر جدید با موفقیت ایجاد شد." });
+            }
+
+            // اگر به هر دلیل دات‌نت خطا گرفت (مثلاً پسورد ضعیف بود)
+            var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
+            return Json(new { success = false, message = errors });
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> SaveSignature([FromBody] SignatureUploadModel model)
@@ -60,31 +105,7 @@ namespace OfficeAutomation.Controllers
             return Json(users);
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateUser(string email, string fullName, string jobTitle, string password)
-        {
-            var user = new User
-            {
-                UserName = email,
-                Email = email,
-                FullName = fullName,
-                JobTitle = jobTitle,
-                EmailConfirmed = true
-            };
-
-            var result = await _userManager.CreateAsync(user, password);
-            if (result.Succeeded)
-            {
-                await _userManager.AddToRoleAsync(user, "User");
-                return Json(new { success = true, message = "کاربر با موفقیت ساخته شد." });
-            }
-
-            // استخراج تمام خطاهای Identity و فرستادن به کلاینت
-            var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
-            return Json(new { success = false, message = "خطای سیستم: " + errors });
-        }
-
+     
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(string userId)

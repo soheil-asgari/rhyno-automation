@@ -541,13 +541,13 @@ body {
 }
 
 
-@media print {
+/*@media print {*/
     /* مخفی کردن کل ساختار سایت */
-    body * {
+    /*body * {
         visibility: hidden;
-    }
+    }*/
     /* نمایش فقط بخش کاغذ */
-    .paper-wrapper, .paper-wrapper * {
+    /*.paper-wrapper, .paper-wrapper * {
         visibility: visible;
     }
 
@@ -570,4 +570,4 @@ body {
     .no-print {
         display: none !important;
     }
-}
+}*/

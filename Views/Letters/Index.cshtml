@@ -3,7 +3,9 @@
 @{
     ViewData["Title"] = "کارتابل نامه‌ها";
 }
-
+@{
+    var pc = new System.Globalization.PersianCalendar();
+}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="bi bi-envelope-paper"></i> کارتابل نامه‌ها</h1>
     <p>
@@ -27,18 +29,17 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td><strong>@Html.DisplayFor(modelItem => item.Title)</strong></td>
-                <td dir="ltr">
-                    @* نمایش تاریخ به صورت ساده - در مرحله بعد شمسی می‌کنیم *@
-                    @item.SentDate.ToString("yyyy/MM/dd HH:mm")
+                <td>@item.Title</td>
+                <td>
+                    @{
+                        string shamsiDate = $"{pc.GetYear(item.SentDate)}/{pc.GetMonth(item.SentDate):D2}/{pc.GetDayOfMonth(item.SentDate):D2}";
+                    }
+                    @shamsiDate
                 </td>
                 <td>@item.Sender?.FullName</td>
                 <td>@item.Receiver?.FullName</td>
                 <td>
-                    <div class="btn-group" role="group">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm text-white">مشاهده</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">حذف</a>
-                    </div>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">نمایش و چاپ</a>
                 </td>
             </tr>
         }

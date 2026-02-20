@@ -144,41 +144,7 @@
 
         // اجرا هنگام لود صفحه
         setDailyBackground();
-            // ۱. تغییر سایز کاغذ
-            function changePaperSize(size) {
-            const paper = document.getElementById('paper');
-            if (size === 'A4') {
-            paper.className = 'paper-a4 shadow-lg';
-            } else {
-            paper.className = 'paper-a5 shadow-lg';
-            }
-            }
-
-            // ۲. خروجی PDF حرفه‌ای
-            function generatePDF() {
-            const element = document.getElementById('previewArea');
-            const opt = {
-            margin:       10,
-            filename:     'Official-Letter.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
-            }
-
-            // ۳. چاپ مستقیم
-            function printLetter() {
-            const content = document.getElementById('previewArea').innerHTML;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-            <html>
-            <head><title>Print Letter</title></head>
-            <body dir="rtl" onload="window.print();window.close()">${content}</body>
-            </html>
-            `);
-            printWindow.document.close();
-            }
+            
     </script>
 </body>
 </html>

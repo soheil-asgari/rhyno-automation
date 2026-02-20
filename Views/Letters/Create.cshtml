@@ -8,27 +8,22 @@
     string persianDate = $"{pc.GetYear(now)}/{pc.GetMonth(now):D2}/{pc.GetDayOfMonth(now):D2}";
 }
 
+@* ۱. اسکریپت ادیتور *@
 <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
 
 <style>
     .word-processor-container { background-color: #f0f2f5; min-height: 100vh; display: flex; flex-direction: column; }
     .top-toolbar { background: white; border-bottom: 1px solid #ddd; padding: 10px 20px; position: sticky; top: 0; z-index: 1000; }
     .paper-wrapper { flex-grow: 1; padding: 40px 20px; display: flex; justify-content: center; overflow-y: auto; }
-    .paper { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 0 15px rgba(0,0,0,0.1); position: relative; display: block !important; }
-
-    /* حذف خط زیر نام گیرنده */
-    #display-receiver { border-bottom: none !important; text-decoration: none !important; display: inline-block; }
-
-    @@media print {
-        header, footer, aside, nav, .sidebar, .top-toolbar, .no-print { display: none !important; }
-        body * { visibility: hidden; }
-        #paper, #paper * { visibility: visible; }
-        #paper { position: absolute; left: 0; top: 0; width: 100% !important; margin: 0 !important; padding: 15mm !important; box-shadow: none !important; }
+    .paper { 
+        background: white; width: 210mm; min-height: 297mm; padding: 20mm; 
+        box-shadow: 0 0 15px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; 
     }
 </style>
 
 <div class="word-processor-container">
-    <div class="top-toolbar no-print">
+    @* نوار ابزار بالا *@
+    <div class="top-toolbar">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex gap-3">
                 <div class="input-group" style="width: 300px;">
@@ -40,16 +35,19 @@
                 <input type="text" id="subjectInput" class="form-control" placeholder="موضوع نامه..." style="width: 350px;">
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-dark" onclick="window.print()"><i class="bi bi-printer"></i> چاپ نامه</button>
-                <button class="btn btn-primary fw-bold" onclick="submitLetter()">ارسال نهایی</button>
+                <button class="btn btn-primary fw-bold" onclick="submitLetter()">
+                    <i class="bi bi-send"></i> ارسال نهایی نامه
+                </button>
             </div>
         </div>
     </div>
 
+    @* برگه نامه *@
     <div class="paper-wrapper">
         <div id="paper" class="paper">
+            @* هدر نامه *@
             <div class="d-flex justify-content-between mb-5">
-                <div style="font-size: 12px;">
+                <div style="font-size: 13px;">
                     <div>تاریخ: @persianDate</div>
                     <div>شماره: RH-@now.Ticks.ToString().Substring(12)</div>
                     <div>پیوست: ندارد</div>
@@ -58,12 +56,15 @@
                     <h5 class="fw-bold">بسمه تعالی</h5>
                     <div class="mt-2 fw-bold">شرکت فنی مهندسی راینو</div>
                 </div>
-                <div style="width: 60px; height: 60px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-weight: bold;">RH</div>
+                <div>
+                    <img src="/images/logo.png" width="70" alt="لوگو" onerror="this.style.display='none'">
+                </div>
             </div>
 
-            <div class="mb-5" style="font-size: 1.1rem;">
+            @* بخش گیرنده و موضوع *@
+            <div class="mb-5" style="font-size: 1.1rem; line-height: 2;">
                 <div class="fw-bold mb-3">
-                    <span id="gender-prefix">جناب آقای / سرکار خانم</span>
+                    <span id="gender-prefix">جناب آقای / سرکار خانم</span> 
                     <span id="display-receiver">....................</span>
                 </div>
                 <div class="fw-bold">
@@ -71,6 +72,7 @@
                 </div>
             </div>
 
+            @* متن نامه (ادیتور) *@
             <div id="editor-container" class="mb-5">
                 <div id="editor">
                     <p>با سلام و احترام،</p>
@@ -78,14 +80,15 @@
                 </div>
             </div>
 
-            <div style="margin-top: 100px; display: flex; justify-content: flex-end;">
-                <div class="text-center" style="min-width: 200px;">
+            @* امضای فرستنده *@
+            <div style="margin-top: 50px; display: flex; justify-content: flex-end;"> 
+                <div class="text-center" style="min-width: 220px;">
                     <p class="fw-bold mb-1">با تقدیم احترام</p>
                     <p class="fw-bold mb-0">@ViewBag.SenderFullName</p>
                     <p class="small text-muted mb-2">@ViewBag.SenderRole</p>
                     @if (ViewBag.UserSignature != null)
                     {
-                        <img src="@ViewBag.UserSignature" style="max-height: 80px; mix-blend-mode: multiply;">
+                        <img src="@ViewBag.UserSignature" style="max-height: 80px; mix-blend-mode: multiply;" alt="امضا">
                     }
                 </div>
             </div>
@@ -95,69 +98,84 @@
 
 <form id="finalForm" asp-action="Create" method="post" style="display:none;">
     <input type="hidden" name="Title" id="hTitle">
-    <input type="hidden" name="Content" id="hContent">
+    <input type="hidden" name="Body" id="hContent"> @* اینجا name شد Body *@
     <input type="hidden" name="ReceiverId" id="hReceiver">
+    @Html.AntiForgeryToken()
 </form>
 
 @section Scripts {
     <script>
         let myEditor;
         
-        // ۱. راه اندازی ادیتور
+        // ۱. اجرای ادیتور
         ClassicEditor.create(document.querySelector('#editor'), {
             language: 'fa', 
             contentsLangDirection: 'rtl'
         }).then(editor => { 
             myEditor = editor; 
-        }).catch(err => console.error("Editor Error:", err));
+        }).catch(err => console.error(err));
 
-        // ۲. دریافت دیتا با چک کردن عدم وجود خطا
-        const rawData = '@Html.Raw(ViewBag.UsersData)';
-        const allUsers = rawData ? JSON.parse(rawData) : [];
+        // ۲. دیتای کاربران
+        const allUsers = @Html.Raw(ViewBag.UsersData ?? "[]");
 
-        // ۳. منطق هوشمند پیشوند و حذف خط زیر نام
+        // ۳. تغییر خودکار القاب و نام گیرنده
         document.getElementById('receiverSelect').addEventListener('change', function() {
             const selectedId = this.value;
             const prefix = document.getElementById('gender-prefix');
-            const receiver = document.getElementById('display-receiver');
+            const receiverDisplay = document.getElementById('display-receiver');
 
             if (!selectedId) {
                 prefix.innerText = "جناب آقای / سرکار خانم";
-                receiver.innerText = "....................";
+                receiverDisplay.innerText = "....................";
                 return;
             }
 
             const user = allUsers.find(u => u.Id == selectedId);
             if (user) {
-                receiver.innerText = user.FullName;
-                
-                // 0=آقا، 1=خانم، 2=واحد
-                if (user.Gender === 0) prefix.innerText = "جناب آقای";
-                else if (user.Gender === 1) prefix.innerText = "سرکار خانم";
-                else if (user.Gender === 2) prefix.innerText = "مدیریت محترم / ریاست محترم";
+                receiverDisplay.innerText = user.FullName;
+                const gender = String(user.Gender).trim();
+                if (gender === "Male") prefix.innerText = "جناب آقای";
+                else if (gender === "Female") prefix.innerText = "سرکار خانم";
+                else if (gender === "Department") prefix.innerText = "واحد محترم";
                 else prefix.innerText = "جناب آقای / سرکار خانم";
             }
         });
 
-        // ۴. آپدیت موضوع
+        // ۴. موضوع زنده
         document.getElementById('subjectInput').addEventListener('input', function() {
             document.getElementById('display-subject').innerText = this.value || "....................";
         });
 
-        // ۵. ارسال فرم بدون خطا
-        function submitLetter() {
-            const rec = document.getElementById('receiverSelect').value;
-            const sub = document.getElementById('subjectInput').value;
-            
-            if (!rec || !sub) {
-                alert("لطفاً گیرنده و موضوع را وارد کنید.");
-                return;
-            }
+        // ۵. ارسال فرم
+      function submitLetter() {
+    // ۱. دریافت مقادیر
+    const rec = document.getElementById('receiverSelect').value;
+    const sub = document.getElementById('subjectInput').value;
+    
+    if (!rec || !sub) {
+        alert("لطفاً گیرنده و موضوع را وارد کنید.");
+        return;
+    }
 
-            document.getElementById('hTitle').value = sub;
-            document.getElementById('hContent').value = myEditor.getData();
-            document.getElementById('hReceiver').value = rec;
-            document.getElementById('finalForm').submit();
-        }
+    // ۲. استخراج محتوای ادیتور
+    if (!myEditor) {
+        alert("ادیتور هنوز لود نشده است.");
+        return;
+    }
+    const editorData = myEditor.getData();
+
+    if (!editorData.trim()) {
+        alert("متن نامه نمی‌تواند خالی باشد.");
+        return;
+    }
+
+    // ۳. ست کردن مقادیر در فرم مخفی
+    document.getElementById('hTitle').value = sub;
+    document.getElementById('hContent').value = editorData; // این به Body در مدل مپ می‌شود
+    document.getElementById('hReceiver').value = rec;
+
+    // ۴. ارسال
+    document.getElementById('finalForm').submit();
+}
     </script>
 }
