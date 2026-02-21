@@ -1,48 +1,212 @@
 ﻿@model IEnumerable<OfficeAutomation.Models.Leave>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "مدیریت درخواست‌های مرخصی";
 }
 
-<h1>Index</h1>
+<style>
+    :root {
+        --primary-soft: #eef2ff;
+        --primary-main: #4f46e5;
+        --success-soft: #ecfdf5;
+        --success-main: #10b981;
+        --warning-soft: #fffbeb;
+        --warning-main: #f59e0b;
+    }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table table-hover table-bordered shadow-sm">
-    <thead class="table-primary">
-        <tr>
-            <th>نام درخواست‌دهنده</th>
-            <th>تاریخ شروع</th>
-            <th>تاریخ پایان</th>
-            <th>علت</th>
-            <th>وضعیت</th>
-            <th>عملیات</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.User?.FullName</td>
-                <td>@item.StartDate.ToString("yyyy/MM/dd")</td>
-                <td>@item.EndDate.ToString("yyyy/MM/dd")</td>
-                <td>@item.Reason</td>
-                <td>
-                    @if (item.Status == "در انتظار تایید")
-                    {
-                        <span class="badge bg-warning text-dark">@item.Status</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-success">@item.Status</span>
-                    }
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">ویرایش</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">حذف</a>
-                </td>
-            </tr>
+    body {
+        background-color: #f8fafc;
+        font-size: 0.9rem;
+    }
+
+    .stat-card {
+        border: 1px solid #e2e8f0 !important;
+        transition: transform 0.2s;
+        border-radius: 12px;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
         }
-    </tbody>
-</table>
+
+    .icon-box {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 1.2rem;
+    }
+
+    .table thead th {
+        background-color: #f1f5f9;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.025em;
+        border: none;
+    }
+
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-soft);
+        color: var(--primary-main);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    .status-pending {
+        background: var(--warning-soft);
+        color: var(--warning-main);
+    }
+
+    .status-approved {
+        background: var(--success-soft);
+        color: var(--success-main);
+    }
+
+    .action-btn {
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+        background: white;
+    }
+
+        .action-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+</style>
+
+<div class="container-fluid py-4" style="direction: rtl; text-align: right; max-width: 1200px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">مدیریت مرخصی‌ها</h5>
+            <p class="text-muted small mb-0">لیست و وضعیت درخواست‌های ثبت شده در سیستم</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary px-4 shadow-sm" style="border-radius: 10px; background-color: var(--primary-main);">
+            <i class="bi bi-plus-lg ms-1"></i> درخواست جدید
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm h-100">
+                <div class="card-body d-flex align-items-center p-3">
+                    <div class="icon-box bg-light text-primary ms-3"><i class="bi bi-collection"></i></div>
+                    <div>
+                        <small class="text-muted d-block">کل درخواست‌ها</small>
+                        <span class="fw-bold fs-5">@Model.Count()</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm h-100">
+                <div class="card-body d-flex align-items-center p-3">
+                    <div class="icon-box status-pending ms-3"><i class="bi bi-clock-history"></i></div>
+                    <div>
+                        <small class="text-muted d-block">در انتظار تایید</small>
+                        <span class="fw-bold fs-5 text-warning">@Model.Count(x => x.Status == "در انتظار تایید")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm h-100">
+                <div class="card-body d-flex align-items-center p-3">
+                    <div class="icon-box status-approved ms-3"><i class="bi bi-check2-circle"></i></div>
+                    <div>
+                        <small class="text-muted d-block">تایید شده</small>
+                        <span class="fw-bold fs-5 text-success">@Model.Count(x => x.Status == "تایید شده")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">درخواست‌دهنده</th>
+                        <th>بازه زمانی</th>
+                        <th>مدت</th>
+                        <th>علت</th>
+                        <th>وضعیت</th>
+                        <th class="text-center pe-4">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle ms-2">@item.User?.FullName.Substring(0, 1)</div>
+                                    <div class="fw-semibold text-dark">@item.User?.FullName</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <span class="text-muted small">از:</span> @item.StartDate.ToString("yyyy/MM/dd")<br />
+                                    <span class="text-muted small">تا:</span> @item.EndDate.ToString("yyyy/MM/dd")
+                                </div>
+                            </td>
+                            <td>
+                                @{
+                                    var days = (item.EndDate - item.StartDate).Days + 1;
+                                    <span class="fw-medium text-dark">@days روز</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="text-muted d-inline-block text-truncate" style="max-width: 150px;" title="@item.Reason">
+                                    @item.Reason
+                                </span>
+                            </td>
+                            <td>
+                                @if (item.Status == "در انتظار تایید")
+                                {
+                                    <span class="badge-soft status-pending small">در انتظار</span>
+                                }
+                                else if (item.Status == "تایید شده")
+                                {
+                                    <span class="badge-soft status-approved small">تایید شده</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft bg-light text-danger small">رد شده</span>
+                                }
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn text-primary" title="ویرایش">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <button onclick="confirmDelete('@item.Id')" class="action-btn text-danger" title="حذف">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

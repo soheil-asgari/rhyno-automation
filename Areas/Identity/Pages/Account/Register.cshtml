@@ -33,6 +33,14 @@
                 <label asp-for="Input.ConfirmPassword">تکرار رمز عبور</label>
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
+            <div class="form-floating mb-3">
+                <select asp-for="Input.ServiceLocation" class="form-control">
+                    <option value="">انتخاب محل خدمت...</option>
+                    <option value="تهران">تهران</option>
+                    <option value="اصفهان">اصفهان</option>
+                </select>
+                <label asp-for="Input.ServiceLocation">محل خدمت</label>
+            </div>
             <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">ثبت نام</button>
         </form>
     </div>

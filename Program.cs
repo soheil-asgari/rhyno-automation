@@ -1,7 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
-using Microsoft.AspNetCore.Identity;
+using OfficeAutomation.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,20 +20,24 @@ builder.Services.AddIdentity<User, IdentityRole>(options => {
     options.Password.RequireLowercase = false;
 
     // تنظیمات مهم برای نام کاربری به جای ایمیل
+    options.User.AllowedUserNameCharacters =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ " +
+        "آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی";
+
+    // تنظیمات مهم برای نام کاربری به جای ایمیل
     options.User.RequireUniqueEmail = false;
     options.SignIn.RequireConfirmedAccount = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders()
-.AddDefaultUI(); // این متد برای سازگاری با Razor Pages هویت (Identity) اضافه شده است
-
+.AddDefaultUI();
 
 
 
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-
+builder.Services.AddScoped<LeaveWorkflowService>();
 var app = builder.Build();
 
 // 3. تنظیمات محیط اجرا

@@ -1,4 +1,4 @@
-﻿<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+﻿<script src="https://lib.arvancloud.ir/html2pdf.js/0.9.3/html2pdf.min.js"></script>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -50,6 +50,15 @@
                         <a class="nav-link py-2 px-4" href="#"><i class="bi bi-people text-info ms-2"></i> سرمایه انسانی</a>
                         <a class="nav-link py-2 px-4" href="#"><i class="bi bi-person-walking text-warning ms-2"></i> مدیریت تردد</a>
                         <a class="nav-link py-2 px-4" href="#"><i class="bi bi-chat-square-text-fill text-primary ms-2"></i> سامانه پیامکی</a>
+                        <a class="nav-link py-2 px-4" href="#"><i class="bi bi-chat-square-text-fill text-primary ms-2"></i> چت سازمانی</a>
+
+                        <a class="nav-link py-2 px-4" href="#"><i class="bi bi-stars text-purple ms-2"></i> چت با هوش مصنوعی</a>
+
+                        <a class="nav-link py-2 px-4" href="#"><i class="bi bi-truck text-warning ms-2"></i> ثبت بارنامه</a>
+
+                        <a class="nav-link py-2 px-4" href="#"><i class="bi bi-cash-stack text-success ms-2"></i> ارسال کارکرد لیست حقوق</a>
+
+                        <a class="nav-link py-2 px-4" href="#"><i class="bi bi-shield-check text-info ms-2"></i> ارسال کارکرد لیست بیمه</a>
                             <a class="nav-link py-2 px-4" asp-controller="Settings" asp-action="Index">
                                 <i class="bi bi-gear text-secondary ms-2"></i> تنظیمات سیستم
                             </a>
@@ -80,32 +89,36 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
-        $(document).ready(function() {
-            if ($('.table').length > 0) {
-                $('.table').DataTable({
-                    "language": { "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/fa.json" },
-                    "pageLength": 10,
-                    "lengthMenu": [5, 10, 25]
-                });
-            }
+            $(document).ready(function() {
+            // فقط جدول‌هایی را دیتاتیبل کن که کلاس 'dt-skip' ندارند
+            // اینطوری هر جدولی که بخوایم خودمون دستی مدیریت کنیم، تداخل ایجاد نمیکنه
+            $('.table:not(.dt-skip)').each(function() {
+                if (!$.fn.DataTable.isDataTable(this)) {
+                    $(this).DataTable({
+                        "language": { "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/fa.json" },
+                        "pageLength": 10,
+                        "lengthMenu": [5, 10, 25],
+                        "retrieve": true // این خط جلوی ارور رو میگیره
+                    });
+                }
+            });
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
     <script>
-        function updatePersianDateTime() {
+               function updatePersianDateTime() {
             const now = new Date();
-
-            // تنظیمات برای تاریخ شمسی
             const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
             const persianDate = now.toLocaleDateString('fa-IR', dateOptions);
-
-            // تنظیمات برای ساعت
             const timeOptions = { hour: '2-digit', minute: '2-digit' };
             const persianTime = now.toLocaleTimeString('fa-IR', timeOptions);
 
-            // اعمال در خروجی
-            document.getElementById('current-persian-date').innerHTML = "امروز: " + persianDate;
-            document.getElementById('current-time-persian').innerHTML = "ساعت " + persianTime;
+            // اضافه کردن شرط برای جلوگیری از ارور
+            const dateEl = document.getElementById('current-persian-date');
+            const timeEl = document.getElementById('current-time-persian');
+
+            if (dateEl) dateEl.innerHTML = "امروز: " + persianDate;
+            if (timeEl) timeEl.innerHTML = "ساعت " + persianTime;
         }
 
         // اجرا هنگام لود

@@ -1,0 +1,65 @@
+﻿/* leave-custom.css */
+.stat-card {
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    background: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #495057;
+}
+
+.dot-badge {
+    padding: 0.5em 1em;
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+.btn-white {
+    background: white;
+    border: 1px solid #eee;
+}
+
+    .btn-white:hover {
+        background: #f8f9fa;
+    }
+
+#leave-table thead th {
+    padding: 15px 10px;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+#leave-table tbody td {
+    padding: 18px 10px;
+}
+
+
+/* اصلاح ظاهر بخش جستجو و تعداد نمایش DataTable */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: 'Vazir', sans-serif !important;
+}
+
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    font-family: 'Vazir', sans-serif !important;
+    font-size: 0.85rem;
+    margin-top: 15px;
+}

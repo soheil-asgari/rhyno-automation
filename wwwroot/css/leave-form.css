@@ -1,0 +1,66 @@
+﻿/* leave-form.css */
+.request-card {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.form-control {
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+    .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.08);
+    }
+
+.input-group-text {
+    border-radius: 10px !important;
+    border-left: 0;
+}
+
+.input-group .form-control {
+    border-radius: 0 10px 10px 0 !important;
+}
+
+.pdate {
+    background-color: #fff !important;
+    cursor: pointer;
+}
+/* اطمینان از اینکه تقویم روی همه المان‌ها نمایش داده شود */
+.datepicker-plot-area {
+    z-index: 99999999 !important;
+    font-family: 'Vazir', Tahoma, sans-serif !important; /* یا هر فونتی که استفاده می‌کنی */
+}
+
+
+/* ۱. معرفی فونت */
+@font-face {
+    font-family: 'Vazir';
+    src: url('/fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+
+/* ۲. اعمال به کل صفحه */
+body, html, form {
+    font-family: 'Vazir', Tahoma, sans-serif !important;
+}
+
+/* ۳. اعمال مخصوص به تقویم (چون تقویم خارج از لایه‌های عادی رندر می‌شود) */
+/* مطمئن شویم تقویم روی همه چیز نمایش داده می‌شود */
+.datepicker-plot-area {
+    z-index: 99999999 !important;
+    font-family: 'Vazir', Tahoma, sans-serif !important;
+}
+
+/* نشانگر ماوس به شکل دست روی فیلد تاریخ */
+.pdate {
+    cursor: pointer !important;
+    background-color: #ffffff !important;
+}
+
+/* ۴. اعداد فارسی در جدول و اینپوت‌ها */
+.form-control, .badge, .btn {
+    font-family: 'Vazir', Tahoma, sans-serif !important;
+}

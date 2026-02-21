@@ -54,23 +54,26 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
             // ۱. اضافه شدن فیلد نام و نام خانوادگی به مدل ورودی
             [Required(ErrorMessage = "وارد کردن نام و نام خانوادگی الزامی است")]
             [Display(Name = "نام و نام خانوادگی")]
-            public string FullName { get; set; }
+            public string? FullName { get; set; }
 
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]
-            public string Email { get; set; }
+            public string? Email { get; set; }
 
             [Required]
             [StringLength(100, ErrorMessage = "رمز عبور باید حداقل {2} کاراکتر باشد.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
-            public string Password { get; set; }
+            public string? Password { get; set; }
 
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "رمز عبور و تکرار آن با هم مطابقت ندارند.")]
-            public string ConfirmPassword { get; set; }
+            public string? ConfirmPassword { get; set; }
+            [Required(ErrorMessage = "انتخاب محل خدمت الزامی است")]
+            [Display(Name = "محل خدمت")]
+            public string? ServiceLocation { get; set; }
         }
 
 
