@@ -1,77 +1,12 @@
-﻿@model OfficeAutomation.Models.User
+﻿@model OfficeAutomation.Models.UserViewModel
 @{
     ViewData["Title"] = "تنظیمات سیستم";
 }
 
-<style>
-    .settings-card {
-        border-radius: 15px;
-        transition: all 0.3s;
-    }
+@section Styles {
+    <link rel="stylesheet" href="~/css/settings.css" />
+}
 
-    .nav-pills .nav-link {
-        border-radius: 10px;
-        margin-bottom: 8px;
-        transition: 0.3s;
-        color: #555;
-    }
-
-        .nav-pills .nav-link.active {
-            background: linear-gradient(45deg, #4e73df, #224abe);
-            box-shadow: 0 4px 15px rgba(78, 115, 223, 0.3);
-        }
-
-        .nav-pills .nav-link:hover:not(.active) {
-            background-color: #f8f9fc;
-        }
-
-    #sig-pad {
-        cursor: crosshair;
-        touch-action: none;
-        background-image: radial-gradient(#ddd 1px, transparent 1px);
-        background-size: 20px 20px;
-    }
-
-    .table thead {
-        background-color: #f8f9fc;
-        color: #4e73df;
-    }
-
-    <style >
-    /* بزرگتر کردن فضای هر ردیف برای خوانایی بهتر */
-    #users-table tbody tr {
-        height: 70px; /* ارتفاع هر ردیف را افزایش می‌دهد */
-        transition: background-color 0.2s;
-    }
-
-    /* حذف اسکرول‌بار داخلی آزاردهنده و اصلاح کادر جدول */
-    .table-responsive {
-        border: none !important;
-        overflow-x: auto; /* فقط اسکرول افقی در صورت نیاز (برای موبایل) */
-        overflow-y: visible !important; /* اسکرول عمودی را آزاد می‌کند */
-    }
-
-    /* تنظیم فونت و سایز داخل جدول */
-    #users-table td {
-        font-size: 0.95rem;
-        padding: 15px 10px;
-    }
-
-    /* اصلاح ظاهر DataTable در حالت فارسی */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-    }
-
-    .dataTables_filter input {
-        margin-right: 10px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        padding: 5px 15px;
-    }
-</style>
 
 <div class="container-fluid mt-4" style="direction: rtl; text-align: right;">
     <div class="row">
@@ -113,64 +48,48 @@
         </div>
 
         <div class="col-md-9">
-            <div class="tab-content card shadow-sm p-4 border-0 settings-card" style="min-height: 500px;">
-
+            <div class="tab-content card shadow-sm p-4 border-0 settings-card" style="min-height: 600px; background: white;">
+                
                 <div class="tab-pane fade show active" id="tab-profile">
-                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-                        <h5 class="mb-0"><i class="bi bi-sliders ms-2 text-primary"></i> ویرایش مشخصات شخصی </h5>
-                    </div>
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">نام و نام خانوادگی</label>
-                            <input type="text" class="form-control form-control-lg" value="@Model.FullName" id="p_name">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">سمت شغلی</label>
-                            <input type="text" class="form-control form-control-lg" value="@Model.JobTitle" id="p_job">
-                        </div>
-                        <div class="col-12 mt-4">
-                            <button class="btn btn-primary px-4 shadow-sm" onclick="saveProfile()">
-                                <i class="bi bi-check2-circle ms-1"></i> ذخیره تغییرات
-                            </button>
-                        </div>
-                    </div>
+                    @await Html.PartialAsync("_ProfileSettings", Model)
                 </div>
+
                 <div class="tab-pane fade" id="tab-signature">
                     <h5 class="border-bottom pb-3 mb-4"><i class="bi bi-pencil-fill ms-2 text-primary"></i>مدیریت امضای دیجیتال</h5>
 
-                    <div class="sig-container">
-                        <canvas id="sig-pad"></canvas>
+                    <div class="sig-container border rounded bg-light mb-3" style="height: 300px;">
+                        <canvas id="sig-pad" style="width: 100%; height: 100%; cursor: crosshair;"></canvas>
                     </div>
 
-                    <div class="sig-actions">
+                    <div class="d-flex gap-2 mb-3">
                         <button class="btn btn-success px-4" id="sig-save">
-                            <i class="bi bi-check-lg"></i> ذخیره امضا
+                            <i class="bi bi-check-lg ms-1"></i> ذخیره امضا
                         </button>
                         <button class="btn btn-outline-secondary" id="sig-clear">پاکسازی</button>
 
-                        <div class="upload-btn-wrapper">
+                        <div class="position-relative overflow-hidden ms-auto">
                             <button class="btn btn-outline-primary">
-                                <i class="bi bi-upload"></i> آپلود فایل امضا
+                                <i class="bi bi-upload ms-1"></i> آپلود فایل امضا
                             </button>
-                            <input type="file" id="sig-upload" accept="image/*" />
+                            <input type="file" id="sig-upload" accept="image/*" style="position: absolute; opacity: 0; right: 0; top: 0; cursor: pointer;" />
                         </div>
                     </div>
-                    <small class="text-muted d-block mt-2">فرمت‌های مجاز: PNG, JPG (پیشنهاد می‌شود تصویر با پس‌زمینه شفاف باشد)</small>
+                    <small class="text-muted d-block"><i class="bi bi-info-circle ms-1"></i>فرمت‌های مجاز: PNG, JPG (پیشنهاد می‌شود تصویر با پس‌زمینه شفاف باشد)</small>
                 </div>
 
                 @if (User.IsInRole("Admin"))
                 {
                     <div class="tab-pane fade" id="tab-admin">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
                             <h5 class="text-dark mb-0"><i class="bi bi-people-fill ms-2 text-danger"></i>مدیریت کاربران سیستم</h5>
                             <button type="button" class="btn btn-success shadow-sm" id="btn-manual-add-user">
                                 <i class="bi bi-plus-lg ms-1"></i> کاربر جدید
                             </button>
                         </div>
 
-                        <div class="table-responsive" style="min-height: 500px; overflow: visible;">
+                        <div class="table-responsive">
                             <table id="users-table" class="table table-hover align-middle border-0 w-100">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
                                         <th class="text-center">#</th>
                                         <th>نام و واحد</th>
@@ -181,15 +100,12 @@
                                     </tr>
                                 </thead>
                                 <tbody id="users-list-body">
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
                 }
-            </div>
-        </div>
-    </div>
-</div>
+            </div> </div> </div> </div> 
 
 <div class="modal fade" id="modal-add-user" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -224,7 +140,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="small mb-1">واحد سازمانی</label>
-                    <select id="edit_department" class="form-select">
+                    <select id="add_department" class="form-select">
                         <option value="Technical">فنی</option>
                         <option value="Financial">مالی</option>
                         <option value="Administrative">اداری</option>
@@ -255,7 +171,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="small mb-1">محل خدمت</label>
-                    <select id="edit_location" class="form-select">
+                    <select id="add_location" class="form-select">
                         <option value="مرکز اصلی">مرکز اصلی</option>
                         <option value="دفتر تهران">دفتر تهران</option>
                         <option value="کارگاه مرکزی">کارگاه مرکزی</option>
@@ -317,7 +233,7 @@
                 <div class="mb-3">
                     <label class="small mb-1">واحد سازمانی</label>
                     <select id="edit_department" class="form-select">
-                        <option value="Technical">فنی</option>
+                         <option value="Technical">فنی</option>
                         <option value="Financial">مالی</option>
                         <option value="Administrative">اداری</option>
                         <option value="HR">منابع انسانی</option>
@@ -347,7 +263,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="small mb-1">محل خدمت</label>
-                    <select id="add_location" class="form-select">
+                    <select id="edit_location" class="form-select">
                         <option value="مرکز اصلی">مرکز اصلی</option>
                         <option value="دفتر تهران">دفتر تهران</option>
                         <option value="کارگاه مرکزی">کارگاه مرکزی</option>
@@ -377,303 +293,5 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
-    <script>
-        $(document).ready(function () {
-            // تنظیمات عمومی SweetAlert برای توست‌ها (پیام‌های کوچک گوشه صفحه)
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
-            });
-
-            // ۱. تابع مدیریت جدول (DataTables)
-            function getTableInstance() {
-                if ($.fn.DataTable.isDataTable('#users-table')) {
-                    return $('#users-table').DataTable();
-                } else {
-                    return $('#users-table').DataTable({
-                        language: {
-                            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/fa.json'
-                        },
-                        columnDefs: [
-                            { targets: '_all', className: 'text-right' }
-                        ],
-                        responsive: true,
-                        dom: 'rtip' // حذف المان‌های اضافی برای ظاهر تمیزتر
-                    });
-                }
-            }
-
-            // مقداردهی اولیه
-            getTableInstance();
-
-            // ۲. لود لیست کاربران با Fetch و SweetAlert
-            const btnLoad = document.getElementById('btn-load-users');
-            if (btnLoad) {
-                btnLoad.addEventListener('click', function () {
-                    // نمایش حالت بارگذاری در جدول
-                    $('#users-list-body').html('<tr><td colspan="6" class="text-center p-5"><div class="spinner-border text-primary"></div></td></tr>');
-
-                    fetch('/Settings/GetAllUsers')
-                        .then(res => res.json())
-                        .then(users => {
-                            const table = getTableInstance();
-                            table.clear();
-
-                            users.forEach((u, index) => {
-                                table.row.add([
-                                    index + 1,
-                                    `<div class="d-flex align-items-center">
-                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center ms-2" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-person text-secondary small"></i>
-                                        </div>
-                                        <div class="fw-bold">${u.fullName || '---'}</div>
-                                    </div>`,
-                                    `<span class="badge bg-light text-dark border">${u.jobTitle || '---'}</span>`,
-                                    `<span class="text-muted"><i class="bi bi-geo-alt text-danger ms-1"></i>${u.serviceLocation || 'نامشخص'}</span>`,
-                                    `<code class="text-primary">${u.userName}</code>`,
-                                    `<div class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary border-0 me-1" onclick="editUser('${u.id}')">
-            <i class="bi bi-pencil-square"></i> ویرایش
-        </button>
-                                        <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteUser('${u.id}')">
-                                            <i class="bi bi-trash3"></i> حذف
-                                        </button>
-                                    </div>`
-                                ]);
-                            });
-                            table.draw();
-                            Toast.fire({ icon: 'success', title: 'لیست کاربران بروزرسانی شد' });
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            Swal.fire('خطا', 'دریافت اطلاعات کاربران با خطا مواجه شد.', 'error');
-                        });
-                });
-            }
-
-            // ۳. مدیریت امضای دیجیتال
-            const canvas = document.getElementById('sig-pad');
-            if (canvas) {
-                const pad = new SignaturePad(canvas);
-                const clearBtn = document.getElementById('sig-clear');
-                const saveBtn = document.getElementById('sig-save');
-
-                if (clearBtn) clearBtn.addEventListener('click', () => pad.clear());
-
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', function () {
-                        if (pad.isEmpty()) {
-                            Swal.fire({ icon: 'warning', title: 'کادر خالی است', text: 'لطفاً ابتدا امضا را ترسیم کنید.', confirmButtonText: 'متوجه شدم' });
-                            return;
-                        }
-
-                        Swal.fire({
-                            title: 'ذخیره امضا؟',
-                            text: "امضای جدید جایگزین امضای قبلی خواهد شد.",
-                            icon: 'question',
-                            showCancelButton: true,
-                            confirmButtonText: 'بله، ذخیره کن',
-                            cancelButtonText: 'انصراف'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                Swal.showLoading();
-                                fetch('/Settings/SaveSignature', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ imageData: pad.toDataURL() })
-                                }).then(res => {
-                                    if(res.ok) {
-                                        Swal.fire('موفقیت', 'امضا با موفقیت ثبت شد.', 'success').then(() => location.reload());
-                                    } else {
-                                        throw new Error();
-                                    }
-                                }).catch(() => Swal.fire('خطا', 'مشکلی در ذخیره امضا پیش آمد.', 'error'));
-                            }
-                        });
-                    });
-                }
-            }
-
-            // ۴. مدیریت مودال افزودن کاربر
-            const btnManual = document.getElementById('btn-manual-add-user');
-            if (btnManual) {
-                btnManual.addEventListener('click', function () {
-                    const myModal = new bootstrap.Modal(document.getElementById('modal-add-user'));
-                    myModal.show();
-                });
-            }
-        });
-
-        // ۵. توابع Global (خارج از Ready برای دسترسی مستقیم HTML)
-
-               window.createUser = function () {
-            // ۱. گرفتن المان‌ها و مقادیر (دقت کنید که آی‌دی‌ها با HTML شما یکی باشد)
-            const nameElement = document.getElementById('add_name');
-            const emailElement = document.getElementById('add_email');
-            const jobElement = document.getElementById('add_job');
-            const genderElement = document.getElementById('add_gender');
-            const passElement = document.getElementById('add_pass');
-            const roleElement = document.getElementById('add_role');
-           const locationElement = document.getElementById('add_location');
-            const deptElement = document.getElementById('add_department');
-            const managerElement = document.getElementById('add_manager');
-            const isManagerElement = document.getElementById('add_is_manager');
-
-            // ۲. بررسی وجود مقدار (Validation)
-            if (!nameElement.value || !emailElement.value || !passElement.value) {
-                Swal.fire('خطا', 'لطفاً نام، نام کاربری (ایمیل) و رمز عبور را وارد کنید.', 'error');
-                return;
-            }
-
-            Swal.fire({ title: 'در حال ثبت...', didOpen: () => Swal.showLoading() });
-
-            // ۳. بسته‌بندی داده‌ها برای ارسال به UserViewModel
-            const params = new URLSearchParams();
-            params.append('FullName', nameElement.value);
-            params.append('Email', emailElement.value);
-            params.append('JobTitle', jobElement.value);
-            params.append('Password', passElement.value);
-            params.append('Gender', genderElement.value);
-            params.append('Role', roleElement.value);
-            params.append('ServiceLocation', locationElement.value);
-            params.append('Department', deptElement.value);
-            params.append('ManagerId', managerElement.value);
-            params.append('IsManager', isManagerElement.checked);
-
-            // ۴. ارسال درخواست
-            fetch('/Settings/CreateUser', {
-                method: 'POST',
-                body: params
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('تبریک!', 'کاربر جدید با موفقیت ایجاد شد.', 'success').then(() => window.location.reload());
-                } else {
-                    Swal.fire('خطا در ثبت', data.message, 'error');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                Swal.fire('خطا', 'ارتباط با سرور برقرار نشد.', 'error');
-            });
-        };
-
-        window.deleteUser = function (id) {
-            Swal.fire({
-                title: 'آیا مطمئن هستید؟',
-                text: "این عملیات غیرقابل بازگشت است!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'بله، حذف شود',
-                cancelButtonText: 'انصراف'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const params = new URLSearchParams();
-                    params.append('userId', id);
-                    fetch('/Settings/DeleteUser', {
-                        method: 'POST',
-                        body: params
-                    }).then(res => {
-                        if (res.ok) {
-                            Swal.fire('حذف شد', 'کاربر با موفقیت حذف گردید.', 'success').then(() => location.reload());
-                        } else {
-                            Swal.fire('خطا', 'عملیات حذف انجام نشد.', 'error');
-                        }
-                    });
-                }
-            });
-        };
-                  window.editUser = function(id) {
-            fetch(`/Settings/GetUser/${id}`)
-                .then(res => {
-                    if (!res.ok) throw new Error("خطا در دریافت اطلاعات");
-                    return res.json();
-                })
-                .then(user => {
-                    // پر کردن دقیق فیلدها - نام‌ها را با خروجی کنترلر چک کنید
-                    document.getElementById('edit_userId').value = user.id;
-                    document.getElementById('edit_name').value = user.fullName || "";
-                    document.getElementById('edit_job').value = user.jobTitle || "شخصی";
-
-                    // مشکل اصلی اینجاست: چک کنید در کنسول مرورگر چه فیلدی برای یوزرنیم می‌آید
-                    document.getElementById('edit_email').value = user.userName || user.email || "";
-
-                    document.getElementById('edit_gender').value = user.gender || "Male";
-                    document.getElementById('edit_department').value = user.department || "Technical";
-                    document.getElementById('edit_is_manager').checked = user.isManager;
-                    document.getElementById('edit_manager').value = user.managerId || "";
-                    document.getElementById('edit_location').value = user.serviceLocation || "مرکز اصلی";
-                    document.getElementById('edit_role').value = user.role || "User";
-
-                    // باز کردن مودال
-                    var editModal = new bootstrap.Modal(document.getElementById('modal-edit-user'));
-                    editModal.show();
-                })
-                .catch(err => {
-                    Swal.fire('خطا', 'امکان بارگذاری اطلاعات کاربر وجود ندارد', 'error');
-                });
-        }
-
-              window.updateUser = function() {
-            const params = new URLSearchParams();
-
-            // گرفتن مقادیر با شناسه‌های اصلاح شده
-            const userId = document.getElementById('edit_userId').value;
-            const fullName = document.getElementById('edit_name').value;
-
-            if (!userId || !fullName) {
-                Swal.fire('خطا', 'اطلاعات ضروری وارد نشده است', 'error');
-                return;
-            }
-
-            params.append('Id', userId);
-            params.append('FullName', fullName);
-            params.append('Email', document.getElementById('edit_email').value); // اضافه شد
-            params.append('JobTitle', document.getElementById('edit_job').value);
-            params.append('Gender', document.getElementById('edit_gender').value);
-            params.append('Department', document.getElementById('edit_department').value);
-            params.append('IsManager', document.getElementById('edit_is_manager').checked);
-            params.append('ManagerId', document.getElementById('edit_manager').value);
-            params.append('ServiceLocation', document.getElementById('edit_location').value);
-            params.append('Role', document.getElementById('edit_role').value);
-            params.append('NewPassword', document.getElementById('edit_new_password').value);
-
-            Swal.fire({
-                title: 'در حال ثبت تغییرات...',
-                didOpen: () => Swal.showLoading(),
-                allowOutsideClick: false
-            });
-
-            fetch('/Settings/UpdateUser', {
-                method: 'POST',
-                body: params,
-                headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() // برای امنیت بیشتر
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    Swal.fire('بروزرسانی', 'اطلاعات کاربر با موفقیت تغییر یافت', 'success')
-                        .then(() => location.reload());
-                } else {
-                    Swal.fire('خطا', data.message || 'خطایی در سمت سرور رخ داد', 'error');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                Swal.fire('خطا', 'ارتباط با سرور برقرار نشد', 'error');
-            });
-        }
-    </script>
+    <script src="~/js/settings.js"></script>
 }

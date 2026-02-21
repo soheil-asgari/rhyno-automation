@@ -1,17 +1,23 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OfficeAutomation.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq; // برای Select و ToList الزامی است
 using System.Threading.Tasks;
+using System.Security.Claims;
+
 
 namespace OfficeAutomation.Controllers
 {
     public class SettingsController : Controller
     {
+
+
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager; // اضافه شد
 
@@ -24,21 +30,40 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            // ۱. گرفتن کاربر لاگین شده
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            // اصلاح شد: لیست کاربران را کامل‌تر می‌گیریم تا در دراپ‌داون مدیران بهتر نمایش داده شود
+            // ۲. پر کردن لیست کاربران برای دراپ‌داون مدیران (در صورت نیاز)
             ViewBag.UsersList = _userManager.Users
                 .Select(u => new User
                 {
                     Id = u.Id,
                     FullName = u.FullName,
                     JobTitle = u.JobTitle,
-                    UserName = u.UserName // اضافه شد
+                    UserName = u.UserName
                 }).ToList();
 
-            return View(user);
+            // ۳. تبدیل مدل دیتابیس (User) به مدل نمایشی (UserViewModel)
+            // این دقیقاً همان چیزی است که ارور Model Mismatch را حل می‌کند
+            var viewModel = new UserViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                JobTitle = user.JobTitle,
+                Email = user.Email,
+                Gender = user.Gender,
+                ServiceLocation = user.ServiceLocation,
+                IsManager = user.IsManager,
+                Department = user.Department,
+                // اگر UserName در UserViewModel داری:
+                // UserName = user.UserName 
+            };
+
+            // ۴. ارسال ویومدل به صفحه
+            return View(viewModel);
         }
+
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
@@ -91,55 +116,54 @@ namespace OfficeAutomation.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(UserViewModel model)
         {
-            var user = await _userManager.FindByIdAsync(model.Id);
-            if (user == null) return Json(new { success = false, message = "کاربر یافت نشد" });
+            // لاگ برای ردیابی ورود داده‌ها
+            Console.WriteLine($"--- شروع آپدیت کاربر: {model.FullName} (ID: {model.Id}) ---");
 
-            // بروزرسانی اطلاعات پایه
-            user.FullName = model.FullName;
-            user.JobTitle = model.JobTitle;
-            user.Gender = model.Gender;
-            user.ServiceLocation = model.ServiceLocation;
-            user.IsManager = model.IsManager;
-            user.ManagerId = model.ManagerId;
-            user.Department = model.Department;
-
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
+            try
             {
-                // ۱. مدیریت تغییر رمز عبور (فقط یک بار)
-                if (!string.IsNullOrEmpty(model.NewPassword))
+                var user = await _userManager.FindByIdAsync(model.Id);
+                if (user == null)
                 {
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    var passResult = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
-                    if (!passResult.Succeeded)
-                    {
-                        return Json(new { success = false, message = "اطلاعات بروز شد اما خطا در تغییر رمز عبور: " + passResult.Errors.FirstOrDefault()?.Description });
-                    }
+                    Console.WriteLine("خطا: کاربر در دیتابیس یافت نشد.");
+                    return Json(new { success = false, message = "کاربر یافت نشد" });
                 }
 
-                // ۲. مدیریت نقش (Role)
-                if (!string.IsNullOrEmpty(model.Role))
+                // بروزرسانی فیلدها
+                user.FullName = model.FullName;
+                user.JobTitle = model.JobTitle;
+                user.Gender = model.Gender;
+                user.ServiceLocation = model.ServiceLocation;
+                user.IsManager = model.IsManager;
+                user.ManagerId = model.ManagerId;
+                user.Department = model.Department;
+
+                var result = await _userManager.UpdateAsync(user);
+
+                if (result.Succeeded)
                 {
-                    var currentRoles = await _userManager.GetRolesAsync(user);
+                    Console.WriteLine("موفقیت: اطلاعات پایه در دیتابیس ذخیره شد.");
 
-                    // اگر نقش فعلی با نقش جدید متفاوت است، بروزرسانی کن
-                    if (!currentRoles.Contains(model.Role))
+                    // مدیریت رمز عبور
+                    if (!string.IsNullOrEmpty(model.NewPassword))
                     {
-                        await _userManager.RemoveFromRolesAsync(user, currentRoles);
-
-                        if (!await _roleManager.RoleExistsAsync(model.Role))
-                            await _roleManager.CreateAsync(new IdentityRole(model.Role));
-
-                        await _userManager.AddToRoleAsync(user, model.Role);
+                        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                        var passResult = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+                        Console.WriteLine(passResult.Succeeded ? "رمز عبور تغییر کرد." : "خطا در تغییر رمز.");
                     }
+
+                    return Json(new { success = true, message = "تغییرات با موفقیت اعمال شد." });
                 }
 
-                return Json(new { success = true, message = "تغییرات با موفقیت اعمال شد." });
+                // اگر UpdateAsync شکست خورد، خطاها را لاگ کن
+                var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
+                Console.WriteLine($"خطای دیتابیس: {errors}");
+                return Json(new { success = false, message = errors });
             }
-
-            var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
-            return Json(new { success = false, message = errors });
+            catch (Exception ex)
+            {
+                Console.WriteLine($"خطای غیرمنتظره: {ex.Message}");
+                return Json(new { success = false, message = "خطای سرور: " + ex.Message });
+            }
         }
         [HttpPost]
         public async Task<IActionResult> SaveSignature([FromBody] SignatureUploadModel model)
@@ -221,7 +245,8 @@ namespace OfficeAutomation.Controllers
                 jobTitle = user.JobTitle,
                 gender = user.Gender,
                 location = user.ServiceLocation,
-                department = (int)user.Department, // اصلاح شد به مقدار عددی
+                // نکته مهم: ارسال مقدار عددی برای هماهنگی با Select HTML
+                department = user.Department.ToString(),
                 isManager = user.IsManager,
                 managerId = user.ManagerId,
                 role = roles.FirstOrDefault() ?? "User"

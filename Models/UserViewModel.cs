@@ -17,7 +17,7 @@ namespace OfficeAutomation.Models
         public string? JobTitle { get; set; }
 
         public string? PhoneNumber { get; set; } // فیلد جدید شماره تلفن
-
+        public string? SignaturePath { get; set; }
         // برای ساخت کاربر جدید اجباری، اما برای ویرایش اختیاری است
         public string? Password { get; set; }
 
@@ -35,5 +35,7 @@ namespace OfficeAutomation.Models
         public string? Role { get; set; }
 
         public string? ManagerId { get; set; }
+
+
     }
 }

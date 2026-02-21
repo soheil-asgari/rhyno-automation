@@ -1,0 +1,108 @@
+﻿<style >
+/* ۱. آزاد کردن کامل جدول از هرگونه اسکرول‌بار داخلی */
+.table-responsive,
+.dataTables_wrapper,
+.dataTables_scrollBody,
+.card-body {
+    overflow: visible !important; /* حذف اسکرول‌بارهای خاکستری تصویر 96465e */
+    height: auto !important;
+    max-height: none !important;
+}
+
+/* ۲. استایل ردیف‌های جدول (ایجاد فاصله و سایه برای تفکیک کاربران) */
+#users-table {
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important; /* فاصله بین ردیف‌ها */
+    width: 100% !important;
+    margin-top: 20px !important;
+}
+
+    #users-table thead th {
+        background-color: #f8f9fc;
+        border: none !important;
+        padding: 15px !important;
+        color: #4e73df;
+    }
+
+    #users-table tbody tr {
+        background-color: #ffffff !important;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05) !important;
+        transition: 0.2s;
+    }
+
+        #users-table tbody tr:hover {
+            background-color: #f1f4ff !important;
+        }
+
+    #users-table td {
+        border: none !important;
+        padding: 15px !important;
+        vertical-align: middle !important;
+    }
+
+/* ۳. دکمه‌های عملیات (اصلاح رنگ و تضاد تصویری) */
+.btn-action {
+    border: none !important;
+    padding: 6px 14px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.3s;
+}
+
+/* رنگ آبی استاندارد برای ویرایش (سفید روی آبی) */
+.btn-edit {
+    background-color: #4e73df !important;
+    color: #ffffff !important;
+}
+
+/* رنگ قرمز استاندارد برای حذف (سفید روی قرمز) */
+.btn-delete {
+    background-color: #e74a3b !important;
+    color: #ffffff !important;
+}
+
+.btn-edit:hover {
+    background-color: #2e59d9 !important;
+    box-shadow: 0 4px 8px rgba(78,115,223,0.3);
+}
+
+.btn-delete:hover {
+    background-color: #be2617 !important;
+    box-shadow: 0 4px 8px rgba(231,74,59,0.3);
+}
+
+/* ۴. واکنش‌گرایی برای موبایل */
+@media (max-width: 768px) {
+    .btn-text {
+        display: none !important;
+    }
+    /* حذف متن دکمه در موبایل */
+    .btn-action {
+        padding: 10px !important;
+        border-radius: 50% !important;
+    }
+
+    #users-table td {
+        font-size: 12px !important;
+        padding: 10px 5px !important;
+    }
+}
+
+/* ۵. اصلاح جستجو و فیلترها */
+.dataTables_filter {
+    margin-bottom: 20px;
+    text-align: right;
+}
+
+    .dataTables_filter input {
+        border: 1px solid #d1d3e2 !important;
+        border-radius: 20px !important;
+        padding: 5px 15px !important;
+        width: 250px !important;
+    }
+
+</style >
