@@ -1,61 +1,78 @@
-﻿/* ۱. تنظیمات کلی و پس‌زمینه */
+﻿/* =========================
+   STYLES.CSS (Global + UI)
+   ========================= */
 
+/* 1) Font */
 @font-face {
     font-family: 'Vazirmatn';
     src: url('../fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
     font-weight: 500;
+    font-style: normal;
+    font-display: swap;
 }
 
+/* 2) Root variables */
 :root {
-    --sidebar-width: 280px;
     --primary-color: #3b82f6;
     --glass-bg: rgba(255, 255, 255, 0.75);
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --card-radius: 24px;
+}
+
+/* 3) Base */
+html, body {
+    height: 100%;
 }
 
 body {
     font-family: 'Vazirmatn', sans-serif !important;
+    margin: 0;
+    color: var(--text-main);
+    /* Background image is set by JS daily (optional), this is fallback */
+    background-image: url('/images/backgrounds/bg-1.jpg');
     background-attachment: fixed;
     background-size: cover;
     background-position: center;
     overflow-x: hidden;
-    color: #1e293b;
-    margin: 0;
+    overflow-y: auto;
 }
 
-/* ۲. اصلاح ساختار اصلی (Sidebar & Main) */
-.sidebar-right {
-    width: var(--sidebar-width);
-    background: #0f172a; /* تم تیره و مدرن برای سایدبار */
-    height: 100vh;
-    position: fixed;
-    right: 0;
-    top: 0;
-    z-index: 1000;
-}
+    /* Background blur layer (performance safer) */
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: inherit;
+        background-size: cover;
+        background-position: center;
+        /* blur + slight darken */
+        filter: blur(8px) brightness(0.92);
+        transform: scale(1.05);
+        will-change: transform;
+        z-index: -1;
+    }
+
+/* 4) Main wrapper helpers */
 .content-wrapper {
     width: 100%;
-    max-width: 1400px; /* عرض طلایی برای مانیتورهای بزرگ */
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
+
+/* IMPORTANT: do NOT center children globally; layout.css handles structure */
 .main-content {
-    /* فضا برای سایدبار در سمت راست */
-    margin-right: var(--sidebar-width);
-    margin-left: 0; /* مقدار قبلی auto را حذف کن */
-
-    min-height: 100vh;
-    padding: 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* محتوا را در محور افقی وسط می‌آورد */
+    align-items: stretch !important;
 }
 
-/* ۳. المان‌های شیشه‌ای (Glassmorphism) */
+/* =========================
+   Glass components
+   ========================= */
+
 .search-box-glass {
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255,255,255,0.55);
     border-radius: 12px;
     padding: 6px 15px;
     display: flex;
@@ -68,57 +85,123 @@ body {
         border: none;
         outline: none;
         font-size: 13px;
-        width: 200px;
+        width: 220px;
     }
 
 .bg-glass-pill {
     background: var(--glass-bg);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border: 1px solid rgba(255,255,255,0.35) !important;
 }
 
-/* ۴. کارت‌های آمار (Stats Grid) */
+/* =========================
+   Cards & Tables (global)
+   ========================= */
+
+.card {
+    border-radius: var(--card-radius) !important;
+    border: none !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03) !important;
+    /* اگر روی همه کارت‌ها padding نمی‌خوای، این خط رو بردار.
+     ولی چون قبلاً گذاشته بودی، نگه داشتم */
+    padding: 15px !important;
+    height: auto !important;
+    margin-bottom: 20px !important;
+}
+
+.table thead th {
+    background: #f8fafc;
+    border: none;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 12px 14px;
+}
+
+.table tbody td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+.table-responsive {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+/* =========================
+   DataTables (safe)
+   ========================= */
+.dataTables_wrapper {
+    width: 100% !important;
+}
+
+.dataTables_scrollBody {
+    max-height: none !important;
+    height: auto !important;
+}
+
+/* =========================
+   Dashboard blocks
+   ========================= */
+
 .stats-grid {
     display: grid;
-    /* در مانیتور بزرگ ۴ ستون و در کوچک‌ترها کمتر */
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
     width: 100%;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
-@media (min-width: 1200px) {
-    .stat-card {
-        max-width: none;
-        height: 100px; /* کمی ارتفاع بیشتر برای خوانایی */
-    }
-}
+
+/* Stat card */
 .stat-card {
     background: #ffffff;
     border-radius: 20px;
-    padding: 20px;
+    padding: 10px 15px;
+    height: 75px;
     display: flex;
     align-items: center;
     position: relative;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     border: none;
     transition: transform 0.2s;
 }
 
     .stat-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-4px);
     }
 
 .stat-icon {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    margin-left: 15px;
+    font-size: 20px;
+    margin-left: 10px;
 }
 
+.stat-label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    display: block;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.stat-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Soft icon backgrounds */
 .bg-soft-primary {
     background: #e0e7ff;
     color: #4338ca;
@@ -139,189 +222,52 @@ body {
     color: #0369a1;
 }
 
-.stat-label {
-    font-size: 12px;
-    color: #64748b;
-    display: block;
-}
-
-.stat-value {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0;
-}
-
-.stat-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    font-size: 11px;
-    font-weight: bold;
-}
-
-/* ۵. بنر خوش‌آمدگویی */
+/* Welcome banner */
 .welcome-banner-mini {
     background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
     backdrop-filter: blur(10px);
     border-radius: 24px;
-    padding: 25px;
-    margin-bottom: 30px;
-    border: 1px solid rgba(255,255,255,0.5);
+    padding: 12px 20px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255,255,255,0.55);
     text-align: center;
 }
 
     .welcome-banner-mini h2 {
-        font-size: 22px;
-        font-weight: 800;
-    }
-
-    .welcome-banner-mini p {
-        font-size: 14px;
-        color: #475569;
-    }
-
-.btn-primary-light {
-    background: #3b82f6;
-    color: white;
-    border-radius: 10px;
-    padding: 8px 20px;
-    font-size: 13px;
-    border: none;
-    margin-top: 10px;
-}
-
-/* ۶. جداول و کارت‌های محتوا */
-.card {
-    border-radius: 24px !important;
-    border: none !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.03) !important;
-}
-
-.table thead th {
-    background: #f8fafc;
-    border: none;
-    font-size: 12px;
-    color: #64748b;
-    padding: 15px;
-}
-
-.table tbody td {
-    padding: 15px;
-    vertical-align: middle;
-    font-size: 13px;
-}
-
-/* اصلاح تداخل Bootstrap */
-.display-4 {
-    font-size: 2.2rem !important;
-    font-weight: 900 !important;
-}
-
-.nav-link {
-    color: rgba(255,255,255,0.7);
-    transition: 0.3s;
-}
-
-    .nav-link:hover, .nav-link.active {
-        color: #3b82f6;
-        background: rgba(59, 130, 246, 0.1);
-    }
-
-
-/* ۱. بلور کردن پس‌زمینه و کاهش وضوح عکس */
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* مقدار بلور را اینجا تنظیم کن - ۸ پیکسل عالی است */
-    filter: blur(10px) brightness(0.9);
-    background-image: inherit; /* عکس را از body می‌گیرد */
-    background-size: cover;
-    background-position: center;
-    z-index: -1;
-}
-
-body {
-    background-image: url('/images/backgrounds/bg-1.jpg');
-    background-attachment: fixed;
-    /* overflow: hidden; <--- این خط را کاملا پاک کن */
-    overflow-x: hidden; /* جلوگیری از اسکرول افقی اضافی */
-    overflow-y: auto; /* اجازه اسکرول عمودی */
-}
-
-/* ۲. پررنگ کردن نوشته‌های محو در سایدبار */
-.sidebar-content small.text-muted {
-    color: #cbd5e1 !important; /* رنگ روشن‌تر و واضح‌تر */
-    opacity: 1 !important;
-    font-size: 11px;
-    margin-top: 15px;
-    display: block;
-    font-weight: 700;
-}
-
-/* ۳. کوچک‌سازی باکس‌های آمار (Stats) */
-.stat-card {
-    padding: 10px 15px; /* کاهش پدینگ */
-    height: 75px; /* ارتفاع کمتر */
-}
-
-.stat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    margin-left: 10px;
-}
-
-.stat-value {
-    font-size: 18px; /* کوچک‌تر کردن عدد */
-}
-
-.stat-label {
-    font-size: 10.5px; /* کوچک‌تر کردن متن */
-}
-
-/* ۴. فشرده‌سازی بنر خوش‌آمدگویی */
-.welcome-banner-mini {
-    padding: 12px 20px; /* کاهش فضای داخلی */
-    margin-bottom: 15px;
-}
-
-    .welcome-banner-mini h2 {
         font-size: 18px;
+        font-weight: 900;
         margin-bottom: 5px;
     }
 
     .welcome-banner-mini p {
         font-size: 12px;
+        color: #475569;
         margin-bottom: 10px;
     }
 
-/* ۵. کوچک کردن تیتر اصلی صفحه */
+.btn-primary-light {
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: 10px;
+    padding: 8px 20px;
+    font-size: 13px;
+    border: none;
+}
+
+/* Headings (avoid heavy global overrides) */
 .display-4 {
-    font-size: 1.6rem !important; /* خیلی جمع و جورتر */
+    font-size: 1.6rem !important;
+    font-weight: 900 !important;
     margin-bottom: 5px;
 }
 
 .fs-5 {
-    font-size: 13px !important; /* متن زیر تیتر */
+    font-size: 13px !important;
 }
 
-/* ۶. تنظیم جداول برای جا شدن در صفحه */
-.card {
-    padding: 15px !important;
-}
-
-.table td, .table th {
-    padding: 8px 12px !important; /* فشرده کردن ردیف‌های جدول */
-    font-size: 12px;
-}
-
-
-
-/* استایل سفارشی برای نشان‌های (Badges) ملایم */
+/* =========================
+   Badges (soft)
+   ========================= */
 .badge {
     font-weight: 500;
     padding: 5px 10px;
@@ -329,245 +275,58 @@ body {
     font-size: 11px;
 }
 
-/* رنگ سبز ملایم (تایید شده) */
 .bg-soft-success {
     background-color: #d1fae5 !important;
     color: #065f46 !important;
 }
 
-/* رنگ آبی ملایم (در حال بررسی) */
 .bg-soft-info {
     background-color: #e0f2fe !important;
     color: #075985 !important;
 }
 
-/* رنگ زرد/نارنجی ملایم (انتظار) */
 .bg-soft-warning {
     background-color: #fef3c7 !important;
     color: #92400e !important;
 }
 
-/* رنگ قرمز ملایم (رد شده) */
 .bg-soft-danger {
     background-color: #fee2e2 !important;
     color: #991b1b !important;
 }
 
-/* فشرده‌سازی بیشتر سایدبار برای جلوگیری از شلوغی */
-.nav-link {
-    padding: 6px 20px !important; /* کاهش فاصله عمودی گزینه‌های منو */
-    font-size: 13px;
+/* =========================
+   Sidebar minor text (safe scope)
+   ========================= */
+.sidebar-content small.text-muted {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+    font-size: 11px;
+    margin-top: 15px;
+    display: block;
+    font-weight: 700;
 }
 
-.sidebar-header {
-    padding: 15px 20px !important; /* کوچک‌تر کردن هدر سایدبار */
-}
+/* IMPORTANT:
+   DO NOT style .nav-link globally here.
+   Sidebar links are handled in layout.css and/or scoped sidebar rules.
+*/
 
-
-/* تنظیم ارتفاع خودکار برای بخش‌های اصلی */
-.container-fluid {
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - 40px); /* تغییر height به min-height */
-    /* justify-content: space-between; <-- این خط را پاک کن چون باعث فاصله‌های عجیب در اسکرول میشه */
-}
-
-.row.g-4 {
-    flex-grow: 1;
-    margin-top: 0;
-}
-
-.card {
-    /* height: 100%; <-- این را پاک کن تا ارتفاع کارت‌ها داینامیک شود */
-    height: auto !important;
-    margin-bottom: 20px !important; /* به جای 0، کمی فاصله پایین کارت‌ها بده */
-}
-
-.table-responsive {
-    max-height: 200px; /* اگر تعداد ردیف‌ها زیاد شد، فقط داخل جدول اسکرول بخورد */
-    overflow-y: auto;
-}
-
-/* اصلاح دکمه‌های فرم ارسال نامه */
-.d-grid.gap-2.d-md-flex {
-    display: flex !important;
-    flex-direction: row !important; /* چیدمان افقی دکمه‌ها */
-    align-items: center;
-    justify-content: flex-end; /* بردن دکمه‌ها به سمت چپ (در حالت RTL) */
-    gap: 10px !important;
-    width: auto !important;
-}
-
-.btn-primary.px-5, .btn-outline-secondary {
-    width: auto !important; /* جلوگیری از کشیده شدن دکمه */
-    height: 40px !important; /* ارتفاع استاندارد */
-    padding: 0 25px !important;
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px !important;
-}
-
-/* اصلاح باکس امضا */
-.mb-3.p-3.bg-light.border.rounded {
-    max-width: 400px; /* محدود کردن عرض باکس امضا */
-    margin-right: 0; /* چسباندن به راست */
-    padding: 10px !important;
-    font-size: 12px;
-}
-
-.signature-img-preview {
-    max-height: 60px !important; /* کوچک کردن پیش‌نمایش امضا */
-    width: auto;
-}
-
-
-/* ---- کدهای مربوط به ریسپانسیو (تبلت و موبایل) ---- */
-
+/* =========================
+   Responsive
+   ========================= */
 @media (max-width: 992px) {
-    /* مخفی کردن سایدبار در تبلت و موبایل به سمت راست */
-    .sidebar-right {
-        transform: translateX(100%);
-        transition: transform 0.3s ease-in-out;
+    .search-box-glass input {
+        width: 100%;
     }
 
-    /* تمام‌صفحه کردن محتوای اصلی وقتی سایدبار نیست */
-    .main-content {
-        margin-right: 0 !important;
-        padding: 15px; /* پدینگ کمتر برای موبایل */
-    }
-
-    /* کارت‌های آمار در تبلت ۲ ستونه و در موبایل ۱ ستونه شوند */
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 }
 
 @media (max-width: 576px) {
-    /* در موبایل، باکس سرچ تمام عرض را بگیرد */
-    .search-box-glass input {
-        width: 100%;
-    }
-
     .stats-grid {
-        grid-template-columns: 1fr; /* کارت های آمار کاملا زیر هم */
+        grid-template-columns: 1fr;
     }
 }
-
-
-
-/* تنظیمات کاغذ برای پیش‌نمایش نامه */
-#paper {
-    background: white;
-    margin: 0 auto;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    transform-origin: top center;
-    transition: transform 0.2s ease;
-}
-
-/* این کلاس‌ها ابعاد استاندارد چاپ هستند */
-.paper-a4 {
-    width: 210mm;
-    min-height: 297mm;
-}
-
-.paper-a5 {
-    width: 148mm;
-    min-height: 210mm;
-}
-
-/* برای اینکه در مانیتورهای کوچک کل کاغذ دیده شود */
-@media (max-width: 1200px) {
-    #paper {
-        transform: scale(0.7);
-    }
-}
-
-@media (max-width: 900px) {
-    #paper {
-        transform: scale(0.5);
-    }
-}
-
-/* تنظیمات پایه برای محیط نامه نگاری */
-.word-processor-container {
-    background-color: #f1f5f9;
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 60px); /* کسر ارتفاع فوتر یا هدر احتمالی */
-    position: relative;
-}
-
-.top-toolbar {
-    background: white;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 12px 25px;
-    z-index: 100;
-    flex-shrink: 0;
-}
-
-.paper-wrapper {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 30px;
-    display: flex;
-    justify-content: center;
-    background: #e2e8f0;
-}
-
-.paper {
-    background: #fff;
-    width: 210mm;
-    min-height: 297mm;
-    padding: 20mm;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    margin-bottom: 40px;
-}
-
-.size-a4 {
-    width: 210mm;
-}
-
-.size-a5 {
-    width: 148mm;
-    min-height: 210mm;
-}
-
-/* استایل هدر نامه داخل کاغذ */
-.letter-header {
-    border-bottom: 2px solid #333;
-    padding-bottom: 15px;
-    margin-bottom: 30px;
-}
-
-
-/*@media print {*/
-    /* مخفی کردن کل ساختار سایت */
-    /*body * {
-        visibility: hidden;
-    }*/
-    /* نمایش فقط بخش کاغذ */
-    /*.paper-wrapper, .paper-wrapper * {
-        visibility: visible;
-    }
-
-    .paper-wrapper {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 0;
-        margin: 0;
-        background: none !important;
-    }
-
-    .paper {
-        box-shadow: none !important;
-        margin: 0 !important;
-        border: none !important;
-    }
-
-    .no-print {
-        display: none !important;
-    }
-}*/

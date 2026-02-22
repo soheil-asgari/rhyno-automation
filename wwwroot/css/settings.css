@@ -1,8 +1,14 @@
-﻿<style >
-/* ۱. آزاد کردن کامل جدول از هرگونه اسکرول‌بار داخلی */
-.table-responsive,
+﻿
+.table-responsive {
+    overflow: visible !important;
+}
 .dataTables_wrapper,
-.dataTables_scrollBody,
+.dataTables_scrollBody {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    border: none !important;
+}
 .card-body {
     overflow: visible !important; /* حذف اسکرول‌بارهای خاکستری تصویر 96465e */
     height: auto !important;
@@ -18,10 +24,15 @@
 }
 
     #users-table thead th {
-        background-color: #f8f9fc;
-        border: none !important;
-        padding: 15px !important;
-        color: #4e73df;
+        text-align: center !important;
+        vertical-align: middle !important;
+        background-color: #f8f9fc !important;
+        border-bottom: 2px solid #e3e6f0 !important;
+    }
+    #users-table tbody td {
+        text-align: center !important;
+        color: #444 !important;
+        font-size: 13px !important;
     }
 
     #users-table tbody tr {
@@ -105,4 +116,112 @@
         width: 250px !important;
     }
 
-</style >
+/* --- اصلاح نهایی دکمه‌های ناوبری و مدیریت --- */
+
+/* ۱. دکمه مدیریت کاربران در سایدبار سمت راست (وقتی فعال نیست) */
+#settings-tabs .nav-link {
+    color: rgba(0, 0, 0, 0.7) !important; /* رنگ متن در حالت عادی */
+    background: transparent;
+    border: 1px solid transparent;
+    margin-bottom: 5px;
+}
+
+    /* ۲. وقتی هر کدام از دکمه‌های منو فعال (Selected) می‌شوند */
+    #settings-tabs .nav-link.active {
+        background-color: #0d6efd !important; /* پس‌زمینه آبی */
+        color: #ffffff !important; /* متن حتما سفید */
+        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+    }
+
+        /* ۳. سفید کردن آیکون‌ها داخل دکمه فعال */
+        #settings-tabs .nav-link.active i {
+            color: #ffffff !important;
+        }
+
+/* ۴. دکمه سبز "کاربر جدید" بالای جدول */
+.btn-success#btn-manual-add-user {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 600;
+}
+
+/* ۵. دکمه مدیریت کاربران که در تصویر شما قرمز شده بود */
+.card-body .nav-link#btn-load-users {
+    color: #333 !important; /* متن تیره در حالت عادی */
+}
+
+/* ۶. اجبار به سفید بودن متن تمام دکمه‌های اصلی عملیاتی */
+.btn-primary, .btn-success, .btn-danger {
+    color: #ffffff !important;
+}
+
+
+#users-table thead th {
+    background-color: #f8f9fa !important;
+    color: #334155 !important; /* رنگ تیره برای متن هدر */
+    font-weight: 700;
+    border-bottom: 2px solid #dee2e6;
+}
+
+
+/* اجبار به خوانایی متن‌های داخل جدول مدیریت */
+#users-list-body td {
+    color: #2d3748 !important; /* رنگ خاکستری تیره استاندارد */
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+    /* ۲. حذف کامل استایل بنفش برای ستون پنجم */
+    #users-list-body td:nth-child(5) {
+        color: #475569 !important; /* رنگ Slate */
+        font-family: 'Courier New', Tahoma, sans-serif !important;
+    }
+    #users-list-body td:nth-child(2) b,
+    #users-list-body td:nth-child(2) span {
+        color: #000000 !important;
+    }
+
+    /* ۴. رفع مشکل نمایش محل خدمت در جدول */
+    #users-list-body td:nth-child(4) {
+        white-space: nowrap;
+        color: #4a5568 !important;
+    }
+/* اصلاح دکمه‌های عملیات در جدول */
+.btn-outline-primary {
+    border-color: #4e73df !important;
+    color: #4e73df !important;
+}
+
+    .btn-outline-primary:hover {
+        background-color: #4e73df !important;
+        color: white !important;
+    }
+
+
+/* نمایش بهتر نام کاربری/ایمیل داخل جدول (در صفحه RTL) */
+.user-username {
+    direction: ltr;
+    unicode-bidi: plaintext;
+    text-align: left;
+    /* فونت تمیز برای متن لاتین/ایمیل */
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    letter-spacing: 0.2px;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+/* اگر خیلی طولانی شد، در یک خط بماند و ... بخورد */
+.user-username {
+    max-width: 220px; /* اگر خواستی بیشتر/کمتر کن */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

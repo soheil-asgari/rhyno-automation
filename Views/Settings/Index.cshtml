@@ -29,16 +29,18 @@
                     <span class="badge bg-light text-primary mb-4">@Model.JobTitle</span>
 
                     <div class="nav flex-column nav-pills pr-0" id="settings-tabs" role="tablist">
-                        <button class="nav-link active text-end" data-bs-toggle="pill" data-bs-target="#tab-profile">
+                        <button type="button" class="nav-link active text-end" data-bs-toggle="pill" data-bs-target="#tab-profile">
                             <i class="bi bi-person-vcard ms-2"></i> اطلاعات کاربری
                         </button>
-                        <button class="nav-link text-end" data-bs-toggle="pill" data-bs-target="#tab-signature">
+
+                        <button type="button" class="nav-link text-end" data-bs-toggle="pill" data-bs-target="#tab-signature">
                             <i class="bi bi-pen ms-2"></i> امضای دیجیتال
                         </button>
+
                         @if (User.IsInRole("Admin"))
                         {
                             <hr class="my-2">
-                            <button class="nav-link text-end text-danger" data-bs-toggle="pill" data-bs-target="#tab-admin" id="btn-load-users">
+                            <button type="button" class="nav-link text-end" data-bs-toggle="pill" data-bs-target="#tab-admin" id="btn-load-users">
                                 <i class="bi bi-people ms-2"></i> مدیریت کاربران
                             </button>
                         }
@@ -81,7 +83,7 @@
                 {
                     <div class="tab-pane fade" id="tab-admin">
                         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <h5 class="text-dark mb-0"><i class="bi bi-people-fill ms-2 text-danger"></i>مدیریت کاربران سیستم</h5>
+                            <h5 class="text-dark mb-0"><i class="bi bi-people-fill ms-2 "></i>مدیریت کاربران سیستم</h5>
                             <button type="button" class="btn btn-success shadow-sm" id="btn-manual-add-user">
                                 <i class="bi bi-plus-lg ms-1"></i> کاربر جدید
                             </button>

@@ -1,0 +1,89 @@
+﻿.letters-page .letters-title-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    color: #1d4ed8;
+    border: 1px solid #e5e7eb;
+    font-size: 1.2rem;
+}
+
+.letters-search {
+    position: relative;
+    min-width: 280px;
+}
+
+    .letters-search > i {
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    .letters-search input {
+        padding-right: 38px;
+        border-radius: 12px;
+    }
+
+.letters-search-clear {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 10px;
+}
+
+.letters-table thead th {
+    background: #0f172a;
+    color: #fff;
+    border-bottom: 0;
+    padding: 14px 16px;
+    font-weight: 700;
+}
+
+.letters-table tbody td {
+    padding: 14px 16px;
+}
+
+.letter-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #60a5fa;
+    margin-top: 6px;
+    flex: 0 0 auto;
+}
+
+.letter-title {
+    font-weight: 800;
+    color: #0f172a;
+    max-width: 520px;
+}
+
+.letter-sub {
+    margin-top: 2px;
+    max-width: 520px;
+}
+
+.letter-date {
+    font-weight: 700;
+    border-radius: 999px;
+}
+
+.letter-person {
+    border-radius: 999px;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* کمک برای truncate داخل flex */
+.min-w-0 {
+    min-width: 0;
+}

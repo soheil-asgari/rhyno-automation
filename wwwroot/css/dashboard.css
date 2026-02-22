@@ -1,0 +1,194 @@
+﻿.dashboard .dash-search {
+    position: relative;
+    min-width: 280px;
+    max-width: 520px;
+    flex: 1 1 320px;
+}
+
+    .dashboard .dash-search > i {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    .dashboard .dash-search input {
+        padding-right: 38px;
+        border-radius: 14px;
+    }
+
+.dashboard .dash-search-clear {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 12px;
+}
+
+.dashboard .dash-clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    box-shadow: 0 1px 10px rgba(15, 23, 42, 0.06);
+    font-size: 0.9rem;
+}
+
+.dashboard .dash-hero {
+    padding: 16px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+}
+
+.dashboard .dash-card {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 1px 16px rgba(15, 23, 42, 0.06);
+    padding: 16px;
+}
+
+.stat-card2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 14px;
+    border-radius: 18px;
+    text-decoration: none;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 1px 12px rgba(15,23,42,0.06);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+    .stat-card2:hover {
+        transform: translateY(-1px);
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 22px rgba(15,23,42,0.10);
+    }
+
+.stat2-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid #e2e8f0;
+}
+
+.stat-primary .stat2-icon {
+    background: #eef2ff;
+    color: #1d4ed8;
+}
+
+.stat-success .stat2-icon {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.stat-warning .stat2-icon {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.stat-info .stat2-icon {
+    background: #f0f9ff;
+    color: #0369a1;
+}
+
+.stat2-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat2-label {
+    color: #64748b;
+    font-size: .88rem;
+}
+
+.stat2-value {
+    color: #0f172a;
+    font-weight: 900;
+    font-size: 1.4rem;
+    line-height: 1.1;
+}
+
+.stat2-meta {
+    font-size: .85rem;
+    white-space: nowrap;
+}
+
+.dashboard .dash-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 16px rgba(15,23,42,0.06);
+}
+
+.dashboard .banner-title {
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.dashboard .banner-sub {
+    color: #64748b;
+    font-size: .92rem;
+    margin-top: 2px;
+}
+
+.dashboard .dash-mini-chart {
+    height: 120px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px dashed #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+/* Fix alignment for dashboard clock */
+.dash-clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: #475569;
+    font-size: .9rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+    .dash-clock i {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        font-size: 1rem;
+        vertical-align: middle;
+        /* اگر هنوز 1px پایین بود اینو نگه دار */
+        transform: translateY(-1px);
+    }
+
+    .dash-clock span {
+        display: inline-block;
+        line-height: 1;
+    }

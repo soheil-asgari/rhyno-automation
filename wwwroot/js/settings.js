@@ -1,4 +1,12 @@
 ﻿$(document).ready(function () {
+    const btnAddUser = document.getElementById('btn-manual-add-user');
+    if (btnAddUser) {
+        btnAddUser.addEventListener('click', function () {
+            const modalEl = document.getElementById('modal-add-user');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        });
+    }
     // تنظیمات عمومی SweetAlert
     const Toast = Swal.mixin({
         toast: true,
@@ -26,10 +34,10 @@
                 paging: true,
                 pageLength: 10,
                 dom: 'rtip',
-                // اضافه کردن این دو خط برای حذف اسکرول‌های داخلی خود دیتاتیبل:
-                scrollY: false,
-                scrollX: false,
-                searching: true
+                // این تنظیمات را به این شکل اصلاح کنید:
+                searching: true,
+                info: true,
+                // scrollY و scrollX را کلاً حذف کنید یا روی مقادیر پیش‌فرض بگذارید
             });
         }
     }
@@ -48,25 +56,30 @@
                     const table = getTableInstance();
                     table.clear();
 
+                    // داخل حلقه کاربران در متد fetch
+                    // داخل حلقه کاربران در متد fetch
                     users.forEach((u, index) => {
-                        // داخل حلقه کاربران
                         table.row.add([
                             index + 1,
-                            `<b>${u.fullName || '---'}</b>`,
-                            `<span class="badge bg-light text-dark border">${u.jobTitle || '---'}</span>`,
-                            `<span><i class="bi bi-geo-alt text-danger me-1"></i>${u.serviceLocation || 'نامشخص'}</span>`,
-                            `<code>${u.userName}</code>`,
+                            // استفاده از کلاس text-dark برای جلوگیری از بنفش شدن
+                            `<span class="fw-bold text-dark">${u.fullName || '---'}</span>`,
+                            `<span class="badge bg-light text-dark border">${u.jobTitle || 'شخصی'}</span>`,
+                            // اصلاح نمایش محل خدمت (تطبیق با مدل ارسالی سرور)
+                            `<span><i class="bi bi-geo-alt text-danger me-1"></i>${u.serviceLocation || u.location || 'نامشخص'}</span>`,
+                            // نام کاربری را با رنگ تیره (Slate) نمایش می‌دهیم تا زشت نباشد
+                            `<span class="user-username" title="${u.userName || u.email}">${u.userName || u.email}</span>`,
                             `<div class="d-flex justify-content-center gap-2">
-        <button class="btn-action btn-edit" onclick="editUser('${u.id}')">
-            <i class="bi bi-pencil-square"></i> <span class="btn-text">ویرایش</span>
-        </button>
-        <button class="btn-action btn-delete" onclick="deleteUser('${u.id}')">
-            <i class="bi bi-trash3"></i> <span class="btn-text">حذف</span>
-        </button>
-    </div>`
+            <button class="btn-action btn-edit" onclick="editUser('${u.id}')">
+                <i class="bi bi-pencil-square"></i> <span class="btn-text">ویرایش</span>
+            </button>
+            <button class="btn-action btn-delete" onclick="deleteUser('${u.id}')">
+                <i class="bi bi-trash3"></i> <span class="btn-text">حذف</span>
+            </button>
+        </div>`
                         ]);
                     });
                     table.draw();
+                    //table.columns.adjust().responsive.recalc();
                     Toast.fire({ icon: 'success', title: 'لیست کاربران بروزرسانی شد' });
                 })
                 .catch(err => {

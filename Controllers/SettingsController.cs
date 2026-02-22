@@ -188,12 +188,18 @@ namespace OfficeAutomation.Controllers
         {
             var users = _userManager.Users.Select(u => new
             {
-                u.Id,
-                u.FullName,
-                u.UserName,
-                u.JobTitle,
-                u.Email
+                id = u.Id,
+                fullName = u.FullName,
+                userName = u.UserName,
+                jobTitle = u.JobTitle,
+                email = u.Email,
+                serviceLocation = u.ServiceLocation,
+                department = u.Department,
+                gender = u.Gender,
+                isManager = u.IsManager,
+                managerId = u.ManagerId
             }).ToList();
+
             return Json(users);
         }
 
