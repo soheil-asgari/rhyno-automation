@@ -243,3 +243,19 @@
     /*text-align: center;
     padding: 10px 0;
 }*/
+
+
+/* ۱. اول بدنه همه صفحات را سفید کن */
+body {
+    background-color: #f6f8fa !important;
+    background-image: none !important; /* مطمئن شویم عکسی نیست */
+}
+
+    /* ۲. فقط وقتی کلاس home-bg اضافه شد، عکس را نشان بده */
+    body.home-bg {
+        background-image: url('/images/bg-main.jpg') !important; /* مسیر عکس خودت */
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }

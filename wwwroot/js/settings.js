@@ -27,7 +27,7 @@
         } else {
             return $('#users-table').DataTable({
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/fa.json'
+                    "url": "/lib/datatables/i18n/fa.json"
                 },
                 responsive: true,
                 autoWidth: false,

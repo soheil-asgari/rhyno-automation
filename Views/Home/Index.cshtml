@@ -2,167 +2,203 @@
     ViewData["Title"] = "میز کار";
 }
 
-<div class="container-fluid mt-4 dashboard" style="direction: rtl; text-align: right;">
+<div class="container-fluid mt-4 dashboard" style="direction: rtl; text-align: right;"></div>
 
     <!-- Top Bar -->
-    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+    @* <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <div class="dash-search">
             <i class="bi bi-search"></i>
             <input id="dashSearch" type="text" class="form-control" placeholder="جستجو در بخش‌ها..." autocomplete="off">
             <button type="button" class="btn btn-sm btn-light border dash-search-clear d-none" id="dashSearchClear" aria-label="پاک کردن">
                 <i class="bi bi-x-lg"></i>
             </button>
-        </div>
-
-      @*   <div class="dash-clock">
-            <i class="bi bi-clock ms-1"></i>
-            <span id="current-persian-date"></span>
-            <span class="mx-2">|</span>
-            <span id="current-time-persian"></span>
         </div> *@
-    </div>
 
-    <!-- Hero -->
-    <div class="dash-hero mb-4">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div>
-                <h3 class="mb-1 fw-black text-dark">
-                    میز کار <span class="text-primary">مرکزی</span>
-                </h3>
-                <div class="text-muted">
-                    گزارش لحظه‌ای فعالیت‌های شما در پورتال راینو
-                </div>
+    
+<script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.11/dist/jalali-moment.browser.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<div class="rhino-premium-panel">
+    <header class="rh-top-bar">
+        <div class="rh-search-mini">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="جستجوی سریع (Ctrl+K)...">
+        </div>
+        
+        <div class="rh-actions">
+            <div class="system-status-dots">
+                <span><i class="bi bi-circle-fill"></i> سرور: فعال</span>
+                <span class="d-none d-md-inline"><i class="bi bi-circle-fill"></i> دیتابیس: متصل</span>
             </div>
+            <button class="btn-action-sm primary">
+                <i class="bi bi-plus-lg"></i> درخواست جدید
+            </button>
+        </div>
+    </header>
 
-            <div class="d-flex flex-wrap gap-2">
-                <a href="/Letters" class="btn btn-outline-primary">
-                    <i class="bi bi-envelope ms-1"></i> کارتابل نامه‌ها
-                </a>
-                <a href="/Leaves" class="btn btn-primary">
-                    <i class="bi bi-plus-lg ms-1"></i> درخواست جدید
-                </a>
+    <main class="rh-grid-layout">
+        <div class="rh-bento hero-sm animate-frip">
+            <div class="hero-inner">
+                <h2>میز کار <span>مرکزی</span></h2>
+                <p>امروز ۸ اسفند؛ خوش آمدید. تمامی سرویس‌ها در وضعیت پایدار هستند.</p>
             </div>
         </div>
-    </div>
 
-    <!-- Stats -->
-    <div class="row g-3 mb-4" id="statsArea">
-        <div class="col-12 col-md-6 col-xl-3">
-            <a href="/Letters" class="stat-card2 stat-primary" data-keywords="نامه کارتابل جدید inbox">
-                <div class="stat2-icon"><i class="bi bi-envelope-paper"></i></div>
-                <div class="stat2-info">
-                    <div class="stat2-label">نامه‌های جدید</div>
-                    <div class="stat2-value">۵</div>
-                </div>
-                <div class="stat2-meta text-success">+۲ امروز</div>
-            </a>
+        <div class="rh-bento stat-sm blue animate-frip">
+            <i class="bi bi-envelope" style="color: #4f46e5;"></i>
+            <div class="stat-info">
+                <span class="v">۵</span>
+                <span class="l">نامه جدید</span>
+            </div>
+            <div class="neon-line"></div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
-            <a href="/Leaves" class="stat-card2 stat-success" data-keywords="مرخصی باقی مانده leave">
-                <div class="stat2-icon"><i class="bi bi-calendar2-check"></i></div>
-                <div class="stat2-info">
-                    <div class="stat2-label">مرخصی مانده</div>
-                    <div class="stat2-value">۱۲</div>
-                </div>
-                <div class="stat2-meta text-muted">روز</div>
-            </a>
+        <div class="rh-bento stat-sm green animate-frip">
+            <i class="bi bi-calendar-check" style="color: #10b981;"></i>
+            <div class="stat-info">
+                <span class="v">۱۲</span>
+                <span class="l">مرخصی</span>
+            </div>
+            <div class="neon-line"></div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-3">
-            <a href="/Notifications" class="stat-card2 stat-warning" data-keywords="پیام سیستم اعلان notification">
-                <div class="stat2-icon"><i class="bi bi-bell"></i></div>
-                <div class="stat2-info">
-                    <div class="stat2-label">پیام سیستم</div>
-                    <div class="stat2-value">۲</div>
-                </div>
-                <div class="stat2-meta text-muted">باز نشده</div>
-            </a>
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-3">
-            <a href="/Letters/Sent" class="stat-card2 stat-info" data-keywords="ارسالی ماه sent نامه">
-                <div class="stat2-icon"><i class="bi bi-send"></i></div>
-                <div class="stat2-info">
-                    <div class="stat2-label">ارسالی ماه</div>
-                    <div class="stat2-value">۲۴</div>
-                </div>
-                <div class="stat2-meta text-muted">نامه</div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Banner -->
-    <div class="dash-banner mb-4" data-keywords="اطلاعیه ها اخبار announcements">
-        <div class="banner-text">
-            <div class="banner-title">پورتال هوشمند <span class="text-primary">راینو</span></div>
-            <div class="banner-sub">خوش آمدید! امروز همه چیز برای مدیریت بهتر آماده است.</div>
-        </div>
-        <a href="/Announcements" class="btn btn-light border">
-            <i class="bi bi-megaphone ms-1"></i> مشاهده اطلاعیه‌ها
-        </a>
-    </div>
-
-    <!-- Content Grid -->
-    <div class="row g-3" id="dashContent">
-
-        <div class="col-12 col-lg-4">
-            <div class="card dash-card h-100" data-keywords="سرمایه انسانی حضور غیاب hr">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="fw-bold">سرمایه انسانی</div>
-                    <span class="badge bg-light text-success border">فعال</span>
-                </div>
-                <div class="dash-mini-chart">
-                    <canvas id="chartDemo"></canvas>
-                </div>
-                <div class="text-muted small mt-2">
-                    گزارش وضعیت حضور و غیاب پرسنل در ماه جاری
+        <div class="rh-bento table-box animate-frip">
+            <div class="box-head">
+                <h3><i class="bi bi-layers-half"></i> آخرین اسناد ثبت شده</h3>
+                <a href="#">آرشیو کامل <i class="bi bi-arrow-left"></i></a>
+            </div>
+            <table class="rh-table-sm">
+                <thead>
+                    <tr>
+                        <th>نوع سند</th>
+                        <th>تاریخ</th>
+                        <th>وضعیت نهایی</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>فاکتور خرید تجهیزات</td>
+                        <td>۱۱/۲۸</td>
+                        <td><span class="badge-sm pending">در حال بررسی</span></td>
+                    </tr>
+                    <tr>
+                        <td>حکم کارگزینی سال جدید</td>
+                        <td>۱۱/۲۵</td>
+                        <td><span class="badge-sm success">تایید شده</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="mini-chart-wrapper">
+                <span class="chart-label">روند درخواست‌های هفته</span>
+                <div class="css-chart">
+                    <div style="height: 40%;"></div>
+                    <div style="height: 70%;"></div>
+                    <div style="height: 45%;"></div>
+                    <div style="height: 90%; background: var(--primary);"></div>
+                    <div style="height: 60%;"></div>
+                    <div style="height: 30%;"></div>
+                    <div style="height: 50%;"></div>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-lg-8">
-            <div class="card dash-card h-100" data-keywords="اسناد آخرین ثبت شده documents">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="fw-bold">آخرین اسناد ثبت شده</div>
-                    <a href="/Documents" class="btn btn-sm btn-outline-secondary">مشاهده همه</a>
-                </div>
+        <div class="rh-bento stat-sm orange animate-frip">
+            <i class="bi bi-bell" style="color: #f59e0b;"></i>
+            <div class="stat-info">
+                <span class="v">۲</span>
+                <span class="l">اعلان سیستم</span>
+            </div>
+            <div class="neon-line"></div>
+        </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>نوع سند</th>
-                                <th style="width:140px;">تاریخ</th>
-                                <th style="width:160px;">وضعیت</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="fw-semibold">فاکتور خرید</td>
-                                <td>۱۴۰۲/۱۱/۲۸</td>
-                                <td><span class="badge bg-info">درحال بررسی</span></td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">حکم کارگزینی</td>
-                                <td>۱۴۰۲/۱۱/۲۵</td>
-                                <td><span class="badge bg-success">تایید نهایی</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="rh-bento stat-sm cyan animate-frip">
+            <i class="bi bi-send" style="color: #06b6d4;"></i>
+            <div class="stat-info">
+                <span class="v">۲۴</span>
+                <span class="l">نامه ارسالی</span>
+            </div>
+            <div class="neon-line"></div>
+        </div>
 
+        <div class="rh-bento stat-sm animate-frip collab-box">
+            <div class="stat-info">
+                <span class="l" style="font-weight: 800; margin-bottom: 5px; display: block;">تیم آنلاین</span>
+                <div class="avatar-stack">
+                    <div class="avtr" style="background: #4f46e5;">JS</div>
+                    <div class="avtr" style="background: #10b981; margin-right: -10px;">AK</div>
+                    <div class="avtr" style="background: #f59e0b; margin-right: -10px;">M</div>
+                    <div class="avtr-more" style="margin-right: -10px;">+۲</div>
+                </div>
             </div>
         </div>
 
-    </div>
+        <div class="rh-bento stat-sm animate-frip event-box">
+            <i class="bi bi-lightning-charge-fill" style="color: #db2777;"></i>
+            <div class="stat-info">
+                <span class="v" style="font-size: 0.9rem; color: #db2777;">جلسه فنی</span>
+                <span class="l">امروز ساعت ۱۶:۰۰</span>
+            </div>
+        </div>
+        <div class="rh-bento chart-wide animate-frip" style="grid-column: span 3; display: flex; align-items: center; gap: 30px;">
+            <div class="donut-chart-wrapper" style="position: relative; width: 80px; height: 80px;">
+                <svg viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+                    <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" stroke-width="3"></circle>
+                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--primary)" stroke-width="3" stroke-dasharray="70, 100"></circle>
+                </svg>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: bold;">۷۰٪</div>
+            </div>
+            <div class="chart-info">
+                <h4 style="font-size: 0.85rem; margin-bottom: 5px;">توزیع بار کاری</h4>
+                <p style="font-size: 0.7rem; color: #64748b; margin: 0;">بیشترین تمرکز بر بخش بازرگانی و نامه‌های وارده است.</p>
+            </div>
+        </div>
 
+        <div class="rh-bento task-box animate-frip" style="grid-column: span 2; background: #fffbeb; border-color: #fef3c7;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 0.75rem; font-weight: bold; color: #92400e;"><i class="bi bi-pencil-square"></i> یادداشت سریع</span>
+                <i class="bi bi-three-dots" style="color: #d97706; cursor: pointer;"></i>
+            </div>
+            <div style="font-size: 0.7rem; color: #b45309; line-height: 1.6;">
+                • بررسی پیش‌نویس قرارداد جدید<br>
+                • هماهنگی با تیم فنی برای آپدیت دیتابیس
+            </div>
+        </div>
+        <div class="rh-bento calendar-box animate-frip" style="grid-column: span 5;">
+            <div class="cal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="cal-nav" style="display: flex; align-items: center; gap: 15px; font-weight: bold;">
+                    <i class="bi bi-chevron-right" id="prevMonth" style="cursor: pointer; font-size: 1.2rem;"></i>
+                    <span id="monthDisplay" style="font-size: 1.1rem; min-width: 120px; text-align: center;">---</span>
+                    <i class="bi bi-chevron-left" id="nextMonth" style="cursor: pointer; font-size: 1.2rem;"></i>
+                </div>
+                <button class="btn-today btn-action-sm" onclick="goToToday()" style="background: #fff; border: 1px solid #e2e8f0;">امروز</button>
+            </div>
+            
+            <div class="cal-body">
+                <div class="weekday-row" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; color: #94a3b8; font-size: 0.8rem; padding-bottom: 10px;">
+                    <span>شنبه</span><span>یکشنبه</span><span>دوشنبه</span><span>سه‌شنبه</span><span>چهارشنبه</span><span>پنجشنبه</span><span>جمعه</span>
+                </div>
+                <div id="daysContainer" class="days-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center;">
+                </div>
+            </div>
+
+            <div class="cal-footer" style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                <div id="eventBox" style="display: flex; align-items: center; gap: 10px;">
+                    <div id="eventLoader" style="display: none;"><div class="spinner-border-sm"></div></div>
+                    <div id="eventContent" style="display: flex; align-items: center;">
+                        <i class="bi bi-calendar2-check" style="color: #4f46e5; margin-left: 10px;"></i>
+                        <span id="eventDisplay" style="font-size: 0.85rem; color: #475569;">در حال دریافت مناسبت...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
 </div>
-
 @section Styles {
     <link rel="stylesheet" href="~/css/dashboard.css" />
 }
 
 @section Scripts {
     <script src="~/js/dashboard.js"></script>
+
 }

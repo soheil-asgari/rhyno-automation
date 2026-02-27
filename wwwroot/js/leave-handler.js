@@ -2,7 +2,7 @@
 $(document).ready(function () {
     // فعالسازی جدول با قابلیت جستجو و صفحه بندی فارسی
     $('#leave-table').DataTable({
-        language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/fa.json' },
+        language: { "url": "/lib/datatables/i18n/fa.json" },
         dom: 'rtip',
         pageLength: 10,
         responsive: true
