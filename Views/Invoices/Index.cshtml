@@ -1,0 +1,260 @@
+﻿@model IEnumerable<OfficeAutomation.Models.Invoice>
+@{
+    ViewData["Title"] = "فهرست فاکتورها";
+    var isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container-fluid p-0" dir="rtl">
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 small" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 small" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light">
+        <div>
+            <h4 class="fw-bold text-slate-800 mb-1">مدیریت فاکتورهای ورودی</h4>
+            <p class="text-muted small mb-0">لیست فاکتورهای ثبت شده در سیستم اتوماسیون</p>
+        </div>
+        <button onclick="openCreateModal()" class="btn btn-primary d-flex align-items-center gap-2" style="border-radius: 8px; background-color: #4f46e5; border:none;">
+            <i class="bi bi-plus-lg"></i>
+            <span class="small fw-bold">ثبت فاکتور جدید</span>
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                <thead class="table-light text-secondary" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                    <tr>
+                        <th class="py-3 px-4">شماره فاکتور</th>
+                        <th class="py-3">فروشنده</th>
+                        <th class="py-3">مبلغ (ریال)</th>
+                        <th class="py-3">تاریخ فاکتور</th>
+                        <th class="py-3 text-start px-4">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="text-secondary">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr class="cursor-pointer" onclick="showDetails(@item.Id, @isAdmin.ToString().ToLower())" style="transition: background 0.2s;">
+                                <td class="py-3 px-4 fw-bold text-dark">@item.InvoiceNumber</td>
+                                <td class="py-3 text-dark">@item.VendorName</td>
+                                <td class="py-3 fw-bold text-slate-900">@item.Amount.ToString("N0")</td>
+                                <td class="py-3 text-muted">@item.InvoiceDate.ToString("yyyy/MM/dd")</td>
+                                <td class="py-3 text-start px-4" onclick="event.stopPropagation();">
+                                    <button onclick="showDetails(@item.Id, @isAdmin.ToString().ToLower())" class="btn btn-sm btn-link text-primary text-decoration-none me-2 p-0">مشاهده</button>
+                                    @if (isAdmin)
+                                    {
+                                        <button onclick="openEditModal(@item.Id)" class="btn btn-sm btn-link text-warning text-decoration-none me-2 p-0">ویرایش</button>
+                                        <button onclick="openDeleteModal(@item.Id)" class="btn btn-sm btn-link text-danger text-decoration-none p-0">حذف</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-folder-x fs-2 d-block mb-2 text-slate-300"></i>
+                                هیچ فاکتوری در حال حاضر ثبت نشده است.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+            <div class="modal-header border-bottom border-light">
+                <h5 class="modal-title fw-bold text-slate-800 fs-6">ثبت فاکتور جدید</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form asp-action="Create" method="post">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">شماره فاکتور</label>
+                        <input name="InvoiceNumber" required class="form-control text-start" dir="ltr" style="border-radius: 8px;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">نام فروشنده</label>
+                        <input name="VendorName" required class="form-control" style="border-radius: 8px;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">مبلغ (ریال)</label>
+                        <input name="Amount" type="number" required class="form-control" style="border-radius: 8px;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">تاریخ فاکتور</label>
+                        <input name="InvoiceDate" type="date" required class="form-control" style="border-radius: 8px;" />
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end pt-3 border-top border-light">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px;">انصراف</button>
+                        <button type="submit" class="btn btn-primary" style="border-radius: 8px; background-color: #4f46e5; border:none;">ذخیره فاکتور</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+            <div class="modal-header border-bottom border-light">
+                <h5 class="modal-title fw-bold text-slate-800 fs-6">جزئیات کامل فاکتور</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="bg-light p-3 mb-3" style="border-radius: 10px;">
+                    <div class="d-flex justify-content-between py-2 border-bottom border-dashed small">
+                        <span class="text-muted">شماره فاکتور:</span>
+                        <span id="detNumber" class="fw-bold text-dark"></span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-dashed small">
+                        <span class="text-muted">نام فروشنده:</span>
+                        <span id="detVendor" class="fw-bold text-dark"></span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-dashed small">
+                        <span class="text-muted">مبلغ فاکتور:</span>
+                        <span id="detAmount" class="fw-bold text-dark"></span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 small">
+                        <span class="text-muted">تاریخ ثبت:</span>
+                        <span id="detDate" class="text-dark"></span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-end pt-2" id="adminActionsArea">
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+            <div class="modal-header border-bottom border-light">
+                <h5 class="modal-title fw-bold text-warning fs-6">ویرایش فاکتور</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" id="editId" />
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">شماره فاکتور</label>
+                        <input name="InvoiceNumber" id="editNumberInput" required class="form-control" style="border-radius: 8px;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">نام فروشنده</label>
+                        <input name="VendorName" id="editVendorInput" required class="form-control" style="border-radius: 8px;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">مبلغ (ریال)</label>
+                        <input name="Amount" id="editAmountInput" type="number" required class="form-control" style="border-radius: 8px;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">تاریخ فاکتور</label>
+                        <input name="InvoiceDate" id="editDateInput" type="date" required class="form-control" style="border-radius: 8px;" />
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end pt-3 border-top border-light">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px;">انصراف</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold" style="border-radius: 8px;">اعمال تغییرات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+            <div class="modal-body p-4 text-center">
+                <div class="text-danger mb-3">
+                    <i class="bi bi-exclamation-octagon-fill fs-1"></i>
+                </div>
+                <h6 class="fw-bold text-slate-800 mb-2">آیا از حذف این فاکتور مطمئن هستید؟</h6>
+                <p class="text-muted small mb-4">این عملیات غیرقابل بازگشت است.</p>
+                <form id="deleteForm" method="post" class="d-flex justify-content-center gap-2">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal" style="border-radius: 6px;">انصراف</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-3" style="border-radius: 6px;">حذف قطعی</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let bsCreateModal, bsDetailsModal, bsEditModal, bsDeleteModal;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            bsCreateModal = new bootstrap.Modal(document.getElementById('createModal'));
+            bsDetailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            bsEditModal = new bootstrap.Modal(document.getElementById('editModal'));
+            bsDeleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        });
+
+        function openCreateModal() { bsCreateModal.show(); }
+
+        async function showDetails(id, isAdmin) {
+            const response = await fetch(`/Invoices/GetInvoice/${id}`);
+            if(response.ok) {
+                const data = await response.json();
+                document.getElementById('detNumber').innerText = data.invoiceNumber;
+                document.getElementById('detVendor').innerText = data.vendorName;
+                document.getElementById('detAmount').innerText = Number(data.amount).toLocaleString() + ' ریال';
+                document.getElementById('detDate').innerText = data.invoiceDate;
+
+                const actionsArea = document.getElementById('adminActionsArea');
+                actionsArea.innerHTML = '';
+                if(isAdmin) {
+                    actionsArea.innerHTML = `
+                        <button onclick="bsDetailsModal.hide(); openEditModal(${data.id})" class="btn btn-sm btn-warning fw-bold px-3" style="border-radius:6px;">ویرایش</button>
+                        <button onclick="bsDetailsModal.hide(); openDeleteModal(${data.id})" class="btn btn-sm btn-danger px-3" style="border-radius:6px;">حذف</button>
+                    `;
+                }
+                bsDetailsModal.show();
+            }
+        }
+
+        async function openEditModal(id) {
+            const response = await fetch(`/Invoices/GetInvoice/${id}`);
+            if(response.ok) {
+                const data = await response.json();
+                document.getElementById('editId').value = data.id;
+                document.getElementById('editNumberInput').value = data.invoiceNumber;
+                document.getElementById('editVendorInput').value = data.vendorName;
+                document.getElementById('editAmountInput').value = data.amount;
+                document.getElementById('editDateInput').value = data.invoiceDate;
+                document.getElementById('editForm').action = `/Invoices/Edit/${id}`;
+                bsEditModal.show();
+            }
+        }
+
+        function openDeleteModal(id) {
+            document.getElementById('deleteForm').action = `/Invoices/Delete/${id}`;
+            bsDeleteModal.show();
+        }
+    </script>
+}

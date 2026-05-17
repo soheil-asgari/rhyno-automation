@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
 
 
+
 namespace OfficeAutomation.Data
 {
     public class ApplicationDbContext : IdentityDbContext<User>
@@ -12,6 +13,7 @@ namespace OfficeAutomation.Data
         {
         }
         public DbSet<InsuranceList> InsuranceLists { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
 
 
         public DbSet<InsuranceEmployee> InsuranceEmployees { get; set; }
@@ -57,6 +59,10 @@ namespace OfficeAutomation.Data
                 new Department { Id = 4, Name = "HR" },
                 new Department { Id = 5, Name = "Management" }
             );
+            modelBuilder.Entity<Invoice>()
+     .HasIndex(i => new { i.InvoiceNumber, i.VendorName })
+     .IsUnique()
+     .HasDatabaseName("IX_Invoice_Number_Vendor");
         }
 
     }
