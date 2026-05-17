@@ -1,0 +1,156 @@
+﻿@model InsuranceCreateVM
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/persian-datepicker.min.css">
+}
+
+<form asp-action="Create" method="post">
+
+    <div class="row mb-3">
+
+        <div class="col-md-4">
+            <label>پروژه</label>
+            <input asp-for="ProjectName" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+            <label>مدیر پروژه</label>
+            <input asp-for="ManagerName" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label>ماه</label>
+            <input asp-for="Month" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label>سال</label>
+            <input asp-for="Year" class="form-control" />
+        </div>
+
+    </div>
+
+    <hr />
+
+    <h5>کارکنان</h5>
+
+    <table class="table table-bordered" id="employeeTable">
+
+        <thead>
+            <tr>
+                <th>نام</th>
+                <th>شغل</th>
+                <th>شروع کار</th>
+                <th>ترک کار</th>
+                <th>روز کارکرد</th>
+                <th>حقوق</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+
+                <td>
+                    <input name="Employees[0].FullName" class="form-control" />
+                </td>
+
+                <td>
+                    <input name="Employees[0].JobTitle" class="form-control" />
+                </td>
+
+                <td>
+                    <input type="date" name="Employees[0].StartWork" class="form-control" />
+                </td>
+
+                <td>
+                    <input type="date" name="Employees[0].EndWork" class="form-control" />
+                </td>
+
+                <td>
+                    <input name="Employees[0].WorkDays" class="form-control" />
+                </td>
+
+                <td>
+                    <input name="Employees[0].Salary" class="form-control" />
+                </td>
+
+                <td>
+                    <button type="button" class="btn btn-danger removeRow">حذف</button>
+                </td>
+
+            </tr>
+
+        </tbody>
+
+    </table>
+
+    <button type="button" id="addRow" class="btn btn-secondary">
+        افزودن کارمند
+    </button>
+
+    <hr />
+
+    <button class="btn btn-success">
+        ذخیره لیست بیمه
+    </button>
+
+</form>
+<script>
+
+    let index = 1;
+
+    document.getElementById("addRow").addEventListener("click", function () {
+
+    let table = document.querySelector("#employeeTable tbody");
+
+    let row = `
+    <tr>
+
+    <td>
+    <input name="Employees[${index}].FullName" class="form-control"/>
+    </td>
+
+    <td>
+    <input name="Employees[${index}].JobTitle" class="form-control"/>
+    </td>
+
+    <td>
+    <input type="date" name="Employees[${index}].StartWork" class="form-control"/>
+    </td>
+
+    <td>
+    <input type="date" name="Employees[${index}].EndWork" class="form-control"/>
+    </td>
+
+    <td>
+    <input name="Employees[${index}].WorkDays" class="form-control"/>
+    </td>
+
+    <td>
+    <input name="Employees[${index}].Salary" class="form-control"/>
+    </td>
+
+    <td>
+    <button type="button" class="btn btn-danger removeRow">حذف</button>
+    </td>
+
+    </tr>
+    `;
+
+    table.insertAdjacentHTML("beforeend", row);
+
+    index++;
+
+    });
+
+    document.addEventListener("click", function(e){
+
+    if(e.target.classList.contains("removeRow")){
+    e.target.closest("tr").remove();
+    }
+
+    });
+
+</script>

@@ -1,4 +1,10 @@
-﻿(function () {
+﻿function testUpdateEvent() {
+    const testYear = 1404;
+    const testMonth = 12;
+    const testDay = 20;
+    updateEventDisplay(testYear, testMonth, testDay, `${testDay} اسفند`);
+}
+(function () {
     // تاریخ و ساعت فارسی
     const dateEl = document.getElementById('current-persian-date');
     const timeEl = document.getElementById('current-time-persian');
@@ -63,22 +69,58 @@ async function updateEventDisplay(year, month, day, label = "امروز") {
     const content = document.getElementById('eventContent');
     const display = document.getElementById('eventDisplay');
 
+    console.log("updateEventDisplay called with:", year, month, day, label); // لاگ اول
+
     if (loader) loader.style.display = 'flex';
     if (content) content.style.opacity = '0.4';
-    display.innerText = "در حال دریافت...";
+    if (display) display.innerText = "در حال دریافت..."; // اطمینان از وجود display
 
     try {
-        const response = await fetch(`https://api.keybit.ir/time/`);
+        const apiUrl = `https://pnldev.com/api/calender?year=${year}&month=${month}&day=${day}&holiday=true`;
+        //console.log("Fetching URL:", apiUrl); // لاگ URL
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) { // بررسی خطای شبکه
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
-        await new Promise(r => setTimeout(r, 600)); // برای زیبایی پرزنت
-        display.innerText = `${label}: ${data.date.event || "مناسبت خاصی نیست"}`;
+        await new Promise(r => setTimeout(r, 600));
+
+        //console.log("API Response Data:", data);
+        //console.log("Holiday Status:", data?.result?.holiday);
+        //console.log("Events Array:", data?.result?.event);
+
+        let eventText = "مناسبت خاصی نیست";
+        let holidayInfo = "";
+
+        if (data && data.result && data.result.holiday === true) {
+            holidayInfo = " (تعطیل رسمی)";
+        }
+
+        if (data && data.result && Array.isArray(data.result.event) && data.result.event.length > 0) {
+            eventText = data.result.event.join(" - ");
+        } else {
+            console.log("No events found or event array is empty/malformed.");
+        }
+
+        if (display) { // اطمینان از وجود display قبل از تغییر متن
+            display.innerText = `${label}: ${eventText}${holidayInfo}`;
+        }
+
     } catch (e) {
-        display.innerText = "خطا در اتصال";
+        console.error("Error in updateEventDisplay:", e); // لاگ خطا
+        if (display) { // نمایش خطا در صورت وجود display
+            display.innerText = `خطا: ${e.message}`;
+        }
     } finally {
         if (loader) loader.style.display = 'none';
         if (content) content.style.opacity = '1';
     }
+
 }
+
+
+
 
 function renderCalendar() {
     const container = document.getElementById('daysContainer');

@@ -1,0 +1,127 @@
+﻿@font-face {
+    font-family: 'Vazirmatn';
+    src: url('/fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #525659;
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* استایل نمایش در مانیتور */
+.letter-container {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    padding: 15mm 20mm;
+    background: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.letter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.header-info p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.letter-body {
+    flex-grow: 0;
+    margin-bottom: 50px;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.letter-content {
+    font-size: 16px;
+    text-align: justify;
+}
+
+/* اصلاح بخش فوتر و امضا */
+.letter-footer {
+    margin-top: 50px;
+    width: 100%;
+    display: block; /* حذف فلکس برای جلوگیری از باگ مرورگر */
+}
+    .letter-footer::after {
+        content: "";
+        clear: both;
+        display: table;
+    }
+
+.signature-area {
+    float: left; /* این دستور تحت هر شرایطی، کادر را به گوشه چپ می‌چسباند */
+    display: flex; /* استفاده از فلکس فقط برای چیدمان داخلی متن و عکس امضا */
+    flex-direction: column;
+    align-items: center; /* وسط‌چین کردن اجزای داخلی امضا نسبت به هم */
+    text-align: center;
+    width: 250px;
+    margin-left: 20px; /* یک فاصله کوچک از لبه سمت چپ کاغذ */
+    margin-right: 500px;
+}
+
+.signature-img {
+    display: block;
+    margin-top: 15px;
+    max-height: 100px; /* کنترل ارتفاع امضا */
+    width: auto;
+}
+
+/* در صورت وجود استایل‌های زیر در فایل، آن‌ها را حذف یا اصلاح کنید */
+.letter-container {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    padding: 15mm 20mm;
+    background: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    /* اینجا فلکس را ساده نگه می‌داریم */
+    display: block;
+}
+
+/* --- تنظیمات جادویی چاپ --- */
+@media print {
+    @page {
+        margin: 10mm;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .letter-container {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        display: block !important;
+    }
+
+    /* جلوگیری از نصف شدن امضا یا پاراگراف‌ها در مرز صفحه */
+    .letter-header, .letter-footer, .letter-body {
+        page-break-inside: avoid;
+    }
+}

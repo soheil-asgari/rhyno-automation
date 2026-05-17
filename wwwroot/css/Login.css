@@ -1,0 +1,135 @@
+﻿@font-face {
+    font-family: 'Vazirmatn';
+    src: url('/fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+}
+
+:root {
+    --accent: #4f46e5;
+    --accent-glow: rgba(79, 70, 229, 0.4);
+}
+
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: #0f172a;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+    /* دایره‌های نوری پس‌زمینه */
+    body::before, body::after {
+        content: "";
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: var(--accent);
+        filter: blur(100px);
+        opacity: 0.15;
+        z-index: 0;
+    }
+
+    body::before {
+        top: 10%;
+        left: 10%;
+    }
+
+    body::after {
+        bottom: 10%;
+        right: 10%;
+    }
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 35px;
+    padding: 40px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    position: relative;
+}
+
+.brand-logo {
+    width: 65px;
+    height: 65px;
+    background: linear-gradient(135deg, var(--accent), #3b82f6);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+    color: white;
+    box-shadow: 0 10px 20px var(--accent-glow);
+}
+
+.input-group-glass {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+    .input-group-glass i {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255,255,255,0.4);
+        font-size: 1.1rem;
+    }
+
+.form-control {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border-radius: 15px !important;
+    padding: 12px 45px 12px 15px !important; /* پدینگ برای آیکون */
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
+    }
+
+.btn-login {
+    background: var(--accent);
+    border: none;
+    border-radius: 15px;
+    padding: 14px;
+    font-weight: 700;
+    color: white;
+    width: 100%;
+    margin-top: 10px;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+    .btn-login:hover {
+        background: #4338ca;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--accent-glow);
+    }
+
+.login-footer {
+    margin-top: 25px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.4);
+}
+
+/* حذف استایل‌های پیش‌فرض مایکروسافت */
+input::placeholder {
+    color: rgba(255,255,255,0.3) !important;
+}

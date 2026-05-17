@@ -1,0 +1,29 @@
+﻿@model OfficeAutomation.Models.Department
+
+<h2>ایجاد بخش</h2>
+
+<form asp-action="Create" method="post">
+
+    <div class="form-group">
+        <label>نام بخش</label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+
+    <div class="form-group mt-3">
+        <label>مدیر بخش</label>
+
+        <select asp-for="ManagerId" class="form-control">
+            <option value="">انتخاب مدیر</option>
+
+            @foreach (var user in ViewBag.Users)
+            {
+                <option value="@user.Id">@user.FullName</option>
+            }
+        </select>
+    </div>
+
+    <button class="btn btn-success mt-3">
+        ذخیره
+    </button>
+
+</form>

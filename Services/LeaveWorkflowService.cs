@@ -49,15 +49,18 @@ namespace OfficeAutomation.Services
             return manager?.Id;
         }
 
-        /// <summary>
-        /// پیدا کردن تمام کاربران واحد منابع انسانی برای مرحله دوم
-        /// </summary>
         public async Task<List<string>> GetHRUserIds()
         {
+            var hrDepartmentId = await _context.Departments
+                .Where(d => d.Name == "HR")
+                .Select(d => d.Id)
+                .FirstOrDefaultAsync();
+
             return await _context.Users
-                .Where(u => u.Department == Department.HR)
+                .Where(u => u.DepartmentId == hrDepartmentId)
                 .Select(u => u.Id)
                 .ToListAsync();
         }
+
     }
 }

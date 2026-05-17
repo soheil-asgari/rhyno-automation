@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "دستیار هوش مصنوعی";
+}
+
+<link rel="stylesheet" href="~/css/aiassistant.css" />
+<script src="~/js/aiassistant.js" defer></script>
+
+<div class="container py-4">
+
+    <div class="card chat-card shadow-sm mx-auto">
+
+        <div class="card-header chat-header">
+            <i class="bi bi-stars"></i>
+            <span>دستیار هوش مصنوعی</span>
+        </div>
+
+        <div class="card-body p-0">
+
+            <div id="chatMessages" class="chat-container">
+
+                <div class="message ai">
+                    <div class="avatar">
+                        <i class="bi bi-robot"></i>
+                    </div>
+
+                    <div class="bubble">
+                        سلام 👋
+                        چطور میتونم کمکتون کنم؟
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card-footer chat-footer">
+
+            <div class="chat-input">
+
+                <input id="userInput"
+                       type="text"
+                       placeholder="پیام خود را بنویسید..." />
+
+                <button id="sendBtn">
+                    <i class="bi bi-send"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

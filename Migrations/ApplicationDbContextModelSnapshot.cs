@@ -22,6 +22,55 @@ namespace OfficeAutomation.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Department", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ManagerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ManagerId");
+
+                    b.ToTable("Departments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Financial"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Administrative"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Technical"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "HR"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Management"
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -155,6 +204,84 @@ namespace OfficeAutomation.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.InsuranceEmployee", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("EndWork")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("InsuranceListId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("JobTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Salary")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("StartWork")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WorkDays")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InsuranceListId");
+
+                    b.ToTable("InsuranceEmployees");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InsuranceList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ManagerName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InsuranceLists");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.Leave", b =>
                 {
                     b.Property<int>("Id")
@@ -242,7 +369,7 @@ namespace OfficeAutomation.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Department")
+                    b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
@@ -312,6 +439,8 @@ namespace OfficeAutomation.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DepartmentId");
+
                     b.HasIndex("ManagerId");
 
                     b.HasIndex("NormalizedEmail")
@@ -323,6 +452,16 @@ namespace OfficeAutomation.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Department", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "Manager")
+                        .WithMany()
+                        .HasForeignKey("ManagerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Manager");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -376,6 +515,17 @@ namespace OfficeAutomation.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.InsuranceEmployee", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.InsuranceList", "InsuranceList")
+                        .WithMany("Employees")
+                        .HasForeignKey("InsuranceListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InsuranceList");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.Leave", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.User", "User")
@@ -408,11 +558,28 @@ namespace OfficeAutomation.Migrations
 
             modelBuilder.Entity("OfficeAutomation.Models.User", b =>
                 {
+                    b.HasOne("Department", "Department")
+                        .WithMany("Users")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("OfficeAutomation.Models.User", "Manager")
                         .WithMany()
                         .HasForeignKey("ManagerId");
 
+                    b.Navigation("Department");
+
                     b.Navigation("Manager");
+                });
+
+            modelBuilder.Entity("Department", b =>
+                {
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InsuranceList", b =>
+                {
+                    b.Navigation("Employees");
                 });
 #pragma warning restore 612, 618
         }

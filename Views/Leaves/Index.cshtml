@@ -1,6 +1,7 @@
 ﻿@model IEnumerable<OfficeAutomation.Models.Leave>
 @{
     ViewData["Title"] = "مدیریت درخواست‌های مرخصی";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <style>
@@ -15,7 +16,7 @@
 
     body {
         background-color: #f8fafc;
-        font-size: 0.9rem;
+        /* font-size: 0.9rem; */
     }
 
     .stat-card {
@@ -198,9 +199,12 @@
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn text-primary" title="ویرایش">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <button onclick="confirmDelete('@item.Id')" class="action-btn text-danger" title="حذف">
+                                    <button class="action-btn text-danger btn-delete"
+                                            data-id="@item.Id"
+                                            title="حذف">
                                         <i class="bi bi-trash3"></i>
                                     </button>
+
                                 </div>
                             </td>
                         </tr>
@@ -210,3 +214,12 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const id = this.dataset.id;
+             window.location.href = `/Leaves/Delete/${id}`;
+        });
+    });
+</script>

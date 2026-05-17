@@ -44,8 +44,12 @@
         const el = e.target.closest('a.sidebar-link--comingsoon');
         if (!el) return;
         e.preventDefault();
-        const title = el.getAttribute('data-title') || 'این بخش';
-        toast(`${title} در حال توسعه است.`);
+        Swal.fire({
+            icon: 'info',
+            title: 'بخش مالی',
+            text: 'این بخش در حال توسعه است.',
+            confirmButtonText: 'تایید'
+        });
     });
 
     // Persian date/time
@@ -102,18 +106,19 @@
     }
     // چون اسکریپت‌ها defer هستند، DOM آماده است
     initDataTables();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.querySelector('.sidebar-right');
+        const overlay = document.getElementById('sidebarOverlay');
+        const btnOpen = document.getElementById('btnOpenSidebar');
+
+        function open() { sidebar?.classList.add('is-open'); overlay?.classList.add('show'); }
+        function close() { sidebar?.classList.remove('is-open'); overlay?.classList.remove('show'); }
+
+        btnOpen?.addEventListener('click', open);
+        overlay?.addEventListener('click', close);
+    });
 })();
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    const sidebar = document.querySelector('.sidebar-right');
-    const overlay = document.getElementById('sidebarOverlay');
-    const btnOpen = document.getElementById('btnOpenSidebar');
-
-    function open() { sidebar?.classList.add('is-open'); overlay?.classList.add('show'); }
-    function close() { sidebar?.classList.remove('is-open'); overlay?.classList.remove('show'); }
-
-    btnOpen?.addEventListener('click', open);
-    overlay?.addEventListener('click', close);
-});

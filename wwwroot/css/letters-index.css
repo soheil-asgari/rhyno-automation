@@ -1,89 +1,235 @@
-﻿.letters-page .letters-title-icon {
-    width: 44px;
-    height: 44px;
+﻿@font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+:root {
+    --primary-color: #4361ee;
+    --primary-light: #4895ef;
+    --bg-body: #f1f3f9;
+    --text-main: #2b2d42;
+    --text-muted: #8d99ae;
+    --success-color: #06d6a0;
+}
+
+body {
+    background-color: var(--bg-body);
+}
+
+.letters-page {
+    font-family: 'Vazirmatn', sans-serif !important;
+    direction: rtl;
+}
+
+/* Header & Search */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.brand-icon-box {
+    background: var(--primary-color);
+    color: white;
+    width: 50px;
+    height: 50px;
     border-radius: 12px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    background: #eef2ff;
-    color: #1d4ed8;
-    border: 1px solid #e5e7eb;
+    font-size: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.search-box-modern {
+    position: relative;
+}
+
+    .search-box-modern i {
+        position: absolute;
+        right: 15px;
+        top: 12px;
+        color: var(--text-muted);
+    }
+
+    .search-box-modern input {
+        border: 1.5px solid #edf2f7;
+        padding: 10px 40px 10px 15px;
+        border-radius: 12px;
+        width: 300px;
+        transition: 0.3s;
+        outline: none;
+    }
+
+        .search-box-modern input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+        }
+
+.btn-new-letter {
+    background: var(--primary-color);
+    color: white !important;
+    padding: 10px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+    .btn-new-letter:hover {
+        transform: translateY(-3px);
+        background: var(--primary-light);
+    }
+
+/* Letter Cards */
+.letters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.letter-row-card {
+    background: white;
+    border-radius: 16px;
+    padding: 15px 25px;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+}
+
+    .letter-row-card:hover {
+        transform: translateX(-5px);
+        border-color: var(--primary-light);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+.document-icon {
+    background: #f8f9ff;
+    color: var(--primary-color);
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.2rem;
 }
 
-.letters-search {
-    position: relative;
-    min-width: 280px;
-}
-
-    .letters-search > i {
-        position: absolute;
-        top: 50%;
-        right: 12px;
-        transform: translateY(-50%);
-        color: #64748b;
-        pointer-events: none;
-    }
-
-    .letters-search input {
-        padding-right: 38px;
-        border-radius: 12px;
-    }
-
-.letters-search-clear {
-    position: absolute;
-    left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-radius: 10px;
-}
-
-.letters-table thead th {
-    background: #0f172a;
-    color: #fff;
-    border-bottom: 0;
-    padding: 14px 16px;
-    font-weight: 700;
-}
-
-.letters-table tbody td {
-    padding: 14px 16px;
-}
-
-.letter-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #60a5fa;
-    margin-top: 6px;
-    flex: 0 0 auto;
-}
-
 .letter-title {
-    font-weight: 800;
-    color: #0f172a;
-    max-width: 520px;
-}
-
-.letter-sub {
-    margin-top: 2px;
-    max-width: 520px;
-}
-
-.letter-date {
+    display: block;
     font-weight: 700;
-    border-radius: 999px;
+    color: var(--text-main);
+    text-decoration: none;
+    margin-bottom: 4px;
+    font-size: 1rem;
 }
 
-.letter-person {
-    border-radius: 999px;
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.flow-info {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* کمک برای truncate داخل flex */
-.min-w-0 {
-    min-width: 0;
+.badge-person {
+    font-weight: 600;
 }
+
+.sender {
+    color: var(--primary-color);
+}
+
+.date-wrapper {
+    background: #f8fafc;
+    padding: 8px 15px;
+    border-radius: 30px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+/* Status Indicator */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+    .status-indicator.approved {
+        background: #e6fffa;
+        color: #047857;
+    }
+
+    .status-indicator .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success-color);
+    }
+
+/* Action Buttons */
+.action-flex {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.btn-action-minimal {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #edf2f7;
+    background: white;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+    .btn-action-minimal:hover {
+        background: #f8f9ff;
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+
+    .btn-action-minimal i {
+        color: #4361ee !important; /* رنگ آیکون‌ها را کمی پررنگ‌تر می‌کند */
+        font-size: 1.1rem;
+    }

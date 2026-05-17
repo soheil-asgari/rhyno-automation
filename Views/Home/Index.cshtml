@@ -15,8 +15,10 @@
         </div> *@
 
     
-<script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.11/dist/jalali-moment.browser.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+@* <script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.11/dist/jalali-moment.browser.min.js"></script> *@
+<script src="~/js/jalali-moment.browser.js"></script>
+@* C:\Users\esmaeili\source\repos\rhyno-automation\wwwroot\js\jalali-moment.browser.js *@
+<link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
 <div class="rhino-premium-panel">
     <header class="rh-top-bar">
         <div class="rh-search-mini">
@@ -181,19 +183,22 @@
                 </div>
             </div>
 
-            <div class="cal-footer" style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+            <div class="cal-footer" style="margin-top: 20px; border-top: 1px solid #f1f1f1; padding-top: 15px;">
                 <div id="eventBox" style="display: flex; align-items: center; gap: 10px;">
-                    <div id="eventLoader" style="display: none;"><div class="spinner-border-sm"></div></div>
+                    <div id="eventLoader" style="display: none;"><!-- شما ممکن است اینجا یک انیمیشن لودر داشته باشید --></div>
                     <div id="eventContent" style="display: flex; align-items: center;">
                         <i class="bi bi-calendar2-check" style="color: #4f46e5; margin-left: 10px;"></i>
                         <span id="eventDisplay" style="font-size: 0.85rem; color: #475569;">در حال دریافت مناسبت...</span>
                     </div>
                 </div>
+                <!-- دکمه تست -->
+               
             </div>
         </div>
+        </div>
 
-    </main>
-</div>
+  
+
 @section Styles {
     <link rel="stylesheet" href="~/css/dashboard.css" />
 }

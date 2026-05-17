@@ -3,179 +3,104 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "ارسال نامه جدید";
+
     var pc = new System.Globalization.PersianCalendar();
     var now = DateTime.Now;
     string persianDate = $"{pc.GetYear(now)}/{pc.GetMonth(now):D2}/{pc.GetDayOfMonth(now):D2}";
 }
 
-@* ۱. اسکریپت ادیتور *@
-<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+<link rel="stylesheet" href="/css/letter.css">
 
-<style>
-    .word-processor-container { background-color: #f0f2f5; min-height: 100vh; display: flex; flex-direction: column; }
-    .top-toolbar { background: white; border-bottom: 1px solid #ddd; padding: 10px 20px; position: sticky; top: 0; z-index: 1000; }
-    .paper-wrapper { flex-grow: 1; padding: 40px 20px; display: flex; justify-content: center; overflow-y: auto; }
-    .paper { 
-        background: white; width: 210mm; min-height: 297mm; padding: 20mm; 
-        box-shadow: 0 0 15px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; 
-    }
-</style>
+<script src="https://lib.arvancloud.ir/ckeditor5/36.0.1/ckeditor.js"></script>
 
 <div class="word-processor-container">
-    @* نوار ابزار بالا *@
+
+    <!-- Toolbar -->
     <div class="top-toolbar">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex gap-3">
-                <div class="input-group" style="width: 300px;">
-                    <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+        <div class="toolbar-row">
+
+            <div class="left-tools">
+                <div class="input-group receiver-box">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
                     <select id="receiverSelect" class="form-select" asp-items="ViewBag.ReceiverId">
                         <option value="">انتخاب گیرنده یا واحد...</option>
                     </select>
                 </div>
-                <input type="text" id="subjectInput" class="form-control" placeholder="موضوع نامه..." style="width: 350px;">
+
+                <input type="text" id="subjectInput" class="form-control subject-input" placeholder="موضوع نامه...">
             </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary fw-bold" onclick="submitLetter()">
-                    <i class="bi bi-send"></i> ارسال نهایی نامه
-                </button>
-            </div>
+
+            <button class="btn btn-primary fw-bold send-btn" id="btnSendLetter">
+                <i class="bi bi-send"></i> ارسال نهایی
+            </button>
         </div>
     </div>
 
-    @* برگه نامه *@
+    <!-- Paper -->
     <div class="paper-wrapper">
         <div id="paper" class="paper">
-            @* هدر نامه *@
-            <div class="d-flex justify-content-between mb-5">
-                <div style="font-size: 13px;">
+
+            <!-- Header -->
+            <div class="header-row">
+                <div class="header-info">
                     <div>تاریخ: @persianDate</div>
                     <div>شماره: RH-@now.Ticks.ToString().Substring(12)</div>
                     <div>پیوست: ندارد</div>
                 </div>
-                <div class="text-center">
+
+                <div class="header-center">
                     <h5 class="fw-bold">بسمه تعالی</h5>
-                    <div class="mt-2 fw-bold">شرکت فنی مهندسی راینو</div>
+                    <div class="fw-bold mt-2">شرکت فنی مهندسی راینو</div>
                 </div>
-                <div>
-                    <img src="/images/logo.png" width="70" alt="لوگو" onerror="this.style.display='none'">
-                </div>
+
+                <img src="/images/logo.png" class="letter-logo" alt="لوگو" onerror="this.style.display='none'">
             </div>
 
-            @* بخش گیرنده و موضوع *@
-            <div class="mb-5" style="font-size: 1.1rem; line-height: 2;">
-                <div class="fw-bold mb-3">
-                    <span id="gender-prefix">جناب آقای / سرکار خانم</span> 
-                    <span id="display-receiver">....................</span>
+            <!-- Receiver / Subject -->
+            <div class="receiver-block">
+                <div class="fw-bold receiver-line">
+                    <span id="gender-prefix">جناب آقای / سرکار خانم</span>
+                    <span id="display-receiver" class="receiver-name">....................</span>
                 </div>
                 <div class="fw-bold">
-                    موضوع: <span id="display-subject" style="font-weight: normal;">....................</span>
+                    موضوع: <span id="display-subject" class="subject-display">....................</span>
                 </div>
             </div>
 
-            @* متن نامه (ادیتور) *@
-            <div id="editor-container" class="mb-5">
+            <!-- Editor -->
+            <div id="editor-container">
                 <div id="editor">
                     <p>با سلام و احترام،</p>
                     <p>به استحضار می‌رساند...</p>
                 </div>
             </div>
 
-            @* امضای فرستنده *@
-            <div style="margin-top: 50px; display: flex; justify-content: flex-end;"> 
-                <div class="text-center" style="min-width: 220px;">
+            <!-- Signature -->
+            <div class="signature-wrapper">
+                <div class="signature-box">
                     <p class="fw-bold mb-1">با تقدیم احترام</p>
-                    <p class="fw-bold mb-0">@ViewBag.SenderFullName</p>
-                    <p class="small text-muted mb-2">@ViewBag.SenderRole</p>
+                    <p class="fw-bold">@ViewBag.SenderFullName</p>
+                    <p class="small text-muted">@ViewBag.SenderRole</p>
+
                     @if (ViewBag.UserSignature != null)
                     {
-                        <img src="@ViewBag.UserSignature" style="max-height: 80px; mix-blend-mode: multiply;" alt="امضا">
+                        <img src="@ViewBag.UserSignature" class="signature-img" alt="امضا">
                     }
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 
-<form id="finalForm" asp-action="Create" method="post" style="display:none;">
-    <input type="hidden" name="Title" id="hTitle">
-    <input type="hidden" name="Body" id="hContent"> @* اینجا name شد Body *@
-    <input type="hidden" name="ReceiverId" id="hReceiver">
+<!-- Hidden Form -->
+<form id="finalForm" asp-action="Create" method="post" class="d-none">
+    <input type="hidden" id="hTitle" name="Title">
+    <input type="hidden" id="hContent" name="Body">
+    <input type="hidden" id="hReceiver" name="ReceiverId">
     @Html.AntiForgeryToken()
 </form>
-
-@section Scripts {
-    <script>
-        let myEditor;
-        
-        // ۱. اجرای ادیتور
-        ClassicEditor.create(document.querySelector('#editor'), {
-            language: 'fa', 
-            contentsLangDirection: 'rtl'
-        }).then(editor => { 
-            myEditor = editor; 
-        }).catch(err => console.error(err));
-
-        // ۲. دیتای کاربران
-        const allUsers = @Html.Raw(ViewBag.UsersData ?? "[]");
-
-        // ۳. تغییر خودکار القاب و نام گیرنده
-        document.getElementById('receiverSelect').addEventListener('change', function() {
-            const selectedId = this.value;
-            const prefix = document.getElementById('gender-prefix');
-            const receiverDisplay = document.getElementById('display-receiver');
-
-            if (!selectedId) {
-                prefix.innerText = "جناب آقای / سرکار خانم";
-                receiverDisplay.innerText = "....................";
-                return;
-            }
-
-            const user = allUsers.find(u => u.Id == selectedId);
-            if (user) {
-                receiverDisplay.innerText = user.FullName;
-                const gender = String(user.Gender).trim();
-                if (gender === "Male") prefix.innerText = "جناب آقای";
-                else if (gender === "Female") prefix.innerText = "سرکار خانم";
-                else if (gender === "Department") prefix.innerText = "واحد محترم";
-                else prefix.innerText = "جناب آقای / سرکار خانم";
-            }
-        });
-
-        // ۴. موضوع زنده
-        document.getElementById('subjectInput').addEventListener('input', function() {
-            document.getElementById('display-subject').innerText = this.value || "....................";
-        });
-
-        // ۵. ارسال فرم
-      function submitLetter() {
-    // ۱. دریافت مقادیر
-    const rec = document.getElementById('receiverSelect').value;
-    const sub = document.getElementById('subjectInput').value;
-    
-    if (!rec || !sub) {
-        alert("لطفاً گیرنده و موضوع را وارد کنید.");
-        return;
-    }
-
-    // ۲. استخراج محتوای ادیتور
-    if (!myEditor) {
-        alert("ادیتور هنوز لود نشده است.");
-        return;
-    }
-    const editorData = myEditor.getData();
-
-    if (!editorData.trim()) {
-        alert("متن نامه نمی‌تواند خالی باشد.");
-        return;
-    }
-
-    // ۳. ست کردن مقادیر در فرم مخفی
-    document.getElementById('hTitle').value = sub;
-    document.getElementById('hContent').value = editorData; // این به Body در مدل مپ می‌شود
-    document.getElementById('hReceiver').value = rec;
-
-    // ۴. ارسال
-    document.getElementById('finalForm').submit();
-}
-    </script>
-}
+<script>
+    window.usersList = @Html.Raw(ViewBag.UsersData ?? "[]");
+</script>
+<script src="/js/letter.js"></script>

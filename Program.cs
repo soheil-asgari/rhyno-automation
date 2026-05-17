@@ -34,6 +34,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options => {
 
 
 
+builder.Services.AddSingleton<AiService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

@@ -1,0 +1,148 @@
+﻿.word-processor-container {
+    background: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Toolbar */
+.top-toolbar {
+    background: white;
+    border-bottom: 1px solid #ddd;
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.toolbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.left-tools {
+    display: flex;
+    gap: 10px;
+}
+
+.receiver-box {
+    width: 280px;
+}
+
+.subject-input {
+    width: 330px;
+}
+
+/* Paper */
+.paper-wrapper {
+    padding: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.paper {
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    direction: rtl; /* ← این را به همین حالت نگه دار */
+}
+
+
+
+/* Header */
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+}
+
+.header-info {
+    font-size: 13px;
+}
+
+.letter-logo {
+    width: 70px;
+}
+
+/* Receiver Section */
+.receiver-block {
+    font-size: 1.1rem;
+    line-height: 2;
+    margin-bottom: 40px;
+}
+
+.receiver-line {
+    margin-bottom: 15px;
+}
+
+/* Editor Area */
+#editor-container {
+    margin-bottom: 50px;
+}
+
+.signature-wrapper {
+    margin-top: 50px;
+    width: 100%;
+    display: flex;
+    /* دستور justify-content را کلاً حذف کردیم تا تداخل ایجاد نکند */
+}
+
+
+.signature-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* متن‌ها و عکس را نسبت به هم وسط‌چین نگه می‌دارد */
+    text-align: center;
+    width: max-content;
+    /* 🌟 این دستور کلیدی است: تمام فضای راست را می‌گیرد و باکس را به چپ می‌چسباند */
+    margin-right: 300px;
+    margin-left: 20px; /* یک فاصله ملایم از لبه‌ی سمت چپ کاغذ تا نچسبد به حاشیه */
+}
+
+
+
+
+    .signature-box p {
+        margin: 0;
+        line-height: 1.6;
+    }
+
+        /* "با تقدیم احترام" */
+        .signature-box p.fw-bold.mb-1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        /* نام و سمت */
+        .signature-box p.fw-bold {
+            font-size: 1.25rem;
+            font-weight: 800 !important;
+        }
+
+.signature-img {
+    display: block;
+    margin-top: 10px;
+    max-height: 120px;
+    width: auto;
+}
+
+
+
+.ck-content {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+#editor-container {
+    margin-bottom: 10px !important; /* قبلش 50px بود */
+    padding-bottom: 0 !important;
+}
+.ck.ck-reset.ck-editor__main > .ck-editor__editable {
+    min-height: auto !important;
+}

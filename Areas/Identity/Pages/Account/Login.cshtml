@@ -8,115 +8,54 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ورود به سیستم راینو</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        @@font-face {
-            font-family: 'Vazirmatn';
-            src: url('/fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
-        }
-
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background: linear-gradient(45deg, #0f172a, #1e293b, #0f172a);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        @@keyframes gradientBG {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            padding: 50px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-
-        .login-icon {
-            width: 80px;
-            height: 80px;
-            background: #3b82f6;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 22px;
-            font-size: 40px;
-            color: white;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
-        }
-
-        .form-control {
-            background: rgba(255, 255, 255, 0.08) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: white !important;
-            border-radius: 15px;
-            padding: 15px;
-        }
-
-            .form-control:focus {
-                box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-                border-color: #3b82f6 !important;
-            }
-
-        .btn-login {
-            background: linear-gradient(90deg, #3b82f6, #2563eb);
-            border: none;
-            border-radius: 15px;
-            padding: 15px;
-            font-weight: bold;
-            font-size: 18px;
-            transition: 0.3s;
-        }
-
-            .btn-login:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4);
-                color: white;
-            }
-    </style>
+    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/Login.css" />
+ 
 </head>
 <body>
+
     <div class="glass-card">
-        <div class="login-icon"><i class="bi bi-cpu-fill"></i></div>
-        <h2 class="fw-bold text-white mb-2">سیستم راینو</h2>
-        <p class="text-white-50 mb-5">خوش آمدید، لطفا وارد حساب خود شوید</p>
+        <div class="brand-logo">
+            <i class="bi bi-box-seam-fill"></i>
+        </div>
+
+        <h4 class="text-white fw-bold mb-1 text-center">پنل مدیریت راینو</h4>
+        <p class="text-white-50 small mb-4 text-center">ورود به دنیای مدیریت هوشمند</p>
 
         <form method="post">
-            <div asp-validation-summary="All" class="text-danger mb-3 small"></div>
-            <div class="mb-4 text-start">
-                <label class="text-white-50 ms-2 mb-2 small">نام کاربری</label>
-                <input asp-for="Input.Email" class="form-control" placeholder="نام کاربری..." />
+            <div asp-validation-summary="All" class="text-danger mb-3 small text-center"></div>
+
+            <div class="input-group-glass">
+                <i class="bi bi-person"></i>
+                <input asp-for="Input.Email" class="form-control" placeholder="نام کاربری" />
             </div>
-            <div class="mb-4 text-start">
-                <label class="text-white-50 ms-2 mb-2 small">رمز عبور</label>
-                <input asp-for="Input.Password" class="form-control" type="password" placeholder="••••••••" />
+
+            <div class="input-group-glass">
+                <i class="bi bi-lock"></i>
+                <input asp-for="Input.Password" class="form-control" type="password" placeholder="رمز عبور" />
             </div>
-            <button type="submit" class="btn btn-primary btn-login w-100 mt-2">ورود به پنل مدیریت</button>
+
+            <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" style="background-color: transparent; border-color: rgba(255,255,255,0.2);">
+                    <label class="text-white-50 small" style="cursor:pointer">مرا به خاطر بسپار</label>
+                </div>
+                <a href="#" class="text-accent small text-decoration-none" style="color: var(--accent);">فراموشی رمز؟</a>
+            </div>
+
+            <button type="submit" class="btn btn-login">
+                <span>ورود به حساب</span>
+                <i class="bi bi-arrow-left-short fs-4"></i>
+            </button>
         </form>
+
+        <div class="login-footer text-center">
+            &copy; 2026 طراحی شده برای پورتال سازمانی راینو
+        </div>
     </div>
+
 </body>
 </html>

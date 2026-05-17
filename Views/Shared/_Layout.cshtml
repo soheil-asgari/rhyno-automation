@@ -5,84 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - پنل مدیریت راینو</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://lib.arvancloud.ir/sweetalert2/9.17.4/sweetalert2.all.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
 
     <link rel="stylesheet" href="~/css/main.css" asp-append-version="true">
-    
+
         @await RenderSectionAsync("Styles", required: false)
     </head>
 
     <body class="@(ViewData["BodyClass"] ?? "default-bg")">
-    <!-- فقط یک overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <!-- فقط یک overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <div class="app-shell">
+        <div class="app-shell">
 
-                <aside class="sidebar-right" id="appSidebar">
-                    <div class="sidebar-header">
-                        <div class="logo-wrapper">
-                            <div class="logo-icon">
-                                <i class="bi bi-box-seam-fill"></i>
-                            </div>
-                            <div class="logo-text">
-                                <span class="brand-name">پنل راینو</span>
-                                <span class="brand-status">نسخه سازمانی 2026</span>
-                            </div>
+            <aside class="sidebar-right" id="appSidebar">
+                <div class="sidebar-header">
+                    <div class="logo-wrapper">
+                        <div class="logo-icon">
+                            <i class="bi bi-box-seam-fill"></i>
                         </div>
-                        <button type="button" class="btn-close-sidebar d-lg-none" id="btnCloseSidebar">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                        <div class="logo-text">
+                            <span class="brand-name">پنل راینو</span>
+                            <span class="brand-status">نسخه سازمانی 2026</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close-sidebar d-lg-none" id="btnCloseSidebar">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="sidebar-content">
+                    <div class="sidebar-section">
+                        <div class="sidebar-label">منوی اصلی</div>
+                        <nav class="nav flex-column gap-1">
+                            <a class="nav-link sidebar-link active" asp-controller="Home" asp-action="Index">
+                                <div class="link-icon bg-soft-primary"><i class="bi bi-grid-1x2-fill"></i></div>
+                                <span class="link-text">میز کار مرکزی</span>
+                            </a>
+
+                            <a class="nav-link sidebar-link sidebar-link--comingsoon" href="#">
+                                <div class="link-icon bg-soft-success"><i class="bi bi-wallet2"></i></div>
+                                <span class="link-text">تنظیمات مالی</span>
+                                @* <span class="mini-badge">بزودی</span> *@
+                            </a>
+                        </nav>
                     </div>
 
-                    <div class="sidebar-content">
-                        <div class="sidebar-section">
-                            <div class="sidebar-label">منوی اصلی</div>
-                            <nav class="nav flex-column gap-1">
-                                <a class="nav-link sidebar-link active" asp-controller="Home" asp-action="Index">
-                                    <div class="link-icon bg-soft-primary"><i class="bi bi-grid-1x2-fill"></i></div>
-                                    <span class="link-text">میز کار مرکزی</span>
-                                </a>
+                    <div class="sidebar-section">
+                        <div class="sidebar-label">مدیریت و مکاتبات</div>
+                        <nav class="nav flex-column gap-1">
+                            <a class="nav-link sidebar-link" asp-controller="Letters" asp-action="Index">
+                                <div class="link-icon bg-soft-danger"><i class="bi bi-envelope-paper-heart"></i></div>
+                                <span class="link-text">مدیریت نامه‌ها</span>
+                                @* <span class="link-counter">۱۲</span> *@
+                            </a>
 
-                                <a class="nav-link sidebar-link sidebar-link--comingsoon" href="javascript:void(0)">
-                                    <div class="link-icon bg-soft-success"><i class="bi bi-wallet2"></i></div>
-                                    <span class="link-text">تنظیمات مالی</span>
-                                    @* <span class="mini-badge">بزودی</span> *@
-                                </a>
-                            </nav>
-                        </div>
+                            <a class="nav-link sidebar-link" asp-controller="Leaves" asp-action="Index">
+                                <div class="link-icon bg-soft-info"><i class="bi bi-calendar-check"></i></div>
+                                <span class="link-text">درخواست مرخصی</span>
+                            </a>
 
-                        <div class="sidebar-section">
-                            <div class="sidebar-label">مدیریت و مکاتبات</div>
-                            <nav class="nav flex-column gap-1">
-                                <a class="nav-link sidebar-link" asp-controller="Letters" asp-action="Index">
-                                    <div class="link-icon bg-soft-danger"><i class="bi bi-envelope-paper-heart"></i></div>
-                                    <span class="link-text">مدیریت نامه‌ها</span>
-                                    @* <span class="link-counter">۱۲</span> *@
-                                </a>
+                            <a class="nav-link sidebar-link" asp-controller="HumanCapital" asp-action="Index">
+                                <div class="link-icon bg-soft-warning"><i class="bi bi-people"></i></div>
+                                <span class="link-text">سرمایه انسانی</span>
+                            </a>
+                        </nav>
+                    </div>
 
-                                <a class="nav-link sidebar-link" asp-controller="Leaves" asp-action="Index">
-                                    <div class="link-icon bg-soft-info"><i class="bi bi-calendar-check"></i></div>
-                                    <span class="link-text">درخواست مرخصی</span>
-                                </a>
-
-                                <a class="nav-link sidebar-link" asp-controller="HumanCapital" asp-action="Index">
-                                    <div class="link-icon bg-soft-warning"><i class="bi bi-people"></i></div>
-                                    <span class="link-text">سرمایه انسانی</span>
-                                </a>
-                            </nav>
-                        </div>
-
-                        <div class="sidebar-section">
-                            <div class="sidebar-label">سرویس‌های هوشمند</div>
-                            <div class="ai-card-mini">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-stars text-purple me-2"></i>
-                                    <span class="fw-bold small">دستیار هوش مصنوعی</span>
-                                </div>
-                                <a href="#" class="btn-ai-chat">شروع گفت‌وگو</a>
+                    <div class="sidebar-section">
+                        <div class="sidebar-label">سرویس‌های هوشمند</div>
+                        <div class="ai-card-mini">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-stars text-purple me-2"></i>
+                                <span class="fw-bold small">دستیار هوش مصنوعی</span>
                             </div>
-            
+                            <a asp-controller="AiAssistant"
+                                   asp-action="Index"
+                                   class="btn-ai-chat">
+                                شروع گفت‌وگو
+                            </a>
+
+                        </div>
+
                         <nav class="nav flex-column gap-1 mt-2">
                             <a class="nav-link sidebar-link small-link" href="#">
                                 <div class="link-icon bg-soft-primary" style="width: 28px; height: 28px; font-size: 0.8rem;">
@@ -97,72 +103,84 @@
                                 </div>
                                 <span class="link-text">ثبت بارنامه</span>
                             </a>
-
-                            <a class="nav-link sidebar-link small-link" href="#">
+                            <div class="sidebar-label">حقوق و بیمه</div>
+                            <a class="nav-link sidebar-link small-link" asp-controller="Bimeh" asp-action="Index">
+                               
                                 <div class="link-icon bg-soft-info" style="width: 28px; height: 28px; font-size: 0.8rem;">
                                     <i class="bi bi-shield-lock"></i>
                                 </div>
-                                <span class="link-text">لیست بیمه و حقوق</span>
+
+                                <span class="link-text">لیست بیمه</span>
+
                             </a>
+                            
+                            <a class="nav-link sidebar-link small-link">
+                               
+                                <div class="link-icon bg-soft-info" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                    <i class="bi bi-shield-lock"></i>
+                                </div>
+
+                                <span class="link-text">لیست حقوق</span>
+                                </a>
                         </nav>
-                        </div>
                     </div>
+                </div>
 
                 <div class="user-profile-pill">
                     <div class="user-avatar">
-                        <img src="https://ui-avatars.com/api/?name=Admin&background=4f46e5&color=fff" alt="User">
-                        <span class="online-status"></span>
+                        <img src="~/images/Party.svg" alt="User" id="partysvg">
+                            <span class="online-status"></span>
+                        </div>
+                        <div class="user-info">
+                            <span class="u-name">مدیر سیستم</span>
+                            <span class="u-role">دسترسی کل</span>
+                        </div>
+                        <a asp-controller="Settings" asp-action="Index" class="logout-btn" title="تنظیمات سیستم">
+                            <i class="bi bi-gear-fill" style="color: #64748b;"></i>
+                        </a>
                     </div>
-                    <div class="user-info">
-                        <span class="u-name">مدیر سیستم</span>
-                        <span class="u-role">دسترسی کل</span>
-                    </div>
-                    <a asp-controller="Settings" asp-action="Index" class="logout-btn" title="تنظیمات سیستم">
-                        <i class="bi bi-gear-fill" style="color: #64748b;"></i>
-                    </a>
-                </div>
                 </aside>
 
-        <main class="main-content">
+                <main class="main-content">
 
-            <!-- Topbar -->
-            <div class="topbar">
-                <button type="button" class="btn btn-sm btn-light border d-lg-none" id="btnOpenSidebar" aria-label="باز کردن منو">
-                    <i class="bi bi-list"></i>
-                </button>
+                    <!-- Topbar -->
+                    <div class="topbar">
+                        <button type="button" class="btn btn-sm btn-light border d-lg-none" id="btnOpenSidebar" aria-label="باز کردن منو">
+                            <i class="bi bi-list"></i>
+                        </button>
 
-                <!-- فقط یک ساعت در کل سیستم -->
-                <div class="topbar-clock ms-auto">
-                    <i class="bi bi-clock ms-1"></i>
-                    <span id="current-persian-date"></span>
-                    <span class="mx-2">|</span>
-                    <span id="current-time-persian"></span>
-                </div>
-            </div>
+                        <!-- فقط یک ساعت در کل سیستم -->
+                        <div class="topbar-clock ms-auto">
+                            <i class="bi bi-clock ms-1"></i>
+                            <span id="current-persian-date"></span>
+                            <span class="mx-2">|</span>
+                            <span id="current-time-persian"></span>
+                        </div>
+                    </div>
 
-            <div class="container-fluid py-3">
-                @RenderBody()
-            </div>
+                    <div class="container-fluid py-3">
+                        @RenderBody()
+                    </div>
 
-            @* <footer class="app-footer">
+                    @* <footer class="app-footer">
                 <small class="footer-text">
                     طراحی شده برای پورتال سازمانی راینو &copy; 2026
                 </small>
             </footer> *@
-        </main>
+                </main>
 
-    </div>
+            </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+            <script src="https://lib.arvancloud.ir/jquery/3.6.3/jquery.min.js"></script>
+            <script src="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js" defer></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js" defer></script>
+            <script src="~/js/dataTables.min.js"></script>
+            <script src="~/js/dataTables.bootstrap5.min.js"></script>
 
-    <script src="https://lib.arvancloud.ir/html2pdf.js/0.9.3/html2pdf.min.js" defer></script>
+            <script src="https://lib.arvancloud.ir/html2pdf.js/0.9.3/html2pdf.min.js"></script>
 
-    <script src="~/js/layout.js" asp-append-version="true" defer></script>
+            <script src="~/js/layout.js" asp-append-version="true"></script>
 
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
-</html>
+            @await RenderSectionAsync("Scripts", required: false)
+        </body>
+    </html>

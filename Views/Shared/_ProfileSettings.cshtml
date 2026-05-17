@@ -39,13 +39,9 @@
         <div class="input-group">
             <span class="input-group-text bg-light border-0"><i class="bi bi-diagram-3 text-secondary"></i></span>
             @{
-                // کد کمکی برای خواندن Display Name از Enum
-                var enumValue = Model.Department;
-                var displayAttribute = enumValue.GetType()
-                    .GetField(enumValue.ToString())
-                    ?.GetCustomAttribute<DisplayAttribute>();
-                var departmentName = displayAttribute?.Name ?? enumValue.ToString();
+                var departmentName = Model.Department?.Name ?? "نامشخص";
             }
+
             <input type="text" class="form-control bg-light border-0" value="@departmentName" readonly>
         </div>
     </div>

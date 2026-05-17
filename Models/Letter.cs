@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations; // این فضای نام را اضافه کنید
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OfficeAutomation.Models;
 

@@ -8,11 +8,11 @@ namespace OfficeAutomation.Models
         public string? Id { get; set; }
 
         [Required(ErrorMessage = "نام کامل الزامی است")]
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
 
         [Required(ErrorMessage = "ایمیل الزامی است")]
         [EmailAddress(ErrorMessage = "فرمت ایمیل صحیح نیست")]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         public string? JobTitle { get; set; }
 
