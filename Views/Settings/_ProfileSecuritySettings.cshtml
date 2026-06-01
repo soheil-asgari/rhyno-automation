@@ -1,0 +1,86 @@
+@model OfficeAutomation.Models.SettingsIndexViewModel
+
+<div class="settings-panel">
+    <div class="section-head">
+        <h2>پروفایل و امنیت</h2>
+        <p>اطلاعات حساب کاربری و بروزرسانی امن رمز عبور</p>
+    </div>
+
+    <div class="dual-panel-grid">
+        <form asp-action="UpdateProfile" asp-controller="Settings" method="post" class="settings-form profile-card">
+            @Html.AntiForgeryToken()
+
+            <h3 class="card-mini-title">پروفایل کاربر</h3>
+            <div class="field-grid">
+                <div class="field-group">
+                    <label asp-for="Profile.FullName" class="form-label"></label>
+                    <input asp-for="Profile.FullName" class="form-control" />
+                    <span asp-validation-for="Profile.FullName" class="text-danger"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Profile.Email" class="form-label"></label>
+                    <input asp-for="Profile.Email" class="form-control" dir="ltr" />
+                    <span asp-validation-for="Profile.Email" class="text-danger"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Profile.JobTitle" class="form-label"></label>
+                    <input asp-for="Profile.JobTitle" class="form-control" />
+                    <span asp-validation-for="Profile.JobTitle" class="text-danger"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Profile.PhoneNumber" class="form-label"></label>
+                    <input asp-for="Profile.PhoneNumber" class="form-control" dir="ltr" />
+                    <span asp-validation-for="Profile.PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <div class="field-group field-full">
+                    <label asp-for="Profile.ServiceLocation" class="form-label"></label>
+                    <input asp-for="Profile.ServiceLocation" class="form-control" />
+                    <span asp-validation-for="Profile.ServiceLocation" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="actions-row">
+                <button type="submit" class="btn settings-btn-primary">
+                    <i class="bi bi-person-check"></i>
+                    <span>ذخیره پروفایل</span>
+                </button>
+            </div>
+        </form>
+
+        <form asp-action="ChangePassword" asp-controller="Settings" method="post" class="settings-form security-card">
+            @Html.AntiForgeryToken()
+
+            <h3 class="card-mini-title">تغییر رمز عبور</h3>
+            <div class="field-grid">
+                <div class="field-group field-full">
+                    <label asp-for="Password.CurrentPassword" class="form-label"></label>
+                    <input asp-for="Password.CurrentPassword" class="form-control" />
+                    <span asp-validation-for="Password.CurrentPassword" class="text-danger"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Password.NewPassword" class="form-label"></label>
+                    <input asp-for="Password.NewPassword" class="form-control" />
+                    <span asp-validation-for="Password.NewPassword" class="text-danger"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Password.ConfirmPassword" class="form-label"></label>
+                    <input asp-for="Password.ConfirmPassword" class="form-control" />
+                    <span asp-validation-for="Password.ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="actions-row">
+                <button type="submit" class="btn settings-btn-danger">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>بروزرسانی رمز عبور</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

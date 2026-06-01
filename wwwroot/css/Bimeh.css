@@ -15,5 +15,80 @@
 
 body {
     background-color: #f8fafc;
-    
+}
+
+.bimeh-page {
+    direction: rtl;
+    text-align: right;
+    max-width: 1200px;
+}
+
+.bimeh-header {
+    gap: 12px;
+}
+
+.bimeh-card {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.bimeh-new-btn {
+    border-radius: 10px;
+    background-color: var(--primary-main);
+    border-color: var(--primary-main);
+}
+
+.bimeh-table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.86rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.bimeh-table td {
+    vertical-align: middle;
+}
+
+.bimeh-table .btn {
+    border-radius: 8px;
+}
+
+.bimeh-count-badge {
+    background-color: var(--primary-soft);
+    color: var(--primary-main);
+    font-weight: 600;
+    border: 1px solid #dbeafe;
+}
+
+.bimeh-status-badge {
+    background-color: var(--warning-soft);
+    color: #92400e;
+    border: 1px solid #fde68a;
+    font-weight: 600;
+}
+
+.bimeh-danger-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+}
+
+.bimeh-delete-summary {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .bimeh-page {
+        padding-inline: 0.5rem;
+    }
 }

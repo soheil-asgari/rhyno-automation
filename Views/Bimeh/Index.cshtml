@@ -1,4 +1,4 @@
-﻿@model IEnumerable<InsuranceList>
+﻿@model InsuranceIndexVM
 @{
     ViewData["Title"] = "لیست بیمه";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -7,46 +7,100 @@
     <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
 }
 
-<div class="container-fluid py-4" style="direction: rtl; text-align: right; max-width: 1200px;">
-
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container-fluid py-4 bimeh-page">
+    <div class="d-flex justify-content-between align-items-center mb-4 bimeh-header">
         <div>
             <h5 class="fw-bold mb-1 text-dark">مدیریت لیست بیمه</h5>
             <p class="text-muted small mb-0">لیست و وضعیت درخواست‌های ثبت شده در سیستم</p>
         </div>
-        <a class="btn btn-primary px-4 shadow-sm" style="border-radius: 10px; background-color: var(--primary-main);" asp-action="Create">
+        <a class="btn btn-primary px-4 shadow-sm bimeh-new-btn" asp-action="Create">
             <i class="bi bi-plus-lg ms-1"></i> لیست جدید
         </a>
-        
     </div>
-</div>
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+
+    <div class="card border-0 shadow-sm bimeh-card">
+        <div class="card-body border-bottom p-3 p-md-4">
+            <form method="get" asp-action="Index" class="row g-2 g-md-3 align-items-end">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label asp-for="SearchTerm" class="form-label small text-muted mb-1">جستجو</label>
+                    <input asp-for="SearchTerm" class="form-control" placeholder="پروژه یا مدیر پروژه" />
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label asp-for="Month" class="form-label small text-muted mb-1">ماه</label>
+                    <input asp-for="Month" type="number" min="1" max="12" class="form-control" />
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label asp-for="Year" class="form-label small text-muted mb-1">سال</label>
+                    <input asp-for="Year" type="number" min="1300" max="1600" class="form-control" />
+                </div>
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="Status" class="form-label small text-muted mb-1">وضعیت</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="">همه</option>
+                        @foreach (var status in Model.AvailableStatuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-2 d-grid d-md-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">اعمال</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">حذف</a>
+                </div>
+            </form>
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                <small class="text-muted">تعداد کل: @Model.TotalCount</small>
+                <small class="text-muted">نتایج فیلتر: @Model.FilteredCount</small>
+            </div>
+        </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>پروژه</th>
-                    <th>مدیر</th>
-                    <th>ماه</th>
-                    <th>تعداد پرسنل</th>
-                    <th>وضعیت</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                @foreach (var item in Model)
-                {
+            <table class="table table-hover align-middle mb-0 bimeh-table">
+                <thead>
                     <tr>
-                        <td>@item.ProjectName</td>
-                        <td>@item.ManagerName</td>
-                        <td>@item.Month / @item.Year</td>
-                        <td>@item.EmployeeCount</td>
-                        <td>@item.Status</td>
+                        <th>پروژه</th>
+                        <th>مدیر</th>
+                        <th>ماه</th>
+                        <th>تعداد پرسنل</th>
+                        <th>وضعیت</th>
+                        <th class="text-center">عملیات</th>
                     </tr>
-                }
-
+                </thead>
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.ProjectName</td>
+                                <td>@item.ManagerName</td>
+                                <td>@item.Month / @item.Year</td>
+                                <td>
+                                    <span class="badge bimeh-count-badge">@item.EmployeeCount نفر</span>
+                                </td>
+                                <td>
+                                    <span class="badge bimeh-status-badge">@item.Status</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">جزئیات</a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">ویرایش</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">حذف</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                هنوز لیست بیمه‌ای ثبت نشده است.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
             </table>
         </div>
     </div>
-           
+
+</div>

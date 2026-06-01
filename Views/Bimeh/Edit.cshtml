@@ -1,6 +1,6 @@
-﻿@model InsuranceCreateVM
+﻿@model InsuranceEditVM
 @{
-    ViewData["Title"] = "ایجاد لیست بیمه";
+    ViewData["Title"] = "ویرایش لیست بیمه";
 }
 
 @section Styles {
@@ -12,23 +12,24 @@
         <div class="card-body p-4 p-md-5">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                 <div>
-                    <h5 class="fw-bold mb-1 text-dark">ثبت لیست بیمه جدید</h5>
-                    <p class="text-muted small mb-0">اطلاعات پروژه و پرسنل را وارد کنید.</p>
+                    <h5 class="fw-bold mb-1 text-dark">ویرایش لیست بیمه</h5>
+                    <p class="text-muted small mb-0">اطلاعات لیست و کارکنان را به‌روزرسانی کنید.</p>
                 </div>
                 <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
             </div>
 
-            <form asp-action="Create" method="post" id="bimehCreateForm">
+            <form asp-action="Edit" method="post" id="bimehEditForm">
                 <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                <input type="hidden" asp-for="Id" />
 
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-md-6 col-lg-3">
                         <label asp-for="ProjectName" class="form-label">پروژه</label>
                         <input asp-for="ProjectName" class="form-control" maxlength="150" />
                         <span asp-validation-for="ProjectName" class="text-danger small"></span>
                     </div>
 
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-md-6 col-lg-3">
                         <label asp-for="ManagerName" class="form-label">مدیر پروژه</label>
                         <input asp-for="ManagerName" class="form-control" maxlength="100" />
                         <span asp-validation-for="ManagerName" class="text-danger small"></span>
@@ -44,6 +45,17 @@
                         <label asp-for="Year" class="form-label">سال</label>
                         <input asp-for="Year" class="form-control" type="number" min="1300" max="1600" />
                         <span asp-validation-for="Year" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 col-lg-2">
+                        <label asp-for="Status" class="form-label">وضعیت</label>
+                        <select asp-for="Status" class="form-select">
+                            @foreach (var status in Model.AvailableStatuses)
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
                     </div>
                 </div>
 
@@ -68,13 +80,31 @@
                                 <th class="text-center">حذف</th>
                             </tr>
                         </thead>
-                        <tbody id="employeeRows"></tbody>
+                        <tbody id="employeeRows">
+                            @if (Model.Employees.Any())
+                            {
+                                @for (var index = 0; index < Model.Employees.Count; index++)
+                                {
+                                    <tr>
+                                        <td><input asp-for="Employees[index].FullName" class="form-control" maxlength="100" required data-field="FullName" /></td>
+                                        <td><input asp-for="Employees[index].JobTitle" class="form-control" maxlength="100" required data-field="JobTitle" /></td>
+                                        <td><input asp-for="Employees[index].StartWork" type="date" class="form-control" required data-field="StartWork" /></td>
+                                        <td><input asp-for="Employees[index].EndWork" type="date" class="form-control" data-field="EndWork" /></td>
+                                        <td><input asp-for="Employees[index].WorkDays" type="number" class="form-control" min="0" max="31" required data-field="WorkDays" /></td>
+                                        <td><input asp-for="Employees[index].Salary" type="number" class="form-control" min="0" step="0.01" required data-field="Salary" /></td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-outline-danger btn-sm removeRow">حذف</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
                     </table>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
                     <small id="employeeCountLabel" class="text-muted">تعداد کارکنان: 0</small>
-                    <button class="btn btn-success px-4">ذخیره لیست بیمه</button>
+                    <button class="btn btn-success px-4">ذخیره تغییرات</button>
                 </div>
             </form>
         </div>
@@ -137,7 +167,11 @@
                 }
             });
 
-            addRow();
+            if (rowsContainer.children.length === 0) {
+                addRow();
+            } else {
+                updateRowIndexes();
+            }
         })();
     </script>
 }

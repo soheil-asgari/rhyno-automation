@@ -1,264 +1,382 @@
-﻿
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using OfficeAutomation.Data;
 using OfficeAutomation.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq; // برای Select و ToList الزامی است
-using System.Threading.Tasks;
-using System.Security.Claims;
-
 
 namespace OfficeAutomation.Controllers
 {
+    [Authorize]
     public class SettingsController : Controller
     {
+        private const string DefaultApplicationTitle = "Rhyno Dashboard";
+        private const string DefaultLanguage = "fa-IR";
+        private const string DefaultTimeZone = "Asia/Tehran";
 
-
+        private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager; // اضافه شد
+        private readonly IWebHostEnvironment _environment;
 
-        // تزریق هر دو سرویس در سازنده
-        public SettingsController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+        public SettingsController(
+            ApplicationDbContext context,
+            UserManager<User> userManager,
+            IWebHostEnvironment environment)
         {
+            _context = context;
             _userManager = userManager;
-            _roleManager = roleManager;
+            _environment = environment;
         }
+
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
-            // ۱. گرفتن کاربر لاگین شده
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound();
-
-            // ۲. پر کردن لیست کاربران برای دراپ‌داون مدیران (در صورت نیاز)
-            ViewBag.UsersList = _userManager.Users
-                .Select(u => new User
-                {
-                    Id = u.Id,
-                    FullName = u.FullName,
-                    JobTitle = u.JobTitle,
-                    UserName = u.UserName
-                }).ToList();
-
-            // ۳. تبدیل مدل دیتابیس (User) به مدل نمایشی (UserViewModel)
-            // این دقیقاً همان چیزی است که ارور Model Mismatch را حل می‌کند
-            var viewModel = new UserViewModel
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                JobTitle = user.JobTitle,
-                Email = user.Email,
-                Gender = user.Gender,
-                ServiceLocation = user.ServiceLocation,
-                IsManager = user.IsManager,
-                Department = user.Department,
-                // اگر UserName در UserViewModel داری:
-                // UserName = user.UserName 
-            };
-
-            // ۴. ارسال ویومدل به صفحه
+            var viewModel = await BuildSettingsViewModelAsync(cancellationToken);
             return View(viewModel);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateGeneral([Bind(Prefix = "General")] GeneralSettingsViewModel model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                var vmWithErrors = await BuildSettingsViewModelAsync(cancellationToken);
+                vmWithErrors.General = model;
+                return View("Index", vmWithErrors);
+            }
+
+            var systemSetting = await _context.SystemSettings
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (systemSetting == null)
+            {
+                systemSetting = new SystemSetting();
+                _context.SystemSettings.Add(systemSetting);
+            }
+
+            systemSetting.ApplicationTitle = model.ApplicationTitle.Trim();
+            systemSetting.SystemLanguage = model.SystemLanguage;
+            systemSetting.TimeZoneId = model.TimeZoneId;
+            systemSetting.ActiveEnvironment = _environment.EnvironmentName;
+            systemSetting.UpdatedAtUtc = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TempData["SettingsSuccess"] = "تنظیمات عمومی با موفقیت ذخیره شد.";
+            return RedirectToAction(nameof(Index));
+        }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateUser(UserViewModel model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile([Bind(Prefix = "Profile")] ProfileSettingsViewModel model, CancellationToken cancellationToken)
         {
-            // ۱. چک کردن تکراری نبودن بر اساس ایمیل
-            var existingUser = await _userManager.FindByEmailAsync(model.Email);
-            if (existingUser != null)
+            if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "این ایمیل قبلاً ثبت شده است." });
+                var vmWithErrors = await BuildSettingsViewModelAsync(cancellationToken);
+                vmWithErrors.Profile = model;
+                return View("Index", vmWithErrors);
             }
 
-            // ۲. ایجاد شیء کاربر و انتساب مستقیم مقادیر
-            var user = new User
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
             {
-                UserName = model.Email,
-                Email = model.Email,
-                FullName = model.FullName,
-                IsManager = model.IsManager,
-                JobTitle = model.JobTitle,
-                Gender = model.Gender,
-                ServiceLocation = model.ServiceLocation,
-                ManagerId = model.ManagerId,
-                // چون در ویومدل نوع داده را اصلاح کردیم، اینجا انتساب مستقیم انجام می‌شود
-                Department = model.Department,
-                EmailConfirmed = true
-            };
+                return NotFound();
+            }
 
-            // ۳. ساخت کاربر در دیتابیس
-            var result = await _userManager.CreateAsync(user, model.Password);
+            user.FullName = model.FullName.Trim();
+            user.Email = model.Email.Trim();
+            user.UserName = model.Email.Trim();
+            user.JobTitle = model.JobTitle?.Trim();
+            user.PhoneNumber = model.PhoneNumber?.Trim();
+            user.ServiceLocation = model.ServiceLocation?.Trim();
 
-            if (result.Succeeded)
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
             {
-                // ۴. مدیریت نقش (Role)
-                var role = string.IsNullOrEmpty(model.Role) ? "User" : model.Role;
-                if (!await _roleManager.RoleExistsAsync(role))
+                foreach (var error in result.Errors)
                 {
-                    await _roleManager.CreateAsync(new IdentityRole(role));
+                    ModelState.AddModelError(string.Empty, error.Description);
                 }
-                await _userManager.AddToRoleAsync(user, role);
 
-                return Json(new { success = true, message = "کاربر جدید با موفقیت ایجاد شد." });
+                var vmWithErrors = await BuildSettingsViewModelAsync(cancellationToken);
+                vmWithErrors.Profile = model;
+                return View("Index", vmWithErrors);
             }
 
-            var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
-            return Json(new { success = false, message = errors });
+            TempData["SettingsSuccess"] = "پروفایل شما با موفقیت بروزرسانی شد.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([Bind(Prefix = "Password")] ChangePasswordViewModel model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                var vmWithErrors = await BuildSettingsViewModelAsync(cancellationToken);
+                vmWithErrors.Password = model;
+                return View("Index", vmWithErrors);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                var vmWithErrors = await BuildSettingsViewModelAsync(cancellationToken);
+                vmWithErrors.Password = new ChangePasswordViewModel();
+                return View("Index", vmWithErrors);
+            }
+
+            TempData["SettingsSuccess"] = "رمز عبور با موفقیت تغییر کرد.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateSystem([Bind(Prefix = "System")] SystemConnectivitySettingsViewModel model, CancellationToken cancellationToken)
+        {
+            var systemSetting = await _context.SystemSettings
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (systemSetting == null)
+            {
+                systemSetting = new SystemSetting();
+                _context.SystemSettings.Add(systemSetting);
+            }
+
+            systemSetting.MaintenanceMode = model.MaintenanceMode;
+            systemSetting.ActiveEnvironment = _environment.EnvironmentName;
+            systemSetting.UpdatedAtUtc = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TempData["SettingsSuccess"] = "تنظیمات اتصال و نگهداری با موفقیت ذخیره شد.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateUi([Bind(Prefix = "Ui")] UiPreferencesViewModel model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                var vmWithErrors = await BuildSettingsViewModelAsync(cancellationToken);
+                vmWithErrors.Ui = model;
+                return View("Index", vmWithErrors);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var preference = await _context.UserPreferences
+                .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+
+            if (preference == null)
+            {
+                preference = new UserPreference { UserId = user.Id };
+                _context.UserPreferences.Add(preference);
+            }
+
+            preference.SidebarCollapsedByDefault = model.SidebarCollapsedByDefault;
+            preference.ThemePreference = model.ThemePreference;
+            preference.UpdatedAtUtc = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            TempData["SettingsSuccess"] = "تنظیمات ظاهری با موفقیت ذخیره شد.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public IActionResult UserSignatureManagement()
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public IActionResult AddNewUser()
+        {
+            return RedirectToAction("Create", "Users");
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public IActionResult CreateUser()
+        {
+            return RedirectToAction("Create", "Users");
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateUser(UserViewModel model)
+        public async Task<IActionResult> SaveSignature([FromBody] SignatureUploadModel? model)
         {
-            // لاگ برای ردیابی ورود داده‌ها
-            Console.WriteLine($"--- شروع آپدیت کاربر: {model.FullName} (ID: {model.Id}) ---");
-
-            try
+            if (string.IsNullOrWhiteSpace(model?.ImageData))
             {
-                var user = await _userManager.FindByIdAsync(model.Id);
-                if (user == null)
-                {
-                    Console.WriteLine("خطا: کاربر در دیتابیس یافت نشد.");
-                    return Json(new { success = false, message = "کاربر یافت نشد" });
-                }
+                return Json(new { success = false, message = "داده امضا ارسال نشده است." });
+            }
 
-                // بروزرسانی فیلدها
-                user.FullName = model.FullName;
-                user.JobTitle = model.JobTitle;
-                user.Gender = model.Gender;
-                user.ServiceLocation = model.ServiceLocation;
-                user.IsManager = model.IsManager;
-                user.ManagerId = model.ManagerId;
-                user.Department = model.Department;
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "کاربر یافت نشد." });
+            }
 
-                var result = await _userManager.UpdateAsync(user);
+            user.SignaturePath = model.ImageData;
+            var result = await _userManager.UpdateAsync(user);
 
-                if (result.Succeeded)
-                {
-                    Console.WriteLine("موفقیت: اطلاعات پایه در دیتابیس ذخیره شد.");
-
-                    // مدیریت رمز عبور
-                    if (!string.IsNullOrEmpty(model.NewPassword))
-                    {
-                        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                        var passResult = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
-                        Console.WriteLine(passResult.Succeeded ? "رمز عبور تغییر کرد." : "خطا در تغییر رمز.");
-                    }
-
-                    return Json(new { success = true, message = "تغییرات با موفقیت اعمال شد." });
-                }
-
-                // اگر UpdateAsync شکست خورد، خطاها را لاگ کن
-                var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
-                Console.WriteLine($"خطای دیتابیس: {errors}");
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(" | ", result.Errors.Select(error => error.Description));
                 return Json(new { success = false, message = errors });
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"خطای غیرمنتظره: {ex.Message}");
-                return Json(new { success = false, message = "خطای سرور: " + ex.Message });
-            }
+
+            return Json(new { success = true });
         }
-        [HttpPost]
-        public async Task<IActionResult> SaveSignature([FromBody] SignatureUploadModel model)
+
+        private async Task<SettingsIndexViewModel> BuildSettingsViewModelAsync(CancellationToken cancellationToken)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Json(new { success = false, message = "کاربر یافت نشد" });
-            if (string.IsNullOrEmpty(model.ImageData)) return Json(new { success = false, message = "داده تصویر خالی است" });
-
-            try
+            if (user == null)
             {
-                user.SignaturePath = model.ImageData;
-                var result = await _userManager.UpdateAsync(user);
-                return Json(new { success = result.Succeeded });
+                return new SettingsIndexViewModel
+                {
+                    Languages = GetLanguageOptions(),
+                    TimeZones = GetTimeZoneOptions(),
+                    Themes = GetThemeOptions()
+                };
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
-        }
 
-        // مدیریت کاربران - مخصوص ادمین
-        [Authorize(Roles = "Admin")]
-        [HttpGet]
-        public IActionResult GetAllUsers()
-        {
-            var users = _userManager.Users.Select(u => new
+            var systemSetting = await _context.SystemSettings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var userPreference = await _context.UserPreferences
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+
+            var canConnectDb = await _context.Database
+                .CanConnectAsync(cancellationToken);
+
+            var defaultSystem = BuildDefaultSystemSetting();
+            var resolvedSystem = systemSetting ?? defaultSystem;
+
+            return new SettingsIndexViewModel
             {
-                id = u.Id,
-                fullName = u.FullName,
-                userName = u.UserName,
-                jobTitle = u.JobTitle,
-                email = u.Email,
-                serviceLocation = u.ServiceLocation,
-                department = u.Department,
-                gender = u.Gender,
-                isManager = u.IsManager,
-                managerId = u.ManagerId
-            }).ToList();
-
-            return Json(users);
+                General = new GeneralSettingsViewModel
+                {
+                    ApplicationTitle = resolvedSystem.ApplicationTitle,
+                    SystemLanguage = resolvedSystem.SystemLanguage,
+                    TimeZoneId = resolvedSystem.TimeZoneId
+                },
+                Profile = new ProfileSettingsViewModel
+                {
+                    FullName = user.FullName ?? string.Empty,
+                    Email = user.Email ?? user.UserName ?? string.Empty,
+                    JobTitle = user.JobTitle,
+                    PhoneNumber = user.PhoneNumber,
+                    ServiceLocation = user.ServiceLocation
+                },
+                Password = new ChangePasswordViewModel(),
+                System = new SystemConnectivitySettingsViewModel
+                {
+                    IsDatabaseConnected = canConnectDb,
+                    ActiveEnvironment = resolvedSystem.ActiveEnvironment ?? _environment.EnvironmentName,
+                    MaintenanceMode = resolvedSystem.MaintenanceMode,
+                    LastUpdatedUtc = resolvedSystem.UpdatedAtUtc
+                },
+                Ui = new UiPreferencesViewModel
+                {
+                    SidebarCollapsedByDefault = userPreference?.SidebarCollapsedByDefault ?? false,
+                    ThemePreference = userPreference?.ThemePreference ?? "System"
+                },
+                CurrentUserSignaturePath = user.SignaturePath,
+                Languages = GetLanguageOptions(),
+                TimeZones = GetTimeZoneOptions(),
+                Themes = GetThemeOptions()
+            };
         }
 
-
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser(string userId)
+        private static SystemSetting BuildDefaultSystemSetting()
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return Json(new { success = false });
-
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser.Id == userId) return Json(new { success = false, message = "خودتان را نمی‌توانید حذف کنید." });
-
-            var result = await _userManager.DeleteAsync(user);
-            return Json(new { success = result.Succeeded });
-        }
-
-        // متد نجات‌بخش برای ادمین کردن اکانت شما
-        [HttpGet]
-        public async Task<string> CreateTestAdmin()
-        {
-            var roleName = "Admin";
-            if (!await _roleManager.RoleExistsAsync(roleName))
-                await _roleManager.CreateAsync(new IdentityRole(roleName));
-
-            var user = await _userManager.FindByEmailAsync("admin@alpha.com");
-            if (user != null)
+            return new SystemSetting
             {
-                await _userManager.AddToRoleAsync(user, roleName);
-                return "تبریک! شما الان ادمین هستید. صفحه تنظیمات را رفرش کنید.";
-            }
-            return "کاربر admin@alpha.com پیدا نشد.";
+                ApplicationTitle = DefaultApplicationTitle,
+                SystemLanguage = DefaultLanguage,
+                TimeZoneId = DefaultTimeZone,
+                ActiveEnvironment = null,
+                MaintenanceMode = false,
+                UpdatedAtUtc = DateTime.UtcNow
+            };
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetUser(string id)
+        private static IReadOnlyCollection<SelectListItem> GetLanguageOptions()
         {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-
-            var roles = await _userManager.GetRolesAsync(user);
-
-            return Json(new
+            return new List<SelectListItem>
             {
-                id = user.Id,
-                fullName = user.FullName,
-                userName = user.UserName,
-                jobTitle = user.JobTitle,
-                gender = user.Gender,
-                location = user.ServiceLocation,
-                // نکته مهم: ارسال مقدار عددی برای هماهنگی با Select HTML
-                department = user.Department.ToString(),
-                isManager = user.IsManager,
-                managerId = user.ManagerId,
-                role = roles.FirstOrDefault() ?? "User"
-            });
+                new() { Text = "فارسی", Value = "fa-IR" },
+                new() { Text = "English", Value = "en-US" },
+                new() { Text = "العربية", Value = "ar-SA" }
+            };
         }
 
-        public class SignatureUploadModel { public string ImageData { get; set; } }
+        private static IReadOnlyCollection<SelectListItem> GetThemeOptions()
+        {
+            return new List<SelectListItem>
+            {
+                new() { Text = "روشن (Light)", Value = "Light" },
+                new() { Text = "تیره (Dark)", Value = "Dark" },
+                new() { Text = "سیستمی (System)", Value = "System" }
+            };
+        }
+
+        private static IReadOnlyCollection<SelectListItem> GetTimeZoneOptions()
+        {
+            var preferred = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "Asia/Tehran",
+                "UTC",
+                "Europe/Istanbul",
+                "Asia/Dubai"
+            };
+
+            var list = TimeZoneInfo.GetSystemTimeZones()
+                .Select(zone => new SelectListItem
+                {
+                    Value = zone.Id,
+                    Text = $"{zone.DisplayName} ({zone.Id})"
+                })
+                .ToList();
+
+            var ordered = list
+                .OrderByDescending(item => preferred.Contains(item.Value ?? string.Empty))
+                .ThenBy(item => item.Text)
+                .ToList();
+
+            return ordered;
+        }
+
+        public class SignatureUploadModel
+        {
+            public string? ImageData { get; set; }
+        }
     }
 }

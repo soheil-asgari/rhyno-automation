@@ -1,0 +1,74 @@
+@model WaybillDetailsVM
+@{
+    ViewData["Title"] = "جزئیات بارنامه";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Waybill.css" asp-append-version="true" />
+}
+
+<div class="container-fluid py-4 waybill-page">
+    <div class="card border-0 shadow-sm waybill-card">
+        <div class="card-body p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">جزئیات بارنامه</h5>
+                    <p class="text-muted small mb-0">مشاهده کامل اطلاعات بارنامه @Model.WaybillNumber</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">ویرایش</a>
+                    <a asp-action="Index" class="btn btn-outline-primary">بازگشت</a>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="waybill-info-card">
+                        <h6>اطلاعات بارنامه</h6>
+                        <div class="waybill-info-row"><span>شماره بارنامه</span><strong>@Model.WaybillNumber</strong></div>
+                        <div class="waybill-info-row"><span>تاریخ صدور</span><strong>@Model.IssueDate.ToString("yyyy/MM/dd")</strong></div>
+                        <div class="waybill-info-row"><span>تاریخ بارگیری</span><strong>@Model.LoadingDate.ToString("yyyy/MM/dd")</strong></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="waybill-info-card">
+                        <h6>فرستنده و گیرنده</h6>
+                        <div class="waybill-info-row"><span>فرستنده</span><strong>@Model.SenderName</strong></div>
+                        <div class="waybill-info-row"><span>مبدا</span><strong>@Model.OriginCity</strong></div>
+                        <div class="waybill-info-row"><span>گیرنده</span><strong>@Model.ReceiverName</strong></div>
+                        <div class="waybill-info-row"><span>مقصد</span><strong>@Model.DestinationCity</strong></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="waybill-info-card">
+                        <h6>راننده و خودرو</h6>
+                        <div class="waybill-info-row"><span>نام راننده</span><strong>@Model.DriverName</strong></div>
+                        <div class="waybill-info-row"><span>کد ملی</span><strong>@Model.DriverNationalId</strong></div>
+                        <div class="waybill-info-row"><span>تلفن</span><strong>@Model.DriverPhone</strong></div>
+                        <div class="waybill-info-row"><span>پلاک خودرو</span><strong>@Model.VehiclePlateNumber</strong></div>
+                        <div class="waybill-info-row"><span>نوع خودرو</span><strong>@Model.VehicleType</strong></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="waybill-info-card">
+                        <h6>اطلاعات مالی و بار</h6>
+                        <div class="waybill-info-row"><span>نوع بار</span><strong>@Model.CargoType</strong></div>
+                        <div class="waybill-info-row"><span>وزن</span><strong>@Model.Weight.ToString("N3")</strong></div>
+                        <div class="waybill-info-row"><span>کرایه کل</span><strong>@Model.TotalFreightCharges.ToString("N0")</strong></div>
+                        <div class="waybill-info-row"><span>کمیسیون</span><strong>@Model.DriverCommission.ToString("N0")</strong></div>
+                        <div class="waybill-info-row"><span>صافی راننده</span><strong>@Model.NetPayToDriver.ToString("N0")</strong></div>
+                        <div class="waybill-info-row"><span>وضعیت پرداخت</span><strong><span class="badge waybill-status-badge">@Model.PaymentStatus</span></strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="waybill-meta mt-4 pt-3 border-top small text-muted d-flex flex-wrap gap-3">
+                <span>تاریخ ثبت: @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+                @if (Model.UpdatedAt.HasValue)
+                {
+                    <span>آخرین بروزرسانی: @Model.UpdatedAt.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>

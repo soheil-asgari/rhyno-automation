@@ -1,0 +1,37 @@
+@model OfficeAutomation.Models.SettingsIndexViewModel
+
+<div class="settings-panel">
+    <div class="section-head">
+        <h2>تنظیمات ظاهری</h2>
+        <p>کنترل رفتار سایدبار و انتخاب تم متناسب با تجربه کاربری</p>
+    </div>
+
+    <form asp-action="UpdateUi" asp-controller="Settings" method="post" class="settings-form">
+        @Html.AntiForgeryToken()
+
+        <div class="preferences-grid">
+            <div class="preference-card">
+                <div class="preference-title">رفتار پیش‌فرض سایدبار</div>
+                <p class="preference-text">می‌توانید تعیین کنید سایدبار به‌صورت باز یا جمع‌شده نمایش داده شود.</p>
+                <div class="form-check form-switch form-switch-lg">
+                    <input asp-for="Ui.SidebarCollapsedByDefault" class="form-check-input" type="checkbox" role="switch" />
+                    <label asp-for="Ui.SidebarCollapsedByDefault" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <div class="preference-card">
+                <div class="preference-title">انتخاب تم</div>
+                <p class="preference-text">تم نمایشی پنل را بین حالت روشن، تیره یا سیستمی تعیین کنید.</p>
+                <select asp-for="Ui.ThemePreference" asp-items="Model.Themes" class="form-select"></select>
+                <span asp-validation-for="Ui.ThemePreference" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="actions-row">
+            <button type="submit" class="btn settings-btn-primary">
+                <i class="bi bi-palette"></i>
+                <span>ذخیره تنظیمات ظاهری</span>
+            </button>
+        </div>
+    </form>
+</div>

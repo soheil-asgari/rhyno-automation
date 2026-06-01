@@ -1,0 +1,144 @@
+:root {
+    --waybill-primary: #4f46e5;
+    --waybill-primary-soft: #eef2ff;
+    --waybill-success-soft: #ecfdf5;
+    --waybill-success-text: #065f46;
+    --waybill-warning-soft: #fffbeb;
+    --waybill-warning-text: #92400e;
+    --waybill-info-soft: #ecfeff;
+    --waybill-info-text: #155e75;
+}
+
+.waybill-page {
+    direction: rtl;
+    text-align: right;
+    max-width: 1200px;
+}
+
+.waybill-header {
+    gap: 12px;
+}
+
+.waybill-card {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.waybill-new-btn {
+    border-radius: 10px;
+    background-color: var(--waybill-primary);
+    border-color: var(--waybill-primary);
+}
+
+.waybill-table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.86rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.waybill-table td {
+    vertical-align: middle;
+}
+
+.waybill-table .btn {
+    border-radius: 8px;
+}
+
+.waybill-status-badge {
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.waybill-status-badge.status-paid {
+    background-color: var(--waybill-success-soft);
+    color: var(--waybill-success-text);
+    border-color: #a7f3d0;
+}
+
+.waybill-status-badge.status-pending {
+    background-color: var(--waybill-warning-soft);
+    color: var(--waybill-warning-text);
+    border-color: #fde68a;
+}
+
+.waybill-status-badge.status-internal {
+    background-color: var(--waybill-info-soft);
+    color: var(--waybill-info-text);
+    border-color: #bae6fd;
+}
+
+.waybill-section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.85rem;
+    border-right: 3px solid var(--waybill-primary);
+    padding-right: 0.65rem;
+}
+
+.waybill-info-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem;
+    height: 100%;
+}
+
+.waybill-info-card h6 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.85rem;
+}
+
+.waybill-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px dashed #e2e8f0;
+    font-size: 0.88rem;
+}
+
+.waybill-info-row:last-child {
+    border-bottom: 0;
+}
+
+.waybill-info-row span {
+    color: #64748b;
+}
+
+.waybill-info-row strong {
+    color: #0f172a;
+    text-align: left;
+}
+
+.waybill-danger-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+}
+
+.waybill-delete-summary {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .waybill-page {
+        padding-inline: 0.5rem;
+    }
+}

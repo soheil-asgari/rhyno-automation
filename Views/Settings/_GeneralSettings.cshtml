@@ -1,0 +1,49 @@
+@model OfficeAutomation.Models.SettingsIndexViewModel
+
+<div class="settings-panel">
+    <div class="section-head">
+        <h2>تنظیمات عمومی</h2>
+        <p>تعریف هویت سامانه، زبان پیش‌فرض و منطقه زمانی</p>
+    </div>
+
+    <form asp-action="UpdateGeneral" asp-controller="Settings" method="post" class="settings-form">
+        @Html.AntiForgeryToken()
+
+        <div class="field-grid">
+            <div class="field-group">
+                <label asp-for="General.ApplicationTitle" class="form-label"></label>
+                <input asp-for="General.ApplicationTitle" class="form-control" placeholder="Rhyno Enterprise" />
+                <span asp-validation-for="General.ApplicationTitle" class="text-danger"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="General.SystemLanguage" class="form-label"></label>
+                <select asp-for="General.SystemLanguage" asp-items="Model.Languages" class="form-select"></select>
+                <span asp-validation-for="General.SystemLanguage" class="text-danger"></span>
+            </div>
+
+            <div class="field-group field-full">
+                <label asp-for="General.TimeZoneId" class="form-label"></label>
+                <select asp-for="General.TimeZoneId" asp-items="Model.TimeZones" class="form-select"></select>
+                <span asp-validation-for="General.TimeZoneId" class="text-danger"></span>
+            </div>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="actions-row">
+                <button type="submit" class="btn settings-btn-primary">
+                    <i class="bi bi-save2"></i>
+                    <span>ذخیره تنظیمات عمومی</span>
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="role-hint">
+                <i class="bi bi-info-circle"></i>
+                <span>ویرایش تنظیمات عمومی فقط برای مدیر سیستم فعال است.</span>
+            </div>
+        }
+    </form>
+</div>

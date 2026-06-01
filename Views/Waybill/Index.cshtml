@@ -1,0 +1,108 @@
+@model WaybillIndexVM
+@{
+    ViewData["Title"] = "ثبت بارنامه";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Waybill.css" asp-append-version="true" />
+}
+
+<div class="container-fluid py-4 waybill-page">
+    <div class="d-flex justify-content-between align-items-center mb-4 waybill-header">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">مدیریت بارنامه‌ها</h5>
+            <p class="text-muted small mb-0">ثبت، جستجو و پیگیری وضعیت پرداخت بارنامه‌ها</p>
+        </div>
+        <a class="btn btn-primary px-4 shadow-sm waybill-new-btn" asp-action="Create">
+            <i class="bi bi-plus-lg ms-1"></i> ثبت بارنامه جدید
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm waybill-card">
+        <div class="card-body border-bottom p-3 p-md-4">
+            <form method="get" asp-action="Index" class="row g-2 g-md-3 align-items-end">
+                <div class="col-12 col-md-7 col-lg-5">
+                    <label asp-for="SearchTerm" class="form-label small text-muted mb-1">جستجو</label>
+                    <input asp-for="SearchTerm" class="form-control" placeholder="شماره بارنامه، راننده، مبدا یا مقصد" />
+                </div>
+                <div class="col-12 col-md-5 col-lg-3">
+                    <label asp-for="PaymentStatus" class="form-label small text-muted mb-1">وضعیت پرداخت</label>
+                    <select asp-for="PaymentStatus" class="form-select">
+                        <option value="">همه</option>
+                        @foreach (var status in Model.AvailablePaymentStatuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-lg-4 d-grid d-md-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">اعمال</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">حذف فیلتر</a>
+                </div>
+            </form>
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                <small class="text-muted">تعداد کل: @Model.TotalCount</small>
+                <small class="text-muted">نتایج فیلتر: @Model.FilteredCount</small>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 waybill-table">
+                <thead>
+                    <tr>
+                        <th>شماره بارنامه</th>
+                        <th>تاریخ صدور</th>
+                        <th>مبدا / مقصد</th>
+                        <th>راننده</th>
+                        <th>صافی راننده</th>
+                        <th>وضعیت پرداخت</th>
+                        <th class="text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.WaybillNumber</td>
+                                <td>@item.IssueDate.ToString("yyyy/MM/dd")</td>
+                                <td>@item.OriginCity <span class="text-muted">→</span> @item.DestinationCity</td>
+                                <td>@item.DriverName</td>
+                                <td class="fw-semibold">@item.NetPayToDriver.ToString("N0")</td>
+                                <td>
+                                    <span class="badge waybill-status-badge @GetStatusClass(item.PaymentStatus)">@item.PaymentStatus</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">جزئیات</a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">ویرایش</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">حذف</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">بارنامه‌ای برای نمایش وجود ندارد.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private static string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Paid" => "status-paid",
+            "Pending" => "status-pending",
+            "Internal" => "status-internal",
+            _ => "status-pending"
+        };
+    }
+}

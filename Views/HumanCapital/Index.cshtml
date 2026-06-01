@@ -1,35 +1,144 @@
-﻿@{
+@model HumanCapitalIndexVM
+@{
     ViewData["Title"] = "سرمایه انسانی";
 }
 
-<div class="container-fluid py-3">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h1 class="h4 mb-0">سرمایه انسانی</h1>
+@section Styles {
+    <link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
+}
+
+<div class="container-fluid py-4 hc-page">
+    <div class="d-flex justify-content-between align-items-center mb-4 hc-header">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">مدیریت سرمایه انسانی</h5>
+            <p class="text-muted small mb-0">مدیریت چرخه کامل کارکنان: استخدام، افزایش حقوق، تعدیل، ترک کار و پایان خدمت</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary px-4 hc-new-btn">
+            <i class="bi bi-person-plus ms-1"></i>
+            استخدام جدید
+        </a>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-lg-6">
-            <div class="card shadow-sm">
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm hc-stat-card">
                 <div class="card-body">
-                    <h2 class="h6">خلاصه</h2>
-                    <p class="text-muted mb-0">
-                        این صفحه نقطه شروع ماژول منابع انسانی است (پرسنل، احکام، قراردادها، مرخصی، حضور و غیاب و ...).
-                    </p>
+                    <small class="text-muted d-block">کل پرسنل</small>
+                    <span class="fs-5 fw-bold">@Model.TotalCount</span>
                 </div>
             </div>
         </div>
-
-        <div class="col-12 col-lg-6">
-            <div class="card shadow-sm">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm hc-stat-card">
                 <div class="card-body">
-                    <h2 class="h6">میانبرها</h2>
-                    <ul class="mb-0">
-                        <li>لیست پرسنل</li>
-                        <li>درخواست‌های مرخصی</li>
-                        <li>گزارش حضور و غیاب</li>
-                    </ul>
+                    <small class="text-muted d-block">پرسنل فعال</small>
+                    <span class="fs-5 fw-bold text-success">@Model.ActiveCount</span>
                 </div>
             </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm hc-stat-card">
+                <div class="card-body">
+                    <small class="text-muted d-block">پرسنل خارج شده</small>
+                    <span class="fs-5 fw-bold text-danger">@Model.SeparatedCount</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm hc-stat-card">
+                <div class="card-body">
+                    <small class="text-muted d-block">نتایج فیلتر</small>
+                    <span class="fs-5 fw-bold text-primary">@Model.FilteredCount</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm hc-card mb-3">
+        <div class="card-body border-bottom p-3 p-md-4">
+            <form method="get" asp-action="Index" class="row g-2 g-md-3 align-items-end">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label asp-for="SearchTerm" class="form-label small text-muted mb-1"></label>
+                    <input asp-for="SearchTerm" class="form-control" placeholder="نام، کد پرسنلی، کد ملی یا عنوان شغلی" />
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <label asp-for="Status" class="form-label small text-muted mb-1"></label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="">همه وضعیت‌ها</option>
+                        @foreach (var status in Model.StatusOptions)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <label asp-for="DepartmentId" class="form-label small text-muted mb-1"></label>
+                    <select asp-for="DepartmentId" class="form-select" asp-items="Model.DepartmentOptions">
+                        <option value="">همه دپارتمان‌ها</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-12 col-lg-3 d-grid d-md-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">اعمال فیلتر</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">حذف فیلتر</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 hc-table">
+                <thead>
+                    <tr>
+                        <th>پرسنل</th>
+                        <th>سمت / دپارتمان</th>
+                        <th>استخدام</th>
+                        <th>حقوق فعلی</th>
+                        <th>وضعیت</th>
+                        <th>سوابق</th>
+                        <th class="text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        @foreach (var employee in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold text-dark">@employee.FullName</div>
+                                    <small class="text-muted">کد پرسنلی: @employee.PersonnelCode</small>
+                                </td>
+                                <td>
+                                    <div>@employee.PositionTitle</div>
+                                    <small class="text-muted">@(employee.DepartmentName ?? "-")</small>
+                                </td>
+                                <td>@employee.HireDate.ToString("yyyy/MM/dd")</td>
+                                <td>@employee.CurrentSalary.ToString("N0")</td>
+                                <td>
+                                    <span class="badge hc-status-badge @(employee.CurrentStatus == "فعال" ? "hc-status-active" : "hc-status-inactive")">
+                                        @employee.CurrentStatus
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="small text-muted">افزایش حقوق: @employee.SalaryChangeCount</div>
+                                    <div class="small text-muted">آخرین رخداد: @(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="Details" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-primary">جزئیات</a>
+                                        <a asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-secondary">ویرایش</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">هیچ پرونده‌ای با فیلتر انتخاب‌شده یافت نشد.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

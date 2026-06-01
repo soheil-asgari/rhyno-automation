@@ -1,5 +1,64 @@
-﻿<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+﻿@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@using OfficeAutomation.Data
+@inject ApplicationDbContext DbContext
+@{
+    var displayName = User?.FindFirst("name")?.Value
+                      ?? User?.FindFirst(ClaimTypes.Name)?.Value
+                      ?? User?.Identity?.Name;
+    if (string.IsNullOrWhiteSpace(displayName))
+    {
+        displayName = "کاربر";
+    }
+
+    var userRoleLabel = "کاربر سیستم";
+    if (User?.Identity?.IsAuthenticated == true)
+    {
+        if (User.IsInRole("Admin"))
+        {
+            userRoleLabel = "مدیر سیستم";
+        }
+        else
+        {
+            var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value
+                            ?? User.FindFirst("role")?.Value;
+
+            if (!string.IsNullOrWhiteSpace(roleClaim))
+            {
+                userRoleLabel = roleClaim;
+            }
+        }
+    }
+
+    var themePreference = "System";
+    if (User?.Identity?.IsAuthenticated == true)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrWhiteSpace(currentUserId))
+        {
+            var savedTheme = await DbContext.UserPreferences
+                .AsNoTracking()
+                .Where(preference => preference.UserId == currentUserId)
+                .Select(preference => preference.ThemePreference)
+                .FirstOrDefaultAsync();
+
+            if (string.Equals(savedTheme, "Light", StringComparison.OrdinalIgnoreCase))
+            {
+                themePreference = "Light";
+            }
+            else if (string.Equals(savedTheme, "Dark", StringComparison.OrdinalIgnoreCase))
+            {
+                themePreference = "Dark";
+            }
+        }
+    }
+
+    var rootThemeClass = string.Equals(themePreference, "Dark", StringComparison.OrdinalIgnoreCase)
+        ? "theme-dark"
+        : "theme-light";
+}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="@themePreference.ToLowerInvariant()" class="@rootThemeClass">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -99,11 +158,20 @@
             display: flex;
             flex-direction: column;
         }
+
+        .user-profile-link .user-profile-pill {
+            transition: background-color 0.2s ease;
+        }
+
+        .user-profile-link:hover .user-profile-pill,
+        .user-profile-link:focus-visible .user-profile-pill {
+            background-color: #f8fafc;
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
-<body>
+<body data-theme="@themePreference.ToLowerInvariant()">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-shell">
@@ -161,7 +229,7 @@
                         <a class="nav-link sidebar-link" href="#">
                             <i class="bi bi-chat-left-dots me-2 text-secondary"></i> <span class="link-text">چت سازمانی</span>
                         </a>
-                        <a class="nav-link sidebar-link" href="#">
+                        <a class="nav-link sidebar-link" asp-controller="Waybill" asp-action="Index">
                             <i class="bi bi-truck me-2 text-secondary"></i> <span class="link-text">ثبت بارنامه</span>
                         </a>
                     </nav>
@@ -177,16 +245,18 @@
                 </div>
             </div>
 
-            <div class="user-profile-pill" style="padding: 15px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; background: #fff;">
-                <div class="user-avatar" style="position: relative;">
-                    <div style="width: 38px; height: 38px; background: #e2e8f0; border-radius: 50%; display:flex; align-items:center; justify-content:center;"><i class="bi bi-person-fill text-secondary"></i></div>
-                    <span class="online-status" style="position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background: #10b981; border: 2px solid #fff; border-radius: 50%;"></span>
+            <a asp-controller="Settings" asp-action="Index" class="user-profile-link" style="display: block; text-decoration: none; color: inherit; cursor: pointer;">
+                <div class="user-profile-pill" style="padding: 15px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; background: #fff;">
+                    <div class="user-avatar" style="position: relative;">
+                        <div style="width: 38px; height: 38px; background: #e2e8f0; border-radius: 50%; display:flex; align-items:center; justify-content:center;"><i class="bi bi-person-fill text-secondary"></i></div>
+                        <span class="online-status" style="position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background: #10b981; border: 2px solid #fff; border-radius: 50%;"></span>
+                    </div>
+                    <div class="user-info" style="flex: 1;">
+                        <span class="u-name" style="display: block; font-size: 0.85rem; font-weight: bold; color:#1e293b;">@displayName</span>
+                        <span class="u-role" style="font-size: 0.7rem; color: #64748b;">@userRoleLabel</span>
+                    </div>
                 </div>
-                <div class="user-info" style="flex: 1;">
-                    <span class="u-name" style="display: block; font-size: 0.85rem; font-weight: bold; color:#1e293b;">مدیر سیستم</span>
-                    <span class="u-role" style="font-size: 0.7rem; color: #64748b;">دسترسی کل</span>
-                </div>
-            </div>
+            </a>
         </aside>
 
         <div class="main-wrapper">
@@ -227,6 +297,32 @@
     <script src="https://lib.arvancloud.ir/jquery/3.6.3/jquery.min.js"></script>
     <script src="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/layout.js" asp-append-version="true"></script>
+    <script>
+        (() => {
+            const html = document.documentElement;
+            const storedPreference = localStorage.getItem('rhyno.theme.preference');
+            const fallbackPreference = '@themePreference';
+            const activePreference = storedPreference || fallbackPreference;
+            const normalized = (activePreference || 'System').toLowerCase();
+
+            html.classList.remove('theme-light', 'theme-dark');
+            html.setAttribute('data-theme', normalized);
+            document.body?.setAttribute('data-theme', normalized);
+
+            if (normalized === 'light') {
+                html.classList.add('theme-light');
+                return;
+            }
+
+            if (normalized === 'dark') {
+                html.classList.add('theme-dark');
+                return;
+            }
+
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
+        })();
+    </script>
     
     <script>
         // اسکریپت ساعت زنده در هدر بالایی

@@ -1,0 +1,85 @@
+:root {
+    --hc-primary: #4f46e5;
+    --hc-primary-soft: #eef2ff;
+    --hc-success-soft: #ecfdf5;
+    --hc-success-text: #047857;
+    --hc-danger-soft: #fef2f2;
+    --hc-danger-text: #b91c1c;
+}
+
+.hc-page {
+    direction: rtl;
+    text-align: right;
+    max-width: 1280px;
+}
+
+.hc-header {
+    gap: 12px;
+}
+
+.hc-card {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.hc-stat-card {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.hc-new-btn {
+    border-radius: 10px;
+    background-color: var(--hc-primary);
+    border-color: var(--hc-primary);
+}
+
+.hc-table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.hc-table td {
+    vertical-align: middle;
+}
+
+.hc-table .btn {
+    border-radius: 8px;
+}
+
+.hc-status-badge {
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0.45rem 0.7rem;
+}
+
+.hc-status-active {
+    background-color: var(--hc-success-soft);
+    border-color: #bbf7d0;
+    color: var(--hc-success-text);
+}
+
+.hc-status-inactive {
+    background-color: var(--hc-danger-soft);
+    border-color: #fecaca;
+    color: var(--hc-danger-text);
+}
+
+.hc-card .form-control,
+.hc-card .form-select {
+    border-radius: 10px;
+}
+
+.hc-card textarea.form-control {
+    resize: vertical;
+}
+
+@media (max-width: 768px) {
+    .hc-page {
+        padding-inline: 0.5rem;
+    }
+}

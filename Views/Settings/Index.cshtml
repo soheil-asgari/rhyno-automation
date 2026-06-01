@@ -1,322 +1,152 @@
-﻿@model OfficeAutomation.Models.UserViewModel
+@model OfficeAutomation.Models.SettingsIndexViewModel
 @{
-    ViewData["Title"] = "تنظیمات سیستم";
+    ViewData["Title"] = "تنظیمات";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/settings.css" />
+    <link rel="stylesheet" href="~/css/Settings.css" asp-append-version="true" />
 }
 
-
-<div class="container-fluid mt-4" style="direction: rtl; text-align: right;">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 settings-card">
-                <div class="card-body text-center">
-                    <div class="mb-3 position-relative">
-                        <div class="mx-auto" style="width: 110px; height: 110px; border-radius: 50%; background: #ffffff; border: 3px solid #4e73df; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                            @if (!string.IsNullOrEmpty(Model.SignaturePath))
-                            {
-                                <img src="@Model.SignaturePath" style="width: 100%;" id="side-sig-preview" />
-                            }
-                            else
-                            {
-                                <i class="bi bi-person-bounding-box text-light-emphasis" style="font-size: 3rem;"></i>
-                            }
-                        </div>
-                    </div>
-                    <h6 class="fw-bold mb-1">@Model.FullName</h6>
-                    <span class="badge bg-light text-primary mb-4">@Model.JobTitle</span>
-
-                    <div class="nav flex-column nav-pills pr-0" id="settings-tabs" role="tablist">
-                        <button type="button" class="nav-link active text-end" data-bs-toggle="pill" data-bs-target="#tab-profile">
-                            <i class="bi bi-person-vcard ms-2"></i> اطلاعات کاربری
-                        </button>
-
-                        <button type="button" class="nav-link text-end" data-bs-toggle="pill" data-bs-target="#tab-signature">
-                            <i class="bi bi-pen ms-2"></i> امضای دیجیتال
-                        </button>
-                      
-                        <a asp-controller="Departments"
-                               asp-action="Index"
-                               class="nav-link text-end">
-
-                            <i class="bi bi-diagram-3 ms-2"></i>
-                            مدیریت بخش‌ها
-
-                        </a>
-
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <hr class="my-2">
-                            <button type="button" class="nav-link text-end" data-bs-toggle="pill" data-bs-target="#tab-admin" id="btn-load-users">
-                                <i class="bi bi-people ms-2"></i> مدیریت کاربران
-                            </button>
-                        }
-                    </div>
-                </div>
-            </div>
+<div class="settings-page" dir="rtl">
+    @if (TempData["SettingsSuccess"] is string message)
+    {
+        <div class="alert alert-success settings-alert" role="alert">
+            <i class="bi bi-check2-circle"></i>
+            <span>@message</span>
         </div>
+    }
 
-        <div class="col-md-9">
-            <div class="tab-content card shadow-sm p-4 border-0 settings-card" style="min-height: 600px; background: white;">
-                
-                <div class="tab-pane fade show active" id="tab-profile">
-                    @await Html.PartialAsync("_ProfileSettings", Model)
-                </div>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger settings-alert"></div>
 
-                <div class="tab-pane fade" id="tab-signature">
-                    <h5 class="border-bottom pb-3 mb-4"><i class="bi bi-pencil-fill ms-2 text-primary"></i>مدیریت امضای دیجیتال</h5>
-
-                    <div class="sig-container border rounded bg-light mb-3" style="height: 300px;">
-                        <canvas id="sig-pad" style="width: 100%; height: 100%; cursor: crosshair;"></canvas>
-                    </div>
-
-                    <div class="d-flex gap-2 mb-3">
-                        <button class="btn btn-success px-4" id="sig-save">
-                            <i class="bi bi-check-lg ms-1"></i> ذخیره امضا
-                        </button>
-                        <button class="btn btn-outline-secondary" id="sig-clear">پاکسازی</button>
-
-                        <div class="position-relative overflow-hidden ms-auto">
-                            <button class="btn btn-outline-primary">
-                                <i class="bi bi-upload ms-1"></i> آپلود فایل امضا
-                            </button>
-                            <input type="file" id="sig-upload" accept="image/*" style="position: absolute; opacity: 0; right: 0; top: 0; cursor: pointer;" />
-                        </div>
-                    </div>
-                    <small class="text-muted d-block"><i class="bi bi-info-circle ms-1"></i>فرمت‌های مجاز: PNG, JPG (پیشنهاد می‌شود تصویر با پس‌زمینه شفاف باشد)</small>
-                </div>
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <div class="tab-pane fade" id="tab-admin">
-                        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <h5 class="text-dark mb-0"><i class="bi bi-people-fill ms-2 "></i>مدیریت کاربران سیستم</h5>
-                            <button type="button" class="btn btn-success shadow-sm" id="btn-manual-add-user">
-                                <i class="bi bi-plus-lg ms-1"></i> کاربر جدید
-                            </button>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table id="users-table" class="table table-hover align-middle border-0 w-100">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="text-center">#</th>
-                                        <th>نام و واحد</th>
-                                        <th>سمت</th>
-                                        <th>محل خدمت</th>
-                                        <th>نام کاربری</th>
-                                        <th class="text-center">عملیات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="users-list-body">
-                                    </tbody>
-                            </table>
-                        </div>
-                    </div>
-                }
-            </div> </div> </div> </div> 
-
-<div class="modal fade" id="modal-add-user" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content text-end" style="direction:rtl;">
-            <div class="modal-header">
-                <h5 class="modal-title">افزودن کاربر جدید</h5>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="small mb-1">نام کامل یا عنوان واحد سازمانی</label>
-                    <input type="text" id="add_name" class="form-control" placeholder="مثلاً: واحد حسابداری">
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">سمت / نوع واحد</label>
-                    <select id="add_job" class="form-select">
-                        <option value="شخصی">شخصی</option>
-                        <option value="واحد سازمانی">واحد سازمانی</option>
-                        <option value="مدیریت">مدیریت</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">نام کاربری</label>
-                    <input type="email" id="add_email" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">نوع مخاطب / جنسیت</label>
-                    <select id="add_gender" class="form-select">
-                        <option value="Male">آقا</option>
-                        <option value="Female">خانم</option>
-                        <option value="Department">واحد سازمانی / پست ثابت</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">واحد سازمانی</label>
-                    <select id="add_department" class="form-select">
-                        <option value="Technical">فنی</option>
-                        <option value="Financial">مالی</option>
-                        <option value="Administrative">اداری</option>
-                        <option value="HR">منابع انسانی</option>
-                        <option value="Management">مدیریت عالی</option>
-                    </select>
-                </div>
-                <div class="mb-3 d-flex align-items-center">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="add_is_manager">
-                        <label class="form-check-label fw-bold ms-2" for="add_is_manager">این کاربر مدیر واحد است</label>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">مدیر مستقیم (تایید کننده اول)</label>
-                    <select id="add_manager" class="form-select">
-                        <option value="">بدون مدیر (مثلاً خود مدیر عامل)</option>
-                        @if (ViewBag.UsersList != null)
-                        {
-                            foreach (var user in (List<OfficeAutomation.Models.User>)ViewBag.UsersList)
-                            {
-                                <option value="@user.Id">
-                                    @user.FullName @(string.IsNullOrEmpty(user.JobTitle) ? "" : $"({user.JobTitle})")
-                                </option>
-                            }
-                        }
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">محل خدمت</label>
-                    <select id="add_location" class="form-select">
-                        <option value="مرکز اصلی">مرکز اصلی</option>
-                        <option value="دفتر تهران">دفتر تهران</option>
-                        <option value="کارگاه مرکزی">کارگاه مرکزی</option>
-                        <option value="انبار">انبار</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">رمز عبور</label>
-                    <input type="password" id="add_pass" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">سطح دسترسی</label>
-                    <select id="add_role" class="form-select">
-                        <option value="User">کاربر معمولی</option>
-                        <option value="Admin">مدیر سیستم</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                <button type="button" class="btn btn-primary" onclick="createUser()">ذخیره کاربر</button>
-            </div>
+    <header class="settings-header-card">
+        <div>
+            <h1 class="settings-title">تنظیمات سامانه</h1>
+            <p class="settings-subtitle">مدیریت یکپارچه پیکربندی، امنیت و تجربه کاربری</p>
         </div>
+        <span class="settings-badge">Rhyno Settings Hub</span>
+    </header>
+
+    <div class="settings-shell">
+        <aside class="settings-side-nav nav nav-pills" id="settings-tab" role="tablist" aria-orientation="vertical">
+            <button class="nav-link active" id="general-tab" data-bs-toggle="pill" data-bs-target="#general-pane" type="button" role="tab" aria-controls="general-pane" aria-selected="true">
+                <i class="bi bi-sliders"></i>
+                <span>تنظیمات عمومی</span>
+            </button>
+            <button class="nav-link" id="security-tab" data-bs-toggle="pill" data-bs-target="#security-pane" type="button" role="tab" aria-controls="security-pane" aria-selected="false">
+                <i class="bi bi-shield-lock"></i>
+                <span>پروفایل و امنیت</span>
+            </button>
+            <button class="nav-link" id="system-tab" data-bs-toggle="pill" data-bs-target="#system-pane" type="button" role="tab" aria-controls="system-pane" aria-selected="false">
+                <i class="bi bi-hdd-network"></i>
+                <span>اتصال دیتابیس و شبکه</span>
+            </button>
+            <button class="nav-link" id="ui-tab" data-bs-toggle="pill" data-bs-target="#ui-pane" type="button" role="tab" aria-controls="ui-pane" aria-selected="false">
+                <i class="bi bi-palette2"></i>
+                <span>تنظیمات ظاهری</span>
+            </button>
+            @if (User.IsInRole("Admin"))
+            {
+                <button class="nav-link" id="signature-admin-tab" data-bs-toggle="pill" data-bs-target="#signature-admin-pane" type="button" role="tab" aria-controls="signature-admin-pane" aria-selected="false">
+                    <i class="bi bi-pen"></i>
+                    <span>مدیریت امضای کاربر</span>
+                </button>
+                <button class="nav-link" id="add-user-admin-tab" data-bs-toggle="pill" data-bs-target="#add-user-admin-pane" type="button" role="tab" aria-controls="add-user-admin-pane" aria-selected="false">
+                    <i class="bi bi-person-plus"></i>
+                    <span>افزودن کاربر</span>
+                </button>
+            }
+        </aside>
+
+        <section class="settings-content tab-content">
+            <div class="tab-pane fade show active" id="general-pane" role="tabpanel" aria-labelledby="general-tab" tabindex="0">
+                @await Html.PartialAsync("_GeneralSettings", Model)
+            </div>
+            <div class="tab-pane fade" id="security-pane" role="tabpanel" aria-labelledby="security-tab" tabindex="0">
+                @await Html.PartialAsync("_ProfileSecuritySettings", Model)
+            </div>
+            <div class="tab-pane fade" id="system-pane" role="tabpanel" aria-labelledby="system-tab" tabindex="0">
+                @await Html.PartialAsync("_SystemConnectivitySettings", Model)
+            </div>
+            <div class="tab-pane fade" id="ui-pane" role="tabpanel" aria-labelledby="ui-tab" tabindex="0">
+                @await Html.PartialAsync("_UiPreferencesSettings", Model)
+            </div>
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="tab-pane fade" id="signature-admin-pane" role="tabpanel" aria-labelledby="signature-admin-tab" tabindex="0">
+                    <div class="settings-panel">
+                        <div class="section-head">
+                            <h2>مدیریت امضای کاربر</h2>
+                            <p>ترسیم، آپلود و ذخیره مستقیم امضای دیجیتال بدون خروج از تنظیمات</p>
+                        </div>
+
+                        <div class="signature-admin-grid">
+                            <div class="signature-draw-card">
+                                <div class="signature-canvas-wrap">
+                                    <canvas id="signature-canvas" class="signature-canvas" aria-label="Signature Canvas"></canvas>
+                                </div>
+                                <div class="signature-actions">
+                                    <button type="button" class="btn settings-btn-primary" id="signature-save-btn">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>ذخیره امضا</span>
+                                    </button>
+                                    <button type="button" class="btn settings-btn-danger" id="signature-clear-btn">
+                                        <i class="bi bi-eraser"></i>
+                                        <span>پاک‌سازی</span>
+                                    </button>
+                                    <label class="btn btn-outline-primary signature-upload-btn mb-0">
+                                        <i class="bi bi-upload"></i>
+                                        <span>آپلود فایل</span>
+                                        <input type="file" id="signature-upload-input" accept="image/*" hidden />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="signature-preview-card">
+                                <h3 class="signature-preview-title">پیش‌نمایش امضای فعلی</h3>
+                                @if (!string.IsNullOrWhiteSpace(Model.CurrentUserSignaturePath))
+                                {
+                                    <img src="@Model.CurrentUserSignaturePath" alt="Current Signature" class="signature-preview-image" id="signature-current-preview" />
+                                }
+                                else
+                                {
+                                    <div class="signature-preview-empty" id="signature-current-preview-empty">
+                                        <i class="bi bi-pen"></i>
+                                        <span>هنوز امضایی ثبت نشده است.</span>
+                                    </div>
+                                }
+                                <div class="role-hint mb-0">
+                                    <i class="bi bi-shield-check"></i>
+                                    <span>این ابزار مخصوص مدیر سیستم است.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="add-user-admin-pane" role="tabpanel" aria-labelledby="add-user-admin-tab" tabindex="0">
+                    <div class="settings-panel">
+                        <div class="section-head">
+                            <h2>افزودن کاربر جدید</h2>
+                            <p>ایجاد حساب کاربری جدید با دسترسی مدیریتی یا کاربری</p>
+                        </div>
+                        <div class="role-hint mb-3">
+                            <i class="bi bi-shield-check"></i>
+                            <span>برای ثبت کاربر جدید از فرم مدیریت کاربران استفاده کنید.</span>
+                        </div>
+                        <div class="actions-row justify-content-start">
+                            <a asp-controller="Settings" asp-action="AddNewUser" class="btn settings-btn-primary">
+                                <i class="bi bi-person-plus-fill"></i>
+                                <span>انتقال به فرم افزودن کاربر</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </section>
     </div>
 </div>
-<div class="modal fade" id="modal-edit-user" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content text-end" style="direction:rtl;">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title">ویرایش اطلاعات کاربر</h5>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="edit_userId">
 
-                <div class="mb-3">
-                    <label class="small mb-1">نام کامل یا عنوان واحد سازمانی</label>
-                    <input type="text" id="edit_name" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">سمت / نوع واحد</label>
-                    <select id="edit_job" class="form-select">
-                        <option value="شخصی">شخصی</option>
-                        <option value="واحد سازمانی">واحد سازمانی</option>
-                        <option value="مدیریت">مدیریت</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">نام کاربری (غیر قابل تغییر)</label>
-                    <input type="email" id="edit_email" class="form-control" readonly style="background-color: #f8f9fa;">
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">نوع مخاطب / جنسیت</label>
-                    <select id="edit_gender" class="form-select">
-                        <option value="Male">آقا</option>
-                        <option value="Female">خانم</option>
-                        <option value="Department">واحد سازمانی / پست ثابت</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">واحد سازمانی</label>
-                    <select id="edit_department" class="form-select">
-                         <option value="Technical">فنی</option>
-                        <option value="Financial">مالی</option>
-                        <option value="Administrative">اداری</option>
-                        <option value="HR">منابع انسانی</option>
-                        <option value="Management">مدیریت عالی</option>
-                    </select>
-                </div>
-                <div class="mb-3 d-flex align-items-center">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="edit_is_manager">
-                        <label class="form-check-label fw-bold ms-2" for="edit_is_manager">این کاربر مدیر واحد است</label>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">مدیر مستقیم (تایید کننده اول)</label>
-                    <select id="edit_manager" class="form-select">
-                        <option value="">بدون مدیر (مثلاً خود مدیر عامل)</option>
-                        @if (ViewBag.UsersList != null)
-                        {
-                            foreach (var user in (List<OfficeAutomation.Models.User>)ViewBag.UsersList)
-                            {
-                                <option value="@user.Id">
-                                    @user.FullName @(string.IsNullOrEmpty(user.JobTitle) ? "" : $"({user.JobTitle})")
-                                </option>
-                            }
-                        }
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">محل خدمت</label>
-                    <select id="edit_location" class="form-select">
-                        <option value="مرکز اصلی">مرکز اصلی</option>
-                        <option value="دفتر تهران">دفتر تهران</option>
-                        <option value="کارگاه مرکزی">کارگاه مرکزی</option>
-                        <option value="انبار">انبار</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">رمز عبور جدید (در صورت نیاز به تغییر)</label>
-                    <input type="password" id="edit_new_password" class="form-control" placeholder="برای عدم تغییر خالی بگذارید">
-                </div>
-                <div class="mb-3">
-                    <label class="small mb-1">سطح دسترسی</label>
-                    <select id="edit_role" class="form-select">
-                        <option value="User">کاربر معمولی</option>
-                        <option value="Admin">مدیر سیستم</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                <button type="button" class="btn btn-primary" onclick="updateUser()">ذخیره تغییرات</button>
-            </div>
-        </div>
-    </div>
-</div>
 @section Scripts {
-    @* ۱. ابتدا کتابخانه‌های اصلی اگر در لایه Layout نیستند *@
-    <script src="https://lib.arvancloud.ir/jquery/3.6.3/jquery.min.js"></script>
-
-    @* ۲. کتابخانه‌های جانبی *@
-    @* CORRECT WAY TO LOAD DATATABLES CSS *@
-    <link rel="stylesheet" href="https://lib.arvancloud.ir/datatables/1.9.4/css/jquery.dataTables.min.css" />
-
-    @* JS for DataTables *@
-    <script src="~/js/dataTables.min.js"></script>
-    <script src="~/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://lib.arvancloud.ir/sweetalert2/9.17.4/sweetalert2.all.js"></script>
-    <script src="https://lib.arvancloud.ir/signature_pad/4.1.5/signature_pad.umd.min.js"></script>
-
-    @* اگر از html2pdf استفاده می‌کنید، ترتیب درست این است: *@
-    <script src="https://lib.arvancloud.ir/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-
-    @* ۳. در نهایت فایل شخصی خودتان *@
-    <script src="~/js/settings.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="~/js/settings-hub.js" asp-append-version="true"></script>
 }
