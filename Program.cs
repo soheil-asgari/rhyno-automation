@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
+using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services;
 
@@ -36,7 +37,13 @@ builder.Services.AddIdentity<User, IdentityRole>(options => {
 
 builder.Services.AddSingleton<AiService>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<PermissionAccessFilter>();
+
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<NormalizeInputFilter>();
+    options.Filters.Add<PermissionAccessFilter>();
+});
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<LeaveWorkflowService>();
 var app = builder.Build();
@@ -83,7 +90,15 @@ using (var scope = app.Services.CreateScope())
         }
 
         // ب) ساخت یوزر ادمین
-        var adminEmail = "admin@alpha.com";
+        var adminEmail = builder.Configuration["BootstrapAdmin:Email"] ?? "admin@alpha.com";
+        var adminPassword = builder.Configuration["BootstrapAdmin:Password"];
+
+        if (string.IsNullOrWhiteSpace(adminPassword) || adminPassword.Length < 12)
+        {
+            adminPassword = $"Adm!n-{Guid.NewGuid():N}".Substring(0, 16);
+            Console.WriteLine("WARNING: Bootstrap admin password was missing/weak. Generated temporary secure password.");
+        }
+
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
         if (adminUser == null)
@@ -95,7 +110,11 @@ using (var scope = app.Services.CreateScope())
                 FullName = "مدیر سیستم",
                 EmailConfirmed = true
             };
-            await userManager.CreateAsync(adminUser, "1234");
+            var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+            if (!createResult.Succeeded)
+            {
+                Console.WriteLine("خطا در ایجاد ادمین پیش‌فرض: " + string.Join(" | ", createResult.Errors.Select(item => item.Description)));
+            }
         }
 
         // ج) مطمئن شویم یوزر ادمین، نقش Admin را دارد

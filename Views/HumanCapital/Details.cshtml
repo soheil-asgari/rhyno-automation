@@ -156,7 +156,7 @@
                     <h6 class="fw-bold mb-3">تاریخچه افزایش حقوق</h6>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle hc-table mb-0">
-                            <thead>
+                            <thead class="bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-200">
                                 <tr>
                                     <th>تاریخ</th>
                                     <th>قبلی</th>
@@ -170,12 +170,12 @@
                                     @foreach (var history in Model.SalaryHistories)
                                     {
                                         <tr>
-                                            <td>@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
-                                            <td>@history.PreviousSalary.ToString("N0")</td>
+                                            <td class="text-slate-900 dark:text-slate-100">@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
+                                            <td class="text-slate-900 dark:text-slate-100">@history.PreviousSalary.ToString("N0")</td>
                                             <td class="text-success fw-semibold">@history.NewSalary.ToString("N0")</td>
                                             <td>
-                                                <div>@(history.PromotionTitle ?? "-")</div>
-                                                <small class="text-muted">@history.Reason</small>
+                                                <div class="text-slate-900 dark:text-slate-100">@(history.PromotionTitle ?? "-")</div>
+                                                <small class="text-slate-500 dark:text-slate-400">@history.Reason</small>
                                             </td>
                                         </tr>
                                     }
@@ -199,7 +199,7 @@
                     <h6 class="fw-bold mb-3">تاریخچه وضعیت پرسنل</h6>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle hc-table mb-0">
-                            <thead>
+                            <thead class="bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-200">
                                 <tr>
                                     <th>فرآیند</th>
                                     <th>تاریخ</th>
@@ -213,11 +213,11 @@
                                     @foreach (var history in Model.StatusHistories)
                                     {
                                         <tr>
-                                            <td>@history.StatusType</td>
-                                            <td>@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
-                                            <td>@(history.ReferenceNumber ?? "-")</td>
+                                            <td class="text-slate-900 dark:text-slate-100">@history.StatusType</td>
+                                            <td class="text-slate-900 dark:text-slate-100">@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
+                                            <td class="text-slate-900 dark:text-slate-100">@(history.ReferenceNumber ?? "-")</td>
                                             <td>
-                                                <div>@history.Description</div>
+                                                <div class="text-slate-900 dark:text-slate-100">@history.Description</div>
                                                 @if (!string.IsNullOrWhiteSpace(history.ExitReason))
                                                 {
                                                     <small class="text-danger">دلیل خروج: @history.ExitReason</small>

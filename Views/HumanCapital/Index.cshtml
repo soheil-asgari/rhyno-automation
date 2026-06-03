@@ -59,11 +59,11 @@
             <form method="get" asp-action="Index" class="row g-2 g-md-3 align-items-end">
                 <div class="col-12 col-md-4 col-lg-3">
                     <label asp-for="SearchTerm" class="form-label small text-muted mb-1"></label>
-                    <input asp-for="SearchTerm" class="form-control" placeholder="نام، کد پرسنلی، کد ملی یا عنوان شغلی" />
+                    <input asp-for="SearchTerm" class="form-control hc-filter-control dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400" placeholder="نام، کد پرسنلی، کد ملی یا عنوان شغلی" />
                 </div>
                 <div class="col-6 col-md-4 col-lg-3">
                     <label asp-for="Status" class="form-label small text-muted mb-1"></label>
-                    <select asp-for="Status" class="form-select">
+                    <select asp-for="Status" class="form-select hc-filter-control dark:bg-slate-800 dark:border-slate-600 dark:text-white">
                         <option value="">همه وضعیت‌ها</option>
                         @foreach (var status in Model.StatusOptions)
                         {
@@ -73,7 +73,7 @@
                 </div>
                 <div class="col-6 col-md-4 col-lg-3">
                     <label asp-for="DepartmentId" class="form-label small text-muted mb-1"></label>
-                    <select asp-for="DepartmentId" class="form-select" asp-items="Model.DepartmentOptions">
+                    <select asp-for="DepartmentId" class="form-select hc-filter-control dark:bg-slate-800 dark:border-slate-600 dark:text-white" asp-items="Model.DepartmentOptions">
                         <option value="">همه دپارتمان‌ها</option>
                     </select>
                 </div>
@@ -85,8 +85,8 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 hc-table">
-                <thead>
+            <table class="table table-hover align-middle mb-0 hc-table hc-readable-table">
+                <thead class="bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-white">
                     <tr>
                         <th>پرسنل</th>
                         <th>سمت / دپارتمان</th>
@@ -104,23 +104,23 @@
                         {
                             <tr>
                                 <td>
-                                    <div class="fw-semibold text-dark">@employee.FullName</div>
-                                    <small class="text-muted">کد پرسنلی: @employee.PersonnelCode</small>
+                                    <div class="fw-semibold text-slate-900 dark:text-white">@employee.FullName</div>
+                                    <small class="text-slate-500 dark:text-slate-200">کد پرسنلی: @employee.PersonnelCode</small>
                                 </td>
                                 <td>
-                                    <div>@employee.PositionTitle</div>
-                                    <small class="text-muted">@(employee.DepartmentName ?? "-")</small>
+                                    <div class="text-slate-900 dark:text-white">@employee.PositionTitle</div>
+                                    <small class="text-slate-500 dark:text-slate-200">@(employee.DepartmentName ?? "-")</small>
                                 </td>
-                                <td>@employee.HireDate.ToString("yyyy/MM/dd")</td>
-                                <td>@employee.CurrentSalary.ToString("N0")</td>
+                                <td class="text-slate-900 dark:text-white">@employee.HireDate.ToString("yyyy/MM/dd")</td>
+                                <td class="text-slate-900 dark:text-white">@employee.CurrentSalary.ToString("N0")</td>
                                 <td>
                                     <span class="badge hc-status-badge @(employee.CurrentStatus == "فعال" ? "hc-status-active" : "hc-status-inactive")">
                                         @employee.CurrentStatus
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="small text-muted">افزایش حقوق: @employee.SalaryChangeCount</div>
-                                    <div class="small text-muted">آخرین رخداد: @(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</div>
+                                    <div class="small text-slate-500 dark:text-slate-200">افزایش حقوق: @employee.SalaryChangeCount</div>
+                                    <div class="small text-slate-500 dark:text-slate-200">آخرین رخداد: @(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</div>
                                 </td>
                                 <td class="text-center">
                                     <div class="d-inline-flex gap-1">

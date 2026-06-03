@@ -22,6 +22,17 @@
         </select>
     </div>
 
+    <div class="form-group mt-3">
+        <label>مدیر واحد (پرسنل)</label>
+        <select asp-for="ManagerEmployeeId" class="form-control">
+            <option value="">انتخاب پرسنل مدیر</option>
+            @foreach (var employee in ViewBag.Employees)
+            {
+                <option value="@employee.Id">@employee.FullName (@employee.PersonnelCode)</option>
+            }
+        </select>
+    </div>
+
     <button class="btn btn-success mt-3">
         ذخیره
     </button>

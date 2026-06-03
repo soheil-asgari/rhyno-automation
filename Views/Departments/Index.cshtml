@@ -9,6 +9,7 @@
         <tr>
             <th>نام بخش</th>
             <th>مدیر</th>
+            <th>مدیر واحد (پرسنل)</th>
             <th>عملیات</th>
         </tr>
     </thead>
@@ -22,6 +23,11 @@
                 <td>
                     @(dept.Manager != null
                         ? dept.Manager.FullName
+                        : "تعیین نشده")
+                </td>
+                <td>
+                    @(dept.ManagerEmployee != null
+                        ? dept.ManagerEmployee.FullName
                         : "تعیین نشده")
                 </td>
 

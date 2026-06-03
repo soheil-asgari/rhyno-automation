@@ -1,0 +1,68 @@
+@model PayrollHistoryIndexViewModel
+@{
+    ViewData["Title"] = "سوابق لیست حقوق";
+}
+
+<div class="container-fluid py-4 bimeh-page">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-1">سوابق لیست حقوق و دستمزد</h5>
+            <p class="text-muted small mb-0">مرور لیست‌های ذخیره‌شده و وضعیت نهایی‌سازی</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-sm px-3">ایجاد لیست حقوق جدید</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 bimeh-table">
+                <thead>
+                    <tr>
+                        <th>سال</th>
+                        <th>ماه</th>
+                        <th>جمع حقوق پایه</th>
+                        <th>جمع بیمه</th>
+                        <th>جمع خالص پرداختی</th>
+                        <th>وضعیت</th>
+                        <th class="text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.Year</td>
+                                <td>@item.Month</td>
+                                <td>@item.TotalBaseSalary.ToString("N0")</td>
+                                <td>@item.TotalInsurance.ToString("N0")</td>
+                                <td>@item.TotalNetPayable.ToString("N0")</td>
+                                <td>
+                                    <span class="badge @(item.IsFinalized ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning")">
+                                        @(item.IsFinalized ? "Finalized" : "Draft")
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.IsFinalized)
+                                    {
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">مشاهده</a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm">ویرایش</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">هنوز لیست حقوقی ثبت نشده است.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

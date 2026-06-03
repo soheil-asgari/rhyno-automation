@@ -23,6 +23,24 @@ namespace OfficeAutomation.Data
         public DbSet<Leave> Leaves { get; set; }
         public DbSet<SystemSetting> SystemSettings { get; set; }
         public DbSet<UserPreference> UserPreferences { get; set; }
+        public DbSet<PayrollList> PayrollLists { get; set; }
+        public DbSet<PayrollItem> PayrollItems { get; set; }
+        public DbSet<InvoiceItem> InvoiceItems { get; set; }
+        public DbSet<Warehouse> Warehouses { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<WarehouseReceipt> WarehouseReceipts { get; set; }
+        public DbSet<WarehouseReceiptItem> WarehouseReceiptItems { get; set; }
+        public DbSet<WarehouseIssuance> WarehouseIssuances { get; set; }
+        public DbSet<WarehouseIssuanceItem> WarehouseIssuanceItems { get; set; }
+        public DbSet<InventoryStock> InventoryStocks { get; set; }
+        public DbSet<InventoryCounting> InventoryCountings { get; set; }
+        public DbSet<InventoryCountingItem> InventoryCountingItems { get; set; }
+        public DbSet<WarehouseClosing> WarehouseClosings { get; set; }
+        public DbSet<WarehouseClosingItem> WarehouseClosingItems { get; set; }
+        public DbSet<InventoryOpeningBalanceLedger> InventoryOpeningBalanceLedgers { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<Vendor> Vendors { get; set; }
+        public DbSet<Employer> Employers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -52,6 +70,18 @@ namespace OfficeAutomation.Data
                 .HasForeignKey(d => d.ManagerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Department>()
+                .HasOne(d => d.ManagerEmployee)
+                .WithMany()
+                .HasForeignKey(d => d.ManagerEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Employee)
+                .WithMany()
+                .HasForeignKey(u => u.EmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Department>().HasData(
                 new Department { Id = 1, Name = "Financial" },
                 new Department { Id = 2, Name = "Administrative" },
@@ -61,9 +91,107 @@ namespace OfficeAutomation.Data
             );
 
             modelBuilder.Entity<Invoice>()
-                .HasIndex(i => new { i.InvoiceNumber, i.VendorName })
+                .HasIndex(i => new { i.InvoiceNumber, i.InvoiceType })
                 .IsUnique()
-                .HasDatabaseName("IX_Invoice_Number_Vendor");
+                .HasDatabaseName("IX_Invoice_Number_Type");
+
+            modelBuilder.Entity<Invoice>()
+                .HasIndex(i => new { i.InvoiceType, i.DateShamsi })
+                .HasDatabaseName("IX_Invoice_Type_DateShamsi");
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.InvoiceType)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.DateShamsi)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.PartyName)
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.NationalCodeOrEconomicId)
+                .HasMaxLength(30);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.SubTotal)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.VatAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.GrandTotal)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.Notes)
+                .HasMaxLength(600);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.RowVersion)
+                .IsRowVersion();
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.DeadlineDateShamsi)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.WarehouseReceipt)
+                .WithMany()
+                .HasForeignKey(i => i.WarehouseReceiptId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.FollowUpEmployee)
+                .WithMany()
+                .HasForeignKey(i => i.FollowUpEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.Employer)
+                .WithMany(e => e.Invoices)
+                .HasForeignKey(i => i.EmployerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .Property(i => i.ItemName)
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .Property(i => i.Quantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .Property(i => i.UnitPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .Property(i => i.LineSubTotal)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .Property(i => i.LineVatAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .Property(i => i.LineGrandTotal)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .HasOne(i => i.Invoice)
+                .WithMany(i => i.Items)
+                .HasForeignKey(i => i.InvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .HasOne(i => i.Product)
+                .WithMany()
+                .HasForeignKey(i => i.ProductId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Waybill>()
                 .HasIndex(waybill => waybill.WaybillNumber)
@@ -141,6 +269,422 @@ namespace OfficeAutomation.Data
                 .WithMany()
                 .HasForeignKey(preference => preference.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PayrollList>()
+                .HasIndex(list => new { list.Year, list.Month })
+                .IsUnique();
+
+            modelBuilder.Entity<PayrollList>()
+                .Property(list => list.Status)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<PayrollList>()
+                .Property(list => list.RowVersion)
+                .IsRowVersion();
+
+            modelBuilder.Entity<PayrollItem>()
+                .Property(item => item.EmployeeName)
+                .HasMaxLength(120);
+
+            modelBuilder.Entity<PayrollItem>()
+                .Property(item => item.BaseSalary)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PayrollItem>()
+                .Property(item => item.Allowance)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PayrollItem>()
+                .Property(item => item.Overtime)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PayrollItem>()
+                .Property(item => item.InsuranceDeduction)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PayrollItem>()
+                .Property(item => item.Tax)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PayrollItem>()
+                .Property(item => item.NetPayable)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PayrollItem>()
+                .HasOne(item => item.PayrollList)
+                .WithMany(list => list.Items)
+                .HasForeignKey(item => item.PayrollListId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PayrollItem>()
+                .HasOne(item => item.HumanCapitalEmployee)
+                .WithMany()
+                .HasForeignKey(item => item.HumanCapitalEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<InsuranceEmployee>()
+                .HasOne(emp => emp.HumanCapitalEmployee)
+                .WithMany()
+                .HasForeignKey(emp => emp.HumanCapitalEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(product => product.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Warehouse>()
+                .HasIndex(warehouse => warehouse.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Warehouse>()
+                .Property(warehouse => warehouse.Code)
+                .HasMaxLength(30);
+
+            modelBuilder.Entity<Warehouse>()
+                .Property(warehouse => warehouse.Name)
+                .HasMaxLength(120);
+
+            modelBuilder.Entity<Warehouse>()
+                .Property(warehouse => warehouse.Location)
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.Code)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.Name)
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.Unit)
+                .HasMaxLength(30);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.Description)
+                .HasMaxLength(600);
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .HasIndex(receipt => receipt.ReceiptNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .Property(receipt => receipt.ReceiptNumber)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .Property(receipt => receipt.DateShamsi)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .Property(receipt => receipt.SupplierOrSource)
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .Property(receipt => receipt.Notes)
+                .HasMaxLength(600);
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .HasOne(receipt => receipt.Warehouse)
+                .WithMany(warehouse => warehouse.Receipts)
+                .HasForeignKey(receipt => receipt.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .HasOne(receipt => receipt.Vendor)
+                .WithMany(vendor => vendor.Receipts)
+                .HasForeignKey(receipt => receipt.VendorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<WarehouseReceiptItem>()
+                .Property(item => item.Quantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<WarehouseReceiptItem>()
+                .Property(item => item.UnitPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<WarehouseReceiptItem>()
+                .HasOne(item => item.WarehouseReceipt)
+                .WithMany(receipt => receipt.Items)
+                .HasForeignKey(item => item.WarehouseReceiptId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WarehouseReceiptItem>()
+                .HasOne(item => item.Product)
+                .WithMany(product => product.ReceiptItems)
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .HasIndex(issuance => issuance.IssuanceNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .Property(issuance => issuance.IssuanceNumber)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .Property(issuance => issuance.DateShamsi)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .Property(issuance => issuance.DestinationOrDepartment)
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .Property(issuance => issuance.Notes)
+                .HasMaxLength(600);
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .HasOne(issuance => issuance.Warehouse)
+                .WithMany(warehouse => warehouse.Issuances)
+                .HasForeignKey(issuance => issuance.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .HasOne(issuance => issuance.Employer)
+                .WithMany(employer => employer.Issuances)
+                .HasForeignKey(issuance => issuance.EmployerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<WarehouseIssuanceItem>()
+                .Property(item => item.Quantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<WarehouseIssuanceItem>()
+                .HasOne(item => item.WarehouseIssuance)
+                .WithMany(issuance => issuance.Items)
+                .HasForeignKey(item => item.WarehouseIssuanceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WarehouseIssuanceItem>()
+                .HasOne(item => item.Product)
+                .WithMany(product => product.IssuanceItems)
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryStock>()
+                .HasIndex(stock => new { stock.ProductId, stock.WarehouseId })
+                .IsUnique();
+
+            modelBuilder.Entity<InventoryStock>()
+                .Property(stock => stock.CurrentQuantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryStock>()
+                .Property(stock => stock.RowVersion)
+                .IsRowVersion();
+
+            modelBuilder.Entity<InventoryStock>()
+                .HasOne(stock => stock.Product)
+                .WithMany(product => product.Stocks)
+                .HasForeignKey(stock => stock.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryStock>()
+                .HasOne(stock => stock.Warehouse)
+                .WithMany(warehouse => warehouse.Stocks)
+                .HasForeignKey(stock => stock.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryCounting>()
+                .HasIndex(counting => counting.DocumentNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<InventoryCounting>()
+                .Property(counting => counting.DocumentNumber)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<InventoryCounting>()
+                .Property(counting => counting.DateShamsi)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<InventoryCounting>()
+                .Property(counting => counting.Status)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<InventoryCounting>()
+                .Property(counting => counting.Notes)
+                .HasMaxLength(600);
+
+            modelBuilder.Entity<InventoryCounting>()
+                .HasOne(counting => counting.Warehouse)
+                .WithMany(warehouse => warehouse.Countings)
+                .HasForeignKey(counting => counting.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryCountingItem>()
+                .Property(item => item.SystemQuantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryCountingItem>()
+                .Property(item => item.PhysicalQuantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryCountingItem>()
+                .Property(item => item.DiscrepancyQuantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryCountingItem>()
+                .HasOne(item => item.InventoryCounting)
+                .WithMany(counting => counting.Items)
+                .HasForeignKey(item => item.InventoryCountingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<InventoryCountingItem>()
+                .HasOne(item => item.Product)
+                .WithMany(product => product.CountingItems)
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseClosing>()
+                .HasIndex(closing => closing.DocumentNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<WarehouseClosing>()
+                .Property(closing => closing.DocumentNumber)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<WarehouseClosing>()
+                .Property(closing => closing.ClosingDateShamsi)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<WarehouseClosing>()
+                .HasOne(closing => closing.Warehouse)
+                .WithMany(warehouse => warehouse.Closings)
+                .HasForeignKey(closing => closing.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseClosingItem>()
+                .Property(item => item.ClosingQuantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<WarehouseClosingItem>()
+                .Property(item => item.OpeningQuantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<WarehouseClosingItem>()
+                .HasOne(item => item.WarehouseClosing)
+                .WithMany(closing => closing.Items)
+                .HasForeignKey(item => item.WarehouseClosingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WarehouseClosingItem>()
+                .HasOne(item => item.Product)
+                .WithMany()
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryOpeningBalanceLedger>()
+                .HasIndex(item => new { item.WarehouseId, item.ProductId, item.PeriodYear })
+                .IsUnique();
+
+            modelBuilder.Entity<InventoryOpeningBalanceLedger>()
+                .Property(item => item.Quantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryOpeningBalanceLedger>()
+                .HasOne(item => item.Warehouse)
+                .WithMany(warehouse => warehouse.OpeningLedgers)
+                .HasForeignKey(item => item.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryOpeningBalanceLedger>()
+                .HasOne(item => item.Product)
+                .WithMany()
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryOpeningBalanceLedger>()
+                .HasOne(item => item.WarehouseClosing)
+                .WithMany()
+                .HasForeignKey(item => item.WarehouseClosingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AuditLog>()
+                .Property(item => item.UserId)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<AuditLog>()
+                .Property(item => item.Action)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<AuditLog>()
+                .Property(item => item.EntityName)
+                .HasMaxLength(80);
+
+            modelBuilder.Entity<AuditLog>()
+                .Property(item => item.EntityId)
+                .HasMaxLength(80);
+
+            modelBuilder.Entity<AuditLog>()
+                .Property(item => item.Timestamp)
+                .HasDefaultValueSql("GETDATE()");
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(item => new { item.EntityName, item.EntityId, item.Timestamp });
+
+            modelBuilder.Entity<Vendor>()
+                .HasIndex(item => item.Name);
+
+            modelBuilder.Entity<Vendor>()
+                .HasIndex(item => item.EconomicCode);
+
+            modelBuilder.Entity<Vendor>()
+                .Property(item => item.Name)
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Vendor>()
+                .Property(item => item.EconomicCode)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Vendor>()
+                .Property(item => item.NationalId)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Vendor>()
+                .Property(item => item.Phone)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Vendor>()
+                .Property(item => item.Address)
+                .HasMaxLength(300);
+
+            modelBuilder.Entity<Employer>()
+                .HasIndex(item => item.Name);
+
+            modelBuilder.Entity<Employer>()
+                .HasIndex(item => item.ContractNumber);
+
+            modelBuilder.Entity<Employer>()
+                .Property(item => item.Name)
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Employer>()
+                .Property(item => item.ContractNumber)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Employer>()
+                .Property(item => item.Phone)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Employer>()
+                .Property(item => item.Address)
+                .HasMaxLength(300);
+
+            modelBuilder.Entity<Warehouse>().HasData(
+                new Warehouse
+                {
+                    Id = 1,
+                    Code = "WH-MAIN",
+                    Name = "انبار مرکزی",
+                    Location = "ستاد",
+                    IsActive = true,
+                    IsClosed = false,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                }
+            );
         }
     }
 }

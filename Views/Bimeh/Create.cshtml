@@ -1,10 +1,63 @@
-﻿@model InsuranceCreateVM
+@model InsuranceCreateVM
 @{
     ViewData["Title"] = "ایجاد لیست بیمه";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/persian-datepicker.min.css" asp-append-version="true" />
+    <style>
+        .employee-autocomplete { position: relative; }
+        .bimeh-page .table-responsive,
+        .bimeh-page table,
+        .bimeh-page tbody,
+        .bimeh-page tr,
+        .bimeh-page td,
+        .bimeh-page .card,
+        .bimeh-page .card-body {
+            overflow: visible !important;
+        }
+        .bimeh-page td { position: relative; }
+        .employee-suggestions {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            left: 0;
+            z-index: 10001 !important;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+            max-height: 240px;
+            overflow-y: auto;
+            display: none;
+        }
+        .employee-suggestion-item {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            text-align: right;
+            padding: .6rem .8rem;
+        }
+        .employee-suggestion-item:hover { background: #f8fafc; }
+        .insurance-amount {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: .5rem;
+            padding: .38rem .6rem;
+            min-height: calc(1.5em + .75rem + 2px);
+            display: flex;
+            align-items: center;
+            color: #475569;
+            font-size: .86rem;
+            font-weight: 600;
+        }
+        .employee-lock-note {
+            margin-top: .25rem;
+            font-size: .72rem;
+            color: #64748b;
+        }
+    </style>
 }
 
 <div class="container-fluid py-4 bimeh-page">
@@ -12,10 +65,13 @@
         <div class="card-body p-4 p-md-5">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                 <div>
-                    <h5 class="fw-bold mb-1 text-dark">ثبت لیست بیمه جدید</h5>
-                    <p class="text-muted small mb-0">اطلاعات پروژه و پرسنل را وارد کنید.</p>
+                    <h5 class="fw-bold mb-1 text-dark">ثبت لیست بیمه</h5>
+                    <p class="text-muted small mb-0">اتصال مستقیم به سرمایه انسانی و ثبت بدون ورود تکراری</p>
                 </div>
-                <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+                    <button type="button" id="copyPreviousMonth" class="btn btn-outline-primary">کپی از ماه قبل</button>
+                </div>
             </div>
 
             <form asp-action="Create" method="post" id="bimehCreateForm">
@@ -23,48 +79,43 @@
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6 col-lg-4">
-                        <label asp-for="ProjectName" class="form-label">پروژه</label>
-                        <input asp-for="ProjectName" class="form-control" maxlength="150" />
+                        <label asp-for="ProjectName" class="form-label"></label>
+                        <input asp-for="ProjectName" class="form-control" maxlength="150" id="projectNameField" />
                         <span asp-validation-for="ProjectName" class="text-danger small"></span>
                     </div>
-
                     <div class="col-md-6 col-lg-4">
-                        <label asp-for="ManagerName" class="form-label">مدیر پروژه</label>
-                        <input asp-for="ManagerName" class="form-control" maxlength="100" />
+                        <label asp-for="ManagerName" class="form-label"></label>
+                        <input asp-for="ManagerName" class="form-control" maxlength="100" id="managerNameField" />
                         <span asp-validation-for="ManagerName" class="text-danger small"></span>
                     </div>
-
                     <div class="col-6 col-lg-2">
-                        <label asp-for="Month" class="form-label">ماه</label>
-                        <input asp-for="Month" class="form-control" type="number" min="1" max="12" />
+                        <label asp-for="Month" class="form-label"></label>
+                        <input asp-for="Month" class="form-control" type="number" min="1" max="12" id="monthField" />
                         <span asp-validation-for="Month" class="text-danger small"></span>
                     </div>
-
                     <div class="col-6 col-lg-2">
-                        <label asp-for="Year" class="form-label">سال</label>
-                        <input asp-for="Year" class="form-control" type="number" min="1300" max="1600" />
+                        <label asp-for="Year" class="form-label"></label>
+                        <input asp-for="Year" class="form-control" type="number" min="1300" max="1600" id="yearField" />
                         <span asp-validation-for="Year" class="text-danger small"></span>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <h6 class="mb-0 fw-bold">کارکنان</h6>
-                    <button type="button" id="addRow" class="btn btn-secondary btn-sm">
-                        <i class="bi bi-plus-lg ms-1"></i>
-                        افزودن کارمند
-                    </button>
+                    <h6 class="mb-0 fw-bold">پرسنل</h6>
+                    <button type="button" id="addRow" class="btn btn-secondary btn-sm">افزودن ردیف</button>
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-bordered align-middle bimeh-table" id="employeeTable">
+                    <table class="table table-bordered align-middle bimeh-table">
                         <thead>
                             <tr>
-                                <th>نام</th>
-                                <th>شغل</th>
-                                <th>شروع کار</th>
-                                <th>ترک کار</th>
+                                <th>نام کارمند</th>
+                                <th>سمت</th>
+                                <th>شروع کار (شمسی)</th>
+                                <th>ترک کار (شمسی)</th>
                                 <th>روز کارکرد</th>
-                                <th>حقوق</th>
+                                <th>حقوق مشمول</th>
+                                <th>حق بیمه 7٪</th>
                                 <th class="text-center">حذف</th>
                             </tr>
                         </thead>
@@ -74,7 +125,7 @@
 
                 <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
                     <small id="employeeCountLabel" class="text-muted">تعداد کارکنان: 0</small>
-                    <button class="btn btn-success px-4">ذخیره لیست بیمه</button>
+                    <button type="submit" class="btn btn-success px-4">ذخیره لیست بیمه</button>
                 </div>
             </form>
         </div>
@@ -83,61 +134,67 @@
 
 <template id="employeeRowTemplate">
     <tr>
-        <td><input data-field="FullName" class="form-control" maxlength="100" required /></td>
-        <td><input data-field="JobTitle" class="form-control" maxlength="100" required /></td>
-        <td><input type="date" data-field="StartWork" class="form-control" required /></td>
-        <td><input type="date" data-field="EndWork" class="form-control" /></td>
-        <td><input type="number" data-field="WorkDays" class="form-control" min="0" max="31" required /></td>
-        <td><input type="number" data-field="Salary" class="form-control" min="0" step="0.01" required /></td>
-        <td class="text-center">
-            <button type="button" class="btn btn-outline-danger btn-sm removeRow">حذف</button>
+        <td>
+            <div class="employee-autocomplete">
+                <input data-field="FullName" class="form-control employee-search" maxlength="120" autocomplete="off" placeholder="جستجو نام/کد پرسنلی" required />
+                <input type="hidden" data-field="HumanCapitalEmployeeId" />
+                <div class="employee-suggestions"></div>
+            </div>
         </td>
+        <td>
+            <input data-field="JobTitle" class="form-control" maxlength="100" required readonly />
+            <small class="employee-lock-note">از پرونده سرمایه انسانی</small>
+        </td>
+        <td>
+            <input type="text" data-field="StartWorkSolar" class="form-control solar-date-field" placeholder="1405/03/01" required readonly />
+            <small class="employee-lock-note">قفل‌شده از تاریخ استخدام</small>
+        </td>
+        <td><input type="text" data-field="EndWorkSolar" class="form-control solar-date-field" placeholder="1405/03/31" /></td>
+        <td><input type="number" data-field="WorkDays" class="form-control" min="0" max="31" required /></td>
+        <td><input type="number" data-field="Salary" class="form-control salary-input" min="0" step="0.01" required /></td>
+        <td><div class="insurance-amount" data-insurance-cell>0 ریال</div></td>
+        <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm removeRow">حذف</button></td>
     </tr>
 </template>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/persian-date.js" asp-append-version="true"></script>
+    <script src="~/js/persian-datepicker.min.js" asp-append-version="true"></script>
+    <script src="~/js/insurance-form.js" asp-append-version="true"></script>
     <script>
         (() => {
-            const rowsContainer = document.getElementById('employeeRows');
-            const rowTemplate = document.getElementById('employeeRowTemplate');
-            const addRowButton = document.getElementById('addRow');
-            const employeeCountLabel = document.getElementById('employeeCountLabel');
+            const initialEmployees = @Html.Raw(Json.Serialize((Model.Employees ?? new List<InsuranceEmployeeRowViewModel>()).Select(e => new {
+                humanCapitalEmployeeId = e.HumanCapitalEmployeeId,
+                fullName = e.FullName,
+                jobTitle = e.JobTitle,
+                startWorkSolar = e.StartWorkSolar,
+                endWorkSolar = e.EndWorkSolar,
+                workDays = e.WorkDays,
+                salary = e.Salary
+            })));
 
-            const updateRowIndexes = () => {
-                const rows = rowsContainer.querySelectorAll('tr');
-                rows.forEach((row, index) => {
-                    row.querySelectorAll('[data-field]').forEach((input) => {
-                        const fieldName = input.dataset.field;
-                        input.name = `Employees[${index}].${fieldName}`;
-                    });
-                });
-                employeeCountLabel.textContent = `تعداد کارکنان: ${rows.length}`;
-            };
-
-            const addRow = () => {
-                const clone = rowTemplate.content.firstElementChild.cloneNode(true);
-                rowsContainer.appendChild(clone);
-                updateRowIndexes();
-            };
-
-            addRowButton.addEventListener('click', addRow);
-
-            rowsContainer.addEventListener('click', (event) => {
-                const removeButton = event.target.closest('.removeRow');
-                if (!removeButton) return;
-
-                const row = removeButton.closest('tr');
-                row?.remove();
-
-                if (rowsContainer.children.length === 0) {
-                    addRow();
-                } else {
-                    updateRowIndexes();
-                }
+            window.initInsuranceForm({
+                mode: 'create',
+                formId: 'bimehCreateForm',
+                rowsContainerId: 'employeeRows',
+                rowTemplateId: 'employeeRowTemplate',
+                addRowButtonId: 'addRow',
+                employeeCountLabelId: 'employeeCountLabel',
+                copyPreviousMonthButtonId: 'copyPreviousMonth',
+                projectNameFieldId: 'projectNameField',
+                managerNameFieldId: 'managerNameField',
+                monthFieldId: 'monthField',
+                yearFieldId: 'yearField',
+                initialEmployees
             });
 
-            addRow();
+            document.getElementById('employeeRows').addEventListener('input', event => {
+                if (!event.target.classList.contains('salary-input')) return;
+                const row = event.target.closest('tr');
+                const salary = Number(event.target.value || 0);
+                row.querySelector('[data-insurance-cell]').textContent = `${(salary * 0.07).toLocaleString('fa-IR')} ریال`;
+            });
         })();
     </script>
 }

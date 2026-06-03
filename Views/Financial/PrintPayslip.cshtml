@@ -1,0 +1,30 @@
+@model PayrollItem
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>Pay Slip Print</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; margin: 24px; color: #111827; font-size: 12px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .label { color: #4b5563; }
+        .value { font-weight: 700; }
+    </style>
+</head>
+<body onload="window.print()">
+    <h3 style="margin-bottom:10px;">فیش حقوقی</h3>
+    <div class="row"><span class="label">کارمند</span><span class="value">@Model.EmployeeName</span></div>
+    <div class="row"><span class="label">دوره</span><span class="value">@ViewBag.PayrollYear/@ViewBag.PayrollMonth</span></div>
+    <hr />
+    <div class="row"><span class="label">حقوق پایه</span><span class="value">@Model.BaseSalary.ToString("N0")</span></div>
+    <div class="row"><span class="label">مزایا</span><span class="value">@Model.Allowance.ToString("N0")</span></div>
+    <div class="row"><span class="label">اضافه‌کار</span><span class="value">@Model.Overtime.ToString("N0")</span></div>
+    <div class="row"><span class="label">بیمه</span><span class="value">@Model.InsuranceDeduction.ToString("N0")</span></div>
+    <div class="row"><span class="label">مالیات</span><span class="value">@Model.Tax.ToString("N0")</span></div>
+    <hr />
+    <div class="row"><span class="label">خالص پرداختی</span><span class="value">@Model.NetPayable.ToString("N0")</span></div>
+</body>
+</html>

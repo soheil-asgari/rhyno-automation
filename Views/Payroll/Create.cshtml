@@ -1,0 +1,525 @@
+@model PayrollListPageViewModel
+@{
+    ViewData["Title"] = "لیست حقوق";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
+    <style>
+        .payroll-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+        .payroll-status {
+            border-radius: 999px;
+            padding: .4rem .75rem;
+            font-size: .82rem;
+            font-weight: 700;
+            background: #eef2ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+        }
+        .payroll-shell {
+            border-radius: 1rem;
+            border: 1px solid #e2e8f0;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+        .payroll-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .75rem;
+            margin-bottom: 1rem;
+        }
+        .payroll-summary-item {
+            border: 1px solid #e2e8f0;
+            border-radius: .85rem;
+            padding: .85rem;
+            background: #fff;
+        }
+        .payroll-summary-item .label {
+            font-size: .8rem;
+            color: #64748b;
+            margin-bottom: .2rem;
+        }
+        .payroll-summary-item .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .employee-autocomplete { position: relative; }
+        .employee-meta-line {
+            margin-top: .25rem;
+            font-size: .72rem;
+            color: #64748b;
+            display: flex;
+            gap: .45rem;
+            flex-wrap: wrap;
+        }
+        .employee-meta-pill {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            padding: .08rem .4rem;
+            white-space: nowrap;
+        }
+        .employee-suggestions {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            left: 0;
+            z-index: 9999 !important;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+            max-height: 260px;
+            overflow-y: auto;
+            display: none;
+        }
+        .payroll-shell .employee-suggestions {
+            z-index: 10001 !important;
+        }
+        .employee-suggestion-item {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            text-align: right;
+            padding: .6rem .8rem;
+        }
+        .employee-suggestion-item:hover { background: #f8fafc; }
+        .bimeh-page,
+        .bimeh-page .container-fluid,
+        .bimeh-page .card,
+        .bimeh-page .card-body {
+            overflow: visible !important;
+        }
+        .payroll-shell,
+        .payroll-shell .table-responsive,
+        .payroll-shell table,
+        .payroll-shell tbody,
+        .payroll-shell tr,
+        .payroll-shell td {
+            overflow: visible !important;
+        }
+        .payroll-shell .table-responsive {
+            position: relative;
+            z-index: 1;
+        }
+        .payroll-shell td {
+            position: relative;
+        }
+        .payroll-shell .employee-autocomplete {
+            z-index: 9999 !important;
+        }
+        .payroll-shell .employee-autocomplete:focus-within {
+            z-index: 10000 !important;
+        }
+        #payrollTable {
+            position: relative;
+            z-index: 1;
+        }
+        .calculated-field {
+            background: #f8fafc;
+            color: #0f172a;
+            font-weight: 600;
+        }
+        @@media (max-width: 992px) {
+            .payroll-summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @@media (max-width: 576px) {
+            .payroll-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+<div class="container-fluid py-4 bimeh-page">
+    <div class="payroll-header">
+        <div>
+            <h5 class="fw-bold mb-1">مدیریت لیست حقوق و دستمزد</h5>
+            <p class="text-muted small mb-0">دریافت خودکار اطلاعات از سرمایه انسانی و محاسبه ماشینی حقوق</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <a asp-controller="Financial" asp-action="ExportPayrollExcel" asp-route-year="@Model.Year" asp-route-month="@Model.Month" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
+            @if (Model.Items.Any())
+            {
+                <a asp-controller="Financial" asp-action="PrintPayslipPdf" asp-route-payrollListId="@Model.Id" asp-route-payrollItemId="@Model.Items.First().Id" class="btn btn-sm btn-outline-dark">چاپ PDF</a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-sm btn-outline-dark" disabled>چاپ PDF</button>
+            }
+            <span class="payroll-status">وضعیت: @(Model.IsFinalized ? "نهایی‌شده" : "پیش‌نویس")</span>
+        </div>
+    </div>
+
+    <div class="payroll-shell p-3 p-md-4 shadow-sm">
+        <div class="payroll-summary-grid" id="payrollSummary">
+            <div class="payroll-summary-item">
+                <div class="label">جمع حقوق پایه</div>
+                <div class="value" id="totalBaseSalary">0 ریال</div>
+            </div>
+            <div class="payroll-summary-item">
+                <div class="label">جمع حق بیمه</div>
+                <div class="value" id="totalInsurance">0 ریال</div>
+            </div>
+            <div class="payroll-summary-item">
+                <div class="label">جمع مالیات</div>
+                <div class="value" id="totalTax">0 ریال</div>
+            </div>
+            <div class="payroll-summary-item">
+                <div class="label">جمع خالص پرداختی</div>
+                <div class="value" id="totalNetPayable">0 ریال</div>
+            </div>
+        </div>
+
+        <form id="payrollForm">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-6 col-md-2">
+                    <label class="form-label">ماه</label>
+                    <select id="payrollMonth" class="form-select">
+                        @for (var month = 1; month <= 12; month++)
+                        {
+                            <option value="@month" selected="@(month == Model.Month)">@month</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">سال</label>
+                    <input id="payrollYear" type="number" min="1300" max="1600" class="form-control" value="@Model.Year" />
+                </div>
+                <div class="col-12 col-md-8 d-flex flex-wrap gap-2 justify-content-md-end">
+                    <button type="button" class="btn btn-outline-primary" id="loadMonthButton">بارگذاری ماه</button>
+                    <button type="button" class="btn btn-info" id="calculatePayrollButton">محاسبه خودکار</button>
+                    <button type="button" class="btn btn-warning" id="savePayrollButton">ذخیره پیش‌نویس</button>
+                    <button type="button" class="btn btn-success" id="finalizePayrollButton">ذخیره و نهایی‌سازی</button>
+                </div>
+            </div>
+
+            <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <button type="button" class="btn btn-secondary btn-sm" id="addEmployeeRow">افزودن ردیف کارمند</button>
+                <small class="text-muted">فرمول خودکار: (پایه + مزایا + اضافه‌کار) - بیمه - مالیات</small>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle bimeh-table" id="payrollTable">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 240px;">کارمند</th>
+                            <th style="min-width: 120px;">حقوق پایه</th>
+                            <th style="min-width: 120px;">مزایا</th>
+                            <th style="min-width: 120px;">اضافه‌کار</th>
+                            <th style="min-width: 140px;">حق بیمه سهم کارگر (7%)</th>
+                            <th style="min-width: 120px;">مالیات</th>
+                            <th style="min-width: 140px;">خالص دریافتی</th>
+                            <th style="width: 80px;">حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payrollRows"></tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+
+<template id="payrollRowTemplate">
+    <tr>
+        <td>
+            <div class="employee-autocomplete">
+                <input data-field="EmployeeName" class="form-control employee-search" autocomplete="off" placeholder="جستجو نام/کد پرسنلی" />
+                <input type="hidden" data-field="HumanCapitalEmployeeId" />
+                <input type="hidden" data-field="JobTitle" />
+                <input type="hidden" data-field="HireDateShamsi" />
+                <div class="employee-suggestions"></div>
+                <div class="employee-meta-line">
+                    <span class="employee-meta-pill" data-meta-job>سمت: -</span>
+                    <span class="employee-meta-pill" data-meta-hire>استخدام: -</span>
+                </div>
+            </div>
+        </td>
+        <td><input data-field="BaseSalary" type="number" min="0" step="0.01" class="form-control" /></td>
+        <td><input data-field="Allowance" type="number" min="0" step="0.01" class="form-control" /></td>
+        <td><input data-field="Overtime" type="number" min="0" step="0.01" class="form-control" /></td>
+        <td><input data-field="InsuranceDeduction" type="number" min="0" step="0.01" class="form-control calculated-field" readonly /></td>
+        <td><input data-field="Tax" type="number" min="0" step="0.01" class="form-control" /></td>
+        <td><input data-field="NetPayable" type="number" min="0" step="0.01" class="form-control calculated-field" readonly /></td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger removeRow">حذف</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <script>
+        (() => {
+            const rowsContainer = document.getElementById('payrollRows');
+            const rowTemplate = document.getElementById('payrollRowTemplate');
+            const monthField = document.getElementById('payrollMonth');
+            const yearField = document.getElementById('payrollYear');
+            const calculateButton = document.getElementById('calculatePayrollButton');
+            const saveButton = document.getElementById('savePayrollButton');
+            const finalizeButton = document.getElementById('finalizePayrollButton');
+            const loadButton = document.getElementById('loadMonthButton');
+            const addRowButton = document.getElementById('addEmployeeRow');
+            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            let debounceTimer;
+
+            function calculateRowFinancials(row) {
+                const baseSalary = Number(row.querySelector('[data-field="BaseSalary"]')?.value || 0);
+                const allowance = Number(row.querySelector('[data-field="Allowance"]')?.value || 0);
+                const overtime = Number(row.querySelector('[data-field="Overtime"]')?.value || 0);
+                const tax = Number(row.querySelector('[data-field="Tax"]')?.value || 0);
+
+                const pensionableSalary = baseSalary + allowance + overtime;
+                const insuranceDeduction = pensionableSalary * 0.07;
+                const netPayable = pensionableSalary - insuranceDeduction - tax;
+
+                row.querySelector('[data-field="InsuranceDeduction"]').value = insuranceDeduction.toFixed(2);
+                row.querySelector('[data-field="NetPayable"]').value = netPayable.toFixed(2);
+                updateSummary();
+            }
+
+            function updateSummary() {
+                const rows = [...rowsContainer.querySelectorAll('tr')];
+                let totalBase = 0, totalIns = 0, totalTax = 0, totalNet = 0;
+
+                rows.forEach(row => {
+                    totalBase += Number(row.querySelector('[data-field="BaseSalary"]')?.value || 0);
+                    totalIns += Number(row.querySelector('[data-field="InsuranceDeduction"]')?.value || 0);
+                    totalTax += Number(row.querySelector('[data-field="Tax"]')?.value || 0);
+                    totalNet += Number(row.querySelector('[data-field="NetPayable"]')?.value || 0);
+                });
+
+                document.getElementById('totalBaseSalary').textContent = `${totalBase.toLocaleString('fa-IR')} ریال`;
+                document.getElementById('totalInsurance').textContent = `${totalIns.toLocaleString('fa-IR')} ریال`;
+                document.getElementById('totalTax').textContent = `${totalTax.toLocaleString('fa-IR')} ریال`;
+                document.getElementById('totalNetPayable').textContent = `${totalNet.toLocaleString('fa-IR')} ریال`;
+            }
+
+            async function searchEmployees(query) {
+                try {
+                    const response = await fetch(`/Payroll/GetEmployees?search=${encodeURIComponent(query)}`);
+                    if (!response.ok) return [];
+                    const result = await response.json();
+                    return Array.isArray(result) ? result : [];
+                } catch {
+                    return [];
+                }
+            }
+
+            async function fetchEmployeeById(id) {
+                try {
+                    const response = await fetch(`/Payroll/GetEmployeeById?id=${id}`);
+                    if (!response.ok) return null;
+                    return await response.json();
+                } catch {
+                    return null;
+                }
+            }
+
+            function attachEmployeeAutocomplete(row) {
+                const searchInput = row.querySelector('.employee-search');
+                const suggestionsDiv = row.querySelector('.employee-suggestions');
+                const hiddenIdField = row.querySelector('[data-field="HumanCapitalEmployeeId"]');
+
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(debounceTimer);
+                    hiddenIdField.value = '';
+                    const query = e.target.value.trim();
+
+                    if (query.length < 2) {
+                        suggestionsDiv.innerHTML = '';
+                        suggestionsDiv.style.display = 'none';
+                        return;
+                    }
+
+                    debounceTimer = setTimeout(async () => {
+                        const employees = await searchEmployees(query);
+                        if (!employees.length) {
+                            suggestionsDiv.innerHTML = '';
+                            suggestionsDiv.style.display = 'none';
+                            return;
+                        }
+
+                        suggestionsDiv.innerHTML = employees.map(emp => `
+                            <button type="button" class="employee-suggestion-item" data-id="${emp.id}">
+                                <div><strong>${emp.fullName}</strong> (${emp.personnelCode})</div>
+                                <small>${emp.positionTitle || '-'} - حقوق پایه: ${(emp.currentSalary || 0).toLocaleString('fa-IR')} ریال</small>
+                            </button>
+                        `).join('');
+                        suggestionsDiv.style.display = 'block';
+
+                        suggestionsDiv.querySelectorAll('.employee-suggestion-item').forEach(item => {
+                            item.addEventListener('click', async () => {
+                                const selectedId = Number(item.getAttribute('data-id') || 0);
+                                const employee = await fetchEmployeeById(selectedId);
+                                if (!employee) return;
+
+                                searchInput.value = employee.fullName || '';
+                                hiddenIdField.value = employee.id || '';
+                                row.querySelector('[data-field="JobTitle"]').value = employee.positionTitle || '';
+                                row.querySelector('[data-field="HireDateShamsi"]').value = employee.hireDateShamsi || '';
+                                row.querySelector('[data-field="BaseSalary"]').value = Number(employee.currentSalary || 0).toFixed(2);
+                                row.querySelector('[data-field="Allowance"]').value = Number(employee.allowance || 0).toFixed(2);
+                                row.querySelector('[data-field="Overtime"]').value = Number(employee.overtime || 0).toFixed(2);
+                                row.querySelector('[data-field="Tax"]').value = Number(employee.tax || 0).toFixed(2);
+                                const jobMeta = row.querySelector('[data-meta-job]');
+                                const hireMeta = row.querySelector('[data-meta-hire]');
+                                if (jobMeta) {
+                                    jobMeta.textContent = `سمت: ${employee.positionTitle || '-'}`;
+                                }
+                                if (hireMeta) {
+                                    hireMeta.textContent = `استخدام: ${employee.hireDateShamsi || '-'}`;
+                                }
+
+                                calculateRowFinancials(row);
+                                suggestionsDiv.style.display = 'none';
+                            });
+                        });
+                    }, 250);
+                });
+
+                searchInput.addEventListener('blur', () => {
+                    setTimeout(() => { suggestionsDiv.style.display = 'none'; }, 150);
+                });
+            }
+
+            function addRow(item = null) {
+                const clone = rowTemplate.content.cloneNode(true);
+                const tr = clone.querySelector('tr');
+                rowsContainer.appendChild(clone);
+
+                attachEmployeeAutocomplete(tr);
+
+                ['BaseSalary', 'Allowance', 'Overtime', 'Tax'].forEach(field => {
+                    tr.querySelector(`[data-field="${field}"]`)?.addEventListener('input', () => calculateRowFinancials(tr));
+                });
+
+                if (item) {
+                    tr.querySelector('[data-field="HumanCapitalEmployeeId"]').value = item.humanCapitalEmployeeId || '';
+                    tr.querySelector('.employee-search').value = item.employeeName || '';
+                    tr.querySelector('[data-field="JobTitle"]').value = item.jobTitle || '';
+                    tr.querySelector('[data-field="HireDateShamsi"]').value = item.hireDateShamsi || '';
+                    tr.querySelector('[data-field="BaseSalary"]').value = item.baseSalary ?? 0;
+                    tr.querySelector('[data-field="Allowance"]').value = item.allowance ?? 0;
+                    tr.querySelector('[data-field="Overtime"]').value = item.overtime ?? 0;
+                    tr.querySelector('[data-field="Tax"]').value = item.tax ?? 0;
+                    tr.querySelector('[data-field="InsuranceDeduction"]').value = item.insuranceDeduction ?? 0;
+                    tr.querySelector('[data-field="NetPayable"]').value = item.netPayable ?? 0;
+                    const jobMeta = tr.querySelector('[data-meta-job]');
+                    const hireMeta = tr.querySelector('[data-meta-hire]');
+                    if (jobMeta) {
+                        jobMeta.textContent = `سمت: ${item.jobTitle || '-'}`;
+                    }
+                    if (hireMeta) {
+                        hireMeta.textContent = `استخدام: ${item.hireDateShamsi || '-'}`;
+                    }
+                }
+
+                calculateRowFinancials(tr);
+            }
+
+            function collectRows() {
+                const rows = [...rowsContainer.querySelectorAll('tr')];
+                return rows.map(row => ({
+                    humanCapitalEmployeeId: Number(row.querySelector('[data-field="HumanCapitalEmployeeId"]')?.value || 0) || null,
+                    employeeName: row.querySelector('.employee-search')?.value?.trim() || '',
+                    jobTitle: row.querySelector('[data-field="JobTitle"]')?.value?.trim() || '',
+                    hireDateShamsi: row.querySelector('[data-field="HireDateShamsi"]')?.value?.trim() || '',
+                    baseSalary: Number(row.querySelector('[data-field="BaseSalary"]')?.value || 0),
+                    allowance: Number(row.querySelector('[data-field="Allowance"]')?.value || 0),
+                    overtime: Number(row.querySelector('[data-field="Overtime"]')?.value || 0),
+                    insuranceDeduction: Number(row.querySelector('[data-field="InsuranceDeduction"]')?.value || 0),
+                    tax: Number(row.querySelector('[data-field="Tax"]')?.value || 0),
+                    netPayable: Number(row.querySelector('[data-field="NetPayable"]')?.value || 0)
+                })).filter(item => item.humanCapitalEmployeeId);
+            }
+
+            function renderRows(items) {
+                rowsContainer.innerHTML = '';
+                if (items?.length) {
+                    items.forEach(addRow);
+                } else {
+                    addRow();
+                }
+                updateSummary();
+            }
+
+            addRowButton.addEventListener('click', () => addRow());
+
+            rowsContainer.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('.removeRow');
+                if (!removeButton) return;
+                removeButton.closest('tr')?.remove();
+                if (!rowsContainer.querySelector('tr')) addRow();
+                updateSummary();
+            });
+
+            loadButton.addEventListener('click', () => {
+                const month = Number(monthField.value || 0);
+                const year = Number(yearField.value || 0);
+                window.location.href = `/Payroll/Create?month=${month}&year=${year}`;
+            });
+
+            calculateButton.addEventListener('click', async () => {
+                const response = await fetch('/Payroll/Calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': antiForgeryToken || '' },
+                    body: JSON.stringify({ month: Number(monthField.value || 0), year: Number(yearField.value || 0) })
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result?.success) {
+                    alert(result?.message || 'محاسبه خودکار انجام نشد.');
+                    return;
+                }
+
+                renderRows(result.items || []);
+            });
+
+            async function savePayroll(finalize) {
+                const payload = {
+                    month: Number(monthField.value || 0),
+                    year: Number(yearField.value || 0),
+                    finalize,
+                    items: collectRows()
+                };
+
+                const response = await fetch('/Payroll/Save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': antiForgeryToken || '' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result?.success) {
+                    alert(result?.message || 'ذخیره انجام نشد.');
+                    return;
+                }
+
+                alert(result.message || (finalize ? 'لیست حقوق نهایی شد.' : 'پیش‌نویس ذخیره شد.'));
+                if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                    return;
+                }
+                window.location.href = '/Payroll';
+            }
+
+            saveButton.addEventListener('click', () => savePayroll(false));
+            finalizeButton.addEventListener('click', () => {
+                if (!confirm('آیا از نهایی‌سازی لیست حقوق مطمئن هستید؟')) return;
+                savePayroll(true);
+            });
+
+            const initialItems = @Html.Raw(Json.Serialize(Model.Items ?? new List<PayrollEmployeeRowViewModel>()));
+            renderRows(initialItems);
+        })();
+    </script>
+}

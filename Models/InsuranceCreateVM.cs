@@ -19,6 +19,6 @@ namespace OfficeAutomation.Models
         [Range(1300, 1600, ErrorMessage = "سال وارد شده معتبر نیست.")]
         public int Year { get; set; }
 
-        public List<InsuranceEmployee> Employees { get; set; } = new List<InsuranceEmployee>();
+        public List<InsuranceEmployeeRowViewModel> Employees { get; set; } = new();
     }
 }

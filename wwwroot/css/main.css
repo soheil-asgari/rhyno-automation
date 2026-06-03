@@ -295,10 +295,55 @@ html.theme-dark .brand-status,
 html.theme-dark .u-name,
 html.theme-dark .u-role,
 html.theme-dark .topbar-right-info,
-html.theme-dark .table td,
-html.theme-dark .table th,
 html.theme-dark .form-label {
     color: #cbd5e1 !important;
+}
+
+html.theme-dark .table {
+    --bs-table-bg: #0f172a;
+    --bs-table-color: #ffffff;
+    --bs-table-hover-bg: #172033;
+    --bs-table-hover-color: #ffffff;
+    --bs-table-striped-bg: #111c2f;
+    --bs-table-striped-color: #ffffff;
+    --bs-table-active-bg: #172033;
+    --bs-table-active-color: #ffffff;
+}
+
+html.theme-dark .table th,
+html.theme-dark .table td {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+html.theme-dark .table th *,
+html.theme-dark .table td * {
+    opacity: 1 !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+html.theme-dark .table thead,
+html.theme-dark .table thead tr,
+html.theme-dark .table thead th {
+    background-color: #172033 !important;
+    color: #ffffff !important;
+    border-color: #334155 !important;
+    opacity: 1 !important;
+}
+
+html.theme-dark .table tbody td {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+html.theme-dark .table-muted,
+html.theme-dark .text-muted,
+html.theme-dark .table .text-muted {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
 }
 
 html.theme-dark .sidebar-link:hover,
@@ -311,7 +356,25 @@ html.theme-dark .form-control,
 html.theme-dark .form-select,
 html.theme-dark .input-group-text {
     background-color: #1e293b !important;
-    color: #e2e8f0 !important;
-    border-color: #334155 !important;
+    color: #ffffff !important;
+    border-color: #475569 !important;
+    opacity: 1 !important;
 }
 
+html.theme-dark .form-control::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+html.theme-dark .form-control:focus,
+html.theme-dark .form-select:focus {
+    background-color: #1e293b !important;
+    border-color: #818cf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.2rem rgba(129, 140, 248, 0.25);
+}
+
+html.theme-dark .form-select option {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+}

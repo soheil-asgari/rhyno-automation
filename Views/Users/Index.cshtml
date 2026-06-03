@@ -14,6 +14,8 @@
                 <tr>
                     <th>نام و نام خانوادگی</th>
                     <th>ایمیل (نام کاربری)</th>
+                    <th>کد پرسنلی</th>
+                    <th>دسترسی‌ها</th>
                     <th>وضعیت</th>
                 </tr>
             </thead>
@@ -23,6 +25,13 @@
                     <tr>
                         <td>@user.FullName</td>
                         <td>@user.Email</td>
+                        <td>@(user.Employee?.PersonnelCode ?? "-")</td>
+                        <td class="small">
+                            @(user.CanAccessFinance ? "مالی " : "")
+                            @(user.CanAccessWarehouse ? "انبار " : "")
+                            @(user.CanAccessHumanCapital ? "سرمایه انسانی " : "")
+                            @(user.CanAccessSystemSettings ? "تنظیمات" : "")
+                        </td>
                         <td><span class="badge bg-success">فعال</span></td>
                     </tr>
                 }

@@ -11,6 +11,7 @@ public class AiAssistantController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AskAI([FromBody] UserMessage request)
     {
         var reply = await _ai.AskAsync(request.Message);
@@ -19,6 +20,7 @@ public class AiAssistantController : Controller
     }
    
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task StreamAI([FromBody] UserMessage request)
     {
         Response.Headers.Add("Content-Type", "text/event-stream");

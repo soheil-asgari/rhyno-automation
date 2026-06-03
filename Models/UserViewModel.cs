@@ -14,6 +14,8 @@ namespace OfficeAutomation.Models
         [EmailAddress(ErrorMessage = "فرمت ایمیل صحیح نیست")]
         public string? Email { get; set; }
 
+        public int? EmployeeId { get; set; }
+
         public string? JobTitle { get; set; }
 
         public string? PhoneNumber { get; set; } // فیلد جدید شماره تلفن
@@ -35,6 +37,14 @@ namespace OfficeAutomation.Models
         public string? Role { get; set; }
 
         public string? ManagerId { get; set; }
+
+        public bool CanAccessFinance { get; set; }
+
+        public bool CanAccessWarehouse { get; set; }
+
+        public bool CanAccessHumanCapital { get; set; }
+
+        public bool CanAccessSystemSettings { get; set; }
 
 
     }

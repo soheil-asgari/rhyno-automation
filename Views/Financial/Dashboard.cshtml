@@ -1,0 +1,122 @@
+@model FinancialDashboardVM
+@{
+    ViewData["Title"] = "داشبورد سود و زیان";
+}
+
+@section Styles {
+    <style>
+        .fin-dash .metric-label { font-size: .78rem; color: #64748b; }
+        .fin-dash .metric-value { font-size: 1.1rem; font-weight: 700; }
+    </style>
+}
+
+<div class="container-fluid py-4 fin-dash">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">داشبورد پویای سود و زیان</h5>
+            <p class="text-muted small mb-0">درآمد، هزینه، و سود/زیان با نمودار پویا</p>
+        </div>
+        <a asp-action="Invoices" class="btn btn-sm btn-outline-secondary">بازگشت به خرید/فروش</a>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2"><div class="metric-label">کل درآمد</div><div class="metric-value text-success">@Model.TotalRevenue.ToString("N0")</div></div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2"><div class="metric-label">هزینه خرید</div><div class="metric-value text-primary">@Model.TotalPurchaseCost.ToString("N0")</div></div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2"><div class="metric-label">هزینه حقوق</div><div class="metric-value text-warning">@Model.TotalPayrollCost.ToString("N0")</div></div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2"><div class="metric-label">سود/زیان خالص</div><div class="metric-value @(Model.NetProfitLoss >= 0 ? "text-success" : "text-danger")">@Model.NetProfitLoss.ToString("N0")</div></div></div></div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+            <div class="d-flex gap-2 mb-3 flex-wrap">
+                <button class="btn btn-sm btn-outline-primary chart-mode" data-mode="bar">Bar</button>
+                <button class="btn btn-sm btn-outline-primary chart-mode" data-mode="line">Line</button>
+                <button class="btn btn-sm btn-outline-primary chart-mode" data-mode="area">Area</button>
+            </div>
+            <canvas id="plChart" height="96"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (() => {
+            const labels = @Html.Raw(Json.Serialize(Model.MonthLabels));
+            const revenue = @Html.Raw(Json.Serialize(Model.RevenueSeries));
+            const costs = @Html.Raw(Json.Serialize(Model.CostSeries));
+            const profit = @Html.Raw(Json.Serialize(Model.ProfitSeries));
+
+            const context = document.getElementById('plChart');
+
+            let chartType = 'bar';
+            let chart;
+
+            function buildDatasets(areaMode) {
+                return [
+                    {
+                        label: 'درآمد',
+                        data: revenue,
+                        borderColor: '#10b981',
+                        backgroundColor: areaMode ? 'rgba(16,185,129,0.2)' : '#10b981',
+                        fill: areaMode,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'هزینه',
+                        data: costs,
+                        borderColor: '#ef4444',
+                        backgroundColor: areaMode ? 'rgba(239,68,68,0.2)' : '#ef4444',
+                        fill: areaMode,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'سود/زیان',
+                        data: profit,
+                        borderColor: '#3b82f6',
+                        backgroundColor: areaMode ? 'rgba(59,130,246,0.2)' : '#3b82f6',
+                        fill: areaMode,
+                        tension: 0.3
+                    }
+                ];
+            }
+
+            function renderChart(mode) {
+                const area = mode === 'area';
+                const baseType = area ? 'line' : mode;
+
+                if (chart) {
+                    chart.destroy();
+                }
+
+                chart = new Chart(context, {
+                    type: baseType,
+                    data: {
+                        labels,
+                        datasets: buildDatasets(area)
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    callback: (value) => Number(value).toLocaleString('fa-IR')
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            document.querySelectorAll('.chart-mode').forEach(button => {
+                button.addEventListener('click', () => {
+                    chartType = button.getAttribute('data-mode');
+                    renderChart(chartType);
+                });
+            });
+
+            renderChart(chartType);
+        })();
+    </script>
+}

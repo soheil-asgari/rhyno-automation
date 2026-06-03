@@ -1,0 +1,370 @@
+@model FinancialInvoiceUpsertVM
+@{
+    ViewData["Title"] = "ویرایش فاکتور خرید/فروش";
+    var backAction = ViewBag.BackToListAction as string ?? "Sales";
+}
+
+<div class="container-fluid py-4">
+    <h6 class="fw-bold mb-3">ویرایش فاکتور خرید/فروش</h6>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+            <form asp-action="EditInvoice" asp-route-id="@Model.Id" method="post" id="invoiceForm">
+                @Html.AntiForgeryToken()
+                <input asp-for="Id" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                <div class="row g-2 mb-3 small">
+                    <div class="col-md-2">
+                        <label asp-for="InvoiceNumber" class="form-label small"></label>
+                        <input asp-for="InvoiceNumber" class="form-control form-control-sm" />
+                        <div id="invoiceNumberHint" class="small text-danger mt-1 d-none"></div>
+                    </div>
+                    <div class="col-md-2"><label asp-for="InvoiceType" class="form-label small"></label><select asp-for="InvoiceType" class="form-select form-select-sm"><option value="Sale">فروش</option><option value="Purchase">خرید</option></select></div>
+                    <div class="col-md-2"><label asp-for="DateShamsi" class="form-label small"></label><input asp-for="DateShamsi" class="form-control form-control-sm" /></div>
+                    <div class="col-md-3">
+                        <label asp-for="EmployerId" class="form-label small sale-only d-none"></label>
+                        <select asp-for="EmployerId" asp-items="Model.EmployerOptions" class="form-select form-select-sm sale-only d-none">
+                            <option value="">انتخاب کارفرما</option>
+                        </select>
+                        <label asp-for="PartyName" class="form-label small purchase-only d-none"></label>
+                        <input asp-for="PartyName" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-3"><label asp-for="NationalCodeOrEconomicId" class="form-label small"></label><input asp-for="NationalCodeOrEconomicId" class="form-control form-control-sm" /></div>
+                    <div class="col-md-4 purchase-only d-none"><label asp-for="WarehouseReceiptId" class="form-label small"></label><select asp-for="WarehouseReceiptId" asp-items="Model.WarehouseReceiptOptions" class="form-select form-select-sm"><option value="">انتخاب رسید انبار</option></select></div>
+                    <div class="col-md-4 purchase-only d-none"><label asp-for="FollowUpEmployeeId" class="form-label small"></label><select asp-for="FollowUpEmployeeId" asp-items="Model.FollowUpEmployeeOptions" class="form-select form-select-sm"><option value="">انتخاب مسئول پیگیری</option></select></div>
+                    <div class="col-md-4 purchase-only d-none"><label asp-for="DeadlineDateShamsi" class="form-label small"></label><input asp-for="DeadlineDateShamsi" class="form-control form-control-sm" placeholder="1405/12/29" /></div>
+                    <div class="col-12"><label asp-for="Notes" class="form-label small"></label><textarea asp-for="Notes" class="form-control form-control-sm" rows="2"></textarea></div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="small fw-bold mb-0">اقلام فاکتور</h6>
+                    <button type="button" id="addInvoiceRow" class="btn btn-sm btn-outline-secondary">+ افزودن ردیف</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle" id="invoiceItemsTable" style="font-size:.8rem;">
+                        <thead>
+                            <tr>
+                                <th>کالا</th>
+                                <th>شرح آیتم</th>
+                                <th>تعداد</th>
+                                <th>فی</th>
+                                <th>جمع جزء</th>
+                                <th>VAT 10%</th>
+                                <th>جمع کل</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceItemsBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="row g-2 mt-2 small">
+                    <div class="col-md-4"><label asp-for="SubTotal" class="form-label small"></label><input asp-for="SubTotal" class="form-control form-control-sm" readonly /></div>
+                    <div class="col-md-4"><label asp-for="VatAmount" class="form-label small"></label><input asp-for="VatAmount" class="form-control form-control-sm" readonly /></div>
+                    <div class="col-md-4"><label asp-for="GrandTotal" class="form-label small"></label><input asp-for="GrandTotal" class="form-control form-control-sm" readonly /></div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" id="submitInvoiceButton" class="btn btn-sm btn-success">ذخیره تغییرات</button>
+                    <a asp-action="@backAction" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<template id="invoiceRowTemplate">
+    <tr>
+        <td>
+            <select data-field="ProductId" class="form-select form-select-sm">
+                <option value="">-</option>
+                @foreach (var item in Model.ProductOptions)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+        </td>
+        <td><input data-field="ItemName" class="form-control form-control-sm" /></td>
+        <td><input type="number" data-field="Quantity" class="form-control form-control-sm line-calc" min="0.001" step="0.001" /></td>
+        <td><input type="number" data-field="UnitPrice" class="form-control form-control-sm line-calc" min="0" step="0.01" /></td>
+        <td><input type="number" data-field="LineSubTotal" class="form-control form-control-sm" readonly /></td>
+        <td><input type="number" data-field="LineVatAmount" class="form-control form-control-sm" readonly /></td>
+        <td><input type="number" data-field="LineGrandTotal" class="form-control form-control-sm" readonly /></td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger removeRow">حذف</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const body = document.getElementById('invoiceItemsBody');
+            const tpl = document.getElementById('invoiceRowTemplate');
+            const invoiceNumberInput = document.getElementById('InvoiceNumber');
+            const invoiceTypeSelect = document.getElementById('InvoiceType');
+            const invoiceNumberHint = document.getElementById('invoiceNumberHint');
+            const submitButton = document.getElementById('submitInvoiceButton');
+            const form = document.getElementById('invoiceForm');
+            const currentInvoiceId = '@(Model.Id?.ToString() ?? string.Empty)';
+            const purchaseOnlyFields = document.querySelectorAll('.purchase-only');
+            const saleOnlyFields = document.querySelectorAll('.sale-only');
+            const receiptSelect = document.getElementById('WarehouseReceiptId');
+            const employerSelect = document.getElementById('EmployerId');
+            const partyNameInput = document.getElementById('PartyName');
+
+            const subTotalInput = document.querySelector('[name="SubTotal"]');
+            const vatInput = document.querySelector('[name="VatAmount"]');
+            const grandInput = document.querySelector('[name="GrandTotal"]');
+            let duplicateInvoiceNumber = false;
+            let previousReceiptId = receiptSelect?.value || '';
+
+            function togglePurchaseFields() {
+                const isPurchase = (invoiceTypeSelect?.value || '') === 'Purchase';
+                purchaseOnlyFields.forEach(field => field.classList.toggle('d-none', !isPurchase));
+                saleOnlyFields.forEach(field => field.classList.toggle('d-none', isPurchase));
+                if (isPurchase) {
+                    if (employerSelect) employerSelect.value = '';
+                    if (partyNameInput) partyNameInput.readOnly = false;
+                } else if (employerSelect && partyNameInput) {
+                    const opt = employerSelect.options[employerSelect.selectedIndex];
+                    partyNameInput.value = opt?.text && opt.value ? opt.text : '';
+                    partyNameInput.readOnly = true;
+                }
+            }
+
+            employerSelect?.addEventListener('change', () => {
+                if (!partyNameInput) return;
+                const opt = employerSelect.options[employerSelect.selectedIndex];
+                partyNameInput.value = opt?.text && opt.value ? opt.text : '';
+            });
+
+            if ((invoiceTypeSelect?.value || '') === 'Sale' && employerSelect && partyNameInput && employerSelect.value) {
+                const opt = employerSelect.options[employerSelect.selectedIndex];
+                partyNameInput.value = opt?.text && opt.value ? opt.text : partyNameInput.value;
+            }
+
+            function updateNames() {
+                [...body.querySelectorAll('tr')].forEach((row, index) => {
+                    row.querySelectorAll('[data-field]').forEach(field => {
+                        const fieldName = field.getAttribute('data-field');
+                        field.name = `Items[${index}].${fieldName}`;
+                    });
+                });
+            }
+
+            function calculateRow(row) {
+                const quantity = Number(row.querySelector('[data-field="Quantity"]')?.value || 0);
+                const unitPrice = Number(row.querySelector('[data-field="UnitPrice"]')?.value || 0);
+
+                const subTotal = quantity * unitPrice;
+                const vat = subTotal * 0.10;
+                const grand = subTotal + vat;
+
+                row.querySelector('[data-field="LineSubTotal"]').value = subTotal.toFixed(2);
+                row.querySelector('[data-field="LineVatAmount"]').value = vat.toFixed(2);
+                row.querySelector('[data-field="LineGrandTotal"]').value = grand.toFixed(2);
+            }
+
+            function calculateTotals() {
+                const rows = [...body.querySelectorAll('tr')];
+                let totalSub = 0;
+                let totalVat = 0;
+                let totalGrand = 0;
+
+                rows.forEach(row => {
+                    totalSub += Number(row.querySelector('[data-field="LineSubTotal"]')?.value || 0);
+                    totalVat += Number(row.querySelector('[data-field="LineVatAmount"]')?.value || 0);
+                    totalGrand += Number(row.querySelector('[data-field="LineGrandTotal"]')?.value || 0);
+                });
+
+                subTotalInput.value = totalSub.toFixed(2);
+                vatInput.value = totalVat.toFixed(2);
+                grandInput.value = totalGrand.toFixed(2);
+            }
+
+            function setInvoiceNumberState(isDuplicate, message) {
+                duplicateInvoiceNumber = Boolean(isDuplicate);
+                if (duplicateInvoiceNumber && message) {
+                    invoiceNumberHint.textContent = message;
+                    invoiceNumberHint.classList.remove('d-none');
+                    invoiceNumberInput.classList.add('is-invalid');
+                } else {
+                    invoiceNumberHint.textContent = '';
+                    invoiceNumberHint.classList.add('d-none');
+                    invoiceNumberInput.classList.remove('is-invalid');
+                }
+                submitButton.disabled = duplicateInvoiceNumber;
+            }
+
+            async function checkInvoiceNumberDuplicate() {
+                const invoiceNumber = (invoiceNumberInput?.value || '').trim();
+                const invoiceType = invoiceTypeSelect?.value || 'Sale';
+
+                if (!invoiceNumber) {
+                    setInvoiceNumberState(false, '');
+                    return;
+                }
+
+                const url = '@Url.Action("CheckInvoiceNumber", "Financial")'
+                    + `?invoiceNumber=${encodeURIComponent(invoiceNumber)}`
+                    + `&invoiceType=${encodeURIComponent(invoiceType)}`
+                    + `&currentInvoiceId=${encodeURIComponent(currentInvoiceId)}`;
+
+                try {
+                    const response = await fetch(url, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!response.ok) {
+                        setInvoiceNumberState(false, '');
+                        return;
+                    }
+
+                    const result = await response.json();
+                    setInvoiceNumberState(result.isDuplicate, result.message || '');
+                } catch {
+                    setInvoiceNumberState(false, '');
+                }
+            }
+
+            function attachRowEvents(row) {
+                row.querySelectorAll('.line-calc').forEach(input => {
+                    input.addEventListener('input', () => {
+                        calculateRow(row);
+                        calculateTotals();
+                    });
+                });
+            }
+
+            function addRow(item = null) {
+                const clone = tpl.content.cloneNode(true);
+                const row = clone.querySelector('tr');
+                body.appendChild(clone);
+
+                attachRowEvents(row);
+
+                if (item) {
+                    row.querySelector('[data-field="ProductId"]').value = item.productId || '';
+                    row.querySelector('[data-field="ItemName"]').value = item.itemName || '';
+                    row.querySelector('[data-field="Quantity"]').value = item.quantity || 0;
+                    row.querySelector('[data-field="UnitPrice"]').value = item.unitPrice || 0;
+                    row.querySelector('[data-field="LineSubTotal"]').value = item.lineSubTotal || 0;
+                    row.querySelector('[data-field="LineVatAmount"]').value = item.lineVatAmount || 0;
+                    row.querySelector('[data-field="LineGrandTotal"]').value = item.lineGrandTotal || 0;
+                }
+
+                calculateRow(row);
+                updateNames();
+                calculateTotals();
+            }
+
+            function clearRows() {
+                body.innerHTML = '';
+                updateNames();
+                calculateTotals();
+            }
+
+            function hasManualRows() {
+                const rows = [...body.querySelectorAll('tr')];
+                return rows.some(row => {
+                    const productId = (row.querySelector('[data-field="ProductId"]')?.value || '').trim();
+                    const itemName = (row.querySelector('[data-field="ItemName"]')?.value || '').trim();
+                    const quantity = Number(row.querySelector('[data-field="Quantity"]')?.value || 0);
+                    const unitPrice = Number(row.querySelector('[data-field="UnitPrice"]')?.value || 0);
+                    return Boolean(productId || itemName || quantity > 0 || unitPrice > 0);
+                });
+            }
+
+            async function populateItemsFromReceipt(skipConfirm = false) {
+                const isPurchase = (invoiceTypeSelect?.value || '') === 'Purchase';
+                const receiptId = receiptSelect?.value;
+
+                if (!isPurchase || !receiptId) {
+                    previousReceiptId = receiptId || '';
+                    return;
+                }
+
+                if (!skipConfirm && hasManualRows()) {
+                    const shouldReplace = window.confirm('با انتخاب این رسید انبار، اقلام فعلی جدول پاک و جایگزین خواهند شد. آیا مطمئن هستید؟');
+                    if (!shouldReplace) {
+                        if (receiptSelect) {
+                            receiptSelect.value = previousReceiptId;
+                        }
+                        return;
+                    }
+                }
+
+                const url = '@Url.Action("GetReceiptItemsJson", "Financial")'
+                    + `?receiptId=${encodeURIComponent(receiptId)}`;
+
+                try {
+                    const response = await fetch(url, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!response.ok) {
+                        if (receiptSelect) {
+                            receiptSelect.value = previousReceiptId;
+                        }
+                        return;
+                    }
+
+                    const result = await response.json();
+                    const mappedItems = Array.isArray(result?.items) ? result.items : [];
+                    if (!mappedItems.length) {
+                        clearRows();
+                        addRow();
+                        previousReceiptId = receiptId;
+                        return;
+                    }
+
+                    clearRows();
+                    mappedItems.forEach(item => addRow(item));
+                    previousReceiptId = receiptId;
+                } catch {
+                    if (receiptSelect) {
+                        receiptSelect.value = previousReceiptId;
+                    }
+                }
+            }
+
+            document.getElementById('addInvoiceRow').addEventListener('click', () => addRow());
+
+            body.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('.removeRow');
+                if (!removeButton) return;
+                removeButton.closest('tr')?.remove();
+                if (!body.querySelector('tr')) {
+                    addRow();
+                }
+                updateNames();
+                calculateTotals();
+            });
+
+            invoiceNumberInput?.addEventListener('blur', checkInvoiceNumberDuplicate);
+            invoiceNumberInput?.addEventListener('change', checkInvoiceNumberDuplicate);
+            invoiceTypeSelect?.addEventListener('change', () => {
+                togglePurchaseFields();
+                checkInvoiceNumberDuplicate();
+            });
+            receiptSelect?.addEventListener('change', () => populateItemsFromReceipt(false));
+
+            form?.addEventListener('submit', async (event) => {
+                await checkInvoiceNumberDuplicate();
+                if (duplicateInvoiceNumber) {
+                    event.preventDefault();
+                    invoiceNumberInput?.focus();
+                }
+            });
+
+            const initialItems = @Html.Raw(Json.Serialize(Model.Items ?? new List<FinancialInvoiceItemVM>()));
+            if (initialItems.length) {
+                initialItems.forEach(addRow);
+            } else {
+                addRow();
+            }
+
+            togglePurchaseFields();
+            checkInvoiceNumberDuplicate();
+
+            if ((invoiceTypeSelect?.value || '') === 'Purchase' && receiptSelect?.value) {
+                populateItemsFromReceipt(true);
+            }
+        })();
+    </script>
+}

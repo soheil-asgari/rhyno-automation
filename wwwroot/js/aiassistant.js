@@ -2,6 +2,7 @@
     const input = document.getElementById("userInput");
     const chat = document.getElementById("chatMessages");
     const sendBtn = document.getElementById("sendBtn");
+    const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
 
     sendBtn.addEventListener("click", sendMessage);
     input.addEventListener("keypress", function (e) {
@@ -32,7 +33,8 @@
         const response = await fetch("/AiAssistant/StreamAI", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "RequestVerificationToken": antiForgeryToken
             },
             body: JSON.stringify({ message: message })
         });
@@ -72,11 +74,13 @@
 });
 
 async function askAI(message) {
+    const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
 
     const response = await fetch("/AiAssistant/StreamAI", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "RequestVerificationToken": antiForgeryToken
         },
         body: JSON.stringify({ message: message })
     });

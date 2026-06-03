@@ -1,4 +1,6 @@
-﻿<div class="row justify-content-center">
+﻿@model OfficeAutomation.Models.UserViewModel
+
+<div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow border-0">
             <div class="card-header bg-primary text-white py-3">
@@ -6,22 +8,44 @@
             </div>
             <div class="card-body p-4">
                 <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
                     <div asp-validation-summary="All" class="text-danger small"></div>
 
                     <div class="mb-3">
                         <label class="form-label">نام و نام خانوادگی</label>
-                        <input name="fullName" class="form-control" required />
+                        <input asp-for="FullName" class="form-control" required readonly />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">نام کاربری (کد پرسنلی یا نام)</label>
-                        <input name="email" class="form-control" required />
+                        <input asp-for="Email" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">اتصال به کارمند</label>
+                        <select asp-for="EmployeeId" class="form-select" required>
+                            <option value="">انتخاب کارمند</option>
+                            @foreach (var employee in (IEnumerable<dynamic>)(ViewBag.EmployeeOptions ?? new List<dynamic>()))
+                            {
+                                <option value="@employee.Id">@employee.FullName (@employee.PersonnelCode)</option>
+                            }
+                        </select>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">رمز عبور پیش‌فرض</label>
-                        <input name="password" type="password" class="form-control" required />
+                        <input asp-for="Password" type="password" class="form-control" required />
                         <small class="text-muted">حداقل ۶ کاراکتر، شامل عدد و حروف بزرگ</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label mb-2">دسترسی‌ها</label>
+                        <div class="d-grid gap-2" style="grid-template-columns: 1fr 1fr;">
+                            <label class="form-check small mb-0"><input asp-for="CanAccessFinance" class="form-check-input ms-2" />مالی و حقوق و بیمه</label>
+                            <label class="form-check small mb-0"><input asp-for="CanAccessWarehouse" class="form-check-input ms-2" />انبارداری</label>
+                            <label class="form-check small mb-0"><input asp-for="CanAccessHumanCapital" class="form-check-input ms-2" />سرمایه انسانی</label>
+                            <label class="form-check small mb-0"><input asp-for="CanAccessSystemSettings" class="form-check-input ms-2" />تنظیمات سیستم</label>
+                        </div>
                     </div>
 
                     <div class="d-grid gap-2">
@@ -33,3 +57,24 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const employeeSelect = document.getElementById('EmployeeId');
+            const fullNameInput = document.getElementById('FullName');
+            if (!employeeSelect || !fullNameInput) return;
+
+            employeeSelect.addEventListener('change', () => {
+                const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+                if (!selectedOption || !selectedOption.value) {
+                    fullNameInput.value = '';
+                    return;
+                }
+                const optionText = selectedOption.textContent || '';
+                const namePart = optionText.split('(')[0]?.trim() || '';
+                fullNameInput.value = namePart;
+            });
+        })();
+    </script>
+}

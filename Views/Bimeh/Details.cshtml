@@ -1,6 +1,12 @@
-﻿@model InsuranceList
+﻿@using System.Globalization
+@model InsuranceList
 @{
     ViewData["Title"] = "جزئیات لیست بیمه";
+    string ToSolar(DateTime date)
+    {
+        var pc = new PersianCalendar();
+        return $"{pc.GetYear(date):0000}/{pc.GetMonth(date):00}/{pc.GetDayOfMonth(date):00}";
+    }
 }
 
 @section Styles {
@@ -67,8 +73,8 @@
                             <tr>
                                 <td class="fw-semibold">@employee.FullName</td>
                                 <td>@employee.JobTitle</td>
-                                <td>@employee.StartWork.ToString("yyyy/MM/dd")</td>
-                                <td>@(employee.EndWork?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                <td>@ToSolar(employee.StartWork)</td>
+                                <td>@(employee.EndWork.HasValue ? ToSolar(employee.EndWork.Value) : "-")</td>
                                 <td>@employee.WorkDays</td>
                                 <td>@employee.Salary.ToString("N0")</td>
                             </tr>

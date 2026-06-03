@@ -1,0 +1,106 @@
+@model InventoryCountingUpsertVM
+@{
+    ViewData["Title"] = "ثبت انبارگردانی";
+}
+
+<div class="container-fluid py-4">
+    <h6 class="fw-bold mb-3">ثبت انبارگردانی</h6>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+            <form asp-action="CreateCounting" method="post" id="countingForm">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3"><label asp-for="DocumentNumber" class="form-label small"></label><input asp-for="DocumentNumber" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2"><label asp-for="DateShamsi" class="form-label small"></label><input asp-for="DateShamsi" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2"><label asp-for="WarehouseId" class="form-label small"></label><select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select form-select-sm"></select></div>
+                    <div class="col-md-2"><label asp-for="Status" class="form-label small"></label><select asp-for="Status" class="form-select form-select-sm"><option value="Draft">Draft</option><option value="Approved">Approved</option></select></div>
+                    <div class="col-md-3"><label class="form-label small">عملیات</label><button type="button" id="addCountingRow" class="btn btn-sm btn-outline-secondary d-block">+ ردیف</button></div>
+                    <div class="col-12"><label asp-for="Notes" class="form-label small"></label><textarea asp-for="Notes" rows="2" class="form-control form-control-sm"></textarea></div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle" id="countingItemsTable">
+                        <thead><tr><th>کالا</th><th>موجودی سیستمی</th><th>موجودی شمارش</th><th>اختلاف</th><th></th></tr></thead>
+                        <tbody id="countingItemsBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex gap-2 mt-2"><button class="btn btn-sm btn-success">ذخیره</button><a asp-action="Countings" class="btn btn-sm btn-outline-secondary">بازگشت</a></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<template id="countingRowTemplate">
+    <tr>
+        <td>
+            <select data-field="ProductId" class="form-select form-select-sm">
+                <option value="">انتخاب کالا</option>
+                @foreach (var product in Model.ProductOptions)
+                {
+                    <option value="@product.Value">@product.Text</option>
+                }
+            </select>
+        </td>
+        <td><input type="number" data-field="SystemQuantity" class="form-control form-control-sm system-qty" min="0" step="0.001" /></td>
+        <td><input type="number" data-field="PhysicalQuantity" class="form-control form-control-sm physical-qty" min="0" step="0.001" /></td>
+        <td><input type="number" data-field="DiscrepancyQuantity" class="form-control form-control-sm discrepancy-qty" readonly /></td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger removeRow">حذف</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const body = document.getElementById('countingItemsBody');
+            const tpl = document.getElementById('countingRowTemplate');
+
+            function updateNames() {
+                [...body.querySelectorAll('tr')].forEach((row, index) => {
+                    row.querySelectorAll('[data-field]').forEach(field => {
+                        const f = field.getAttribute('data-field');
+                        field.name = `Items[${index}].${f}`;
+                    });
+                });
+            }
+
+            function recalcRow(row) {
+                const system = Number(row.querySelector('.system-qty')?.value || 0);
+                const physical = Number(row.querySelector('.physical-qty')?.value || 0);
+                row.querySelector('.discrepancy-qty').value = (physical - system).toFixed(3);
+            }
+
+            function addRow(item) {
+                const clone = tpl.content.cloneNode(true);
+                const row = clone.querySelector('tr');
+                body.appendChild(clone);
+
+                row.querySelectorAll('.system-qty, .physical-qty').forEach(input => {
+                    input.addEventListener('input', () => recalcRow(row));
+                });
+
+                if (item) {
+                    row.querySelector('[data-field="ProductId"]').value = item.productId || '';
+                    row.querySelector('[data-field="SystemQuantity"]').value = item.systemQuantity || 0;
+                    row.querySelector('[data-field="PhysicalQuantity"]').value = item.physicalQuantity || 0;
+                    row.querySelector('[data-field="DiscrepancyQuantity"]').value = item.discrepancyQuantity || 0;
+                    recalcRow(row);
+                }
+
+                updateNames();
+            }
+
+            document.getElementById('addCountingRow').addEventListener('click', () => addRow());
+            body.addEventListener('click', e => {
+                if (!e.target.closest('.removeRow')) return;
+                e.target.closest('tr')?.remove();
+                if (!body.querySelector('tr')) addRow();
+                updateNames();
+            });
+
+            const initialItems = @Html.Raw(Json.Serialize(Model.Items ?? new List<InventoryCountingItemVM>()));
+            if (initialItems.length) initialItems.forEach(addRow); else addRow();
+        })();
+    </script>
+}

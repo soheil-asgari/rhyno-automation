@@ -25,7 +25,7 @@ namespace OfficeAutomation.Models
         [StringLength(50)]
         public string Status { get; set; } = "Draft";
 
-        public List<InsuranceEmployee> Employees { get; set; } = new List<InsuranceEmployee>();
+        public List<InsuranceEmployeeRowViewModel> Employees { get; set; } = new();
 
         public List<string> AvailableStatuses { get; set; } = new List<string>();
     }

@@ -155,6 +155,51 @@ namespace OfficeAutomation.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityName", "EntityId", "Timestamp");
+
+                    b.ToTable("AuditLogs");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.Department", b =>
                 {
                     b.Property<int>("Id")
@@ -162,6 +207,9 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ManagerEmployeeId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ManagerId")
                         .HasColumnType("nvarchar(450)");
@@ -171,6 +219,8 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ManagerEmployeeId");
 
                     b.HasIndex("ManagerId");
 
@@ -202,6 +252,43 @@ namespace OfficeAutomation.Migrations
                             Id = 5,
                             Name = "Management"
                         });
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Employer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("ContractNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractNumber");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Employers");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.HumanCapitalEmployee", b =>
@@ -394,6 +481,9 @@ namespace OfficeAutomation.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("HumanCapitalEmployeeId")
+                        .HasColumnType("int");
+
                     b.Property<int>("InsuranceListId")
                         .HasColumnType("int");
 
@@ -411,6 +501,8 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("HumanCapitalEmployeeId");
 
                     b.HasIndex("InsuranceListId");
 
@@ -457,6 +549,163 @@ namespace OfficeAutomation.Migrations
                     b.ToTable("InsuranceLists");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryCounting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("DocumentNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentNumber")
+                        .IsUnique();
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("InventoryCountings");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryCountingItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("DiscrepancyQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("InventoryCountingId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PhysicalQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SystemQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryCountingId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("InventoryCountingItems");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryOpeningBalanceLedger", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PeriodYear")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("WarehouseClosingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseClosingId");
+
+                    b.HasIndex("WarehouseId", "ProductId", "PeriodYear")
+                        .IsUnique();
+
+                    b.ToTable("InventoryOpeningBalanceLedgers");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryStock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CurrentQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("ProductId", "WarehouseId")
+                        .IsUnique();
+
+                    b.ToTable("InventoryStocks");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.Invoice", b =>
                 {
                     b.Property<int>("Id")
@@ -471,6 +720,25 @@ namespace OfficeAutomation.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("DeadlineDateShamsi")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("EmployerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FollowUpEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("InvoiceDate")
                         .HasColumnType("datetime2");
 
@@ -479,18 +747,110 @@ namespace OfficeAutomation.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("InvoiceType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NationalCodeOrEconomicId")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<string>("PartyName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("VatAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("VendorName")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<int?>("WarehouseReceiptId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("InvoiceNumber", "VendorName")
+                    b.HasIndex("EmployerId");
+
+                    b.HasIndex("FollowUpEmployeeId");
+
+                    b.HasIndex("WarehouseReceiptId");
+
+                    b.HasIndex("InvoiceNumber", "InvoiceType")
                         .IsUnique()
-                        .HasDatabaseName("IX_Invoice_Number_Vendor");
+                        .HasDatabaseName("IX_Invoice_Number_Type");
+
+                    b.HasIndex("InvoiceType", "DateShamsi")
+                        .HasDatabaseName("IX_Invoice_Type_DateShamsi");
 
                     b.ToTable("Invoices");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InvoiceItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<decimal>("LineGrandTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineSubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineVatAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("InvoiceItems");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.Leave", b =>
@@ -568,6 +928,144 @@ namespace OfficeAutomation.Migrations
                     b.ToTable("Letters");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.PayrollItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Allowance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BaseSalary")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("EmployeeName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<int?>("HumanCapitalEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("InsuranceDeduction")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("NetPayable")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Overtime")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PayrollListId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Tax")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HumanCapitalEmployeeId");
+
+                    b.HasIndex("PayrollListId");
+
+                    b.ToTable("PayrollItems");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.PayrollList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsFinalized")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("PayrollLists");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Product", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Products");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.SystemSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -616,6 +1114,18 @@ namespace OfficeAutomation.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<bool>("CanAccessFinance")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CanAccessHumanCapital")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CanAccessSystemSettings")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CanAccessWarehouse")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -629,6 +1139,9 @@ namespace OfficeAutomation.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("EmployeeId")
+                        .HasColumnType("int");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -692,6 +1205,8 @@ namespace OfficeAutomation.Migrations
 
                     b.HasIndex("DepartmentId");
 
+                    b.HasIndex("EmployeeId");
+
                     b.HasIndex("ManagerId");
 
                     b.HasIndex("NormalizedEmail")
@@ -735,6 +1250,323 @@ namespace OfficeAutomation.Migrations
                         .IsUnique();
 
                     b.ToTable("UserPreferences");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Vendor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("EconomicCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EconomicCode");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Vendors");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Warehouse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Warehouses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "WH-MAIN",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            IsClosed = false,
+                            Location = "ستاد",
+                            Name = "انبار مرکزی"
+                        });
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseClosing", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClosingDateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("ClosingYear")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DocumentNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int>("OpeningYear")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentNumber")
+                        .IsUnique();
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("WarehouseClosings");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseClosingItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("ClosingQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("OpeningQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WarehouseClosingId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseClosingId");
+
+                    b.ToTable("WarehouseClosingItems");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseIssuance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("DestinationOrDepartment")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("EmployerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IssuanceNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployerId");
+
+                    b.HasIndex("IssuanceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("WarehouseIssuances");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseIssuanceItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("WarehouseIssuanceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseIssuanceId");
+
+                    b.ToTable("WarehouseIssuanceItems");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseReceipt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<string>("ReceiptNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("SupplierOrSource")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("VendorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiptNumber")
+                        .IsUnique();
+
+                    b.HasIndex("VendorId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("WarehouseReceipts");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseReceiptItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("WarehouseReceiptId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseReceiptId");
+
+                    b.ToTable("WarehouseReceiptItems");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.Waybill", b =>
@@ -900,12 +1732,19 @@ namespace OfficeAutomation.Migrations
 
             modelBuilder.Entity("OfficeAutomation.Models.Department", b =>
                 {
+                    b.HasOne("OfficeAutomation.Models.HumanCapitalEmployee", "ManagerEmployee")
+                        .WithMany()
+                        .HasForeignKey("ManagerEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("OfficeAutomation.Models.User", "Manager")
                         .WithMany()
                         .HasForeignKey("ManagerId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Manager");
+
+                    b.Navigation("ManagerEmployee");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.HumanCapitalEmployee", b =>
@@ -942,13 +1781,138 @@ namespace OfficeAutomation.Migrations
 
             modelBuilder.Entity("OfficeAutomation.Models.InsuranceEmployee", b =>
                 {
+                    b.HasOne("OfficeAutomation.Models.HumanCapitalEmployee", "HumanCapitalEmployee")
+                        .WithMany()
+                        .HasForeignKey("HumanCapitalEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("OfficeAutomation.Models.InsuranceList", "InsuranceList")
                         .WithMany("Employees")
                         .HasForeignKey("InsuranceListId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("HumanCapitalEmployee");
+
                     b.Navigation("InsuranceList");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryCounting", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Warehouse", "Warehouse")
+                        .WithMany("Countings")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryCountingItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.InventoryCounting", "InventoryCounting")
+                        .WithMany("Items")
+                        .HasForeignKey("InventoryCountingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany("CountingItems")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InventoryCounting");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryOpeningBalanceLedger", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.WarehouseClosing", "WarehouseClosing")
+                        .WithMany()
+                        .HasForeignKey("WarehouseClosingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.Warehouse", "Warehouse")
+                        .WithMany("OpeningLedgers")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Warehouse");
+
+                    b.Navigation("WarehouseClosing");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryStock", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany("Stocks")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.Warehouse", "Warehouse")
+                        .WithMany("Stocks")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Invoice", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Employer", "Employer")
+                        .WithMany("Invoices")
+                        .HasForeignKey("EmployerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.HumanCapitalEmployee", "FollowUpEmployee")
+                        .WithMany()
+                        .HasForeignKey("FollowUpEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.WarehouseReceipt", "WarehouseReceipt")
+                        .WithMany()
+                        .HasForeignKey("WarehouseReceiptId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Employer");
+
+                    b.Navigation("FollowUpEmployee");
+
+                    b.Navigation("WarehouseReceipt");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InvoiceItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Invoice", "Invoice")
+                        .WithMany("Items")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.Leave", b =>
@@ -981,6 +1945,24 @@ namespace OfficeAutomation.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.PayrollItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.HumanCapitalEmployee", "HumanCapitalEmployee")
+                        .WithMany()
+                        .HasForeignKey("HumanCapitalEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.PayrollList", "PayrollList")
+                        .WithMany("Items")
+                        .HasForeignKey("PayrollListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HumanCapitalEmployee");
+
+                    b.Navigation("PayrollList");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.User", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.Department", "Department")
@@ -988,11 +1970,18 @@ namespace OfficeAutomation.Migrations
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("OfficeAutomation.Models.HumanCapitalEmployee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("OfficeAutomation.Models.User", "Manager")
                         .WithMany()
                         .HasForeignKey("ManagerId");
 
                     b.Navigation("Department");
+
+                    b.Navigation("Employee");
 
                     b.Navigation("Manager");
                 });
@@ -1008,9 +1997,120 @@ namespace OfficeAutomation.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseClosing", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Warehouse", "Warehouse")
+                        .WithMany("Closings")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseClosingItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.WarehouseClosing", "WarehouseClosing")
+                        .WithMany("Items")
+                        .HasForeignKey("WarehouseClosingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("WarehouseClosing");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseIssuance", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Employer", "Employer")
+                        .WithMany("Issuances")
+                        .HasForeignKey("EmployerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.Warehouse", "Warehouse")
+                        .WithMany("Issuances")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employer");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseIssuanceItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany("IssuanceItems")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.WarehouseIssuance", "WarehouseIssuance")
+                        .WithMany("Items")
+                        .HasForeignKey("WarehouseIssuanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("WarehouseIssuance");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseReceipt", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Vendor", "Vendor")
+                        .WithMany("Receipts")
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.Warehouse", "Warehouse")
+                        .WithMany("Receipts")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Vendor");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseReceiptItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany("ReceiptItems")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.WarehouseReceipt", "WarehouseReceipt")
+                        .WithMany("Items")
+                        .HasForeignKey("WarehouseReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("WarehouseReceipt");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.Department", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Employer", b =>
+                {
+                    b.Navigation("Invoices");
+
+                    b.Navigation("Issuances");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.HumanCapitalEmployee", b =>
@@ -1023,6 +2123,67 @@ namespace OfficeAutomation.Migrations
             modelBuilder.Entity("OfficeAutomation.Models.InsuranceList", b =>
                 {
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryCounting", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Invoice", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.PayrollList", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Product", b =>
+                {
+                    b.Navigation("CountingItems");
+
+                    b.Navigation("IssuanceItems");
+
+                    b.Navigation("ReceiptItems");
+
+                    b.Navigation("Stocks");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Vendor", b =>
+                {
+                    b.Navigation("Receipts");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Warehouse", b =>
+                {
+                    b.Navigation("Closings");
+
+                    b.Navigation("Countings");
+
+                    b.Navigation("Issuances");
+
+                    b.Navigation("OpeningLedgers");
+
+                    b.Navigation("Receipts");
+
+                    b.Navigation("Stocks");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseClosing", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseIssuance", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.WarehouseReceipt", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

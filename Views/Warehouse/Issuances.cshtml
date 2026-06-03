@@ -1,0 +1,56 @@
+@model List<WarehouseIssuance>
+@{
+    ViewData["Title"] = "خروج انبار";
+    var warehouseOptions = ViewBag.WarehouseOptions as List<SelectListItem> ?? new();
+    var selectedWarehouseId = ViewBag.WarehouseId as int?;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">اسناد خروج انبار</h6>
+        <a asp-action="CreateIssuance" class="btn btn-sm btn-primary">ثبت خروج جدید</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-3 border-bottom">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4"><label class="form-label small text-muted mb-1">جستجو</label><input name="searchTerm" value="@ViewBag.SearchTerm" class="form-control form-control-sm" placeholder="شماره خروج/مقصد" /></div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small text-muted mb-1">انبار</label>
+                    <select name="warehouseId" class="form-select form-select-sm">
+                        <option value="">همه انبارها</option>
+                        @foreach (var option in warehouseOptions)
+                        {
+                            <option value="@option.Value" selected="@(selectedWarehouseId.HasValue && selectedWarehouseId.Value.ToString() == option.Value)">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto"><button class="btn btn-sm btn-primary">اعمال</button></div>
+            </form>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead><tr><th>شماره</th><th>تاریخ</th><th>انبار</th><th>کارفرما</th><th>اقلام</th></tr></thead>
+                <tbody>
+                @if (Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.IssuanceNumber</td>
+                            <td>@item.DateShamsi</td>
+                            <td>@item.Warehouse.Name</td>
+                            <td>@(item.Employer?.Name ?? item.DestinationOrDepartment)</td>
+                            <td>@item.Items.Sum(row => row.Quantity).ToString("N3")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-3">خروجی ثبت نشده است.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

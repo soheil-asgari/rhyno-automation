@@ -12,6 +12,10 @@ namespace OfficeAutomation.Models
 
         public User? Manager { get; set; }
 
+        public int? ManagerEmployeeId { get; set; }
+
+        public HumanCapitalEmployee? ManagerEmployee { get; set; }
+
         public ICollection<User>? Users { get; set; }
     }
 }

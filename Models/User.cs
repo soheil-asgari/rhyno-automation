@@ -24,6 +24,18 @@ namespace OfficeAutomation.Models
 
         public Department? Department { get; set; }
 
+        public int? EmployeeId { get; set; }
+
+        public HumanCapitalEmployee? Employee { get; set; }
+
+        public bool CanAccessFinance { get; set; }
+
+        public bool CanAccessWarehouse { get; set; }
+
+        public bool CanAccessHumanCapital { get; set; }
+
+        public bool CanAccessSystemSettings { get; set; }
+
         public bool IsManager { get; set; }
 
 
