@@ -17,6 +17,10 @@ namespace OfficeAutomation.Models
         [StringLength(200)]
         public string? Location { get; set; }
 
+        public string? ManagerUserId { get; set; }
+
+        public User? ManagerUser { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public bool IsClosed { get; set; }

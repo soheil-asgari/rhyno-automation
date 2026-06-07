@@ -1,0 +1,206 @@
+@model SecurityMatrixVM
+@{
+    ViewData["Title"] = "ماتریس دسترسی";
+    var permissionMap = ViewBag.PermissionMap as Dictionary<string, bool> ?? new();
+}
+
+@section Styles {
+    <style>
+        .security-matrix .table th,
+        .security-matrix .table td,
+        .security-matrix .table th *,
+        .security-matrix .table td * {
+            color: var(--text-dark) !important;
+        }
+
+        .security-matrix .table-responsive {
+            overflow: visible;
+        }
+
+        .security-matrix .dropdown-menu {
+            z-index: 10001 !important;
+        }
+
+        .security-matrix .permission-toggle-btn {
+            min-width: 84px;
+            border-radius: 999px;
+            font-weight: 700;
+            box-shadow: none;
+            transition: background-color .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease;
+        }
+
+        .security-matrix .permission-toggle-btn:disabled {
+            opacity: .7;
+        }
+
+        .security-matrix .permission-toast {
+            position: fixed;
+            left: 1rem;
+            bottom: 1rem;
+            z-index: 11050;
+            background: var(--glass-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: .7rem 1rem;
+            font-size: .8rem;
+            font-weight: 700;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, .14);
+            backdrop-filter: blur(14px);
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+
+        .security-matrix .permission-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        html.theme-dark .security-matrix .table th,
+        html.theme-dark .security-matrix .table td,
+        html.theme-dark .security-matrix .table th *,
+        html.theme-dark .security-matrix .table td * {
+            color: var(--text-dark) !important;
+        }
+    </style>
+}
+
+<div class="container-fluid py-4 security-matrix" data-toggle-url="@Url.Action("TogglePermission", "Security")">
+    @Html.AntiForgeryToken()
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">ماتریس دسترسی نقش‌ها</h5>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>نقش / دسترسی</th>
+                        @foreach (var feature in Model.Features)
+                        {
+                            <th class="text-center">@feature.Title</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in Model.Roles)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@role.Name</td>
+                            @foreach (var feature in Model.Features)
+                            {
+                                var key = $"{role.Id}:{feature.Key}";
+                                var isAllowed = permissionMap.TryGetValue(key, out var allowed) && allowed;
+                                <td class="text-center">
+                                    <button type="button"
+                                            class="btn btn-sm permission-toggle-btn @(isAllowed ? "btn-success" : "btn-outline-secondary")"
+                                            data-role-id="@role.Id"
+                                            data-permission-key="@feature.Key"
+                                            data-is-allowed="@(isAllowed ? "true" : "false")">
+                                        @(isAllowed ? "فعال" : "غیرفعال")
+                                    </button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="permission-toast" aria-live="polite"></div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const showToast = (matrix, message, isSuccess = true) => {
+                const toast = matrix.querySelector('.permission-toast');
+                if (!toast) {
+                    return;
+                }
+
+                const existingTimer = toast.dataset.timerId ? Number(toast.dataset.timerId) : 0;
+                if (existingTimer) {
+                    clearTimeout(existingTimer);
+                }
+
+                toast.textContent = message;
+                toast.style.borderColor = isSuccess ? '#16a34a' : '#dc2626';
+                toast.classList.add('show');
+
+                const timerId = window.setTimeout(() => {
+                    toast.classList.remove('show');
+                    delete toast.dataset.timerId;
+                }, 1700);
+
+                toast.dataset.timerId = String(timerId);
+            };
+
+            const paintButton = (button, isAllowed) => {
+                button.dataset.isAllowed = isAllowed ? 'true' : 'false';
+                button.textContent = isAllowed ? 'فعال' : 'غیرفعال';
+                button.classList.toggle('btn-success', isAllowed);
+                button.classList.toggle('btn-outline-secondary', !isAllowed);
+            };
+
+            $(document)
+                .off('click', '.permission-toggle-btn')
+                .on('click', '.permission-toggle-btn', async function (e) {
+                    e.preventDefault();
+
+                    const button = this;
+                    const matrix = button.closest('.security-matrix[data-toggle-url]');
+                    if (!matrix) {
+                        return;
+                    }
+
+                    const toggleUrl = matrix.dataset.toggleUrl;
+                    const antiForgeryToken = $('input[name="__RequestVerificationToken"]').val();
+                    const previousState = button.dataset.isAllowed === 'true';
+                    const nextState = !previousState;
+
+                    button.disabled = true;
+                    paintButton(button, nextState);
+
+                    const payload = new URLSearchParams();
+                    payload.append('RoleId', button.dataset.roleId);
+                    payload.append('PermissionKey', button.dataset.permissionKey);
+                    payload.append('IsAllowed', String(nextState));
+
+                    try {
+                        const response = await fetch(toggleUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                'RequestVerificationToken': antiForgeryToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: payload.toString()
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('save_failed');
+                        }
+
+                        const result = await response.json();
+                        if (!result?.success) {
+                            throw new Error('invalid_result');
+                        }
+
+                        showToast(matrix, result.message || 'دسترسی با موفقیت ذخیره شد.', true);
+                    } catch {
+                        paintButton(button, previousState);
+                        showToast(matrix, 'ذخیره تغییرات ناموفق بود. دوباره تلاش کنید.', false);
+                    } finally {
+                        button.disabled = false;
+                    }
+                });
+        })();
+    </script>
+}

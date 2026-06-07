@@ -38,6 +38,8 @@ namespace OfficeAutomation.Models
 
         public string? ManagerId { get; set; }
 
+        public string? ParentManagerUserId { get; set; }
+
         public bool CanAccessFinance { get; set; }
 
         public bool CanAccessWarehouse { get; set; }

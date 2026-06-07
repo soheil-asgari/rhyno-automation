@@ -20,6 +20,8 @@ namespace OfficeAutomation.Models
         public string? ServiceLocation { get; set; }
         public string? ManagerId { get; set; }
         public virtual User? Manager { get; set; }
+        public string? ParentManagerUserId { get; set; }
+        public virtual User? ParentManagerUser { get; set; }
         public int? DepartmentId { get; set; }
 
         public Department? Department { get; set; }

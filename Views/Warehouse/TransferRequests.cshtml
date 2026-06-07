@@ -1,0 +1,99 @@
+@model List<InventoryTransferRequest>
+@{
+    ViewData["Title"] = "درخواست‌های انتقال";
+    var currentUserId = ViewBag.CurrentUserId as string;
+}
+
+@section Styles {
+    <style>
+        .transfer-page .table th,
+        .transfer-page .table td {
+            color: var(--text-dark) !important;
+        }
+        .transfer-page .table-responsive {
+            overflow: visible;
+        }
+        .transfer-page .dropdown-menu {
+            z-index: 10001 !important;
+        }
+        html.theme-dark .transfer-page .table th,
+        html.theme-dark .transfer-page .table td,
+        html.theme-dark .transfer-page .table th *,
+        html.theme-dark .transfer-page .table td * {
+            color: var(--text-dark) !important;
+        }
+    </style>
+}
+
+<div class="container-fluid py-4 transfer-page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">درخواست‌های انتقال بین پروژه‌ها/انبارها</h6>
+        <a asp-action="CreateTransferRequest" class="btn btn-sm btn-primary">درخواست جدید</a>
+    </div>
+
+    @if (TempData["WarehouseMessage"] is string message)
+    {
+        <div class="alert alert-info py-2 small">@message</div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>مبدا</th>
+                        <th>مقصد</th>
+                        <th>کالا</th>
+                        <th>مقدار</th>
+                        <th>درخواست‌دهنده</th>
+                        <th>وضعیت</th>
+                        <th>تاییدکننده</th>
+                        <th class="text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var canManage = item.Status == "PendingManager" &&
+                                            (User.IsInRole("Admin") || item.SourceWarehouse?.ManagerUserId == currentUserId);
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.SourceWarehouse?.Name</td>
+                                <td>@item.DestinationWarehouse?.Name</td>
+                                <td>@item.Product?.Name</td>
+                                <td>@item.Quantity.ToString("N3")</td>
+                                <td>@item.RequestedByUser?.FullName</td>
+                                <td>
+                                    <span class="badge @(item.Status == "Approved" ? "text-bg-success" : item.Status == "Rejected" ? "text-bg-danger" : "text-bg-warning")">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td>@(item.ApprovedByUser?.FullName ?? "-")</td>
+                                <td class="text-center">
+                                    @if (canManage)
+                                    {
+                                        <form asp-action="ApproveTransferRequest" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-success">تایید</button>
+                                        </form>
+                                        <form asp-action="RejectTransferRequest" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">رد</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="9" class="text-center text-muted py-3">درخواستی ثبت نشده است.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

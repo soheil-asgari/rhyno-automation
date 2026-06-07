@@ -1,0 +1,100 @@
+@model List<Microsoft.AspNetCore.Identity.IdentityRole>
+@{
+    ViewData["Title"] = "مرکز امنیت";
+}
+
+@section Styles {
+    <style>
+        .security-page .table th,
+        .security-page .table td {
+            color: var(--text-dark) !important;
+        }
+        html.theme-dark .security-page .table th,
+        html.theme-dark .security-page .table td,
+        html.theme-dark .security-page .table th *,
+        html.theme-dark .security-page .table td * {
+            color: var(--text-dark) !important;
+        }
+        .security-page .dropdown-menu {
+            z-index: 10001 !important;
+        }
+    </style>
+}
+
+<div class="container-fluid py-4 security-page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">مدیریت نقش‌ها</h5>
+        <div class="d-flex gap-2">
+            <a asp-action="Matrix" class="btn btn-sm btn-outline-primary">ماتریس دسترسی</a>
+            <a asp-action="WorkflowRoutes" class="btn btn-sm btn-outline-secondary">مسیر گردش کار</a>
+        </div>
+    </div>
+
+    @if (TempData["SecurityMessage"] is string message)
+    {
+        <div class="alert alert-info py-2 small">@message</div>
+    }
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form asp-action="CreateRole" method="post" class="row g-2 align-items-end">
+                @Html.AntiForgeryToken()
+                <div class="col-md-4">
+                    <label class="form-label small">نام نقش جدید</label>
+                    <input name="Name" class="form-control form-control-sm" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">افزودن نقش</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>نام نقش</th>
+                        <th class="text-center">ویرایش</th>
+                        <th class="text-center">حذف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var role in Model)
+                        {
+                            <tr>
+                                <td>@role.Name</td>
+                                <td class="text-center">
+                                    @if (!string.Equals(role.Name, "Admin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <form asp-action="RenameRole" asp-route-id="@role.Id" method="post" class="d-inline-flex gap-1 align-items-center">
+                                            @Html.AntiForgeryToken()
+                                            <input type="text" name="newName" class="form-control form-control-sm" value="@role.Name" style="max-width: 170px;" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">ثبت</button>
+                                        </form>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (!string.Equals(role.Name, "Admin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post" class="d-inline" onsubmit="return confirm('حذف نقش انجام شود؟');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-3">نقشی ثبت نشده است.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

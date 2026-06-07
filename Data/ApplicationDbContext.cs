@@ -41,6 +41,9 @@ namespace OfficeAutomation.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Employer> Employers { get; set; }
+        public DbSet<InventoryTransferRequest> InventoryTransferRequests { get; set; }
+        public DbSet<WorkflowRoute> WorkflowRoutes { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,6 +60,12 @@ namespace OfficeAutomation.Data
                 .WithMany()
                 .HasForeignKey(l => l.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Letter>()
+                .HasOne(l => l.FinalReceiver)
+                .WithMany()
+                .HasForeignKey(l => l.FinalReceiverId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Department)
@@ -81,6 +90,12 @@ namespace OfficeAutomation.Data
                 .WithMany()
                 .HasForeignKey(u => u.EmployeeId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.ParentManagerUser)
+                .WithMany()
+                .HasForeignKey(u => u.ParentManagerUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Department>().HasData(
                 new Department { Id = 1, Name = "Financial" },
@@ -348,6 +363,12 @@ namespace OfficeAutomation.Data
                 .Property(warehouse => warehouse.Location)
                 .HasMaxLength(200);
 
+            modelBuilder.Entity<Warehouse>()
+                .HasOne(warehouse => warehouse.ManagerUser)
+                .WithMany()
+                .HasForeignKey(warehouse => warehouse.ManagerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Product>()
                 .Property(product => product.Code)
                 .HasMaxLength(40);
@@ -363,6 +384,79 @@ namespace OfficeAutomation.Data
             modelBuilder.Entity<Product>()
                 .Property(product => product.Description)
                 .HasMaxLength(600);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.MinimumStock)
+                .HasDefaultValue(0);
+
+            modelBuilder.Entity<InventoryTransferRequest>()
+                .Property(item => item.Status)
+                .HasMaxLength(30);
+
+            modelBuilder.Entity<InventoryTransferRequest>()
+                .Property(item => item.Quantity)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryTransferRequest>()
+                .HasOne(item => item.SourceWarehouse)
+                .WithMany()
+                .HasForeignKey(item => item.SourceWarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryTransferRequest>()
+                .HasOne(item => item.DestinationWarehouse)
+                .WithMany()
+                .HasForeignKey(item => item.DestinationWarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryTransferRequest>()
+                .HasOne(item => item.Product)
+                .WithMany()
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryTransferRequest>()
+                .HasOne(item => item.RequestedByUser)
+                .WithMany()
+                .HasForeignKey(item => item.RequestedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryTransferRequest>()
+                .HasOne(item => item.ApprovedByUser)
+                .WithMany()
+                .HasForeignKey(item => item.ApprovedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WorkflowRoute>()
+                .Property(item => item.DocumentType)
+                .HasMaxLength(60);
+
+            modelBuilder.Entity<WorkflowRoute>()
+                .HasIndex(item => new { item.DocumentType, item.StepNumber });
+
+            modelBuilder.Entity<WorkflowRoute>()
+                .HasOne(item => item.ApproverUser)
+                .WithMany()
+                .HasForeignKey(item => item.ApproverUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Letter>()
+                .Property(item => item.DocumentType)
+                .HasMaxLength(60);
+
+            modelBuilder.Entity<RolePermission>()
+                .Property(item => item.PermissionKey)
+                .HasMaxLength(80);
+
+            modelBuilder.Entity<RolePermission>()
+                .HasIndex(item => new { item.RoleId, item.PermissionKey })
+                .IsUnique();
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(item => item.Role)
+                .WithMany()
+                .HasForeignKey(item => item.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<WarehouseReceipt>()
                 .HasIndex(receipt => receipt.ReceiptNumber)

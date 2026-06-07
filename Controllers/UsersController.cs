@@ -11,11 +11,13 @@ namespace OfficeAutomation.Controllers
     public class UsersController : Controller
     {
         private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
 
-        public UsersController(UserManager<User> userManager, ApplicationDbContext context)
+        public UsersController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _context = context;
         }
 
@@ -24,6 +26,7 @@ namespace OfficeAutomation.Controllers
         {
             var users = await _userManager.Users
                 .Include(item => item.Employee)
+                .Include(item => item.ParentManagerUser)
                 .ToListAsync();
             return View(users);
         }
@@ -32,6 +35,8 @@ namespace OfficeAutomation.Controllers
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
             await PopulateEmployeesAsync(cancellationToken);
+            await PopulateManagersAsync(cancellationToken);
+            await PopulateRolesAsync(cancellationToken);
             return View();
         }
 
@@ -70,6 +75,7 @@ namespace OfficeAutomation.Controllers
 
             if (ModelState.IsValid)
             {
+                var permissionTemplate = await ResolveRolePermissionTemplateAsync(model.Role, cancellationToken);
                 var user = new User
                 {
                     UserName = model.Email,
@@ -77,10 +83,11 @@ namespace OfficeAutomation.Controllers
                     FullName = model.FullName,
                     EmployeeId = model.EmployeeId,
                     JobTitle = employee?.PositionTitle,
-                    CanAccessFinance = model.CanAccessFinance,
-                    CanAccessWarehouse = model.CanAccessWarehouse,
-                    CanAccessHumanCapital = model.CanAccessHumanCapital,
-                    CanAccessSystemSettings = model.CanAccessSystemSettings,
+                    CanAccessFinance = permissionTemplate.Finance,
+                    CanAccessWarehouse = permissionTemplate.Warehouse,
+                    CanAccessHumanCapital = permissionTemplate.HumanCapital,
+                    CanAccessSystemSettings = permissionTemplate.SystemSettings,
+                    ParentManagerUserId = model.ParentManagerUserId,
                     EmailConfirmed = true // چون خودمان می‌سازیم تایید شده فرض می‌کنیم
                 };
 
@@ -88,6 +95,11 @@ namespace OfficeAutomation.Controllers
 
                 if (result.Succeeded)
                 {
+                    if (!string.IsNullOrWhiteSpace(model.Role) && await _roleManager.RoleExistsAsync(model.Role))
+                    {
+                        await _userManager.AddToRoleAsync(user, model.Role);
+                    }
+
                     TempData["SuccessMessage"] = "کاربر جدید با موفقیت تعریف شد.";
                     return RedirectToAction(nameof(Index));
                 }
@@ -99,6 +111,8 @@ namespace OfficeAutomation.Controllers
             }
 
             await PopulateEmployeesAsync(cancellationToken);
+            await PopulateManagersAsync(cancellationToken);
+            await PopulateRolesAsync(cancellationToken);
             return View(model);
         }
 
@@ -127,6 +141,64 @@ namespace OfficeAutomation.Controllers
                 .ToList();
 
             ViewBag.EmployeeOptions = employees;
+        }
+
+        private async Task PopulateManagersAsync(CancellationToken cancellationToken)
+        {
+            var managers = await _context.Users
+                .AsNoTracking()
+                .OrderBy(item => item.FullName)
+                .Select(item => new
+                {
+                    item.Id,
+                    item.FullName
+                })
+                .ToListAsync(cancellationToken);
+
+            ViewBag.ManagerOptions = managers;
+        }
+
+        private async Task PopulateRolesAsync(CancellationToken cancellationToken)
+        {
+            var roles = await _roleManager.Roles
+                .AsNoTracking()
+                .OrderBy(item => item.Name)
+                .Select(item => item.Name)
+                .Where(item => item != null)
+                .ToListAsync(cancellationToken);
+
+            ViewBag.RoleOptions = roles!;
+        }
+
+        private async Task<(bool Finance, bool Warehouse, bool HumanCapital, bool SystemSettings)> ResolveRolePermissionTemplateAsync(string? roleName, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                return (false, false, false, false);
+            }
+
+            var role = await _roleManager.FindByNameAsync(roleName);
+            if (role == null)
+            {
+                return (false, false, false, false);
+            }
+
+            var rolePermissions = await _context.RolePermissions
+                .AsNoTracking()
+                .Where(item => item.RoleId == role.Id)
+                .ToListAsync(cancellationToken);
+
+            bool Resolve(string key) => rolePermissions
+                .Where(item => item.PermissionKey == key)
+                .OrderByDescending(item => item.Id)
+                .Select(item => item.IsAllowed)
+                .FirstOrDefault();
+
+            return (
+                Resolve("Finance"),
+                Resolve("Warehouse"),
+                Resolve("HumanCapital"),
+                Resolve("SystemSettings") || Resolve("WorkflowAdministration"));
         }
     }
 }

@@ -32,27 +32,29 @@
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">
-                <thead><tr><th>کد</th><th>کالا</th><th>واحد</th><th>انبار</th><th>ورودی</th><th>خروجی</th><th>موجودی فعلی</th><th>آخرین بروزرسانی</th></tr></thead>
+                <thead><tr><th>کد</th><th>کالا</th><th>واحد</th><th>انبار</th><th>حداقل</th><th>ورودی</th><th>خروجی</th><th>موجودی فعلی</th><th>آخرین بروزرسانی</th></tr></thead>
                 <tbody>
                 @if (Model.Items.Any())
                 {
                     @foreach (var item in Model.Items)
                     {
+                        var isLowStock = item.CurrentQuantity <= item.MinimumStock;
                         <tr>
                             <td>@item.ProductCode</td>
                             <td>@item.ProductName</td>
                             <td>@item.Unit</td>
                             <td>@item.WarehouseName</td>
+                            <td>@item.MinimumStock</td>
                             <td class="text-success">@item.TotalInput.ToString("N3")</td>
                             <td class="text-danger">@item.TotalOutput.ToString("N3")</td>
-                            <td class="fw-semibold @(item.CurrentQuantity <= 0 ? "text-danger" : "")">@item.CurrentQuantity.ToString("N3")</td>
+                            <td class="fw-semibold @(isLowStock ? "text-danger" : "")">@item.CurrentQuantity.ToString("N3")</td>
                             <td>@item.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
                         </tr>
                     }
                 }
                 else
                 {
-                    <tr><td colspan="8" class="text-center text-muted py-3">موجودی یافت نشد.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-3">موجودی یافت نشد.</td></tr>
                 }
                 </tbody>
             </table>

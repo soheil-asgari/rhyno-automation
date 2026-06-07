@@ -60,9 +60,9 @@
                     </div>
 
                     <div class="col-lg-2 col-md-2 text-center mb-3 mb-md-0">
-                        <div class="status-indicator approved">
+                        <div class="status-indicator @(item.IsWorkflowCompleted ? "approved" : "pending")">
                             <span class="dot"></span>
-                            تایید شده
+                            @(item.IsWorkflowCompleted ? "تایید نهایی" : $"در گردش - مرحله {item.CurrentWorkflowStep}")
                         </div>
                     </div>
 
@@ -71,6 +71,15 @@
                             <a href="@Url.Action("Details", new { id = item.Id })" class="btn-action-minimal view" title="مشاهده">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            @if (!item.IsWorkflowCompleted && item.ReceiverId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)
+                            {
+                                <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-action-minimal view" title="تایید و ارجاع مرحله بعد">
+                                        <i class="bi bi-check2-circle"></i>
+                                    </button>
+                                </form>
+                            }
                             <button type="button" class="btn-action-minimal print" title="چاپ">
                                 <i class="bi bi-printer"></i>
 

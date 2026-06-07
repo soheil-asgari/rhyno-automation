@@ -41,6 +41,10 @@ namespace OfficeAutomation.Models
         [Display(Name = "توضیحات")]
         public string? Description { get; set; }
 
+        [Range(0, 999999)]
+        [Display(Name = "حداقل موجودی")]
+        public int MinimumStock { get; set; }
+
         [Display(Name = "فعال")]
         public bool IsActive { get; set; } = true;
     }
@@ -63,11 +67,16 @@ namespace OfficeAutomation.Models
         [Display(Name = "موقعیت")]
         public string? Location { get; set; }
 
+        [Display(Name = "مدیر انبار")]
+        public string? ManagerUserId { get; set; }
+
         [Display(Name = "فعال")]
         public bool IsActive { get; set; } = true;
 
         [Display(Name = "بسته")]
         public bool IsClosed { get; set; }
+
+        public List<SelectListItem> ManagerOptions { get; set; } = new();
     }
 
     public class WarehouseReceiptUpsertVM
@@ -195,6 +204,8 @@ namespace OfficeAutomation.Models
         public decimal TotalOutput { get; set; }
 
         public decimal CurrentQuantity { get; set; }
+
+        public int MinimumStock { get; set; }
 
         public DateTime UpdatedAt { get; set; }
     }

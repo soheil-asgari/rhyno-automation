@@ -31,7 +31,7 @@
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">
-                <thead><tr><th>کد</th><th>نام</th><th>واحد</th><th>وضعیت</th><th class="text-center">عملیات</th></tr></thead>
+                <thead><tr><th>کد</th><th>نام</th><th>واحد</th><th>حداقل موجودی</th><th>وضعیت</th><th class="text-center">عملیات</th></tr></thead>
                 <tbody>
                 @if (Model.Any())
                 {
@@ -41,6 +41,7 @@
                             <td>@item.Code</td>
                             <td>@item.Name</td>
                             <td>@item.Unit</td>
+                            <td>@item.MinimumStock</td>
                             <td>
                                 <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "فعال" : "غیرفعال")</span>
                             </td>
@@ -60,7 +61,7 @@
                 }
                 else
                 {
-                    <tr><td colspan="5" class="text-center text-muted py-3">موردی یافت نشد.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-3">موردی یافت نشد.</td></tr>
                 }
                 </tbody>
             </table>

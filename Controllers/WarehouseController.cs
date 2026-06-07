@@ -34,7 +34,7 @@ namespace OfficeAutomation.Controllers
                 ReceiptCount = await _context.WarehouseReceipts.CountAsync(cancellationToken),
                 IssuanceCount = await _context.WarehouseIssuances.CountAsync(cancellationToken),
                 CountingDraftCount = await _context.InventoryCountings.CountAsync(item => item.Status == "Draft", cancellationToken),
-                LowStockCount = await _context.InventoryStocks.CountAsync(item => item.CurrentQuantity <= 0, cancellationToken)
+                LowStockCount = await _context.InventoryStocks.CountAsync(item => item.CurrentQuantity <= item.Product.MinimumStock, cancellationToken)
             };
 
             return View(model);
@@ -85,6 +85,7 @@ namespace OfficeAutomation.Controllers
                 Name = model.Name.Trim(),
                 Unit = model.Unit.Trim(),
                 Description = model.Description?.Trim(),
+                MinimumStock = model.MinimumStock,
                 IsActive = model.IsActive,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
@@ -116,6 +117,7 @@ namespace OfficeAutomation.Controllers
                 Name = entity.Name,
                 Unit = entity.Unit,
                 Description = entity.Description,
+                MinimumStock = entity.MinimumStock,
                 IsActive = entity.IsActive
             });
         }
@@ -150,6 +152,7 @@ namespace OfficeAutomation.Controllers
                 entity.Name,
                 entity.Unit,
                 entity.Description,
+                entity.MinimumStock,
                 entity.IsActive
             };
 
@@ -157,6 +160,7 @@ namespace OfficeAutomation.Controllers
             entity.Name = model.Name.Trim();
             entity.Unit = model.Unit.Trim();
             entity.Description = model.Description?.Trim();
+            entity.MinimumStock = model.MinimumStock;
             entity.IsActive = model.IsActive;
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -171,6 +175,7 @@ namespace OfficeAutomation.Controllers
                     entity.Name,
                     entity.Unit,
                     entity.Description,
+                    entity.MinimumStock,
                     entity.IsActive
                 },
                 cancellationToken);
@@ -268,9 +273,11 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
-        public IActionResult CreateWarehouse()
+        public async Task<IActionResult> CreateWarehouse(CancellationToken cancellationToken)
         {
-            return View(new WarehouseUpsertVM());
+            var model = new WarehouseUpsertVM();
+            await PopulateManagerOptionsAsync(model.ManagerOptions, cancellationToken);
+            return View(model);
         }
 
         [HttpPost]
@@ -281,6 +288,7 @@ namespace OfficeAutomation.Controllers
 
             if (!ModelState.IsValid)
             {
+                await PopulateManagerOptionsAsync(model.ManagerOptions, cancellationToken);
                 return View(model);
             }
 
@@ -289,6 +297,7 @@ namespace OfficeAutomation.Controllers
                 Code = model.Code.Trim(),
                 Name = model.Name.Trim(),
                 Location = model.Location?.Trim(),
+                ManagerUserId = string.IsNullOrWhiteSpace(model.ManagerUserId) ? null : model.ManagerUserId,
                 IsActive = model.IsActive,
                 IsClosed = model.IsClosed,
                 CreatedAt = DateTime.Now
@@ -308,15 +317,19 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            return View(new WarehouseUpsertVM
+            var model = new WarehouseUpsertVM
             {
                 Id = entity.Id,
                 Code = entity.Code,
                 Name = entity.Name,
                 Location = entity.Location,
+                ManagerUserId = entity.ManagerUserId,
                 IsActive = entity.IsActive,
                 IsClosed = entity.IsClosed
-            });
+            };
+
+            await PopulateManagerOptionsAsync(model.ManagerOptions, cancellationToken);
+            return View(model);
         }
 
         [HttpPost]
@@ -332,6 +345,7 @@ namespace OfficeAutomation.Controllers
 
             if (!ModelState.IsValid)
             {
+                await PopulateManagerOptionsAsync(model.ManagerOptions, cancellationToken);
                 return View(model);
             }
 
@@ -346,6 +360,7 @@ namespace OfficeAutomation.Controllers
                 entity.Code,
                 entity.Name,
                 entity.Location,
+                entity.ManagerUserId,
                 entity.IsActive,
                 entity.IsClosed
             };
@@ -353,6 +368,7 @@ namespace OfficeAutomation.Controllers
             entity.Code = model.Code.Trim();
             entity.Name = model.Name.Trim();
             entity.Location = model.Location?.Trim();
+            entity.ManagerUserId = string.IsNullOrWhiteSpace(model.ManagerUserId) ? null : model.ManagerUserId;
             entity.IsActive = model.IsActive;
             entity.IsClosed = model.IsClosed;
 
@@ -367,6 +383,7 @@ namespace OfficeAutomation.Controllers
                     entity.Code,
                     entity.Name,
                     entity.Location,
+                    entity.ManagerUserId,
                     entity.IsActive,
                     entity.IsClosed
                 },
@@ -642,6 +659,7 @@ namespace OfficeAutomation.Controllers
                     WarehouseId = item.WarehouseId,
                     WarehouseName = item.Warehouse.Name,
                     CurrentQuantity = item.CurrentQuantity,
+                    MinimumStock = item.Product.MinimumStock,
                     UpdatedAt = item.UpdatedAt
                 })
                 .ToListAsync(cancellationToken);
@@ -732,6 +750,234 @@ namespace OfficeAutomation.Controllers
             await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
             await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TransferRequests(CancellationToken cancellationToken)
+        {
+            var items = await _context.InventoryTransferRequests
+                .AsNoTracking()
+                .Include(item => item.SourceWarehouse)
+                .Include(item => item.DestinationWarehouse)
+                .Include(item => item.Product)
+                .Include(item => item.RequestedByUser)
+                .Include(item => item.ApprovedByUser)
+                .OrderByDescending(item => item.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+            var currentUserId = CurrentUserId;
+            ViewBag.IsManagerApproval = !string.IsNullOrWhiteSpace(currentUserId) &&
+                                        await _context.Warehouses
+                                            .AsNoTracking()
+                                            .AnyAsync(item => item.IsActive && item.ManagerUserId == currentUserId, cancellationToken);
+            ViewBag.CurrentUserId = currentUserId;
+            return View(items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateTransferRequest(CancellationToken cancellationToken)
+        {
+            var model = new InventoryTransferRequestCreateVM
+            {
+                Quantity = 1
+            };
+
+            await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
+            await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateTransferRequest(InventoryTransferRequestCreateVM model, CancellationToken cancellationToken)
+        {
+            if (model.SourceWarehouseId == model.DestinationWarehouseId)
+            {
+                ModelState.AddModelError(nameof(model.DestinationWarehouseId), "مبدا و مقصد نمی‌تواند یکسان باشد.");
+            }
+
+            await ValidateWarehouseIsOpenAsync(model.SourceWarehouseId, cancellationToken);
+            await ValidateWarehouseIsOpenAsync(model.DestinationWarehouseId, cancellationToken);
+            await ValidateProductsExistenceAsync(new[] { model.ProductId }, cancellationToken);
+
+            var currentUserId = CurrentUserId;
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
+                await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
+                return View(model);
+            }
+
+            var entity = new InventoryTransferRequest
+            {
+                SourceWarehouseId = model.SourceWarehouseId,
+                DestinationWarehouseId = model.DestinationWarehouseId,
+                ProductId = model.ProductId,
+                Quantity = model.Quantity,
+                Status = "PendingManager",
+                RequestedByUserId = currentUserId,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.InventoryTransferRequests.Add(entity);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await WriteAuditLogAsync(
+                "Create",
+                "InventoryTransferRequest",
+                entity.Id.ToString(),
+                null,
+                new
+                {
+                    entity.SourceWarehouseId,
+                    entity.DestinationWarehouseId,
+                    entity.ProductId,
+                    entity.Quantity,
+                    entity.Status
+                },
+                cancellationToken);
+
+            TempData["WarehouseMessage"] = "درخواست انتقال ثبت شد و در انتظار تایید مدیر مبدا قرار گرفت.";
+            return RedirectToAction(nameof(TransferRequests));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveTransferRequest(int id, CancellationToken cancellationToken)
+        {
+            var currentUserId = CurrentUserId;
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Forbid();
+            }
+
+            var request = await _context.InventoryTransferRequests
+                .Include(item => item.Product)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (request == null)
+            {
+                return NotFound();
+            }
+
+            if (request.Status != "PendingManager")
+            {
+                TempData["WarehouseMessage"] = "این درخواست قبلاً تعیین تکلیف شده است.";
+                return RedirectToAction(nameof(TransferRequests));
+            }
+
+            var isSourceManager = await _context.Warehouses
+                .AsNoTracking()
+                .AnyAsync(item => item.Id == request.SourceWarehouseId && item.ManagerUserId == currentUserId, cancellationToken);
+            if (!isSourceManager && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+
+            var issueResult = await ApplyIssuanceToStockWithRetryAsync(
+                request.SourceWarehouseId,
+                new List<WarehouseIssuanceItemVM> { new() { ProductId = request.ProductId, Quantity = request.Quantity } },
+                cancellationToken);
+
+            if (!issueResult.Success)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                TempData["WarehouseMessage"] = issueResult.Message ?? "موجودی مبدا کافی نیست.";
+                return RedirectToAction(nameof(TransferRequests));
+            }
+
+            var receiptResult = await ApplyReceiptToStockWithRetryAsync(
+                request.DestinationWarehouseId,
+                new List<WarehouseReceiptItemVM> { new() { ProductId = request.ProductId, Quantity = request.Quantity, UnitPrice = 0 } },
+                cancellationToken);
+
+            if (!receiptResult.Success)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                TempData["WarehouseMessage"] = receiptResult.Message ?? "ثبت موجودی مقصد با خطا مواجه شد.";
+                return RedirectToAction(nameof(TransferRequests));
+            }
+
+            request.Status = "Approved";
+            request.ApprovedByUserId = currentUserId;
+            request.ApprovedAt = DateTime.Now;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            await WriteAuditLogAsync(
+                "Approve",
+                "InventoryTransferRequest",
+                request.Id.ToString(),
+                new { Status = "PendingManager" },
+                new
+                {
+                    request.Status,
+                    request.ApprovedByUserId,
+                    request.ApprovedAt
+                },
+                cancellationToken);
+
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید شد و موجودی دو انبار به‌روزرسانی شد.";
+            return RedirectToAction(nameof(TransferRequests));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectTransferRequest(int id, CancellationToken cancellationToken)
+        {
+            var currentUserId = CurrentUserId;
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Forbid();
+            }
+
+            var request = await _context.InventoryTransferRequests.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (request == null)
+            {
+                return NotFound();
+            }
+
+            if (request.Status != "PendingManager")
+            {
+                TempData["WarehouseMessage"] = "این درخواست قبلاً تعیین تکلیف شده است.";
+                return RedirectToAction(nameof(TransferRequests));
+            }
+
+            var isSourceManager = await _context.Warehouses
+                .AsNoTracking()
+                .AnyAsync(item => item.Id == request.SourceWarehouseId && item.ManagerUserId == currentUserId, cancellationToken);
+            if (!isSourceManager && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
+            request.Status = "Rejected";
+            request.ApprovedByUserId = currentUserId;
+            request.ApprovedAt = DateTime.Now;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await WriteAuditLogAsync(
+                "Reject",
+                "InventoryTransferRequest",
+                request.Id.ToString(),
+                new { Status = "PendingManager" },
+                new
+                {
+                    request.Status,
+                    request.ApprovedByUserId,
+                    request.ApprovedAt
+                },
+                cancellationToken);
+
+            TempData["WarehouseMessage"] = "درخواست انتقال رد شد.";
+            return RedirectToAction(nameof(TransferRequests));
         }
 
         [HttpPost]
@@ -1447,6 +1693,22 @@ namespace OfficeAutomation.Controllers
                 {
                     Value = item.Id.ToString(),
                     Text = item.Name
+                })
+                .ToListAsync(cancellationToken);
+
+            options.AddRange(items);
+        }
+
+        private async Task PopulateManagerOptionsAsync(List<SelectListItem> options, CancellationToken cancellationToken)
+        {
+            options.Clear();
+            var items = await _context.Users
+                .AsNoTracking()
+                .OrderBy(item => item.FullName)
+                .Select(item => new SelectListItem
+                {
+                    Value = item.Id,
+                    Text = item.FullName ?? item.UserName ?? "کاربر"
                 })
                 .ToListAsync(cancellationToken);
 

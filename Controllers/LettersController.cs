@@ -29,14 +29,17 @@ namespace OfficeAutomation.Controllers
         // GET: Letters
         public async Task<IActionResult> Index()
         {
-            // ۱. گرفتن ID کاربر فعلی
             var currentUserId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Unauthorized();
+            }
 
-            // ۲. فقط نامه‌هایی را بیاور که فرستنده یا گیرنده‌اش این کاربر باشد
             var letters = _context.Letters
                 .Include(l => l.Receiver)
                 .Include(l => l.Sender)
-                .Where(l => l.SenderId == currentUserId || l.ReceiverId == currentUserId)
+                .Include(l => l.FinalReceiver)
+                .Where(l => l.SenderId == currentUserId || l.ReceiverId == currentUserId || l.FinalReceiverId == currentUserId)
                 .OrderByDescending(l => l.SentDate);
 
             return View(await letters.ToListAsync());
@@ -108,14 +111,17 @@ namespace OfficeAutomation.Controllers
 
             letter.SenderId = currentUser.Id;
             letter.SentDate = DateTime.Now;
+            letter.DocumentType = "Letter";
+            letter.FinalReceiverId = letter.ReceiverId;
 
-            // حذف مواردی که نباید توسط کاربر پر شوند از اعتبارسنجی
             ModelState.Remove("SenderId");
             ModelState.Remove("Sender");
             ModelState.Remove("Receiver");
+            ModelState.Remove("FinalReceiver");
 
             if (ModelState.IsValid)
             {
+                await ApplyWorkflowRoutingOnCreateAsync(letter);
                 _context.Add(letter);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -127,6 +133,48 @@ namespace OfficeAutomation.Controllers
             ViewBag.UserSignature = currentUser.SignaturePath;
             ViewData["ReceiverId"] = new SelectList(_context.Users, "Id", "FullName", letter.ReceiverId);
             return View(letter);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Unauthorized();
+            }
+
+            var letter = await _context.Letters.FirstOrDefaultAsync(item => item.Id == id);
+            if (letter == null)
+            {
+                return NotFound();
+            }
+
+            if (letter.ReceiverId != currentUserId && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
+            var nextApprover = await GetNextWorkflowApproverAsync(letter.DocumentType, letter.CurrentWorkflowStep + 1);
+            if (!string.IsNullOrWhiteSpace(nextApprover))
+            {
+                letter.CurrentWorkflowStep += 1;
+                letter.ReceiverId = nextApprover;
+                letter.IsWorkflowCompleted = false;
+            }
+            else
+            {
+                letter.CurrentWorkflowStep = Math.Max(1, letter.CurrentWorkflowStep);
+                letter.ReceiverId = letter.FinalReceiverId ?? letter.ReceiverId;
+                letter.IsWorkflowCompleted = true;
+            }
+
+            letter.IsRead = false;
+            letter.ReadDate = null;
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // بقیه متدها (Edit و Delete) را فعلاً تغییر نده...
@@ -163,6 +211,45 @@ namespace OfficeAutomation.Controllers
         private bool LetterExists(int id)
         {
             return _context.Letters.Any(e => e.Id == id);
+        }
+
+        private async Task ApplyWorkflowRoutingOnCreateAsync(Letter letter)
+        {
+            var firstApprover = await GetNextWorkflowApproverAsync(letter.DocumentType, 1);
+            if (!string.IsNullOrWhiteSpace(firstApprover))
+            {
+                letter.ReceiverId = firstApprover;
+                letter.CurrentWorkflowStep = 1;
+                letter.IsWorkflowCompleted = false;
+                return;
+            }
+
+            var sender = await _context.Users
+                .AsNoTracking()
+                .Where(item => item.Id == letter.SenderId)
+                .Select(item => new { item.ParentManagerUserId })
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(sender?.ParentManagerUserId))
+            {
+                letter.ReceiverId = sender.ParentManagerUserId;
+                letter.CurrentWorkflowStep = 1;
+                letter.IsWorkflowCompleted = false;
+                return;
+            }
+
+            letter.IsWorkflowCompleted = true;
+        }
+
+        private async Task<string?> GetNextWorkflowApproverAsync(string documentType, int step)
+        {
+            var approverUserId = await _context.WorkflowRoutes
+                .AsNoTracking()
+                .Where(item => item.IsActive && item.DocumentType == documentType && item.StepNumber == step)
+                .Select(item => item.ApproverUserId)
+                .FirstOrDefaultAsync();
+
+            return string.IsNullOrWhiteSpace(approverUserId) ? null : approverUserId;
         }
     }
 }

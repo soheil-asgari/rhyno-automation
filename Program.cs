@@ -83,10 +83,13 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<User>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        // الف) ساخت نقش Admin اگر وجود ندارد
-        if (!await roleManager.RoleExistsAsync("Admin"))
+        var bootstrapRoles = new[] { "Admin", "FinanceManager", "WarehouseManager", "HrManager" };
+        foreach (var roleName in bootstrapRoles)
         {
-            await roleManager.CreateAsync(new IdentityRole("Admin"));
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole(roleName));
+            }
         }
 
         // ب) ساخت یوزر ادمین
@@ -121,6 +124,32 @@ using (var scope = app.Services.CreateScope())
         if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
         {
             await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+
+        var adminRole = await roleManager.FindByNameAsync("Admin");
+        if (adminRole != null)
+        {
+            var permissionKeys = new[] { "Finance", "HumanCapital", "Warehouse", "SystemSettings", "WorkflowAdministration" };
+            foreach (var key in permissionKeys)
+            {
+                var existing = await context.RolePermissions
+                    .FirstOrDefaultAsync(item => item.RoleId == adminRole.Id && item.PermissionKey == key);
+                if (existing == null)
+                {
+                    context.RolePermissions.Add(new RolePermission
+                    {
+                        RoleId = adminRole.Id,
+                        PermissionKey = key,
+                        IsAllowed = true
+                    });
+                }
+                else if (!existing.IsAllowed)
+                {
+                    existing.IsAllowed = true;
+                }
+            }
+
+            await context.SaveChangesAsync();
         }
     }
     catch (Exception ex)

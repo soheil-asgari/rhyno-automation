@@ -63,6 +63,7 @@
     var userCanAccessWarehouse = true;
     var userCanAccessHumanCapital = true;
     var userCanAccessSystemSettings = true;
+    var userCanAccessWorkflowAdministration = true;
     if (User?.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -86,6 +87,33 @@
                 userCanAccessWarehouse = permission.CanAccessWarehouse;
                 userCanAccessHumanCapital = permission.CanAccessHumanCapital;
                 userCanAccessSystemSettings = permission.CanAccessSystemSettings;
+                userCanAccessWorkflowAdministration = permission.CanAccessSystemSettings;
+            }
+
+            var roleIds = await DbContext.UserRoles
+                .AsNoTracking()
+                .Where(item => item.UserId == currentUserId)
+                .Select(item => item.RoleId)
+                .ToListAsync();
+
+            if (roleIds.Count > 0)
+            {
+                var rolePermissions = await DbContext.RolePermissions
+                    .AsNoTracking()
+                    .Where(item => roleIds.Contains(item.RoleId))
+                    .ToListAsync();
+
+                bool? ResolvePermission(string key) => rolePermissions
+                    .Where(item => item.PermissionKey == key)
+                    .OrderByDescending(item => item.Id)
+                    .Select(item => (bool?)item.IsAllowed)
+                    .FirstOrDefault();
+
+                userCanAccessFinance = ResolvePermission("Finance") ?? userCanAccessFinance;
+                userCanAccessWarehouse = ResolvePermission("Warehouse") ?? userCanAccessWarehouse;
+                userCanAccessHumanCapital = ResolvePermission("HumanCapital") ?? userCanAccessHumanCapital;
+                userCanAccessSystemSettings = ResolvePermission("SystemSettings") ?? userCanAccessSystemSettings;
+                userCanAccessWorkflowAdministration = ResolvePermission("WorkflowAdministration") ?? userCanAccessWorkflowAdministration;
             }
         }
     }
@@ -150,9 +178,21 @@
         .custom-topbar {
             background-color: #f8fafc;
             padding: 16px 24px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 16px;
+            min-height: 72px;
+            overflow: hidden;
+        }
+
+        .topbar-cluster,
+        .topbar-actions {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 12px;
+            min-width: 0;
+            white-space: nowrap;
         }
 
         .topbar-right-info {
@@ -183,6 +223,15 @@
             border-radius: 8px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .topbar-search {
+            position: relative;
+            width: min(260px, 28vw);
+            min-width: 180px;
+            flex: 0 1 260px;
         }
 
         .main-wrapper {
@@ -242,8 +291,8 @@
         }
 
         .sidebar-link.sidebar-active {
-            background: #e0e7ff;
-            color: #312e81;
+            background: var(--glass-bg);
+            color: var(--primary);
             font-weight: 700;
         }
 
@@ -254,6 +303,18 @@
         .user-profile-link:hover .user-profile-pill,
         .user-profile-link:focus-visible .user-profile-pill {
             background-color: #f8fafc;
+        }
+
+        #main-content-wrapper,
+        #main-content-wrapper table,
+        #main-content-wrapper .table,
+        #main-content-wrapper .table th,
+        #main-content-wrapper .table td,
+        #main-content-wrapper .table th *,
+        #main-content-wrapper .table td *,
+        #main-content-wrapper .grid,
+        #main-content-wrapper .matrix {
+            color: var(--text-dark) !important;
         }
     </style>
     <style>
@@ -286,8 +347,8 @@
         }
         html.theme-dark .sidebar-link:hover,
         html.theme-dark .sidebar-link.sidebar-active {
-            background: #334155 !important;
-            color: #f8fafc !important;
+            background: var(--glass-bg) !important;
+            color: var(--primary) !important;
         }
         html.theme-dark .main-content {
             background-color: #0f172a !important;
@@ -298,6 +359,7 @@
 
 <body data-theme="@themePreference.ToLowerInvariant()">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <form id="rhGlobalAntiForgery" class="d-none">@Html.AntiForgeryToken()</form>
 
     <div class="app-shell">
         
@@ -385,6 +447,7 @@
                                     <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Receipts" || currentAction == "CreateReceipt") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Receipts"><i class="bi bi-box-arrow-in-down text-dark"></i> <span class="link-text">رسید انبار</span></a>
                                     <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Issuances" || currentAction == "CreateIssuance") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Issuances"><i class="bi bi-box-arrow-up text-dark"></i> <span class="link-text">خروج انبار</span></a>
                                     <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Stock" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Stock"><i class="bi bi-clipboard-data text-dark"></i> <span class="link-text">موجودی انبار</span></a>
+                                    <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "TransferRequests" || currentAction == "CreateTransferRequest") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="TransferRequests"><i class="bi bi-arrow-left-right text-dark"></i> <span class="link-text">انتقال بین انبارها</span></a>
                                     <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Countings" || currentAction == "CreateCounting") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Countings"><i class="bi bi-check2-square text-dark"></i> <span class="link-text">انبارگردانی</span></a>
                                     <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Closing" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Closing"><i class="bi bi-lock text-danger"></i> <span class="link-text">بستن پایان سال</span></a>
                                 </nav>
@@ -405,6 +468,10 @@
                             <div class="accordion-body py-1 px-0">
                                 <nav class="nav flex-column sidebar-group-nav">
                                     <a class="nav-link sidebar-link @(currentController == "Settings" ? "sidebar-active" : "")" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear text-secondary"></i> <span class="link-text">تنظیمات سیستم</span></a>
+                                    @if (userCanAccessWorkflowAdministration || User.IsInRole("Admin"))
+                                    {
+                                        <a class="nav-link sidebar-link @(currentController == "Security" ? "sidebar-active" : "")" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-check text-secondary"></i> <span class="link-text">مرکز امنیت</span></a>
+                                    }
                                     <a class="nav-link sidebar-link @(currentController == "AiAssistant" ? "sidebar-active" : "")" asp-controller="AiAssistant" asp-action="Index"><i class="bi bi-stars text-info"></i> <span class="link-text">دستیار هوش مصنوعی</span></a>
                                     <a class="nav-link sidebar-link @(currentController == "Waybill" ? "sidebar-active" : "")" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck text-secondary"></i> <span class="link-text">ثبت بارنامه</span></a>
                                 </nav>
@@ -432,7 +499,7 @@
         <div class="main-wrapper">
             
             <header class="custom-topbar">
-                <div class="d-flex align-items-center gap-3">
+                <div class="topbar-cluster">
                     <div class="topbar-clock-box">
                         <i class="bi bi-clock-history text-primary"></i>
                         <span id="topbarTime">--:--:--</span>
@@ -440,13 +507,13 @@
                         <span id="topbarDate">۱۴۰۵/۰۲/۲۷</span>
                     </div>
                     
-                    <div class="position-relative d-none d-md-block" style="width: 220px;">
+                    <div class="topbar-search d-none d-md-block">
                         <input type="text" class="form-control form-control-sm pe-4" placeholder="جستجوی سریع... (Ctrl+K)" style="border-radius: 8px; font-size: 0.8rem; border: 1px solid #e2e8f0; padding-right: 30px;">
                         <i class="bi bi-search position-absolute" style="right: 10px; top: 7px; color: #94a3b8; font-size: 0.8rem;"></i>
                     </div>
                 </div>
                 
-                <div class="d-flex align-items-center gap-3">
+                <div class="topbar-actions">
                     <div class="topbar-right-info d-none d-lg-flex">
                         <span><span class="status-dot" style="background-color: #10b981;"></span> سرور: <span class="fw-bold text-dark">فعال</span></span>
                         <span><span class="status-dot" style="background-color: #10b981;"></span> دیتابیس: <span class="fw-bold text-dark">متصل</span></span>
@@ -457,7 +524,7 @@
                 </div>
             </header>
 
-            <main class="main-content flex-1 p-4" style="background-color: #f8fafc;">
+            <main id="main-content-wrapper" class="w-full h-full min-h-screen p-6" style="color: var(--text-dark); background: transparent;">
                 @RenderBody()
             </main>
         </div>
@@ -521,17 +588,43 @@
             window.addEventListener('beforeunload', persistScroll);
         })();
     </script>
-    
+
     <script>
-        // اسکریپت ساعت زنده در هدر بالایی
-        function updateLiveTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        (() => {
             const timeElem = document.getElementById('topbarTime');
-            if(timeElem) timeElem.textContent = timeString;
-        }
-        setInterval(updateLiveTime, 1000);
-        updateLiveTime();
+            const dateElem = document.getElementById('topbarDate');
+            if (!timeElem || !dateElem) {
+                return;
+            }
+
+            const toPersianDigits = (value) => String(value).replace(/\d/g, (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]);
+
+            const updateClockAndDate = () => {
+                const now = new Date();
+
+                timeElem.textContent = now.toLocaleTimeString('fa-IR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+
+                const dateParts = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).formatToParts(now);
+
+                const year = dateParts.find((item) => item.type === 'year')?.value ?? '';
+                const month = dateParts.find((item) => item.type === 'month')?.value ?? '';
+                const day = dateParts.find((item) => item.type === 'day')?.value ?? '';
+
+                dateElem.textContent = `${toPersianDigits(year)}/${toPersianDigits(month)}/${toPersianDigits(day)}`;
+            };
+
+            updateClockAndDate();
+            setInterval(updateClockAndDate, 1000);
+        })();
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

@@ -18,6 +18,7 @@
     --danger: #ef4444;
     --glass-bg: rgba(255, 255, 255, 0.7);
     --text-main: #1e293b;
+    --text-dark: var(--text-main);
     --text-muted: #64748b;
     --card-radius: 24px;
 }
@@ -30,6 +31,7 @@ html.theme-dark {
     color-scheme: dark;
     --glass-bg: rgba(15, 23, 42, 0.75);
     --text-main: #e2e8f0;
+    --text-dark: var(--text-main);
     --text-muted: #94a3b8;
 }
 
@@ -126,8 +128,8 @@ body {
     text-decoration: none !important;
 }
 
-    .sidebar-link:hover, .sidebar-link.active {
-        background: white !important;
+    .sidebar-link:hover, .sidebar-link.sidebar-active {
+        background: var(--glass-bg) !important;
         color: var(--primary) !important;
         transform: translateX(-5px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.04);
@@ -310,9 +312,18 @@ html.theme-dark .table {
     --bs-table-active-color: #ffffff;
 }
 
+table,
+.table,
+.table th,
+.table td,
+.table th *,
+.table td * {
+    color: var(--text-dark) !important;
+}
+
 html.theme-dark .table th,
 html.theme-dark .table td {
-    color: #ffffff !important;
+    color: var(--text-dark) !important;
     opacity: 1 !important;
     text-shadow: none !important;
     filter: none !important;
@@ -329,13 +340,13 @@ html.theme-dark .table thead,
 html.theme-dark .table thead tr,
 html.theme-dark .table thead th {
     background-color: #172033 !important;
-    color: #ffffff !important;
+    color: var(--text-dark) !important;
     border-color: #334155 !important;
     opacity: 1 !important;
 }
 
 html.theme-dark .table tbody td {
-    color: #ffffff !important;
+    color: var(--text-dark) !important;
     opacity: 1 !important;
 }
 
@@ -347,9 +358,9 @@ html.theme-dark .table .text-muted {
 }
 
 html.theme-dark .sidebar-link:hover,
-html.theme-dark .sidebar-link.active {
-    background: #1e293b !important;
-    color: #e2e8f0 !important;
+html.theme-dark .sidebar-link.sidebar-active {
+    background: var(--glass-bg) !important;
+    color: var(--primary) !important;
 }
 
 html.theme-dark .form-control,

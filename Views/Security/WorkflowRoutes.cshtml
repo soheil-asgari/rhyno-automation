@@ -1,0 +1,100 @@
+@model List<WorkflowRoute>
+@{
+    ViewData["Title"] = "تعریف مسیر گردش کار";
+    var userOptions = (IEnumerable<dynamic>)(ViewBag.UserOptions ?? new List<dynamic>());
+}
+
+@section Styles {
+    <style>
+        .security-routes .table th,
+        .security-routes .table td {
+            color: var(--text-dark) !important;
+        }
+        html.theme-dark .security-routes .table th,
+        html.theme-dark .security-routes .table td,
+        html.theme-dark .security-routes .table th *,
+        html.theme-dark .security-routes .table td * {
+            color: var(--text-dark) !important;
+        }
+        .security-routes .dropdown-menu {
+            z-index: 10001 !important;
+        }
+    </style>
+}
+
+<div class="container-fluid py-4 security-routes">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">مدیریت مسیر گردش کار اسناد</h5>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form asp-action="CreateWorkflowRoute" method="post" class="row g-2 align-items-end">
+                @Html.AntiForgeryToken()
+                <div class="col-md-3">
+                    <label class="form-label small">نوع سند</label>
+                    <select class="form-select form-select-sm" name="documentType">
+                        <option value="Letter">Letter</option>
+                        <option value="Financial">Financial</option>
+                        <option value="Warehouse">Warehouse</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">مرحله</label>
+                    <input type="number" class="form-control form-control-sm" name="stepNumber" min="1" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">تاییدکننده</label>
+                    <select class="form-select form-select-sm" name="approverUserId">
+                        @foreach (var user in userOptions)
+                        {
+                            <option value="@user.Id">@user.FullName</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">افزودن گام</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>نوع سند</th>
+                        <th>مرحله</th>
+                        <th>تاییدکننده</th>
+                        <th class="text-center">حذف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.DocumentType</td>
+                                <td>@item.StepNumber</td>
+                                <td>@item.ApproverUser?.FullName</td>
+                                <td class="text-center">
+                                    <form asp-action="DeleteWorkflowRoute" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('این گام حذف شود؟');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">مسیر گردش کاری تعریف نشده است.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

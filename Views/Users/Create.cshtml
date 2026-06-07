@@ -1,6 +1,6 @@
 ﻿@model OfficeAutomation.Models.UserViewModel
 
-<div class="row justify-content-center">
+<div class="row justify-content-center users-create">
     <div class="col-md-6">
         <div class="card shadow border-0">
             <div class="card-header bg-primary text-white py-3">
@@ -33,19 +33,35 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">مدیر مستقیم</label>
+                        <select asp-for="ParentManagerUserId" class="form-select">
+                            <option value="">بدون مدیر</option>
+                            @foreach (var manager in (IEnumerable<dynamic>)(ViewBag.ManagerOptions ?? new List<dynamic>()))
+                            {
+                                <option value="@manager.Id">@manager.FullName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">نقش</label>
+                        <select asp-for="Role" class="form-select" required>
+                            <option value="">انتخاب نقش</option>
+                            @foreach (var role in (IEnumerable<string>)(ViewBag.RoleOptions ?? new List<string>()))
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">رمز عبور پیش‌فرض</label>
                         <input asp-for="Password" type="password" class="form-control" required />
                         <small class="text-muted">حداقل ۶ کاراکتر، شامل عدد و حروف بزرگ</small>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label mb-2">دسترسی‌ها</label>
-                        <div class="d-grid gap-2" style="grid-template-columns: 1fr 1fr;">
-                            <label class="form-check small mb-0"><input asp-for="CanAccessFinance" class="form-check-input ms-2" />مالی و حقوق و بیمه</label>
-                            <label class="form-check small mb-0"><input asp-for="CanAccessWarehouse" class="form-check-input ms-2" />انبارداری</label>
-                            <label class="form-check small mb-0"><input asp-for="CanAccessHumanCapital" class="form-check-input ms-2" />سرمایه انسانی</label>
-                            <label class="form-check small mb-0"><input asp-for="CanAccessSystemSettings" class="form-check-input ms-2" />تنظیمات سیستم</label>
-                        </div>
+                        <small class="text-muted">دسترسی‌ها به‌صورت پویا از ماتریس نقش تعیین می‌شود.</small>
                     </div>
 
                     <div class="d-grid gap-2">
@@ -57,6 +73,14 @@
         </div>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        .users-create .dropdown-menu {
+            z-index: 10001 !important;
+        }
+    </style>
+}
 
 @section Scripts {
     <script>

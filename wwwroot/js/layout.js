@@ -27,7 +27,7 @@
         if (!href || href === '#' || href.startsWith('javascript')) return;
 
         if (path === href || path.startsWith(href + '/') || (href !== '/' && path.startsWith(href))) {
-            a.classList.add('active');
+            a.classList.add('sidebar-active');
         }
     });
 

@@ -85,14 +85,28 @@ namespace OfficeAutomation.Filters
                 return;
             }
 
-            var allowed = area switch
+            var roleIds = await _context.UserRoles
+                .AsNoTracking()
+                .Where(item => item.UserId == userId)
+                .Select(item => item.RoleId)
+                .ToListAsync(context.HttpContext.RequestAborted);
+
+            var rolePermission = await _context.RolePermissions
+                .AsNoTracking()
+                .Where(item => roleIds.Contains(item.RoleId) && item.PermissionKey == area)
+                .OrderByDescending(item => item.Id)
+                .Select(item => (bool?)item.IsAllowed)
+                .FirstOrDefaultAsync(context.HttpContext.RequestAborted);
+
+            var allowed = rolePermission ?? (area switch
             {
                 "Finance" => permissionData.CanAccessFinance,
                 "Warehouse" => permissionData.CanAccessWarehouse,
                 "HumanCapital" => permissionData.CanAccessHumanCapital,
                 "SystemSettings" => permissionData.CanAccessSystemSettings,
+                "WorkflowAdministration" => permissionData.CanAccessSystemSettings,
                 _ => true
-            };
+            });
 
             if (!allowed)
             {
@@ -111,6 +125,7 @@ namespace OfficeAutomation.Filters
                 "Warehouse" or "Vendors" or "Employers" => "Warehouse",
                 "HumanCapital" => "HumanCapital",
                 "Settings" => "SystemSettings",
+                "Security" => "WorkflowAdministration",
                 _ => null
             };
         }
