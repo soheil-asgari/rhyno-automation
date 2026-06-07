@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OfficeAutomation.Models
 {
-    public class AuditLog
+    public sealed class AuditLog
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [StringLength(100)]
         public string? UserId { get; set; }
@@ -14,17 +14,21 @@ namespace OfficeAutomation.Models
         public string Action { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(80)]
-        public string EntityName { get; set; } = string.Empty;
+        [StringLength(128)]
+        public string TableName { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(80)]
-        public string EntityId { get; set; } = string.Empty;
+        public DateTimeOffset DateTime { get; set; } = DateTimeOffset.UtcNow;
 
         public string? OldValues { get; set; }
 
         public string? NewValues { get; set; }
 
-        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public string? AffectedColumns { get; set; }
+
+        [StringLength(64)]
+        public string? UserIP { get; set; }
+
+        [StringLength(1024)]
+        public string? UserAgent { get; set; }
     }
 }

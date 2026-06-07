@@ -467,22 +467,26 @@
                         <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "AiAssistant" || currentController == "Waybill") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
                             <div class="accordion-body py-1 px-0">
                                 <nav class="nav flex-column sidebar-group-nav">
-                                    <a class="nav-link sidebar-link @(currentController == "Settings" ? "sidebar-active" : "")" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear text-secondary"></i> <span class="link-text">تنظیمات سیستم</span></a>
-                                    @if (userCanAccessWorkflowAdministration || User.IsInRole("Admin"))
-                                    {
-                                        <a class="nav-link sidebar-link @(currentController == "Security" ? "sidebar-active" : "")" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-check text-secondary"></i> <span class="link-text">مرکز امنیت</span></a>
-                                    }
-                                    <a class="nav-link sidebar-link @(currentController == "AiAssistant" ? "sidebar-active" : "")" asp-controller="AiAssistant" asp-action="Index"><i class="bi bi-stars text-info"></i> <span class="link-text">دستیار هوش مصنوعی</span></a>
-                                    <a class="nav-link sidebar-link @(currentController == "Waybill" ? "sidebar-active" : "")" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck text-secondary"></i> <span class="link-text">ثبت بارنامه</span></a>
-                                </nav>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a class="nav-link sidebar-link @((currentController == "AuditLogView" || currentController == "AuditLogs") ? "sidebar-active" : "")" href="/admin/audit-dashboard">
+                                                <i class="bi bi-shield-check text-danger"></i> <span class="link-text">نظارت بر فعالیت‌ها</span>
+                                            </a>
+                                        }
+
+                                        @if (userCanAccessWorkflowAdministration || User.IsInRole("Admin"))
+                                        {
+                                            <a class="nav-link sidebar-link @(currentController == "Security" ? "sidebar-active" : "")" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-check text-secondary"></i> <span class="link-text">مرکز امنیت</span></a>
+                                        }
+                                        <a class="nav-link sidebar-link @(currentController == "AiAssistant" ? "sidebar-active" : "")" asp-controller="AiAssistant" asp-action="Index"><i class="bi bi-stars text-info"></i> <span class="link-text">دستیار هوش مصنوعی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Waybill" ? "sidebar-active" : "")" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck text-secondary"></i> <span class="link-text">ثبت بارنامه</span></a>
+                                    </nav>
+                                </div>
                             </div>
                         </div>
-                    </div>
                     }
-                </div>
-            </div>
-
-            <a asp-controller="Settings" asp-action="Index" class="user-profile-link" style="display: block; text-decoration: none; color: inherit; cursor: pointer;">
+                    
+                    <a asp-controller="Settings" asp-action="Index" class="user-profile-link" style="display: block; text-decoration: none; color: inherit; cursor: pointer;">
                 <div class="user-profile-pill" style="padding: 15px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; background: #fff;">
                     <div class="user-avatar" style="position: relative;">
                         <div style="width: 38px; height: 38px; background: #e2e8f0; border-radius: 50%; display:flex; align-items:center; justify-content:center;"><i class="bi bi-person-fill text-secondary"></i></div>

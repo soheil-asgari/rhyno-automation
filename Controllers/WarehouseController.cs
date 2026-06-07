@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
-using System.Text.Json;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
@@ -164,21 +163,6 @@ namespace OfficeAutomation.Controllers
             entity.IsActive = model.IsActive;
 
             await _context.SaveChangesAsync(cancellationToken);
-            await WriteAuditLogAsync(
-                "Edit",
-                "Product",
-                entity.Id.ToString(),
-                beforeState,
-                new
-                {
-                    entity.Code,
-                    entity.Name,
-                    entity.Unit,
-                    entity.Description,
-                    entity.MinimumStock,
-                    entity.IsActive
-                },
-                cancellationToken);
             return RedirectToAction(nameof(Products));
         }
 
@@ -211,19 +195,6 @@ namespace OfficeAutomation.Controllers
                 entity.IsActive = false;
                 entity.IsDeleted = true;
                 await _context.SaveChangesAsync(cancellationToken);
-                await WriteAuditLogAsync(
-                    "Delete",
-                    "Product",
-                    entity.Id.ToString(),
-                    beforeState,
-                    new
-                    {
-                        entity.Code,
-                        entity.Name,
-                        entity.IsActive,
-                        entity.IsDeleted
-                    },
-                    cancellationToken);
                 TempData["WarehouseMessage"] = "کالا به دلیل وجود گردش، حذف نرم شد.";
                 return RedirectToAction(nameof(Products));
             }
@@ -1810,7 +1781,7 @@ namespace OfficeAutomation.Controllers
             return $"{persianCalendar.GetYear(now):0000}/{persianCalendar.GetMonth(now):00}/{persianCalendar.GetDayOfMonth(now):00}";
         }
 
-        private async Task WriteAuditLogAsync(
+        private Task WriteAuditLogAsync(
             string action,
             string entityName,
             string entityId,
@@ -1818,19 +1789,7 @@ namespace OfficeAutomation.Controllers
             object? newValues,
             CancellationToken cancellationToken)
         {
-            var audit = new AuditLog
-            {
-                UserId = CurrentUserId,
-                Action = action,
-                EntityName = entityName,
-                EntityId = entityId,
-                OldValues = oldValues is null ? null : JsonSerializer.Serialize(oldValues),
-                NewValues = newValues is null ? null : JsonSerializer.Serialize(newValues),
-                Timestamp = DateTime.Now
-            };
-
-            _context.AuditLogs.Add(audit);
-            await _context.SaveChangesAsync(cancellationToken);
+            return Task.CompletedTask;
         }
     }
 }

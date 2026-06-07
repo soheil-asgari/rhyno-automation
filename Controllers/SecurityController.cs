@@ -5,26 +5,18 @@ using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
-    [Authorize(Roles = "Admin")]
-    [RequireAccessArea("WorkflowAdministration")]
+    [Authorize]
+    [PermissionAuthorize("Security.Manage")]
     public class SecurityController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
 
-        private static readonly List<PermissionFeatureVM> PermissionCatalog =
-        [
-            new() { Key = "Finance", Area = "Finance", Title = "مالی" },
-            new() { Key = "HumanCapital", Area = "HumanCapital", Title = "سرمایه انسانی" },
-            new() { Key = "Warehouse", Area = "Warehouse", Title = "انبار" },
-            new() { Key = "SystemSettings", Area = "SystemSettings", Title = "تنظیمات سیستم" },
-            new() { Key = "WorkflowAdministration", Area = "WorkflowAdministration", Title = "مدیریت گردش کار" }
-        ];
-
-        public SecurityController(ApplicationDbContext context, RoleManager<IdentityRole> roleManager)
+        public SecurityController(ApplicationDbContext context, RoleManager<ApplicationRole> roleManager)
         {
             _context = context;
             _roleManager = roleManager;
@@ -53,7 +45,12 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var result = await _roleManager.CreateAsync(new IdentityRole(roleName));
+            var result = await _roleManager.CreateAsync(new ApplicationRole
+            {
+                Name = roleName,
+                DataAccessScope = RoleDataAccessScope.Department
+            });
+
             TempData["SecurityMessage"] = result.Succeeded ? "نقش جدید ایجاد شد." : "ایجاد نقش ناموفق بود.";
             return RedirectToAction(nameof(Index));
         }
@@ -136,7 +133,14 @@ namespace OfficeAutomation.Controllers
             var matrix = new SecurityMatrixVM
             {
                 Roles = roles,
-                Features = PermissionCatalog
+                Features = PermissionCatalog.CorePermissions
+                    .Select(item => new PermissionFeatureVM
+                    {
+                        Key = item.Key,
+                        Area = item.Category,
+                        Title = item.DisplayName
+                    })
+                    .ToList()
             };
 
             ViewBag.PermissionMap = permissions
@@ -154,6 +158,7 @@ namespace OfficeAutomation.Controllers
                 Request.Headers["X-Requested-With"],
                 "XMLHttpRequest",
                 StringComparison.OrdinalIgnoreCase);
+
             if (!ModelState.IsValid)
             {
                 if (isAjaxRequest)
@@ -164,13 +169,13 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(Matrix));
             }
 
-            var permissionExists = PermissionCatalog.Any(item => item.Key == model.PermissionKey);
+            var permissionExists = await _context.Permissions.AnyAsync(item => item.Key == model.PermissionKey, cancellationToken);
             var roleExists = await _roleManager.Roles.AnyAsync(item => item.Id == model.RoleId, cancellationToken);
             if (!permissionExists || !roleExists)
             {
                 if (isAjaxRequest)
                 {
-                    return BadRequest(new { success = false, message = "ط¯ط³طھط±ط³غŒ غŒط§ ظ†ظ‚ط´ ط§ط±ط³ط§ظ„غŒ ظ…ط¹طھط¨ط± ظ†غŒط³طھ." });
+                    return BadRequest(new { success = false, message = "نقش یا مجوز انتخاب شده معتبر نیست." });
                 }
 
                 return RedirectToAction(nameof(Matrix));

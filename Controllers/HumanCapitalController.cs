@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
@@ -11,6 +12,7 @@ namespace OfficeAutomation.Controllers
     public class HumanCapitalController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDataIsolationService _dataIsolationService;
 
         private static readonly string[] DefaultEmploymentTypes =
         [
@@ -29,17 +31,18 @@ namespace OfficeAutomation.Controllers
             "پایان خدمت"
         ];
 
-        public HumanCapitalController(ApplicationDbContext context)
+        public HumanCapitalController(ApplicationDbContext context, IDataIsolationService dataIsolationService)
         {
             _context = context;
+            _dataIsolationService = dataIsolationService;
         }
 
         public async Task<IActionResult> Index(HumanCapitalIndexVM filter)
         {
-            var query = _context.HumanCapitalEmployees
+            var query = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.HumanCapitalEmployees
                 .AsNoTracking()
                 .Include(employee => employee.Department)
-                .AsQueryable();
+                .AsQueryable());
 
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
             {
@@ -62,7 +65,7 @@ namespace OfficeAutomation.Controllers
                 query = query.Where(employee => employee.DepartmentId == filter.DepartmentId.Value);
             }
 
-            var fullListQuery = _context.HumanCapitalEmployees.AsNoTracking();
+            var fullListQuery = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.HumanCapitalEmployees.AsNoTracking());
 
             filter.TotalCount = await fullListQuery.CountAsync();
             filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "فعال");

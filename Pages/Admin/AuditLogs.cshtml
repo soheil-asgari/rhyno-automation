@@ -1,0 +1,984 @@
+@page "/admin/audit-dashboard"
+@model OfficeAutomation.Pages.Admin.AuditLogsModel
+
+@{
+    ViewData["Title"] = "گزارش فعالیت‌های سیستم";
+}
+
+@section Styles {
+    <style>
+        .audit-page {
+            direction: rtl;
+            color: #0f172a;
+        }
+
+        .audit-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #2563eb 100%);
+            border-radius: 8px;
+            color: #fff;
+            padding: 22px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+        }
+
+        .audit-hero .eyebrow {
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .audit-metric-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+            min-height: 116px;
+        }
+
+        .audit-metric-card .metric-value {
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .audit-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+        }
+
+        .audit-table {
+            margin-bottom: 0;
+        }
+
+        .audit-table thead th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.78rem;
+            font-weight: 800;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .audit-table tbody td {
+            font-size: 0.86rem;
+            vertical-align: middle;
+        }
+
+        .audit-row {
+            cursor: pointer;
+        }
+
+        .audit-row:hover td {
+            background: #f8fafc;
+        }
+
+        .text-ltr {
+            direction: ltr;
+            unicode-bidi: plaintext;
+        }
+
+        .audit-empty {
+            padding: 46px 16px;
+            color: #64748b;
+        }
+
+        .audit-loader {
+            min-height: 240px;
+        }
+
+        .audit-filter-label {
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .diff-table th {
+            width: 20%;
+            color: #475569;
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+
+        .diff-value {
+            direction: ltr;
+            unicode-bidi: plaintext;
+            text-align: left;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.78rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-width: 420px;
+        }
+
+        .diff-changed {
+            background: #fff7ed;
+        }
+
+        .diff-added {
+            background: #ecfdf5;
+        }
+
+        .diff-removed {
+            background: #fef2f2;
+        }
+
+        .pagination .page-link {
+            border-radius: 8px;
+            margin: 0 2px;
+        }
+
+        html.theme-dark .audit-page,
+        html.theme-dark .audit-card,
+        html.theme-dark .audit-metric-card {
+            color: #e5e7eb;
+        }
+
+        html.theme-dark .audit-card,
+        html.theme-dark .audit-metric-card {
+            background: #111827;
+            border-color: #334155;
+        }
+
+        html.theme-dark .audit-table thead th {
+            background: #1f2937;
+            color: #e5e7eb;
+            border-color: #334155;
+        }
+
+        html.theme-dark .audit-table tbody td,
+        html.theme-dark .audit-table tbody th {
+            background: #111827;
+            color: #e5e7eb;
+            border-color: #334155;
+        }
+
+        html.theme-dark .audit-row:hover td {
+            background: #1f2937;
+        }
+    </style>
+}
+
+<div class="audit-page container-fluid py-4">
+    <div class="audit-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+            <div>
+                <div class="eyebrow mb-2">مرکز امنیت و رهگیری</div>
+                <h1 class="h4 fw-bold mb-2">گزارش فعالیت‌های سیستم</h1>
+                <p class="mb-0 opacity-75">مشاهده، فیلتر و بررسی دقیق تغییرات ثبت‌شده در سامانه</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button id="refreshAuditLogsBtn" type="button" class="btn btn-light btn-sm px-3">
+                    <i class="bi bi-arrow-clockwise ms-1"></i>
+                    به‌روزرسانی
+                </button>
+                <button id="exportAuditLogsBtn" type="button" class="btn btn-success btn-sm px-3">
+                    <i class="bi bi-file-earmark-excel ms-1"></i>
+                    خروجی اکسل
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="audit-metric-card p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-bold">کل رکوردها</div>
+                        <div id="metricTotal" class="metric-value mt-2">۰</div>
+                    </div>
+                    <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">Total</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="audit-metric-card p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-bold">ثبت جدید</div>
+                        <div id="metricCreate" class="metric-value mt-2">۰</div>
+                    </div>
+                    <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">Insert</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="audit-metric-card p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-bold">ویرایش‌ها</div>
+                        <div id="metricUpdate" class="metric-value mt-2">۰</div>
+                    </div>
+                    <span class="badge rounded-pill bg-warning-subtle text-warning px-3 py-2">Update</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="audit-metric-card p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-bold">حذف‌ها</div>
+                        <div id="metricDelete" class="metric-value mt-2">۰</div>
+                    </div>
+                    <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">Delete</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="audit-card card mb-4">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between gap-3">
+            <button class="btn btn-link text-decoration-none fw-bold text-dark px-0" type="button" data-bs-toggle="collapse" data-bs-target="#advancedAuditFilters" aria-expanded="true" aria-controls="advancedAuditFilters">
+                <i class="bi bi-funnel ms-1 text-primary"></i>
+                فیلترهای پیشرفته
+            </button>
+            <span id="filterOptionsStatus" class="badge bg-secondary-subtle text-secondary">در حال دریافت گزینه‌ها</span>
+        </div>
+        <div id="advancedAuditFilters" class="collapse show">
+            <div class="card-body">
+                <form id="auditFiltersForm" class="row g-3 align-items-end">
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="filterUserId" class="audit-filter-label">کاربران</label>
+                        <select id="filterUserId" class="form-select">
+                            <option value="">همه کاربران</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="filterTableName" class="audit-filter-label">بخش‌ها/جداول</label>
+                        <select id="filterTableName" class="form-select">
+                            <option value="">همه بخش‌ها</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-2">
+                        <label for="filterAction" class="audit-filter-label">نوع عملیات</label>
+                        <select id="filterAction" class="form-select">
+                            <option value="">همه عملیات</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-2">
+                        <label for="filterFrom" class="audit-filter-label">از تاریخ</label>
+                        <input id="filterFrom" type="date" class="form-control" />
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-2">
+                        <label for="filterTo" class="audit-filter-label">تا تاریخ</label>
+                        <input id="filterTo" type="date" class="form-control" />
+                    </div>
+                    <div class="col-12 d-flex flex-wrap justify-content-between gap-2 pt-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="pageSizeSelect" class="audit-filter-label mb-0">تعداد در صفحه</label>
+                            <select id="pageSizeSelect" class="form-select form-select-sm" style="width: 96px;">
+                                <option value="10">۱۰</option>
+                                <option value="20" selected>۲۰</option>
+                                <option value="50">۵۰</option>
+                                <option value="100">۱۰۰</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="clearFiltersBtn" type="button" class="btn btn-outline-secondary px-4">
+                                پاک‌سازی
+                            </button>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-search ms-1"></i>
+                                اعمال فیلتر
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="audit-card card">
+        <div class="card-header bg-white d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+            <div>
+                <h2 class="h6 fw-bold mb-1">لیست رویدادها</h2>
+                <div id="gridSummary" class="small text-muted">در حال بارگذاری...</div>
+            </div>
+            <div id="activeFilterBadges" class="d-flex flex-wrap gap-2"></div>
+        </div>
+        <div class="card-body p-0">
+            <div id="auditLoading" class="audit-loader d-none align-items-center justify-content-center">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>
+                    <div class="text-muted small">در حال دریافت اطلاعات...</div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="audit-table table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>زمان</th>
+                            <th>کاربر</th>
+                            <th>عملیات</th>
+                            <th>بخش/جدول</th>
+                            <th>IP</th>
+                            <th>ستون‌های تغییر یافته</th>
+                            <th class="text-center">جزئیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditLogsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
+            <div id="paginationInfo" class="small text-muted"></div>
+            <nav aria-label="صفحه‌بندی گزارش فعالیت‌ها">
+                <ul id="auditPagination" class="pagination pagination-sm mb-0 flex-wrap justify-content-center"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="auditDiffModal" tabindex="-1" aria-labelledby="auditDiffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content" dir="rtl">
+            <div class="modal-header">
+                <div>
+                    <h5 id="auditDiffModalLabel" class="modal-title fw-bold">جزئیات تغییرات سند</h5>
+                    <div id="auditDiffSubtitle" class="small text-muted mt-1"></div>
+                </div>
+                <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <div class="modal-body">
+                <div id="auditDiffMeta" class="row g-3 mb-3"></div>
+                <div id="auditDiffContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const apiUrl = '/api/admin/audit-logs';
+            const optionsUrl = '/api/admin/audit-logs/filter-options';
+            const state = {
+                page: 1,
+                pageSize: 20,
+                totalCount: 0,
+                totalPages: 0,
+                items: [],
+                options: {
+                    users: [],
+                    actions: [],
+                    tableNames: []
+                }
+            };
+
+            const els = {
+                form: document.getElementById('auditFiltersForm'),
+                tableBody: document.getElementById('auditLogsTableBody'),
+                loading: document.getElementById('auditLoading'),
+                pagination: document.getElementById('auditPagination'),
+                paginationInfo: document.getElementById('paginationInfo'),
+                gridSummary: document.getElementById('gridSummary'),
+                filterOptionsStatus: document.getElementById('filterOptionsStatus'),
+                activeFilterBadges: document.getElementById('activeFilterBadges'),
+                metricTotal: document.getElementById('metricTotal'),
+                metricCreate: document.getElementById('metricCreate'),
+                metricUpdate: document.getElementById('metricUpdate'),
+                metricDelete: document.getElementById('metricDelete'),
+                userId: document.getElementById('filterUserId'),
+                tableName: document.getElementById('filterTableName'),
+                action: document.getElementById('filterAction'),
+                from: document.getElementById('filterFrom'),
+                to: document.getElementById('filterTo'),
+                pageSize: document.getElementById('pageSizeSelect'),
+                clear: document.getElementById('clearFiltersBtn'),
+                refresh: document.getElementById('refreshAuditLogsBtn'),
+                export: document.getElementById('exportAuditLogsBtn'),
+                modal: document.getElementById('auditDiffModal'),
+                modalSubtitle: document.getElementById('auditDiffSubtitle'),
+                modalMeta: document.getElementById('auditDiffMeta'),
+                modalContent: document.getElementById('auditDiffContent')
+            };
+
+            const modal = els.modal ? new bootstrap.Modal(els.modal) : null;
+            const persianNumberFormatter = new Intl.NumberFormat('fa-IR');
+
+            const getValue = (obj, ...keys) => {
+                if (!obj) {
+                    return undefined;
+                }
+
+                for (const key of keys) {
+                    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                        return obj[key];
+                    }
+                }
+
+                return undefined;
+            };
+
+            const normalizeItems = (payload) => getValue(payload, 'items', 'Items') || [];
+            const normalizeText = (value) => value === null || value === undefined || value === '' ? '-' : String(value);
+            const toFaNumber = (value) => persianNumberFormatter.format(Number(value) || 0);
+            const escapeHtml = (value) => normalizeText(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
+            const sortForCompare = (value) => {
+                if (Array.isArray(value)) {
+                    return value.map(sortForCompare);
+                }
+
+                if (value && typeof value === 'object') {
+                    return Object.keys(value).sort().reduce((result, key) => {
+                        result[key] = sortForCompare(value[key]);
+                        return result;
+                    }, {});
+                }
+
+                return value;
+            };
+
+            const stableStringify = (value) => {
+                if (value === null || value === undefined || value === '') {
+                    return '';
+                }
+
+                if (typeof value === 'object') {
+                    try {
+                        return JSON.stringify(sortForCompare(value), null, 2);
+                    } catch {
+                        return String(value);
+                    }
+                }
+
+                return String(value);
+            };
+
+            const formatJsonValue = (value) => {
+                if (value === null || value === undefined || value === '') {
+                    return '<span class="text-muted">بدون مقدار</span>';
+                }
+
+                if (typeof value === 'object') {
+                    return escapeHtml(JSON.stringify(value, null, 2));
+                }
+
+                return escapeHtml(value);
+            };
+
+            const parseJson = (jsonText) => {
+                if (!jsonText || typeof jsonText !== 'string') {
+                    return {};
+                }
+
+                try {
+                    const parsed = JSON.parse(jsonText);
+                    return parsed && typeof parsed === 'object' ? parsed : {};
+                } catch {
+                    return {};
+                }
+            };
+
+            const formatDate = (value, includeTime = true) => {
+                if (!value) {
+                    return '-';
+                }
+
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return '-';
+                }
+
+                const dateText = date.toLocaleDateString('fa-IR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+
+                if (!includeTime) {
+                    return dateText;
+                }
+
+                const timeText = date.toLocaleTimeString('fa-IR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+
+                return `${dateText}، ${timeText}`;
+            };
+
+            const actionInfo = (action) => {
+                const normalized = String(action || '').toLowerCase();
+                if (normalized === 'create' || normalized === 'insert') {
+                    return { label: 'ثبت جدید', badgeClass: 'bg-success' };
+                }
+
+                if (normalized === 'update' || normalized === 'edit') {
+                    return { label: 'ویرایش', badgeClass: 'bg-warning text-dark' };
+                }
+
+                if (normalized === 'delete') {
+                    return { label: 'حذف', badgeClass: 'bg-danger' };
+                }
+
+                return { label: normalizeText(action), badgeClass: 'bg-secondary' };
+            };
+
+            const buildQuery = (page = state.page, pageSize = state.pageSize) => {
+                const params = new URLSearchParams();
+                params.set('page', String(page));
+                params.set('pageSize', String(pageSize));
+
+                if (els.userId.value) {
+                    params.set('userId', els.userId.value);
+                }
+                if (els.action.value) {
+                    params.set('action', els.action.value);
+                }
+                if (els.tableName.value) {
+                    params.set('tableName', els.tableName.value);
+                }
+                if (els.from.value) {
+                    params.set('from', new Date(`${els.from.value}T00:00:00`).toISOString());
+                }
+                if (els.to.value) {
+                    params.set('to', new Date(`${els.to.value}T23:59:59`).toISOString());
+                }
+
+                return params;
+            };
+
+            const setLoading = (isLoading) => {
+                els.loading.classList.toggle('d-none', !isLoading);
+                els.loading.classList.toggle('d-flex', isLoading);
+            };
+
+            const fetchJson = async (url) => {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                return response.json();
+            };
+
+            const fillSelect = (select, items, placeholder, mapItem) => {
+                select.innerHTML = `<option value="">${placeholder}</option>`;
+                items.forEach((item) => {
+                    const mapped = mapItem(item);
+                    const option = document.createElement('option');
+                    option.value = mapped.value;
+                    option.textContent = mapped.label;
+                    select.appendChild(option);
+                });
+            };
+
+            const loadFilterOptions = async () => {
+                try {
+                    const payload = await fetchJson(optionsUrl);
+                    state.options.users = getValue(payload, 'users', 'Users') || [];
+                    state.options.actions = getValue(payload, 'actions', 'Actions') || [];
+                    state.options.tableNames = getValue(payload, 'tableNames', 'TableNames') || [];
+
+                    fillSelect(els.userId, state.options.users, 'همه کاربران', (item) => ({
+                        value: getValue(item, 'value', 'Value') || '',
+                        label: getValue(item, 'label', 'Label') || ''
+                    }));
+                    fillSelect(els.tableName, state.options.tableNames, 'همه بخش‌ها', (item) => ({
+                        value: item,
+                        label: item
+                    }));
+                    fillSelect(els.action, state.options.actions, 'همه عملیات', (item) => ({
+                        value: item,
+                        label: actionInfo(item).label
+                    }));
+
+                    els.filterOptionsStatus.textContent = 'گزینه‌ها آماده است';
+                    els.filterOptionsStatus.className = 'badge bg-success-subtle text-success';
+                } catch (error) {
+                    els.filterOptionsStatus.textContent = 'خطا در دریافت گزینه‌ها';
+                    els.filterOptionsStatus.className = 'badge bg-danger-subtle text-danger';
+                    console.error('Audit filter options failed:', error);
+                }
+            };
+
+            const renderRows = () => {
+                if (!state.items.length) {
+                    els.tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7">
+                                <div class="audit-empty text-center">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2 text-muted"></i>
+                                    رکوردی مطابق فیلترهای انتخاب‌شده یافت نشد.
+                                </div>
+                            </td>
+                        </tr>`;
+                    return;
+                }
+
+                els.tableBody.innerHTML = state.items.map((item, index) => {
+                    const action = getValue(item, 'action', 'Action');
+                    const actionBadge = actionInfo(action);
+                    const userDisplayName = getValue(item, 'userDisplayName', 'UserDisplayName') || getValue(item, 'userId', 'UserId');
+                    const tableName = getValue(item, 'tableName', 'TableName');
+                    const dateTime = getValue(item, 'dateTime', 'DateTime');
+                    const affectedColumns = getValue(item, 'affectedColumns', 'AffectedColumns');
+                    const userIp = getValue(item, 'userIP', 'UserIP', 'userIp', 'UserIp');
+
+                    return `
+                        <tr class="audit-row" data-index="${index}" title="برای مشاهده جزئیات تغییرات کلیک کنید">
+                            <td class="text-nowrap">
+                                <div class="fw-bold">${escapeHtml(formatDate(dateTime))}</div>
+                                <div class="small text-muted text-ltr">${escapeHtml(dateTime)}</div>
+                            </td>
+                            <td>
+                                <span class="fw-bold">${escapeHtml(userDisplayName)}</span>
+                            </td>
+                            <td>
+                                <span class="badge ${actionBadge.badgeClass} px-3 py-2">${escapeHtml(actionBadge.label)}</span>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">${escapeHtml(tableName)}</span></td>
+                            <td class="text-ltr text-muted">${escapeHtml(userIp)}</td>
+                            <td>${escapeHtml(affectedColumns)}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-primary btn-sm audit-detail-btn" data-index="${index}">
+                                    <i class="bi bi-eye ms-1"></i>
+                                    مشاهده
+                                </button>
+                            </td>
+                        </tr>`;
+                }).join('');
+            };
+
+            const renderPagination = () => {
+                const page = state.page;
+                const totalPages = state.totalPages;
+                const totalCount = state.totalCount;
+
+                if (!totalCount) {
+                    els.paginationInfo.textContent = '';
+                    els.pagination.innerHTML = '';
+                    return;
+                }
+
+                const from = ((page - 1) * state.pageSize) + 1;
+                const to = Math.min(page * state.pageSize, totalCount);
+                els.paginationInfo.textContent = `نمایش ${toFaNumber(from)} تا ${toFaNumber(to)} از ${toFaNumber(totalCount)} رکورد`;
+
+                const pages = new Set([1, totalPages, page - 2, page - 1, page, page + 1, page + 2]);
+                const validPages = [...pages].filter((item) => item >= 1 && item <= totalPages).sort((a, b) => a - b);
+                const html = [];
+
+                html.push(pageButton('قبلی', page - 1, page <= 1));
+                let previous = 0;
+                validPages.forEach((pageNumber) => {
+                    if (previous && pageNumber - previous > 1) {
+                        html.push('<li class="page-item disabled"><span class="page-link">...</span></li>');
+                    }
+                    html.push(pageButton(toFaNumber(pageNumber), pageNumber, false, pageNumber === page));
+                    previous = pageNumber;
+                });
+                html.push(pageButton('بعدی', page + 1, page >= totalPages));
+
+                els.pagination.innerHTML = html.join('');
+            };
+
+            const pageButton = (label, page, disabled = false, active = false) => `
+                <li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}">
+                    <button type="button" class="page-link" data-page="${page}" ${disabled ? 'disabled' : ''}>${label}</button>
+                </li>`;
+
+            const renderFilterBadges = () => {
+                const badges = [];
+                if (els.userId.value) {
+                    badges.push(`کاربر: ${els.userId.options[els.userId.selectedIndex]?.text || els.userId.value}`);
+                }
+                if (els.tableName.value) {
+                    badges.push(`بخش: ${els.tableName.value}`);
+                }
+                if (els.action.value) {
+                    badges.push(`عملیات: ${actionInfo(els.action.value).label}`);
+                }
+                if (els.from.value) {
+                    badges.push(`از: ${formatDate(els.from.value, false)}`);
+                }
+                if (els.to.value) {
+                    badges.push(`تا: ${formatDate(els.to.value, false)}`);
+                }
+
+                els.activeFilterBadges.innerHTML = badges.map((item) => `<span class="badge bg-primary-subtle text-primary">${escapeHtml(item)}</span>`).join('');
+            };
+
+            const renderMetrics = async () => {
+                els.metricTotal.textContent = toFaNumber(state.totalCount);
+
+                const currentAction = els.action.value;
+                if (currentAction) {
+                    els.metricCreate.textContent = actionInfo(currentAction).label === 'ثبت جدید' ? toFaNumber(state.totalCount) : '۰';
+                    els.metricUpdate.textContent = actionInfo(currentAction).label === 'ویرایش' ? toFaNumber(state.totalCount) : '۰';
+                    els.metricDelete.textContent = actionInfo(currentAction).label === 'حذف' ? toFaNumber(state.totalCount) : '۰';
+                    return;
+                }
+
+                const countByAction = async (action) => {
+                    const params = buildQuery(1, 1);
+                    params.set('action', action);
+                    const payload = await fetchJson(`${apiUrl}?${params.toString()}`);
+                    return getValue(payload, 'totalCount', 'TotalCount') || 0;
+                };
+
+                try {
+                    const [created, inserted, updated, deleted] = await Promise.all([
+                        countByAction('Create'),
+                        countByAction('Insert'),
+                        countByAction('Update'),
+                        countByAction('Delete')
+                    ]);
+                    els.metricCreate.textContent = toFaNumber(created + inserted);
+                    els.metricUpdate.textContent = toFaNumber(updated);
+                    els.metricDelete.textContent = toFaNumber(deleted);
+                } catch (error) {
+                    console.error('Audit metrics failed:', error);
+                }
+            };
+
+            const loadAuditLogs = async (page = 1) => {
+                state.page = page;
+                state.pageSize = Number(els.pageSize.value) || 20;
+                setLoading(true);
+                els.gridSummary.textContent = 'در حال بارگذاری...';
+
+                try {
+                    const payload = await fetchJson(`${apiUrl}?${buildQuery(state.page, state.pageSize).toString()}`);
+                    state.items = normalizeItems(payload);
+                    state.page = getValue(payload, 'page', 'Page') || state.page;
+                    state.pageSize = getValue(payload, 'pageSize', 'PageSize') || state.pageSize;
+                    state.totalCount = getValue(payload, 'totalCount', 'TotalCount') || 0;
+                    state.totalPages = getValue(payload, 'totalPages', 'TotalPages') || Math.ceil(state.totalCount / state.pageSize) || 0;
+
+                    renderRows();
+                    renderPagination();
+                    renderFilterBadges();
+                    els.gridSummary.textContent = `${toFaNumber(state.totalCount)} رکورد در نتیجه فیلتر فعلی`;
+                    await renderMetrics();
+                } catch (error) {
+                    console.error('Audit logs failed:', error);
+                    els.tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7">
+                                <div class="audit-empty text-center text-danger">
+                                    <i class="bi bi-exclamation-triangle fs-2 d-block mb-2"></i>
+                                    خطا در دریافت گزارش فعالیت‌ها.
+                                </div>
+                            </td>
+                        </tr>`;
+                    els.gridSummary.textContent = 'خطا در بارگذاری';
+                    els.pagination.innerHTML = '';
+                    els.paginationInfo.textContent = '';
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const buildDiffRows = (oldValues, newValues) => {
+                const keys = [...new Set([...Object.keys(oldValues), ...Object.keys(newValues)])].sort((a, b) => a.localeCompare(b));
+                if (!keys.length) {
+                    return '<div class="alert alert-light border mb-0">برای این رویداد مقدار قدیم یا جدیدی ثبت نشده است.</div>';
+                }
+
+                const rows = keys.map((key) => {
+                    const oldValue = oldValues[key];
+                    const newValue = newValues[key];
+                    const oldText = stableStringify(oldValue);
+                    const newText = stableStringify(newValue);
+                    const changed = oldText !== newText;
+                    const statusClass = oldValue === undefined ? 'diff-added' : newValue === undefined ? 'diff-removed' : changed ? 'diff-changed' : '';
+                    const statusLabel = oldValue === undefined ? 'افزوده شده' : newValue === undefined ? 'حذف شده' : changed ? 'تغییر کرده' : 'بدون تغییر';
+                    const statusBadge = changed || oldValue === undefined || newValue === undefined
+                        ? `<span class="badge bg-primary-subtle text-primary">${statusLabel}</span>`
+                        : `<span class="badge bg-secondary-subtle text-secondary">${statusLabel}</span>`;
+
+                    return `
+                        <tr class="${statusClass}">
+                            <th>${escapeHtml(key)}</th>
+                            <td class="diff-value">${formatJsonValue(oldValue)}</td>
+                            <td class="diff-value">${formatJsonValue(newValue)}</td>
+                            <td class="text-nowrap">${statusBadge}</td>
+                        </tr>`;
+                }).join('');
+
+                return `
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle diff-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ویژگی</th>
+                                    <th>مقدار قبلی</th>
+                                    <th>مقدار جدید</th>
+                                    <th>وضعیت</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`;
+            };
+
+            const showDetails = (index) => {
+                const item = state.items[index];
+                if (!item || !modal) {
+                    return;
+                }
+
+                const oldValues = parseJson(getValue(item, 'oldValues', 'OldValues'));
+                const newValues = parseJson(getValue(item, 'newValues', 'NewValues'));
+                const action = getValue(item, 'action', 'Action');
+                const tableName = getValue(item, 'tableName', 'TableName');
+                const userDisplayName = getValue(item, 'userDisplayName', 'UserDisplayName') || getValue(item, 'userId', 'UserId');
+                const userIp = getValue(item, 'userIP', 'UserIP', 'userIp', 'UserIp');
+                const dateTime = getValue(item, 'dateTime', 'DateTime');
+                const affectedColumns = getValue(item, 'affectedColumns', 'AffectedColumns');
+                const actionBadge = actionInfo(action);
+
+                els.modalSubtitle.textContent = `${normalizeText(tableName)} | ${formatDate(dateTime)}`;
+                els.modalMeta.innerHTML = `
+                    <div class="col-12 col-md-3">
+                        <div class="p-3 rounded border bg-light h-100">
+                            <div class="small text-muted mb-1">کاربر</div>
+                            <div class="fw-bold">${escapeHtml(userDisplayName)}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="p-3 rounded border bg-light h-100">
+                            <div class="small text-muted mb-1">عملیات</div>
+                            <span class="badge ${actionBadge.badgeClass} px-3 py-2">${escapeHtml(actionBadge.label)}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="p-3 rounded border bg-light h-100">
+                            <div class="small text-muted mb-1">آدرس IP</div>
+                            <div class="fw-bold text-ltr">${escapeHtml(userIp)}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="p-3 rounded border bg-light h-100">
+                            <div class="small text-muted mb-1">ستون‌ها</div>
+                            <div class="fw-bold">${escapeHtml(affectedColumns)}</div>
+                        </div>
+                    </div>`;
+                els.modalContent.innerHTML = buildDiffRows(oldValues, newValues);
+                modal.show();
+            };
+
+            const csvEscape = (value) => `"${normalizeText(value).replace(/"/g, '""')}"`;
+
+            const loadAllFilteredRows = async () => {
+                const pageSize = 200;
+                const firstPayload = await fetchJson(`${apiUrl}?${buildQuery(1, pageSize).toString()}`);
+                const allItems = [...normalizeItems(firstPayload)];
+                const totalCount = getValue(firstPayload, 'totalCount', 'TotalCount') || allItems.length;
+                const totalPages = Math.ceil(totalCount / pageSize);
+
+                for (let page = 2; page <= totalPages; page += 1) {
+                    const payload = await fetchJson(`${apiUrl}?${buildQuery(page, pageSize).toString()}`);
+                    allItems.push(...normalizeItems(payload));
+                }
+
+                return allItems;
+            };
+
+            const exportCsv = async () => {
+                els.export.disabled = true;
+                const originalText = els.export.innerHTML;
+                els.export.innerHTML = '<span class="spinner-border spinner-border-sm ms-1" aria-hidden="true"></span>در حال آماده‌سازی';
+
+                try {
+                    const rows = await loadAllFilteredRows();
+                    const header = ['شناسه', 'زمان', 'کاربر', 'نوع عملیات', 'بخش/جدول', 'IP', 'ستون‌های تغییر یافته', 'مقادیر قبلی', 'مقادیر جدید'];
+                    const csvRows = [header.map(csvEscape).join(',')];
+
+                    rows.forEach((item) => {
+                        const action = actionInfo(getValue(item, 'action', 'Action')).label;
+                        csvRows.push([
+                            getValue(item, 'id', 'Id'),
+                            formatDate(getValue(item, 'dateTime', 'DateTime')),
+                            getValue(item, 'userDisplayName', 'UserDisplayName') || getValue(item, 'userId', 'UserId'),
+                            action,
+                            getValue(item, 'tableName', 'TableName'),
+                            getValue(item, 'userIP', 'UserIP', 'userIp', 'UserIp'),
+                            getValue(item, 'affectedColumns', 'AffectedColumns'),
+                            getValue(item, 'oldValues', 'OldValues'),
+                            getValue(item, 'newValues', 'NewValues')
+                        ].map(csvEscape).join(','));
+                    });
+
+                    const csvContent = `\uFEFF${csvRows.join('\r\n')}`;
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error('Audit CSV export failed:', error);
+                    alert('خطا در تولید خروجی اکسل. لطفا دوباره تلاش کنید.');
+                } finally {
+                    els.export.disabled = false;
+                    els.export.innerHTML = originalText;
+                }
+            };
+
+            els.form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                loadAuditLogs(1);
+            });
+
+            els.clear.addEventListener('click', () => {
+                els.form.reset();
+                els.pageSize.value = '20';
+                loadAuditLogs(1);
+            });
+
+            els.refresh.addEventListener('click', () => loadAuditLogs(state.page));
+            els.export.addEventListener('click', exportCsv);
+            els.pageSize.addEventListener('change', () => loadAuditLogs(1));
+
+            els.pagination.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-page]');
+                if (!button || button.disabled) {
+                    return;
+                }
+
+                const nextPage = Number(button.dataset.page);
+                if (Number.isFinite(nextPage)) {
+                    loadAuditLogs(nextPage);
+                }
+            });
+
+            els.tableBody.addEventListener('click', (event) => {
+                const target = event.target.closest('[data-index]');
+                if (!target) {
+                    return;
+                }
+
+                showDetails(Number(target.dataset.index));
+            });
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                await loadFilterOptions();
+                await loadAuditLogs(1);
+            });
+        })();
+    </script>
+}

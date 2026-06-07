@@ -1,14 +1,21 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Auditing;
 
 namespace OfficeAutomation.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<User>
+    public class ApplicationDbContext : IdentityDbContext<User, ApplicationRole, string>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        private readonly IAuditContextProvider? _auditContextProvider;
+        private bool _isWritingAuditLog;
+
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options,
+            IAuditContextProvider? auditContextProvider = null)
             : base(options)
         {
+            _auditContextProvider = auditContextProvider;
         }
 
         public DbSet<InsuranceList> InsuranceLists { get; set; }
@@ -43,7 +50,137 @@ namespace OfficeAutomation.Data
         public DbSet<Employer> Employers { get; set; }
         public DbSet<InventoryTransferRequest> InventoryTransferRequests { get; set; }
         public DbSet<WorkflowRoute> WorkflowRoutes { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (_isWritingAuditLog)
+            {
+                return await base.SaveChangesAsync(cancellationToken);
+            }
+
+            ChangeTracker.DetectChanges();
+
+            var auditEntries = PrepareAuditEntries();
+            var result = await base.SaveChangesAsync(cancellationToken);
+
+            if (auditEntries.Count == 0)
+            {
+                return result;
+            }
+
+            foreach (var auditEntry in auditEntries)
+            {
+                auditEntry.FinalizeTemporaryProperties();
+                AuditLogs.Add(auditEntry.ToAuditLog());
+            }
+
+            _isWritingAuditLog = true;
+            try
+            {
+                await base.SaveChangesAsync(cancellationToken);
+            }
+            finally
+            {
+                _isWritingAuditLog = false;
+            }
+
+            return result;
+        }
+
+        private List<PendingAuditLogEntry> PrepareAuditEntries()
+        {
+            var requestInfo = _auditContextProvider?.GetCurrent() ?? new AuditRequestInfo(null, null, null);
+            var auditEntries = new List<PendingAuditLogEntry>();
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.State is EntityState.Detached or EntityState.Unchanged)
+                {
+                    continue;
+                }
+
+                if (entry.Entity is AuditLog)
+                {
+                    continue;
+                }
+
+                var auditEntry = new PendingAuditLogEntry(entry, requestInfo);
+
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        auditEntry.Action = "Create";
+                        PopulateAddedEntry(auditEntry);
+                        break;
+                    case EntityState.Modified:
+                        auditEntry.Action = "Update";
+                        PopulateModifiedEntry(auditEntry);
+                        break;
+                    case EntityState.Deleted:
+                        auditEntry.Action = "Delete";
+                        PopulateDeletedEntry(auditEntry);
+                        break;
+                }
+
+                if (auditEntry.AffectedColumns.Count == 0 &&
+                    auditEntry.OldValues.Count == 0 &&
+                    auditEntry.NewValues.Count == 0)
+                {
+                    continue;
+                }
+
+                auditEntries.Add(auditEntry);
+            }
+
+            return auditEntries;
+        }
+
+        private static void PopulateAddedEntry(PendingAuditLogEntry auditEntry)
+        {
+            foreach (var property in auditEntry.Entry.Properties)
+            {
+                if (property.IsTemporary)
+                {
+                    auditEntry.TemporaryProperties.Add(property);
+                    continue;
+                }
+
+                auditEntry.AffectedColumns.Add(property.Metadata.Name);
+                auditEntry.NewValues[property.Metadata.Name] = PendingAuditLogEntry.NormalizeValue(property.CurrentValue);
+            }
+        }
+
+        private static void PopulateModifiedEntry(PendingAuditLogEntry auditEntry)
+        {
+            foreach (var property in auditEntry.Entry.Properties)
+            {
+                if (property.IsTemporary)
+                {
+                    auditEntry.TemporaryProperties.Add(property);
+                    continue;
+                }
+
+                if (property.Metadata.IsPrimaryKey() || !property.IsModified || Equals(property.OriginalValue, property.CurrentValue))
+                {
+                    continue;
+                }
+
+                auditEntry.AffectedColumns.Add(property.Metadata.Name);
+                auditEntry.OldValues[property.Metadata.Name] = PendingAuditLogEntry.NormalizeValue(property.OriginalValue);
+                auditEntry.NewValues[property.Metadata.Name] = PendingAuditLogEntry.NormalizeValue(property.CurrentValue);
+            }
+        }
+
+        private static void PopulateDeletedEntry(PendingAuditLogEntry auditEntry)
+        {
+            foreach (var property in auditEntry.Entry.Properties)
+            {
+                auditEntry.AffectedColumns.Add(property.Metadata.Name);
+                auditEntry.OldValues[property.Metadata.Name] = PendingAuditLogEntry.NormalizeValue(property.OriginalValue);
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -449,6 +586,10 @@ namespace OfficeAutomation.Data
                 .HasMaxLength(80);
 
             modelBuilder.Entity<RolePermission>()
+                .Property(item => item.PermissionKey)
+                .HasMaxLength(128);
+
+            modelBuilder.Entity<RolePermission>()
                 .HasIndex(item => new { item.RoleId, item.PermissionKey })
                 .IsUnique();
 
@@ -705,19 +846,72 @@ namespace OfficeAutomation.Data
                 .HasMaxLength(20);
 
             modelBuilder.Entity<AuditLog>()
-                .Property(item => item.EntityName)
-                .HasMaxLength(80);
+                .Property(item => item.TableName)
+                .HasMaxLength(128);
 
             modelBuilder.Entity<AuditLog>()
-                .Property(item => item.EntityId)
-                .HasMaxLength(80);
+                .Property(item => item.DateTime)
+                .HasColumnType("datetimeoffset")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             modelBuilder.Entity<AuditLog>()
-                .Property(item => item.Timestamp)
-                .HasDefaultValueSql("GETDATE()");
+                .Property(item => item.UserIP)
+                .HasMaxLength(64);
 
             modelBuilder.Entity<AuditLog>()
-                .HasIndex(item => new { item.EntityName, item.EntityId, item.Timestamp });
+                .Property(item => item.UserAgent)
+                .HasMaxLength(1024);
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(item => new { item.TableName, item.DateTime });
+
+            modelBuilder.Entity<ApplicationRole>()
+                .Property(item => item.Description)
+                .HasMaxLength(256);
+
+            modelBuilder.Entity<ApplicationRole>()
+                .Property(item => item.DataAccessScope)
+                .HasMaxLength(32)
+                .HasDefaultValue(RoleDataAccessScope.Department);
+
+            modelBuilder.Entity<Permission>()
+                .HasKey(item => item.Key);
+
+            modelBuilder.Entity<Permission>()
+                .Property(item => item.Key)
+                .HasMaxLength(128);
+
+            modelBuilder.Entity<Permission>()
+                .Property(item => item.DisplayName)
+                .HasMaxLength(128);
+
+            modelBuilder.Entity<Permission>()
+                .Property(item => item.Category)
+                .HasMaxLength(64);
+
+            modelBuilder.Entity<Permission>()
+                .Property(item => item.Description)
+                .HasMaxLength(256);
+
+            modelBuilder.Entity<Permission>()
+                .HasData(Services.Security.PermissionCatalog.CorePermissions);
+
+            modelBuilder.Entity<RolePermission>()
+                .HasIndex(item => new { item.RoleId, item.PermissionKey })
+                .IsUnique();
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(item => item.Role)
+                .WithMany()
+                .HasForeignKey(item => item.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(item => item.Permission)
+                .WithMany()
+                .HasForeignKey(item => item.PermissionKey)
+                .HasPrincipalKey(item => item.Key)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Vendor>()
                 .HasIndex(item => item.Name);

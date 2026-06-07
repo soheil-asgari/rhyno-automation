@@ -10,11 +10,13 @@ namespace OfficeAutomation.Models
         [Required]
         public string RoleId { get; set; } = string.Empty;
 
-        public IdentityRole? Role { get; set; }
+        public ApplicationRole? Role { get; set; }
 
         [Required]
-        [StringLength(80)]
+        [StringLength(128)]
         public string PermissionKey { get; set; } = string.Empty;
+
+        public Permission? Permission { get; set; }
 
         public bool IsAllowed { get; set; }
     }

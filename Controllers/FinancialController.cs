@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,8 +21,6 @@ namespace OfficeAutomation.Controllers
         {
             _context = context;
         }
-
-        private string? CurrentUserId => User?.Identity?.IsAuthenticated == true ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value : null;
 
         [HttpGet]
         public Task<IActionResult> Invoices(FinancialInvoiceIndexVM filter, string? invoiceType, CancellationToken cancellationToken)
@@ -215,23 +212,6 @@ namespace OfficeAutomation.Controllers
             try
             {
                 await _context.SaveChangesAsync(cancellationToken);
-                await WriteAuditLogAsync(
-                    "Create",
-                    "Invoice",
-                    entity.Id.ToString(),
-                    null,
-                    new
-                    {
-                        entity.InvoiceNumber,
-                        entity.InvoiceType,
-                        entity.DateShamsi,
-                        entity.PartyName,
-                        entity.SubTotal,
-                        entity.VatAmount,
-                        entity.GrandTotal,
-                        ItemCount = entity.Items.Count
-                    },
-                    cancellationToken);
             }
             catch (DbUpdateException)
             {
@@ -401,27 +381,6 @@ namespace OfficeAutomation.Controllers
                 }).ToList();
 
                 await _context.SaveChangesAsync(cancellationToken);
-                await WriteAuditLogAsync(
-                    "Edit",
-                    "Invoice",
-                    entity.Id.ToString(),
-                    beforeState,
-                    new
-                    {
-                        entity.InvoiceNumber,
-                        entity.InvoiceType,
-                        entity.DateShamsi,
-                        entity.PartyName,
-                        entity.SubTotal,
-                        entity.VatAmount,
-                        entity.GrandTotal,
-                        entity.WarehouseReceiptId,
-                        entity.FollowUpEmployeeId,
-                        entity.EmployerId,
-                        entity.DeadlineDateShamsi,
-                        ItemCount = entity.Items.Count
-                    },
-                    cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
             }
             catch (DbUpdateException)
@@ -485,13 +444,6 @@ namespace OfficeAutomation.Controllers
 
                 _context.Invoices.Remove(entity);
                 await _context.SaveChangesAsync(cancellationToken);
-                await WriteAuditLogAsync(
-                    "Delete",
-                    "Invoice",
-                    id.ToString(),
-                    deletedSnapshot,
-                    null,
-                    cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
             }
             catch
@@ -1324,27 +1276,5 @@ namespace OfficeAutomation.Controllers
             }
         }
 
-        private async Task WriteAuditLogAsync(
-            string action,
-            string entityName,
-            string entityId,
-            object? oldValues,
-            object? newValues,
-            CancellationToken cancellationToken)
-        {
-            var audit = new AuditLog
-            {
-                UserId = CurrentUserId,
-                Action = action,
-                EntityName = entityName,
-                EntityId = entityId,
-                OldValues = oldValues is null ? null : JsonSerializer.Serialize(oldValues),
-                NewValues = newValues is null ? null : JsonSerializer.Serialize(newValues),
-                Timestamp = DateTime.Now
-            };
-
-            _context.AuditLogs.Add(audit);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
     }
 }

@@ -1,9 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Filters
 {
@@ -20,11 +19,11 @@ namespace OfficeAutomation.Filters
 
     public class PermissionAccessFilter : IAsyncActionFilter
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAuthorizationService _authorizationService;
 
-        public PermissionAccessFilter(ApplicationDbContext context)
+        public PermissionAccessFilter(IAuthorizationService authorizationService)
         {
-            _context = context;
+            _authorizationService = authorizationService;
         }
 
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -43,91 +42,55 @@ namespace OfficeAutomation.Filters
                 return;
             }
 
-            if (user.IsInRole("Admin"))
-            {
-                await next();
-                return;
-            }
-
             var areaRequirement = context.ActionDescriptor.EndpointMetadata
                 .OfType<RequireAccessAreaAttribute>()
                 .FirstOrDefault();
 
-            var area = areaRequirement?.Area ?? ResolveAreaByController(context.RouteData.Values["controller"]?.ToString());
-            if (string.IsNullOrWhiteSpace(area))
+            var permissions = ResolvePermissions(
+                areaRequirement?.Area,
+                context.RouteData.Values["controller"]?.ToString());
+
+            if (permissions.Count == 0)
             {
                 await next();
                 return;
             }
 
-            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrWhiteSpace(userId))
+            foreach (var permission in permissions)
             {
-                context.Result = new ForbidResult();
-                return;
-            }
-
-            var permissionData = await _context.Users
-                .AsNoTracking()
-                .Where(item => item.Id == userId)
-                .Select(item => new
+                var result = await _authorizationService.AuthorizeAsync(user, PermissionAuthorizationPolicyProvider.PolicyPrefix + permission);
+                if (result.Succeeded)
                 {
-                    item.CanAccessFinance,
-                    item.CanAccessWarehouse,
-                    item.CanAccessHumanCapital,
-                    item.CanAccessSystemSettings
-                })
-                .FirstOrDefaultAsync(context.HttpContext.RequestAborted);
-
-            if (permissionData == null)
-            {
-                context.Result = new ForbidResult();
-                return;
+                    await next();
+                    return;
+                }
             }
 
-            var roleIds = await _context.UserRoles
-                .AsNoTracking()
-                .Where(item => item.UserId == userId)
-                .Select(item => item.RoleId)
-                .ToListAsync(context.HttpContext.RequestAborted);
-
-            var rolePermission = await _context.RolePermissions
-                .AsNoTracking()
-                .Where(item => roleIds.Contains(item.RoleId) && item.PermissionKey == area)
-                .OrderByDescending(item => item.Id)
-                .Select(item => (bool?)item.IsAllowed)
-                .FirstOrDefaultAsync(context.HttpContext.RequestAborted);
-
-            var allowed = rolePermission ?? (area switch
-            {
-                "Finance" => permissionData.CanAccessFinance,
-                "Warehouse" => permissionData.CanAccessWarehouse,
-                "HumanCapital" => permissionData.CanAccessHumanCapital,
-                "SystemSettings" => permissionData.CanAccessSystemSettings,
-                "WorkflowAdministration" => permissionData.CanAccessSystemSettings,
-                _ => true
-            });
-
-            if (!allowed)
-            {
-                context.Result = new RedirectToActionResult("AccessDenied", "Home", null);
-                return;
-            }
-
-            await next();
+            context.Result = new RedirectToActionResult("AccessDenied", "Home", null);
         }
 
-        private static string? ResolveAreaByController(string? controller)
+        private static IReadOnlyList<string> ResolvePermissions(string? area, string? controller)
         {
-            return controller switch
+            if (!string.IsNullOrWhiteSpace(area))
             {
-                "Financial" or "Payroll" or "Bimeh" => "Finance",
-                "Warehouse" or "Vendors" or "Employers" => "Warehouse",
-                "HumanCapital" => "HumanCapital",
-                "Settings" => "SystemSettings",
-                "Security" => "WorkflowAdministration",
-                _ => null
-            };
+                return area switch
+                {
+                    "Finance" => ["Finance.View"],
+                    "Warehouse" => ["Warehouse.View"],
+                    "HumanCapital" => ["HR.View"],
+                    "SystemSettings" => ["SystemSettings.View"],
+                    "WorkflowAdministration" => ["Security.Manage"],
+                    _ => [area]
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(controller) &&
+                PermissionCatalog.ControllerFallbackPermissions.TryGetValue(controller, out var permissions))
+            {
+                return permissions;
+            }
+
+            return [];
         }
     }
 }
