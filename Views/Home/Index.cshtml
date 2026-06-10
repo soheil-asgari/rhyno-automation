@@ -1,186 +1,171 @@
-﻿@{
+@model OfficeAutomation.Models.DashboardIndexViewModel
+@using System.Globalization
+
+@{
     ViewData["Title"] = "میز کار";
+    var fa = CultureInfo.GetCultureInfo("fa-IR");
+    string ToFa(int value) => value.ToString("N0", fa);
 }
 
-<div class="container-fluid mt-4 dashboard" style="direction: rtl; text-align: right;"></div>
-
-    <!-- Top Bar -->
-    @* <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-        <div class="dash-search">
-            <i class="bi bi-search"></i>
-            <input id="dashSearch" type="text" class="form-control" placeholder="جستجو در بخش‌ها..." autocomplete="off">
-            <button type="button" class="btn btn-sm btn-light border dash-search-clear d-none" id="dashSearchClear" aria-label="پاک کردن">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div> *@
-
-    
-@* <script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.11/dist/jalali-moment.browser.min.js"></script> *@
 <script src="~/js/jalali-moment.browser.js"></script>
-@* C:\Users\esmaeili\source\repos\rhyno-automation\wwwroot\js\jalali-moment.browser.js *@
-<link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
+
 <div class="rhino-premium-panel">
     <main class="rh-grid-layout">
-        <div class="rh-bento hero-sm animate-frip">
+        <section class="rh-bento hero-sm animate-frip">
             <div class="hero-inner">
                 <h2>میز کار <span>مرکزی</span></h2>
-                <p>امروز ۸ اسفند؛ خوش آمدید. تمامی سرویس‌ها در وضعیت پایدار هستند.</p>
+                <p>امروز @Model.TodayText؛ داده‌های این صفحه مستقیما از پایگاه داده خوانده شده‌اند.</p>
             </div>
-        </div>
+        </section>
 
-        <div class="rh-bento stat-sm blue animate-frip">
-            <i class="bi bi-envelope" style="color: #4f46e5;"></i>
+        <section class="rh-bento stat-sm blue animate-frip">
+            <i class="bi bi-database-check" style="color: #4f46e5;"></i>
             <div class="stat-info">
-                <span class="v">۵</span>
-                <span class="l">نامه جدید</span>
+                <span class="v">@ToFa(Model.TotalAuditEvents)</span>
+                <span class="l">کل رخدادها</span>
             </div>
-            <div class="neon-line"></div>
-        </div>
+        </section>
 
-        <div class="rh-bento stat-sm green animate-frip">
-            <i class="bi bi-calendar-check" style="color: #10b981;"></i>
+        <section class="rh-bento stat-sm green animate-frip">
+            <i class="bi bi-plus-square" style="color: #10b981;"></i>
             <div class="stat-info">
-                <span class="v">۱۲</span>
-                <span class="l">مرخصی</span>
+                <span class="v">@ToFa(Model.CreateEvents)</span>
+                <span class="l">ثبت جدید</span>
             </div>
-            <div class="neon-line"></div>
-        </div>
+        </section>
 
-        <div class="rh-bento table-box animate-frip">
+        <section class="rh-bento table-box animate-frip">
             <div class="box-head">
-                <h3><i class="bi bi-layers-half"></i> آخرین اسناد ثبت شده</h3>
-                <a href="#">آرشیو کامل <i class="bi bi-arrow-left"></i></a>
+                <h3><i class="bi bi-activity"></i> آخرین فعالیت‌های ثبت شده</h3>
+                <a href="/admin/audit-dashboard">مشاهده کامل <i class="bi bi-arrow-left"></i></a>
             </div>
+
             <table class="rh-table-sm">
                 <thead>
                     <tr>
-                        <th>نوع سند</th>
+                        <th>بخش</th>
                         <th>تاریخ</th>
-                        <th>وضعیت نهایی</th>
+                        <th>وضعیت</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>فاکتور خرید تجهیزات</td>
-                        <td>۱۱/۲۸</td>
-                        <td><span class="badge-sm pending">در حال بررسی</span></td>
-                    </tr>
-                    <tr>
-                        <td>حکم کارگزینی سال جدید</td>
-                        <td>۱۱/۲۵</td>
-                        <td><span class="badge-sm success">تایید شده</span></td>
-                    </tr>
+                    @if (Model.RecentActivities.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-muted">هنوز رخدادی برای نمایش ثبت نشده است.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.RecentActivities)
+                        {
+                            <tr>
+                                <td>@item.DocumentType</td>
+                                <td>@item.DateText</td>
+                                <td><span class="badge-sm @item.StatusCssClass">@item.StatusText</span></td>
+                            </tr>
+                        }
+                    }
                 </tbody>
             </table>
-            
+
             <div class="mini-chart-wrapper">
-                <span class="chart-label">روند درخواست‌های هفته</span>
+                <span class="chart-label">روند رخدادهای ۷ روز اخیر</span>
                 <div class="css-chart">
-                    <div style="height: 40%;"></div>
-                    <div style="height: 70%;"></div>
-                    <div style="height: 45%;"></div>
-                    <div style="height: 90%; background: var(--primary);"></div>
-                    <div style="height: 60%;"></div>
-                    <div style="height: 30%;"></div>
-                    <div style="height: 50%;"></div>
+                    @foreach (var point in Model.WeeklyActivity)
+                    {
+                        <div style="height: @point.Percent%;" title="@point.Label - @ToFa(point.Value) رخداد"></div>
+                    }
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="rh-bento stat-sm orange animate-frip">
-            <i class="bi bi-bell" style="color: #f59e0b;"></i>
+        <section class="rh-bento stat-sm orange animate-frip">
+            <i class="bi bi-pencil-square" style="color: #f59e0b;"></i>
             <div class="stat-info">
-                <span class="v">۲</span>
-                <span class="l">اعلان سیستم</span>
+                <span class="v">@ToFa(Model.UpdateEvents)</span>
+                <span class="l">ویرایش</span>
             </div>
-            <div class="neon-line"></div>
-        </div>
+        </section>
 
-        <div class="rh-bento stat-sm cyan animate-frip">
-            <i class="bi bi-send" style="color: #06b6d4;"></i>
+        <section class="rh-bento stat-sm cyan animate-frip">
+            <i class="bi bi-trash3" style="color: #ef4444;"></i>
             <div class="stat-info">
-                <span class="v">۲۴</span>
-                <span class="l">نامه ارسالی</span>
+                <span class="v">@ToFa(Model.DeleteEvents)</span>
+                <span class="l">حذف</span>
             </div>
-            <div class="neon-line"></div>
-        </div>
+        </section>
 
-        <div class="rh-bento stat-sm animate-frip collab-box">
+        <section class="rh-bento stat-sm animate-frip collab-box">
+            <i class="bi bi-envelope" style="color: #4f46e5;"></i>
             <div class="stat-info">
-                <span class="l" style="font-weight: 800; margin-bottom: 5px; display: block;">تیم آنلاین</span>
-                <div class="avatar-stack">
-                    <div class="avtr" style="background: #4f46e5;">JS</div>
-                    <div class="avtr" style="background: #10b981; margin-right: -10px;">AK</div>
-                    <div class="avtr" style="background: #f59e0b; margin-right: -10px;">M</div>
-                    <div class="avtr-more" style="margin-right: -10px;">+۲</div>
-                </div>
+                <span class="v">@ToFa(Model.NewLetters)</span>
+                <span class="l">نامه خوانده نشده</span>
             </div>
-        </div>
+        </section>
 
-        <div class="rh-bento stat-sm animate-frip event-box">
-            <i class="bi bi-lightning-charge-fill" style="color: #db2777;"></i>
+        <section class="rh-bento stat-sm animate-frip event-box">
+            <i class="bi bi-calendar-check" style="color: #db2777;"></i>
             <div class="stat-info">
-                <span class="v" style="font-size: 0.9rem; color: #db2777;">جلسه فنی</span>
-                <span class="l">امروز ساعت ۱۶:۰۰</span>
+                <span class="v">@ToFa(Model.PendingLeaves)</span>
+                <span class="l">مرخصی در انتظار</span>
             </div>
-        </div>
-        <div class="rh-bento chart-wide animate-frip" style="grid-column: span 3; display: flex; align-items: center; gap: 30px;">
-            <div class="donut-chart-wrapper" style="position: relative; width: 80px; height: 80px;">
-                <svg viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+        </section>
+
+        <section class="rh-bento chart-wide animate-frip">
+            <div class="donut-chart-wrapper">
+                <svg viewBox="0 0 36 36">
                     <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" stroke-width="3"></circle>
-                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--primary)" stroke-width="3" stroke-dasharray="70, 100"></circle>
+                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--primary)" stroke-width="3" stroke-dasharray="@Model.WorkloadPercent, 100"></circle>
                 </svg>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: bold;">۷۰٪</div>
+                <div class="donut-chart-value">@ToFa(Model.WorkloadPercent)٪</div>
             </div>
             <div class="chart-info">
-                <h4 style="font-size: 0.85rem; margin-bottom: 5px;">توزیع بار کاری</h4>
-                <p style="font-size: 0.7rem; color: #64748b; margin: 0;">بیشترین تمرکز بر بخش بازرگانی و نامه‌های وارده است.</p>
+                <h4>توزیع بار کاری</h4>
+                <p>بر اساس نامه‌های خوانده نشده و مرخصی‌های در انتظار نسبت به کل نامه‌های ثبت شده.</p>
             </div>
-        </div>
+        </section>
 
-        <div class="rh-bento task-box animate-frip" style="grid-column: span 2; background: #fffbeb; border-color: #fef3c7;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 0.75rem; font-weight: bold; color: #92400e;"><i class="bi bi-pencil-square"></i> یادداشت سریع</span>
-                <i class="bi bi-three-dots" style="color: #d97706; cursor: pointer;"></i>
+        <section class="rh-bento task-box animate-frip">
+            <div class="task-header">
+                <span><i class="bi bi-people"></i> کاربران سامانه</span>
+                <i class="bi bi-three-dots"></i>
             </div>
-            <div style="font-size: 0.7rem; color: #b45309; line-height: 1.6;">
-                • بررسی پیش‌نویس قرارداد جدید<br>
-                • هماهنگی با تیم فنی برای آپدیت دیتابیس
+            <div class="task-body">
+                <strong>@ToFa(Model.TotalUsers)</strong>
+                <span>کاربر ثبت شده در سامانه</span>
             </div>
-        </div>
-        <div class="rh-bento calendar-box animate-frip" style="grid-column: span 5;">
-            <div class="cal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <div class="cal-nav" style="display: flex; align-items: center; gap: 15px; font-weight: bold;">
-                    <i class="bi bi-chevron-right" id="prevMonth" style="cursor: pointer; font-size: 1.2rem;"></i>
-                    <span id="monthDisplay" style="font-size: 1.1rem; min-width: 120px; text-align: center;">---</span>
-                    <i class="bi bi-chevron-left" id="nextMonth" style="cursor: pointer; font-size: 1.2rem;"></i>
+        </section>
+
+        <section class="rh-bento calendar-box animate-frip">
+            <div class="cal-header">
+                <div class="cal-nav">
+                    <i class="bi bi-chevron-right" id="prevMonth"></i>
+                    <span id="monthDisplay">---</span>
+                    <i class="bi bi-chevron-left" id="nextMonth"></i>
                 </div>
-                <button class="btn-today btn-action-sm" onclick="goToToday()" style="background: #fff; border: 1px solid #e2e8f0;">امروز</button>
+                <button class="btn-today btn-action-sm" type="button">امروز</button>
             </div>
-            
+
             <div class="cal-body">
-                <div class="weekday-row" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; color: #94a3b8; font-size: 0.8rem; padding-bottom: 10px;">
+                <div class="weekday-row">
                     <span>شنبه</span><span>یکشنبه</span><span>دوشنبه</span><span>سه‌شنبه</span><span>چهارشنبه</span><span>پنجشنبه</span><span>جمعه</span>
                 </div>
-                <div id="daysContainer" class="days-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center;">
-                </div>
+                <div id="daysContainer" class="days-grid"></div>
             </div>
 
-            <div class="cal-footer" style="margin-top: 20px; border-top: 1px solid #f1f1f1; padding-top: 15px;">
-                <div id="eventBox" style="display: flex; align-items: center; gap: 10px;">
-                    <div id="eventLoader" style="display: none;"><!-- شما ممکن است اینجا یک انیمیشن لودر داشته باشید --></div>
-                    <div id="eventContent" style="display: flex; align-items: center;">
-                        <i class="bi bi-calendar2-check" style="color: #4f46e5; margin-left: 10px;"></i>
-                        <span id="eventDisplay" style="font-size: 0.85rem; color: #475569;">در حال دریافت مناسبت...</span>
+            <div class="cal-footer">
+                <div id="eventBox">
+                    <div id="eventLoader"></div>
+                    <div id="eventContent">
+                        <i class="bi bi-calendar2-check"></i>
+                        <span id="eventDisplay">در حال دریافت مناسبت...</span>
                     </div>
                 </div>
-                <!-- دکمه تست -->
-               
             </div>
-        </div>
-        </div>
-
-  
+        </section>
+    </main>
+</div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/dashboard.css" />
@@ -194,5 +179,4 @@
 
 @section Scripts {
     <script src="~/js/dashboard.js"></script>
-
 }

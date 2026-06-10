@@ -99,7 +99,7 @@ function flattenRecord(value: unknown, prefix = ""): Record<string, string> {
   }
 
   if (typeof value !== "object") {
-    return prefix ? { [prefix]: String(value) } : { مقدار: String(value) };
+    return prefix ? { [prefix]: String(value) } : { value: String(value) };
   }
 
   if (Array.isArray(value)) {
@@ -197,7 +197,7 @@ function downloadCsv(rows: AuditLogListItem[], fileName: string) {
     item.userAgent ?? "",
   ]);
 
-  const escapeCell = (cell: string) => `"${cell.replace(/"/g, "\"\"")}"`;
+  const escapeCell = (cell: unknown) => `"${String(cell ?? "").replace(/"/g, "\"\"")}"`;
   const content = [header, ...csvRows].map((row) => row.map(escapeCell).join(",")).join("\n");
   const blob = new Blob(["\uFEFF", content], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -217,10 +217,10 @@ function SummaryCard({ title, value, hint, tone }: SummaryCardProps) {
   };
 
   return (
-    <div className={`rounded-3xl border p-5 shadow-sm shadow-slate-200/60 ${toneClasses[tone]}`}>
-      <div className="text-sm font-medium text-slate-500">{title}</div>
-      <div className="mt-3 text-3xl font-black tracking-tight">{value}</div>
-      <div className="mt-2 text-xs text-slate-500">{hint}</div>
+    <div className={`rounded-none border p-3 shadow-none ${toneClasses[tone]}`}>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</div>
+      <div className="mt-1 text-2xl font-black tracking-tight">{value}</div>
+      <div className="mt-1 text-[11px] text-slate-500">{hint}</div>
     </div>
   );
 }
@@ -236,9 +236,9 @@ function FilterField({
 }) {
   return (
     <label className="space-y-2">
-      <span className="block text-sm font-semibold text-slate-700">{label}</span>
+      <span className="block text-xs font-semibold text-slate-700">{label}</span>
       {children}
-      {hint ? <span className="block text-xs text-slate-500">{hint}</span> : null}
+      {hint ? <span className="block text-[11px] text-slate-500">{hint}</span> : null}
     </label>
   );
 }
@@ -255,7 +255,7 @@ function PaginationButton({
   return (
     <button
       type="button"
-      className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+      className="rounded-none border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
       disabled={disabled}
       onClick={onClick}
     >
@@ -306,25 +306,25 @@ function ChangesModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4" onClick={onClose}>
       <div
-        className="max-h-[88vh] w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-slate-900/25"
+        className="max-h-[88vh] w-full max-w-6xl overflow-hidden rounded-none bg-white shadow-2xl shadow-slate-900/25"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="border-b border-slate-200 bg-slate-50/80 px-6 py-5">
+        <div className="border-b border-slate-200 bg-slate-50/80 px-4 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${meta.badge}`}>{meta.label}</span>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{log.tableName}</span>
+                <span className={`inline-flex rounded-none px-2 py-0.5 text-[11px] font-bold ${meta.badge}`}>{meta.label}</span>
+                <span className="rounded-none bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">{log.tableName}</span>
               </div>
-              <h3 className="text-xl font-black text-slate-900">مشاهده تغییرات</h3>
-              <p className="text-sm text-slate-500">
+              <h3 className="text-base font-black text-slate-900">مشاهده تغییرات</h3>
+              <p className="text-xs text-slate-500">
                 {log.userDisplayName ?? log.userId ?? "سیستم"} در {formatDateTime(log.dateTime)}
               </p>
             </div>
 
             <button
               type="button"
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-white"
+              className="inline-flex h-8 items-center justify-center rounded-none border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-white"
               onClick={onClose}
             >
               بستن
@@ -332,26 +332,26 @@ function ChangesModal({
           </div>
         </div>
 
-        <div className="overflow-y-auto px-6 py-6">
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+        <div className="overflow-y-auto px-4 py-4">
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="rounded-none border border-slate-200 bg-slate-50 p-3">
               <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">کاربر</div>
               <div className="mt-2 text-sm font-semibold text-slate-900">{log.userDisplayName ?? "کاربر نامشخص"}</div>
               <div className="mt-1 break-all text-xs text-slate-500">{log.userId ?? "-"}</div>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-none border border-slate-200 bg-slate-50 p-3">
               <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">شبکه</div>
               <div className="mt-2 text-sm font-semibold text-slate-900" dir="ltr">
                 {log.userIP ?? "-"}
               </div>
               <div className="mt-1 text-xs text-slate-500">{log.userAgent ?? "-"}</div>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-none border border-slate-200 bg-slate-50 p-3">
               <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">ستون های متاثر</div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {affectedColumns.length > 0 ? (
                   affectedColumns.map((column) => (
-                    <span key={column} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                    <span key={column} className="rounded-none bg-white px-2 py-0.5 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200">
                       {column}
                     </span>
                   ))
@@ -362,8 +362,8 @@ function ChangesModal({
             </div>
           </div>
 
-          <div className="mt-6 rounded-[1.75rem] border border-slate-200">
-            <div className="hidden grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)] border-b border-slate-200 bg-slate-50 px-5 py-4 text-sm font-bold text-slate-700 md:grid">
+          <div className="mt-4 rounded-none border border-slate-200">
+            <div className="hidden grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)] border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 md:grid">
               <div>فیلد</div>
               <div>مقدار قبلی</div>
               <div>مقدار جدید</div>
@@ -374,7 +374,7 @@ function ChangesModal({
                 {rows.map((row) => (
                   <div
                     key={row.key}
-                    className={`grid gap-3 px-5 py-4 md:grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)] ${
+                    className={`grid gap-2 px-4 py-2 md:grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)] ${
                       row.changed ? "bg-white" : "bg-slate-50/60"
                     }`}
                   >
@@ -385,7 +385,7 @@ function ChangesModal({
                     <div className="space-y-1">
                       <div className="text-xs font-bold text-slate-500 md:hidden">مقدار قبلی</div>
                       <div
-                        className={`min-h-16 rounded-2xl border px-3 py-2 text-sm ${
+                        className={`min-h-12 rounded-none border px-2 py-1.5 text-xs ${
                           row.changed
                             ? "border-rose-200 bg-rose-50/70 text-rose-900"
                             : "border-slate-200 bg-white text-slate-600"
@@ -397,7 +397,7 @@ function ChangesModal({
                     <div className="space-y-1">
                       <div className="text-xs font-bold text-slate-500 md:hidden">مقدار جدید</div>
                       <div
-                        className={`min-h-16 rounded-2xl border px-3 py-2 text-sm ${
+                        className={`min-h-12 rounded-none border px-2 py-1.5 text-xs ${
                           row.changed
                             ? "border-emerald-200 bg-emerald-50/70 text-emerald-900"
                             : "border-slate-200 bg-white text-slate-600"
@@ -565,35 +565,35 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
 
   return (
     <div
-      className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.12),_transparent_28%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] p-4 sm:p-6"
+      className="min-h-screen bg-slate-50 p-3 sm:p-4"
       dir="rtl"
       style={{ fontFamily: "Vazirmatn, Yekan Bakh, Yekan, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-3">
         {exportError ? (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700">
+          <div className="rounded-none border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
             {exportError}
           </div>
         ) : null}
 
-        <section className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 shadow-[0_20px_70px_-32px_rgba(15,23,42,0.45)] backdrop-blur">
-          <div className="relative px-6 py-7 sm:px-8">
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-l from-sky-500 via-emerald-500 to-amber-400" />
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-slate-900/15">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+        <section className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
+          <div className="relative px-4 py-4 sm:px-5">
+            <div className="absolute inset-x-0 top-0 h-px bg-slate-900" />
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-none bg-slate-900 px-3 py-1.5 text-[11px] font-bold text-white shadow-none">
+                  <span className="h-2 w-2 rounded-none bg-emerald-400" />
                   داشبورد لاگ های حسابرسی سیستم
                 </div>
                 <div>
-                  <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">نظارت دقیق بر عملیات کاربران</h1>
-                  <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+                  <h1 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">نظارت دقیق بر عملیات کاربران</h1>
+                  <p className="mt-1 max-w-3xl text-xs leading-6 text-slate-600">
                     رخدادهای ثبت، ویرایش و حذف را با فیلترهای پیشرفته، نمایش خوانای تغییرات و خروجی اکسل بررسی کنید.
                   </p>
                 </div>
               </div>
 
-              <div className="grid gap-3 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 sm:grid-cols-2">
+              <div className="grid gap-3 rounded-none border border-slate-200 bg-slate-50/80 p-3 sm:grid-cols-2">
                 <div>
                   <div className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">نمایش</div>
                   <div className="mt-2 text-sm font-semibold text-slate-800">
@@ -611,7 +611,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
               </div>
             </div>
 
-            <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <SummaryCard title="کل عملیات" value={initialData.totalCount.toLocaleString("fa-IR")} hint="تعداد کل لاگ های منطبق با فیلتر" tone="default" />
               <SummaryCard title="ثبت های جدید" value={summary.create.toLocaleString("fa-IR")} hint="تعداد در صفحه جاری" tone="create" />
               <SummaryCard title="ویرایش ها" value={summary.update.toLocaleString("fa-IR")} hint="تعداد در صفحه جاری" tone="update" />
@@ -620,12 +620,12 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 shadow-[0_20px_70px_-32px_rgba(15,23,42,0.45)] backdrop-blur">
-          <div className="border-b border-slate-200 px-6 py-5 sm:px-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <section className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
+          <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <button
                 type="button"
-                className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-right text-sm font-bold text-slate-800 transition hover:bg-slate-100 lg:min-w-[320px]"
+                className="inline-flex items-center justify-between rounded-none border border-slate-200 bg-slate-50 px-3 py-2 text-right text-xs font-bold text-slate-800 transition hover:bg-slate-100 lg:min-w-[260px]"
                 onClick={() => setIsFiltersOpen((current) => !current)}
               >
                 <span>فیلترهای پیشرفته</span>
@@ -635,7 +635,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-none bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-none transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isExporting}
                   onClick={handleExport}
                 >
@@ -648,11 +648,11 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
 
           <div className={`grid transition-all duration-300 ${isFiltersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
             <div className="overflow-hidden">
-              <div className="border-b border-slate-200 bg-slate-50/70 px-6 py-6 sm:px-8">
-                <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+              <div className="border-b border-slate-200 bg-slate-50/70 px-4 py-3 sm:px-5">
+                <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-5">
                   <FilterField label="کاربر">
                     <select
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none ring-0 transition focus:border-sky-400"
+                      className="h-9 w-full rounded-none border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none ring-0 transition focus:border-sky-400"
                       value={filters.userId ?? ""}
                       onChange={(event) => updateFilter("userId", event.target.value)}
                     >
@@ -667,7 +667,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
 
                   <FilterField label="نوع عملیات">
                     <select
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-sky-400"
+                      className="h-9 w-full rounded-none border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-sky-400"
                       value={filters.action ?? ""}
                       onChange={(event) => updateFilter("action", event.target.value)}
                     >
@@ -683,7 +683,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
                   <FilterField label="بخش یا جدول" hint="قابل انتخاب از لیست یا ورود دستی">
                     <input
                       list="audit-log-table-names"
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-sky-400"
+                      className="h-9 w-full rounded-none border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-sky-400"
                       placeholder="مثلا Invoices"
                       value={filters.tableName ?? ""}
                       onChange={(event) => updateFilter("tableName", event.target.value)}
@@ -700,7 +700,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
                       type="datetime-local"
                       lang="fa-IR"
                       dir="ltr"
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-sky-400"
+                      className="h-9 w-full rounded-none border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-sky-400"
                       value={filters.from ?? ""}
                       onChange={(event) => updateFilter("from", event.target.value)}
                     />
@@ -711,17 +711,17 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
                       type="datetime-local"
                       lang="fa-IR"
                       dir="ltr"
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-sky-400"
+                      className="h-9 w-full rounded-none border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-sky-400"
                       value={filters.to ?? ""}
                       onChange={(event) => updateFilter("to", event.target.value)}
                     />
                   </FilterField>
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    className="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-none bg-sky-600 px-4 py-2 text-xs font-bold text-white shadow-none transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={isPending}
                     onClick={handleApplyFilters}
                   >
@@ -729,7 +729,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
                   </button>
                   <button
                     type="button"
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                    className="rounded-none border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
                     onClick={handleClearFilters}
                   >
                     پاک کردن فیلترها
@@ -739,19 +739,19 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
             </div>
           </div>
 
-          <div className="px-4 py-4 sm:px-6 lg:px-8">
-            <div className="overflow-hidden rounded-[1.75rem] border border-slate-200">
+          <div className="px-3 py-3 sm:px-4 lg:px-5">
+            <div className="overflow-hidden rounded-none border border-slate-200">
               <div className="overflow-x-auto">
-                <table className="min-w-full text-right text-sm">
+                <table className="min-w-full text-right text-xs">
                   <thead className="bg-slate-900 text-white">
                     <tr>
-                      <th className="px-5 py-4 font-bold">زمان</th>
-                      <th className="px-5 py-4 font-bold">کاربر</th>
-                      <th className="px-5 py-4 font-bold">عملیات</th>
-                      <th className="px-5 py-4 font-bold">بخش</th>
-                      <th className="px-5 py-4 font-bold">ستون های متاثر</th>
-                      <th className="px-5 py-4 font-bold">IP</th>
-                      <th className="px-5 py-4 font-bold">جزئیات</th>
+                      <th className="px-3 py-2 font-bold">زمان</th>
+                      <th className="px-3 py-2 font-bold">کاربر</th>
+                      <th className="px-3 py-2 font-bold">عملیات</th>
+                      <th className="px-3 py-2 font-bold">بخش</th>
+                      <th className="px-3 py-2 font-bold">ستون های متاثر</th>
+                      <th className="px-3 py-2 font-bold">IP</th>
+                      <th className="px-3 py-2 font-bold">جزئیات</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 bg-white">
@@ -764,31 +764,31 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
 
                       return (
                         <tr key={item.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
-                          <td className="px-5 py-4 align-top text-slate-700">
+                          <td className="px-3 py-2 align-top text-slate-700">
                             <div className="font-semibold text-slate-900">{formatDateTime(item.dateTime)}</div>
                             <div className="mt-1 text-xs text-slate-500">{item.id.slice(0, 8)}</div>
                           </td>
-                          <td className="px-5 py-4 align-top text-slate-700">
+                          <td className="px-3 py-2 align-top text-slate-700">
                             <div className="font-semibold text-slate-900">{item.userDisplayName ?? "سیستم"}</div>
                             <div className="mt-1 text-xs text-slate-500" dir="ltr">
                               {item.userId ?? "-"}
                             </div>
                           </td>
-                          <td className="px-5 py-4 align-top">
-                            <div className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${meta.badge}`}>{meta.label}</div>
+                          <td className="px-3 py-2 align-top">
+                            <div className={`inline-flex rounded-none px-2 py-0.5 text-[11px] font-bold ${meta.badge}`}>{meta.label}</div>
                           </td>
-                          <td className="px-5 py-4 align-top">
-                            <div className={`rounded-2xl bg-gradient-to-l p-[1px] ${meta.ring}`}>
-                              <div className="rounded-2xl bg-white px-3 py-2 font-semibold text-slate-900">{item.tableName}</div>
+                          <td className="px-3 py-2 align-top">
+                            <div className={`rounded-none bg-gradient-to-l p-[1px] ${meta.ring}`}>
+                              <div className="rounded-none bg-white px-2 py-1 font-semibold text-slate-900">{item.tableName}</div>
                             </div>
                           </td>
-                          <td className="px-5 py-4 align-top">
-                            <div className="flex max-w-xs flex-wrap gap-2">
+                          <td className="px-3 py-2 align-top">
+                            <div className="flex max-w-xs flex-wrap gap-1">
                               {affectedColumns.length > 0 ? (
                                 affectedColumns.map((column) => (
                                   <span
                                     key={column}
-                                    className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+                                    className="rounded-none bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
                                   >
                                     {column}
                                   </span>
@@ -798,13 +798,13 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
                               )}
                             </div>
                           </td>
-                          <td className="px-5 py-4 align-top text-xs text-slate-600" dir="ltr">
+                          <td className="px-3 py-2 align-top text-[11px] text-slate-600" dir="ltr">
                             {item.userIP ?? "-"}
                           </td>
-                          <td className="px-5 py-4 align-top">
+                          <td className="px-3 py-2 align-top">
                             <button
                               type="button"
-                              className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                              className="rounded-none border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
                               onClick={() => setSelectedLog(item)}
                             >
                               مشاهده تغییرات
@@ -816,7 +816,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
 
                     {deferredItems.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-16 text-center">
+                        <td colSpan={7} className="px-4 py-10 text-center">
                           <div className="mx-auto max-w-md space-y-3">
                             <div className="text-lg font-bold text-slate-900">لاگی برای نمایش پیدا نشد</div>
                             <p className="text-sm leading-7 text-slate-500">
@@ -831,17 +831,17 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col gap-4 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                <div className="text-sm text-slate-600">
+            <div className="mt-3 flex flex-col gap-3 rounded-none border border-slate-200 bg-slate-50/70 px-3 py-2 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <div className="text-xs text-slate-600">
                   نمایش <span className="font-bold text-slate-900">{visibleRangeStart}</span> تا{" "}
                   <span className="font-bold text-slate-900">{visibleRangeEnd}</span> از{" "}
                   <span className="font-bold text-slate-900">{initialData.totalCount}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-slate-600">تعداد در هر صفحه</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-600">تعداد در هر صفحه</span>
                   <select
-                    className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-sky-400"
+                    className="h-8 rounded-none border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-sky-400"
                     value={filters.pageSize ?? String(initialData.pageSize)}
                     onChange={(event) => handlePageSizeChange(event.target.value)}
                   >
@@ -861,7 +861,7 @@ export function AuditLogDashboard({ initialData, filterOptions, initialFilters }
                 <PaginationButton disabled={activePage <= 1 || isPending} onClick={() => goToPage(activePage - 1)}>
                   قبلی
                 </PaginationButton>
-                <div className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-800 ring-1 ring-slate-200">
+                <div className="rounded-none bg-white px-3 py-1.5 text-xs font-bold text-slate-800 ring-1 ring-slate-200">
                   صفحه {initialData.page} از {totalPages}
                 </div>
                 <PaginationButton disabled={activePage >= totalPages || isPending} onClick={() => goToPage(activePage + 1)}>

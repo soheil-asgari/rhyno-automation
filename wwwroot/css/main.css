@@ -60,8 +60,8 @@ body {
    ========================================================================== */
 .app-shell {
     display: flex;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow: visible;
 }
 
 .main-content {
@@ -120,7 +120,7 @@ body {
     align-items: center;
     padding: 10px 18px !important;
     margin: 4px 12px;
-    border-radius: 14px !important;
+    border-radius: 0 !important;
     color: var(--text-main) !important;
     font-size: 0.85rem;
     font-weight: 600;
@@ -388,4 +388,275 @@ html.theme-dark .form-select:focus {
 html.theme-dark .form-select option {
     background-color: #1e293b !important;
     color: #ffffff !important;
+}
+
+/* ==========================================================================
+   Final UI Contract: sharp, compact, theme-safe surfaces across all Razor views
+   ========================================================================== */
+:root {
+    --card-radius: 0;
+}
+
+*,
+*::before,
+*::after {
+    border-radius: 0 !important;
+}
+
+.card,
+.modal-content,
+.modal-header,
+.modal-footer,
+.dropdown-menu,
+.list-group,
+.list-group-item,
+.alert,
+.badge,
+.btn,
+.form-control,
+.form-select,
+.input-group-text,
+.page-link,
+.table,
+.accordion,
+.accordion-item,
+.accordion-button,
+.navbar,
+.nav-pills .nav-link,
+.nav-tabs .nav-link,
+.nav-link,
+.rounded,
+.rounded-0,
+.rounded-1,
+.rounded-2,
+.rounded-3,
+.rounded-4,
+.rounded-5,
+.rounded-circle,
+.rounded-pill,
+.sidebar-link,
+.user-profile-pill,
+.rh-bento,
+.audit-card,
+.audit-metric-card,
+.settings-shell,
+.settings-card,
+.settings-panel,
+.hc-page,
+.bimeh-page,
+.waybill-page {
+    border-radius: 0 !important;
+}
+
+i,
+.bi,
+.icon,
+[class*="-icon"],
+[class*="icon-"],
+.stat-icon,
+.logo-icon,
+.link-icon,
+.brand-icon-box,
+.document-icon,
+.bimeh-danger-icon,
+.waybill-danger-icon,
+.input-group-text,
+.user-avatar-box,
+.stat-sm i,
+.audit-metric-card .badge {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+.input-group-text {
+    border-color: inherit !important;
+}
+
+html.theme-dark body,
+html[data-theme="dark"] body,
+body[data-theme="dark"] {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+}
+
+html.theme-dark body *,
+html[data-theme="dark"] body *,
+body[data-theme="dark"] * {
+    color: #f1f5f9 !important;
+    text-shadow: none !important;
+}
+
+html.theme-dark .text-muted,
+html.theme-dark .text-secondary,
+html.theme-dark .small,
+html.theme-dark small,
+html.theme-dark label,
+html.theme-dark .form-label,
+html[data-theme="dark"] .text-muted,
+html[data-theme="dark"] .text-secondary,
+html[data-theme="dark"] .small,
+html[data-theme="dark"] small,
+html[data-theme="dark"] label,
+html[data-theme="dark"] .form-label,
+body[data-theme="dark"] .text-muted,
+body[data-theme="dark"] .text-secondary,
+body[data-theme="dark"] .small,
+body[data-theme="dark"] small,
+body[data-theme="dark"] label,
+body[data-theme="dark"] .form-label {
+    color: #cbd5e1 !important;
+}
+
+html.theme-dark .card,
+html.theme-dark .modal-content,
+html.theme-dark .dropdown-menu,
+html.theme-dark .list-group-item,
+html.theme-dark .accordion-item,
+html.theme-dark .accordion-button,
+html.theme-dark .table,
+html.theme-dark .table *,
+html.theme-dark .rh-bento,
+html.theme-dark .audit-card,
+html.theme-dark .audit-metric-card,
+html.theme-dark .settings-card,
+html.theme-dark .settings-panel,
+html.theme-dark .main-wrapper,
+html.theme-dark #main-content-wrapper,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .dropdown-menu,
+html[data-theme="dark"] .list-group-item,
+html[data-theme="dark"] .accordion-item,
+html[data-theme="dark"] .accordion-button,
+html[data-theme="dark"] .table,
+html[data-theme="dark"] .table *,
+html[data-theme="dark"] .rh-bento,
+html[data-theme="dark"] .audit-card,
+html[data-theme="dark"] .audit-metric-card,
+html[data-theme="dark"] .settings-card,
+html[data-theme="dark"] .settings-panel,
+html[data-theme="dark"] .main-wrapper,
+html[data-theme="dark"] #main-content-wrapper,
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .modal-content,
+body[data-theme="dark"] .dropdown-menu,
+body[data-theme="dark"] .list-group-item,
+body[data-theme="dark"] .accordion-item,
+body[data-theme="dark"] .accordion-button,
+body[data-theme="dark"] .table,
+body[data-theme="dark"] .table *,
+body[data-theme="dark"] .rh-bento,
+body[data-theme="dark"] .audit-card,
+body[data-theme="dark"] .audit-metric-card,
+body[data-theme="dark"] .settings-card,
+body[data-theme="dark"] .settings-panel,
+body[data-theme="dark"] .main-wrapper,
+body[data-theme="dark"] #main-content-wrapper {
+    background-color: #111827 !important;
+    border-color: #334155 !important;
+}
+
+html.theme-dark .form-control,
+html.theme-dark .form-select,
+html.theme-dark .input-group-text,
+html.theme-dark .page-link,
+html.theme-dark .btn:not(.btn-primary):not(.btn-success):not(.btn-danger):not(.btn-warning),
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] .input-group-text,
+html[data-theme="dark"] .page-link,
+html[data-theme="dark"] .btn:not(.btn-primary):not(.btn-success):not(.btn-danger):not(.btn-warning),
+body[data-theme="dark"] .form-control,
+body[data-theme="dark"] .form-select,
+body[data-theme="dark"] .input-group-text,
+body[data-theme="dark"] .page-link,
+body[data-theme="dark"] .btn:not(.btn-primary):not(.btn-success):not(.btn-danger):not(.btn-warning) {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+    color: #f8fafc !important;
+}
+
+html.theme-dark .form-control::placeholder,
+html[data-theme="dark"] .form-control::placeholder,
+body[data-theme="dark"] .form-control::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+html.theme-dark .bg-light,
+html.theme-dark .bg-white,
+html.theme-dark .bg-body,
+html.theme-dark .bg-secondary-subtle,
+html.theme-dark .bg-primary-subtle,
+html.theme-dark .bg-success-subtle,
+html.theme-dark .bg-warning-subtle,
+html.theme-dark .bg-danger-subtle,
+html[data-theme="dark"] .bg-light,
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .bg-body,
+html[data-theme="dark"] .bg-secondary-subtle,
+html[data-theme="dark"] .bg-primary-subtle,
+html[data-theme="dark"] .bg-success-subtle,
+html[data-theme="dark"] .bg-warning-subtle,
+html[data-theme="dark"] .bg-danger-subtle,
+body[data-theme="dark"] .bg-light,
+body[data-theme="dark"] .bg-white,
+body[data-theme="dark"] .bg-body,
+body[data-theme="dark"] .bg-secondary-subtle,
+body[data-theme="dark"] .bg-primary-subtle,
+body[data-theme="dark"] .bg-success-subtle,
+body[data-theme="dark"] .bg-warning-subtle,
+body[data-theme="dark"] .bg-danger-subtle {
+    background-color: #1f2937 !important;
+    border-color: #334155 !important;
+}
+
+html.theme-dark .table thead,
+html.theme-dark .table thead th,
+html[data-theme="dark"] .table thead,
+html[data-theme="dark"] .table thead th,
+body[data-theme="dark"] .table thead,
+body[data-theme="dark"] .table thead th {
+    background-color: #1f2937 !important;
+    color: #f8fafc !important;
+}
+
+html.theme-dark .table tbody,
+html.theme-dark .table tbody tr,
+html.theme-dark .table tbody td,
+html.theme-dark .table tbody th,
+html[data-theme="dark"] .table tbody,
+html[data-theme="dark"] .table tbody tr,
+html[data-theme="dark"] .table tbody td,
+html[data-theme="dark"] .table tbody th,
+body[data-theme="dark"] .table tbody,
+body[data-theme="dark"] .table tbody tr,
+body[data-theme="dark"] .table tbody td,
+body[data-theme="dark"] .table tbody th {
+    background-color: #111827 !important;
+    color: #f8fafc !important;
+}
+
+html.theme-dark .sidebar-link i,
+html.theme-dark .sidebar-link .bi,
+html.theme-dark .btn i,
+html.theme-dark .btn .bi,
+html.theme-dark .input-group-text i,
+html.theme-dark .input-group-text .bi,
+html[data-theme="dark"] .sidebar-link i,
+html[data-theme="dark"] .sidebar-link .bi,
+html[data-theme="dark"] .btn i,
+html[data-theme="dark"] .btn .bi,
+html[data-theme="dark"] .input-group-text i,
+html[data-theme="dark"] .input-group-text .bi,
+body[data-theme="dark"] .sidebar-link i,
+body[data-theme="dark"] .sidebar-link .bi,
+body[data-theme="dark"] .btn i,
+body[data-theme="dark"] .btn .bi,
+body[data-theme="dark"] .input-group-text i,
+body[data-theme="dark"] .input-group-text .bi {
+    background: transparent !important;
+    color: currentColor !important;
 }

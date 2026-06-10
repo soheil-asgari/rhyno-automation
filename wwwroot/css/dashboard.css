@@ -3,7 +3,7 @@
     --card: #ffffff;
     --text-dark: #1e293b;
     --primary: #4f46e5;
-    --br: 16px;
+    --br: 0;
 }
 
 .rhino-premium-panel {
@@ -473,4 +473,254 @@
 
 .days-grid span.off {
     visibility: hidden;
+}
+
+/* Final dashboard override: dense, data-first, sharp-edged UI */
+.rhino-premium-panel {
+    background-image: none !important;
+    padding: 12px !important;
+    min-height: auto !important;
+}
+
+.rh-grid-layout {
+    gap: 10px !important;
+}
+
+.rh-bento {
+    border-radius: 0 !important;
+    padding: 12px !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease, background-color 0.15s ease !important;
+}
+
+.rh-bento:hover {
+    border-color: #cbd5e1 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.hero-sm h2 {
+    font-size: 1.15rem !important;
+    margin-bottom: 3px !important;
+}
+
+.hero-sm p {
+    font-size: 0.78rem !important;
+    margin-bottom: 0 !important;
+}
+
+.box-head {
+    margin-bottom: 8px !important;
+}
+
+.box-head h3 {
+    font-size: 0.85rem !important;
+}
+
+.rh-table-sm th,
+.rh-table-sm td,
+.rh-table-sm td {
+    padding: 8px !important;
+}
+
+.mini-chart-wrapper {
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+}
+
+.css-chart div,
+.stat-sm i,
+.badge-sm,
+.btn-action-sm,
+.days-grid span,
+.spinner-border-sm,
+.avtr,
+.avtr-more {
+    border-radius: 0 !important;
+}
+
+.stat-sm {
+    gap: 10px !important;
+}
+
+.stat-sm i {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1rem !important;
+}
+
+.stat-sm .v {
+    font-size: 1.15rem !important;
+}
+
+.badge-sm.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.badge-sm.neutral {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.rhino-premium-panel::before {
+    content: none !important;
+}
+
+.chart-wide {
+    grid-column: span 3;
+    min-height: 96px !important;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.donut-chart-wrapper {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+}
+
+.donut-chart-wrapper svg {
+    transform: rotate(-90deg);
+    filter: none !important;
+}
+
+.donut-chart-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.chart-info h4 {
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+}
+
+.chart-info p {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.task-box {
+    grid-column: span 2;
+    background: #fffbeb !important;
+    border-color: #fef3c7 !important;
+}
+
+.task-header,
+.cal-header,
+#eventBox,
+#eventContent {
+    display: flex;
+    align-items: center;
+}
+
+.task-header,
+.cal-header {
+    justify-content: space-between;
+}
+
+.task-header {
+    margin-bottom: 8px;
+    color: #92400e;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.task-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: #b45309;
+    font-size: 0.72rem;
+}
+
+.task-body strong {
+    color: #92400e;
+    font-size: 1rem;
+}
+
+.calendar-box {
+    grid-column: span 5;
+    box-shadow: none !important;
+}
+
+.cal-header {
+    margin-bottom: 12px;
+}
+
+.cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+}
+
+.cal-nav i {
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+#monthDisplay {
+    min-width: 120px;
+    text-align: center;
+}
+
+.weekday-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.76rem;
+    padding-bottom: 8px;
+}
+
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+}
+
+.days-grid span {
+    height: 30px !important;
+    width: 30px !important;
+}
+
+.days-grid span.today {
+    box-shadow: none !important;
+}
+
+.days-grid span:hover:not(.off) {
+    transform: none !important;
+}
+
+.cal-footer {
+    margin-top: 12px;
+    border-top: 1px solid #f1f1f1;
+    padding-top: 10px;
+}
+
+#eventBox,
+#eventContent {
+    gap: 8px;
+}
+
+#eventLoader {
+    display: none;
+}
+
+#eventContent i {
+    color: #4f46e5;
+}
+
+#eventDisplay {
+    font-size: 0.8rem;
+    color: #475569;
 }
