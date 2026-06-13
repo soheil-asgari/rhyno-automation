@@ -5,6 +5,8 @@
     string receiverPrefix = ViewBag.Prefix ?? "جناب آقای / سرکار خانم";
     string senderName = Model.Sender?.FullName ?? "نامشخص";
     string senderJob = Model.Sender?.JobTitle ?? "سمت نامشخص";
+    string? currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    bool canApprove = !Model.IsWorkflowCompleted && Model.ReceiverId == currentUserId;
 
     // بهینه‌سازی: انتقال منطق تبدیل تاریخ به این قسمت برای تمیزی HTML
     var pc = new System.Globalization.PersianCalendar();
@@ -21,14 +23,69 @@
 
     <!-- Bootstrap RTL -->
     <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
 
     <!-- فایل استایل اختصاصی نامه که جدا شده است -->
     <link rel="stylesheet" href="~/css/letter-print.css" />
+    <style>
+        .letter-ai-panel {
+            max-width: 900px;
+            margin: 18px auto;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        }
+
+        .letter-ai-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .letter-ai-controls {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) auto;
+            gap: 10px;
+        }
+
+        .letter-ai-panel input,
+        .letter-ai-panel textarea,
+        .letter-ai-panel button {
+            border-radius: 6px !important;
+        }
+
+        #aiLetterReplyResult {
+            min-height: 140px;
+            margin-top: 10px;
+            line-height: 1.9;
+            resize: vertical;
+        }
+
+        .letter-ai-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        @@media print {
+            .letter-ai-panel {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
     <!-- نوار ابزار (هنگام چاپ مخفی می‌شود) -->
     <div class="no-print d-flex justify-content-center gap-2 py-3 bg-dark">
+        @Html.AntiForgeryToken()
         <button onclick="window.print()" class="btn btn-success btn-sm">
             چاپ یا ذخیره PDF
         </button>
@@ -80,6 +137,34 @@
 
     </main>
 
+    <section class="letter-ai-panel no-print">
+        <div class="letter-ai-title">
+            <i class="bi bi-stars"></i>
+            <span>پاسخ و تأییدیه با دستیار هوش مصنوعی</span>
+        </div>
+        <div class="letter-ai-controls">
+            <input id="aiReplyIntent" class="form-control" value="این نامه از نظر من تایید است" placeholder="نظر خود را بنویسید؛ مثلاً: تایید است، نیاز به اصلاح دارد، پاسخ رسمی آماده کن...">
+            <button id="btnGenerateLetterReply" type="button" class="btn btn-primary" data-letter-id="@Model.Id">
+                <i class="bi bi-magic"></i>
+                تولید پاسخ
+            </button>
+        </div>
+        <textarea id="aiLetterReplyResult" class="form-control" placeholder="متن پیشنهادی هوش مصنوعی اینجا نمایش داده می‌شود. قبل از ارسال یا تأیید، متن را بازبینی کنید."></textarea>
+        <div class="letter-ai-actions">
+            <small class="text-muted">ارسال نهایی باید بعد از بازبینی کاربر انجام شود.</small>
+            @if (canApprove)
+            {
+                <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check2-circle"></i>
+                        تایید و ارجاع نامه
+                    </button>
+                </form>
+            }
+        </div>
+    </section>
+
     <!-- انتقال دیتای سرورساید به جاوااسکریپت -->
     <script>
         window.allUsers = @Html.Raw(ViewBag.UsersData ?? "[]");
@@ -87,5 +172,6 @@
 
     <!-- فایل اسکریپت اختصاصی که جدا شده است -->
     <script src="~/js/letter-form.js"></script>
+    <script src="~/js/letters-ai.js"></script>
 </body>
 </html>

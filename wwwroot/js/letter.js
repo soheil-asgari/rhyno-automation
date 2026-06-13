@@ -5,7 +5,10 @@
     ClassicEditor.create(document.querySelector('#editor'), {
         language: 'fa',
         contentsLangDirection: 'rtl'
-    }).then(ed => myEditor = ed);
+    }).then(ed => {
+        myEditor = ed;
+        window.letterEditor = ed;
+    });
 
     const allUsers = window.usersList || [];
 

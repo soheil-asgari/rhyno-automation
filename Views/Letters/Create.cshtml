@@ -34,6 +34,21 @@
                 <i class="bi bi-send"></i> ارسال نهایی
             </button>
         </div>
+
+        <div class="ai-letter-panel">
+            <div class="ai-letter-title">
+                <i class="bi bi-stars"></i>
+                <span>نگارش نامه با دستیار هوش مصنوعی</span>
+            </div>
+            <div class="ai-letter-controls">
+                <input id="aiLetterInstruction" type="text" class="form-control" placeholder="مثلاً: یک نامه رسمی برای درخواست تأیید خرید تجهیزات بنویس...">
+                <button id="btnDraftWithAi" type="button" class="btn btn-outline-primary">
+                    <i class="bi bi-magic"></i>
+                    تولید متن
+                </button>
+            </div>
+            <div id="aiLetterStatus" class="ai-letter-status"></div>
+        </div>
     </div>
 
     <!-- Paper -->
@@ -104,3 +119,52 @@
     window.usersList = @Html.Raw(ViewBag.UsersData ?? "[]");
 </script>
 <script src="/js/letter.js"></script>
+<script src="/js/letters-ai.js"></script>
+
+@section Styles {
+    <style>
+        .ai-letter-panel {
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+
+        .ai-letter-title,
+        .ai-letter-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-letter-title {
+            margin-bottom: 10px;
+            color: #334155;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+
+        .ai-letter-controls input,
+        .ai-letter-controls button {
+            border-radius: 6px !important;
+        }
+
+        .ai-letter-status {
+            min-height: 20px;
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+
+        html.theme-dark .ai-letter-panel {
+            background: #111827;
+            border-color: #334155;
+        }
+
+        html.theme-dark .ai-letter-title,
+        html.theme-dark .ai-letter-status {
+            color: #f1f5f9;
+        }
+    </style>
+}

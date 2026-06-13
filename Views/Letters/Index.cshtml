@@ -6,6 +6,8 @@
 }
 
 <div class="container-fluid py-4 letters-page">
+    @Html.AntiForgeryToken()
+
     <div class="header-section mb-5">
         <div class="d-flex align-items-center gap-3">
             <div class="brand-icon-box">
@@ -26,6 +28,37 @@
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>ایجاد نامه جدید</span>
             </a>
+        </div>
+    </div>
+
+    <div class="letters-ai-summary mb-4">
+        <div class="letters-ai-summary-head">
+            <div>
+                <h5><i class="bi bi-stars"></i> خلاصه هوشمند نامه‌ها</h5>
+                <p>خلاصه نامه‌های دریافتی، خوانده‌نشده، ارسالی یا گردش یک نامه مشخص را با هوش مصنوعی ببینید.</p>
+            </div>
+        </div>
+        <div class="letters-ai-summary-controls">
+            <select id="letterSummaryMode" class="form-select">
+                <option value="week">خلاصه نامه‌های دریافتی هفته اخیر</option>
+                <option value="unread">خلاصه نامه‌های خوانده‌نشده</option>
+                <option value="sent">خلاصه نامه‌های ارسالی من</option>
+                <option value="selected">خلاصه و گردش نامه انتخاب‌شده</option>
+            </select>
+            <select id="letterSummaryId" class="form-select">
+                <option value="">انتخاب موضوع نامه...</option>
+                @foreach (var item in list.OrderByDescending(item => item.SentDate))
+                {
+                    <option value="@item.Id">@item.Title</option>
+                }
+            </select>
+            <button id="btnSummarizeLetters" type="button" class="btn btn-primary">
+                <i class="bi bi-card-text"></i>
+                نمایش خلاصه
+            </button>
+        </div>
+        <div id="letterSummaryResult" class="letters-ai-summary-result">
+            یک گزینه را انتخاب کنید و دکمه نمایش خلاصه را بزنید.
         </div>
     </div>
 
@@ -120,9 +153,68 @@
             background: #0f172a !important;
             border-color: #334155 !important;
         }
+        .letters-ai-summary {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 14px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        }
+        .letters-ai-summary h5 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 4px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        .letters-ai-summary p {
+            margin: 0 0 12px;
+            color: #64748b;
+            font-size: 0.84rem;
+        }
+        .letters-ai-summary-controls {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+            gap: 10px;
+        }
+        .letters-ai-summary select,
+        .letters-ai-summary button,
+        .letters-ai-summary-result {
+            border-radius: 6px !important;
+        }
+        .letters-ai-summary-result {
+            margin-top: 12px;
+            min-height: 70px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.9;
+            white-space: pre-wrap;
+        }
+        html.theme-dark .letters-ai-summary {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-color: #334155 !important;
+        }
+        html.theme-dark .letters-ai-summary h5,
+        html.theme-dark .letters-ai-summary p,
+        html.theme-dark .letters-ai-summary-result {
+            color: #f1f5f9 !important;
+        }
+        html.theme-dark .letters-ai-summary-result {
+            background: #111827 !important;
+            border-color: #334155 !important;
+        }
+        @@media (max-width: 768px) {
+            .letters-ai-summary-controls {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 }
 
 @section Scripts {
     <script src="~/js/letters-index.js"></script>
+    <script src="~/js/letters-ai.js"></script>
 }

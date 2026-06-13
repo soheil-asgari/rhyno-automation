@@ -8,6 +8,8 @@ using OfficeAutomation.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace OfficeAutomation.Controllers
@@ -18,12 +20,14 @@ namespace OfficeAutomation.Controllers
         private readonly ApplicationDbContext _context;
         // اضافه کردن مدیریت کاربران
         private readonly UserManager<User> _userManager;
+        private readonly AiService _ai;
 
         // تزریق هر دو سرویس در سازنده کلاس
-        public LettersController(ApplicationDbContext context, UserManager<User> userManager)
+        public LettersController(ApplicationDbContext context, UserManager<User> userManager, AiService ai)
         {
             _context = context;
             _userManager = userManager;
+            _ai = ai;
         }
 
         // GET: Letters
@@ -45,6 +49,170 @@ namespace OfficeAutomation.Controllers
             return View(await letters.ToListAsync());
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DraftWithAi([FromBody] LetterDraftRequest request)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.ReceiverId))
+            {
+                return BadRequest(new { message = "گیرنده نامه مشخص نیست." });
+            }
+
+            var receiver = await _context.Users
+                .AsNoTracking()
+                .Include(item => item.Department)
+                .FirstOrDefaultAsync(item => item.Id == request.ReceiverId);
+
+            if (receiver == null)
+            {
+                return BadRequest(new { message = "گیرنده انتخاب‌شده معتبر نیست." });
+            }
+
+            var senderUnit = currentUser.Department?.Name ?? currentUser.ServiceLocation ?? currentUser.JobTitle ?? "نامشخص";
+            var receiverUnit = receiver.Department?.Name ?? receiver.ServiceLocation ?? receiver.JobTitle ?? "نامشخص";
+            var existingBody = StripHtml(request.CurrentBody);
+
+            var prompt = $"""
+            شما دستیار نگارش نامه‌های اداری فارسی در یک سامانه اتوماسیون اداری هستید.
+            یک متن رسمی، دقیق و قابل ارسال تولید کنید. فقط متن نامه را برگردانید و هیچ توضیح اضافه‌ای ننویسید.
+
+            فرستنده: {currentUser.FullName ?? "نامشخص"}
+            واحد/سمت فرستنده: {senderUnit}
+            گیرنده: {receiver.FullName ?? "نامشخص"}
+            واحد/سمت گیرنده: {receiverUnit}
+            موضوع: {request.Subject}
+            خواسته کاربر: {request.Instruction}
+            متن فعلی نامه، در صورت وجود: {existingBody}
+
+            متن باید با «با سلام و احترام» شروع شود، لحن رسمی داشته باشد و بدون امضا تمام شود.
+            """;
+
+            var reply = await _ai.AskAsync(prompt);
+            return Json(new { reply });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SummarizeWithAi([FromBody] LetterSummaryRequest request)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Unauthorized();
+            }
+
+            var mode = string.IsNullOrWhiteSpace(request.Mode) ? "week" : request.Mode.Trim();
+            var query = _context.Letters
+                .AsNoTracking()
+                .Include(item => item.Sender)
+                .Include(item => item.Receiver)
+                .Where(item => item.SenderId == currentUserId || item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId);
+
+            if (mode == "selected" && request.LetterId.HasValue)
+            {
+                query = query.Where(item => item.Id == request.LetterId.Value);
+            }
+            else if (mode == "unread")
+            {
+                query = query.Where(item => item.ReceiverId == currentUserId && !item.IsRead);
+            }
+            else if (mode == "sent")
+            {
+                query = query.Where(item => item.SenderId == currentUserId);
+            }
+            else
+            {
+                var weekStart = DateTime.Now.AddDays(-7);
+                query = query.Where(item => item.SentDate >= weekStart && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId));
+            }
+
+            var letters = await query
+                .OrderByDescending(item => item.SentDate)
+                .Take(mode == "selected" ? 1 : 12)
+                .ToListAsync();
+
+            if (letters.Count == 0)
+            {
+                return Json(new { reply = "نامه‌ای برای خلاصه‌سازی در این بازه یا حالت پیدا نشد." });
+            }
+
+            var letterText = string.Join("\n\n---\n\n", letters.Select(item =>
+                $"""
+                شناسه: {item.Id}
+                موضوع: {item.Title}
+                فرستنده: {item.Sender?.FullName ?? "نامشخص"}
+                گیرنده فعلی: {item.Receiver?.FullName ?? "نامشخص"}
+                تاریخ: {item.SentDate:yyyy/MM/dd HH:mm}
+                وضعیت گردش: {(item.IsWorkflowCompleted ? "تکمیل شده" : $"در گردش - مرحله {item.CurrentWorkflowStep}")}
+                متن: {StripHtml(item.Body)}
+                """));
+
+            var prompt = $"""
+            این داده‌ها مربوط به نامه‌های اداری کاربر در سامانه اتوماسیون است.
+            بر اساس حالت انتخاب‌شده، خلاصه‌ای کاربردی و مدیریتی به فارسی تولید کن.
+            اگر یک نامه انتخاب شده، گردش نامه، موضوع، وضعیت، فرستنده، گیرنده و متن کامل/خلاصه را منظم توضیح بده.
+            اگر چند نامه است، اول جمع‌بندی کوتاه بده، سپس فهرست موضوع‌ها و اقدام‌های پیشنهادی را بنویس.
+            اگر پاراف جداگانه‌ای در داده‌ها نیست، فقط وضعیت گردش موجود را گزارش کن و چیزی جعل نکن.
+
+            حالت: {mode}
+            نامه‌ها:
+            {letterText}
+            """;
+
+            var reply = await _ai.AskAsync(prompt);
+            return Json(new { reply });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReplyWithAi([FromBody] LetterReplyRequest request)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Unauthorized();
+            }
+
+            var letter = await _context.Letters
+                .AsNoTracking()
+                .Include(item => item.Sender)
+                .Include(item => item.Receiver)
+                .FirstOrDefaultAsync(item => item.Id == request.LetterId);
+
+            if (letter == null)
+            {
+                return NotFound();
+            }
+
+            if (!CanAccessLetter(letter, currentUserId))
+            {
+                return Forbid();
+            }
+
+            var prompt = $"""
+            شما دستیار پاسخ‌گویی به نامه‌های اداری فارسی هستید.
+            برای نامه زیر یک متن پاسخ رسمی و کامل تولید کن. فقط متن پاسخ را بنویس.
+
+            موضوع نامه اصلی: {letter.Title}
+            فرستنده نامه اصلی: {letter.Sender?.FullName ?? "نامشخص"}
+            گیرنده فعلی: {letter.Receiver?.FullName ?? "نامشخص"}
+            وضعیت گردش: {(letter.IsWorkflowCompleted ? "تکمیل شده" : $"در گردش - مرحله {letter.CurrentWorkflowStep}")}
+            متن نامه اصلی: {StripHtml(letter.Body)}
+            نظر/درخواست کاربر برای پاسخ: {request.Intent}
+
+            اگر نظر کاربر تأیید است، متن را به شکل تأییدیه اداری بنویس. اگر نیاز به اصلاح یا توضیح دارد، همان را رسمی و شفاف کن.
+            """;
+
+            var reply = await _ai.AskAsync(prompt);
+            return Json(new { reply });
+        }
+
         // GET: Letters/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -53,6 +221,7 @@ namespace OfficeAutomation.Controllers
             var letter = await _context.Letters
                 .Include(l => l.Receiver)
                 .Include(l => l.Sender)
+                .Include(l => l.FinalReceiver)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (letter == null) return NotFound();
@@ -213,6 +382,22 @@ namespace OfficeAutomation.Controllers
             return _context.Letters.Any(e => e.Id == id);
         }
 
+        private static bool CanAccessLetter(Letter letter, string userId)
+        {
+            return letter.SenderId == userId || letter.ReceiverId == userId || letter.FinalReceiverId == userId;
+        }
+
+        private static string StripHtml(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            var withoutTags = Regex.Replace(value, "<.*?>", " ");
+            return Regex.Replace(WebUtility.HtmlDecode(withoutTags), @"\s+", " ").Trim();
+        }
+
         private async Task ApplyWorkflowRoutingOnCreateAsync(Letter letter)
         {
             var firstApprover = await GetNextWorkflowApproverAsync(letter.DocumentType, 1);
@@ -250,6 +435,26 @@ namespace OfficeAutomation.Controllers
                 .FirstOrDefaultAsync();
 
             return string.IsNullOrWhiteSpace(approverUserId) ? null : approverUserId;
+        }
+
+        public sealed class LetterDraftRequest
+        {
+            public string? ReceiverId { get; set; }
+            public string? Subject { get; set; }
+            public string? Instruction { get; set; }
+            public string? CurrentBody { get; set; }
+        }
+
+        public sealed class LetterSummaryRequest
+        {
+            public string? Mode { get; set; }
+            public int? LetterId { get; set; }
+        }
+
+        public sealed class LetterReplyRequest
+        {
+            public int LetterId { get; set; }
+            public string? Intent { get; set; }
         }
     }
 }

@@ -19,7 +19,7 @@
         </section>
 
         <section class="rh-bento stat-sm blue animate-frip">
-            <i class="bi bi-database-check" style="color: #4f46e5;"></i>
+            <i class="bi bi-clipboard-data" style="color: #4f46e5;"></i>
             <div class="stat-info">
                 <span class="v">@ToFa(Model.TotalAuditEvents)</span>
                 <span class="l">کل رخدادها</span>
@@ -27,7 +27,7 @@
         </section>
 
         <section class="rh-bento stat-sm green animate-frip">
-            <i class="bi bi-plus-square" style="color: #10b981;"></i>
+            <i class="bi bi-file-earmark-plus" style="color: #10b981;"></i>
             <div class="stat-info">
                 <span class="v">@ToFa(Model.CreateEvents)</span>
                 <span class="l">ثبت جدید</span>
@@ -36,8 +36,8 @@
 
         <section class="rh-bento table-box animate-frip">
             <div class="box-head">
-                <h3><i class="bi bi-activity"></i> آخرین فعالیت‌های ثبت شده</h3>
-                <a href="/admin/audit-dashboard">مشاهده کامل <i class="bi bi-arrow-left"></i></a>
+                <h3><i class="bi bi-clock-history"></i> آخرین فعالیت‌های ثبت شده</h3>
+                <a href="/admin/audit-dashboard">مشاهده کامل <i class="bi bi-arrow-left-short"></i></a>
             </div>
 
             <table class="rh-table-sm">
@@ -81,7 +81,7 @@
         </section>
 
         <section class="rh-bento stat-sm orange animate-frip">
-            <i class="bi bi-pencil-square" style="color: #f59e0b;"></i>
+            <i class="bi bi-pencil" style="color: #f59e0b;"></i>
             <div class="stat-info">
                 <span class="v">@ToFa(Model.UpdateEvents)</span>
                 <span class="l">ویرایش</span>
@@ -89,7 +89,7 @@
         </section>
 
         <section class="rh-bento stat-sm cyan animate-frip">
-            <i class="bi bi-trash3" style="color: #ef4444;"></i>
+            <i class="bi bi-trash" style="color: #ef4444;"></i>
             <div class="stat-info">
                 <span class="v">@ToFa(Model.DeleteEvents)</span>
                 <span class="l">حذف</span>
@@ -97,7 +97,7 @@
         </section>
 
         <section class="rh-bento stat-sm animate-frip collab-box">
-            <i class="bi bi-envelope" style="color: #4f46e5;"></i>
+            <i class="bi bi-envelope-open" style="color: #4f46e5;"></i>
             <div class="stat-info">
                 <span class="v">@ToFa(Model.NewLetters)</span>
                 <span class="l">نامه خوانده نشده</span>
@@ -105,7 +105,7 @@
         </section>
 
         <section class="rh-bento stat-sm animate-frip event-box">
-            <i class="bi bi-calendar-check" style="color: #db2777;"></i>
+            <i class="bi bi-calendar-event" style="color: #db2777;"></i>
             <div class="stat-info">
                 <span class="v">@ToFa(Model.PendingLeaves)</span>
                 <span class="l">مرخصی در انتظار</span>
@@ -128,8 +128,8 @@
 
         <section class="rh-bento task-box animate-frip">
             <div class="task-header">
-                <span><i class="bi bi-people"></i> کاربران سامانه</span>
-                <i class="bi bi-three-dots"></i>
+                <span><i class="bi bi-people-fill"></i> کاربران سامانه</span>
+                <i class="bi bi-gear"></i>
             </div>
             <div class="task-body">
                 <strong>@ToFa(Model.TotalUsers)</strong>
@@ -158,7 +158,7 @@
                 <div id="eventBox">
                     <div id="eventLoader"></div>
                     <div id="eventContent">
-                        <i class="bi bi-calendar2-check"></i>
+                        <i class="bi bi-calendar2-event"></i>
                         <span id="eventDisplay">در حال دریافت مناسبت...</span>
                     </div>
                 </div>
@@ -173,6 +173,87 @@
         html.theme-dark .rhino-premium-panel {
             background: #0f172a !important;
             background-image: none !important;
+        }
+
+        .rhino-premium-panel {
+            --rh-home-radius: 6px;
+        }
+
+        .rhino-premium-panel .rh-bento,
+        .rhino-premium-panel .card,
+        .rhino-premium-panel .table-box,
+        .rhino-premium-panel .calendar-box,
+        .rhino-premium-panel .task-box,
+        .rhino-premium-panel .chart-wide,
+        .rhino-premium-panel .hero-sm,
+        .rhino-premium-panel .badge-sm,
+        .rhino-premium-panel .btn-action-sm,
+        .rhino-premium-panel .btn-today,
+        .rhino-premium-panel input,
+        .rhino-premium-panel select,
+        .rhino-premium-panel textarea,
+        .rhino-premium-panel button {
+            border-radius: var(--rh-home-radius) !important;
+        }
+
+        .rhino-premium-panel .rh-bento {
+            border-color: rgba(203, 213, 225, 0.9) !important;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05) !important;
+        }
+
+        .rhino-premium-panel .rh-bento:hover {
+            border-color: rgba(79, 70, 229, 0.35) !important;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .rhino-premium-panel .stat-sm > i,
+        .rhino-premium-panel .box-head h3 > i,
+        .rhino-premium-panel .task-header i,
+        .rhino-premium-panel #eventContent i {
+            width: 34px !important;
+            height: 34px !important;
+            min-width: 34px !important;
+            border-radius: var(--rh-home-radius) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #f1f5f9 !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: none !important;
+            font-size: 1rem !important;
+        }
+
+        .rhino-premium-panel .box-head h3 > i,
+        .rhino-premium-panel .task-header i,
+        .rhino-premium-panel #eventContent i {
+            color: #4f46e5 !important;
+        }
+
+        .rhino-premium-panel .css-chart div,
+        .rhino-premium-panel .days-grid span,
+        .rhino-premium-panel .days-grid span.today,
+        .rhino-premium-panel .spinner-border-sm {
+            border-radius: var(--rh-home-radius) !important;
+        }
+
+        .rhino-premium-panel .box-head a {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        html.theme-dark .rhino-premium-panel .rh-bento {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            box-shadow: none !important;
+        }
+
+        html.theme-dark .rhino-premium-panel .stat-sm > i,
+        html.theme-dark .rhino-premium-panel .box-head h3 > i,
+        html.theme-dark .rhino-premium-panel .task-header i,
+        html.theme-dark .rhino-premium-panel #eventContent i {
+            background: #1f2937 !important;
+            border-color: #334155 !important;
         }
     </style>
 }

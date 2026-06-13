@@ -170,7 +170,7 @@
             background-color: transparent !important;
             background-image: none !important;
             box-shadow: none !important;
-            border-radius: 0 !important;
+            border-radius: 6px !important;
             line-height: 1;
         }
 
@@ -198,7 +198,7 @@
 
             .sidebar-content::-webkit-scrollbar-thumb {
                 background-color: #cbd5e1;
-                border-radius: 0;
+                border-radius: 6px !important;
             }
 
         /* نوار بالای صفحه همرنگ بدنه (بدون حاشیه اضافی) */
@@ -234,7 +234,7 @@
             display: inline-block;
             width: 8px;
             height: 8px;
-            border-radius: 0;
+            border-radius: 6px !important;
             margin-left: 4px;
         }
 
@@ -247,7 +247,7 @@
             color: #334155;
             background: #fff;
             padding: 6px 14px;
-            border-radius: 0;
+            border-radius: 6px !important;
             border: 1px solid #e2e8f0;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             flex: 0 0 auto;
@@ -272,7 +272,7 @@
 
         .sidebar-accordion .accordion-item {
             border: 0;
-            border-radius: 0;
+            border-radius: 6px !important;
             overflow: visible;
             background: transparent;
             margin-bottom: 6px;
@@ -285,7 +285,7 @@
             font-weight: 700;
             padding: 8px 10px;
             box-shadow: none;
-            border-radius: 0 !important;
+            border-radius: 6px !important;
         }
 
             .sidebar-accordion .accordion-button:not(.collapsed) {
@@ -307,7 +307,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            border-radius: 0;
+            border-radius: 6px !important;
             font-size: 0.76rem;
             color: #334155;
             padding: 7px 10px;
@@ -349,14 +349,14 @@
             align-items: center;
             gap: 10px;
             background: #fff;
-            border-radius: 0 !important;
+            border-radius: 6px !important;
         }
 
         .user-avatar-box {
             width: 34px;
             height: 34px;
             background: transparent;
-            border-radius: 0;
+            border-radius: 6px !important;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -370,7 +370,7 @@
             height: 9px;
             background: #10b981;
             border: 2px solid #fff;
-            border-radius: 0;
+            border-radius: 6px !important;
         }
 
         #appSidebar,
@@ -385,9 +385,18 @@
         #main-content-wrapper .btn,
         #main-content-wrapper .form-control,
         #main-content-wrapper .form-select,
+        #main-content-wrapper textarea,
+        #main-content-wrapper select,
+        #main-content-wrapper input,
+        button,
+        .btn,
+        .card,
+        input,
+        select,
+        textarea,
         #main-content-wrapper .badge,
         #main-content-wrapper .modal-content {
-            border-radius: 0 !important;
+            border-radius: 6px !important;
         }
 
         .user-profile-link:hover .user-profile-pill,
@@ -408,55 +417,143 @@
         }
     </style>
     <style>
-        html.theme-dark body {
+        html.theme-dark body,
+        html.dark-mode body,
+        html[data-theme="dark"] body {
             background-color: #0f172a !important;
+            color: #f8fafc !important;
         }
 
         html.theme-dark .app-shell,
         html.theme-dark .main-wrapper,
-        html.theme-dark .main-content {
+        html.theme-dark .main-content,
+        html.dark-mode .app-shell,
+        html.dark-mode .main-wrapper,
+        html.dark-mode .main-content,
+        html[data-theme="dark"] .app-shell,
+        html[data-theme="dark"] .main-wrapper,
+        html[data-theme="dark"] .main-content {
             background-color: #0f172a !important;
+            color: #f8fafc !important;
         }
 
         html.theme-dark .custom-topbar,
         html.theme-dark .topbar-clock-box,
         html.theme-dark .sidebar-right,
-        html.theme-dark .user-profile-pill {
+        html.theme-dark .user-profile-pill,
+        html.dark-mode .custom-topbar,
+        html.dark-mode .topbar-clock-box,
+        html.dark-mode .sidebar-right,
+        html.dark-mode .user-profile-pill,
+        html[data-theme="dark"] .custom-topbar,
+        html[data-theme="dark"] .topbar-clock-box,
+        html[data-theme="dark"] .sidebar-right,
+        html[data-theme="dark"] .user-profile-pill {
             background-color: #111827 !important;
             border-color: #334155 !important;
-            color: #e5e7eb !important;
+            color: #f8fafc !important;
         }
 
-        html.theme-dark .sidebar-accordion .accordion-button {
+        html.theme-dark .sidebar-accordion .accordion-button,
+        html.dark-mode .sidebar-accordion .accordion-button,
+        html[data-theme="dark"] .sidebar-accordion .accordion-button {
             background: #1f2937 !important;
-            color: #e5e7eb !important;
+            color: #f8fafc !important;
         }
 
-            html.theme-dark .sidebar-accordion .accordion-button:not(.collapsed) {
+            html.theme-dark .sidebar-accordion .accordion-button:not(.collapsed),
+            html.dark-mode .sidebar-accordion .accordion-button:not(.collapsed),
+            html[data-theme="dark"] .sidebar-accordion .accordion-button:not(.collapsed) {
                 background: #312e81 !important;
-                color: #e0e7ff !important;
+                color: #f8fafc !important;
             }
 
-        html.theme-dark .sidebar-link {
-            color: #cbd5e1 !important;
+        html.theme-dark .sidebar-link,
+        html.dark-mode .sidebar-link,
+        html[data-theme="dark"] .sidebar-link {
+            color: #f1f5f9 !important;
         }
 
             html.theme-dark .sidebar-link:hover,
-            html.theme-dark .sidebar-link.sidebar-active {
+            html.theme-dark .sidebar-link.sidebar-active,
+            html.dark-mode .sidebar-link:hover,
+            html.dark-mode .sidebar-link.sidebar-active,
+            html[data-theme="dark"] .sidebar-link:hover,
+            html[data-theme="dark"] .sidebar-link.sidebar-active {
                 background: var(--glass-bg) !important;
-                color: var(--primary) !important;
+                color: #f8fafc !important;
             }
 
-        html.theme-dark .main-content {
+        html.theme-dark .main-content,
+        html.dark-mode .main-content,
+        html[data-theme="dark"] .main-content {
             background-color: #0f172a !important;
         }
 
         html.theme-dark .logo-icon,
-        html.theme-dark .user-avatar-box {
+        html.theme-dark .user-avatar-box,
+        html.dark-mode .logo-icon,
+        html.dark-mode .user-avatar-box,
+        html[data-theme="dark"] .logo-icon,
+        html[data-theme="dark"] .user-avatar-box {
             background: transparent !important;
             background-color: transparent !important;
             border-color: #334155 !important;
-            color: #e5e7eb !important;
+            color: #f8fafc !important;
+        }
+
+        html.theme-dark,
+        html.theme-dark body,
+        html.theme-dark #main-content-wrapper,
+        html.theme-dark #main-content-wrapper *,
+        html.theme-dark .custom-topbar,
+        html.theme-dark .custom-topbar *,
+        html.theme-dark #appSidebar,
+        html.theme-dark #appSidebar *,
+        html.dark-mode,
+        html.dark-mode body,
+        html.dark-mode #main-content-wrapper,
+        html.dark-mode #main-content-wrapper *,
+        html.dark-mode .custom-topbar,
+        html.dark-mode .custom-topbar *,
+        html.dark-mode #appSidebar,
+        html.dark-mode #appSidebar *,
+        html[data-theme="dark"],
+        html[data-theme="dark"] body,
+        html[data-theme="dark"] #main-content-wrapper,
+        html[data-theme="dark"] #main-content-wrapper *,
+        html[data-theme="dark"] .custom-topbar,
+        html[data-theme="dark"] .custom-topbar *,
+        html[data-theme="dark"] #appSidebar,
+        html[data-theme="dark"] #appSidebar * {
+            color: #f8fafc !important;
+        }
+
+        html.theme-dark .text-muted,
+        html.theme-dark .text-secondary,
+        html.theme-dark .text-dark,
+        html.theme-dark .brand-status,
+        html.theme-dark .u-role,
+        html.dark-mode .text-muted,
+        html.dark-mode .text-secondary,
+        html.dark-mode .text-dark,
+        html.dark-mode .brand-status,
+        html.dark-mode .u-role,
+        html[data-theme="dark"] .text-muted,
+        html[data-theme="dark"] .text-secondary,
+        html[data-theme="dark"] .text-dark,
+        html[data-theme="dark"] .brand-status,
+        html[data-theme="dark"] .u-role {
+            color: #f1f5f9 !important;
+        }
+
+        html.theme-dark i,
+        html.theme-dark .bi,
+        html.dark-mode i,
+        html.dark-mode .bi,
+        html[data-theme="dark"] i,
+        html[data-theme="dark"] .bi {
+            color: #f8fafc !important;
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
@@ -471,7 +568,7 @@
         <aside class="sidebar-right" id="appSidebar">
             <div class="sidebar-header" style="padding: 20px 15px; border-bottom: 1px solid #f1f5f9;">
                 <div class="logo-wrapper" style="display: flex; align-items: center; gap: 10px;">
-                    <div class="logo-icon" style="background: transparent; color:#4f46e5; padding: 6px 10px; border-radius: 0;">
+                    <div class="logo-icon" style="background: transparent; color:#4f46e5; padding: 6px 10px; border-radius: 6px !important;">
                         <i class="bi bi-box-seam"></i>
                     </div>
                     <div class="logo-text">
