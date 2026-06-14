@@ -1,0 +1,216 @@
+@{
+    ViewData["Title"] = "داشبورد مدیریتی";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/management-dashboard.css" asp-append-version="true" />
+}
+
+<div class="management-dashboard" dir="rtl"
+     data-test-db-url="@Url.Action("TestDatabaseConnection", "ManagementDashboard")"
+     data-report-url="@Url.Action("GenerateReport", "ManagementDashboard")"
+     data-connections-url="@Url.Action("Connections", "ManagementDashboard")"
+     data-save-connection-url="@Url.Action("SaveConnection", "ManagementDashboard")"
+     data-delete-connection-url="@Url.Action("DeleteConnection", "ManagementDashboard")">
+    @Html.AntiForgeryToken()
+
+    <section class="md-hero">
+        <div>
+            <span class="md-eyebrow">Management Intelligence Hub</span>
+            <h1>داشبورد مدیریتی</h1>
+            <p>اتصال دیتابیس را بررسی کنید، درخواست گزارش را به زبان ساده بنویسید و خروجی را در چند مدل نمودار ببینید.</p>
+        </div>
+        <div class="md-hero-status">
+            <span class="md-status-dot"></span>
+            <span id="mdConnectionLabel">دیتابیس انتخاب نشده</span>
+        </div>
+    </section>
+
+    <section class="md-grid">
+        <div class="md-panel md-connection-panel">
+            <div class="md-panel-head">
+                <div>
+                    <h2>اتصال دیتابیس</h2>
+                    <p>نوع دیتابیس، آدرس و پورت را وارد کنید و اتصال را تست کنید.</p>
+                </div>
+                <i class="bi bi-database-check"></i>
+            </div>
+
+            <form id="mdDbForm" class="md-form">
+                <input id="mdConnectionId" type="hidden" />
+
+                <div class="md-field">
+                    <label for="mdConnectionName">نام اتصال</label>
+                    <input id="mdConnectionName" class="form-control" placeholder="مثلا راهکاران - مالی" />
+                </div>
+
+                <div class="md-field">
+                    <label for="mdProvider">نوع دیتابیس</label>
+                    <select id="mdProvider" class="form-select">
+                        <option value="SqlServer">SQL Server</option>
+                        <option value="PostgreSql">PostgreSQL</option>
+                        <option value="MySql">MySQL / MariaDB</option>
+                        <option value="Sqlite">SQLite</option>
+                    </select>
+                </div>
+
+                <div class="md-field">
+                    <label for="mdHost">آدرس سرور یا مسیر فایل</label>
+                    <input id="mdHost" class="form-control" dir="ltr" placeholder="localhost یا 192.168.1.20" value="localhost" />
+                </div>
+
+                <div class="md-form-row">
+                    <div class="md-field">
+                        <label for="mdPort">پورت</label>
+                        <input id="mdPort" class="form-control" type="number" min="0" max="65535" dir="ltr" placeholder="1433" value="1433" />
+                    </div>
+                    <div class="md-field">
+                        <label for="mdDatabase">نام دیتابیس</label>
+                        <input id="mdDatabase" class="form-control" dir="ltr" placeholder="OfficeAutoDb" />
+                    </div>
+                </div>
+
+                <div class="md-form-row">
+                    <div class="md-field">
+                        <label for="mdUsername">نام کاربری</label>
+                        <input id="mdUsername" class="form-control" dir="ltr" placeholder="اختیاری برای Windows Auth" />
+                    </div>
+                    <div class="md-field">
+                        <label for="mdPassword">رمز عبور</label>
+                        <input id="mdPassword" class="form-control" type="password" dir="ltr" autocomplete="new-password" />
+                    </div>
+                </div>
+
+                <label class="md-check">
+                    <input id="mdTrustCertificate" type="checkbox" checked />
+                    <span>اعتماد به certificate سرور برای تست اتصال</span>
+                </label>
+
+                <button id="mdTestDbBtn" type="submit" class="btn md-primary-btn">
+                    <i class="bi bi-plug"></i>
+                    <span>تست اتصال</span>
+                </button>
+
+                <div class="md-connection-actions">
+                    <button id="mdSaveConnectionBtn" type="button" class="btn btn-outline-primary">
+                        <i class="bi bi-save"></i>
+                        <span>ذخیره اتصال</span>
+                    </button>
+                    <button id="mdNewConnectionBtn" type="button" class="btn btn-outline-secondary">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>اتصال جدید</span>
+                    </button>
+                </div>
+            </form>
+
+            <div id="mdDbResult" class="md-result md-result-muted">
+                اطلاعات اتصال فقط برای تست همین نشست استفاده می‌شود.
+            </div>
+
+            <div class="md-saved-connections">
+                <div class="md-saved-head">
+                    <h3>اتصال‌های ذخیره‌شده</h3>
+                    <span id="mdSavedCount">0</span>
+                </div>
+                <div id="mdSavedConnectionsList" class="md-saved-list"></div>
+            </div>
+        </div>
+
+        <div class="md-panel md-ai-panel">
+            <div class="md-panel-head">
+                <div>
+                    <h2>گزارش‌ساز هوشمند</h2>
+                    <p>درخواست را مثل یک گفتگو بنویسید؛ خروجی به صورت خلاصه و نمودار ساخته می‌شود.</p>
+                </div>
+                <i class="bi bi-stars"></i>
+            </div>
+
+            <div id="mdChat" class="md-chat">
+                <div class="md-message ai">
+                    <div class="md-avatar"><i class="bi bi-robot"></i></div>
+                    <div class="md-bubble">سلام. مثلا بنویسید: «گزارش فروش ماهانه امسال را با نمودار خطی بساز» یا «موجودی انبار را مقایسه کن».</div>
+                </div>
+            </div>
+
+            <form id="mdReportForm" class="md-report-form">
+                <div class="md-chart-tabs" role="group" aria-label="Chart Type">
+                    <button type="button" class="active" data-chart-type="bar"><i class="bi bi-bar-chart"></i> ستونی</button>
+                    <button type="button" data-chart-type="line"><i class="bi bi-graph-up"></i> خطی</button>
+                    <button type="button" data-chart-type="doughnut"><i class="bi bi-pie-chart"></i> حلقه‌ای</button>
+                    <button type="button" data-chart-type="radar"><i class="bi bi-bullseye"></i> راداری</button>
+                </div>
+
+                <div class="md-prompt-row">
+                    <textarea id="mdPrompt" class="form-control" rows="2" placeholder="گزارشی که می‌خواهید را بنویسید..."></textarea>
+                    <button id="mdGenerateBtn" type="submit" class="btn md-primary-btn">
+                        <i class="bi bi-send"></i>
+                        <span>ساخت گزارش</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="md-report-shell">
+        <div class="md-report-summary">
+            <span class="md-eyebrow">AI Report</span>
+            <h2 id="mdReportTitle">هنوز گزارشی ساخته نشده</h2>
+            <p id="mdReportSummary">بعد از تست اتصال یا نوشتن درخواست، گزارش مدیریتی اینجا نمایش داده می‌شود.</p>
+            <div id="mdInsights" class="md-insights"></div>
+        </div>
+
+        <div class="md-chart-panel">
+            <div class="md-chart-toolbar">
+                <span id="mdChartModeLabel">نمودار ستونی</span>
+                <div class="md-chart-actions">
+                    <select id="mdNumberFormat" class="form-select form-select-sm" aria-label="فرمت عدد">
+                        <option value="standard">عدد معمولی</option>
+                        <option value="compact">خلاصه‌شده</option>
+                        <option value="currency">ریالی</option>
+                    </select>
+                    <button id="mdZoomChartBtn" type="button" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrows-fullscreen"></i>
+                        <span>بزرگنمایی</span>
+                    </button>
+                    <button id="mdPrintReportBtn" type="button" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-filetype-pdf"></i>
+                        <span>PDF</span>
+                    </button>
+                </div>
+            </div>
+            <div class="md-chart-wrap">
+                <canvas id="mdReportChart"></canvas>
+            </div>
+            <div id="mdSqlDebug" class="md-sql-debug d-none">
+                <div class="md-sql-debug-head">
+                    <span>SQL تولیدشده برای دیباگ</span>
+                    <button id="mdCopySqlBtn" type="button" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-copy"></i>
+                        <span>کپی</span>
+                    </button>
+                </div>
+                <pre id="mdGeneratedSql"></pre>
+            </div>
+        </div>
+    </section>
+
+    <div id="mdChartModal" class="md-chart-modal d-none" role="dialog" aria-modal="true" aria-labelledby="mdChartModalTitle">
+        <div class="md-chart-modal-dialog">
+            <div class="md-chart-modal-head">
+                <h3 id="mdChartModalTitle">نمای بزرگ نمودار</h3>
+                <button id="mdCloseChartModalBtn" type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i>
+                    <span>بستن</span>
+                </button>
+            </div>
+            <div class="md-chart-modal-body">
+                <canvas id="mdZoomChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/management-dashboard.js" asp-append-version="true"></script>
+}

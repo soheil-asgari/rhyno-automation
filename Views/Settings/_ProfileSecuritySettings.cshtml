@@ -82,5 +82,17 @@
                 </button>
             </div>
         </form>
+
+        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Account/Login", new { area = "Identity" })" method="post" class="settings-form logout-card">
+            <h3 class="card-mini-title">خروج از حساب کاربری</h3>
+            <p class="logout-card-text">با خروج از حساب، نشست فعلی شما پایان می‌یابد و به صفحه ورود منتقل می‌شوید.</p>
+
+            <div class="actions-row">
+                <button type="submit" class="btn settings-btn-danger">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>خروج از حساب</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>

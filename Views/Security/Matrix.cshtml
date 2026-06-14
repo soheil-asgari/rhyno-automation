@@ -6,6 +6,46 @@
 
 @section Styles {
     <style>
+        .security-matrix {
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .security-matrix-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem 1.15rem;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            background: var(--glass-bg);
+            box-shadow: 0 12px 32px rgba(15, 23, 42, .08);
+            backdrop-filter: blur(14px);
+        }
+
+        .security-matrix-title,
+        .security-matrix-hero > h5 {
+            margin: 0;
+            color: var(--text-dark);
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        .security-matrix-subtitle {
+            margin: .35rem 0 0;
+            color: var(--text-muted);
+            font-size: .82rem;
+            line-height: 1.8;
+        }
+
+        .security-matrix-card {
+            overflow: hidden;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+        }
+
         .security-matrix .table th,
         .security-matrix .table td,
         .security-matrix .table th *,
@@ -14,7 +54,59 @@
         }
 
         .security-matrix .table-responsive {
-            overflow: visible;
+            max-height: calc(100vh - 230px);
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-gutter: stable both-edges;
+        }
+
+        .security-matrix .table {
+            min-width: 980px;
+            table-layout: fixed;
+        }
+
+        .security-matrix .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background: #f8fafc;
+            box-shadow: inset 0 -1px 0 var(--border-color);
+            vertical-align: middle;
+        }
+
+        .security-matrix .role-column,
+        .security-matrix thead th:first-child {
+            position: sticky;
+            right: 0;
+            z-index: 2;
+            width: 180px;
+            min-width: 180px;
+            background: #fff;
+            box-shadow: -1px 0 0 var(--border-color);
+        }
+
+        .security-matrix thead .role-column,
+        .security-matrix thead th:first-child {
+            z-index: 4;
+            background: #f8fafc;
+        }
+
+        .security-matrix .feature-column {
+            width: 132px;
+            min-width: 132px;
+            white-space: normal;
+            line-height: 1.65;
+        }
+
+        .security-matrix .feature-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .security-matrix tbody tr:hover td {
+            background: #f8fafc;
         }
 
         .security-matrix .dropdown-menu {
@@ -22,9 +114,10 @@
         }
 
         .security-matrix .permission-toggle-btn {
-            min-width: 84px;
+            min-width: 74px;
             border-radius: 999px;
             font-weight: 700;
+            font-size: .76rem;
             box-shadow: none;
             transition: background-color .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease;
         }
@@ -64,18 +157,59 @@
         html.theme-dark .security-matrix .table td * {
             color: var(--text-dark) !important;
         }
+
+        html.theme-dark .security-matrix .table thead th,
+        html.theme-dark .security-matrix thead .role-column {
+            background: #0f172a;
+        }
+
+        html.theme-dark .security-matrix .role-column,
+        html.theme-dark .security-matrix thead th:first-child {
+            background: #111827;
+        }
+
+        html.theme-dark .security-matrix tbody tr:hover td {
+            background: #1f2937;
+        }
+
+        @@media (max-width: 767.98px) {
+            .security-matrix {
+                padding-left: .75rem !important;
+                padding-right: .75rem !important;
+            }
+
+            .security-matrix-hero {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .security-matrix .table-responsive {
+                max-height: calc(100vh - 260px);
+            }
+
+            .security-matrix .role-column,
+            .security-matrix thead th:first-child {
+                width: 140px;
+                min-width: 140px;
+            }
+
+            .security-matrix .feature-column {
+                width: 112px;
+                min-width: 112px;
+            }
+        }
     </style>
 }
 
 <div class="container-fluid py-4 security-matrix" data-toggle-url="@Url.Action("TogglePermission", "Security")">
     @Html.AntiForgeryToken()
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="security-matrix-hero">
         <h5 class="fw-bold mb-0">ماتریس دسترسی نقش‌ها</h5>
         <a asp-action="Index" class="btn btn-sm btn-outline-secondary">بازگشت</a>
     </div>
 
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm security-matrix-card">
         <div class="table-responsive">
             <table class="table table-sm table-bordered align-middle mb-0">
                 <thead>
@@ -83,7 +217,9 @@
                         <th>نقش / دسترسی</th>
                         @foreach (var feature in Model.Features)
                         {
-                            <th class="text-center">@feature.Title</th>
+                            <th class="text-center feature-column" title="@feature.Title">
+                                <span class="feature-title">@feature.Title</span>
+                            </th>
                         }
                     </tr>
                 </thead>
@@ -91,7 +227,7 @@
                     @foreach (var role in Model.Roles)
                     {
                         <tr>
-                            <td class="fw-semibold">@role.Name</td>
+                            <td class="fw-semibold role-column">@role.Name</td>
                             @foreach (var feature in Model.Features)
                             {
                                 var key = $"{role.Id}:{feature.Key}";

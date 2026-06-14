@@ -230,11 +230,23 @@
 }
 
 .profile-card,
-.security-card {
+.security-card,
+.logout-card {
     border: 1px solid #e2e8f0;
     border-radius: 14px;
     padding: 16px;
     background: #fcfdff;
+}
+
+.logout-card {
+    grid-column: 1 / -1;
+}
+
+.logout-card-text {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.8;
 }
 
 .card-mini-title {
@@ -449,6 +461,7 @@
 .settings-page.theme-preview-dark .settings-panel,
 .settings-page.theme-preview-dark .profile-card,
 .settings-page.theme-preview-dark .security-card,
+.settings-page.theme-preview-dark .logout-card,
 .settings-page.theme-preview-dark .status-card,
 .settings-page.theme-preview-dark .switch-card,
 .settings-page.theme-preview-dark .preference-card,
@@ -475,6 +488,7 @@
 .settings-page.theme-preview-dark .settings-subtitle,
 .settings-page.theme-preview-dark .section-head p,
 .settings-page.theme-preview-dark .role-hint,
+.settings-page.theme-preview-dark .logout-card-text,
 .settings-page.theme-preview-dark .switch-text,
 .settings-page.theme-preview-dark .preference-text,
 .settings-page.theme-preview-dark .status-card-title,
@@ -505,6 +519,7 @@
 .settings-page.theme-preview-light .settings-panel,
 .settings-page.theme-preview-light .profile-card,
 .settings-page.theme-preview-light .security-card,
+.settings-page.theme-preview-light .logout-card,
 .settings-page.theme-preview-light .status-card,
 .settings-page.theme-preview-light .switch-card,
 .settings-page.theme-preview-light .preference-card,
@@ -521,6 +536,7 @@
 .settings-page.theme-preview-animated .settings-panel,
 .settings-page.theme-preview-animated .profile-card,
 .settings-page.theme-preview-animated .security-card,
+.settings-page.theme-preview-animated .logout-card,
 .settings-page.theme-preview-animated .status-card,
 .settings-page.theme-preview-animated .switch-card,
 .settings-page.theme-preview-animated .preference-card,
@@ -538,6 +554,7 @@
 .settings-page.theme-preview-animated .settings-subtitle,
 .settings-page.theme-preview-animated .section-head p,
 .settings-page.theme-preview-animated .role-hint,
+.settings-page.theme-preview-animated .logout-card-text,
 .settings-page.theme-preview-animated .switch-text,
 .settings-page.theme-preview-animated .preference-text,
 .settings-page.theme-preview-animated .status-card-title,

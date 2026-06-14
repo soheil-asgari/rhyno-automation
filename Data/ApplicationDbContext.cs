@@ -52,6 +52,7 @@ namespace OfficeAutomation.Data
         public DbSet<WorkflowRoute> WorkflowRoutes { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<ManagementDatabaseConnection> ManagementDatabaseConnections { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -102,6 +103,11 @@ namespace OfficeAutomation.Data
                 }
 
                 if (entry.Entity is AuditLog)
+                {
+                    continue;
+                }
+
+                if (!AuditLogScope.IsAuditedEntity(entry.Metadata.ClrType))
                 {
                     continue;
                 }
@@ -421,6 +427,33 @@ namespace OfficeAutomation.Data
                 .WithMany()
                 .HasForeignKey(preference => preference.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ManagementDatabaseConnection>()
+                .Property(item => item.Name)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<ManagementDatabaseConnection>()
+                .Property(item => item.Provider)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<ManagementDatabaseConnection>()
+                .Property(item => item.Host)
+                .HasMaxLength(256);
+
+            modelBuilder.Entity<ManagementDatabaseConnection>()
+                .Property(item => item.DatabaseName)
+                .HasMaxLength(128);
+
+            modelBuilder.Entity<ManagementDatabaseConnection>()
+                .Property(item => item.Username)
+                .HasMaxLength(128);
+
+            modelBuilder.Entity<ManagementDatabaseConnection>()
+                .Property(item => item.CreatedByUserId)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<ManagementDatabaseConnection>()
+                .HasIndex(item => item.Name);
 
             modelBuilder.Entity<PayrollList>()
                 .HasIndex(list => new { list.Year, list.Month })

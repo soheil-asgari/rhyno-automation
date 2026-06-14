@@ -261,6 +261,88 @@
             flex: 0 1 260px;
         }
 
+        .sidebar-quick-search {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #fff;
+            padding-bottom: 10px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-quick-search .search-box {
+            position: relative;
+        }
+
+        .sidebar-quick-search .form-control {
+            height: 38px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: .78rem;
+            font-weight: 700;
+            padding-right: 32px;
+        }
+
+        .sidebar-quick-search .form-control:focus {
+            border-color: #6366f1;
+            background: #fff;
+            box-shadow: 0 0 0 .18rem rgba(99, 102, 241, .14);
+        }
+
+        .sidebar-quick-search .bi-search {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            color: #94a3b8;
+            font-size: .82rem;
+            pointer-events: none;
+        }
+
+        .sidebar-search-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 7px;
+            color: #64748b;
+            font-size: .7rem;
+            font-weight: 800;
+        }
+
+        .sidebar-search-clear {
+            border: 0;
+            background: transparent;
+            color: #4f46e5;
+            padding: 0;
+            font-size: .7rem;
+            font-weight: 850;
+        }
+
+        .sidebar-search-clear.d-none {
+            display: none !important;
+        }
+
+        .sidebar-search-hidden {
+            display: none !important;
+        }
+
+        .sidebar-search-no-results {
+            display: none;
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+            color: #64748b;
+            border-radius: 6px !important;
+            padding: 10px;
+            font-size: .76rem;
+            font-weight: 750;
+            line-height: 1.7;
+        }
+
+        .sidebar-search-no-results.is-visible {
+            display: block;
+        }
+
         .main-wrapper {
             margin-right: 260px;
             flex: 1;
@@ -461,6 +543,36 @@
             color: #f8fafc !important;
         }
 
+        html.theme-dark .sidebar-quick-search,
+        html.dark-mode .sidebar-quick-search,
+        html[data-theme="dark"] .sidebar-quick-search {
+            background: #111827 !important;
+        }
+
+        html.theme-dark .sidebar-quick-search .form-control,
+        html.dark-mode .sidebar-quick-search .form-control,
+        html[data-theme="dark"] .sidebar-quick-search .form-control {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.theme-dark .sidebar-search-meta,
+        html.theme-dark .sidebar-search-no-results,
+        html.dark-mode .sidebar-search-meta,
+        html.dark-mode .sidebar-search-no-results,
+        html[data-theme="dark"] .sidebar-search-meta,
+        html[data-theme="dark"] .sidebar-search-no-results {
+            color: #cbd5e1 !important;
+        }
+
+        html.theme-dark .sidebar-search-no-results,
+        html.dark-mode .sidebar-search-no-results,
+        html[data-theme="dark"] .sidebar-search-no-results {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
             html.theme-dark .sidebar-accordion .accordion-button:not(.collapsed),
             html.dark-mode .sidebar-accordion .accordion-button:not(.collapsed),
             html[data-theme="dark"] .sidebar-accordion .accordion-button:not(.collapsed) {
@@ -579,6 +691,21 @@
             </div>
 
             <div class="sidebar-content" id="sidebarScrollContainer">
+                <div class="sidebar-quick-search">
+                    <div class="search-box">
+                        <input id="sidebarMenuSearch" type="search" class="form-control" autocomplete="off" placeholder="جستجوی سریع منو... (Ctrl+K)" aria-label="جستجوی سریع منو">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <div class="sidebar-search-meta">
+                        <span id="sidebarSearchCount">همه بخش‌ها</span>
+                        <button id="sidebarSearchClear" type="button" class="sidebar-search-clear d-none">پاک کردن</button>
+                    </div>
+                </div>
+
+                <div id="sidebarSearchNoResults" class="sidebar-search-no-results">
+                    نتیجه‌ای در منو پیدا نشد.
+                </div>
+
                 <div class="mb-2">
                     <a class="nav-link sidebar-link @(currentController == "Home" ? "sidebar-active" : "")" asp-controller="Home" asp-action="Index">
                         <i class="bi bi-grid text-primary"></i> <span class="link-text">میز کار مرکزی</span>
@@ -662,11 +789,11 @@
                     {
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingSettings">
-                                <button class="accordion-button @((currentController == "Settings" || currentController == "AiAssistant" || currentController == "Waybill") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
+                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
                                     تنظیمات
                                 </button>
                             </h2>
-                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "AiAssistant" || currentController == "Waybill") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
+                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
                                         @if (User.IsInRole("Admin"))
@@ -675,6 +802,8 @@
                                                 <i class="bi bi-shield-check text-danger"></i> <span class="link-text">نظارت بر فعالیت‌ها</span>
                                             </a>
                                         }
+
+                                        <a class="nav-link sidebar-link @(currentController == "ManagementDashboard" ? "sidebar-active" : "")" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-grid-1x2 text-primary"></i> <span class="link-text">داشبورد مدیریتی</span></a>
 
                                         @if (userCanAccessWorkflowAdministration || User.IsInRole("Admin"))
                                         {
@@ -717,10 +846,6 @@
                         <span id="topbarDate">۱۴۰۵/۰۲/۲۷</span>
                     </div>
 
-                    <div class="topbar-search d-none d-md-block">
-                        <input type="text" class="form-control form-control-sm pe-4" placeholder="جستجوی سریع... (Ctrl+K)" style="font-size: 0.8rem; border: 1px solid #e2e8f0; padding-right: 30px;">
-                        <i class="bi bi-search position-absolute" style="right: 10px; top: 7px; color: #94a3b8; font-size: 0.8rem;"></i>
-                    </div>
                 </div>
 
                 <div class="topbar-actions">
@@ -834,6 +959,128 @@
 
             updateClockAndDate();
             setInterval(updateClockAndDate, 1000);
+        })();
+    </script>
+
+    <script>
+        (() => {
+            const input = document.getElementById('sidebarMenuSearch');
+            const clearButton = document.getElementById('sidebarSearchClear');
+            const countLabel = document.getElementById('sidebarSearchCount');
+            const noResults = document.getElementById('sidebarSearchNoResults');
+            const sidebarContainer = document.getElementById('sidebarScrollContainer');
+            const accordion = document.getElementById('sidebarAccordion');
+
+            if (!input || !clearButton || !countLabel || !noResults || !sidebarContainer) {
+                return;
+            }
+
+            const normalize = (value) => String(value || '')
+                .replace(/[ي]/g, 'ی')
+                .replace(/[ك]/g, 'ک')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLocaleLowerCase('fa-IR');
+
+            const links = Array.from(sidebarContainer.querySelectorAll('a.sidebar-link'));
+            const groups = Array.from(sidebarContainer.querySelectorAll('.sidebar-accordion .accordion-item'));
+
+            groups.forEach((group) => {
+                const collapse = group.querySelector('.accordion-collapse');
+                if (collapse) {
+                    collapse.dataset.initialShow = collapse.classList.contains('show') ? '1' : '0';
+                }
+            });
+
+            const setCollapseVisible = (collapse, visible) => {
+                if (!collapse) {
+                    return;
+                }
+
+                collapse.classList.toggle('show', visible);
+                const button = document.querySelector(`[data-bs-target="#${collapse.id}"]`);
+                if (button) {
+                    button.classList.toggle('collapsed', !visible);
+                    button.setAttribute('aria-expanded', String(visible));
+                }
+            };
+
+            const resetSearch = () => {
+                links.forEach((link) => link.classList.remove('sidebar-search-hidden'));
+                groups.forEach((group) => {
+                    group.classList.remove('sidebar-search-hidden');
+                    const collapse = group.querySelector('.accordion-collapse');
+                    if (collapse) {
+                        setCollapseVisible(collapse, collapse.dataset.initialShow === '1');
+                    }
+                });
+                noResults.classList.remove('is-visible');
+                clearButton.classList.add('d-none');
+                countLabel.textContent = 'همه بخش‌ها';
+            };
+
+            const applySearch = () => {
+                const query = normalize(input.value);
+                if (!query) {
+                    resetSearch();
+                    return;
+                }
+
+                let matchCount = 0;
+
+                links.forEach((link) => {
+                    const text = normalize(link.textContent);
+                    const matches = text.includes(query);
+                    link.classList.toggle('sidebar-search-hidden', !matches);
+                    if (matches) {
+                        matchCount += 1;
+                    }
+                });
+
+                groups.forEach((group) => {
+                    const headerText = normalize(group.querySelector('.accordion-button')?.textContent);
+                    const groupLinks = Array.from(group.querySelectorAll('a.sidebar-link'));
+                    const headerMatches = headerText.includes(query);
+                    const hasVisibleLink = groupLinks.some((link) => !link.classList.contains('sidebar-search-hidden'));
+
+                    if (headerMatches) {
+                        groupLinks.forEach((link) => link.classList.remove('sidebar-search-hidden'));
+                        matchCount += groupLinks.filter((link) => !normalize(link.textContent).includes(query)).length;
+                    }
+
+                    const showGroup = headerMatches || hasVisibleLink;
+                    group.classList.toggle('sidebar-search-hidden', !showGroup);
+                    setCollapseVisible(group.querySelector('.accordion-collapse'), showGroup);
+                });
+
+                noResults.classList.toggle('is-visible', matchCount === 0);
+                clearButton.classList.remove('d-none');
+                countLabel.textContent = matchCount === 0
+                    ? 'بدون نتیجه'
+                    : `${matchCount.toLocaleString('fa-IR')} نتیجه`;
+            };
+
+            input.addEventListener('input', applySearch);
+
+            clearButton.addEventListener('click', () => {
+                input.value = '';
+                input.focus();
+                resetSearch();
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                    event.preventDefault();
+                    input.focus();
+                    input.select();
+                    sidebarContainer.scrollTop = 0;
+                }
+
+                if (event.key === 'Escape' && document.activeElement === input) {
+                    input.value = '';
+                    resetSearch();
+                }
+            });
         })();
     </script>
 

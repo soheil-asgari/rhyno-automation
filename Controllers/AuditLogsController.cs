@@ -29,8 +29,11 @@ namespace OfficeAutomation.Controllers
         {
             var page = Math.Max(query.Page, 1);
             var pageSize = Math.Clamp(query.PageSize, 1, 200);
+            var auditedTableNames = GetAuditedTableNames();
 
-            var auditQuery = _context.AuditLogs.AsNoTracking();
+            var auditQuery = _context.AuditLogs
+                .AsNoTracking()
+                .Where(item => auditedTableNames.Contains(item.TableName));
 
             if (!string.IsNullOrWhiteSpace(query.UserId))
             {
@@ -109,8 +112,11 @@ namespace OfficeAutomation.Controllers
         [HttpGet("filter-options")]
         public async Task<ActionResult<AuditLogFilterOptionsDto>> GetFilterOptions(CancellationToken cancellationToken)
         {
+            var auditedTableNames = GetAuditedTableNames();
+
             var tableNames = await _context.AuditLogs
                 .AsNoTracking()
+                .Where(item => auditedTableNames.Contains(item.TableName))
                 .Select(item => item.TableName)
                 .Distinct()
                 .OrderBy(item => item)
@@ -118,6 +124,7 @@ namespace OfficeAutomation.Controllers
 
             var userIds = await _context.AuditLogs
                 .AsNoTracking()
+                .Where(item => auditedTableNames.Contains(item.TableName))
                 .Where(item => item.UserId != null)
                 .Select(item => item.UserId!)
                 .Distinct()
@@ -144,6 +151,15 @@ namespace OfficeAutomation.Controllers
                 Actions = SupportedActions,
                 TableNames = tableNames
             });
+        }
+
+        private HashSet<string> GetAuditedTableNames()
+        {
+            return _context.Model
+                .GetEntityTypes()
+                .Where(entityType => AuditLogScope.IsAuditedEntity(entityType.ClrType))
+                .Select(entityType => entityType.GetTableName() ?? entityType.ClrType.Name)
+                .ToHashSet(StringComparer.Ordinal);
         }
     }
 }
