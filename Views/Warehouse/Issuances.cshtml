@@ -42,6 +42,7 @@
                             <td>@item.Warehouse.Name</td>
                             <td>@(item.Employer?.Name ?? item.DestinationOrDepartment)</td>
                             <td>@item.Items.Sum(row => row.Quantity).ToString("N3")</td>
+                            <td><span class="badge @WorkflowStatus.BadgeCss(item.WorkflowStatus)">@WorkflowStatus.Label(item.WorkflowStatus)</span></td>
                         </tr>
                     }
                 }

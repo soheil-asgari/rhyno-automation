@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
+    [PermissionAuthorize("Finance.View")]
     public class PayrollController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -18,6 +20,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.View")]
         public async Task<IActionResult> Index(int? month, int? year, CancellationToken cancellationToken)
         {
             var historyItems = await _context.PayrollLists
@@ -45,6 +48,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.Create")]
         public async Task<IActionResult> Create(int? month, int? year, CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
@@ -158,6 +162,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
         public async Task<IActionResult> Calculate([FromBody] PayrollCalculationRequestViewModel request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
@@ -212,6 +217,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
         public async Task<IActionResult> Save([FromBody] PayrollSaveRequestViewModel request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)

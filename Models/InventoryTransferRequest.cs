@@ -26,7 +26,7 @@ namespace OfficeAutomation.Models
 
         [Required]
         [StringLength(30)]
-        public string Status { get; set; } = "PendingManager";
+        public string Status { get; set; } = WorkflowStatus.PendingApproval;
 
         [Required]
         public string RequestedByUserId { get; set; } = string.Empty;

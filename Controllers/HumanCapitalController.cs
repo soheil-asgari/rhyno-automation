@@ -9,6 +9,7 @@ using OfficeAutomation.Services.Security;
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
+    [PermissionAuthorize("HR.View")]
     public class HumanCapitalController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -107,6 +108,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Create")]
         public async Task<IActionResult> Create(HumanCapitalCreateVM model)
         {
             await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode);
@@ -211,6 +213,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Edit")]
         public async Task<IActionResult> Edit(int id, HumanCapitalEditVM model)
         {
             if (id != model.Id)

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 using OfficeAutomation.Utilities;
 
 namespace OfficeAutomation.Controllers
@@ -34,6 +35,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.View")]
         public async Task<IActionResult> Sales(FinancialInvoiceIndexVM filter, CancellationToken cancellationToken)
         {
             var model = await BuildInvoiceIndexAsync(filter, "Sale", cancellationToken);
@@ -47,6 +49,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.View")]
         public async Task<IActionResult> Purchases(FinancialInvoiceIndexVM filter, CancellationToken cancellationToken)
         {
             var model = await BuildInvoiceIndexAsync(filter, "Purchase", cancellationToken);
@@ -60,6 +63,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.Create")]
         public async Task<IActionResult> CreateInvoice(string? invoiceType, CancellationToken cancellationToken)
         {
             var normalizedType = invoiceType == "Purchase" ? "Purchase" : "Sale";
@@ -142,6 +146,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Create")]
         public async Task<IActionResult> CreateInvoice(FinancialInvoiceUpsertVM model, CancellationToken cancellationToken)
         {
             await ValidateInvoiceAsync(model, cancellationToken);
@@ -188,6 +193,7 @@ namespace OfficeAutomation.Controllers
                 VatAmount = model.VatAmount,
                 GrandTotal = model.GrandTotal,
                 Notes = model.Notes?.Trim(),
+                WorkflowStatus = WorkflowStatus.Sent,
                 EmployerId = model.InvoiceType == "Sale" ? model.EmployerId : null,
                 WarehouseReceiptId = model.InvoiceType == "Purchase" ? model.WarehouseReceiptId : null,
                 FollowUpEmployeeId = model.InvoiceType == "Purchase" ? model.FollowUpEmployeeId : null,
@@ -227,6 +233,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.Edit")]
         public async Task<IActionResult> EditInvoice(int id, CancellationToken cancellationToken)
         {
             var entity = await _context.Invoices
@@ -279,6 +286,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
         public async Task<IActionResult> EditInvoice(int id, FinancialInvoiceUpsertVM model, CancellationToken cancellationToken)
         {
             if (id != model.Id)
@@ -356,6 +364,7 @@ namespace OfficeAutomation.Controllers
                 entity.VatAmount = model.VatAmount;
                 entity.GrandTotal = model.GrandTotal;
                 entity.Notes = model.Notes?.Trim();
+                entity.WorkflowStatus = WorkflowStatus.Normalize(entity.WorkflowStatus);
                 entity.EmployerId = model.InvoiceType == "Sale" ? model.EmployerId : null;
                 entity.WarehouseReceiptId = model.InvoiceType == "Purchase" ? model.WarehouseReceiptId : null;
                 entity.FollowUpEmployeeId = model.InvoiceType == "Purchase" ? model.FollowUpEmployeeId : null;
@@ -411,6 +420,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Delete")]
         public async Task<IActionResult> DeleteInvoice(int id, string? returnTo, CancellationToken cancellationToken)
         {
             var normalizedReturn = string.Equals(returnTo, "Purchase", StringComparison.OrdinalIgnoreCase)
@@ -712,6 +722,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.Export")]
         public async Task<IActionResult> ExportInvoicesExcel(string? invoiceType, int? year, int? quarter, CancellationToken cancellationToken)
         {
             var query = _context.Invoices.AsNoTracking().AsQueryable();
@@ -769,6 +780,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.Export")]
         public async Task<IActionResult> ExportStockExcel(int? warehouseId, CancellationToken cancellationToken)
         {
             var query = _context.InventoryStocks
@@ -812,6 +824,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Finance.Export")]
         public async Task<IActionResult> ExportPayrollExcel(int? year, int? month, CancellationToken cancellationToken)
         {
             var query = _context.PayrollLists

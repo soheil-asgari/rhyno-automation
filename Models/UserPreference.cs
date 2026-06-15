@@ -17,6 +17,8 @@ namespace OfficeAutomation.Models
         [MaxLength(16)]
         public string ThemePreference { get; set; } = "System";
 
+        public string? TablePreferencesJson { get; set; }
+
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 
         public User? User { get; set; }

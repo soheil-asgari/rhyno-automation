@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
+    [PermissionAuthorize("HR.View")]
     public class BimehController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -19,6 +21,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("HR.View")]
         public async Task<IActionResult> Index(InsuranceIndexVM filter)
         {
             var query = _context.InsuranceLists
@@ -60,6 +63,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("HR.Create")]
         public IActionResult Create()
         {
             var now = DateTime.Now;
@@ -74,6 +78,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Create")]
         public async Task<IActionResult> Create(InsuranceCreateVM model)
         {
             if (!ModelState.IsValid)
@@ -179,6 +184,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Edit")]
         public async Task<IActionResult> Edit(int id, InsuranceEditVM model)
         {
             if (id != model.Id)

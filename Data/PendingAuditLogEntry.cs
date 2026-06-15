@@ -46,6 +46,11 @@ namespace OfficeAutomation.Data
 
         public AuditLog ToAuditLog()
         {
+            var isSensitive = string.Equals(Action, "Delete", StringComparison.OrdinalIgnoreCase) ||
+                              TableName.Contains("Permission", StringComparison.OrdinalIgnoreCase) ||
+                              TableName.Contains("Role", StringComparison.OrdinalIgnoreCase) ||
+                              TableName.Contains("User", StringComparison.OrdinalIgnoreCase);
+
             return new AuditLog
             {
                 UserId = RequestInfo.UserId,
@@ -56,7 +61,8 @@ namespace OfficeAutomation.Data
                 NewValues = NewValues.Count == 0 ? null : JsonSerializer.Serialize(NewValues, SerializerOptions),
                 AffectedColumns = AffectedColumns.Count == 0 ? null : JsonSerializer.Serialize(AffectedColumns, SerializerOptions),
                 UserIP = RequestInfo.UserIP,
-                UserAgent = RequestInfo.UserAgent
+                UserAgent = RequestInfo.UserAgent,
+                IsSensitive = isSensitive
             };
         }
 

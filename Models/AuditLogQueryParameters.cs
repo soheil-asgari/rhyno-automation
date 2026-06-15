@@ -5,6 +5,8 @@ namespace OfficeAutomation.Models
         public string? UserId { get; set; }
         public string? Action { get; set; }
         public string? TableName { get; set; }
+        public string? Module { get; set; }
+        public bool? SensitiveOnly { get; set; }
         public DateTimeOffset? From { get; set; }
         public DateTimeOffset? To { get; set; }
         public int Page { get; set; } = 1;

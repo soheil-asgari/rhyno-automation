@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace OfficeAutomation.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialBuildFix : Migration
+    public partial class nitialreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -42,7 +42,8 @@ namespace OfficeAutomation.Migrations
                     NewValues = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AffectedColumns = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserIP = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
-                    UserAgent = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true)
+                    UserAgent = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    IsSensitive = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -84,6 +85,29 @@ namespace OfficeAutomation.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_InsuranceLists", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ManagementDatabaseConnections",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Provider = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    Host = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Port = table.Column<int>(type: "int", nullable: true),
+                    DatabaseName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    Username = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    ProtectedPassword = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TrustServerCertificate = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ManagementDatabaseConnections", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -377,6 +401,38 @@ namespace OfficeAutomation.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DocumentArchiveItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(180)", maxLength: 180, nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    AccessLevel = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    RelatedModule = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: true),
+                    RelatedEntityType = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: true),
+                    RelatedEntityId = table.Column<int>(type: "int", nullable: true),
+                    FileName = table.Column<string>(type: "nvarchar(260)", maxLength: 260, nullable: false),
+                    StoredFileName = table.Column<string>(type: "nvarchar(260)", maxLength: 260, nullable: false),
+                    RelativePath = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: true),
+                    FileSize = table.Column<long>(type: "bigint", nullable: false),
+                    IsPreviewable = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DocumentArchiveItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DocumentArchiveItems_AspNetUsers_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Leaves",
                 columns: table => new
                 {
@@ -386,7 +442,7 @@ namespace OfficeAutomation.Migrations
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "PendingApproval")
                 },
                 constraints: table =>
                 {
@@ -414,6 +470,7 @@ namespace OfficeAutomation.Migrations
                     IsRead = table.Column<bool>(type: "bit", nullable: false),
                     ReadDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DocumentType = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: false),
+                    WorkflowStatus = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "Sent"),
                     CurrentWorkflowStep = table.Column<int>(type: "int", nullable: false),
                     IsWorkflowCompleted = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -441,6 +498,35 @@ namespace OfficeAutomation.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OrganizationCalendarEvents",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(180)", maxLength: 180, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1200)", maxLength: 1200, nullable: true),
+                    EventType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    EventDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EventDateShamsi = table.Column<string>(type: "nvarchar(24)", maxLength: 24, nullable: true),
+                    SourceModule = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    SourceEntityType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
+                    SourceEntityId = table.Column<int>(type: "int", nullable: true),
+                    IsAllDay = table.Column<bool>(type: "bit", nullable: false),
+                    IsSensitive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrganizationCalendarEvents", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrganizationCalendarEvents_AspNetUsers_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserPreferences",
                 columns: table => new
                 {
@@ -449,6 +535,7 @@ namespace OfficeAutomation.Migrations
                     UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
                     SidebarCollapsedByDefault = table.Column<bool>(type: "bit", nullable: false),
                     ThemePreference = table.Column<string>(type: "nvarchar(16)", maxLength: 16, nullable: false),
+                    TablePreferencesJson = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: true),
                     UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -573,7 +660,7 @@ namespace OfficeAutomation.Migrations
                     DestinationWarehouseId = table.Column<int>(type: "int", nullable: false),
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     Quantity = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "PendingApproval"),
                     RequestedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ApprovedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -649,6 +736,7 @@ namespace OfficeAutomation.Migrations
                     DestinationOrDepartment = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     EmployerId = table.Column<int>(type: "int", nullable: true),
                     Notes = table.Column<string>(type: "nvarchar(600)", maxLength: 600, nullable: true),
+                    WorkflowStatus = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "Approved"),
                     WarehouseId = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -680,6 +768,7 @@ namespace OfficeAutomation.Migrations
                     SupplierOrSource = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     VendorId = table.Column<int>(type: "int", nullable: true),
                     Notes = table.Column<string>(type: "nvarchar(600)", maxLength: 600, nullable: true),
+                    WorkflowStatus = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "Approved"),
                     WarehouseId = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -1002,6 +1091,7 @@ namespace OfficeAutomation.Migrations
                     VatAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     GrandTotal = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(600)", maxLength: 600, nullable: true),
+                    WorkflowStatus = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "Draft"),
                     WarehouseReceiptId = table.Column<int>(type: "int", nullable: true),
                     FollowUpEmployeeId = table.Column<int>(type: "int", nullable: true),
                     EmployerId = table.Column<int>(type: "int", nullable: true),
@@ -1117,14 +1207,34 @@ namespace OfficeAutomation.Migrations
                 columns: new[] { "Key", "Category", "Description", "DisplayName", "IsSystem" },
                 values: new object[,]
                 {
+                    { "Archive.Create", "Archive", "Upload and archive files.", "Upload archive documents", true },
+                    { "Archive.View", "Archive", "View archived files and attachments.", "View document archive", true },
+                    { "Archive.ViewSensitive", "Archive", "View restricted archive files.", "View restricted archive documents", true },
+                    { "AuditLogs.Export", "Security", "Export audit logs.", "Export audit logs", true },
                     { "AuditLogs.Read", "Security", "View audit logs.", "Read audit logs", true },
+                    { "Calendar.Create", "Calendar", "Create organization calendar events.", "Create calendar events", true },
+                    { "Calendar.View", "Calendar", "View unified organization calendar.", "View organization calendar", true },
+                    { "Finance.Approve", "Finance", "Approve finance operations.", "Approve finance", true },
+                    { "Finance.Create", "Finance", "Create invoices and finance records.", "Create finance records", true },
                     { "Finance.Delete", "Finance", "Delete finance records.", "Delete finance", true },
+                    { "Finance.Edit", "Finance", "Edit finance records.", "Edit finance records", true },
+                    { "Finance.Export", "Finance", "Export finance reports.", "Export finance", true },
                     { "Finance.View", "Finance", "View finance dashboards and records.", "View finance", true },
+                    { "Finance.ViewSensitive", "Finance", "View sensitive finance amounts and totals.", "View finance amounts", true },
                     { "HR.Approve", "HR", "Approve HR workflows and actions.", "Approve HR", true },
+                    { "HR.Create", "HR", "Create HR records.", "Create HR records", true },
+                    { "HR.Delete", "HR", "Delete HR records.", "Delete HR records", true },
+                    { "HR.Edit", "HR", "Edit HR records.", "Edit HR records", true },
+                    { "HR.Export", "HR", "Export HR reports.", "Export HR", true },
                     { "HR.View", "HR", "View HR employee records.", "View HR", true },
+                    { "HR.ViewSensitive", "HR", "View salary and confidential HR fields.", "View confidential HR data", true },
+                    { "Letters.Approve", "Letters", "Approve letter workflow actions.", "Approve letters", true },
                     { "Letters.Create", "Letters", "Create and route new letters.", "Create letters", true },
                     { "Letters.Delete", "Letters", "Delete letters.", "Delete letters", true },
+                    { "Letters.Edit", "Letters", "Edit existing letters.", "Edit letters", true },
+                    { "Letters.Export", "Letters", "Export letters reports.", "Export letters", true },
                     { "Letters.Read", "Letters", "View letters and inbox items.", "Read letters", true },
+                    { "Letters.ViewSensitive", "Letters", "View confidential letter content.", "View confidential letters", true },
                     { "Permissions.Manage", "Administration", "Assign permissions to roles.", "Manage permissions", true },
                     { "Roles.Manage", "Administration", "Create and maintain roles.", "Manage roles", true },
                     { "Security.Manage", "Security", "Manage RBAC, permissions, and access rules.", "Manage security", true },
@@ -1132,7 +1242,12 @@ namespace OfficeAutomation.Migrations
                     { "SystemSettings.View", "Settings", "View system settings.", "View settings", true },
                     { "Users.Manage", "Administration", "Create and maintain users.", "Manage users", true },
                     { "Warehouse.Approve", "Warehouse", "Approve warehouse actions.", "Approve warehouse", true },
-                    { "Warehouse.View", "Warehouse", "View warehouse operations.", "View warehouse", true }
+                    { "Warehouse.Create", "Warehouse", "Create warehouse records.", "Create warehouse records", true },
+                    { "Warehouse.Delete", "Warehouse", "Delete warehouse records.", "Delete warehouse records", true },
+                    { "Warehouse.Edit", "Warehouse", "Edit warehouse records.", "Edit warehouse records", true },
+                    { "Warehouse.Export", "Warehouse", "Export warehouse reports.", "Export warehouse", true },
+                    { "Warehouse.View", "Warehouse", "View warehouse operations.", "View warehouse", true },
+                    { "Warehouse.ViewSensitive", "Warehouse", "View sensitive inventory valuations.", "View confidential warehouse values", true }
                 });
 
             migrationBuilder.InsertData(
@@ -1213,6 +1328,16 @@ namespace OfficeAutomation.Migrations
                 name: "IX_Departments_ManagerId",
                 table: "Departments",
                 column: "ManagerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DocumentArchiveItems_Category_CreatedAt",
+                table: "DocumentArchiveItems",
+                columns: new[] { "Category", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DocumentArchiveItems_CreatedByUserId",
+                table: "DocumentArchiveItems",
+                column: "CreatedByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Employers_ContractNumber",
@@ -1389,6 +1514,21 @@ namespace OfficeAutomation.Migrations
                 name: "IX_Letters_SenderId",
                 table: "Letters",
                 column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ManagementDatabaseConnections_Name",
+                table: "ManagementDatabaseConnections",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrganizationCalendarEvents_CreatedByUserId",
+                table: "OrganizationCalendarEvents",
+                column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrganizationCalendarEvents_EventDate_EventType",
+                table: "OrganizationCalendarEvents",
+                columns: new[] { "EventDate", "EventType" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_PayrollItems_HumanCapitalEmployeeId",
@@ -1623,6 +1763,9 @@ namespace OfficeAutomation.Migrations
                 name: "AuditLogs");
 
             migrationBuilder.DropTable(
+                name: "DocumentArchiveItems");
+
+            migrationBuilder.DropTable(
                 name: "HumanCapitalSalaryHistories");
 
             migrationBuilder.DropTable(
@@ -1651,6 +1794,12 @@ namespace OfficeAutomation.Migrations
 
             migrationBuilder.DropTable(
                 name: "Letters");
+
+            migrationBuilder.DropTable(
+                name: "ManagementDatabaseConnections");
+
+            migrationBuilder.DropTable(
+                name: "OrganizationCalendarEvents");
 
             migrationBuilder.DropTable(
                 name: "PayrollItems");

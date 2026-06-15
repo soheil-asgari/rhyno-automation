@@ -23,6 +23,9 @@ namespace OfficeAutomation.Models
         [StringLength(600)]
         public string? Notes { get; set; }
 
+        [StringLength(30)]
+        public string WorkflowStatus { get; set; } = Models.WorkflowStatus.Approved;
+
         public int WarehouseId { get; set; }
 
         public DateTime CreatedAt { get; set; }

@@ -122,7 +122,7 @@
                     <div class="icon-box status-pending ms-3"><i class="bi bi-clock-history"></i></div>
                     <div>
                         <small class="text-muted d-block">در انتظار تایید</small>
-                        <span class="fw-bold fs-5 text-warning">@Model.Count(x => x.Status == "در انتظار تایید")</span>
+                        <span class="fw-bold fs-5 text-warning">@Model.Count(x => WorkflowStatus.IsPending(x.Status))</span>
                     </div>
                 </div>
             </div>
@@ -133,7 +133,7 @@
                     <div class="icon-box status-approved ms-3"><i class="bi bi-check2-circle"></i></div>
                     <div>
                         <small class="text-muted d-block">تایید شده</small>
-                        <span class="fw-bold fs-5 text-success">@Model.Count(x => x.Status == "تایید شده")</span>
+                        <span class="fw-bold fs-5 text-success">@Model.Count(x => WorkflowStatus.IsApproved(x.Status))</span>
                     </div>
                 </div>
             </div>
@@ -181,17 +181,17 @@
                                 </span>
                             </td>
                             <td>
-                                @if (item.Status == "در انتظار تایید")
+                                @if (WorkflowStatus.IsPending(item.Status))
                                 {
-                                    <span class="badge-soft status-pending small">در انتظار</span>
+                                    <span class="badge-soft status-pending small">@WorkflowStatus.Label(item.Status)</span>
                                 }
-                                else if (item.Status == "تایید شده")
+                                else if (WorkflowStatus.IsApproved(item.Status))
                                 {
-                                    <span class="badge-soft status-approved small">تایید شده</span>
+                                    <span class="badge-soft status-approved small">@WorkflowStatus.Label(item.Status)</span>
                                 }
                                 else
                                 {
-                                    <span class="badge-soft bg-light text-danger small">رد شده</span>
+                                    <span class="badge-soft bg-light text-danger small">@WorkflowStatus.Label(item.Status)</span>
                                 }
                             </td>
                             <td class="text-center pe-4">

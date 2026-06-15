@@ -16,7 +16,7 @@ namespace OfficeAutomation.Models
         public string RoleId { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(80)]
+        [StringLength(128)]
         public string PermissionKey { get; set; } = string.Empty;
 
         public bool IsAllowed { get; set; }

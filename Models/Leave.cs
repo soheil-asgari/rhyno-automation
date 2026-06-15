@@ -16,6 +16,6 @@
         public string Reason { get; set; } = string.Empty;
 
         // تغییر از int به string برای ذخیره "در انتظار"، "تایید شده" و غیره
-        public string Status { get; set; } = "در انتظار تایید";
+        public string Status { get; set; } = WorkflowStatus.PendingApproval;
     }
 }

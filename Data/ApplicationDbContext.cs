@@ -53,6 +53,8 @@ namespace OfficeAutomation.Data
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<ManagementDatabaseConnection> ManagementDatabaseConnections { get; set; }
+        public DbSet<OrganizationCalendarEvent> OrganizationCalendarEvents { get; set; }
+        public DbSet<DocumentArchiveItem> DocumentArchiveItems { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -290,6 +292,11 @@ namespace OfficeAutomation.Data
                 .HasMaxLength(600);
 
             modelBuilder.Entity<Invoice>()
+                .Property(i => i.WorkflowStatus)
+                .HasMaxLength(30)
+                .HasDefaultValue(WorkflowStatus.Draft);
+
+            modelBuilder.Entity<Invoice>()
                 .Property(i => i.RowVersion)
                 .IsRowVersion();
 
@@ -421,6 +428,10 @@ namespace OfficeAutomation.Data
             modelBuilder.Entity<UserPreference>()
                 .HasIndex(preference => preference.UserId)
                 .IsUnique();
+
+            modelBuilder.Entity<UserPreference>()
+                .Property(preference => preference.TablePreferencesJson)
+                .HasMaxLength(8000);
 
             modelBuilder.Entity<UserPreference>()
                 .HasOne(preference => preference.User)
@@ -561,7 +572,8 @@ namespace OfficeAutomation.Data
 
             modelBuilder.Entity<InventoryTransferRequest>()
                 .Property(item => item.Status)
-                .HasMaxLength(30);
+                .HasMaxLength(30)
+                .HasDefaultValue(WorkflowStatus.PendingApproval);
 
             modelBuilder.Entity<InventoryTransferRequest>()
                 .Property(item => item.Quantity)
@@ -614,6 +626,16 @@ namespace OfficeAutomation.Data
                 .Property(item => item.DocumentType)
                 .HasMaxLength(60);
 
+            modelBuilder.Entity<Letter>()
+                .Property(item => item.WorkflowStatus)
+                .HasMaxLength(30)
+                .HasDefaultValue(WorkflowStatus.Sent);
+
+            modelBuilder.Entity<Leave>()
+                .Property(item => item.Status)
+                .HasMaxLength(30)
+                .HasDefaultValue(WorkflowStatus.PendingApproval);
+
             modelBuilder.Entity<RolePermission>()
                 .Property(item => item.PermissionKey)
                 .HasMaxLength(80);
@@ -651,6 +673,11 @@ namespace OfficeAutomation.Data
             modelBuilder.Entity<WarehouseReceipt>()
                 .Property(receipt => receipt.Notes)
                 .HasMaxLength(600);
+
+            modelBuilder.Entity<WarehouseReceipt>()
+                .Property(receipt => receipt.WorkflowStatus)
+                .HasMaxLength(30)
+                .HasDefaultValue(WorkflowStatus.Approved);
 
             modelBuilder.Entity<WarehouseReceipt>()
                 .HasOne(receipt => receipt.Warehouse)
@@ -703,6 +730,11 @@ namespace OfficeAutomation.Data
             modelBuilder.Entity<WarehouseIssuance>()
                 .Property(issuance => issuance.Notes)
                 .HasMaxLength(600);
+
+            modelBuilder.Entity<WarehouseIssuance>()
+                .Property(issuance => issuance.WorkflowStatus)
+                .HasMaxLength(30)
+                .HasDefaultValue(WorkflowStatus.Approved);
 
             modelBuilder.Entity<WarehouseIssuance>()
                 .HasOne(issuance => issuance.Warehouse)
@@ -896,6 +928,10 @@ namespace OfficeAutomation.Data
                 .HasMaxLength(1024);
 
             modelBuilder.Entity<AuditLog>()
+                .Property(item => item.IsSensitive)
+                .HasDefaultValue(false);
+
+            modelBuilder.Entity<AuditLog>()
                 .HasIndex(item => new { item.TableName, item.DateTime });
 
             modelBuilder.Entity<ApplicationRole>()
@@ -945,6 +981,89 @@ namespace OfficeAutomation.Data
                 .HasForeignKey(item => item.PermissionKey)
                 .HasPrincipalKey(item => item.Key)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+                .Property(item => item.Title)
+                .HasMaxLength(180);
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+                .Property(item => item.Description)
+                .HasMaxLength(1200);
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+                .Property(item => item.EventType)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+                .Property(item => item.EventDateShamsi)
+                .HasMaxLength(24);
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+                .Property(item => item.SourceModule)
+                .HasMaxLength(80);
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+                .Property(item => item.SourceEntityType)
+                .HasMaxLength(80);
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+    .Property(item => item.CreatedByUserId)
+    .HasMaxLength(450);
+
+
+            modelBuilder.Entity<OrganizationCalendarEvent>()
+                .HasIndex(item => new { item.EventDate, item.EventType });
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.Title)
+                .HasMaxLength(180);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.Category)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.AccessLevel)
+                .HasMaxLength(40);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.RelatedModule)
+                .HasMaxLength(120);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.RelatedEntityType)
+                .HasMaxLength(120);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.FileName)
+                .HasMaxLength(260);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.StoredFileName)
+                .HasMaxLength(260);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.RelativePath)
+                .HasMaxLength(400);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .Property(item => item.ContentType)
+                .HasMaxLength(120);
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+      .Property(item => item.CreatedByUserId)
+      .HasMaxLength(450)
+      .IsRequired();
+
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .HasIndex(item => new { item.Category, item.CreatedAt });
+
+            modelBuilder.Entity<DocumentArchiveItem>()
+                .HasOne(item => item.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(item => item.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Vendor>()
                 .HasIndex(item => item.Name);

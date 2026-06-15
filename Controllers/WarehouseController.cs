@@ -6,6 +6,7 @@ using System.Data;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
@@ -40,6 +41,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Warehouse.View")]
         public async Task<IActionResult> Products(string? searchTerm, CancellationToken cancellationToken)
         {
             var query = _context.Products
@@ -62,6 +64,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Warehouse.Create")]
         public IActionResult CreateProduct()
         {
             return View(new ProductUpsertVM());
@@ -69,6 +72,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Create")]
         public async Task<IActionResult> CreateProduct(ProductUpsertVM model, CancellationToken cancellationToken)
         {
             await ValidateProductCodeAsync(model.Code, null, cancellationToken);
@@ -97,6 +101,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("Warehouse.Edit")]
         public async Task<IActionResult> EditProduct(int id, CancellationToken cancellationToken)
         {
             var entity = await _context.Products
@@ -123,6 +128,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Edit")]
         public async Task<IActionResult> EditProduct(int id, ProductUpsertVM model, CancellationToken cancellationToken)
         {
             if (model.Id != id)
@@ -168,6 +174,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Delete")]
         public async Task<IActionResult> DeleteProduct(int id, CancellationToken cancellationToken)
         {
             var entity = await _context.Products.FirstOrDefaultAsync(item => item.Id == id && !item.IsDeleted, cancellationToken);
@@ -214,6 +221,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Edit")]
         public async Task<IActionResult> ToggleProductStatus(int id, CancellationToken cancellationToken)
         {
             var entity = await _context.Products.FirstOrDefaultAsync(item => item.Id == id && !item.IsDeleted, cancellationToken);
@@ -437,6 +445,7 @@ namespace OfficeAutomation.Controllers
                 VendorId = model.VendorId,
                 SupplierOrSource = (await ResolveVendorNameAsync(model.VendorId, model.SupplierOrSource, cancellationToken)).Trim(),
                 Notes = model.Notes?.Trim(),
+                WorkflowStatus = WorkflowStatus.Approved,
                 WarehouseId = model.WarehouseId,
                 CreatedAt = DateTime.Now,
                 Items = validItems.Select(item => new WarehouseReceiptItem
@@ -555,6 +564,7 @@ namespace OfficeAutomation.Controllers
                 EmployerId = model.EmployerId,
                 DestinationOrDepartment = (await ResolveEmployerNameAsync(model.EmployerId, model.DestinationOrDepartment, cancellationToken)).Trim(),
                 Notes = model.Notes?.Trim(),
+                WorkflowStatus = WorkflowStatus.Approved,
                 WarehouseId = model.WarehouseId,
                 CreatedAt = DateTime.Now,
                 Items = validItems.Select(item => new WarehouseIssuanceItem
@@ -790,7 +800,7 @@ namespace OfficeAutomation.Controllers
                 DestinationWarehouseId = model.DestinationWarehouseId,
                 ProductId = model.ProductId,
                 Quantity = model.Quantity,
-                Status = "PendingManager",
+                Status = WorkflowStatus.PendingApproval,
                 RequestedByUserId = currentUserId,
                 CreatedAt = DateTime.Now
             };
@@ -819,6 +829,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Approve")]
         public async Task<IActionResult> ApproveTransferRequest(int id, CancellationToken cancellationToken)
         {
             var currentUserId = CurrentUserId;
@@ -835,7 +846,7 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            if (request.Status != "PendingManager")
+            if (!WorkflowStatus.IsPending(request.Status) && request.Status != "PendingManager")
             {
                 TempData["WarehouseMessage"] = "این درخواست قبلاً تعیین تکلیف شده است.";
                 return RedirectToAction(nameof(TransferRequests));
@@ -875,7 +886,7 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(TransferRequests));
             }
 
-            request.Status = "Approved";
+            request.Status = WorkflowStatus.Approved;
             request.ApprovedByUserId = currentUserId;
             request.ApprovedAt = DateTime.Now;
             await _context.SaveChangesAsync(cancellationToken);
@@ -886,7 +897,7 @@ namespace OfficeAutomation.Controllers
                 "Approve",
                 "InventoryTransferRequest",
                 request.Id.ToString(),
-                new { Status = "PendingManager" },
+                new { Status = WorkflowStatus.PendingApproval },
                 new
                 {
                     request.Status,
@@ -901,6 +912,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Approve")]
         public async Task<IActionResult> RejectTransferRequest(int id, CancellationToken cancellationToken)
         {
             var currentUserId = CurrentUserId;
@@ -915,7 +927,7 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            if (request.Status != "PendingManager")
+            if (!WorkflowStatus.IsPending(request.Status) && request.Status != "PendingManager")
             {
                 TempData["WarehouseMessage"] = "این درخواست قبلاً تعیین تکلیف شده است.";
                 return RedirectToAction(nameof(TransferRequests));
@@ -929,7 +941,7 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            request.Status = "Rejected";
+            request.Status = WorkflowStatus.Rejected;
             request.ApprovedByUserId = currentUserId;
             request.ApprovedAt = DateTime.Now;
             await _context.SaveChangesAsync(cancellationToken);
@@ -938,7 +950,7 @@ namespace OfficeAutomation.Controllers
                 "Reject",
                 "InventoryTransferRequest",
                 request.Id.ToString(),
-                new { Status = "PendingManager" },
+                new { Status = WorkflowStatus.PendingApproval },
                 new
                 {
                     request.Status,

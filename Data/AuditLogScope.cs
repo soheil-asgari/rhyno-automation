@@ -34,7 +34,9 @@ namespace OfficeAutomation.Data
             typeof(Vendor),
             typeof(Employer),
             typeof(InventoryTransferRequest),
-            typeof(WorkflowRoute)
+            typeof(WorkflowRoute),
+            typeof(OrganizationCalendarEvent),
+            typeof(DocumentArchiveItem)
         ];
 
         public static bool IsAuditedEntity(Type entityType)

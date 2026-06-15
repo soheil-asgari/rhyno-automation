@@ -522,6 +522,12 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-6 col-xl-2">
+                        <label for="filterModule" class="audit-filter-label">ماژول</label>
+                        <select id="filterModule" class="form-select">
+                            <option value="">همه ماژول‌ها</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-2">
                         <label for="filterAction" class="audit-filter-label">نوع عملیات</label>
                         <select id="filterAction" class="form-select">
                             <option value="">همه عملیات</option>
@@ -545,6 +551,10 @@
                                 <option value="100">۱۰۰</option>
                             </select>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filterSensitiveOnly" />
+                            <label class="form-check-label small" for="filterSensitiveOnly">فقط عملیات حساس</label>
+                        </div>
                         <div class="d-flex gap-2">
                             <button id="clearFiltersBtn" type="button" class="btn btn-outline-secondary px-4">
                                 پاک‌سازی
@@ -567,6 +577,10 @@
                 <div id="gridSummary" class="small text-muted">در حال بارگذاری...</div>
             </div>
             <div id="activeFilterBadges" class="d-flex flex-wrap gap-2"></div>
+        </div>
+        <div id="sensitiveWarningBox" class="alert alert-warning rounded-0 border-0 border-top border-bottom mb-0 d-none small">
+            <i class="bi bi-exclamation-triangle ms-1"></i>
+            در نتایج جاری، عملیات حساس ثبت شده است.
         </div>
         <div class="card-body p-0">
             <div id="auditLoading" class="audit-loader d-none align-items-center justify-content-center">
@@ -636,7 +650,8 @@
                 options: {
                     users: [],
                     actions: [],
-                    tableNames: []
+                    tableNames: [],
+                    modules: []
                 }
             };
 
@@ -647,6 +662,7 @@
                 pagination: document.getElementById('auditPagination'),
                 paginationInfo: document.getElementById('paginationInfo'),
                 gridSummary: document.getElementById('gridSummary'),
+                sensitiveWarningBox: document.getElementById('sensitiveWarningBox'),
                 filterOptionsStatus: document.getElementById('filterOptionsStatus'),
                 activeFilterBadges: document.getElementById('activeFilterBadges'),
                 metricTotal: document.getElementById('metricTotal'),
@@ -655,7 +671,9 @@
                 metricDelete: document.getElementById('metricDelete'),
                 userId: document.getElementById('filterUserId'),
                 tableName: document.getElementById('filterTableName'),
+                module: document.getElementById('filterModule'),
                 action: document.getElementById('filterAction'),
+                sensitiveOnly: document.getElementById('filterSensitiveOnly'),
                 from: document.getElementById('filterFrom'),
                 to: document.getElementById('filterTo'),
                 pageSize: document.getElementById('pageSizeSelect'),
@@ -812,6 +830,12 @@
                 if (els.tableName.value) {
                     params.set('tableName', els.tableName.value);
                 }
+                if (els.module.value) {
+                    params.set('module', els.module.value);
+                }
+                if (els.sensitiveOnly.checked) {
+                    params.set('sensitiveOnly', 'true');
+                }
                 if (els.from.value) {
                     params.set('from', new Date(`${els.from.value}T00:00:00`).toISOString());
                 }
@@ -859,12 +883,17 @@
                     state.options.users = getValue(payload, 'users', 'Users') || [];
                     state.options.actions = getValue(payload, 'actions', 'Actions') || [];
                     state.options.tableNames = getValue(payload, 'tableNames', 'TableNames') || [];
+                    state.options.modules = getValue(payload, 'modules', 'Modules') || [];
 
                     fillSelect(els.userId, state.options.users, 'همه کاربران', (item) => ({
                         value: getValue(item, 'value', 'Value') || '',
                         label: getValue(item, 'label', 'Label') || ''
                     }));
                     fillSelect(els.tableName, state.options.tableNames, 'همه بخش‌ها', (item) => ({
+                        value: item,
+                        label: item
+                    }));
+                    fillSelect(els.module, state.options.modules, 'همه ماژول‌ها', (item) => ({
                         value: item,
                         label: item
                     }));
@@ -901,9 +930,11 @@
                     const actionBadge = actionInfo(action);
                     const userDisplayName = getValue(item, 'userDisplayName', 'UserDisplayName') || getValue(item, 'userId', 'UserId');
                     const tableName = getValue(item, 'tableName', 'TableName');
+                    const moduleName = getValue(item, 'module', 'Module');
                     const dateTime = getValue(item, 'dateTime', 'DateTime');
                     const affectedColumns = getValue(item, 'affectedColumns', 'AffectedColumns');
                     const userIp = getValue(item, 'userIP', 'UserIP', 'userIp', 'UserIp');
+                    const isSensitive = getValue(item, 'isSensitive', 'IsSensitive');
 
                     return `
                         <tr class="audit-row" data-index="${index}" title="برای مشاهده جزئیات تغییرات کلیک کنید">
@@ -916,8 +947,12 @@
                             </td>
                             <td>
                                 <span class="badge ${actionBadge.badgeClass} px-3 py-2">${escapeHtml(actionBadge.label)}</span>
+                                ${isSensitive ? '<span class="badge bg-danger-subtle text-danger ms-1">حساس</span>' : ''}
                             </td>
-                            <td><span class="badge bg-light text-dark border">${escapeHtml(tableName)}</span></td>
+                            <td>
+                                <span class="badge bg-light text-dark border">${escapeHtml(tableName)}</span>
+                                <div class="small text-muted mt-1">${escapeHtml(moduleName)}</div>
+                            </td>
                             <td class="text-ltr text-muted">${escapeHtml(userIp)}</td>
                             <td>${escapeHtml(affectedColumns)}</td>
                             <td class="text-center">
@@ -979,6 +1014,12 @@
                 if (els.action.value) {
                     badges.push(`عملیات: ${actionInfo(els.action.value).label}`);
                 }
+                if (els.module.value) {
+                    badges.push(`ماژول: ${els.module.value}`);
+                }
+                if (els.sensitiveOnly.checked) {
+                    badges.push('فقط حساس');
+                }
                 if (els.from.value) {
                     badges.push(`از: ${formatDate(els.from.value, false)}`);
                 }
@@ -987,6 +1028,11 @@
                 }
 
                 els.activeFilterBadges.innerHTML = badges.map((item) => `<span class="badge bg-primary-subtle text-primary">${escapeHtml(item)}</span>`).join('');
+            };
+
+            const renderSensitiveWarning = () => {
+                const hasSensitive = state.items.some((item) => getValue(item, 'isSensitive', 'IsSensitive'));
+                els.sensitiveWarningBox.classList.toggle('d-none', !hasSensitive);
             };
 
             const renderMetrics = async () => {
@@ -1039,6 +1085,7 @@
                     renderRows();
                     renderPagination();
                     renderFilterBadges();
+                    renderSensitiveWarning();
                     els.gridSummary.textContent = `${toFaNumber(state.totalCount)} رکورد در نتیجه فیلتر فعلی`;
                     await renderMetrics();
                 } catch (error) {
@@ -1055,6 +1102,7 @@
                     els.gridSummary.textContent = 'خطا در بارگذاری';
                     els.pagination.innerHTML = '';
                     els.paginationInfo.textContent = '';
+                    els.sensitiveWarningBox.classList.add('d-none');
                 } finally {
                     setLoading(false);
                 }
@@ -1149,50 +1197,17 @@
                 modal.show();
             };
 
-            const csvEscape = (value) => `"${normalizeText(value).replace(/"/g, '""')}"`;
-
-            const loadAllFilteredRows = async () => {
-                const pageSize = 200;
-                const firstPayload = await fetchJson(`${apiUrl}?${buildQuery(1, pageSize).toString()}`);
-                const allItems = [...normalizeItems(firstPayload)];
-                const totalCount = getValue(firstPayload, 'totalCount', 'TotalCount') || allItems.length;
-                const totalPages = Math.ceil(totalCount / pageSize);
-
-                for (let page = 2; page <= totalPages; page += 1) {
-                    const payload = await fetchJson(`${apiUrl}?${buildQuery(page, pageSize).toString()}`);
-                    allItems.push(...normalizeItems(payload));
-                }
-
-                return allItems;
-            };
-
             const exportCsv = async () => {
                 els.export.disabled = true;
                 const originalText = els.export.innerHTML;
                 els.export.innerHTML = '<span class="spinner-border spinner-border-sm ms-1" aria-hidden="true"></span>در حال آماده‌سازی';
 
                 try {
-                    const rows = await loadAllFilteredRows();
-                    const header = ['شناسه', 'زمان', 'کاربر', 'نوع عملیات', 'بخش/جدول', 'IP', 'ستون‌های تغییر یافته', 'مقادیر قبلی', 'مقادیر جدید'];
-                    const csvRows = [header.map(csvEscape).join(',')];
-
-                    rows.forEach((item) => {
-                        const action = actionInfo(getValue(item, 'action', 'Action')).label;
-                        csvRows.push([
-                            getValue(item, 'id', 'Id'),
-                            formatDate(getValue(item, 'dateTime', 'DateTime')),
-                            getValue(item, 'userDisplayName', 'UserDisplayName') || getValue(item, 'userId', 'UserId'),
-                            action,
-                            getValue(item, 'tableName', 'TableName'),
-                            getValue(item, 'userIP', 'UserIP', 'userIp', 'UserIp'),
-                            getValue(item, 'affectedColumns', 'AffectedColumns'),
-                            getValue(item, 'oldValues', 'OldValues'),
-                            getValue(item, 'newValues', 'NewValues')
-                        ].map(csvEscape).join(','));
-                    });
-
-                    const csvContent = `\uFEFF${csvRows.join('\r\n')}`;
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const response = await fetch(`${apiUrl}/export?${buildQuery(1, 5000).toString()}`, { method: 'GET' });
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    const blob = await response.blob();
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;

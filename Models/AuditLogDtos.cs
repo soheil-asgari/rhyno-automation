@@ -13,6 +13,8 @@ namespace OfficeAutomation.Models
         public string? AffectedColumns { get; init; }
         public string? UserIP { get; init; }
         public string? UserAgent { get; init; }
+        public bool IsSensitive { get; init; }
+        public string Module { get; init; } = string.Empty;
     }
 
     public sealed class AuditLogFilterOptionDto
@@ -26,6 +28,7 @@ namespace OfficeAutomation.Models
         public IReadOnlyList<AuditLogFilterOptionDto> Users { get; init; } = [];
         public IReadOnlyList<string> Actions { get; init; } = [];
         public IReadOnlyList<string> TableNames { get; init; } = [];
+        public IReadOnlyList<string> Modules { get; init; } = [];
     }
 
     public sealed class PagedResult<T>

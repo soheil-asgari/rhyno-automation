@@ -1,6 +1,7 @@
 ﻿@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @using OfficeAutomation.Data
+@using OfficeAutomation.Models
 @inject ApplicationDbContext DbContext
 @{
     var displayName = User?.FindFirst("name")?.Value
@@ -109,14 +110,83 @@
                     .Select(item => (bool?)item.IsAllowed)
                     .FirstOrDefault();
 
-                userCanAccessFinance = ResolvePermission("Finance") ?? userCanAccessFinance;
-                userCanAccessWarehouse = ResolvePermission("Warehouse") ?? userCanAccessWarehouse;
-                userCanAccessHumanCapital = ResolvePermission("HumanCapital") ?? userCanAccessHumanCapital;
-                userCanAccessSystemSettings = ResolvePermission("SystemSettings") ?? userCanAccessSystemSettings;
+                userCanAccessFinance = ResolvePermission("Finance.View") ?? ResolvePermission("Finance") ?? userCanAccessFinance;
+                userCanAccessWarehouse = ResolvePermission("Warehouse.View") ?? ResolvePermission("Warehouse") ?? userCanAccessWarehouse;
+                userCanAccessHumanCapital = ResolvePermission("HR.View") ?? ResolvePermission("HumanCapital") ?? userCanAccessHumanCapital;
+                userCanAccessSystemSettings = ResolvePermission("SystemSettings.View") ?? ResolvePermission("SystemSettings") ?? userCanAccessSystemSettings;
                 userCanAccessWorkflowAdministration = ResolvePermission("WorkflowAdministration") ?? userCanAccessWorkflowAdministration;
             }
         }
     }
+
+    var headerNotifications = new List<(string Title, string Description, string Url, string Icon, string Tone)>();
+    if (User?.Identity?.IsAuthenticated == true)
+    {
+        var notificationUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var todayStart = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
+
+        if (!string.IsNullOrWhiteSpace(notificationUserId))
+        {
+            var unreadLetters = await DbContext.Letters
+                .AsNoTracking()
+                .CountAsync(item => !item.IsRead && (item.ReceiverId == notificationUserId || item.FinalReceiverId == notificationUserId));
+            if (unreadLetters > 0)
+            {
+                headerNotifications.Add(("نامه جدید", $"{unreadLetters:N0} نامه خوانده نشده دارید.", "/Letters", "bi-envelope", "primary"));
+            }
+
+            var approvedLeaves = await DbContext.Leaves
+                .AsNoTracking()
+                .CountAsync(item => item.UserId == notificationUserId && item.Status == WorkflowStatus.Approved);
+            if (approvedLeaves > 0)
+            {
+                headerNotifications.Add(("تایید مرخصی", $"{approvedLeaves:N0} درخواست مرخصی تایید شده دارید.", "/Leaves", "bi-calendar-check", "success"));
+            }
+        }
+
+        if (User.IsInRole("Admin"))
+        {
+            var pendingLeavesForApproval = await DbContext.Leaves
+                .AsNoTracking()
+                .CountAsync(item => item.Status == WorkflowStatus.PendingApproval || item.Status == "در انتظار تایید" || item.Status == "در انتظار تأیید");
+            if (pendingLeavesForApproval > 0)
+            {
+                headerNotifications.Add(("مرخصی در انتظار", $"{pendingLeavesForApproval:N0} درخواست مرخصی نیاز به بررسی دارد.", "/Leaves", "bi-hourglass-split", "warning"));
+            }
+        }
+
+        var lowStock = await DbContext.InventoryStocks
+            .AsNoTracking()
+            .CountAsync(item => item.Product.MinimumStock > 0 && item.CurrentQuantity <= item.Product.MinimumStock);
+        if (lowStock > 0)
+        {
+            headerNotifications.Add(("کاهش موجودی", $"{lowStock:N0} قلم کالا به حداقل موجودی رسیده است.", "/Warehouse/Stock", "bi-box-seam", "danger"));
+        }
+
+        var dueInvoices = await DbContext.Invoices
+            .AsNoTracking()
+            .CountAsync(item =>
+                item.InvoiceType == "Purchase" &&
+                item.DeadlineDateShamsi != null &&
+                item.WorkflowStatus != WorkflowStatus.Approved &&
+                item.WorkflowStatus != WorkflowStatus.Archived);
+        if (dueInvoices > 0)
+        {
+            headerNotifications.Add(("سررسید مالی/پرداخت", $"{dueInvoices:N0} فاکتور خرید نیاز به پیگیری موعد دارد.", "/Financial/Purchases", "bi-calendar2-week", "warning"));
+        }
+
+        var securityChanges = await DbContext.AuditLogs
+            .AsNoTracking()
+            .CountAsync(item =>
+                item.DateTime >= todayStart &&
+                (item.Action == "Delete" || item.TableName.Contains("Role") || item.TableName.Contains("Permission")));
+        if (securityChanges > 0)
+        {
+            headerNotifications.Add(("تغییر امنیتی", $"{securityChanges:N0} رخداد حساس امروز ثبت شده است.", "/admin/audit-dashboard", "bi-shield-check", "info"));
+        }
+    }
+
+    var headerNotificationCount = headerNotifications.Count;
 }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl" data-theme="@themePreference.ToLowerInvariant()" class="@rootThemeClass">
@@ -132,6 +202,11 @@
     <link rel="stylesheet" href="~/css/main.css" asp-append-version="true">
 
     <style>
+        :root {
+            --app-sidebar-width: 232px;
+            --app-content-gutter: 14px;
+        }
+
         /* فیکس کردن ارتفاع بدنه و اسکرول سایدبار */
         body {
             background-color: #f8fafc;
@@ -142,21 +217,26 @@
         }
 
         .app-shell {
-            display: flex;
+            display: block;
             height: auto;
             min-height: 100vh;
-            overflow: visible;
+            overflow-x: hidden;
+            overflow-y: visible;
+            width: 100%;
         }
 
         /* استایل سایدبار راست با اسکرول فعال مستقل */
-        .sidebar-right {
+        .sidebar-right,
+        #appSidebar.sidebar-right {
             display: flex;
             flex-direction: column;
             height: 100vh;
             position: fixed;
             top: 0;
             right: 0;
-            width: 260px;
+            width: var(--app-sidebar-width) !important;
+            min-width: var(--app-sidebar-width) !important;
+            max-width: var(--app-sidebar-width) !important;
             background-color: #fff;
             border-left: 1px solid #e2e8f0;
             z-index: 1030;
@@ -188,7 +268,7 @@
             flex: 1;
             min-height: 0;
             overflow-y: auto;
-            padding: 12px;
+            padding: 8px;
             overscroll-behavior: contain;
         }
 
@@ -204,12 +284,12 @@
         /* نوار بالای صفحه همرنگ بدنه (بدون حاشیه اضافی) */
         .custom-topbar {
             background-color: #f8fafc;
-            padding: 16px 24px;
+            padding: 10px 18px;
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             align-items: center;
-            gap: 16px;
-            min-height: 72px;
+            gap: 12px;
+            min-height: 56px;
             overflow: visible;
         }
 
@@ -217,7 +297,7 @@
         .topbar-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             min-width: 0;
             white-space: nowrap;
         }
@@ -225,8 +305,8 @@
         .topbar-right-info {
             display: flex;
             align-items: center;
-            gap: 15px;
-            font-size: 0.8rem;
+            gap: 10px;
+            font-size: 0.72rem;
             color: #64748b;
         }
 
@@ -242,11 +322,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.85rem;
+            font-size: 0.76rem;
             font-weight: 600;
             color: #334155;
             background: #fff;
-            padding: 6px 14px;
+            padding: 5px 10px;
             border-radius: 6px !important;
             border: 1px solid #e2e8f0;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -254,11 +334,123 @@
             white-space: nowrap;
         }
 
+        .notification-center {
+            position: relative;
+        }
+
+        .notification-toggle {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #334155;
+            padding: 0;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            min-width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ef4444;
+            color: #fff;
+            border: 2px solid #fff;
+            font-size: .62rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .notification-menu {
+            width: min(360px, 88vw);
+            padding: 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 14px 32px rgba(15, 23, 42, .14);
+            overflow: hidden;
+        }
+
+        .notification-menu-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .notification-menu-head strong {
+            font-size: .78rem;
+        }
+
+        .notification-menu-head span {
+            font-size: .66rem;
+            color: #64748b;
+            font-weight: 800;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 9px 12px;
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .notification-item:last-child {
+            border-bottom: 0;
+        }
+
+        .notification-item:hover {
+            background: #f8fafc;
+        }
+
+        .notification-item i {
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            background: #fff !important;
+            color: #4f46e5;
+            flex: 0 0 auto;
+        }
+
+        .notification-item strong {
+            display: block;
+            font-size: .74rem;
+            margin-bottom: 2px;
+        }
+
+        .notification-item small {
+            display: block;
+            color: #64748b;
+            font-size: .66rem;
+            line-height: 1.6;
+        }
+
+        .notification-empty {
+            padding: 16px 12px;
+            text-align: center;
+            color: #64748b;
+            font-size: .72rem;
+        }
+
         .topbar-search {
             position: relative;
-            width: min(260px, 28vw);
-            min-width: 180px;
-            flex: 0 1 260px;
+            width: min(220px, 24vw);
+            min-width: 160px;
+            flex: 0 1 220px;
         }
 
         .sidebar-quick-search {
@@ -266,8 +458,8 @@
             top: 0;
             z-index: 2;
             background: #fff;
-            padding-bottom: 10px;
-            margin-bottom: 8px;
+            padding-bottom: 7px;
+            margin-bottom: 6px;
         }
 
         .sidebar-quick-search .search-box {
@@ -275,13 +467,13 @@
         }
 
         .sidebar-quick-search .form-control {
-            height: 38px;
+            height: 32px;
             border: 1px solid #e2e8f0;
             background: #f8fafc;
             color: #0f172a;
-            font-size: .78rem;
+            font-size: .72rem;
             font-weight: 700;
-            padding-right: 32px;
+            padding-right: 28px;
         }
 
         .sidebar-quick-search .form-control:focus {
@@ -292,10 +484,10 @@
 
         .sidebar-quick-search .bi-search {
             position: absolute;
-            right: 10px;
-            top: 10px;
+            right: 9px;
+            top: 8px;
             color: #94a3b8;
-            font-size: .82rem;
+            font-size: .76rem;
             pointer-events: none;
         }
 
@@ -304,9 +496,9 @@
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            margin-top: 7px;
+            margin-top: 5px;
             color: #64748b;
-            font-size: .7rem;
+            font-size: .66rem;
             font-weight: 800;
         }
 
@@ -315,7 +507,7 @@
             background: transparent;
             color: #4f46e5;
             padding: 0;
-            font-size: .7rem;
+            font-size: .66rem;
             font-weight: 850;
         }
 
@@ -333,8 +525,8 @@
             background: #f8fafc;
             color: #64748b;
             border-radius: 6px !important;
-            padding: 10px;
-            font-size: .76rem;
+            padding: 8px;
+            font-size: .7rem;
             font-weight: 750;
             line-height: 1.7;
         }
@@ -344,12 +536,35 @@
         }
 
         .main-wrapper {
-            margin-right: 260px;
-            flex: 1;
+            width: calc(100% - var(--app-sidebar-width)) !important;
+            max-width: calc(100% - var(--app-sidebar-width)) !important;
+            margin-right: var(--app-sidebar-width) !important;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: visible;
+            min-width: 0;
+        }
+
+        #main-content-wrapper {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        #main-content-wrapper > * {
+            max-width: 100%;
+        }
+
+        #main-content-wrapper .container,
+        #main-content-wrapper .container-fluid {
+            max-width: 100%;
+        }
+
+        #main-content-wrapper .table-responsive {
+            overflow-x: auto;
         }
 
         .sidebar-accordion .accordion-item {
@@ -357,15 +572,15 @@
             border-radius: 6px !important;
             overflow: visible;
             background: transparent;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .sidebar-accordion .accordion-button {
             background: #f8fafc;
             color: #334155;
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 700;
-            padding: 8px 10px;
+            padding: 6px 8px;
             box-shadow: none;
             border-radius: 6px !important;
         }
@@ -376,23 +591,23 @@
             }
 
             .sidebar-accordion .accordion-button::after {
-                width: 0.8rem;
-                height: 0.8rem;
-                background-size: 0.8rem;
+                width: 0.68rem;
+                height: 0.68rem;
+                background-size: 0.68rem;
             }
 
         .sidebar-group-nav {
-            padding: 6px 0 2px;
+            padding: 4px 0 1px;
         }
 
         .sidebar-link {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             border-radius: 6px !important;
-            font-size: 0.76rem;
+            font-size: 0.7rem;
             color: #334155;
-            padding: 7px 10px;
+            padding: 5px 8px;
         }
 
             .sidebar-link:hover {
@@ -426,17 +641,17 @@
         }
 
         .user-profile-pill {
-            padding: 12px 14px;
+            padding: 8px 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: #fff;
             border-radius: 6px !important;
         }
 
         .user-avatar-box {
-            width: 34px;
-            height: 34px;
+            width: 28px;
+            height: 28px;
             background: transparent;
             border-radius: 6px !important;
             display: flex;
@@ -448,8 +663,8 @@
             position: absolute;
             bottom: 0;
             right: 0;
-            width: 9px;
-            height: 9px;
+            width: 7px;
+            height: 7px;
             background: #10b981;
             border: 2px solid #fff;
             border-radius: 6px !important;
@@ -667,6 +882,46 @@
         html[data-theme="dark"] .bi {
             color: #f8fafc !important;
         }
+
+        @@media (max-width: 1199.98px) {
+            :root {
+                --app-sidebar-width: 224px;
+            }
+        }
+
+        @@media (max-width: 991.98px) {
+            .app-shell {
+                display: block;
+            }
+
+            .sidebar-right,
+            #appSidebar.sidebar-right {
+                width: min(82vw, 260px) !important;
+                min-width: min(82vw, 260px) !important;
+                max-width: min(82vw, 260px) !important;
+                transform: translateX(100%);
+                transition: transform .2s ease;
+            }
+
+            .sidebar-right.is-open {
+                transform: translateX(0);
+            }
+
+            .main-wrapper {
+                width: 100% !important;
+                margin-right: 0 !important;
+            }
+
+            .custom-topbar {
+                padding: 8px 10px;
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .topbar-actions {
+                justify-content: flex-start;
+                overflow-x: auto;
+            }
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -789,11 +1044,11 @@
                     {
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingSettings">
-                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
+                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
                                     تنظیمات
                                 </button>
                             </h2>
-                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
+                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
                                         @if (User.IsInRole("Admin"))
@@ -804,6 +1059,10 @@
                                         }
 
                                         <a class="nav-link sidebar-link @(currentController == "ManagementDashboard" ? "sidebar-active" : "")" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-grid-1x2 text-primary"></i> <span class="link-text">داشبورد مدیریتی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Search" ? "sidebar-active" : "")" asp-controller="Search" asp-action="Index"><i class="bi bi-search text-primary"></i> <span class="link-text">جستجوی سراسری</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Reports" ? "sidebar-active" : "")" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph text-success"></i> <span class="link-text">گزارش‌ساز و خروجی‌ها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "OrganizationCalendar" ? "sidebar-active" : "")" asp-controller="OrganizationCalendar" asp-action="Index"><i class="bi bi-calendar3 text-primary"></i> <span class="link-text">تقویم سازمانی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "DocumentArchive" ? "sidebar-active" : "")" asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive text-warning"></i> <span class="link-text">بایگانی اسناد</span></a>
 
                                         @if (userCanAccessWorkflowAdministration || User.IsInRole("Admin"))
                                         {
@@ -846,9 +1105,45 @@
                         <span id="topbarDate">۱۴۰۵/۰۲/۲۷</span>
                     </div>
 
+                    @* <form asp-controller="Search" asp-action="Index" method="get" class="topbar-search d-none d-md-flex" role="search">
+                        <i class="bi bi-search"></i>
+                        <input name="q" class="form-control form-control-sm" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجوی کل سیستم..." />
+                    </form> *@
                 </div>
 
                 <div class="topbar-actions">
+                    <div class="dropdown notification-center">
+                        <button class="notification-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="اعلان‌ها">
+                            <i class="bi bi-bell"></i>
+                            @if (headerNotificationCount > 0)
+                            {
+                                <span class="notification-count">@headerNotificationCount.ToString("N0")</span>
+                            }
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-start notification-menu">
+                            <div class="notification-menu-head">
+                                <strong>مرکز اعلان‌ها</strong>
+                                <span>@headerNotificationCount.ToString("N0") اعلان</span>
+                            </div>
+                            @if (headerNotifications.Count == 0)
+                            {
+                                <div class="notification-empty">اعلان مهمی برای نمایش وجود ندارد.</div>
+                            }
+                            else
+                            {
+                                foreach (var notification in headerNotifications.Take(8))
+                                {
+                                    <a class="notification-item" href="@notification.Url">
+                                        <i class="bi @notification.Icon text-@notification.Tone"></i>
+                                        <span>
+                                            <strong>@notification.Title</strong>
+                                            <small>@notification.Description</small>
+                                        </span>
+                                    </a>
+                                }
+                            }
+                        </div>
+                    </div>
                     <div class="topbar-right-info d-none d-lg-flex">
                         <span><span class="status-dot" style="background-color: #10b981;"></span> سرور: <span class="fw-bold text-dark">فعال</span></span>
                         <span><span class="status-dot" style="background-color: #10b981;"></span> دیتابیس: <span class="fw-bold text-dark">متصل</span></span>
@@ -869,6 +1164,7 @@
     <script src="https://lib.arvancloud.ir/jquery/3.6.3/jquery.min.js"></script>
     <script src="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/layout.js" asp-append-version="true"></script>
+    <script src="~/js/professional-table.js" asp-append-version="true"></script>
     <script>
         (() => {
             const html = document.documentElement;

@@ -39,6 +39,10 @@ public class Letter
     [Display(Name = "نوع سند")]
     public string DocumentType { get; set; } = "Letter";
 
+    [Display(Name = "وضعیت")]
+    [StringLength(30)]
+    public string WorkflowStatus { get; set; } = Models.WorkflowStatus.Sent;
+
     [Display(Name = "مرحله گردش کار")]
     public int CurrentWorkflowStep { get; set; }
 

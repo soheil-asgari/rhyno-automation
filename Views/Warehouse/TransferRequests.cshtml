@@ -57,7 +57,7 @@
                     {
                         @foreach (var item in Model)
                         {
-                            var canManage = item.Status == "PendingManager" &&
+                            var canManage = (WorkflowStatus.IsPending(item.Status) || item.Status == "PendingManager") &&
                                             (User.IsInRole("Admin") || item.SourceWarehouse?.ManagerUserId == currentUserId);
                             <tr>
                                 <td>@item.Id</td>
@@ -67,8 +67,8 @@
                                 <td>@item.Quantity.ToString("N3")</td>
                                 <td>@item.RequestedByUser?.FullName</td>
                                 <td>
-                                    <span class="badge @(item.Status == "Approved" ? "text-bg-success" : item.Status == "Rejected" ? "text-bg-danger" : "text-bg-warning")">
-                                        @item.Status
+                                    <span class="badge @WorkflowStatus.BadgeCss(item.Status)">
+                                        @WorkflowStatus.Label(item.Status)
                                     </span>
                                 </td>
                                 <td>@(item.ApprovedByUser?.FullName ?? "-")</td>

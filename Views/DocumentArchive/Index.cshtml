@@ -1,0 +1,154 @@
+@model OfficeAutomation.Models.DocumentArchiveIndexVM
+@{
+    ViewData["Title"] = "بایگانی اسناد";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <h4 class="fw-bold mb-0">بایگانی اسناد و پیوست‌ها</h4>
+    </div>
+
+    @if (TempData["ArchiveMessage"] is string archiveMessage)
+    {
+        <div class="alert alert-info py-2 small">@archiveMessage</div>
+    }
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control form-control-sm" placeholder="جستجو در عنوان/نام فایل" />
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select form-select-sm">
+                        <option value="">همه دسته‌ها</option>
+                        <option value="Letters" selected="@(Model.Category=="Letters" ? "selected" : null)">نامه</option>
+                        <option value="Invoices" selected="@(Model.Category=="Invoices" ? "selected" : null)">فاکتور</option>
+                        <option value="Personnel" selected="@(Model.Category=="Personnel" ? "selected" : null)">پرسنل</option>
+                        <option value="Contracts" selected="@(Model.Category=="Contracts" ? "selected" : null)">قرارداد</option>
+                        <option value="Insurance" selected="@(Model.Category=="Insurance" ? "selected" : null)">بیمه</option>
+                        <option value="Warehouse" selected="@(Model.Category=="Warehouse" ? "selected" : null)">انبار</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="accessLevel" class="form-select form-select-sm">
+                        <option value="">همه سطح‌ها</option>
+                        <option value="Public" selected="@(Model.AccessLevel=="Public" ? "selected" : null)">عمومی</option>
+                        <option value="Module" selected="@(Model.AccessLevel=="Module" ? "selected" : null)">درون‌ماژولی</option>
+                        <option value="Restricted" selected="@(Model.AccessLevel=="Restricted" ? "selected" : null)">محرمانه</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-sm btn-outline-primary w-100">فیلتر</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-xl-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">اسناد بایگانی‌شده</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>عنوان</th>
+                                <th>دسته</th>
+                                <th>سطح</th>
+                                <th>فایل</th>
+                                <th>اقدامات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Items.Count == 0)
+                            {
+                                <tr><td class="text-center text-muted py-4" colspan="5">سندی یافت نشد.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@item.Title</div>
+                                            <div class="text-muted small">@item.CreatedAt.ToString("yyyy/MM/dd HH:mm") - @item.CreatorName</div>
+                                        </td>
+                                        <td>@item.Category</td>
+                                        <td><span class="badge bg-light text-dark border">@item.AccessLevel</span></td>
+                                        <td>
+                                            <div>@item.FileName</div>
+                                            <div class="text-muted small">@($"{item.FileSize / 1024d:0.#} KB")</div>
+                                        </td>
+                                        <td class="text-nowrap">
+                                            @if (item.IsPreviewable)
+                                            {
+                                                <a class="btn btn-sm btn-outline-secondary" asp-action="Preview" asp-route-id="@item.Id" target="_blank">Preview</a>
+                                            }
+                                            <a class="btn btn-sm btn-outline-primary" asp-action="Download" asp-route-id="@item.Id">دانلود</a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">آپلود سند جدید</div>
+                <div class="card-body">
+                    @if (!Model.CanUpload)
+                    {
+                        <div class="alert alert-warning py-2 small mb-0">دسترسی آپلود سند برای شما فعال نیست.</div>
+                    }
+                    else
+                    {
+                    <form asp-action="Upload" method="post" enctype="multipart/form-data" class="row g-2">
+                        @Html.AntiForgeryToken()
+                        <div class="col-12">
+                            <label class="form-label small">عنوان</label>
+                            <input name="Title" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">دسته</label>
+                            <select name="Category" class="form-select form-select-sm">
+                                <option value="Letters">نامه</option>
+                                <option value="Invoices">فاکتور</option>
+                                <option value="Personnel">پرسنل</option>
+                                <option value="Contracts">قرارداد</option>
+                                <option value="Insurance">بیمه</option>
+                                <option value="Warehouse">انبار</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">سطح دسترسی</label>
+                            <select name="AccessLevel" class="form-select form-select-sm">
+                                <option value="Module">درون‌ماژولی</option>
+                                <option value="Public">عمومی</option>
+                                <option value="Restricted">محرمانه</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">ماژول مرتبط</label>
+                            <input name="RelatedModule" class="form-control form-control-sm" placeholder="مثلاً Letters" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">نوع رکورد مرتبط</label>
+                            <input name="RelatedEntityType" class="form-control form-control-sm" placeholder="مثلاً Invoice" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small">فایل</label>
+                            <input type="file" name="File" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-12 mt-2">
+                            <button class="btn btn-sm btn-primary w-100" type="submit">آپلود و بایگانی</button>
+                        </div>
+                    </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

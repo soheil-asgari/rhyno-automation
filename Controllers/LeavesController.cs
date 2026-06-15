@@ -76,7 +76,7 @@ namespace OfficeAutomation.Controllers
 #pragma warning disable CS8601 // Possible null reference assignment.
             leave.UserId = _userManager.GetUserId(User);
 #pragma warning restore CS8601 // Possible null reference assignment.
-            leave.Status = "در انتظار تایید";
+            leave.Status = WorkflowStatus.PendingApproval;
 
             // حذف اعتبارسنجی برای فیلدهایی که کاربر پر نکرده (سیستم پر کرده)
             ModelState.Remove("UserId");
@@ -165,6 +165,34 @@ namespace OfficeAutomation.Controllers
                 _context.Leaves.Remove(leave);
                 await _context.SaveChangesAsync();
             }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var leave = await _context.Leaves.FirstOrDefaultAsync(item => item.Id == id);
+            if (leave == null) return NotFound();
+
+            if (!User.IsInRole("Admin")) return Forbid();
+
+            leave.Status = WorkflowStatus.Approved;
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var leave = await _context.Leaves.FirstOrDefaultAsync(item => item.Id == id);
+            if (leave == null) return NotFound();
+
+            if (!User.IsInRole("Admin")) return Forbid();
+
+            leave.Status = WorkflowStatus.Rejected;
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 

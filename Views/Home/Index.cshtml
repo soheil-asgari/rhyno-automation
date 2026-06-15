@@ -2,262 +2,389 @@
 @using System.Globalization
 
 @{
-    ViewData["Title"] = "میز کار";
+    ViewData["Title"] = "داشبورد اجرایی";
     var fa = CultureInfo.GetCultureInfo("fa-IR");
     string ToFa(int value) => value.ToString("N0", fa);
 }
 
-<script src="~/js/jalali-moment.browser.js"></script>
+<div class="executive-dashboard">
+    <section class="dashboard-header">
+        <div>
+            <h1>داشبورد اجرایی</h1>
+            <p>نمای زنده از کارهای امروز، تاییدها، فاکتورها، موجودی و هشدارهای سیستم - @Model.TodayText</p>
+        </div>
+        <a class="btn btn-sm btn-outline-primary" href="/admin/audit-dashboard">
+            <i class="bi bi-shield-check"></i>
+            رخدادها
+        </a>
+    </section>
 
-<div class="rhino-premium-panel">
-    <main class="rh-grid-layout">
-        <section class="rh-bento hero-sm animate-frip">
-            <div class="hero-inner">
-                <h2>میز کار <span>مرکزی</span></h2>
-                <p>امروز @Model.TodayText؛ داده‌های این صفحه مستقیما از پایگاه داده خوانده شده‌اند.</p>
+    <section class="metric-grid">
+        @foreach (var metric in Model.ExecutiveMetrics)
+        {
+            <a class="metric-card metric-@metric.Tone" href="@metric.Url">
+                <span class="metric-icon"><i class="bi @metric.Icon"></i></span>
+                <span class="metric-body">
+                    <strong>@metric.Value</strong>
+                    <span>@metric.Title</span>
+                    <small>@metric.Description</small>
+                </span>
+            </a>
+        }
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="dashboard-panel" id="pending-work">
+            <div class="panel-head">
+                <h2>کارهای در انتظار اقدام</h2>
+                <span>@ToFa(Model.PendingWorkItems.Count) مورد</span>
             </div>
-        </section>
 
-        <section class="rh-bento stat-sm blue animate-frip">
-            <i class="bi bi-clipboard-data" style="color: #4f46e5;"></i>
-            <div class="stat-info">
-                <span class="v">@ToFa(Model.TotalAuditEvents)</span>
-                <span class="l">کل رخدادها</span>
-            </div>
-        </section>
-
-        <section class="rh-bento stat-sm green animate-frip">
-            <i class="bi bi-file-earmark-plus" style="color: #10b981;"></i>
-            <div class="stat-info">
-                <span class="v">@ToFa(Model.CreateEvents)</span>
-                <span class="l">ثبت جدید</span>
-            </div>
-        </section>
-
-        <section class="rh-bento table-box animate-frip">
-            <div class="box-head">
-                <h3><i class="bi bi-clock-history"></i> آخرین فعالیت‌های ثبت شده</h3>
-                <a href="/admin/audit-dashboard">مشاهده کامل <i class="bi bi-arrow-left-short"></i></a>
-            </div>
-
-            <table class="rh-table-sm">
-                <thead>
-                    <tr>
-                        <th>بخش</th>
-                        <th>تاریخ</th>
-                        <th>وضعیت</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.RecentActivities.Count == 0)
+            @if (Model.PendingWorkItems.Count == 0)
+            {
+                <div class="empty-state">موردی برای اقدام فوری وجود ندارد.</div>
+            }
+            else
+            {
+                <div class="work-list">
+                    @foreach (var item in Model.PendingWorkItems)
                     {
-                        <tr>
-                            <td colspan="3" class="text-muted">هنوز رخدادی برای نمایش ثبت نشده است.</td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var item in Model.RecentActivities)
-                        {
-                            <tr>
-                                <td>@item.DocumentType</td>
-                                <td>@item.DateText</td>
-                                <td><span class="badge-sm @item.StatusCssClass">@item.StatusText</span></td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-
-            <div class="mini-chart-wrapper">
-                <span class="chart-label">روند رخدادهای ۷ روز اخیر</span>
-                <div class="css-chart">
-                    @foreach (var point in Model.WeeklyActivity)
-                    {
-                        <div style="height: @point.Percent%;" title="@point.Label - @ToFa(point.Value) رخداد"></div>
+                        <a class="work-item" href="@item.Url">
+                            <i class="bi @item.Icon"></i>
+                            <span>
+                                <strong>@item.Title</strong>
+                                <small>@item.Module - @item.DateText</small>
+                            </span>
+                            <em class="badge @item.StatusCssClass">@WorkflowStatus.Label(item.Status)</em>
+                        </a>
                     }
                 </div>
-            </div>
-        </section>
+            }
+        </div>
 
-        <section class="rh-bento stat-sm orange animate-frip">
-            <i class="bi bi-pencil" style="color: #f59e0b;"></i>
-            <div class="stat-info">
-                <span class="v">@ToFa(Model.UpdateEvents)</span>
-                <span class="l">ویرایش</span>
-            </div>
-        </section>
-
-        <section class="rh-bento stat-sm cyan animate-frip">
-            <i class="bi bi-trash" style="color: #ef4444;"></i>
-            <div class="stat-info">
-                <span class="v">@ToFa(Model.DeleteEvents)</span>
-                <span class="l">حذف</span>
-            </div>
-        </section>
-
-        <section class="rh-bento stat-sm animate-frip collab-box">
-            <i class="bi bi-envelope-open" style="color: #4f46e5;"></i>
-            <div class="stat-info">
-                <span class="v">@ToFa(Model.NewLetters)</span>
-                <span class="l">نامه خوانده نشده</span>
-            </div>
-        </section>
-
-        <section class="rh-bento stat-sm animate-frip event-box">
-            <i class="bi bi-calendar-event" style="color: #db2777;"></i>
-            <div class="stat-info">
-                <span class="v">@ToFa(Model.PendingLeaves)</span>
-                <span class="l">مرخصی در انتظار</span>
-            </div>
-        </section>
-
-        <section class="rh-bento chart-wide animate-frip">
-            <div class="donut-chart-wrapper">
-                <svg viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" stroke-width="3"></circle>
-                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--primary)" stroke-width="3" stroke-dasharray="@Model.WorkloadPercent, 100"></circle>
-                </svg>
-                <div class="donut-chart-value">@ToFa(Model.WorkloadPercent)٪</div>
-            </div>
-            <div class="chart-info">
-                <h4>توزیع بار کاری</h4>
-                <p>بر اساس نامه‌های خوانده نشده و مرخصی‌های در انتظار نسبت به کل نامه‌های ثبت شده.</p>
-            </div>
-        </section>
-
-        <section class="rh-bento task-box animate-frip">
-            <div class="task-header">
-                <span><i class="bi bi-people-fill"></i> کاربران سامانه</span>
-                <i class="bi bi-gear"></i>
-            </div>
-            <div class="task-body">
-                <strong>@ToFa(Model.TotalUsers)</strong>
-                <span>کاربر ثبت شده در سامانه</span>
-            </div>
-        </section>
-
-        <section class="rh-bento calendar-box animate-frip">
-            <div class="cal-header">
-                <div class="cal-nav">
-                    <i class="bi bi-chevron-right" id="prevMonth"></i>
-                    <span id="monthDisplay">---</span>
-                    <i class="bi bi-chevron-left" id="nextMonth"></i>
-                </div>
-                <button class="btn-today btn-action-sm" type="button">امروز</button>
+        <div class="dashboard-panel" id="system-alerts">
+            <div class="panel-head">
+                <h2>هشدارهای سیستم</h2>
+                <span>@ToFa(Model.SystemWarnings)</span>
             </div>
 
-            <div class="cal-body">
-                <div class="weekday-row">
-                    <span>شنبه</span><span>یکشنبه</span><span>دوشنبه</span><span>سه‌شنبه</span><span>چهارشنبه</span><span>پنجشنبه</span><span>جمعه</span>
-                </div>
-                <div id="daysContainer" class="days-grid"></div>
+            <div class="alert-list">
+                @foreach (var alert in Model.SystemAlerts)
+                {
+                    <a class="alert-item alert-@alert.Severity" href="@alert.Url">
+                        <i class="bi @alert.Icon"></i>
+                        <span>
+                            <strong>@alert.Title</strong>
+                            <small>@alert.Description</small>
+                        </span>
+                    </a>
+                }
             </div>
+        </div>
 
-            <div class="cal-footer">
-                <div id="eventBox">
-                    <div id="eventLoader"></div>
-                    <div id="eventContent">
-                        <i class="bi bi-calendar2-event"></i>
-                        <span id="eventDisplay">در حال دریافت مناسبت...</span>
+        <div class="dashboard-panel">
+            <div class="panel-head">
+                <h2>روند فعالیت ۷ روز اخیر</h2>
+                <span>@ToFa(Model.TotalAuditEvents) رخداد</span>
+            </div>
+            <div class="activity-bars">
+                @foreach (var point in Model.WeeklyActivity)
+                {
+                    <div class="activity-bar" title="@point.Label - @ToFa(point.Value)">
+                        <span style="height:@point.Percent%"></span>
+                        <small>@(point.Label.Length >= 2 ? point.Label[^2..] : point.Label)</small>
                     </div>
-                </div>
+                }
             </div>
-        </section>
-    </main>
+        </div>
+
+        <div class="dashboard-panel">
+            <div class="panel-head">
+                <h2>آخرین فعالیت‌ها</h2>
+                <span>Audit</span>
+            </div>
+            <div class="recent-list">
+                @if (Model.RecentActivities.Count == 0)
+                {
+                    <div class="empty-state">هنوز رخدادی ثبت نشده است.</div>
+                }
+                else
+                {
+                    @foreach (var item in Model.RecentActivities)
+                    {
+                        <div class="recent-item">
+                            <span>
+                                <strong>@item.DocumentType</strong>
+                                <small>@item.DateText</small>
+                            </span>
+                            <em class="status-@item.StatusCssClass">@item.StatusText</em>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </section>
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/dashboard.css" />
     <style>
-        html.theme-dark .rhino-premium-panel {
-            background: #0f172a !important;
-            background-image: none !important;
+        .executive-dashboard {
+            direction: rtl;
+            color: var(--text-dark);
         }
 
-        .rhino-premium-panel {
-            --rh-home-radius: 6px;
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
-        .rhino-premium-panel .rh-bento,
-        .rhino-premium-panel .card,
-        .rhino-premium-panel .table-box,
-        .rhino-premium-panel .calendar-box,
-        .rhino-premium-panel .task-box,
-        .rhino-premium-panel .chart-wide,
-        .rhino-premium-panel .hero-sm,
-        .rhino-premium-panel .badge-sm,
-        .rhino-premium-panel .btn-action-sm,
-        .rhino-premium-panel .btn-today,
-        .rhino-premium-panel input,
-        .rhino-premium-panel select,
-        .rhino-premium-panel textarea,
-        .rhino-premium-panel button {
-            border-radius: var(--rh-home-radius) !important;
+        .dashboard-header h1 {
+            margin: 0 0 4px;
+            font-size: 1.2rem !important;
+            font-weight: 850;
         }
 
-        .rhino-premium-panel .rh-bento {
-            border-color: rgba(203, 213, 225, 0.9) !important;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05) !important;
+        .dashboard-header p {
+            margin: 0;
+            color: #64748b;
+            font-size: .76rem;
         }
 
-        .rhino-premium-panel .rh-bento:hover {
-            border-color: rgba(79, 70, 229, 0.35) !important;
-            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08) !important;
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
-        .rhino-premium-panel .stat-sm > i,
-        .rhino-premium-panel .box-head h3 > i,
-        .rhino-premium-panel .task-header i,
-        .rhino-premium-panel #eventContent i {
-            width: 34px !important;
-            height: 34px !important;
-            min-width: 34px !important;
-            border-radius: var(--rh-home-radius) !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            background: #f1f5f9 !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: none !important;
-            font-size: 1rem !important;
+        .metric-card,
+        .dashboard-panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
         }
 
-        .rhino-premium-panel .box-head h3 > i,
-        .rhino-premium-panel .task-header i,
-        .rhino-premium-panel #eventContent i {
-            color: #4f46e5 !important;
+        .metric-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            color: inherit;
+            text-decoration: none;
         }
 
-        .rhino-premium-panel .css-chart div,
-        .rhino-premium-panel .days-grid span,
-        .rhino-premium-panel .days-grid span.today,
-        .rhino-premium-panel .spinner-border-sm {
-            border-radius: var(--rh-home-radius) !important;
+        .metric-card:hover {
+            border-color: #94a3b8;
         }
 
-        .rhino-premium-panel .box-head a {
+        .metric-icon {
+            width: 32px;
+            height: 32px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #4f46e5;
         }
 
-        html.theme-dark .rhino-premium-panel .rh-bento {
+        .metric-body {
+            display: grid;
+            min-width: 0;
+        }
+
+        .metric-body strong {
+            font-size: 1.1rem;
+            line-height: 1.2;
+        }
+
+        .metric-body span {
+            font-size: .76rem;
+            font-weight: 800;
+        }
+
+        .metric-body small {
+            color: #64748b;
+            font-size: .66rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .metric-danger .metric-icon { color: #dc2626; }
+        .metric-warning .metric-icon { color: #d97706; }
+        .metric-success .metric-icon { color: #059669; }
+        .metric-info .metric-icon { color: #0891b2; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+            gap: 12px;
+        }
+
+        .dashboard-panel {
+            padding: 12px;
+            min-width: 0;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .panel-head h2 {
+            margin: 0;
+            font-size: .9rem !important;
+            font-weight: 850;
+        }
+
+        .panel-head span {
+            color: #64748b;
+            font-size: .7rem;
+            font-weight: 800;
+        }
+
+        .work-list,
+        .alert-list,
+        .recent-list {
+            display: grid;
+            gap: 7px;
+        }
+
+        .work-item,
+        .alert-item,
+        .recent-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid #eef2f7;
+            background: #f8fafc;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .work-item i,
+        .alert-item i {
+            color: #4f46e5;
+        }
+
+        .work-item span,
+        .alert-item span,
+        .recent-item span {
+            display: grid;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .work-item strong,
+        .alert-item strong,
+        .recent-item strong {
+            font-size: .76rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .work-item small,
+        .alert-item small,
+        .recent-item small {
+            font-size: .66rem;
+            color: #64748b;
+        }
+
+        .work-item em,
+        .recent-item em {
+            font-style: normal;
+            font-size: .66rem;
+            white-space: nowrap;
+        }
+
+        .alert-danger { border-color: #fecaca; background: #fff7f7; }
+        .alert-warning { border-color: #fde68a; background: #fffbeb; }
+        .alert-info { border-color: #bae6fd; background: #f0f9ff; }
+        .alert-success { border-color: #bbf7d0; background: #f0fdf4; }
+
+        .activity-bars {
+            height: 156px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            align-items: end;
+            gap: 8px;
+            padding-top: 8px;
+        }
+
+        .activity-bar {
+            height: 100%;
+            display: grid;
+            grid-template-rows: 1fr auto;
+            gap: 5px;
+            align-items: end;
+            text-align: center;
+        }
+
+        .activity-bar span {
+            display: block;
+            min-height: 8px;
+            background: #4f46e5;
+        }
+
+        .activity-bar small {
+            color: #64748b;
+            font-size: .62rem;
+        }
+
+        .empty-state {
+            padding: 18px;
+            text-align: center;
+            color: #64748b;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            font-size: .76rem;
+        }
+
+        html.theme-dark .metric-card,
+        html.theme-dark .dashboard-panel {
             background: #111827 !important;
             border-color: #334155 !important;
-            box-shadow: none !important;
         }
 
-        html.theme-dark .rhino-premium-panel .stat-sm > i,
-        html.theme-dark .rhino-premium-panel .box-head h3 > i,
-        html.theme-dark .rhino-premium-panel .task-header i,
-        html.theme-dark .rhino-premium-panel #eventContent i {
-            background: #1f2937 !important;
+        html.theme-dark .work-item,
+        html.theme-dark .alert-item,
+        html.theme-dark .recent-item,
+        html.theme-dark .empty-state,
+        html.theme-dark .metric-icon {
+            background: #0f172a !important;
             border-color: #334155 !important;
         }
-    </style>
-}
 
-@section Scripts {
-    <script src="~/js/dashboard.js"></script>
+        html.theme-dark .dashboard-header p,
+        html.theme-dark .metric-body small,
+        html.theme-dark .panel-head span,
+        html.theme-dark .work-item small,
+        html.theme-dark .alert-item small,
+        html.theme-dark .recent-item small,
+        html.theme-dark .activity-bar small {
+            color: #cbd5e1 !important;
+        }
+
+        @@media (max-width: 1200px) {
+            .metric-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @@media (max-width: 900px) {
+            .dashboard-grid,
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 }

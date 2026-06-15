@@ -93,7 +93,7 @@
 
     <div class="card border-0 shadow-sm fin-card">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0 fin-compact">
+            <table class="table table-sm table-hover align-middle mb-0 fin-compact" data-pro-table="financial-invoices-@exportInvoiceType">
                 <thead class="bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-200">
                     <tr>
                         <th>شماره</th>
@@ -103,6 +103,7 @@
                         <th>شناسه</th>
                         <th>جمع جزء</th>
                         <th>VAT 10%</th>
+                        <th>وضعیت</th>
                         <th>جمع کل</th>
                         <th class="text-center">عملیات</th>
                     </tr>
@@ -120,6 +121,7 @@
                             <td>@(item.NationalCodeOrEconomicId ?? "-")</td>
                             <td>@item.SubTotal.ToString("N0")</td>
                             <td>@item.VatAmount.ToString("N0")</td>
+                            <td><span class="badge @WorkflowStatus.BadgeCss(item.WorkflowStatus)">@WorkflowStatus.Label(item.WorkflowStatus)</span></td>
                             <td class="fw-bold">@item.GrandTotal.ToString("N0")</td>
                             <td class="text-center">
                                 <div class="d-inline-flex gap-1">

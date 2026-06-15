@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
+    [Services.Security.PermissionAuthorize("Letters.Read")]
     public class LettersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -271,6 +272,7 @@ namespace OfficeAutomation.Controllers
         // POST: Letters/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Services.Security.PermissionAuthorize("Letters.Create")]
         // تغییر مهم: فیلد Content به Body تغییر یافت تا با مدل همخوانی داشته باشد
         public async Task<IActionResult> Create([Bind("Title,Body,ReceiverId")] Letter letter)
         {
@@ -282,6 +284,7 @@ namespace OfficeAutomation.Controllers
             letter.SentDate = DateTime.Now;
             letter.DocumentType = "Letter";
             letter.FinalReceiverId = letter.ReceiverId;
+            letter.WorkflowStatus = WorkflowStatus.Sent;
 
             ModelState.Remove("SenderId");
             ModelState.Remove("Sender");
@@ -306,6 +309,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Services.Security.PermissionAuthorize("Letters.Approve")]
         public async Task<IActionResult> Approve(int id)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -331,12 +335,14 @@ namespace OfficeAutomation.Controllers
                 letter.CurrentWorkflowStep += 1;
                 letter.ReceiverId = nextApprover;
                 letter.IsWorkflowCompleted = false;
+                letter.WorkflowStatus = WorkflowStatus.PendingApproval;
             }
             else
             {
                 letter.CurrentWorkflowStep = Math.Max(1, letter.CurrentWorkflowStep);
                 letter.ReceiverId = letter.FinalReceiverId ?? letter.ReceiverId;
                 letter.IsWorkflowCompleted = true;
+                letter.WorkflowStatus = WorkflowStatus.Approved;
             }
 
             letter.IsRead = false;
@@ -365,6 +371,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Services.Security.PermissionAuthorize("Letters.Delete")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var letter = await _context.Letters.FindAsync(id);
@@ -406,6 +413,7 @@ namespace OfficeAutomation.Controllers
                 letter.ReceiverId = firstApprover;
                 letter.CurrentWorkflowStep = 1;
                 letter.IsWorkflowCompleted = false;
+                letter.WorkflowStatus = WorkflowStatus.PendingApproval;
                 return;
             }
 
@@ -420,10 +428,12 @@ namespace OfficeAutomation.Controllers
                 letter.ReceiverId = sender.ParentManagerUserId;
                 letter.CurrentWorkflowStep = 1;
                 letter.IsWorkflowCompleted = false;
+                letter.WorkflowStatus = WorkflowStatus.PendingApproval;
                 return;
             }
 
             letter.IsWorkflowCompleted = true;
+            letter.WorkflowStatus = WorkflowStatus.Sent;
         }
 
         private async Task<string?> GetNextWorkflowApproverAsync(string documentType, int step)

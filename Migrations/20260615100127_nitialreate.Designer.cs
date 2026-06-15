@@ -12,8 +12,8 @@ using OfficeAutomation.Data;
 namespace OfficeAutomation.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260607083057_InitialBuildFix")]
-    partial class InitialBuildFix
+    [Migration("20260615100127_nitialreate")]
+    partial class nitialreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -188,6 +188,11 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasDefaultValueSql("SYSUTCDATETIME()");
 
+                    b.Property<bool>("IsSensitive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("NewValues")
                         .HasColumnType("nvarchar(max)");
 
@@ -270,6 +275,82 @@ namespace OfficeAutomation.Migrations
                             Id = 5,
                             Name = "Management"
                         });
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.DocumentArchiveItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessLevel")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsPreviewable")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("RelatedEntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RelatedEntityType")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("RelatedModule")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(180)
+                        .HasColumnType("nvarchar(180)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Category", "CreatedAt");
+
+                    b.ToTable("DocumentArchiveItems");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.Employer", b =>
@@ -760,8 +841,10 @@ namespace OfficeAutomation.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("PendingApproval");
 
                     b.HasKey("Id");
 
@@ -859,6 +942,13 @@ namespace OfficeAutomation.Migrations
                     b.Property<int?>("WarehouseReceiptId")
                         .HasColumnType("int");
 
+                    b.Property<string>("WorkflowStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("Draft");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmployerId");
@@ -945,7 +1035,10 @@ namespace OfficeAutomation.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("PendingApproval");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -1005,6 +1098,13 @@ namespace OfficeAutomation.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("WorkflowStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("Sent");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FinalReceiverId");
@@ -1014,6 +1114,126 @@ namespace OfficeAutomation.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Letters");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ManagementDatabaseConnection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DatabaseName")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Host")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("Port")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProtectedPassword")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<bool>("TrustServerCertificate")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Username")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("ManagementDatabaseConnections");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.OrganizationCalendarEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1200)
+                        .HasColumnType("nvarchar(1200)");
+
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EventDateShamsi")
+                        .HasMaxLength(24)
+                        .HasColumnType("nvarchar(24)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("IsAllDay")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("SourceEntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("SourceModule")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(180)
+                        .HasColumnType("nvarchar(180)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("EventDate", "EventType");
+
+                    b.ToTable("OrganizationCalendarEvents");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.PayrollItem", b =>
@@ -1156,10 +1376,42 @@ namespace OfficeAutomation.Migrations
                         },
                         new
                         {
+                            Key = "Letters.Edit",
+                            Category = "Letters",
+                            Description = "Edit existing letters.",
+                            DisplayName = "Edit letters",
+                            IsSystem = true
+                        },
+                        new
+                        {
                             Key = "Letters.Delete",
                             Category = "Letters",
                             Description = "Delete letters.",
                             DisplayName = "Delete letters",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Letters.Approve",
+                            Category = "Letters",
+                            Description = "Approve letter workflow actions.",
+                            DisplayName = "Approve letters",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Letters.Export",
+                            Category = "Letters",
+                            Description = "Export letters reports.",
+                            DisplayName = "Export letters",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Letters.ViewSensitive",
+                            Category = "Letters",
+                            Description = "View confidential letter content.",
+                            DisplayName = "View confidential letters",
                             IsSystem = true
                         },
                         new
@@ -1172,10 +1424,50 @@ namespace OfficeAutomation.Migrations
                         },
                         new
                         {
+                            Key = "HR.Create",
+                            Category = "HR",
+                            Description = "Create HR records.",
+                            DisplayName = "Create HR records",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "HR.Edit",
+                            Category = "HR",
+                            Description = "Edit HR records.",
+                            DisplayName = "Edit HR records",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "HR.Delete",
+                            Category = "HR",
+                            Description = "Delete HR records.",
+                            DisplayName = "Delete HR records",
+                            IsSystem = true
+                        },
+                        new
+                        {
                             Key = "HR.Approve",
                             Category = "HR",
                             Description = "Approve HR workflows and actions.",
                             DisplayName = "Approve HR",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "HR.Export",
+                            Category = "HR",
+                            Description = "Export HR reports.",
+                            DisplayName = "Export HR",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "HR.ViewSensitive",
+                            Category = "HR",
+                            Description = "View salary and confidential HR fields.",
+                            DisplayName = "View confidential HR data",
                             IsSystem = true
                         },
                         new
@@ -1188,10 +1480,50 @@ namespace OfficeAutomation.Migrations
                         },
                         new
                         {
+                            Key = "Finance.Create",
+                            Category = "Finance",
+                            Description = "Create invoices and finance records.",
+                            DisplayName = "Create finance records",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Finance.Edit",
+                            Category = "Finance",
+                            Description = "Edit finance records.",
+                            DisplayName = "Edit finance records",
+                            IsSystem = true
+                        },
+                        new
+                        {
                             Key = "Finance.Delete",
                             Category = "Finance",
                             Description = "Delete finance records.",
                             DisplayName = "Delete finance",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Finance.Approve",
+                            Category = "Finance",
+                            Description = "Approve finance operations.",
+                            DisplayName = "Approve finance",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Finance.Export",
+                            Category = "Finance",
+                            Description = "Export finance reports.",
+                            DisplayName = "Export finance",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Finance.ViewSensitive",
+                            Category = "Finance",
+                            Description = "View sensitive finance amounts and totals.",
+                            DisplayName = "View finance amounts",
                             IsSystem = true
                         },
                         new
@@ -1204,10 +1536,50 @@ namespace OfficeAutomation.Migrations
                         },
                         new
                         {
+                            Key = "Warehouse.Create",
+                            Category = "Warehouse",
+                            Description = "Create warehouse records.",
+                            DisplayName = "Create warehouse records",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Warehouse.Edit",
+                            Category = "Warehouse",
+                            Description = "Edit warehouse records.",
+                            DisplayName = "Edit warehouse records",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Warehouse.Delete",
+                            Category = "Warehouse",
+                            Description = "Delete warehouse records.",
+                            DisplayName = "Delete warehouse records",
+                            IsSystem = true
+                        },
+                        new
+                        {
                             Key = "Warehouse.Approve",
                             Category = "Warehouse",
                             Description = "Approve warehouse actions.",
                             DisplayName = "Approve warehouse",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Warehouse.Export",
+                            Category = "Warehouse",
+                            Description = "Export warehouse reports.",
+                            DisplayName = "Export warehouse",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Warehouse.ViewSensitive",
+                            Category = "Warehouse",
+                            Description = "View sensitive inventory valuations.",
+                            DisplayName = "View confidential warehouse values",
                             IsSystem = true
                         },
                         new
@@ -1232,6 +1604,46 @@ namespace OfficeAutomation.Migrations
                             Category = "Administration",
                             Description = "Assign permissions to roles.",
                             DisplayName = "Manage permissions",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Calendar.View",
+                            Category = "Calendar",
+                            Description = "View unified organization calendar.",
+                            DisplayName = "View organization calendar",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Calendar.Create",
+                            Category = "Calendar",
+                            Description = "Create organization calendar events.",
+                            DisplayName = "Create calendar events",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Archive.View",
+                            Category = "Archive",
+                            Description = "View archived files and attachments.",
+                            DisplayName = "View document archive",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Archive.Create",
+                            Category = "Archive",
+                            Description = "Upload and archive files.",
+                            DisplayName = "Upload archive documents",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "Archive.ViewSensitive",
+                            Category = "Archive",
+                            Description = "View restricted archive files.",
+                            DisplayName = "View restricted archive documents",
                             IsSystem = true
                         },
                         new
@@ -1264,6 +1676,14 @@ namespace OfficeAutomation.Migrations
                             Category = "Security",
                             Description = "View audit logs.",
                             DisplayName = "Read audit logs",
+                            IsSystem = true
+                        },
+                        new
+                        {
+                            Key = "AuditLogs.Export",
+                            Category = "Security",
+                            Description = "Export audit logs.",
+                            DisplayName = "Export audit logs",
                             IsSystem = true
                         });
                 });
@@ -1517,6 +1937,10 @@ namespace OfficeAutomation.Migrations
                     b.Property<bool>("SidebarCollapsedByDefault")
                         .HasColumnType("bit");
 
+                    b.Property<string>("TablePreferencesJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ThemePreference")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -1742,6 +2166,13 @@ namespace OfficeAutomation.Migrations
                     b.Property<int>("WarehouseId")
                         .HasColumnType("int");
 
+                    b.Property<string>("WorkflowStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("Approved");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmployerId");
@@ -1816,6 +2247,13 @@ namespace OfficeAutomation.Migrations
 
                     b.Property<int>("WarehouseId")
                         .HasColumnType("int");
+
+                    b.Property<string>("WorkflowStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("Approved");
 
                     b.HasKey("Id");
 
@@ -2070,6 +2508,17 @@ namespace OfficeAutomation.Migrations
                     b.Navigation("ManagerEmployee");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.DocumentArchiveItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.HumanCapitalEmployee", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.Department", "Department")
@@ -2315,6 +2764,15 @@ namespace OfficeAutomation.Migrations
                     b.Navigation("Receiver");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.OrganizationCalendarEvent", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId");
+
+                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.PayrollItem", b =>

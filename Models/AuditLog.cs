@@ -30,5 +30,7 @@ namespace OfficeAutomation.Models
 
         [StringLength(1024)]
         public string? UserAgent { get; set; }
+
+        public bool IsSensitive { get; set; }
     }
 }

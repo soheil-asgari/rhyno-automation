@@ -1,0 +1,280 @@
+@using System.Globalization
+@using System.Linq
+@model OfficeAutomation.Models.OrganizationCalendarIndexVM
+@{
+    ViewData["Title"] = "تقویم سازمانی";
+    var pc = new PersianCalendar();
+    var firstDate = pc.ToDateTime(Model.CurrentYear, Model.CurrentMonth, 1, 0, 0, 0, 0);
+    var firstDayOffset = ((int)firstDate.DayOfWeek + 1) % 7;
+    var daysInMonth = pc.GetDaysInMonth(Model.CurrentYear, Model.CurrentMonth);
+    var totalCells = ((firstDayOffset + daysInMonth + 6) / 7) * 7;
+    var dayNames = new[] { "ش", "ی", "د", "س", "چ", "پ", "ج" };
+    var eventsByDay = Model.Events
+        .GroupBy(item =>
+        {
+            var parts = (item.DateShamsi ?? string.Empty).Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return parts.Length == 3 && int.TryParse(parts[2], out var day) ? day : 0;
+        })
+        .ToDictionary(group => group.Key, group => group.ToList());
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h4 class="fw-bold mb-1">تقویم سازمانی شمسی</h4>
+            <div class="text-muted small">@Model.MonthTitle</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { year = Model.CurrentMonth == 1 ? Model.CurrentYear - 1 : Model.CurrentYear, month = Model.CurrentMonth == 1 ? 12 : Model.CurrentMonth - 1 })">ماه قبل</a>
+            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index")">ماه جاری</a>
+            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { year = Model.CurrentMonth == 12 ? Model.CurrentYear + 1 : Model.CurrentYear, month = Model.CurrentMonth == 12 ? 1 : Model.CurrentMonth + 1 })">ماه بعد</a>
+        </div>
+    </div>
+
+    @if (TempData["CalendarMessage"] is string calendarMessage)
+    {
+        <div class="alert alert-info py-2 small">@calendarMessage</div>
+    }
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-white fw-bold">نمای ماهانه</div>
+        <div class="card-body">
+            <div class="calendar-month-grid">
+                @foreach (var dayName in dayNames)
+                {
+                    <div class="calendar-day-name">@dayName</div>
+                }
+
+                @for (var cell = 0; cell < totalCells; cell++)
+                {
+                    var day = cell - firstDayOffset + 1;
+                    var isCurrentMonthDay = day >= 1 && day <= daysInMonth;
+                    var dayEvents = isCurrentMonthDay && eventsByDay.TryGetValue(day, out var value)
+                        ? value
+                        : new List<OfficeAutomation.Models.CalendarEventItemVM>();
+                    var hasSensitive = dayEvents.Any(item => item.IsSensitive);
+
+                    <div class="calendar-day-cell @(isCurrentMonthDay ? "" : "is-empty") @(hasSensitive ? "is-sensitive" : "")">
+                        @if (isCurrentMonthDay)
+                        {
+                            <div class="calendar-day-header">
+                                <span class="calendar-day-number">@day</span>
+                                @if (dayEvents.Count > 0)
+                                {
+                                    <span class="badge rounded-pill text-bg-primary">@dayEvents.Count</span>
+                                }
+                            </div>
+
+                            @if (dayEvents.Count == 0)
+                            {
+                                <div class="calendar-no-event">بدون رویداد</div>
+                            }
+                            else
+                            {
+                                <div class="calendar-day-events">
+                                    @foreach (var item in dayEvents.Take(3))
+                                    {
+                                        <div class="calendar-event-item" title="@item.Title">
+                                            <span class="calendar-event-dot"></span>
+                                            <span>@item.EventTypeTitle - @item.Title</span>
+                                        </div>
+                                    }
+
+                                    @if (dayEvents.Count > 3)
+                                    {
+                                        <div class="calendar-more-events">+@(dayEvents.Count - 3) رویداد بیشتر</div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-xl-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">رویدادهای ماه</div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>تاریخ</th>
+                                <th>نوع</th>
+                                <th>عنوان</th>
+                                <th>ماژول</th>
+                                <th class="text-center">حساس</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Events.Count == 0)
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-4">رویدادی ثبت نشده است.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.Events)
+                                {
+                                    <tr>
+                                        <td>@item.DateShamsi</td>
+                                        <td><span class="badge bg-light text-dark border">@item.EventTypeTitle</span></td>
+                                        <td>@item.Title</td>
+                                        <td>@item.SourceModule</td>
+                                        <td class="text-center">
+                                            @if (item.IsSensitive)
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger">حساس</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">ثبت رخداد دستی</div>
+                <div class="card-body">
+                    <form asp-action="CreateEvent" method="post" class="row g-2">
+                        @Html.AntiForgeryToken()
+                        <div class="col-12">
+                            <label class="form-label small">عنوان</label>
+                            <input asp-for="NewEvent.Title" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small">تاریخ شمسی</label>
+                            <input asp-for="NewEvent.EventDateShamsi" class="form-control form-control-sm" placeholder="1405/03/25" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small">نوع رخداد</label>
+                            <select asp-for="NewEvent.EventType" class="form-select form-select-sm">
+                                <option value="Meeting">جلسه</option>
+                                <option value="Deadline">سررسید</option>
+                                <option value="Payment">پرداخت</option>
+                                <option value="Tax">مالیات</option>
+                                <option value="Occasion">مناسبت</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small">ماژول</label>
+                            <input asp-for="NewEvent.SourceModule" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small">توضیحات</label>
+                            <textarea asp-for="NewEvent.Description" class="form-control form-control-sm" rows="3"></textarea>
+                        </div>
+                        <div class="col-12 form-check mt-2">
+                            <input asp-for="NewEvent.IsSensitive" class="form-check-input" />
+                            <label asp-for="NewEvent.IsSensitive" class="form-check-label small">رخداد حساس</label>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <button class="btn btn-sm btn-primary w-100" type="submit">ثبت در تقویم</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .calendar-month-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: .5rem;
+    }
+
+    .calendar-day-name {
+        text-align: center;
+        font-weight: 700;
+        color: #64748b;
+        font-size: .8rem;
+        padding: .25rem 0;
+    }
+
+    .calendar-day-cell {
+        min-height: 130px;
+        border: 1px solid #e5e7eb;
+        border-radius: .75rem;
+        background-color: #fff;
+        padding: .55rem;
+        display: flex;
+        flex-direction: column;
+        gap: .45rem;
+    }
+
+    .calendar-day-cell.is-empty {
+        background: #f8fafc;
+        border-style: dashed;
+    }
+
+    .calendar-day-cell.is-sensitive {
+        border-color: #fca5a5;
+    }
+
+    .calendar-day-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .calendar-day-number {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: .95rem;
+    }
+
+    .calendar-day-events {
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
+    }
+
+    .calendar-event-item {
+        font-size: .74rem;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        line-height: 1.4;
+    }
+
+    .calendar-event-dot {
+        width: .4rem;
+        height: .4rem;
+        border-radius: 50%;
+        background: #3b82f6;
+        flex-shrink: 0;
+    }
+
+    .calendar-no-event {
+        font-size: .72rem;
+        color: #94a3b8;
+    }
+
+    .calendar-more-events {
+        font-size: .72rem;
+        color: #2563eb;
+        font-weight: 600;
+    }
+
+    @@media (max-width: 992px) {
+        .calendar-month-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .calendar-day-name {
+            display: none;
+        }
+    }
+</style>
