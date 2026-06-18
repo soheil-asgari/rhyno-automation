@@ -90,6 +90,9 @@
             چاپ یا ذخیره PDF
         </button>
         <a href="/Letters/Index" class="btn btn-outline-light btn-sm">بازگشت به لیست</a>
+        <a href="@Url.Action("Create", new { replyToId = Model.Id })" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-reply-fill"></i> پاسخ به نامه
+        </a>
     </div>
 
     <!-- بدنه اصلی نامه -->

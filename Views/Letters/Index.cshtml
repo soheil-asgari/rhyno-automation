@@ -3,6 +3,10 @@
     ViewData["Title"] = "کارتابل نامه‌ها";
     var pc = new System.Globalization.PersianCalendar();
     var list = Model?.ToList() ?? new List<OfficeAutomation.Models.Letter>();
+    var currentUserId = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var unreadCount = list.Count(item => !item.IsRead && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId));
+    var sentCount = list.Count(item => item.SenderId == currentUserId);
+    var inboxCount = list.Count(item => (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId));
 }
 
 <div class="container-fluid py-4 letters-page">
@@ -29,6 +33,21 @@
                 <span>ایجاد نامه جدید</span>
             </a>
         </div>
+    </div>
+
+    <div class="letter-filter-bar mb-4">
+        <button type="button" class="letter-filter-btn active" data-letter-filter="all">
+            <i class="bi bi-folder2-open"></i> همه (@list.Count)
+        </button>
+        <button type="button" class="letter-filter-btn" data-letter-filter="unread">
+            <i class="bi bi-envelope-open"></i> خوانده‌نشده (@unreadCount)
+        </button>
+        <button type="button" class="letter-filter-btn" data-letter-filter="sent">
+            <i class="bi bi-send"></i> ارسالی (@sentCount)
+        </button>
+        <button type="button" class="letter-filter-btn" data-letter-filter="received">
+            <i class="bi bi-inbox"></i> دریافتی (@inboxCount)
+        </button>
     </div>
 
     <div class="letters-ai-summary mb-4">
@@ -66,8 +85,11 @@
         @foreach (var item in list)
         {
             var shamsiDate = $"{pc.GetYear(item.SentDate)}/{pc.GetMonth(item.SentDate):D2}/{pc.GetDayOfMonth(item.SentDate):D2}";
+            var isUnread = !item.IsRead && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId);
+            var isSentByCurrentUser = item.SenderId == currentUserId;
+            var isReceivedByCurrentUser = item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId;
 
-            <div class="letter-row-card">
+            <div class="letter-row-card" data-unread="@(isUnread ? "1" : "0")" data-sent="@(isSentByCurrentUser ? "1" : "0")" data-received="@(isReceivedByCurrentUser ? "1" : "0")">
                 <div class="row align-items-center">
                     <div class="col-lg-5 col-md-4 mb-3 mb-md-0">
                         <div class="d-flex align-items-center gap-3">
@@ -75,11 +97,15 @@
                                 <i class="bi bi-file-earmark-text-fill"></i>
                             </div>
                             <div class="content-info">
-                                <a href="#" class="letter-title">@item.Title</a>
+                                <a href="@Url.Action("Details", new { id = item.Id })" class="letter-title">@item.Title</a>
                                 <div class="flow-info">
                                     <span class="badge-person sender">@item.Sender.FullName</span>
                                     <i class="bi bi-chevron-left"></i>
                                     <span class="badge-person receiver">@item.Receiver.FullName</span>
+                                    @if (isUnread)
+                                    {
+                                        <span class="badge-person unread-pill ms-2">خوانده‌نشده</span>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -104,7 +130,7 @@
                             <a href="@Url.Action("Details", new { id = item.Id })" class="btn-action-minimal view" title="مشاهده">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            @if (!item.IsWorkflowCompleted && item.ReceiverId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)
+                            @if (!item.IsWorkflowCompleted && item.ReceiverId == currentUserId)
                             {
                                 <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
@@ -115,8 +141,10 @@
                             }
                             <button type="button" class="btn-action-minimal print" title="چاپ">
                                 <i class="bi bi-printer"></i>
-
                             </button>
+                            <a href="@Url.Action("Create", new { replyToId = item.Id })" class="btn-action-minimal reply" title="پاسخ">
+                                <i class="bi bi-reply-fill"></i>
+                            </a>
                             <button type="button" class="btn-action-minimal more" title="بیشتر">
                                 <i class="bi bi-three-dots"></i>
                             </button>
@@ -193,6 +221,37 @@
             line-height: 1.9;
             white-space: pre-wrap;
         }
+        .letter-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .letter-filter-btn {
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #334155;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .letter-filter-btn.active,
+        .letter-filter-btn:hover {
+            background: #4361ee;
+            border-color: #4361ee;
+            color: white;
+        }
+        .unread-pill {
+            color: #f97316;
+            font-size: 0.75rem;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 999px;
+            padding: 2px 10px;
+        }
         html.theme-dark .letters-ai-summary {
             background: rgba(30, 41, 59, 0.8) !important;
             border-color: #334155 !important;
@@ -205,6 +264,22 @@
         html.theme-dark .letters-ai-summary-result {
             background: #111827 !important;
             border-color: #334155 !important;
+        }
+        html.theme-dark .letter-filter-btn {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.theme-dark .letter-filter-btn.active,
+        html.theme-dark .letter-filter-btn:hover {
+            background: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            color: #fff !important;
+        }
+        html.theme-dark .unread-pill {
+            color: #fdba74 !important;
+            background: #451a03 !important;
+            border-color: #7c2d12 !important;
         }
         @@media (max-width: 768px) {
             .letters-ai-summary-controls {

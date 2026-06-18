@@ -212,6 +212,12 @@ namespace OfficeAutomation.Data
                 .HasForeignKey(l => l.FinalReceiverId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            modelBuilder.Entity<Letter>()
+                .HasOne(l => l.ReplyToLetter)
+                .WithMany()
+                .HasForeignKey(l => l.ReplyToLetterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Department)
                 .WithMany(d => d.Users)

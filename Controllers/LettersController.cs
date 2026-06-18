@@ -245,7 +245,7 @@ namespace OfficeAutomation.Controllers
         }
 
         // GET: Letters/Create
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int? replyToId = null)
         {
             // ۱. دریافت یوزری که لاگین کرده به روش ایمن
             var currentUser = await _userManager.GetUserAsync(User);
@@ -254,14 +254,40 @@ namespace OfficeAutomation.Controllers
             ViewBag.SenderFullName = currentUser?.FullName ?? "نامشخص";
             ViewBag.SenderRole = currentUser?.JobTitle ;
             ViewBag.UserSignature = currentUser?.SignaturePath;
+            ViewBag.IsReplyMode = false;
+            ViewBag.ReplyToLetterId = replyToId;
+            ViewBag.ReplyToSubject = string.Empty;
+            ViewBag.ReplyToReceiverId = string.Empty;
 
             // ۲. دریافت لیست کاربران به همراه جنسیت
             var rawUsers = await _context.Users
                 .Select(u => new { u.Id, u.FullName, u.Gender })
                 .ToListAsync();
 
+            if (replyToId.HasValue)
+            {
+                var replyToLetter = await _context.Letters
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(item => item.Id == replyToId.Value);
+
+                if (replyToLetter == null)
+                {
+                    return NotFound();
+                }
+
+                var currentUserId = currentUser?.Id;
+                if (!CanAccessLetter(replyToLetter, currentUserId ?? string.Empty))
+                {
+                    return Forbid();
+                }
+
+                ViewBag.IsReplyMode = true;
+                ViewBag.ReplyToSubject = $"پاسخ: {replyToLetter.Title}";
+                ViewBag.ReplyToReceiverId = replyToLetter.SenderId;
+            }
+
             // جلوگیری از ارور SelectList در صورت خالی بودن دیتابیس
-            ViewData["ReceiverId"] = new SelectList(rawUsers, "Id", "FullName");
+            ViewData["ReceiverId"] = new SelectList(rawUsers, "Id", "FullName", ViewBag.ReplyToReceiverId);
 
             // تبدیل به JSON برای اسکریپت پیشوند هوشمند
             ViewBag.UsersData = System.Text.Json.JsonSerializer.Serialize(rawUsers);
@@ -274,7 +300,7 @@ namespace OfficeAutomation.Controllers
         [ValidateAntiForgeryToken]
         [Services.Security.PermissionAuthorize("Letters.Create")]
         // تغییر مهم: فیلد Content به Body تغییر یافت تا با مدل همخوانی داشته باشد
-        public async Task<IActionResult> Create([Bind("Title,Body,ReceiverId")] Letter letter)
+        public async Task<IActionResult> Create([Bind("Title,Body,ReceiverId,ReplyToLetterId")] Letter letter)
         {
             var currentUser = await _userManager.GetUserAsync(User);
 
@@ -291,6 +317,17 @@ namespace OfficeAutomation.Controllers
             ModelState.Remove("Receiver");
             ModelState.Remove("FinalReceiver");
 
+            if (letter.ReplyToLetterId.HasValue)
+            {
+                var sourceExists = await _context.Letters.AnyAsync(item =>
+                    item.Id == letter.ReplyToLetterId.Value &&
+                    (item.SenderId == currentUser.Id || item.ReceiverId == currentUser.Id || item.FinalReceiverId == currentUser.Id));
+                if (!sourceExists)
+                {
+                    return Forbid();
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 await ApplyWorkflowRoutingOnCreateAsync(letter);
@@ -303,7 +340,16 @@ namespace OfficeAutomation.Controllers
             ViewBag.SenderFullName = currentUser.FullName;
             ViewBag.SenderRole = currentUser.JobTitle;
             ViewBag.UserSignature = currentUser.SignaturePath;
+            ViewBag.IsReplyMode = letter.ReplyToLetterId.HasValue;
+            ViewBag.ReplyToLetterId = letter.ReplyToLetterId;
+            ViewBag.ReplyToSubject = letter.Title;
+            ViewBag.ReplyToReceiverId = letter.ReceiverId;
             ViewData["ReceiverId"] = new SelectList(_context.Users, "Id", "FullName", letter.ReceiverId);
+            var usersData = await _context.Users
+                .AsNoTracking()
+                .Select(u => new { u.Id, u.FullName, u.Gender })
+                .ToListAsync();
+            ViewBag.UsersData = System.Text.Json.JsonSerializer.Serialize(usersData);
             return View(letter);
         }
 

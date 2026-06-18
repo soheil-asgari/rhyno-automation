@@ -5,6 +5,16 @@
     ViewData["Title"] = "داشبورد اجرایی";
     var fa = CultureInfo.GetCultureInfo("fa-IR");
     string ToFa(int value) => value.ToString("N0", fa);
+
+    var shortcuts = new List<(string Id, string Title, string Description, string Url, string Icon)>
+    {
+        ("letters", "نامه‌ها", "گزارش‌ها و مکاتبات", "/Letters", "bi-envelope-paper"),
+        ("invoices", "فاکتورها", "ایجاد و پیگیری فاکتور", "/Financial/Invoices", "bi-receipt"),
+        ("leaves", "مرخصی‌ها", "درخواست‌ها و تاییدها", "/Leaves", "bi-calendar-check"),
+        ("warehouse", "انبار", "رسید و خروجی کالا", "/Warehouse", "bi-box-seam"),
+        ("calendar", "تقویم", "رویدادهای مهم سازمان", "/OrganizationCalendar", "bi-calendar3"),
+        ("search", "جستجو", "جستجوی سریع", "/Search", "bi-search")
+    };
 }
 
 <div class="executive-dashboard">
@@ -13,16 +23,80 @@
             <h1>داشبورد اجرایی</h1>
             <p>نمای زنده از کارهای امروز، تاییدها، فاکتورها، موجودی و هشدارهای سیستم - @Model.TodayText</p>
         </div>
-        <a class="btn btn-sm btn-outline-primary" href="/admin/audit-dashboard">
-            <i class="bi bi-shield-check"></i>
-            رخدادها
-        </a>
+        <div class="header-actions">
+            <button id="homeCustomizeToggle" class="btn btn-sm btn-outline-primary" type="button">
+                <i class="bi bi-sliders2"></i>
+                تنظیمات صفحه
+            </button>
+            <a class="btn btn-sm btn-outline-primary" href="/admin/audit-dashboard">
+                <i class="bi bi-shield-check"></i>
+                رخدادها
+            </a>
+        </div>
     </section>
 
-    <section class="metric-grid">
-        @foreach (var metric in Model.ExecutiveMetrics)
+    <section id="homeCustomizationPanel" class="home-customization-panel">
+        <h3>شخصی‌سازی داشبورد</h3>
+        <p>می‌تونید ترتیب کارت‌ها رو عوض کنید و شورتکات‌های نمایش داده‌شده را انتخاب کنید.</p>
+
+        <div class="customization-toolbar">
+            <button id="toggleEditMode" class="btn btn-sm btn-outline-secondary" type="button">
+                <i class="bi bi-arrows-move"></i>
+                فعال‌سازی جابه‌جایی
+            </button>
+            <button id="resetDashboardConfig" class="btn btn-sm btn-outline-danger" type="button">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                بازنشانی چیدمان
+            </button>
+        </div>
+
+        <div class="bg-controls">
+            <label>پس‌زمینه</label>
+            <div class="preset-backgrounds" role="list" aria-label="پیش‌تنظیم پس‌زمینه">
+                <button type="button" class="bg-swatch" data-bg="linear-gradient(135deg, #f8fafc, #eff6ff)" data-type="gradient" title="پس‌زمینه روشن" aria-label="پس‌زمینه روشن" style="--swatch: linear-gradient(135deg, #f8fafc, #eff6ff);"></button>
+                <button type="button" class="bg-swatch" data-bg="#fef3c7" data-type="color" title="سفید مایل" aria-label="پس‌زمینه سفید مایل" style="--swatch: #fef3c7;"></button>
+                <button type="button" class="bg-swatch" data-bg="#dcfce7" data-type="color" title="سبز روشن" aria-label="پس‌زمینه سبز روشن" style="--swatch: #dcfce7;"></button>
+                <button type="button" class="bg-swatch" data-bg="#dbeafe" data-type="color" title="آبی روشن" aria-label="پس‌زمینه آبی روشن" style="--swatch: #dbeafe;"></button>
+                <button type="button" class="bg-swatch" data-bg="#ede9fe" data-type="color" title="بنفش روشن" aria-label="پس‌زمینه بنفش روشن" style="--swatch: #ede9fe;"></button>
+            </div>
+            <div class="bg-actions">
+                <label for="customBackgroundColor">رنگ دلخواه</label>
+                <input id="customBackgroundColor" type="color" value="#f8fafc" />
+                <label for="customBackgroundImage">تصویر دلخواه</label>
+                <input id="customBackgroundImage" type="text" placeholder="آدرس تصویر" />
+                <button id="applyBgImage" type="button" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-image"></i>
+                    اعمال تصویر
+                </button>
+                <button id="clearBackground" type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i>
+                    حذف پس‌زمینه
+                </button>
+            </div>
+        </div>
+
+        <div class="shortcut-visibility">
+            <p>نمایش شورتکات‌ها</p>
+            <div class="shortcut-toggles" id="shortcutToggles">
+                @foreach (var shortcut in shortcuts)
+                {
+                    <label class="shortcut-toggle-item">
+                        <input type="checkbox" value="@shortcut.Id" checked />
+                        <i class="bi @shortcut.Icon"></i>
+                        <span>@shortcut.Title</span>
+                    </label>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="metric-grid" id="metricGrid" data-drag-container>
+        @for (int metricIndex = 0; metricIndex < Model.ExecutiveMetrics.Count; metricIndex++)
         {
-            <a class="metric-card metric-@metric.Tone" href="@metric.Url">
+            var metric = Model.ExecutiveMetrics[metricIndex];
+            var cardId = $"metric-{metricIndex}";
+            <a class="metric-card metric-@metric.Tone customizable-card" href="@metric.Url" data-card-id="@cardId" data-card-type="metric" draggable="true">
+                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
                 <span class="metric-icon"><i class="bi @metric.Icon"></i></span>
                 <span class="metric-body">
                     <strong>@metric.Value</strong>
@@ -33,9 +107,10 @@
         }
     </section>
 
-    <section class="dashboard-grid">
-        <div class="dashboard-panel" id="pending-work">
+    <section class="dashboard-grid" id="mainPanels" data-drag-container>
+        <div class="dashboard-panel customizable-card" id="panel-pending-work" data-card-id="panel-pending-work" data-card-type="panel" draggable="true">
             <div class="panel-head">
+                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
                 <h2>کارهای در انتظار اقدام</h2>
                 <span>@ToFa(Model.PendingWorkItems.Count) مورد</span>
             </div>
@@ -62,8 +137,9 @@
             }
         </div>
 
-        <div class="dashboard-panel" id="system-alerts">
+        <div class="dashboard-panel customizable-card" id="panel-system-alerts" data-card-id="panel-system-alerts" data-card-type="panel" draggable="true">
             <div class="panel-head">
+                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
                 <h2>هشدارهای سیستم</h2>
                 <span>@ToFa(Model.SystemWarnings)</span>
             </div>
@@ -82,8 +158,9 @@
             </div>
         </div>
 
-        <div class="dashboard-panel">
+        <div class="dashboard-panel customizable-card" id="panel-weekly-activity" data-card-id="panel-weekly-activity" data-card-type="panel" draggable="true">
             <div class="panel-head">
+                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
                 <h2>روند فعالیت ۷ روز اخیر</h2>
                 <span>@ToFa(Model.TotalAuditEvents) رخداد</span>
             </div>
@@ -98,8 +175,9 @@
             </div>
         </div>
 
-        <div class="dashboard-panel">
+        <div class="dashboard-panel customizable-card" id="panel-recent-activities" data-card-id="panel-recent-activities" data-card-type="panel" draggable="true">
             <div class="panel-head">
+                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
                 <h2>آخرین فعالیت‌ها</h2>
                 <span>Audit</span>
             </div>
@@ -124,6 +202,27 @@
             </div>
         </div>
     </section>
+
+    <section class="dashboard-shortcuts" id="shortcutsPanel" data-card-type="shortcuts" data-card-id="shortcuts-panel">
+        <div class="panel-head">
+            <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
+            <h2>شورتکات‌ها</h2>
+            <span>فوریت‌ها</span>
+        </div>
+        <div class="shortcut-grid" id="shortcutGrid" data-drag-container>
+            @foreach (var shortcut in shortcuts)
+            {
+                <a class="dashboard-shortcut customizable-card" href="@shortcut.Url" data-shortcut-id="@shortcut.Id" data-card-id="shortcut-@shortcut.Id" draggable="true">
+                    <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
+                    <i class="bi @shortcut.Icon"></i>
+                    <span>
+                        <strong>@shortcut.Title</strong>
+                        <small>@shortcut.Description</small>
+                    </span>
+                </a>
+            }
+        </div>
+    </section>
 </div>
 
 @section Styles {
@@ -131,6 +230,33 @@
         .executive-dashboard {
             direction: rtl;
             color: var(--text-dark);
+            --home-surface: rgba(255, 255, 255, 0.9);
+            --home-surface-strong: #ffffff;
+            --home-surface-soft: #f8fafc;
+            --home-border: rgba(148, 163, 184, 0.24);
+            --home-text: var(--text-dark);
+            --home-text-muted: var(--text-muted);
+            --home-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+            --home-primary: #4f46e5;
+            --home-accent: rgba(79, 70, 229, 0.12);
+        }
+
+        html.theme-dark .executive-dashboard,
+        html[data-theme="dark"] .executive-dashboard,
+        body[data-theme="dark"] .executive-dashboard {
+            --home-surface: rgba(15, 23, 42, 0.92);
+            --home-surface-strong: #111827;
+            --home-surface-soft: #172033;
+            --home-border: rgba(148, 163, 184, 0.22);
+            --home-text: #e5edf8;
+            --home-text-muted: #94a3b8;
+            --home-shadow: 0 10px 26px rgba(2, 6, 23, 0.34);
+            --home-primary: #818cf8;
+            --home-accent: rgba(129, 140, 248, 0.14);
+        }
+
+        .executive-dashboard {
+            background: transparent;
         }
 
         .dashboard-header {
@@ -141,6 +267,19 @@
             margin-bottom: 12px;
         }
 
+        .header-actions,
+        .customization-toolbar,
+        .bg-actions,
+        .bg-controls,
+        .bg-controls label,
+        .shortcut-visibility {
+            display: flex;
+        }
+
+        .header-actions { gap: 8px; align-items: center; }
+        .customization-toolbar { gap: 8px; margin-bottom: 8px; }
+        .customization-toolbar { align-items: center; }
+
         .dashboard-header h1 {
             margin: 0 0 4px;
             font-size: 1.2rem !important;
@@ -149,9 +288,95 @@
 
         .dashboard-header p {
             margin: 0;
-            color: #64748b;
+            color: var(--home-text-muted);
             font-size: .76rem;
         }
+
+        .home-customization-panel {
+            margin-bottom: 12px;
+            border: 1px solid var(--home-border);
+            background: var(--home-surface);
+            border-radius: 10px;
+            padding: 10px;
+            gap: 9px;
+            display: none;
+            flex-direction: column;
+            box-shadow: var(--home-shadow);
+        }
+
+        .home-customization-panel h3 {
+            margin: 0;
+            font-size: .95rem;
+            font-weight: 800;
+        }
+
+        .home-customization-panel p {
+            margin: 0;
+            color: var(--home-text-muted);
+            font-size: .73rem;
+        }
+
+        .bg-controls,
+        .shortcut-visibility {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .preset-backgrounds {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .bg-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            border: 1px solid var(--home-border);
+            background: var(--swatch);
+            cursor: pointer;
+        }
+
+        .bg-swatch:hover { filter: brightness(.93); }
+
+        .bg-actions {
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .bg-actions input[type="color"],
+        .bg-actions input[type="text"] {
+            height: 31px;
+            border: 1px solid var(--home-border);
+            border-radius: 6px;
+            padding: 4px 8px;
+            background: var(--home-surface-strong);
+            color: var(--home-text);
+        }
+
+        .bg-actions input[type="text"] { min-width: 270px; }
+
+        .shortcut-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .shortcut-toggle-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--home-border);
+            background: var(--home-surface-soft);
+            border-radius: 999px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: .73rem;
+            color: var(--home-text);
+        }
+
+        .shortcut-toggle-item input { margin: 0; }
 
         .metric-grid {
             display: grid;
@@ -161,13 +386,16 @@
         }
 
         .metric-card,
-        .dashboard-panel {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+        .dashboard-panel,
+        .dashboard-shortcut {
+            background: var(--home-surface);
+            border: 1px solid var(--home-border);
+            box-shadow: var(--home-shadow);
+            color: var(--home-text);
         }
 
-        .metric-card {
+        .metric-card,
+        .dashboard-shortcut {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -176,8 +404,10 @@
             text-decoration: none;
         }
 
-        .metric-card:hover {
-            border-color: #94a3b8;
+        .metric-card:hover,
+        .dashboard-shortcut:hover,
+        .dashboard-panel {
+            border-color: var(--home-primary);
         }
 
         .metric-icon {
@@ -186,9 +416,9 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-            color: #4f46e5;
+            border: 1px solid var(--home-border);
+            background: var(--home-surface-soft);
+            color: var(--home-primary);
         }
 
         .metric-body {
@@ -196,33 +426,26 @@
             min-width: 0;
         }
 
-        .metric-body strong {
-            font-size: 1.1rem;
-            line-height: 1.2;
-        }
-
-        .metric-body span {
-            font-size: .76rem;
-            font-weight: 800;
-        }
-
+        .metric-body strong { font-size: 1.1rem; line-height: 1.2; }
+        .metric-body span { font-size: .76rem; font-weight: 800; }
         .metric-body small {
-            color: #64748b;
+            color: var(--home-text-muted);
             font-size: .66rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .metric-danger .metric-icon { color: #dc2626; }
-        .metric-warning .metric-icon { color: #d97706; }
-        .metric-success .metric-icon { color: #059669; }
-        .metric-info .metric-icon { color: #0891b2; }
+        .metric-danger .metric-icon { color: #fb7185; }
+        .metric-warning .metric-icon { color: #f59e0b; }
+        .metric-success .metric-icon { color: #34d399; }
+        .metric-info .metric-icon { color: #22d3ee; }
 
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
             gap: 12px;
+            margin-bottom: 12px;
         }
 
         .dashboard-panel {
@@ -245,17 +468,33 @@
         }
 
         .panel-head span {
-            color: #64748b;
+            color: var(--home-text-muted);
             font-size: .7rem;
             font-weight: 800;
         }
 
         .work-list,
         .alert-list,
-        .recent-list {
+        .recent-list,
+        .shortcut-grid {
             display: grid;
             gap: 7px;
         }
+
+        .dashboard-shortcuts {
+            border: 1px solid var(--home-border);
+            background: var(--home-surface);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .dashboard-shortcut .metric-body {
+            display: grid;
+            min-width: 0;
+        }
+
+        .dashboard-shortcut strong { font-size: .76rem; }
+        .dashboard-shortcut small { font-size: .65rem; color: var(--home-text-muted); }
 
         .work-item,
         .alert-item,
@@ -264,16 +503,14 @@
             align-items: center;
             gap: 8px;
             padding: 8px;
-            border: 1px solid #eef2f7;
-            background: #f8fafc;
+            border: 1px solid var(--home-border);
+            background: var(--home-surface-soft);
             color: inherit;
             text-decoration: none;
         }
 
         .work-item i,
-        .alert-item i {
-            color: #4f46e5;
-        }
+        .alert-item i { color: var(--home-primary); }
 
         .work-item span,
         .alert-item span,
@@ -296,7 +533,7 @@
         .alert-item small,
         .recent-item small {
             font-size: .66rem;
-            color: #64748b;
+            color: var(--home-text-muted);
         }
 
         .work-item em,
@@ -306,10 +543,13 @@
             white-space: nowrap;
         }
 
-        .alert-danger { border-color: #fecaca; background: #fff7f7; }
-        .alert-warning { border-color: #fde68a; background: #fffbeb; }
-        .alert-info { border-color: #bae6fd; background: #f0f9ff; }
-        .alert-success { border-color: #bbf7d0; background: #f0fdf4; }
+        .work-item,
+        .alert-item,
+        .recent-item,
+        .activity-bar span,
+        .empty-state {
+            border-radius: 8px;
+        }
 
         .activity-bars {
             height: 156px;
@@ -332,36 +572,99 @@
         .activity-bar span {
             display: block;
             min-height: 8px;
-            background: #4f46e5;
+            background: var(--home-primary);
         }
 
         .activity-bar small {
-            color: #64748b;
+            color: var(--home-text-muted);
             font-size: .62rem;
         }
 
         .empty-state {
             padding: 18px;
             text-align: center;
-            color: #64748b;
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
+            color: var(--home-text-muted);
+            background: var(--home-surface-soft);
+            border: 1px dashed var(--home-border);
             font-size: .76rem;
         }
 
+        .dragging {
+            opacity: .55;
+        }
+
+        .drag-indicator {
+            border: 1px dashed var(--home-primary);
+            background: var(--home-accent);
+        }
+
+        .drag-mode .drag-handle {
+            display: inline-flex !important;
+            color: var(--home-text-muted);
+        }
+
+        .drag-handle {
+            width: 21px;
+            height: 21px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--home-border);
+            border-radius: 99px;
+            color: var(--home-primary);
+        }
+
+        .home-customization-panel.open {
+            display: flex;
+        }
+
+        .metric-card.hidden,
+        .dashboard-panel.hidden,
+        .dashboard-shortcut.hidden {
+            display: none !important;
+        }
+
         html.theme-dark .metric-card,
-        html.theme-dark .dashboard-panel {
-            background: #111827 !important;
-            border-color: #334155 !important;
+        html.theme-dark .dashboard-panel,
+        html.theme-dark .home-customization-panel,
+        html.theme-dark .dashboard-shortcuts,
+        html[data-theme="dark"] .metric-card,
+        html[data-theme="dark"] .dashboard-panel,
+        html[data-theme="dark"] .home-customization-panel,
+        html[data-theme="dark"] .dashboard-shortcuts,
+        body[data-theme="dark"] .metric-card,
+        body[data-theme="dark"] .dashboard-panel,
+        body[data-theme="dark"] .home-customization-panel,
+        body[data-theme="dark"] .dashboard-shortcuts {
+            background: var(--home-surface) !important;
+            border-color: var(--home-border) !important;
+            color: var(--home-text) !important;
         }
 
         html.theme-dark .work-item,
         html.theme-dark .alert-item,
         html.theme-dark .recent-item,
         html.theme-dark .empty-state,
-        html.theme-dark .metric-icon {
-            background: #0f172a !important;
-            border-color: #334155 !important;
+        html.theme-dark .metric-icon,
+        html.theme-dark .shortcut-toggle-item,
+        html.theme-dark .bg-swatch,
+        html[data-theme="dark"] .work-item,
+        html[data-theme="dark"] .alert-item,
+        html[data-theme="dark"] .recent-item,
+        html[data-theme="dark"] .empty-state,
+        html[data-theme="dark"] .metric-icon,
+        html[data-theme="dark"] .shortcut-toggle-item,
+        html[data-theme="dark"] .bg-swatch,
+        body[data-theme="dark"] .work-item,
+        body[data-theme="dark"] .alert-item,
+        body[data-theme="dark"] .recent-item,
+        body[data-theme="dark"] .empty-state,
+        body[data-theme="dark"] .metric-icon,
+        body[data-theme="dark"] .shortcut-toggle-item,
+        body[data-theme="dark"] .bg-swatch {
+            background: var(--home-surface-soft) !important;
+            border-color: var(--home-border) !important;
+            color: var(--home-text) !important;
         }
 
         html.theme-dark .dashboard-header p,
@@ -370,8 +673,28 @@
         html.theme-dark .work-item small,
         html.theme-dark .alert-item small,
         html.theme-dark .recent-item small,
-        html.theme-dark .activity-bar small {
-            color: #cbd5e1 !important;
+        html.theme-dark .activity-bar small,
+        html.theme-dark .home-customization-panel p,
+        html.theme-dark .shortcut-toggle-item,
+        html[data-theme="dark"] .dashboard-header p,
+        html[data-theme="dark"] .metric-body small,
+        html[data-theme="dark"] .panel-head span,
+        html[data-theme="dark"] .work-item small,
+        html[data-theme="dark"] .alert-item small,
+        html[data-theme="dark"] .recent-item small,
+        html[data-theme="dark"] .activity-bar small,
+        html[data-theme="dark"] .home-customization-panel p,
+        html[data-theme="dark"] .shortcut-toggle-item,
+        body[data-theme="dark"] .dashboard-header p,
+        body[data-theme="dark"] .metric-body small,
+        body[data-theme="dark"] .panel-head span,
+        body[data-theme="dark"] .work-item small,
+        body[data-theme="dark"] .alert-item small,
+        body[data-theme="dark"] .recent-item small,
+        body[data-theme="dark"] .activity-bar small,
+        body[data-theme="dark"] .home-customization-panel p,
+        body[data-theme="dark"] .shortcut-toggle-item {
+            color: var(--home-text-muted) !important;
         }
 
         @@media (max-width: 1200px) {
@@ -385,6 +708,463 @@
             .metric-grid {
                 grid-template-columns: 1fr;
             }
+
+            .bg-actions {
+                align-items: stretch;
+            }
+
+            .bg-actions input[type="text"] {
+                width: 100%;
+                min-width: unset;
+            }
         }
     </style>
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const storagePrefix = 'home-dashboard';
+            const layoutStorageKey = `${storagePrefix}.layout.order.v1`;
+            const shortcutStorageKey = `${storagePrefix}.shortcuts.v1`;
+            const bgStorageKey = `${storagePrefix}.bg.v1`;
+            const isDarkTheme = () => document.documentElement.classList.contains('theme-dark') || document.documentElement.getAttribute('data-theme') === 'dark';
+            const getBaseSurface = () => isDarkTheme() ? '#111827' : '#f8fafc';
+
+            const toggleButton = document.getElementById('homeCustomizeToggle');
+            const customizationPanel = document.getElementById('homeCustomizationPanel');
+            const editButton = document.getElementById('toggleEditMode');
+            const resetButton = document.getElementById('resetDashboardConfig');
+            const mainPanels = document.getElementById('mainPanels');
+            const metricGrid = document.getElementById('metricGrid');
+            const shortcutGrid = document.getElementById('shortcutGrid');
+            const shortcutToggles = document.getElementById('shortcutToggles');
+            const mainContainer = document.getElementById('main-content-wrapper');
+
+            const presetSwatches = document.querySelectorAll('.bg-swatch');
+            const customColorInput = document.getElementById('customBackgroundColor');
+            const customImageInput = document.getElementById('customBackgroundImage');
+            const applyImageButton = document.getElementById('applyBgImage');
+            const clearBackgroundButton = document.getElementById('clearBackground');
+
+            const containerList = [metricGrid, mainPanels, shortcutGrid];
+            let draggingElement = null;
+            let isDragEnabled = false;
+
+            const getDashboardSettings = () => {
+                const defaultOrder = {};
+                containerList.forEach((container) => {
+                    if (!container) return;
+                    defaultOrder[container.id] = Array.from(container.children)
+                        .filter((node) => node instanceof HTMLElement)
+                        .map((node) => node.getAttribute('data-card-id'));
+                });
+                const defaultShortcuts = Array.from(shortcutToggles?.querySelectorAll('input[type="checkbox"]') || []).map((input) => input.value);
+                return { order: defaultOrder, shortcuts: defaultShortcuts };
+            };
+
+            const readSavedSettings = () => {
+                const fallback = getDashboardSettings();
+                let layout = { ...fallback };
+                let shortcuts = [...fallback.shortcuts];
+                let background = null;
+
+                try {
+                    const rawLayout = localStorage.getItem(layoutStorageKey);
+                    if (rawLayout) {
+                        const parsed = JSON.parse(rawLayout);
+                        if (parsed && typeof parsed === 'object' && parsed.order) {
+                            layout = { ...layout, ...parsed };
+                        }
+                    }
+
+                    const rawShortcuts = localStorage.getItem(shortcutStorageKey);
+                    if (rawShortcuts) {
+                        const parsedShortcuts = JSON.parse(rawShortcuts);
+                        if (Array.isArray(parsedShortcuts)) {
+                            shortcuts = parsedShortcuts;
+                        }
+                    }
+
+                    const rawBg = localStorage.getItem(bgStorageKey);
+                    if (rawBg) {
+                        background = JSON.parse(rawBg);
+                    }
+                }
+                catch {
+                    // ignore and continue with fallback
+                }
+
+                return { order: layout.order || fallback.order, shortcuts, background };
+            };
+
+            const saveSettings = (settings) => {
+                localStorage.setItem(layoutStorageKey, JSON.stringify({ order: settings.order }));
+                localStorage.setItem(shortcutStorageKey, JSON.stringify(settings.shortcuts));
+            };
+
+            const saveBackground = (value) => {
+                localStorage.setItem(bgStorageKey, JSON.stringify(value));
+            };
+
+            const applyOrder = (orderMap) => {
+                if (!containerList.every((container) => container)) {
+                    return;
+                }
+
+                containerList.forEach((container) => {
+                    const expectedOrder = orderMap[container.id];
+                    if (!Array.isArray(expectedOrder)) {
+                        return;
+                    }
+
+                    const childrenById = new Map();
+                    const existingCards = Array.from(container.children);
+                    existingCards.forEach((card) => {
+                        if (card instanceof HTMLElement && card.getAttribute('data-card-id')) {
+                            childrenById.set(card.getAttribute('data-card-id'), card);
+                        }
+                    });
+
+                    const fallbackCards = [];
+                    existingCards.forEach((card) => {
+                        if (card instanceof HTMLElement && card.getAttribute('data-card-id') && !childrenById.has(card.getAttribute('data-card-id'))) {
+                            fallbackCards.push(card);
+                        }
+                    });
+
+                    expectedOrder.forEach((cardId) => {
+                        const card = childrenById.get(cardId);
+                        if (card) {
+                            container.appendChild(card);
+                            childrenById.delete(cardId);
+                        }
+                    });
+
+                    fallbackCards.forEach((card) => container.appendChild(card));
+                    childrenById.forEach((card) => {
+                        container.appendChild(card);
+                    });
+                });
+            };
+
+            const applyShortcutVisibility = (visibleShortcutIds) => {
+                const activeIds = new Set(visibleShortcutIds);
+                const shortcuts = Array.from(shortcutGrid.querySelectorAll('.dashboard-shortcut'));
+                shortcuts.forEach((shortcut) => {
+                    const id = shortcut.getAttribute('data-shortcut-id');
+                    shortcut.classList.toggle('hidden', id ? !activeIds.has(id) : false);
+                });
+
+                const checkboxes = Array.from(shortcutToggles.querySelectorAll('input[type="checkbox"]'));
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = activeIds.has(checkbox.value);
+                });
+            };
+
+            const applyBackground = (config) => {
+                if (!mainContainer) {
+                    return;
+                }
+
+                if (!config || (config.type !== 'color' && config.type !== 'image' && config.type !== 'gradient')) {
+                    mainContainer.style.background = '';
+                    mainContainer.style.backgroundImage = '';
+                    return;
+                }
+
+                if (config.type === 'image') {
+                    mainContainer.style.backgroundColor = getBaseSurface();
+                    mainContainer.style.backgroundImage = `url('${config.value}')`;
+                    mainContainer.style.backgroundSize = 'cover';
+                    mainContainer.style.backgroundPosition = 'center';
+                    mainContainer.style.backgroundAttachment = 'fixed';
+                    return;
+                }
+
+                mainContainer.style.backgroundImage = 'none';
+                mainContainer.style.backgroundColor = config.value;
+                if (config.type === 'gradient') {
+                    mainContainer.style.background = config.value;
+                }
+            };
+
+            const collectLayoutState = () => {
+                const order = {};
+                containerList.forEach((container) => {
+                    if (!container) {
+                        return;
+                    }
+
+                    order[container.id] = Array.from(container.children)
+                        .filter((node) => node instanceof HTMLElement && node.getAttribute('data-card-id'))
+                        .map((node) => node.getAttribute('data-card-id'));
+                });
+
+                const shortcuts = Array.from(shortcutToggles.querySelectorAll('input[type="checkbox"]'))
+                    .filter((checkbox) => checkbox.checked)
+                    .map((checkbox) => checkbox.value);
+
+                return { order, shortcuts };
+            };
+
+            const hydrate = () => {
+                const settings = readSavedSettings();
+                applyOrder(settings.order);
+                applyShortcutVisibility(settings.shortcuts);
+                applyBackground(settings.background);
+            };
+
+            const togglePanel = () => {
+                customizationPanel.classList.toggle('open');
+            };
+
+            const setDragMode = (enabled) => {
+                isDragEnabled = enabled;
+                document.body.classList.toggle('drag-mode', enabled);
+                editButton.textContent = enabled ? 'تایید و خروج از ویرایش' : 'فعال‌سازی جابه‌جایی';
+                document.querySelectorAll('.drag-handle').forEach((handle) => {
+                    handle.style.display = enabled ? 'inline-flex' : '';
+                });
+            };
+
+            const setDragStateForCards = (container, enabled) => {
+                if (!container) {
+                    return;
+                }
+
+                container.querySelectorAll('[draggable]').forEach((item) => {
+                    item.draggable = enabled;
+                });
+            };
+
+            const setAllDragState = (enabled) => {
+                setDragStateForCards(metricGrid, enabled);
+                setDragStateForCards(mainPanels, enabled);
+                setDragStateForCards(shortcutGrid, enabled);
+            };
+
+            const clearIndicators = () => {
+                document.querySelectorAll('.drag-indicator').forEach((node) => {
+                    node.classList.remove('drag-indicator');
+                });
+            };
+
+            const getCardContainer = (element) => {
+                if (!element) return null;
+                return element.closest('[data-drag-container]');
+            };
+
+            const updateOrderStorage = () => {
+                const settings = collectLayoutState();
+                saveSettings(settings);
+            };
+
+            const onDragStart = (event) => {
+                if (!isDragEnabled) {
+                    event.preventDefault();
+                    return;
+                }
+
+                draggingElement = event.currentTarget;
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', draggingElement.getAttribute('data-card-id') || '');
+                draggingElement.classList.add('dragging');
+            };
+
+            const onDragOver = (event) => {
+                if (!isDragEnabled || !draggingElement) {
+                    return;
+                }
+
+                event.preventDefault();
+                const container = getCardContainer(event.currentTarget);
+                if (!container) {
+                    return;
+                }
+
+                const afterElement = getDragAfterElement(container, event.clientY);
+                clearIndicators();
+                if (afterElement) {
+                    afterElement.classList.add('drag-indicator');
+                }
+                return;
+            };
+
+            const getDragAfterElement = (container, y) => {
+                const draggableElements = Array.from(container.querySelectorAll('.customizable-card:not(.dragging):not(.hidden)'));
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - (box.top + box.height / 2);
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset, element: child };
+                    }
+                    return closest;
+                }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+            };
+
+            const onDragEnter = (event) => {
+                const container = getCardContainer(event.currentTarget);
+                if (!container) return;
+                container.classList.add('drag-indicator');
+            };
+
+            const onDragLeave = (event) => {
+                const container = getCardContainer(event.currentTarget);
+                if (!container) return;
+                container.classList.remove('drag-indicator');
+            };
+
+            const onDrop = (event) => {
+                event.preventDefault();
+                if (!isDragEnabled || !draggingElement) {
+                    return;
+                }
+
+                const container = getCardContainer(event.currentTarget);
+                if (!container || !container.contains(event.currentTarget)) {
+                    return;
+                }
+
+                const afterElement = getDragAfterElement(container, event.clientY);
+                if (!afterElement) {
+                    container.appendChild(draggingElement);
+                } else {
+                    container.insertBefore(draggingElement, afterElement);
+                }
+
+                clearIndicators();
+                updateOrderStorage();
+            };
+
+            const onDragEnd = () => {
+                clearIndicators();
+                if (draggingElement) {
+                    draggingElement.classList.remove('dragging');
+                }
+                draggingElement = null;
+            };
+
+            const bindDragEvents = () => {
+                const cards = document.querySelectorAll('[draggable="true"]');
+                cards.forEach((card) => {
+                    card.addEventListener('dragstart', onDragStart);
+                    card.addEventListener('dragend', onDragEnd);
+                });
+
+                containerList.forEach((container) => {
+                    if (!container) return;
+                    container.addEventListener('dragover', onDragOver);
+                    container.addEventListener('dragenter', onDragEnter);
+                    container.addEventListener('dragleave', onDragLeave);
+                    container.addEventListener('drop', onDrop);
+                });
+            };
+
+            const bindShortcutToggle = () => {
+                if (!shortcutToggles) {
+                    return;
+                }
+
+                shortcutToggles.addEventListener('change', (event) => {
+                    const checkbox = event.target;
+                    if (!(checkbox instanceof HTMLInputElement) || checkbox.type !== 'checkbox') {
+                        return;
+                    }
+
+                    const id = checkbox.value;
+                    const shortcut = shortcutGrid.querySelector(`[data-shortcut-id="${id}"]`);
+                    if (shortcut) {
+                        shortcut.classList.toggle('hidden', !checkbox.checked);
+                    }
+                    updateOrderStorage();
+                });
+            };
+
+            const bindBackgroundControls = () => {
+                presetSwatches.forEach((swatch) => {
+                    swatch.addEventListener('click', () => {
+                        const bgType = swatch.dataset.type || 'color';
+                        const value = swatch.dataset.bg;
+                        const config = { type: bgType, value };
+                        applyBackground(config);
+                        saveBackground(config);
+                    });
+                });
+
+                customColorInput?.addEventListener('change', () => {
+                    const config = { type: 'color', value: customColorInput.value };
+                    applyBackground(config);
+                    saveBackground(config);
+                });
+
+                applyImageButton?.addEventListener('click', () => {
+                    const value = customImageInput?.value?.trim();
+                    if (!value) {
+                        return;
+                    }
+                    const config = { type: 'image', value };
+                    applyBackground(config);
+                    saveBackground(config);
+                });
+
+                clearBackgroundButton?.addEventListener('click', () => {
+                    applyBackground(null);
+                    localStorage.removeItem(bgStorageKey);
+                });
+            };
+
+            const resetDashboard = () => {
+                const defaultSettings = getDashboardSettings();
+                applyOrder(defaultSettings.order);
+                applyShortcutVisibility(defaultSettings.shortcuts);
+                localStorage.removeItem(layoutStorageKey);
+                localStorage.removeItem(shortcutStorageKey);
+                localStorage.removeItem(bgStorageKey);
+                applyBackground(null);
+                mainContainer.style.background = '';
+                mainContainer.style.backgroundImage = '';
+                mainContainer.style.backgroundColor = '';
+            };
+
+            toggleButton?.addEventListener('click', togglePanel);
+            editButton?.addEventListener('click', () => {
+                const nextState = !isDragEnabled;
+                setDragMode(nextState);
+                setAllDragState(nextState);
+            });
+
+            resetButton?.addEventListener('click', resetDashboard);
+
+            hydrate();
+            bindDragEvents();
+            bindShortcutToggle();
+            bindBackgroundControls();
+            setAllDragState(false);
+
+            document.querySelectorAll('[draggable="true"]').forEach((card) => {
+                card.addEventListener('touchstart', () => {
+                    if (!isDragEnabled) return;
+                    card.setAttribute('data-touch-lock', '1');
+                });
+            });
+
+            window.addEventListener('storage', (event) => {
+                if (event.key === layoutStorageKey || event.key === shortcutStorageKey || event.key === bgStorageKey) {
+                    hydrate();
+                }
+            });
+
+            window.addEventListener('themechange', () => {
+                const settings = readSavedSettings();
+                applyBackground(settings.background);
+            });
+
+            if (mainContainer) {
+                if (mainContainer.style.backgroundImage || mainContainer.style.backgroundColor) {
+                    return;
+                }
+            }
+        })();
+    </script>
 }

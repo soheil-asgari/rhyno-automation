@@ -7,6 +7,9 @@
     var pc = new System.Globalization.PersianCalendar();
     var now = DateTime.Now;
     string persianDate = $"{pc.GetYear(now)}/{pc.GetMonth(now):D2}/{pc.GetDayOfMonth(now):D2}";
+    bool isReplyMode = ViewBag.IsReplyMode == true;
+    string replySubject = (ViewBag.ReplyToSubject as string) ?? string.Empty;
+    string replyReceiverId = (ViewBag.ReplyToReceiverId as string) ?? string.Empty;
 }
 
 <link rel="stylesheet" href="/css/letter.css">
@@ -27,12 +30,16 @@
                     </select>
                 </div>
 
-                <input type="text" id="subjectInput" class="form-control subject-input" placeholder="موضوع نامه...">
+                <input type="text" id="subjectInput" class="form-control subject-input" value="@replySubject" placeholder="موضوع نامه...">
             </div>
 
             <button class="btn btn-primary fw-bold send-btn" id="btnSendLetter">
                 <i class="bi bi-send"></i> ارسال نهایی
             </button>
+        </div>
+
+        <div class="reply-mode-title @(isReplyMode ? "" : "d-none")">
+            <i class="bi bi-reply-fill"></i> حالت پاسخ نامه
         </div>
 
         <div class="ai-letter-panel">
@@ -113,10 +120,17 @@
     <input type="hidden" id="hTitle" name="Title">
     <input type="hidden" id="hContent" name="Body">
     <input type="hidden" id="hReceiver" name="ReceiverId">
+    <input type="hidden" id="hReplyToLetterId" name="ReplyToLetterId" value="@(ViewBag.ReplyToLetterId)">
     @Html.AntiForgeryToken()
 </form>
 <script>
     window.usersList = @Html.Raw(ViewBag.UsersData ?? "[]");
+        window.letterReplyConfig = {
+            isReplyMode: @((isReplyMode).ToString().ToLowerInvariant()),
+            replyToLetterId: @Html.Raw((ViewBag.ReplyToLetterId == null ? "null" : ViewBag.ReplyToLetterId.ToString())),
+            defaultSubject: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replySubject ?? string.Empty)),
+            defaultReceiverId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replyReceiverId ?? string.Empty))
+        };
 </script>
 <script src="/js/letter.js"></script>
 <script src="/js/letters-ai.js"></script>
@@ -157,13 +171,25 @@
             font-size: 0.78rem;
         }
 
+        .reply-mode-title {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
         html.theme-dark .ai-letter-panel {
             background: #111827;
             border-color: #334155;
         }
 
         html.theme-dark .ai-letter-title,
-        html.theme-dark .ai-letter-status {
+        html.theme-dark .ai-letter-status,
+        html.theme-dark .reply-mode-title {
             color: #f1f5f9;
         }
     </style>

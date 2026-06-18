@@ -1,64 +1,65 @@
 ﻿(function () {
     const search = document.getElementById('lettersSearch');
-    const clearBtn = document.getElementById('lettersSearchClear');
-    // تغییر از tbody به ظرف جدید کارت‌ها
     const container = document.querySelector('.letters-container');
-    const emptySearch = document.getElementById('lettersEmptySearch');
-    const countEl = document.getElementById('lettersCount');
+    const filterButtons = document.querySelectorAll('[data-letter-filter]');
 
-    // اگر المان‌های حیاتی نبودند، کل تابع را متوقف نکن، فقط جستجو را غیرفعال کن
-    if (search && container) {
-        const rows = Array.from(container.querySelectorAll('.letter-row-card'));
+    if (!container) {
+        return;
+    }
 
-        function normalize(str) {
-            return (str || '').toString().trim().toLowerCase();
-        }
+    const rows = Array.from(container.querySelectorAll('.letter-row-card'));
+    let activeFilter = 'all';
 
-        function applyFilter() {
-            const q = normalize(search.value);
-            let visible = 0;
+    function normalize(str) {
+        return (str || '').toString().trim().toLowerCase();
+    }
 
-            rows.forEach(r => {
-                // چون در ساختار جدید دیتاست‌ها را ندارید، از متن داخل کارت استفاده می‌کنیم
-                const content = normalize(r.innerText);
-                const show = !q || content.includes(q);
-                r.style.display = show ? '' : 'none';
-                if (show) visible++;
-            });
+    function itemMatchesFilter(row, filter) {
+        const unread = row.dataset.unread === '1';
+        const sent = row.dataset.sent === '1';
+        const received = row.dataset.received === '1';
 
-            if (countEl) countEl.textContent = visible;
-            if (q && visible === 0) emptySearch?.classList.remove('d-none');
-            else emptySearch?.classList.add('d-none');
+        if (filter === 'unread') return unread;
+        if (filter === 'sent') return sent;
+        if (filter === 'received') return received;
 
-            if (q) clearBtn?.classList.remove('d-none');
-            else clearBtn?.classList.add('d-none');
-        }
+        return true;
+    }
 
-        search.addEventListener('input', applyFilter);
-        clearBtn?.addEventListener('click', function () {
-            search.value = '';
-            search.focus();
-            applyFilter();
+    function applyFilters() {
+        const q = normalize(search?.value);
+
+        rows.forEach(row => {
+            const content = normalize(row.innerText);
+            const matchSearch = !q || content.includes(q);
+            const matchFilter = itemMatchesFilter(row, activeFilter);
+            row.style.display = matchSearch && matchFilter ? '' : 'none';
         });
     }
 
-    // --- مدیریت کلیک دکمه‌ها (خارج از شرط جستجو قرار گرفت تا همیشه کار کند) ---
-    document.addEventListener('click', function (e) {
-        // دکمه مشاهده
-        const viewBtn = e.target.closest('.view');
-        if (viewBtn) {
-            // اجازه بده رفتار پیش‌فرض (لینک) انجام شود
-            return;
-        }
+    if (search) {
+        search.addEventListener('input', applyFilters);
+    }
 
-        // دکمه چاپ
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            activeFilter = this.dataset.letterFilter || 'all';
+
+            filterButtons.forEach(item => item.classList.remove('active'));
+            this.classList.add('active');
+
+            applyFilters();
+        });
+    });
+
+    document.addEventListener('click', function (e) {
         const printBtn = e.target.closest('.print');
         if (printBtn) {
             e.preventDefault();
             window.print();
+            return;
         }
 
-        // دکمه بیشتر
         const moreBtn = e.target.closest('.more');
         if (moreBtn) {
             e.preventDefault();
@@ -70,8 +71,10 @@
                     confirmButtonText: 'تایید'
                 });
             } else {
-                console.log("این بخش در حال توسعه است.");
+                console.log('این بخش در حال توسعه است.');
             }
         }
     });
+
+    applyFilters();
 })();

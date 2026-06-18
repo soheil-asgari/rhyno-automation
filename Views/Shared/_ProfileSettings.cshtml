@@ -11,55 +11,55 @@
     <h5 class="mb-0 text-primary fw-bold">
         <i class="bi bi-person-check-fill ms-2"></i> اطلاعات و امنیت حساب
     </h5>
-    <span class="badge bg-light text-dark border p-2" style="font-family: 'Tahoma', sans-serif;">امروز: @persianDate</span>
+    <span class="badge bg-body-tertiary text-body border p-2" style="font-family: 'Tahoma', sans-serif;">امروز: @persianDate</span>
 </div>
 
 <div class="row g-4 mb-5">
     <div class="col-md-6">
         <label class="form-label small fw-bold text-muted">نام و نام خانوادگی</label>
         <div class="input-group">
-            <span class="input-group-text bg-light border-0"><i class="bi bi-person text-secondary"></i></span>
-            <input type="text" class="form-control bg-light border-0 fw-bold" value="@(string.IsNullOrEmpty(Model.FullName) ? "نامشخص" : Model.FullName)" readonly>
+            <span class="input-group-text bg-body-tertiary border-0"><i class="bi bi-person text-secondary"></i></span>
+            <input type="text" class="form-control bg-body-tertiary border-0 fw-bold" value="@(string.IsNullOrEmpty(Model.FullName) ? "نامشخص" : Model.FullName)" readonly>
         </div>
     </div>
     
     <div class="col-md-6">
         <label class="form-label small fw-bold text-muted">سمت شغلی</label>
         <div class="input-group">
-            <span class="input-group-text bg-light border-0"><i class="bi bi-briefcase text-secondary"></i></span>
-            <input type="text" class="form-control bg-light border-0" value="@(string.IsNullOrEmpty(Model.JobTitle) ? "ثبت نشده" : Model.JobTitle)" readonly>
+            <span class="input-group-text bg-body-tertiary border-0"><i class="bi bi-briefcase text-secondary"></i></span>
+            <input type="text" class="form-control bg-body-tertiary border-0" value="@(string.IsNullOrEmpty(Model.JobTitle) ? "ثبت نشده" : Model.JobTitle)" readonly>
         </div>
     </div>
 
     @using System.Reflection
 @using System.ComponentModel.DataAnnotations
 
-<div class="col-md-6">
+    <div class="col-md-6">
         <label class="form-label small fw-bold text-muted">واحد سازمانی</label>
         <div class="input-group">
-            <span class="input-group-text bg-light border-0"><i class="bi bi-diagram-3 text-secondary"></i></span>
+            <span class="input-group-text bg-body-tertiary border-0"><i class="bi bi-diagram-3 text-secondary"></i></span>
             @{
                 var departmentName = Model.Department?.Name ?? "نامشخص";
             }
 
-            <input type="text" class="form-control bg-light border-0" value="@departmentName" readonly>
+            <input type="text" class="form-control bg-body-tertiary border-0" value="@departmentName" readonly>
         </div>
     </div>
 
     <div class="col-md-6">
         <label class="form-label small fw-bold text-muted">محل خدمت</label>
         <div class="input-group">
-            <span class="input-group-text bg-light border-0"><i class="bi bi-geo-alt text-secondary"></i></span>
-            <input type="text" class="form-control bg-light border-0" value="@(string.IsNullOrEmpty(Model.ServiceLocation) ? "مرکز اصلی" : Model.ServiceLocation)" readonly>
+            <span class="input-group-text bg-body-tertiary border-0"><i class="bi bi-geo-alt text-secondary"></i></span>
+            <input type="text" class="form-control bg-body-tertiary border-0" value="@(string.IsNullOrEmpty(Model.ServiceLocation) ? "مرکز اصلی" : Model.ServiceLocation)" readonly>
         </div>
     </div>
 </div>
 
 <hr class="my-4 opacity-25">
 
-<div class="card border-0 shadow-sm" style="background-color: #fff9f0; border-right: 4px solid #ffc107 !important;">
+<div class="card border-0 shadow-sm" style="background-color: var(--bs-secondary-bg); border-right: 4px solid #ffc107 !important;">
     <div class="card-body p-4">
-        <h6 class="card-title fw-bold mb-4 text-dark">
+        <h6 class="card-title fw-bold mb-4 text-body">
             <i class="bi bi-shield-lock-fill ms-2 text-warning"></i> تغییر رمز عبور امنیتی
         </h6>
         <div class="row g-3">

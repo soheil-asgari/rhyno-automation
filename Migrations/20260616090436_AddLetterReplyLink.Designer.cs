@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OfficeAutomation.Data;
 
@@ -11,9 +12,11 @@ using OfficeAutomation.Data;
 namespace OfficeAutomation.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616090436_AddLetterReplyLink")]
+    partial class AddLetterReplyLink
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1071,9 +1074,6 @@ namespace OfficeAutomation.Migrations
                     b.Property<string>("FinalReceiverId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("ReplyToLetterId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 
@@ -1086,6 +1086,9 @@ namespace OfficeAutomation.Migrations
                     b.Property<string>("ReceiverId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("ReplyToLetterId")
+                        .HasColumnType("int");
 
                     b.Property<string>("SenderId")
                         .IsRequired()
@@ -1116,6 +1119,40 @@ namespace OfficeAutomation.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Letters");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.LetterCopyRecipient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LetterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReadDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecipientId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipientId");
+
+                    b.HasIndex("LetterId", "RecipientId")
+                        .IsUnique();
+
+                    b.ToTable("LetterCopyRecipients");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.ManagementDatabaseConnection", b =>
@@ -2756,7 +2793,7 @@ namespace OfficeAutomation.Migrations
                         .IsRequired();
 
                     b.HasOne("OfficeAutomation.Models.Letter", "ReplyToLetter")
-                        .WithMany()
+                        .WithMany("Replies")
                         .HasForeignKey("ReplyToLetterId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -2773,6 +2810,25 @@ namespace OfficeAutomation.Migrations
                     b.Navigation("ReplyToLetter");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.LetterCopyRecipient", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Letter", "Letter")
+                        .WithMany("CopyRecipients")
+                        .HasForeignKey("LetterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "Recipient")
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Letter");
+
+                    b.Navigation("Recipient");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.OrganizationCalendarEvent", b =>
@@ -3019,6 +3075,13 @@ namespace OfficeAutomation.Migrations
             modelBuilder.Entity("OfficeAutomation.Models.Invoice", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.Letter", b =>
+                {
+                    b.Navigation("CopyRecipients");
+
+                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.PayrollList", b =>

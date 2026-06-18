@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace OfficeAutomation.Models;
 
@@ -29,6 +29,10 @@ public class Letter
 
     [Display(Name = "گیرنده نهایی")]
     public User? FinalReceiver { get; set; }
+
+    public int? ReplyToLetterId { get; set; }
+
+    public Letter? ReplyToLetter { get; set; }
 
     [Display(Name = "وضعیت خوانده شدن")]
     public bool IsRead { get; set; } = false;
