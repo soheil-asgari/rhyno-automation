@@ -21,6 +21,28 @@ namespace OfficeAutomation.Models
         [StringLength(600)]
         public string? Description { get; set; }
 
+        [StringLength(80)]
+        public string? Category { get; set; }
+
+        [StringLength(50)]
+        public string? Barcode { get; set; }
+
+        [StringLength(200)]
+        public string? TechnicalDescription { get; set; }
+
+        public bool IsPurchasable { get; set; } = true;
+
+        public bool IsConsumable { get; set; } = true;
+
+        [StringLength(30)]
+        public string? SecondaryUnit { get; set; }
+
+        public decimal ReorderPoint { get; set; }
+
+        public decimal MaximumStock { get; set; }
+
+        public decimal? LastPurchasePrice { get; set; }
+
         public int MinimumStock { get; set; }
 
         public bool IsActive { get; set; } = true;

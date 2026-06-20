@@ -1,0 +1,7 @@
+@{
+    var panelId = ViewData["PreviewPanelId"] as string ?? string.Empty;
+    var panelText = ViewData["PreviewPanelText"] as string ?? string.Empty;
+    var panelTone = ViewData["PreviewPanelTone"] as string ?? "neutral";
+}
+
+<div class="preview-panel preview-@panelTone" id="@panelId">@panelText</div>

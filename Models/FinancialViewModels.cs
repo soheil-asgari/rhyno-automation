@@ -104,6 +104,20 @@ namespace OfficeAutomation.Models
 
     public class FinancialDashboardVM
     {
+        public int PendingSalesInvoices { get; set; }
+
+        public int PendingPurchaseInvoices { get; set; }
+
+        public int DuePurchaseDeadlines { get; set; }
+
+        public int ValidationWarnings { get; set; }
+
+        public List<FinancialQuickActionVM> QuickActions { get; set; } = new();
+
+        public List<FinancialHubKpiVM> HubKpis { get; set; } = new();
+
+        public List<FinancialActivityVM> RecentActivities { get; set; } = new();
+
         public decimal TotalRevenue { get; set; }
 
         public decimal TotalPurchaseCost { get; set; }
@@ -128,7 +142,60 @@ namespace OfficeAutomation.Models
 
         public decimal NetVatPayableOrRefundable { get; set; }
 
+        public decimal TotalVatLineCalculated { get; set; }
+
+        public decimal VatReconciliationDifference { get; set; }
+
+        public int VatMismatchInvoices { get; set; }
+
+        public int SeasonalMismatchCount { get; set; }
+
+        public int OverdueInvoices { get; set; }
+
+        public decimal MonthlySalesTotal { get; set; }
+
+        public decimal MonthlyPurchaseTotal { get; set; }
+
+        public decimal MonthlyTaxPayable { get; set; }
+
         public List<VatInvoiceRowVM> VatRows { get; set; } = new();
+    }
+
+    public class FinancialQuickActionVM
+    {
+        public string Title { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public string Url { get; set; } = "#";
+
+        public string Icon { get; set; } = "bi-arrow-right-circle";
+
+        public string Tone { get; set; } = "primary";
+    }
+
+    public class FinancialHubKpiVM
+    {
+        public string Title { get; set; } = string.Empty;
+
+        public string Value { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public string Tone { get; set; } = "primary";
+    }
+
+    public class FinancialActivityVM
+    {
+        public string Title { get; set; } = string.Empty;
+
+        public string Subtitle { get; set; } = string.Empty;
+
+        public string Url { get; set; } = "#";
+
+        public string Badge { get; set; } = string.Empty;
+
+        public string BadgeTone { get; set; } = "secondary";
     }
 
     public class VatInvoiceRowVM

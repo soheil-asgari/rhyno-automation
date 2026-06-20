@@ -48,6 +48,70 @@
         <button type="button" class="letter-filter-btn" data-letter-filter="received">
             <i class="bi bi-inbox"></i> دریافتی (@inboxCount)
         </button>
+        <button type="button" id="clearLetterFilters" class="letter-filter-btn ms-auto">
+            <i class="bi bi-x-circle"></i> پاک کردن فیلترها
+        </button>
+    </div>
+
+    <div class="letters-stats-grid mb-4">
+        <button type="button" class="letters-stat-card active" data-letter-filter="all">
+            <span class="letters-stat-label">کل نامه‌ها</span>
+            <span class="letters-stat-value">@list.Count</span>
+            <span class="letters-stat-hint">نمایش همه</span>
+        </button>
+        <button type="button" class="letters-stat-card" data-letter-filter="unread">
+            <span class="letters-stat-label">خوانده‌نشده</span>
+            <span class="letters-stat-value text-warning">@unreadCount</span>
+            <span class="letters-stat-hint">فقط موارد جدید</span>
+        </button>
+        <button type="button" class="letters-stat-card" data-letter-filter="sent">
+            <span class="letters-stat-label">نامه‌های ارسالی</span>
+            <span class="letters-stat-value text-success">@sentCount</span>
+            <span class="letters-stat-hint">ارسال‌شده توسط من</span>
+        </button>
+        <button type="button" class="letters-stat-card" data-letter-filter="received">
+            <span class="letters-stat-label">نامه‌های دریافتی</span>
+            <span class="letters-stat-value text-info">@inboxCount</span>
+            <span class="letters-stat-hint">دریافت‌شده برای من</span>
+        </button>
+    </div>
+
+    <div class="letters-shortcuts mb-3">
+        <button type="button" class="btn btn-outline-primary btn-sm" data-open-palette>
+            <i class="bi bi-command"></i> جستجوی سریع
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.AppUI?.toast('میانبرها', 'Ctrl+K برای فرمان‌ها و دکمه نشانک برای ذخیره نامه.', 'primary')">
+            <i class="bi bi-lightning"></i> راهنمای میانبر
+        </button>
+    </div>
+
+    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترها را ذخیره کن تا بعداً سریع برگردی."; ViewData["SavedFiltersSaveButtonId"] = "lettersSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "lettersClearSaved"; ViewData["SavedFiltersContainerId"] = "lettersSavedFilters"; }
+    <partial name="_SavedFiltersPanel" />
+
+    <div class="letters-advanced-filters mb-4">
+        <select id="letterSenderFilter" class="form-select">
+            <option value="">همه فرستنده‌ها</option>
+            @foreach (var sender in list.Where(item => item.Sender != null).Select(item => item.Sender!.FullName).Distinct().OrderBy(item => item))
+            {
+                <option value="@sender">@sender</option>
+            }
+        </select>
+        <select id="letterReceiverFilter" class="form-select">
+            <option value="">همه گیرنده‌ها</option>
+            @foreach (var receiver in list.Where(item => item.Receiver != null).Select(item => item.Receiver!.FullName).Distinct().OrderBy(item => item))
+            {
+                <option value="@receiver">@receiver</option>
+            }
+        </select>
+        <select id="letterStatusFilter" class="form-select">
+            <option value="">همه وضعیت‌ها</option>
+            @foreach (var status in list.Select(item => item.WorkflowStatus).Distinct().OrderBy(item => item))
+            {
+                <option value="@status">@OfficeAutomation.Models.WorkflowStatus.Label(status)</option>
+            }
+        </select>
+        <input id="letterDateFrom" type="date" class="form-control" />
+        <input id="letterDateTo" type="date" class="form-control" />
     </div>
 
     <div class="letters-ai-summary mb-4">
@@ -89,7 +153,7 @@
             var isSentByCurrentUser = item.SenderId == currentUserId;
             var isReceivedByCurrentUser = item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId;
 
-            <div class="letter-row-card" data-unread="@(isUnread ? "1" : "0")" data-sent="@(isSentByCurrentUser ? "1" : "0")" data-received="@(isReceivedByCurrentUser ? "1" : "0")">
+            <div class="letter-row-card" data-letter-id="@item.Id" data-unread="@(isUnread ? "1" : "0")" data-sent="@(isSentByCurrentUser ? "1" : "0")" data-received="@(isReceivedByCurrentUser ? "1" : "0")" data-sent-at="@item.SentDate.ToString("o")" data-sender="@item.Sender?.FullName" data-receiver="@item.Receiver?.FullName" data-status="@item.WorkflowStatus">
                 <div class="row align-items-center">
                     <div class="col-lg-5 col-md-4 mb-3 mb-md-0">
                         <div class="d-flex align-items-center gap-3">
@@ -99,9 +163,9 @@
                             <div class="content-info">
                                 <a href="@Url.Action("Details", new { id = item.Id })" class="letter-title">@item.Title</a>
                                 <div class="flow-info">
-                                    <span class="badge-person sender">@item.Sender.FullName</span>
+                                    <span class="badge-person sender">@item.Sender?.FullName</span>
                                     <i class="bi bi-chevron-left"></i>
-                                    <span class="badge-person receiver">@item.Receiver.FullName</span>
+                                    <span class="badge-person receiver">@item.Receiver?.FullName</span>
                                     @if (isUnread)
                                     {
                                         <span class="badge-person unread-pill ms-2">خوانده‌نشده</span>
@@ -130,6 +194,9 @@
                             <a href="@Url.Action("Details", new { id = item.Id })" class="btn-action-minimal view" title="مشاهده">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            <button type="button" class="btn-action-minimal pin-letter" data-letter-id="@item.Id" title="ذخیره در علاقه‌مندی">
+                                <i class="bi bi-bookmark-plus"></i>
+                            </button>
                             @if (!item.IsWorkflowCompleted && item.ReceiverId == currentUserId)
                             {
                                 <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
@@ -161,8 +228,8 @@
     <style>
         html.theme-dark .letters-page .header-section,
         html.theme-dark .letters-page .letter-row-card {
-            background: rgba(30, 41, 59, 0.8) !important;
-            border-color: #334155 !important;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.9)) !important;
+            border-color: rgba(139, 92, 246, 0.18) !important;
             color: #e2e8f0 !important;
         }
         html.theme-dark .letters-page .page-title,
@@ -173,13 +240,17 @@
             color: #e2e8f0 !important;
         }
         html.theme-dark .letters-page .search-box-modern input {
-            background: #1e293b !important;
-            border-color: #334155 !important;
+            background: rgba(15, 23, 42, 0.92) !important;
+            border-color: rgba(148, 163, 184, 0.2) !important;
             color: #f8fafc !important;
         }
         html.theme-dark .letters-page .btn-action-minimal {
-            background: #0f172a !important;
-            border-color: #334155 !important;
+            background: rgba(15, 23, 42, 0.92) !important;
+            border-color: rgba(148, 163, 184, 0.18) !important;
+            color: #edf4ff !important;
+        }
+        html.theme-dark .letters-page .btn-action-minimal i {
+            color: #93c5fd !important;
         }
         .letters-ai-summary {
             background: #fff;
@@ -252,9 +323,70 @@
             border-radius: 999px;
             padding: 2px 10px;
         }
+        .letters-advanced-filters {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .letters-shortcuts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .saved-filters-panel {
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+        }
+        html.theme-dark .saved-filters-panel,
+        html[data-theme="dark"] .saved-filters-panel,
+        body[data-theme="dark"] .saved-filters-panel {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+            border-color: rgba(148, 163, 184, 0.18);
+        }
+        .saved-filters-panel .btn-outline-secondary {
+            border-color: rgba(148, 163, 184, 0.34);
+        }
+        .letters-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .letters-stat-card {
+            text-align: right;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 18px;
+            padding: 16px 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+            width: 100%;
+        }
+        .letters-stat-card:hover,
+        .letters-stat-card:focus-visible {
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.45);
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+        }
+        .letters-stat-card.active {
+            border-color: rgba(59, 130, 246, 0.65);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15), 0 16px 30px rgba(15, 23, 42, 0.12);
+        }
+        .letters-stat-label,
+        .letters-stat-hint {
+            display: block;
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+        .letters-stat-value {
+            display: block;
+            font-size: 1.85rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin: 6px 0 4px;
+        }
         html.theme-dark .letters-ai-summary {
-            background: rgba(30, 41, 59, 0.8) !important;
-            border-color: #334155 !important;
+            background: rgba(15, 23, 42, 0.92) !important;
+            border-color: rgba(148, 163, 184, 0.18) !important;
         }
         html.theme-dark .letters-ai-summary h5,
         html.theme-dark .letters-ai-summary p,
@@ -262,27 +394,52 @@
             color: #f1f5f9 !important;
         }
         html.theme-dark .letters-ai-summary-result {
-            background: #111827 !important;
-            border-color: #334155 !important;
+            background: rgba(26, 36, 61, 0.9) !important;
+            border-color: rgba(148, 163, 184, 0.18) !important;
         }
         html.theme-dark .letter-filter-btn {
-            background: #0f172a !important;
-            border-color: #334155 !important;
+            background: rgba(15, 23, 42, 0.92) !important;
+            border-color: rgba(148, 163, 184, 0.18) !important;
             color: #f8fafc !important;
         }
         html.theme-dark .letter-filter-btn.active,
         html.theme-dark .letter-filter-btn:hover {
-            background: #1d4ed8 !important;
-            border-color: #1d4ed8 !important;
+            background: linear-gradient(135deg, #8b5cf6, #38bdf8) !important;
+            border-color: transparent !important;
             color: #fff !important;
         }
         html.theme-dark .unread-pill {
             color: #fdba74 !important;
-            background: #451a03 !important;
-            border-color: #7c2d12 !important;
+            background: rgba(69, 26, 3, 0.8) !important;
+            border-color: rgba(124, 45, 18, 0.9) !important;
+        }
+        html.theme-dark .letters-stat-card,
+        html[data-theme="dark"] .letters-stat-card,
+        body[data-theme="dark"] .letters-stat-card {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
+            border-color: rgba(148, 163, 184, 0.18);
+        }
+        html.theme-dark .letters-stat-label,
+        html.theme-dark .letters-stat-hint,
+        html[data-theme="dark"] .letters-stat-label,
+        html[data-theme="dark"] .letters-stat-hint,
+        body[data-theme="dark"] .letters-stat-label,
+        body[data-theme="dark"] .letters-stat-hint {
+            color: #97a8c6;
         }
         @@media (max-width: 768px) {
             .letters-ai-summary-controls {
+                grid-template-columns: 1fr;
+            }
+            .letters-advanced-filters {
+                grid-template-columns: 1fr;
+            }
+            .letters-stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @@media (max-width: 576px) {
+            .letters-stats-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -292,4 +449,89 @@
 @section Scripts {
     <script src="~/js/letters-index.js"></script>
     <script src="~/js/letters-ai.js"></script>
+    <script>
+        (() => {
+            const preferenceEndpoint = "/table-preferences/letters.filters";
+            const storageKey = "rhyno.letters.filters";
+            const savedContainer = document.getElementById("lettersSavedFilters");
+            const saveButton = document.getElementById("lettersSaveFilter");
+            const clearButton = document.getElementById("lettersClearSaved");
+            const searchInput = document.getElementById("lettersSearch");
+            const senderFilter = document.getElementById("letterSenderFilter");
+            const receiverFilter = document.getElementById("letterReceiverFilter");
+            const statusFilter = document.getElementById("letterStatusFilter");
+            const dateFrom = document.getElementById("letterDateFrom");
+            const dateTo = document.getElementById("letterDateTo");
+
+            const readJson = (key, fallback) => {
+                try { return JSON.parse(localStorage.getItem(key) || "null") || fallback; } catch { return fallback; }
+            };
+            const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+            const currentFilter = () => ({
+                search: searchInput?.value || "",
+                sender: senderFilter?.value || "",
+                receiver: receiverFilter?.value || "",
+                status: statusFilter?.value || "",
+                from: dateFrom?.value || "",
+                to: dateTo?.value || ""
+            });
+            const loadSaved = async () => {
+                try {
+                    const res = await fetch(preferenceEndpoint, { credentials: "same-origin" });
+                    const items = res.ok ? await res.json() : [];
+                    const list = Array.isArray(items) ? items : [];
+                    if (list.length) writeJson(storageKey, list);
+                    return list.length ? list : readJson(storageKey, []);
+                } catch { return readJson(storageKey, []); }
+            };
+            const saveSaved = async (items) => {
+                writeJson(storageKey, items);
+                try {
+                    await fetch(preferenceEndpoint, {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(items)
+                    });
+                } catch { }
+            };
+            const renderSaved = () => {
+                const items = readJson(storageKey, []);
+                if (!savedContainer) return;
+                savedContainer.innerHTML = "";
+                if (!items.length) {
+                    savedContainer.innerHTML = '<span class="text-muted small">هنوز فیلتر ذخیره نشده است.</span>';
+                    return;
+                }
+                items.slice(0, 8).forEach(item => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "btn btn-sm btn-outline-secondary rounded-pill";
+                    btn.textContent = item.name;
+                    btn.addEventListener("click", () => {
+                        if (searchInput) searchInput.value = item.search || "";
+                        if (senderFilter) senderFilter.value = item.sender || "";
+                        if (receiverFilter) receiverFilter.value = item.receiver || "";
+                        if (statusFilter) statusFilter.value = item.status || "";
+                        if (dateFrom) dateFrom.value = item.from || "";
+                        if (dateTo) dateTo.value = item.to || "";
+                        searchInput?.dispatchEvent(new Event("input", { bubbles: true }));
+                    });
+                    savedContainer.appendChild(btn);
+                });
+            };
+            saveButton?.addEventListener("click", () => {
+                const name = prompt("نام فیلتر را وارد کن:", "فیلتر ذخیره‌شده");
+                if (!name) return;
+                const items = readJson(storageKey, []);
+                items.unshift({ name, ...currentFilter() });
+                saveSaved(items.slice(0, 10)).finally(renderSaved);
+            });
+            clearButton?.addEventListener("click", () => {
+                localStorage.removeItem(storageKey);
+                renderSaved();
+            });
+            loadSaved().finally(renderSaved);
+        })();
+    </script>
 }

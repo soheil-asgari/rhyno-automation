@@ -21,11 +21,19 @@ namespace OfficeAutomation.Controllers
 
         [HttpGet]
         [PermissionAuthorize("Finance.View")]
-        public async Task<IActionResult> Index(int? month, int? year, CancellationToken cancellationToken)
+        public async Task<IActionResult> Index(int? month, int? year, int? employeeId, CancellationToken cancellationToken)
         {
-            var historyItems = await _context.PayrollLists
+            var query = _context.PayrollLists
                 .AsNoTracking()
                 .Include(item => item.Items)
+                .AsQueryable();
+
+            if (employeeId.HasValue)
+            {
+                query = query.Where(item => item.Items.Any(row => row.HumanCapitalEmployeeId == employeeId.Value));
+            }
+
+            var historyItems = await query
                 .OrderByDescending(item => item.Year)
                 .ThenByDescending(item => item.Month)
                 .Select(item => new PayrollHistoryRowViewModel
@@ -89,6 +97,20 @@ namespace OfficeAutomation.Controllers
                     .ToList()
                     ?? new List<PayrollEmployeeRowViewModel>()
             };
+
+            var previousMonth = activeMonth == 1 ? 12 : activeMonth - 1;
+            var previousYear = activeMonth == 1 ? activeYear - 1 : activeYear;
+            var previousPayroll = await _context.PayrollLists
+                .AsNoTracking()
+                .Include(list => list.Items)
+                .FirstOrDefaultAsync(list => list.Month == previousMonth && list.Year == previousYear, cancellationToken);
+
+            model.CurrentMonthTotalNetPayable = model.Items.Sum(item => item.NetPayable);
+            model.PreviousMonthTotalNetPayable = previousPayroll?.Items.Sum(item => item.NetPayable) ?? 0m;
+            model.NetPayableDelta = Math.Round(model.CurrentMonthTotalNetPayable - model.PreviousMonthTotalNetPayable, 2);
+            model.MissingHrLockCount = model.Items.Count(item => !item.IsLockedFromHr);
+            model.DataQualityWarnings = model.MissingHrLockCount + model.Items.Count(item => string.IsNullOrWhiteSpace(item.JobTitle));
+            model.Warnings = BuildPayrollWarnings(model);
 
             if (model.Items.Count == 0)
             {
@@ -156,6 +178,22 @@ namespace OfficeAutomation.Controllers
                     })
                     .ToList()
             };
+
+            var previousMonth = payroll.Month == 1 ? 12 : payroll.Month - 1;
+            var previousYear = payroll.Month == 1 ? payroll.Year - 1 : payroll.Year;
+            var previousPayroll = await _context.PayrollLists
+                .AsNoTracking()
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Month == previousMonth && item.Year == previousYear, cancellationToken);
+
+            details.PreviousMonthTotalNetPayable = previousPayroll?.Items.Sum(item => item.NetPayable) ?? 0m;
+            details.NetPayableDelta = Math.Round(details.TotalNetPayable - details.PreviousMonthTotalNetPayable, 2);
+            details.ChangeSummary =
+            [
+                new() { Label = "مقایسه با ماه قبل", Value = details.NetPayableDelta.ToString("N0"), Tone = details.NetPayableDelta >= 0 ? "warning" : "success" },
+                new() { Label = "تعداد پرسنل", Value = details.Items.Count.ToString("N0"), Tone = "primary" },
+                new() { Label = "مجموع حقوق", Value = details.TotalBaseSalary.ToString("N0"), Tone = "success" }
+            ];
 
             return View(details);
         }
@@ -252,7 +290,7 @@ namespace OfficeAutomation.Controllers
             }
 
             payroll.IsFinalized = request.Finalize;
-            payroll.Status = request.Finalize ? "Finalized" : "Draft";
+            payroll.Status = request.Finalize ? "Finalized" : "Calculated";
             payroll.UpdatedAt = DateTime.Now;
 
             await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -325,6 +363,27 @@ namespace OfficeAutomation.Controllers
             {
                 success = true,
                 message = $"خروجی اکسل برای {year}/{month:00} در نسخه بعدی فعال می‌شود."
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportPayslipBatch(int month, int year, CancellationToken cancellationToken)
+        {
+            var payroll = await _context.PayrollLists
+                .AsNoTracking()
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Month == month && item.Year == year, cancellationToken);
+
+            if (payroll == null)
+            {
+                return NotFound();
+            }
+
+            return Json(new
+            {
+                success = true,
+                message = $"خروجی گروهی فیش برای {year}/{month:00} آماده است.",
+                items = payroll.Items.Select(item => new { item.Id, item.EmployeeName, item.NetPayable })
             });
         }
 
@@ -430,6 +489,33 @@ namespace OfficeAutomation.Controllers
         {
             var persianCalendar = new PersianCalendar();
             return $"{persianCalendar.GetYear(dateTime):0000}/{persianCalendar.GetMonth(dateTime):00}/{persianCalendar.GetDayOfMonth(dateTime):00}";
+        }
+
+        private static List<PayrollQualityWarningVM> BuildPayrollWarnings(PayrollListPageViewModel model)
+        {
+            var warnings = new List<PayrollQualityWarningVM>();
+
+            if (model.MissingHrLockCount > 0)
+            {
+                warnings.Add(new PayrollQualityWarningVM
+                {
+                    Title = "پرسنل بدون HR lock",
+                    Description = $"{model.MissingHrLockCount} ردیف از HR همگام نشده‌اند.",
+                    Tone = "warning"
+                });
+            }
+
+            if (model.DataQualityWarnings > 0)
+            {
+                warnings.Add(new PayrollQualityWarningVM
+                {
+                    Title = "داده ناقص",
+                    Description = "برخی ردیف‌ها شغل یا داده‌های مرجع ناقص دارند.",
+                    Tone = "danger"
+                });
+            }
+
+            return warnings;
         }
     }
 }

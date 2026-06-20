@@ -726,6 +726,59 @@ namespace OfficeAutomation.Migrations
                     b.ToTable("InventoryCountingItems");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryMovementLedger", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DocumentId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("QuantityIn")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityOut")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("InventoryMovementLedgers");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.InventoryOpeningBalanceLedger", b =>
                 {
                     b.Property<int>("Id")
@@ -816,8 +869,25 @@ namespace OfficeAutomation.Migrations
                     b.Property<string>("ApprovedByUserId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<DateTime?>("CanceledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CanceledByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
 
                     b.Property<int>("DestinationWarehouseId")
                         .HasColumnType("int");
@@ -828,6 +898,16 @@ namespace OfficeAutomation.Migrations
                     b.Property<decimal>("Quantity")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectedByUserId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("RequestedByUserId")
                         .IsRequired()
@@ -847,9 +927,13 @@ namespace OfficeAutomation.Migrations
 
                     b.HasIndex("ApprovedByUserId");
 
+                    b.HasIndex("CanceledByUserId");
+
                     b.HasIndex("DestinationWarehouseId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("RejectedByUserId");
 
                     b.HasIndex("RequestedByUserId");
 
@@ -1071,9 +1155,6 @@ namespace OfficeAutomation.Migrations
                     b.Property<string>("FinalReceiverId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("ReplyToLetterId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 
@@ -1086,6 +1167,9 @@ namespace OfficeAutomation.Migrations
                     b.Property<string>("ReceiverId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("ReplyToLetterId")
+                        .HasColumnType("int");
 
                     b.Property<string>("SenderId")
                         .IsRequired()
@@ -1698,6 +1782,14 @@ namespace OfficeAutomation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(40)
@@ -1713,8 +1805,20 @@ namespace OfficeAutomation.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsConsumable")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsPurchasable")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("LastPurchasePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MaximumStock")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("MinimumStock")
                         .ValueGeneratedOnAdd()
@@ -1725,6 +1829,17 @@ namespace OfficeAutomation.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<decimal>("ReorderPoint")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("SecondaryUnit")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("TechnicalDescription")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Unit")
                         .IsRequired()
@@ -2013,6 +2128,13 @@ namespace OfficeAutomation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("Capacity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ClosingRules")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -2039,6 +2161,14 @@ namespace OfficeAutomation.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
 
+                    b.Property<string>("OperationalStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WarehouseType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -2052,12 +2182,14 @@ namespace OfficeAutomation.Migrations
                         new
                         {
                             Id = 1,
+                            Capacity = 0m,
                             Code = "WH-MAIN",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsClosed = false,
                             Location = "ستاد",
-                            Name = "انبار مرکزی"
+                            Name = "انبار مرکزی",
+                            OperationalStatus = "Active"
                         });
                 });
 
@@ -2601,6 +2733,25 @@ namespace OfficeAutomation.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.InventoryMovementLedger", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.InventoryOpeningBalanceLedger", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.Product", "Product")
@@ -2654,6 +2805,10 @@ namespace OfficeAutomation.Migrations
                         .HasForeignKey("ApprovedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("OfficeAutomation.Models.User", "CanceledByUser")
+                        .WithMany()
+                        .HasForeignKey("CanceledByUserId");
+
                     b.HasOne("OfficeAutomation.Models.Warehouse", "DestinationWarehouse")
                         .WithMany()
                         .HasForeignKey("DestinationWarehouseId")
@@ -2665,6 +2820,10 @@ namespace OfficeAutomation.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "RejectedByUser")
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId");
 
                     b.HasOne("OfficeAutomation.Models.User", "RequestedByUser")
                         .WithMany()
@@ -2680,9 +2839,13 @@ namespace OfficeAutomation.Migrations
 
                     b.Navigation("ApprovedByUser");
 
+                    b.Navigation("CanceledByUser");
+
                     b.Navigation("DestinationWarehouse");
 
                     b.Navigation("Product");
+
+                    b.Navigation("RejectedByUser");
 
                     b.Navigation("RequestedByUser");
 

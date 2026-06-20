@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using System.Text.Json;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
@@ -15,11 +16,13 @@ namespace OfficeAutomation.Controllers
     public class WarehouseController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuthorizationFacade _authorizationFacade;
         private const int DefaultWarehouseId = 1;
 
-        public WarehouseController(ApplicationDbContext context)
+        public WarehouseController(ApplicationDbContext context, IAuthorizationFacade authorizationFacade)
         {
             _context = context;
+            _authorizationFacade = authorizationFacade;
         }
 
         private string? CurrentUserId => User?.Identity?.IsAuthenticated == true ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value : null;
@@ -27,6 +30,129 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
+            var pendingTransferRows = await _context.InventoryTransferRequests
+                .AsNoTracking()
+                .Include(item => item.Product)
+                .Include(item => item.SourceWarehouse)
+                .Include(item => item.DestinationWarehouse)
+                .Where(item => item.Status != WorkflowStatus.Approved && item.Status != WorkflowStatus.Canceled)
+                .OrderByDescending(item => item.CreatedAt)
+                .Take(6)
+                .Select(item => new WarehousePendingTransferVM
+                {
+                    Id = item.Id,
+                    ProductName = item.Product != null ? item.Product.Name : string.Empty,
+                    SourceWarehouseName = item.SourceWarehouse != null ? item.SourceWarehouse.Name : string.Empty,
+                    DestinationWarehouseName = item.DestinationWarehouse != null ? item.DestinationWarehouse.Name : string.Empty,
+                    Quantity = item.Quantity,
+                    Status = item.Status
+                })
+                .ToListAsync(cancellationToken);
+
+            var criticalStocks = await _context.InventoryStocks
+                .AsNoTracking()
+                .Include(item => item.Product)
+                .Include(item => item.Warehouse)
+                .Where(item => item.CurrentQuantity <= item.Product.MinimumStock)
+                .OrderBy(item => item.CurrentQuantity - item.Product.MinimumStock)
+                .ThenBy(item => item.Warehouse.Name)
+                .Take(8)
+                .Select(item => new WarehouseLowStockItemVM
+                {
+                    WarehouseId = item.WarehouseId,
+                    WarehouseName = item.Warehouse.Name,
+                    ProductId = item.ProductId,
+                    ProductCode = item.Product.Code,
+                    ProductName = item.Product.Name,
+                    CurrentQuantity = item.CurrentQuantity,
+                    MinimumStock = item.Product.MinimumStock
+                })
+                .ToListAsync(cancellationToken);
+
+            var recentReceipts = await _context.WarehouseReceipts
+                .AsNoTracking()
+                .Include(item => item.Warehouse)
+                .Include(item => item.Items)
+                .OrderByDescending(item => item.CreatedAt)
+                .Take(6)
+                .Select(item => new WarehouseRecentDocumentVM
+                {
+                    Id = item.Id,
+                    Number = item.ReceiptNumber,
+                    DateShamsi = item.DateShamsi,
+                    WarehouseName = item.Warehouse.Name,
+                    Status = item.WorkflowStatus,
+                    TotalQuantity = item.Items.Sum(row => row.Quantity)
+                })
+                .ToListAsync(cancellationToken);
+
+            var recentIssuances = await _context.WarehouseIssuances
+                .AsNoTracking()
+                .Include(item => item.Warehouse)
+                .Include(item => item.Items)
+                .OrderByDescending(item => item.CreatedAt)
+                .Take(6)
+                .Select(item => new WarehouseRecentDocumentVM
+                {
+                    Id = item.Id,
+                    Number = item.IssuanceNumber,
+                    DateShamsi = item.DateShamsi,
+                    WarehouseName = item.Warehouse.Name,
+                    Status = item.WorkflowStatus,
+                    TotalQuantity = item.Items.Sum(row => row.Quantity)
+                })
+                .ToListAsync(cancellationToken);
+
+            var countingIssues = await _context.InventoryCountings
+                .AsNoTracking()
+                .Include(item => item.Warehouse)
+                .Include(item => item.Items)
+                .OrderByDescending(item => item.CreatedAt)
+                .Take(6)
+                .Select(item => new WarehouseCountingIssueVM
+                {
+                    Id = item.Id,
+                    DocumentNumber = item.DocumentNumber,
+                    WarehouseName = item.Warehouse.Name,
+                    TotalDiscrepancy = item.Items.Sum(row => row.DiscrepancyQuantity),
+                    Status = item.Status
+                })
+                .ToListAsync(cancellationToken);
+
+            var trendStart = DateTime.Now.Date.AddDays(-6);
+            var trendRows = await _context.InventoryMovementLedgers
+                .AsNoTracking()
+                .Where(item => item.CreatedAt >= trendStart)
+                .Select(item => new { item.CreatedAt, item.QuantityIn, item.QuantityOut })
+                .ToListAsync(cancellationToken);
+
+            var movementTrends = trendRows
+                .GroupBy(item => item.CreatedAt.Date)
+                .Select(group => new WarehouseMovementTrendVM
+                {
+                    Label = group.Key.ToString("MM/dd"),
+                    Inputs = group.Sum(item => item.QuantityIn),
+                    Outputs = group.Sum(item => item.QuantityOut)
+                })
+                .OrderBy(item => item.Label)
+                .ToList();
+
+            var riskWarehouses = await _context.Warehouses
+                .AsNoTracking()
+                .Select(item => new WarehouseRiskWarehouseVM
+                {
+                    WarehouseId = item.Id,
+                    WarehouseName = item.Name,
+                    OpenDocuments = _context.InventoryTransferRequests.Count(req => req.SourceWarehouseId == item.Id && req.Status != WorkflowStatus.Approved && req.Status != WorkflowStatus.Canceled)
+                                      + _context.WarehouseReceipts.Count(req => req.WarehouseId == item.Id && req.WorkflowStatus != WorkflowStatus.Approved && req.WorkflowStatus != WorkflowStatus.Canceled)
+                                      + _context.WarehouseIssuances.Count(req => req.WarehouseId == item.Id && req.WorkflowStatus != WorkflowStatus.Approved && req.WorkflowStatus != WorkflowStatus.Canceled),
+                    LowStockCount = _context.InventoryStocks.Count(stock => stock.WarehouseId == item.Id && stock.CurrentQuantity <= stock.Product.MinimumStock),
+                    NegativeStockCount = _context.InventoryStocks.Count(stock => stock.WarehouseId == item.Id && stock.CurrentQuantity < 0)
+                })
+                .OrderByDescending(item => item.OpenDocuments + item.LowStockCount + item.NegativeStockCount)
+                .Take(5)
+                .ToListAsync(cancellationToken);
+
             var model = new WarehouseDashboardVM
             {
                 ProductCount = await _context.Products.CountAsync(item => !item.IsDeleted, cancellationToken),
@@ -34,7 +160,14 @@ namespace OfficeAutomation.Controllers
                 ReceiptCount = await _context.WarehouseReceipts.CountAsync(cancellationToken),
                 IssuanceCount = await _context.WarehouseIssuances.CountAsync(cancellationToken),
                 CountingDraftCount = await _context.InventoryCountings.CountAsync(item => item.Status == "Draft", cancellationToken),
-                LowStockCount = await _context.InventoryStocks.CountAsync(item => item.CurrentQuantity <= item.Product.MinimumStock, cancellationToken)
+                LowStockCount = await _context.InventoryStocks.CountAsync(item => item.CurrentQuantity <= item.Product.MinimumStock, cancellationToken),
+                CriticalStocks = criticalStocks,
+                RecentReceipts = recentReceipts,
+                RecentIssuances = recentIssuances,
+                PendingTransfers = pendingTransferRows,
+                RiskWarehouses = riskWarehouses,
+                CountingIssues = countingIssues,
+                MovementTrends = movementTrends
             };
 
             return View(model);
@@ -88,6 +221,15 @@ namespace OfficeAutomation.Controllers
                 Name = model.Name.Trim(),
                 Unit = model.Unit.Trim(),
                 Description = model.Description?.Trim(),
+                Category = model.Category?.Trim(),
+                Barcode = model.Barcode?.Trim(),
+                TechnicalDescription = model.TechnicalDescription?.Trim(),
+                IsPurchasable = model.IsPurchasable,
+                IsConsumable = model.IsConsumable,
+                SecondaryUnit = model.SecondaryUnit?.Trim(),
+                ReorderPoint = model.ReorderPoint,
+                MaximumStock = model.MaximumStock,
+                LastPurchasePrice = model.LastPurchasePrice,
                 MinimumStock = model.MinimumStock,
                 IsActive = model.IsActive,
                 IsDeleted = false,
@@ -121,6 +263,15 @@ namespace OfficeAutomation.Controllers
                 Name = entity.Name,
                 Unit = entity.Unit,
                 Description = entity.Description,
+                Category = entity.Category,
+                Barcode = entity.Barcode,
+                TechnicalDescription = entity.TechnicalDescription,
+                IsPurchasable = entity.IsPurchasable,
+                IsConsumable = entity.IsConsumable,
+                SecondaryUnit = entity.SecondaryUnit,
+                ReorderPoint = entity.ReorderPoint,
+                MaximumStock = entity.MaximumStock,
+                LastPurchasePrice = entity.LastPurchasePrice,
                 MinimumStock = entity.MinimumStock,
                 IsActive = entity.IsActive
             });
@@ -157,6 +308,15 @@ namespace OfficeAutomation.Controllers
                 entity.Name,
                 entity.Unit,
                 entity.Description,
+                entity.Category,
+                entity.Barcode,
+                entity.TechnicalDescription,
+                entity.IsPurchasable,
+                entity.IsConsumable,
+                entity.SecondaryUnit,
+                entity.ReorderPoint,
+                entity.MaximumStock,
+                entity.LastPurchasePrice,
                 entity.MinimumStock,
                 entity.IsActive
             };
@@ -165,6 +325,15 @@ namespace OfficeAutomation.Controllers
             entity.Name = model.Name.Trim();
             entity.Unit = model.Unit.Trim();
             entity.Description = model.Description?.Trim();
+            entity.Category = model.Category?.Trim();
+            entity.Barcode = model.Barcode?.Trim();
+            entity.TechnicalDescription = model.TechnicalDescription?.Trim();
+            entity.IsPurchasable = model.IsPurchasable;
+            entity.IsConsumable = model.IsConsumable;
+            entity.SecondaryUnit = model.SecondaryUnit?.Trim();
+            entity.ReorderPoint = model.ReorderPoint;
+            entity.MaximumStock = model.MaximumStock;
+            entity.LastPurchasePrice = model.LastPurchasePrice;
             entity.MinimumStock = model.MinimumStock;
             entity.IsActive = model.IsActive;
 
@@ -202,7 +371,7 @@ namespace OfficeAutomation.Controllers
                 entity.IsActive = false;
                 entity.IsDeleted = true;
                 await _context.SaveChangesAsync(cancellationToken);
-                TempData["WarehouseMessage"] = "کالا به دلیل وجود گردش، حذف نرم شد.";
+                TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
                 return RedirectToAction(nameof(Products));
             }
 
@@ -215,7 +384,7 @@ namespace OfficeAutomation.Controllers
                 beforeState,
                 null,
                 cancellationToken);
-            TempData["WarehouseMessage"] = "کالا با موفقیت حذف شد.";
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
             return RedirectToAction(nameof(Products));
         }
 
@@ -276,9 +445,12 @@ namespace OfficeAutomation.Controllers
                 Code = model.Code.Trim(),
                 Name = model.Name.Trim(),
                 Location = model.Location?.Trim(),
+                WarehouseType = model.WarehouseType?.Trim(),
+                Capacity = model.Capacity,
                 ManagerUserId = string.IsNullOrWhiteSpace(model.ManagerUserId) ? null : model.ManagerUserId,
                 IsActive = model.IsActive,
                 IsClosed = model.IsClosed,
+                ClosingRules = model.ClosingRules?.Trim(),
                 CreatedAt = DateTime.Now
             };
 
@@ -302,9 +474,12 @@ namespace OfficeAutomation.Controllers
                 Code = entity.Code,
                 Name = entity.Name,
                 Location = entity.Location,
+                WarehouseType = entity.WarehouseType,
+                Capacity = entity.Capacity,
                 ManagerUserId = entity.ManagerUserId,
                 IsActive = entity.IsActive,
-                IsClosed = entity.IsClosed
+                IsClosed = entity.IsClosed,
+                ClosingRules = entity.ClosingRules
             };
 
             await PopulateManagerOptionsAsync(model.ManagerOptions, cancellationToken);
@@ -339,17 +514,23 @@ namespace OfficeAutomation.Controllers
                 entity.Code,
                 entity.Name,
                 entity.Location,
+                entity.WarehouseType,
+                entity.Capacity,
                 entity.ManagerUserId,
                 entity.IsActive,
-                entity.IsClosed
+                entity.IsClosed,
+                entity.ClosingRules
             };
 
             entity.Code = model.Code.Trim();
             entity.Name = model.Name.Trim();
             entity.Location = model.Location?.Trim();
+            entity.WarehouseType = model.WarehouseType?.Trim();
+            entity.Capacity = model.Capacity;
             entity.ManagerUserId = string.IsNullOrWhiteSpace(model.ManagerUserId) ? null : model.ManagerUserId;
             entity.IsActive = model.IsActive;
             entity.IsClosed = model.IsClosed;
+            entity.ClosingRules = model.ClosingRules?.Trim();
 
             await _context.SaveChangesAsync(cancellationToken);
             await WriteAuditLogAsync(
@@ -371,7 +552,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Receipts(string? searchTerm, int? warehouseId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Receipts(string? searchTerm, string? status, int? warehouseId, int? vendorId, string? dateFrom, string? dateTo, CancellationToken cancellationToken)
         {
             var query = _context.WarehouseReceipts
                 .AsNoTracking()
@@ -392,14 +573,168 @@ namespace OfficeAutomation.Controllers
                 query = query.Where(item => item.WarehouseId == warehouseId.Value);
             }
 
+            if (vendorId.HasValue)
+            {
+                query = query.Where(item => item.VendorId == vendorId.Value);
+            }
+
             var items = await query
                 .OrderByDescending(item => item.CreatedAt)
                 .ToListAsync(cancellationToken);
 
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                items = items.Where(item => WorkflowStatus.Normalize(item.WorkflowStatus) == WorkflowStatus.Normalize(status)).ToList();
+            }
+
+            if (vendorId.HasValue)
+            {
+                items = items.Where(item => item.VendorId == vendorId.Value).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateFrom) && DateTime.TryParse(dateFrom, out var fromDate))
+            {
+                items = items.Where(item => DateTime.TryParse(item.DateShamsi.Replace('/', '-'), out var docDate) ? docDate >= fromDate.Date : true).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateTo) && DateTime.TryParse(dateTo, out var toDate))
+            {
+                items = items.Where(item => DateTime.TryParse(item.DateShamsi.Replace('/', '-'), out var docDate) ? docDate <= toDate.Date : true).ToList();
+            }
+
             ViewBag.SearchTerm = searchTerm;
+            ViewBag.Status = status;
             ViewBag.WarehouseId = warehouseId;
+            ViewBag.VendorId = vendorId;
+            ViewBag.DateFrom = dateFrom;
+            ViewBag.DateTo = dateTo;
             ViewBag.WarehouseOptions = await BuildWarehouseOptionsAsync(warehouseId, cancellationToken);
+            ViewBag.VendorOptions = await BuildVendorOptionsAsync(vendorId, cancellationToken);
             return View(items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReceiptDetails(int id, CancellationToken cancellationToken)
+        {
+            var receipt = await _context.WarehouseReceipts
+                .AsNoTracking()
+                .Include(item => item.Warehouse)
+                .Include(item => item.Vendor)
+                .Include(item => item.Items)
+                .ThenInclude(item => item.Product)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (receipt == null)
+            {
+                return NotFound();
+            }
+
+            var model = new WarehouseReceiptDetailsVM
+            {
+                Receipt = receipt,
+                TotalQuantity = receipt.Items.Sum(item => item.Quantity),
+                TotalAmount = receipt.Items.Sum(item => item.Quantity * item.UnitPrice),
+                AuditEntries = await BuildAuditEntriesAsync("WarehouseReceipt", id.ToString(), cancellationToken),
+                MovementEntries = await BuildMovementEntriesAsync("WarehouseReceipt", id.ToString(), cancellationToken)
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Approve")]
+        public async Task<IActionResult> ApproveReceipt(int id, CancellationToken cancellationToken)
+        {
+            var receipt = await _context.WarehouseReceipts
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (receipt == null)
+            {
+                return NotFound();
+            }
+
+            if (WorkflowStatus.IsApproved(receipt.WorkflowStatus))
+            {
+                return RedirectToAction(nameof(ReceiptDetails), new { id });
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+
+            var itemVMs = receipt.Items.Select(item => new WarehouseReceiptItemVM
+            {
+                ProductId = item.ProductId,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice
+            }).ToList();
+
+            var applyResult = await ApplyReceiptToStockWithRetryAsync(receipt.WarehouseId, itemVMs, "WarehouseReceipt", receipt.Id.ToString(), receipt.ReceiptNumber, cancellationToken);
+            if (!applyResult.Success)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                TempData["WarehouseMessage"] = applyResult.Message ?? "ثبت موجودی با خطا مواجه شد.";
+                return RedirectToAction(nameof(ReceiptDetails), new { id });
+            }
+
+            receipt.WorkflowStatus = WorkflowStatus.Approved;
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            await WriteAuditLogAsync("Edit", "WarehouseReceipt", receipt.Id.ToString(), new { Status = receipt.WorkflowStatus }, new { Status = WorkflowStatus.Approved }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(ReceiptDetails), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectReceipt(int id, CancellationToken cancellationToken)
+        {
+            var receipt = await _context.WarehouseReceipts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (receipt == null)
+            {
+                return NotFound();
+            }
+
+            receipt.WorkflowStatus = WorkflowStatus.Rejected;
+            await _context.SaveChangesAsync(cancellationToken);
+            await WriteAuditLogAsync("Edit", "WarehouseReceipt", receipt.Id.ToString(), new { Status = receipt.WorkflowStatus }, new { Status = WorkflowStatus.Rejected }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(ReceiptDetails), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelReceipt(int id, CancellationToken cancellationToken)
+        {
+            var receipt = await _context.WarehouseReceipts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (receipt == null)
+            {
+                return NotFound();
+            }
+
+            receipt.WorkflowStatus = WorkflowStatus.Canceled;
+            await _context.SaveChangesAsync(cancellationToken);
+            await WriteAuditLogAsync("Edit", "WarehouseReceipt", receipt.Id.ToString(), new { Status = receipt.WorkflowStatus }, new { Status = WorkflowStatus.Canceled }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(ReceiptDetails), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReopenReceipt(int id, CancellationToken cancellationToken)
+        {
+            var receipt = await _context.WarehouseReceipts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (receipt == null)
+            {
+                return NotFound();
+            }
+
+            receipt.WorkflowStatus = WorkflowStatus.Draft;
+            await _context.SaveChangesAsync(cancellationToken);
+            await WriteAuditLogAsync("Edit", "WarehouseReceipt", receipt.Id.ToString(), new { Status = receipt.WorkflowStatus }, new { Status = WorkflowStatus.Draft }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(ReceiptDetails), new { id });
         }
 
         [HttpGet]
@@ -417,6 +752,7 @@ namespace OfficeAutomation.Controllers
             await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
             await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
             await PopulateVendorOptionsAsync(model.VendorOptions, cancellationToken);
+            ViewBag.StockSnapshotJson = JsonSerializer.Serialize(await BuildWarehouseStockSnapshotAsync(model.WarehouseId, cancellationToken), new JsonSerializerOptions(JsonSerializerDefaults.Web));
             return View(model);
         }
 
@@ -431,6 +767,7 @@ namespace OfficeAutomation.Controllers
                 await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
                 await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
                 await PopulateVendorOptionsAsync(model.VendorOptions, cancellationToken);
+                ViewBag.StockSnapshotJson = JsonSerializer.Serialize(await BuildWarehouseStockSnapshotAsync(model.WarehouseId, cancellationToken), new JsonSerializerOptions(JsonSerializerDefaults.Web));
                 return View(model);
             }
 
@@ -445,7 +782,7 @@ namespace OfficeAutomation.Controllers
                 VendorId = model.VendorId,
                 SupplierOrSource = (await ResolveVendorNameAsync(model.VendorId, model.SupplierOrSource, cancellationToken)).Trim(),
                 Notes = model.Notes?.Trim(),
-                WorkflowStatus = WorkflowStatus.Approved,
+                WorkflowStatus = model.SaveAsDraft ? WorkflowStatus.Draft : WorkflowStatus.PendingApproval,
                 WarehouseId = model.WarehouseId,
                 CreatedAt = DateTime.Now,
                 Items = validItems.Select(item => new WarehouseReceiptItem
@@ -458,17 +795,6 @@ namespace OfficeAutomation.Controllers
 
             _context.WarehouseReceipts.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
-
-            var receiptApplied = await ApplyReceiptToStockWithRetryAsync(model.WarehouseId, validItems, cancellationToken);
-            if (!receiptApplied.Success)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                ModelState.AddModelError(string.Empty, receiptApplied.Message ?? "بروزرسانی موجودی با خطا مواجه شد.");
-                await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
-                await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
-                await PopulateVendorOptionsAsync(model.VendorOptions, cancellationToken);
-                return View(model);
-            }
 
             await transaction.CommitAsync(cancellationToken);
 
@@ -483,15 +809,16 @@ namespace OfficeAutomation.Controllers
                     entity.DateShamsi,
                     entity.SupplierOrSource,
                     entity.WarehouseId,
-                    ItemCount = entity.Items.Count
+                    ItemCount = entity.Items.Count,
+                    entity.WorkflowStatus
                 },
                 cancellationToken);
 
-            return RedirectToAction(nameof(Receipts));
+            return RedirectToAction(nameof(ReceiptDetails), new { id = entity.Id });
         }
 
         [HttpGet]
-        public async Task<IActionResult> Issuances(string? searchTerm, int? warehouseId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Issuances(string? searchTerm, string? status, int? warehouseId, int? employerId, string? dateFrom, string? dateTo, CancellationToken cancellationToken)
         {
             var query = _context.WarehouseIssuances
                 .AsNoTracking()
@@ -512,14 +839,161 @@ namespace OfficeAutomation.Controllers
                 query = query.Where(item => item.WarehouseId == warehouseId.Value);
             }
 
+            if (employerId.HasValue)
+            {
+                query = query.Where(item => item.EmployerId == employerId.Value);
+            }
+
             var items = await query
                 .OrderByDescending(item => item.CreatedAt)
                 .ToListAsync(cancellationToken);
 
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                items = items.Where(item => WorkflowStatus.Normalize(item.WorkflowStatus) == WorkflowStatus.Normalize(status)).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateFrom) && DateTime.TryParse(dateFrom, out var fromDate))
+            {
+                items = items.Where(item => DateTime.TryParse(item.DateShamsi.Replace('/', '-'), out var docDate) ? docDate >= fromDate.Date : true).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateTo) && DateTime.TryParse(dateTo, out var toDate))
+            {
+                items = items.Where(item => DateTime.TryParse(item.DateShamsi.Replace('/', '-'), out var docDate) ? docDate <= toDate.Date : true).ToList();
+            }
+
             ViewBag.SearchTerm = searchTerm;
+            ViewBag.Status = status;
             ViewBag.WarehouseId = warehouseId;
+            ViewBag.EmployerId = employerId;
+            ViewBag.DateFrom = dateFrom;
+            ViewBag.DateTo = dateTo;
             ViewBag.WarehouseOptions = await BuildWarehouseOptionsAsync(warehouseId, cancellationToken);
+            ViewBag.EmployerOptions = await BuildEmployerOptionsAsync(employerId, cancellationToken);
             return View(items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> IssuanceDetails(int id, CancellationToken cancellationToken)
+        {
+            var issuance = await _context.WarehouseIssuances
+                .AsNoTracking()
+                .Include(item => item.Warehouse)
+                .Include(item => item.Employer)
+                .Include(item => item.Items)
+                .ThenInclude(item => item.Product)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (issuance == null)
+            {
+                return NotFound();
+            }
+
+            var model = new WarehouseIssuanceDetailsVM
+            {
+                Issuance = issuance,
+                TotalQuantity = issuance.Items.Sum(item => item.Quantity),
+                AuditEntries = await BuildAuditEntriesAsync("WarehouseIssuance", id.ToString(), cancellationToken),
+                MovementEntries = await BuildMovementEntriesAsync("WarehouseIssuance", id.ToString(), cancellationToken)
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Warehouse.Approve")]
+        public async Task<IActionResult> ApproveIssuance(int id, CancellationToken cancellationToken)
+        {
+            var issuance = await _context.WarehouseIssuances
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (issuance == null)
+            {
+                return NotFound();
+            }
+
+            if (WorkflowStatus.IsApproved(issuance.WorkflowStatus))
+            {
+                return RedirectToAction(nameof(IssuanceDetails), new { id });
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+
+            var itemVMs = issuance.Items.Select(item => new WarehouseIssuanceItemVM
+            {
+                ProductId = item.ProductId,
+                Quantity = item.Quantity
+            }).ToList();
+
+            var applyResult = await ApplyIssuanceToStockWithRetryAsync(issuance.WarehouseId, itemVMs, "WarehouseIssuance", issuance.Id.ToString(), issuance.IssuanceNumber, cancellationToken);
+            if (!applyResult.Success)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                TempData["WarehouseMessage"] = applyResult.Message ?? "ثبت خروج با خطا مواجه شد.";
+                return RedirectToAction(nameof(IssuanceDetails), new { id });
+            }
+
+            issuance.WorkflowStatus = WorkflowStatus.Approved;
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            await WriteAuditLogAsync("Edit", "WarehouseIssuance", issuance.Id.ToString(), new { Status = issuance.WorkflowStatus }, new { Status = WorkflowStatus.Approved }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(IssuanceDetails), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectIssuance(int id, CancellationToken cancellationToken)
+        {
+            var issuance = await _context.WarehouseIssuances.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (issuance == null)
+            {
+                return NotFound();
+            }
+
+            issuance.WorkflowStatus = WorkflowStatus.Rejected;
+            await _context.SaveChangesAsync(cancellationToken);
+            await WriteAuditLogAsync("Edit", "WarehouseIssuance", issuance.Id.ToString(), new { Status = issuance.WorkflowStatus }, new { Status = WorkflowStatus.Rejected }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(IssuanceDetails), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelIssuance(int id, CancellationToken cancellationToken)
+        {
+            var issuance = await _context.WarehouseIssuances.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (issuance == null)
+            {
+                return NotFound();
+            }
+
+            issuance.WorkflowStatus = WorkflowStatus.Canceled;
+            await _context.SaveChangesAsync(cancellationToken);
+            await WriteAuditLogAsync("Edit", "WarehouseIssuance", issuance.Id.ToString(), new { Status = issuance.WorkflowStatus }, new { Status = WorkflowStatus.Canceled }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(IssuanceDetails), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReopenIssuance(int id, CancellationToken cancellationToken)
+        {
+            var issuance = await _context.WarehouseIssuances.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (issuance == null)
+            {
+                return NotFound();
+            }
+
+            issuance.WorkflowStatus = WorkflowStatus.Draft;
+            await _context.SaveChangesAsync(cancellationToken);
+            await WriteAuditLogAsync("Edit", "WarehouseIssuance", issuance.Id.ToString(), new { Status = issuance.WorkflowStatus }, new { Status = WorkflowStatus.Draft }, cancellationToken);
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و انجام شد.";
+            return RedirectToAction(nameof(IssuanceDetails), new { id });
         }
 
         [HttpGet]
@@ -537,6 +1011,7 @@ namespace OfficeAutomation.Controllers
             await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
             await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
             await PopulateEmployerOptionsAsync(model.EmployerOptions, cancellationToken);
+            ViewBag.StockSnapshotJson = JsonSerializer.Serialize(await BuildWarehouseStockSnapshotAsync(model.WarehouseId, cancellationToken), new JsonSerializerOptions(JsonSerializerDefaults.Web));
             return View(model);
         }
 
@@ -552,6 +1027,7 @@ namespace OfficeAutomation.Controllers
                 await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
                 await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
                 await PopulateEmployerOptionsAsync(model.EmployerOptions, cancellationToken);
+                ViewBag.StockSnapshotJson = JsonSerializer.Serialize(await BuildWarehouseStockSnapshotAsync(model.WarehouseId, cancellationToken), new JsonSerializerOptions(JsonSerializerDefaults.Web));
                 return View(model);
             }
 
@@ -564,7 +1040,7 @@ namespace OfficeAutomation.Controllers
                 EmployerId = model.EmployerId,
                 DestinationOrDepartment = (await ResolveEmployerNameAsync(model.EmployerId, model.DestinationOrDepartment, cancellationToken)).Trim(),
                 Notes = model.Notes?.Trim(),
-                WorkflowStatus = WorkflowStatus.Approved,
+                WorkflowStatus = model.SaveAsDraft ? WorkflowStatus.Draft : WorkflowStatus.PendingApproval,
                 WarehouseId = model.WarehouseId,
                 CreatedAt = DateTime.Now,
                 Items = validItems.Select(item => new WarehouseIssuanceItem
@@ -576,17 +1052,6 @@ namespace OfficeAutomation.Controllers
 
             _context.WarehouseIssuances.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
-
-            var deductionResult = await ApplyIssuanceToStockWithRetryAsync(model.WarehouseId, validItems, cancellationToken);
-            if (!deductionResult.Success)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                ModelState.AddModelError(string.Empty, deductionResult.Message ?? "موجودی کافی نیست.");
-                await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
-                await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
-                await PopulateEmployerOptionsAsync(model.EmployerOptions, cancellationToken);
-                return View(model);
-            }
 
             await transaction.CommitAsync(cancellationToken);
 
@@ -601,11 +1066,12 @@ namespace OfficeAutomation.Controllers
                     entity.DateShamsi,
                     entity.DestinationOrDepartment,
                     entity.WarehouseId,
-                    ItemCount = entity.Items.Count
+                    ItemCount = entity.Items.Count,
+                    entity.WorkflowStatus
                 },
                 cancellationToken);
 
-            return RedirectToAction(nameof(Issuances));
+            return RedirectToAction(nameof(IssuanceDetails), new { id = entity.Id });
         }
 
         [HttpGet]
@@ -628,6 +1094,11 @@ namespace OfficeAutomation.Controllers
                 query = query.Where(item => item.WarehouseId == filter.WarehouseId.Value);
             }
 
+            if (filter.CriticalOnly)
+            {
+                query = query.Where(item => item.CurrentQuantity <= item.Product.MinimumStock);
+            }
+
             var baseRows = await query
                 .OrderBy(item => item.Warehouse.Name)
                 .ThenBy(item => item.Product.Name)
@@ -641,7 +1112,11 @@ namespace OfficeAutomation.Controllers
                     WarehouseName = item.Warehouse.Name,
                     CurrentQuantity = item.CurrentQuantity,
                     MinimumStock = item.Product.MinimumStock,
-                    UpdatedAt = item.UpdatedAt
+                    UpdatedAt = item.UpdatedAt,
+                    LastPurchasePrice = item.Product.LastPurchasePrice ?? 0,
+                    AverageCost = 0,
+                    InventoryValue = 0,
+                    WeightedCost = 0
                 })
                 .ToListAsync(cancellationToken);
 
@@ -656,9 +1131,10 @@ namespace OfficeAutomation.Controllers
                 {
                     group.Key.WarehouseId,
                     group.Key.ProductId,
-                    Quantity = group.Sum(item => item.Quantity)
+                    Quantity = group.Sum(item => item.Quantity),
+                    Amount = group.Sum(item => item.Quantity * item.UnitPrice)
                 })
-                .ToDictionaryAsync(item => $"{item.WarehouseId}:{item.ProductId}", item => item.Quantity, cancellationToken);
+                .ToDictionaryAsync(item => $"{item.WarehouseId}:{item.ProductId}", item => new { item.Quantity, item.Amount }, cancellationToken);
 
             var issuanceSums = await _context.WarehouseIssuanceItems
                 .AsNoTracking()
@@ -675,8 +1151,12 @@ namespace OfficeAutomation.Controllers
             foreach (var row in baseRows)
             {
                 var key = $"{row.WarehouseId}:{row.ProductId}";
-                row.TotalInput = receiptSums.TryGetValue(key, out var inputQty) ? inputQty : 0;
+                var receiptData = receiptSums.TryGetValue(key, out var value) ? value : null;
+                row.TotalInput = receiptData?.Quantity ?? 0;
                 row.TotalOutput = issuanceSums.TryGetValue(key, out var outputQty) ? outputQty : 0;
+                row.AverageCost = row.TotalInput > 0 ? (receiptData?.Amount ?? 0) / row.TotalInput : row.LastPurchasePrice;
+                row.WeightedCost = row.AverageCost;
+                row.InventoryValue = row.CurrentQuantity * row.WeightedCost;
             }
 
             filter.Items = baseRows;
@@ -686,7 +1166,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Countings(string? searchTerm, int? warehouseId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Countings(string? searchTerm, string? status, int? warehouseId, string? dateFrom, string? dateTo, CancellationToken cancellationToken)
         {
             var query = _context.InventoryCountings
                 .AsNoTracking()
@@ -710,10 +1190,53 @@ namespace OfficeAutomation.Controllers
                 .OrderByDescending(item => item.CreatedAt)
                 .ToListAsync(cancellationToken);
 
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                items = items.Where(item => WorkflowStatus.Normalize(item.Status) == WorkflowStatus.Normalize(status)).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateFrom) && DateTime.TryParse(dateFrom, out var fromDate))
+            {
+                items = items.Where(item => DateTime.TryParse(item.DateShamsi.Replace('/', '-'), out var docDate) ? docDate >= fromDate.Date : true).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateTo) && DateTime.TryParse(dateTo, out var toDate))
+            {
+                items = items.Where(item => DateTime.TryParse(item.DateShamsi.Replace('/', '-'), out var docDate) ? docDate <= toDate.Date : true).ToList();
+            }
+
             ViewBag.SearchTerm = searchTerm;
+            ViewBag.Status = status;
             ViewBag.WarehouseId = warehouseId;
+            ViewBag.DateFrom = dateFrom;
+            ViewBag.DateTo = dateTo;
             ViewBag.WarehouseOptions = await BuildWarehouseOptionsAsync(warehouseId, cancellationToken);
             return View(items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CountingDetails(int id, CancellationToken cancellationToken)
+        {
+            var counting = await _context.InventoryCountings
+                .AsNoTracking()
+                .Include(item => item.Warehouse)
+                .Include(item => item.Items)
+                .ThenInclude(item => item.Product)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (counting == null)
+            {
+                return NotFound();
+            }
+
+            var model = new WarehouseCountingDetailsVM
+            {
+                Counting = counting,
+                AuditEntries = await BuildAuditEntriesAsync("InventoryCounting", id.ToString(), cancellationToken),
+                MovementEntries = await BuildMovementEntriesAsync("InventoryCounting", id.ToString(), cancellationToken)
+            };
+
+            return View(model);
         }
 
         [HttpGet]
@@ -730,11 +1253,12 @@ namespace OfficeAutomation.Controllers
 
             await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
             await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
+            ViewBag.StockSnapshotJson = JsonSerializer.Serialize(await BuildWarehouseStockSnapshotAsync(model.WarehouseId, cancellationToken), new JsonSerializerOptions(JsonSerializerDefaults.Web));
             return View(model);
         }
 
         [HttpGet]
-        public async Task<IActionResult> TransferRequests(CancellationToken cancellationToken)
+        public async Task<IActionResult> TransferRequests(string? searchTerm, string? status, int? sourceWarehouseId, int? destinationWarehouseId, int? productId, int? requestedById, string? dateFrom, string? dateTo, CancellationToken cancellationToken)
         {
             var items = await _context.InventoryTransferRequests
                 .AsNoTracking()
@@ -746,13 +1270,106 @@ namespace OfficeAutomation.Controllers
                 .OrderByDescending(item => item.CreatedAt)
                 .ToListAsync(cancellationToken);
 
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var term = searchTerm.Trim();
+                items = items.Where(item => item.Product?.Name.Contains(term) == true || item.Product?.Code.Contains(term) == true || (item.Description ?? string.Empty).Contains(term)).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                items = items.Where(item => WorkflowStatus.Normalize(item.Status) == WorkflowStatus.Normalize(status)).ToList();
+            }
+
+            if (sourceWarehouseId.HasValue)
+            {
+                items = items.Where(item => item.SourceWarehouseId == sourceWarehouseId.Value).ToList();
+            }
+
+            if (destinationWarehouseId.HasValue)
+            {
+                items = items.Where(item => item.DestinationWarehouseId == destinationWarehouseId.Value).ToList();
+            }
+
+            if (productId.HasValue)
+            {
+                items = items.Where(item => item.ProductId == productId.Value).ToList();
+            }
+
+            if (requestedById.HasValue)
+            {
+                items = items.Where(item => item.RequestedByUserId == requestedById.Value.ToString()).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateFrom) && DateTime.TryParse(dateFrom, out var fromDate))
+            {
+                items = items.Where(item => item.CreatedAt >= fromDate.Date).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateTo) && DateTime.TryParse(dateTo, out var toDate))
+            {
+                items = items.Where(item => item.CreatedAt <= toDate.Date.AddDays(1).AddTicks(-1)).ToList();
+            }
+
             var currentUserId = CurrentUserId;
             ViewBag.IsManagerApproval = !string.IsNullOrWhiteSpace(currentUserId) &&
                                         await _context.Warehouses
                                             .AsNoTracking()
                                             .AnyAsync(item => item.IsActive && item.ManagerUserId == currentUserId, cancellationToken);
             ViewBag.CurrentUserId = currentUserId;
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.Status = status;
+            ViewBag.SourceWarehouseId = sourceWarehouseId;
+            ViewBag.DestinationWarehouseId = destinationWarehouseId;
+            ViewBag.ProductId = productId;
+            ViewBag.RequestedById = requestedById;
+            ViewBag.DateFrom = dateFrom;
+            ViewBag.DateTo = dateTo;
+            ViewBag.SourceWarehouseOptions = await BuildWarehouseOptionsAsync(sourceWarehouseId, cancellationToken);
+            ViewBag.DestinationWarehouseOptions = await BuildWarehouseOptionsAsync(destinationWarehouseId, cancellationToken);
+            ViewBag.ProductOptions = await BuildProductOptionsAsync(productId, cancellationToken);
+            ViewBag.RequestedByOptions = await BuildManagerOptionsAsync(requestedById, cancellationToken);
             return View(items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TransferRequestDetails(int id, CancellationToken cancellationToken)
+        {
+            var request = await _context.InventoryTransferRequests
+                .AsNoTracking()
+                .Include(item => item.SourceWarehouse)
+                .Include(item => item.DestinationWarehouse)
+                .Include(item => item.Product)
+                .Include(item => item.RequestedByUser)
+                .Include(item => item.ApprovedByUser)
+                .Include(item => item.RejectedByUser)
+                .Include(item => item.CanceledByUser)
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (request == null)
+            {
+                return NotFound();
+            }
+
+            var currentUserId = CurrentUserId;
+            var isSourceManager = !string.IsNullOrWhiteSpace(currentUserId) &&
+                                  await _context.Warehouses
+                                      .AsNoTracking()
+                                      .AnyAsync(item => item.Id == request.SourceWarehouseId && item.ManagerUserId == currentUserId, cancellationToken);
+            var hasManagePermission = await _authorizationFacade.HasPermissionAsync("Security.Manage", cancellationToken);
+            var canManageTransfer = isSourceManager || hasManagePermission;
+
+            var model = new WarehouseTransferDetailsVM
+            {
+                Request = request,
+                AuditEntries = await BuildAuditEntriesAsync("InventoryTransferRequest", id.ToString(), cancellationToken),
+                MovementEntries = await BuildMovementEntriesAsync("InventoryTransferRequest", id.ToString(), cancellationToken)
+            };
+
+            ViewBag.CurrentUserId = currentUserId;
+            ViewBag.CanManageTransfer = canManageTransfer;
+            ViewBag.CanCancelTransfer = canManageTransfer || request.RequestedByUserId == currentUserId;
+            return View(model);
         }
 
         [HttpGet]
@@ -774,7 +1391,7 @@ namespace OfficeAutomation.Controllers
         {
             if (model.SourceWarehouseId == model.DestinationWarehouseId)
             {
-                ModelState.AddModelError(nameof(model.DestinationWarehouseId), "مبدا و مقصد نمی‌تواند یکسان باشد.");
+                ModelState.AddModelError(nameof(model.DestinationWarehouseId), "مبدأ و مقصد نمی‌توانند یکسان باشند.");
             }
 
             await ValidateWarehouseIsOpenAsync(model.SourceWarehouseId, cancellationToken);
@@ -800,7 +1417,8 @@ namespace OfficeAutomation.Controllers
                 DestinationWarehouseId = model.DestinationWarehouseId,
                 ProductId = model.ProductId,
                 Quantity = model.Quantity,
-                Status = WorkflowStatus.PendingApproval,
+                Description = model.Description?.Trim(),
+                Status = WorkflowStatus.PendingManager,
                 RequestedByUserId = currentUserId,
                 CreatedAt = DateTime.Now
             };
@@ -819,11 +1437,12 @@ namespace OfficeAutomation.Controllers
                     entity.DestinationWarehouseId,
                     entity.ProductId,
                     entity.Quantity,
-                    entity.Status
+                    entity.Status,
+                    entity.Description
                 },
                 cancellationToken);
 
-            TempData["WarehouseMessage"] = "درخواست انتقال ثبت شد و در انتظار تایید مدیر مبدا قرار گرفت.";
+            TempData["WarehouseMessage"] = "درخواست انتقال ثبت شد و در انتظار بررسی است.";
             return RedirectToAction(nameof(TransferRequests));
         }
 
@@ -846,37 +1465,44 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            if (!WorkflowStatus.IsPending(request.Status) && request.Status != "PendingManager")
+            if (!WorkflowStatus.IsActionPending(request.Status))
             {
-                TempData["WarehouseMessage"] = "این درخواست قبلاً تعیین تکلیف شده است.";
+                TempData["WarehouseMessage"] = "این درخواست قبلا بررسی شده است.";
                 return RedirectToAction(nameof(TransferRequests));
             }
 
             var isSourceManager = await _context.Warehouses
                 .AsNoTracking()
                 .AnyAsync(item => item.Id == request.SourceWarehouseId && item.ManagerUserId == currentUserId, cancellationToken);
-            if (!isSourceManager && !User.IsInRole("Admin"))
+            if (!isSourceManager && !await _authorizationFacade.HasPermissionAsync("Security.Manage", cancellationToken))
             {
                 return Forbid();
             }
 
             await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            var previousStatus = request.Status;
 
             var issueResult = await ApplyIssuanceToStockWithRetryAsync(
                 request.SourceWarehouseId,
                 new List<WarehouseIssuanceItemVM> { new() { ProductId = request.ProductId, Quantity = request.Quantity } },
+                "InventoryTransferRequest",
+                request.Id.ToString(),
+                "کسر بابت انتقال",
                 cancellationToken);
 
             if (!issueResult.Success)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                TempData["WarehouseMessage"] = issueResult.Message ?? "موجودی مبدا کافی نیست.";
+                TempData["WarehouseMessage"] = issueResult.Message ?? "موجودی مبدأ کافی نیست.";
                 return RedirectToAction(nameof(TransferRequests));
             }
 
             var receiptResult = await ApplyReceiptToStockWithRetryAsync(
                 request.DestinationWarehouseId,
                 new List<WarehouseReceiptItemVM> { new() { ProductId = request.ProductId, Quantity = request.Quantity, UnitPrice = 0 } },
+                "InventoryTransferRequest",
+                request.Id.ToString(),
+                "افزایش بابت انتقال",
                 cancellationToken);
 
             if (!receiptResult.Success)
@@ -886,9 +1512,10 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(TransferRequests));
             }
 
-            request.Status = WorkflowStatus.Approved;
+            request.Status = WorkflowStatus.Completed;
             request.ApprovedByUserId = currentUserId;
             request.ApprovedAt = DateTime.Now;
+            request.CompletedAt = DateTime.Now;
             await _context.SaveChangesAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
@@ -897,23 +1524,24 @@ namespace OfficeAutomation.Controllers
                 "Approve",
                 "InventoryTransferRequest",
                 request.Id.ToString(),
-                new { Status = WorkflowStatus.PendingApproval },
+                new { Status = previousStatus },
                 new
                 {
                     request.Status,
                     request.ApprovedByUserId,
-                    request.ApprovedAt
+                    request.ApprovedAt,
+                    request.CompletedAt
                 },
                 cancellationToken);
 
-            TempData["WarehouseMessage"] = "درخواست انتقال تایید شد و موجودی دو انبار به‌روزرسانی شد.";
-            return RedirectToAction(nameof(TransferRequests));
+            TempData["WarehouseMessage"] = "درخواست انتقال تایید و اجرا شد.";
+            return RedirectToAction(nameof(TransferRequestDetails), new { id = request.Id });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [PermissionAuthorize("Warehouse.Approve")]
-        public async Task<IActionResult> RejectTransferRequest(int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> RejectTransferRequest(int id, string? rejectReason, CancellationToken cancellationToken)
         {
             var currentUserId = CurrentUserId;
             if (string.IsNullOrWhiteSpace(currentUserId))
@@ -921,46 +1549,114 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            var request = await _context.InventoryTransferRequests.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (string.IsNullOrWhiteSpace(rejectReason))
+            {
+                TempData["WarehouseMessage"] = "برای رد درخواست باید دلیل ثبت شود.";
+                return RedirectToAction(nameof(TransferRequestDetails), new { id });
+            }
+
+            var request = await _context.InventoryTransferRequests
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
             if (request == null)
             {
                 return NotFound();
             }
 
-            if (!WorkflowStatus.IsPending(request.Status) && request.Status != "PendingManager")
+            if (!WorkflowStatus.IsActionPending(request.Status))
             {
-                TempData["WarehouseMessage"] = "این درخواست قبلاً تعیین تکلیف شده است.";
+                TempData["WarehouseMessage"] = "این درخواست قبلا بررسی شده است.";
                 return RedirectToAction(nameof(TransferRequests));
             }
 
             var isSourceManager = await _context.Warehouses
                 .AsNoTracking()
                 .AnyAsync(item => item.Id == request.SourceWarehouseId && item.ManagerUserId == currentUserId, cancellationToken);
-            if (!isSourceManager && !User.IsInRole("Admin"))
+            if (!isSourceManager && !await _authorizationFacade.HasPermissionAsync("Security.Manage", cancellationToken))
             {
                 return Forbid();
             }
 
+            var previousStatus = request.Status;
             request.Status = WorkflowStatus.Rejected;
-            request.ApprovedByUserId = currentUserId;
-            request.ApprovedAt = DateTime.Now;
+            request.RejectedByUserId = currentUserId;
+            request.RejectReason = rejectReason.Trim();
+            request.RejectedAt = DateTime.Now;
             await _context.SaveChangesAsync(cancellationToken);
 
             await WriteAuditLogAsync(
                 "Reject",
                 "InventoryTransferRequest",
                 request.Id.ToString(),
-                new { Status = WorkflowStatus.PendingApproval },
+                new { Status = previousStatus },
                 new
                 {
                     request.Status,
-                    request.ApprovedByUserId,
-                    request.ApprovedAt
+                    request.RejectedByUserId,
+                    request.RejectReason,
+                    request.RejectedAt
                 },
                 cancellationToken);
 
             TempData["WarehouseMessage"] = "درخواست انتقال رد شد.";
-            return RedirectToAction(nameof(TransferRequests));
+            return RedirectToAction(nameof(TransferRequestDetails), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelTransferRequest(int id, string? cancelReason, CancellationToken cancellationToken)
+        {
+            var currentUserId = CurrentUserId;
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Forbid();
+            }
+
+            var request = await _context.InventoryTransferRequests
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (request == null)
+            {
+                return NotFound();
+            }
+
+            if (!WorkflowStatus.IsActionPending(request.Status))
+            {
+                TempData["WarehouseMessage"] = "این درخواست دیگر قابل لغو نیست.";
+                return RedirectToAction(nameof(TransferRequestDetails), new { id });
+            }
+
+            var canCancelAsRequester = request.RequestedByUserId == currentUserId;
+            var isSourceManager = await _context.Warehouses
+                .AsNoTracking()
+                .AnyAsync(item => item.Id == request.SourceWarehouseId && item.ManagerUserId == currentUserId, cancellationToken);
+            var hasManagePermission = await _authorizationFacade.HasPermissionAsync("Security.Manage", cancellationToken);
+            if (!canCancelAsRequester && !isSourceManager && !hasManagePermission)
+            {
+                return Forbid();
+            }
+
+            var previousStatus = request.Status;
+            request.Status = WorkflowStatus.Canceled;
+            request.CanceledByUserId = currentUserId;
+            request.CancelReason = cancelReason?.Trim();
+            request.CanceledAt = DateTime.Now;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await WriteAuditLogAsync(
+                "Cancel",
+                "InventoryTransferRequest",
+                request.Id.ToString(),
+                new { Status = previousStatus },
+                new
+                {
+                    request.Status,
+                    request.CanceledByUserId,
+                    request.CancelReason,
+                    request.CanceledAt
+                },
+                cancellationToken);
+
+            TempData["WarehouseMessage"] = "درخواست انتقال لغو شد.";
+            return RedirectToAction(nameof(TransferRequestDetails), new { id });
         }
 
         [HttpPost]
@@ -974,6 +1670,7 @@ namespace OfficeAutomation.Controllers
             {
                 await PopulateProductOptionsAsync(model.ProductOptions, cancellationToken);
                 await PopulateWarehouseOptionsAsync(model.WarehouseOptions, cancellationToken);
+                ViewBag.StockSnapshotJson = JsonSerializer.Serialize(await BuildWarehouseStockSnapshotAsync(model.WarehouseId, cancellationToken), new JsonSerializerOptions(JsonSerializerDefaults.Web));
                 return View(model);
             }
 
@@ -1014,7 +1711,7 @@ namespace OfficeAutomation.Controllers
 
             if (model.Status == "Approved")
             {
-                var approvalResult = await ApplyCountingApprovalToStockWithRetryAsync(model.WarehouseId, validItems, cancellationToken);
+                var approvalResult = await ApplyCountingApprovalToStockWithRetryAsync(model.WarehouseId, validItems, "InventoryCounting", entity.Id.ToString(), entity.DocumentNumber, cancellationToken);
                 if (!approvalResult.Success)
                 {
                     await transaction.RollbackAsync(cancellationToken);
@@ -1042,7 +1739,7 @@ namespace OfficeAutomation.Controllers
                 },
                 cancellationToken);
 
-            return RedirectToAction(nameof(Countings));
+            return RedirectToAction(nameof(CountingDetails), new { id = entity.Id });
         }
 
         [HttpPost]
@@ -1073,7 +1770,7 @@ namespace OfficeAutomation.Controllers
                 DiscrepancyQuantity = item.DiscrepancyQuantity
             }).ToList();
 
-            var approvalResult = await ApplyCountingApprovalToStockWithRetryAsync(counting.WarehouseId, itemVMs, cancellationToken);
+            var approvalResult = await ApplyCountingApprovalToStockWithRetryAsync(counting.WarehouseId, itemVMs, "InventoryCounting", counting.Id.ToString(), counting.DocumentNumber, cancellationToken);
             if (!approvalResult.Success)
             {
                 await transaction.RollbackAsync(cancellationToken);
@@ -1103,7 +1800,7 @@ namespace OfficeAutomation.Controllers
                 },
                 cancellationToken);
 
-            return RedirectToAction(nameof(Countings));
+            return RedirectToAction(nameof(CountingDetails), new { id = counting.Id });
         }
 
         [HttpGet]
@@ -1117,6 +1814,8 @@ namespace OfficeAutomation.Controllers
             };
 
             ViewBag.WarehouseOptions = await BuildWarehouseOptionsAsync(model.WarehouseId, cancellationToken, includeClosed: false);
+            model.PreflightItems = await BuildWarehouseClosingPreflightAsync(model.WarehouseId, cancellationToken);
+            model.CanClose = model.PreflightItems.All(item => !item.IsBlocking);
             return View(model);
         }
 
@@ -1143,6 +1842,13 @@ namespace OfficeAutomation.Controllers
                 {
                     ModelState.AddModelError(string.Empty, "تا زمانی که تمام انبارگردانی‌های انبار تایید نشده باشند، بستن انبار امکان‌پذیر نیست.");
                 }
+            }
+
+            model.PreflightItems = await BuildWarehouseClosingPreflightAsync(model.WarehouseId, cancellationToken);
+            model.CanClose = model.PreflightItems.All(item => !item.IsBlocking);
+            if (!model.CanClose)
+            {
+                ModelState.AddModelError(string.Empty, "چک‌های قبل از بستن سال کامل نیست. موارد قرمز را برطرف کنید.");
             }
 
             if (!ModelState.IsValid)
@@ -1228,6 +1934,100 @@ namespace OfficeAutomation.Controllers
             return RedirectToAction(nameof(Warehouses));
         }
 
+        private async Task<List<WarehouseClosingPreflightItemVM>> BuildWarehouseClosingPreflightAsync(int warehouseId, CancellationToken cancellationToken)
+        {
+            var items = new List<WarehouseClosingPreflightItemVM>();
+
+            var pendingTransfers = await _context.InventoryTransferRequests
+                .AsNoTracking()
+                .CountAsync(item => item.SourceWarehouseId == warehouseId && !WorkflowStatus.IsApproved(item.Status) && item.Status != WorkflowStatus.Canceled, cancellationToken);
+            items.Add(new WarehouseClosingPreflightItemVM
+            {
+                Key = "pending_transfers",
+                Title = "درخواست‌های انتقال باز",
+                Detail = pendingTransfers > 0 ? $"{pendingTransfers} درخواست انتقال هنوز تایید نشده است." : "مورد باز وجود ندارد.",
+                IsBlocking = pendingTransfers > 0
+            });
+
+            var pendingCountings = await _context.InventoryCountings
+                .AsNoTracking()
+                .CountAsync(item => item.WarehouseId == warehouseId && item.Status != WorkflowStatus.Approved && item.Status != WorkflowStatus.Canceled, cancellationToken);
+            items.Add(new WarehouseClosingPreflightItemVM
+            {
+                Key = "pending_countings",
+                Title = "انبارگردانی‌های ناتمام",
+                Detail = pendingCountings > 0 ? $"{pendingCountings} انبارگردانی هنوز تایید نشده است." : "مورد باز وجود ندارد.",
+                IsBlocking = pendingCountings > 0
+            });
+
+            var pendingReceipts = await _context.WarehouseReceipts
+                .AsNoTracking()
+                .CountAsync(item => item.WarehouseId == warehouseId && !WorkflowStatus.IsApproved(item.WorkflowStatus) && item.WorkflowStatus != WorkflowStatus.Canceled, cancellationToken);
+            items.Add(new WarehouseClosingPreflightItemVM
+            {
+                Key = "pending_receipts",
+                Title = "رسیدهای ناتمام",
+                Detail = pendingReceipts > 0 ? $"{pendingReceipts} رسید هنوز در انتظار بررسی است." : "مورد باز وجود ندارد.",
+                IsBlocking = pendingReceipts > 0
+            });
+
+            var pendingIssuances = await _context.WarehouseIssuances
+                .AsNoTracking()
+                .CountAsync(item => item.WarehouseId == warehouseId && !WorkflowStatus.IsApproved(item.WorkflowStatus) && item.WorkflowStatus != WorkflowStatus.Canceled, cancellationToken);
+            items.Add(new WarehouseClosingPreflightItemVM
+            {
+                Key = "pending_issuances",
+                Title = "خروج‌های ناتمام",
+                Detail = pendingIssuances > 0 ? $"{pendingIssuances} خروج هنوز در انتظار بررسی است." : "مورد باز وجود ندارد.",
+                IsBlocking = pendingIssuances > 0
+            });
+
+            var negativeStocks = await _context.InventoryStocks
+                .AsNoTracking()
+                .CountAsync(item => item.WarehouseId == warehouseId && item.CurrentQuantity < 0, cancellationToken);
+            items.Add(new WarehouseClosingPreflightItemVM
+            {
+                Key = "negative_stocks",
+                Title = "موجودی منفی",
+                Detail = negativeStocks > 0 ? $"{negativeStocks} قلم موجودی منفی ثبت شده است." : "موجودی منفی یافت نشد.",
+                IsBlocking = negativeStocks > 0
+            });
+
+            var lastUpdate = await _context.InventoryMovementLedgers
+                .AsNoTracking()
+                .Where(item => item.WarehouseId == warehouseId)
+                .OrderByDescending(item => item.CreatedAt)
+                .Select(item => item.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+            items.Add(new WarehouseClosingPreflightItemVM
+            {
+                Key = "last_update",
+                Title = "آخرین بروزرسانی",
+                Detail = lastUpdate == default ? "هنوز حرکت ثبت نشده است." : lastUpdate.ToString("yyyy/MM/dd HH:mm"),
+                IsBlocking = false
+            });
+
+            return items;
+        }
+
+        private async Task<List<WarehouseStockSnapshotVM>> BuildWarehouseStockSnapshotAsync(int warehouseId, CancellationToken cancellationToken)
+        {
+            return await _context.InventoryStocks
+                .AsNoTracking()
+                .Include(item => item.Product)
+                .Where(item => item.WarehouseId == warehouseId)
+                .OrderBy(item => item.Product.Name)
+                .Select(item => new WarehouseStockSnapshotVM
+                {
+                    ProductId = item.ProductId,
+                    ProductName = item.Product.Name,
+                    ProductCode = item.Product.Code,
+                    CurrentQuantity = item.CurrentQuantity,
+                    MinimumStock = item.Product.MinimumStock
+                })
+                .ToListAsync(cancellationToken);
+        }
+
         private async Task ValidateProductCodeAsync(string? code, int? currentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -1288,7 +2088,7 @@ namespace OfficeAutomation.Controllers
             }
 
             await ValidateWarehouseIsOpenAsync(model.WarehouseId, cancellationToken);
-            await ValidateProductsExistenceAsync(model.Items.Select(item => item.ProductId), cancellationToken);
+            await ValidateProductsExistenceAsync((model.Items ?? []).Select(item => item.ProductId), cancellationToken);
         }
 
         private async Task ValidateIssuanceAsync(WarehouseIssuanceUpsertVM model, List<WarehouseIssuanceItemVM> validItems, CancellationToken cancellationToken)
@@ -1421,7 +2221,7 @@ namespace OfficeAutomation.Controllers
             }
         }
 
-        private async Task ApplyReceiptToStockAsync(int warehouseId, List<WarehouseReceiptItemVM> items, CancellationToken cancellationToken)
+        private async Task ApplyReceiptToStockAsync(int warehouseId, List<WarehouseReceiptItemVM> items, string documentType, string documentId, string? note, CancellationToken cancellationToken)
         {
             var grouped = items
                 .GroupBy(item => item.ProductId)
@@ -1452,17 +2252,31 @@ namespace OfficeAutomation.Controllers
 
                 stock.CurrentQuantity += item.Quantity;
                 stock.UpdatedAt = now;
+
+                _context.InventoryMovementLedgers.Add(new InventoryMovementLedger
+                {
+                    DocumentType = documentType,
+                    DocumentId = documentId,
+                    WarehouseId = warehouseId,
+                    ProductId = item.ProductId,
+                    QuantityIn = item.Quantity,
+                    QuantityOut = 0,
+                    BalanceAfter = stock.CurrentQuantity,
+                    CreatedByUserId = CurrentUserId,
+                    CreatedAt = now,
+                    Notes = note
+                });
             }
         }
 
-        private async Task<(bool Success, string? Message)> ApplyReceiptToStockWithRetryAsync(int warehouseId, List<WarehouseReceiptItemVM> items, CancellationToken cancellationToken)
+        private async Task<(bool Success, string? Message)> ApplyReceiptToStockWithRetryAsync(int warehouseId, List<WarehouseReceiptItemVM> items, string documentType, string documentId, string? note, CancellationToken cancellationToken)
         {
             const int maxAttempts = 3;
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
                 try
                 {
-                    await ApplyReceiptToStockAsync(warehouseId, items, cancellationToken);
+                    await ApplyReceiptToStockAsync(warehouseId, items, documentType, documentId, note, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
                     return (true, null);
                 }
@@ -1483,7 +2297,7 @@ namespace OfficeAutomation.Controllers
             return (false, "بروزرسانی موجودی ناموفق بود.");
         }
 
-        private async Task<(bool Success, string? Message)> ApplyIssuanceToStockAsync(int warehouseId, List<WarehouseIssuanceItemVM> items, CancellationToken cancellationToken)
+        private async Task<(bool Success, string? Message)> ApplyIssuanceToStockAsync(int warehouseId, List<WarehouseIssuanceItemVM> items, string documentType, string documentId, string? note, CancellationToken cancellationToken)
         {
             var grouped = items
                 .GroupBy(item => item.ProductId)
@@ -1517,17 +2331,31 @@ namespace OfficeAutomation.Controllers
                 var stock = stocks.First(row => row.ProductId == item.ProductId);
                 stock.CurrentQuantity -= item.Quantity;
                 stock.UpdatedAt = now;
+
+                _context.InventoryMovementLedgers.Add(new InventoryMovementLedger
+                {
+                    DocumentType = documentType,
+                    DocumentId = documentId,
+                    WarehouseId = warehouseId,
+                    ProductId = item.ProductId,
+                    QuantityIn = 0,
+                    QuantityOut = item.Quantity,
+                    BalanceAfter = stock.CurrentQuantity,
+                    CreatedByUserId = CurrentUserId,
+                    CreatedAt = now,
+                    Notes = note
+                });
             }
 
             return (true, null);
         }
 
-        private async Task<(bool Success, string? Message)> ApplyIssuanceToStockWithRetryAsync(int warehouseId, List<WarehouseIssuanceItemVM> items, CancellationToken cancellationToken)
+        private async Task<(bool Success, string? Message)> ApplyIssuanceToStockWithRetryAsync(int warehouseId, List<WarehouseIssuanceItemVM> items, string documentType, string documentId, string? note, CancellationToken cancellationToken)
         {
             const int maxAttempts = 3;
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                var result = await ApplyIssuanceToStockAsync(warehouseId, items, cancellationToken);
+                var result = await ApplyIssuanceToStockAsync(warehouseId, items, documentType, documentId, note, cancellationToken);
                 if (!result.Success)
                 {
                     return result;
@@ -1555,7 +2383,7 @@ namespace OfficeAutomation.Controllers
             return (false, "کسر موجودی ناموفق بود.");
         }
 
-        private async Task ApplyCountingApprovalToStockAsync(int warehouseId, List<InventoryCountingItemVM> items, CancellationToken cancellationToken)
+        private async Task ApplyCountingApprovalToStockAsync(int warehouseId, List<InventoryCountingItemVM> items, string documentType, string documentId, string? note, CancellationToken cancellationToken)
         {
             var productIds = items.Select(item => item.ProductId).Distinct().ToList();
             var stocks = await _context.InventoryStocks
@@ -1583,17 +2411,32 @@ namespace OfficeAutomation.Controllers
 
                 stock.CurrentQuantity = item.PhysicalQuantity;
                 stock.UpdatedAt = now;
+
+                var diff = item.PhysicalQuantity - item.SystemQuantity;
+                _context.InventoryMovementLedgers.Add(new InventoryMovementLedger
+                {
+                    DocumentType = documentType,
+                    DocumentId = documentId,
+                    WarehouseId = warehouseId,
+                    ProductId = item.ProductId,
+                    QuantityIn = diff > 0 ? diff : 0,
+                    QuantityOut = diff < 0 ? Math.Abs(diff) : 0,
+                    BalanceAfter = stock.CurrentQuantity,
+                    CreatedByUserId = CurrentUserId,
+                    CreatedAt = now,
+                    Notes = note
+                });
             }
         }
 
-        private async Task<(bool Success, string? Message)> ApplyCountingApprovalToStockWithRetryAsync(int warehouseId, List<InventoryCountingItemVM> items, CancellationToken cancellationToken)
+        private async Task<(bool Success, string? Message)> ApplyCountingApprovalToStockWithRetryAsync(int warehouseId, List<InventoryCountingItemVM> items, string documentType, string documentId, string? note, CancellationToken cancellationToken)
         {
             const int maxAttempts = 3;
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
                 try
                 {
-                    await ApplyCountingApprovalToStockAsync(warehouseId, items, cancellationToken);
+                    await ApplyCountingApprovalToStockAsync(warehouseId, items, documentType, documentId, note, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
                     return (true, null);
                 }
@@ -1665,6 +2508,22 @@ namespace OfficeAutomation.Controllers
             options.AddRange(items);
         }
 
+        private async Task<List<SelectListItem>> BuildVendorOptionsAsync(int? selectedId, CancellationToken cancellationToken)
+        {
+            var options = new List<SelectListItem>();
+            await PopulateVendorOptionsAsync(options, cancellationToken);
+            options.Insert(0, new SelectListItem { Value = string.Empty, Text = "همه تامین‌کنندگان", Selected = !selectedId.HasValue });
+            if (selectedId.HasValue)
+            {
+                foreach (var option in options)
+                {
+                    option.Selected = option.Value == selectedId.Value.ToString();
+                }
+            }
+
+            return options;
+        }
+
         private async Task PopulateEmployerOptionsAsync(List<SelectListItem> options, CancellationToken cancellationToken)
         {
             options.Clear();
@@ -1682,6 +2541,22 @@ namespace OfficeAutomation.Controllers
             options.AddRange(items);
         }
 
+        private async Task<List<SelectListItem>> BuildEmployerOptionsAsync(int? selectedId, CancellationToken cancellationToken)
+        {
+            var options = new List<SelectListItem>();
+            await PopulateEmployerOptionsAsync(options, cancellationToken);
+            options.Insert(0, new SelectListItem { Value = string.Empty, Text = "همه کارفرماها", Selected = !selectedId.HasValue });
+            if (selectedId.HasValue)
+            {
+                foreach (var option in options)
+                {
+                    option.Selected = option.Value == selectedId.Value.ToString();
+                }
+            }
+
+            return options;
+        }
+
         private async Task PopulateManagerOptionsAsync(List<SelectListItem> options, CancellationToken cancellationToken)
         {
             options.Clear();
@@ -1696,6 +2571,42 @@ namespace OfficeAutomation.Controllers
                 .ToListAsync(cancellationToken);
 
             options.AddRange(items);
+        }
+
+        private async Task<List<SelectListItem>> BuildManagerOptionsAsync(int? selectedId, CancellationToken cancellationToken)
+        {
+            var options = new List<SelectListItem>();
+            await PopulateManagerOptionsAsync(options, cancellationToken);
+            options.Insert(0, new SelectListItem { Value = string.Empty, Text = "همه کاربران", Selected = !selectedId.HasValue });
+            if (selectedId.HasValue)
+            {
+                foreach (var option in options)
+                {
+                    option.Selected = option.Value == selectedId.Value.ToString();
+                }
+            }
+
+            return options;
+        }
+
+        private async Task<List<SelectListItem>> BuildProductOptionsAsync(int? selectedId, CancellationToken cancellationToken)
+        {
+            var options = new List<SelectListItem>();
+            var items = await _context.Products
+                .AsNoTracking()
+                .Where(item => !item.IsDeleted)
+                .OrderBy(item => item.Name)
+                .Select(item => new SelectListItem
+                {
+                    Value = item.Id.ToString(),
+                    Text = $"{item.Name} ({item.Code})",
+                    Selected = selectedId.HasValue && selectedId.Value == item.Id
+                })
+                .ToListAsync(cancellationToken);
+
+            options.Add(new SelectListItem { Value = string.Empty, Text = "همه کالاها", Selected = !selectedId.HasValue });
+            options.AddRange(items);
+            return options;
         }
 
         private async Task<List<SelectListItem>> BuildWarehouseOptionsAsync(int? selectedId, CancellationToken cancellationToken, bool includeClosed = true)
@@ -1780,6 +2691,129 @@ namespace OfficeAutomation.Controllers
             return string.IsNullOrWhiteSpace(fallbackName) ? "نامشخص" : fallbackName.Trim();
         }
 
+        private async Task<List<WarehouseAuditEntryVM>> BuildAuditEntriesAsync(string tableName, string entityId, CancellationToken cancellationToken)
+        {
+            var logs = await _context.AuditLogs
+                .AsNoTracking()
+                .Where(item => item.TableName == tableName)
+                .OrderByDescending(item => item.DateTime)
+                .ToListAsync(cancellationToken);
+
+            var userIds = logs
+                .Where(item => !string.IsNullOrWhiteSpace(item.UserId))
+                .Select(item => item.UserId!)
+                .Distinct()
+                .ToList();
+
+            var userNames = userIds.Count == 0
+                ? new Dictionary<string, string>()
+                : await _context.Users
+                    .AsNoTracking()
+                    .Where(item => userIds.Contains(item.Id))
+                    .ToDictionaryAsync(item => item.Id, item => item.FullName ?? item.UserName ?? "کاربر", cancellationToken);
+
+            var result = new List<WarehouseAuditEntryVM>();
+
+            foreach (var log in logs)
+            {
+                if (!MatchesEntity(log.OldValues, entityId) && !MatchesEntity(log.NewValues, entityId))
+                {
+                    continue;
+                }
+
+                result.Add(new WarehouseAuditEntryVM
+                {
+                    Action = log.Action,
+                    Caption = BuildAuditCaption(log),
+                    OccurredAt = log.DateTime,
+                    ActorName = log.UserId != null && userNames.TryGetValue(log.UserId, out var displayName) ? displayName : null
+                });
+            }
+
+            return result;
+        }
+
+        private async Task<List<WarehouseMovementEntryVM>> BuildMovementEntriesAsync(string documentType, string documentId, CancellationToken cancellationToken)
+        {
+            var rows = await _context.InventoryMovementLedgers
+                .AsNoTracking()
+                .Include(item => item.Product)
+                .Include(item => item.Warehouse)
+                .Where(item => item.DocumentType == documentType && item.DocumentId == documentId)
+                .OrderByDescending(item => item.CreatedAt)
+                .Select(item => new WarehouseMovementEntryVM
+                {
+                    ProductName = item.Product.Name,
+                    ProductCode = item.Product.Code,
+                    WarehouseName = item.Warehouse.Name,
+                    QuantityIn = item.QuantityIn,
+                    QuantityOut = item.QuantityOut,
+                    BalanceAfter = item.BalanceAfter,
+                    CreatedAt = item.CreatedAt,
+                    ActorName = item.CreatedByUserId
+                })
+                .ToListAsync(cancellationToken);
+
+            var userIds = rows
+                .Where(item => !string.IsNullOrWhiteSpace(item.ActorName))
+                .Select(item => item.ActorName!)
+                .Distinct()
+                .ToList();
+
+            if (userIds.Count == 0)
+            {
+                return rows;
+            }
+
+            var userNames = await _context.Users
+                .AsNoTracking()
+                .Where(item => userIds.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.FullName ?? item.UserName ?? "کاربر", cancellationToken);
+
+            foreach (var row in rows)
+            {
+                if (row.ActorName != null && userNames.TryGetValue(row.ActorName, out var displayName))
+                {
+                    row.ActorName = displayName;
+                }
+            }
+
+            return rows;
+        }
+
+        private static bool MatchesEntity(string? json, string entityId)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
+            try
+            {
+                using var document = JsonDocument.Parse(json);
+                foreach (var property in document.RootElement.EnumerateObject())
+                {
+                    var value = property.Value.ToString();
+                    if (string.Equals(value, entityId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                return json.Contains(entityId, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
+        }
+
+        private static string BuildAuditCaption(AuditLog log)
+        {
+            var columns = string.IsNullOrWhiteSpace(log.AffectedColumns) ? "ثبت رویداد" : log.AffectedColumns;
+            return $"{log.Action} - {columns}";
+        }
+
         private static int GetCurrentShamsiYear()
         {
             var persianCalendar = new System.Globalization.PersianCalendar();
@@ -1801,7 +2835,19 @@ namespace OfficeAutomation.Controllers
             object? newValues,
             CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Action = action,
+                TableName = entityName,
+                DateTime = DateTimeOffset.UtcNow,
+                OldValues = oldValues == null ? null : JsonSerializer.Serialize(oldValues),
+                NewValues = newValues == null ? null : JsonSerializer.Serialize(newValues),
+                AffectedColumns = oldValues == null && newValues == null ? null : "ManualWarehouseEvent",
+                UserId = CurrentUserId,
+                IsSensitive = string.Equals(action, "Delete", StringComparison.OrdinalIgnoreCase)
+            });
+
+            return _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

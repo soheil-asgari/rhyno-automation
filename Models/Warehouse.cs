@@ -17,6 +17,11 @@ namespace OfficeAutomation.Models
         [StringLength(200)]
         public string? Location { get; set; }
 
+        [StringLength(50)]
+        public string? WarehouseType { get; set; }
+
+        public decimal Capacity { get; set; }
+
         public string? ManagerUserId { get; set; }
 
         public User? ManagerUser { get; set; }
@@ -24,6 +29,11 @@ namespace OfficeAutomation.Models
         public bool IsActive { get; set; } = true;
 
         public bool IsClosed { get; set; }
+
+        public string OperationalStatus { get; set; } = "Active";
+
+        [StringLength(600)]
+        public string? ClosingRules { get; set; }
 
         public DateTime CreatedAt { get; set; }
 

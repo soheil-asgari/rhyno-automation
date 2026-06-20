@@ -1,210 +1,219 @@
-﻿@model IEnumerable<OfficeAutomation.Models.Leave>
+@model IEnumerable<OfficeAutomation.Models.Leave>
 @{
-    ViewData["Title"] = "مدیریت درخواست‌های مرخصی";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "درخواست‌های مرخصی";
+    var leaves = Model?.ToList() ?? new List<OfficeAutomation.Models.Leave>();
+    var pendingCount = leaves.Count(item => WorkflowStatus.IsPending(item.Status));
+    var approvedCount = leaves.Count(item => WorkflowStatus.IsApproved(item.Status));
+    var rejectedCount = leaves.Count(item => WorkflowStatus.IsRejected(item.Status));
+    var status = (Context.Request.Query["status"].ToString() ?? string.Empty).Trim().ToLowerInvariant();
+    var filteredLeaves = string.IsNullOrWhiteSpace(status)
+        ? leaves
+        : leaves.Where(item =>
+            (status == "pending" && WorkflowStatus.IsPending(item.Status)) ||
+            (status == "approved" && WorkflowStatus.IsApproved(item.Status)) ||
+            (status == "rejected" && WorkflowStatus.IsRejected(item.Status))).ToList();
 }
 
-<style>
-    :root {
-        --primary-soft: #eef2ff;
-        --primary-main: #4f46e5;
-        --success-soft: #ecfdf5;
-        --success-main: #10b981;
-        --warning-soft: #fffbeb;
-        --warning-main: #f59e0b;
-    }
+@section Styles {
+    <style>
+        .leaves-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
 
-    body {
-        background-color: #f8fafc;
-        /* font-size: 0.9rem; */
-    }
+        .leave-stat-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
 
-    .stat-card {
-        border: 1px solid #e2e8f0 !important;
-        transition: transform 0.2s;
-        border-radius: 12px;
-    }
+        .leave-stat-card {
+            position: relative;
+            overflow: hidden;
+            min-height: 110px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            border: 1px solid var(--ds-border);
+            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,250,252,0.98));
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
 
-        .stat-card:hover {
+        .leave-stat-link:hover .leave-stat-card,
+        .leave-stat-link:focus-visible .leave-stat-card {
             transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.45);
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
         }
 
-    .icon-box {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        font-size: 1.2rem;
-    }
-
-    .table thead th {
-        background-color: #f1f5f9;
-        color: #64748b;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 0.025em;
-        border: none;
-    }
-
-    .avatar-circle {
-        width: 32px;
-        height: 32px;
-        background: var(--primary-soft);
-        color: var(--primary-main);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        font-weight: bold;
-        font-size: 0.8rem;
-    }
-
-    .badge-soft {
-        padding: 0.4em 0.8em;
-        border-radius: 6px;
-        font-weight: 500;
-    }
-
-    .status-pending {
-        background: var(--warning-soft);
-        color: var(--warning-main);
-    }
-
-    .status-approved {
-        background: var(--success-soft);
-        color: var(--success-main);
-    }
-
-    .action-btn {
-        padding: 5px 10px;
-        border-radius: 8px;
-        transition: all 0.2s;
-        border: 1px solid #e2e8f0;
-        background: white;
-    }
-
-        .action-btn:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
+        .leave-stat-card.active {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.18), 0 18px 36px rgba(15, 23, 42, 0.14);
         }
-</style>
 
-<div class="container-fluid py-4" style="direction: rtl; text-align: right; max-width: 1200px;">
+        .leave-stat-label {
+            font-size: .8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+        .leave-stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .leave-stat-hint {
+            position: absolute;
+            bottom: 14px;
+            left: 18px;
+            font-size: .78rem;
+            color: var(--text-muted);
+        }
+
+        .leave-row:hover td {
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        .saved-filters-panel {
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+        }
+
+        html.theme-dark .saved-filters-panel,
+        html[data-theme="dark"] .saved-filters-panel,
+        body[data-theme="dark"] .saved-filters-panel {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+            border-color: rgba(148, 163, 184, 0.18);
+        }
+
+        .leave-reason {
+            max-width: 220px;
+        }
+
+        @@media (max-width: 992px) {
+            .leaves-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .leaves-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        html.theme-dark .leave-stat-card,
+        html[data-theme="dark"] .leave-stat-card,
+        body[data-theme="dark"] .leave-stat-card {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
+            border-color: var(--ds-border-strong);
+        }
+    </style>
+}
+
+<div class="page-shell leaves-page">
+    <div class="section-header">
         <div>
-            <h5 class="fw-bold mb-1 text-dark">مدیریت مرخصی‌ها</h5>
-            <p class="text-muted small mb-0">لیست و وضعیت درخواست‌های ثبت شده در سیستم</p>
+            <h1 class="section-title">درخواست‌های مرخصی</h1>
+            <p class="section-subtitle">نمایش وضعیت درخواست‌ها با رنگ‌بندی سازگار با dark mode و دسترسی سریع به عملیات.</p>
         </div>
-        <a asp-action="Create" class="btn btn-primary px-4 shadow-sm" style="border-radius: 10px; background-color: var(--primary-main);">
-            <i class="bi bi-plus-lg ms-1"></i> درخواست جدید
+        <a asp-action="Create" class="btn btn-primary">درخواست جدید</a>
+    </div>
+
+    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترها را برای دسترسی سریع ذخیره کن."; ViewData["SavedFiltersSaveButtonId"] = "leavesSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "leavesClearSaved"; ViewData["SavedFiltersContainerId"] = "leavesSavedFilters"; }
+    <partial name="_SavedFiltersPanel" />
+
+    <div class="leaves-stats">
+        <a asp-action="Index" class="leave-stat-link">
+            <div class="leave-stat-card @(string.IsNullOrWhiteSpace(status) ? "active" : "")">
+                <div class="leave-stat-label">کل درخواست‌ها</div>
+                <div class="leave-stat-value">@leaves.Count</div>
+                <div class="leave-stat-hint">نمایش همه</div>
+            </div>
+        </a>
+        <a asp-action="Index" asp-route-status="pending" class="leave-stat-link">
+            <div class="leave-stat-card @(status == "pending" ? "active" : "")">
+                <div class="leave-stat-label">در انتظار</div>
+                <div class="leave-stat-value text-warning">@pendingCount</div>
+                <div class="leave-stat-hint">فقط موارد باز</div>
+            </div>
+        </a>
+        <a asp-action="Index" asp-route-status="approved" class="leave-stat-link">
+            <div class="leave-stat-card @(status == "approved" ? "active" : "")">
+                <div class="leave-stat-label">تایید شده</div>
+                <div class="leave-stat-value text-success">@approvedCount</div>
+                <div class="leave-stat-hint">موارد نهایی</div>
+            </div>
+        </a>
+        <a asp-action="Index" asp-route-status="rejected" class="leave-stat-link">
+            <div class="leave-stat-card @(status == "rejected" ? "active" : "")">
+                <div class="leave-stat-label">رد شده</div>
+                <div class="leave-stat-value text-danger">@rejectedCount</div>
+                <div class="leave-stat-hint">موارد رد شده</div>
+            </div>
         </a>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card stat-card shadow-sm h-100">
-                <div class="card-body d-flex align-items-center p-3">
-                    <div class="icon-box bg-light text-primary ms-3"><i class="bi bi-collection"></i></div>
-                    <div>
-                        <small class="text-muted d-block">کل درخواست‌ها</small>
-                        <span class="fw-bold fs-5">@Model.Count()</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card shadow-sm h-100">
-                <div class="card-body d-flex align-items-center p-3">
-                    <div class="icon-box status-pending ms-3"><i class="bi bi-clock-history"></i></div>
-                    <div>
-                        <small class="text-muted d-block">در انتظار تایید</small>
-                        <span class="fw-bold fs-5 text-warning">@Model.Count(x => WorkflowStatus.IsPending(x.Status))</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card shadow-sm h-100">
-                <div class="card-body d-flex align-items-center p-3">
-                    <div class="icon-box status-approved ms-3"><i class="bi bi-check2-circle"></i></div>
-                    <div>
-                        <small class="text-muted d-block">تایید شده</small>
-                        <span class="fw-bold fs-5 text-success">@Model.Count(x => WorkflowStatus.IsApproved(x.Status))</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+    <div class="form-card">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table smart-table align-middle mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-4">درخواست‌دهنده</th>
+                        <th>درخواست‌دهنده</th>
                         <th>بازه زمانی</th>
                         <th>مدت</th>
                         <th>علت</th>
                         <th>وضعیت</th>
-                        <th class="text-center pe-4">عملیات</th>
+                        <th class="text-center">عملیات</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @if (filteredLeaves.Any())
+                    {
+                        foreach (var item in filteredLeaves)
+                        {
+                            var fullName = item.User?.FullName ?? item.User?.UserName ?? "کاربر";
+                            var initial = !string.IsNullOrWhiteSpace(fullName) ? fullName.Substring(0, 1) : "؟";
+                            var days = (item.EndDate - item.StartDate).Days + 1;
+                            <tr class="leave-row">
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-circle">@initial</div>
+                                        <div class="fw-semibold">@fullName</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small text-muted">از: @item.StartDate.ToString("yyyy/MM/dd")</div>
+                                    <div class="small text-muted">تا: @item.EndDate.ToString("yyyy/MM/dd")</div>
+                                </td>
+                                <td>@days روز</td>
+                                <td>
+                                    <div class="leave-reason">
+                                        <span class="text-truncate d-inline-block w-100" title="@item.Reason">@item.Reason</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge @WorkflowStatus.BadgeCss(item.Status)">@WorkflowStatus.Label(item.Status)</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="action-bar justify-content-center">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">ویرایش</a>
+                                        <button class="btn btn-sm btn-outline-danger btn-delete" data-id="@item.Id" type="button">حذف</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td class="ps-4">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-circle ms-2">@item.User?.FullName.Substring(0, 1)</div>
-                                    <div class="fw-semibold text-dark">@item.User?.FullName</div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="small">
-                                    <span class="text-muted small">از:</span> @item.StartDate.ToString("yyyy/MM/dd")<br />
-                                    <span class="text-muted small">تا:</span> @item.EndDate.ToString("yyyy/MM/dd")
-                                </div>
-                            </td>
-                            <td>
-                                @{
-                                    var days = (item.EndDate - item.StartDate).Days + 1;
-                                    <span class="fw-medium text-dark">@days روز</span>
-                                }
-                            </td>
-                            <td>
-                                <span class="text-muted d-inline-block text-truncate" style="max-width: 150px;" title="@item.Reason">
-                                    @item.Reason
-                                </span>
-                            </td>
-                            <td>
-                                @if (WorkflowStatus.IsPending(item.Status))
-                                {
-                                    <span class="badge-soft status-pending small">@WorkflowStatus.Label(item.Status)</span>
-                                }
-                                else if (WorkflowStatus.IsApproved(item.Status))
-                                {
-                                    <span class="badge-soft status-approved small">@WorkflowStatus.Label(item.Status)</span>
-                                }
-                                else
-                                {
-                                    <span class="badge-soft bg-light text-danger small">@WorkflowStatus.Label(item.Status)</span>
-                                }
-                            </td>
-                            <td class="text-center pe-4">
-                                <div class="d-flex justify-content-center gap-2">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn text-primary" title="ویرایش">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <button class="action-btn text-danger btn-delete"
-                                            data-id="@item.Id"
-                                            title="حذف">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
-
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <i class="bi bi-calendar2-week"></i>
+                                    <div>در این فیلتر موردی ثبت نشده است.</div>
                                 </div>
                             </td>
                         </tr>
@@ -219,7 +228,76 @@
     document.querySelectorAll(".btn-delete").forEach(btn => {
         btn.addEventListener("click", function () {
             const id = this.dataset.id;
-             window.location.href = `/Leaves/Delete/${id}`;
+            window.location.href = `/Leaves/Delete/${id}`;
         });
     });
+
+    (() => {
+        const preferenceEndpoint = "/table-preferences/leaves.filters";
+        const storageKey = "rhyno.leaves.filters";
+        const savedContainer = document.getElementById("leavesSavedFilters");
+        const saveButton = document.getElementById("leavesSaveFilter");
+        const clearButton = document.getElementById("leavesClearSaved");
+        const status = new URLSearchParams(window.location.search).get("status") || "";
+
+        const readJson = (key, fallback) => {
+            try { return JSON.parse(localStorage.getItem(key) || "null") || fallback; } catch { return fallback; }
+        };
+        const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+        const loadSaved = async () => {
+            try {
+                const res = await fetch(preferenceEndpoint, { credentials: "same-origin" });
+                const items = res.ok ? await res.json() : [];
+                const list = Array.isArray(items) ? items : [];
+                if (list.length) writeJson(storageKey, list);
+                return list.length ? list : readJson(storageKey, []);
+            } catch { return readJson(storageKey, []); }
+        };
+        const saveSaved = async (items) => {
+            writeJson(storageKey, items);
+            try {
+                await fetch(preferenceEndpoint, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(items)
+                });
+            } catch { }
+        };
+        const renderSaved = () => {
+            const items = readJson(storageKey, []);
+            if (!savedContainer) return;
+            savedContainer.innerHTML = "";
+            if (!items.length) {
+                savedContainer.innerHTML = '<span class="text-muted small">هنوز فیلتر ذخیره نشده است.</span>';
+                return;
+            }
+            items.slice(0, 8).forEach(item => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "btn btn-sm btn-outline-secondary rounded-pill";
+                btn.textContent = item.name;
+                btn.addEventListener("click", () => {
+                    if (item.status) {
+                        window.location.href = `/Leaves?status=${encodeURIComponent(item.status)}`;
+                    } else {
+                        window.location.href = "/Leaves";
+                    }
+                });
+                savedContainer.appendChild(btn);
+            });
+        };
+        saveButton?.addEventListener("click", () => {
+            const name = prompt("نام فیلتر را وارد کن:", "فیلتر ذخیره‌شده");
+            if (!name) return;
+            const items = readJson(storageKey, []);
+            items.unshift({ name, status });
+            saveSaved(items.slice(0, 10)).finally(renderSaved);
+        });
+        clearButton?.addEventListener("click", () => {
+            localStorage.removeItem(storageKey);
+            renderSaved();
+        });
+        loadSaved().finally(renderSaved);
+    })();
 </script>

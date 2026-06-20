@@ -1,6 +1,6 @@
 @model InsuranceCreateVM
 @{
-    ViewData["Title"] = "ایجاد لیست بیمه";
+    ViewData["Title"] = "ثبت لیست بیمه";
 }
 
 @section Styles {
@@ -12,9 +12,7 @@
         .bimeh-page table,
         .bimeh-page tbody,
         .bimeh-page tr,
-        .bimeh-page td,
-        .bimeh-page .card,
-        .bimeh-page .card-body {
+        .bimeh-page td {
             overflow: visible !important;
         }
         .bimeh-page td { position: relative; }
@@ -61,75 +59,86 @@
 }
 
 <div class="container-fluid py-4 bimeh-page">
-    <div class="card border-0 shadow-sm bimeh-card">
-        <div class="card-body p-4 p-md-5">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-                <div>
-                    <h5 class="fw-bold mb-1 text-dark">ثبت لیست بیمه</h5>
-                    <p class="text-muted small mb-0">اتصال مستقیم به سرمایه انسانی و ثبت بدون ورود تکراری</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
-                    <button type="button" id="copyPreviousMonth" class="btn btn-outline-primary">کپی از ماه قبل</button>
-                </div>
-            </div>
-
-            <form asp-action="Create" method="post" id="bimehCreateForm">
-                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="ProjectName" class="form-label"></label>
-                        <input asp-for="ProjectName" class="form-control" maxlength="150" id="projectNameField" />
-                        <span asp-validation-for="ProjectName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="ManagerName" class="form-label"></label>
-                        <input asp-for="ManagerName" class="form-control" maxlength="100" id="managerNameField" />
-                        <span asp-validation-for="ManagerName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-6 col-lg-2">
-                        <label asp-for="Month" class="form-label"></label>
-                        <input asp-for="Month" class="form-control" type="number" min="1" max="12" id="monthField" />
-                        <span asp-validation-for="Month" class="text-danger small"></span>
-                    </div>
-                    <div class="col-6 col-lg-2">
-                        <label asp-for="Year" class="form-label"></label>
-                        <input asp-for="Year" class="form-control" type="number" min="1300" max="1600" id="yearField" />
-                        <span asp-validation-for="Year" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <h6 class="mb-0 fw-bold">پرسنل</h6>
-                    <button type="button" id="addRow" class="btn btn-secondary btn-sm">افزودن ردیف</button>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle bimeh-table">
-                        <thead>
-                            <tr>
-                                <th>نام کارمند</th>
-                                <th>سمت</th>
-                                <th>شروع کار (شمسی)</th>
-                                <th>ترک کار (شمسی)</th>
-                                <th>روز کارکرد</th>
-                                <th>حقوق مشمول</th>
-                                <th>حق بیمه 7٪</th>
-                                <th class="text-center">حذف</th>
-                            </tr>
-                        </thead>
-                        <tbody id="employeeRows"></tbody>
-                    </table>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-                    <small id="employeeCountLabel" class="text-muted">تعداد کارکنان: 0</small>
-                    <button type="submit" class="btn btn-success px-4">ذخیره لیست بیمه</button>
-                </div>
-            </form>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">ثبت لیست بیمه</h5>
+            <p class="text-muted small mb-0">اتصال مستقیم به سرمایه انسانی و ثبت بدون ورود تکراری</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+            <button type="button" id="copyPreviousMonth" class="btn btn-outline-primary">کپی از ماه قبل</button>
         </div>
     </div>
+
+    <div class="mb-4 px-1">
+        <div class="d-flex flex-wrap gap-2 align-items-center small text-muted">
+            <span>وضعیت‌های لیست:</span>
+            <span>پیش‌نویس</span>
+            <span>/</span>
+            <span>ارسال‌شده</span>
+            <span>/</span>
+            <span>در حال بررسی</span>
+            <span>/</span>
+            <span>تاییدشده</span>
+            <span>/</span>
+            <span>بسته‌شده</span>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" id="bimehCreateForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6 col-lg-4">
+                <label asp-for="ProjectName" class="form-label"></label>
+                <input asp-for="ProjectName" class="form-control" maxlength="150" id="projectNameField" />
+                <span asp-validation-for="ProjectName" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <label asp-for="ManagerName" class="form-label"></label>
+                <input asp-for="ManagerName" class="form-control" maxlength="100" id="managerNameField" />
+                <span asp-validation-for="ManagerName" class="text-danger small"></span>
+            </div>
+            <div class="col-6 col-lg-2">
+                <label asp-for="Month" class="form-label"></label>
+                <input asp-for="Month" class="form-control" type="number" min="1" max="12" id="monthField" />
+                <span asp-validation-for="Month" class="text-danger small"></span>
+            </div>
+            <div class="col-6 col-lg-2">
+                <label asp-for="Year" class="form-label"></label>
+                <input asp-for="Year" class="form-control" type="number" min="1300" max="1600" id="yearField" />
+                <span asp-validation-for="Year" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h6 class="mb-0 fw-bold">کارکنان</h6>
+            <button type="button" id="addRow" class="btn btn-secondary btn-sm">افزودن ردیف</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle bimeh-table">
+                <thead>
+                    <tr>
+                        <th>نام کارمند</th>
+                        <th>سمت</th>
+                        <th>شروع کار (شمسی)</th>
+                        <th>ترک کار (شمسی)</th>
+                        <th>روز کارکرد</th>
+                        <th>حقوق مشمول</th>
+                        <th>حق بیمه ۷٪</th>
+                        <th class="text-center">حذف</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeRows"></tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+            <small id="employeeCountLabel" class="text-muted">تعداد کارکنان: 0</small>
+            <button type="submit" class="btn btn-success px-4">ذخیره لیست بیمه</button>
+        </div>
+    </form>
 </div>
 
 <template id="employeeRowTemplate">

@@ -13,8 +13,17 @@
                 <div class="col-md-4"><label asp-for="Name" class="form-label small"></label><input asp-for="Name" class="form-control form-control-sm" /><span asp-validation-for="Name" class="text-danger small"></span></div>
                 <div class="col-md-2"><label asp-for="Unit" class="form-label small"></label><input asp-for="Unit" class="form-control form-control-sm" /><span asp-validation-for="Unit" class="text-danger small"></span></div>
                 <div class="col-md-2"><label asp-for="MinimumStock" class="form-label small"></label><input asp-for="MinimumStock" class="form-control form-control-sm" min="0" /><span asp-validation-for="MinimumStock" class="text-danger small"></span></div>
-                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label small"></label></div></div>
+                <div class="col-md-3"><label asp-for="Category" class="form-label small"></label><input asp-for="Category" class="form-control form-control-sm" /><span asp-validation-for="Category" class="text-danger small"></span></div>
+                <div class="col-md-3"><label asp-for="Barcode" class="form-label small"></label><input asp-for="Barcode" class="form-control form-control-sm" /><span asp-validation-for="Barcode" class="text-danger small"></span></div>
+                <div class="col-md-3"><label asp-for="SecondaryUnit" class="form-label small"></label><input asp-for="SecondaryUnit" class="form-control form-control-sm" /><span asp-validation-for="SecondaryUnit" class="text-danger small"></span></div>
+                <div class="col-md-3"><label asp-for="LastPurchasePrice" class="form-label small"></label><input asp-for="LastPurchasePrice" class="form-control form-control-sm" /><span asp-validation-for="LastPurchasePrice" class="text-danger small"></span></div>
+                <div class="col-md-3"><label asp-for="ReorderPoint" class="form-label small"></label><input asp-for="ReorderPoint" class="form-control form-control-sm" /><span asp-validation-for="ReorderPoint" class="text-danger small"></span></div>
+                <div class="col-md-3"><label asp-for="MaximumStock" class="form-label small"></label><input asp-for="MaximumStock" class="form-control form-control-sm" /><span asp-validation-for="MaximumStock" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="TechnicalDescription" class="form-label small"></label><textarea asp-for="TechnicalDescription" rows="2" class="form-control form-control-sm"></textarea></div>
                 <div class="col-12"><label asp-for="Description" class="form-label small"></label><textarea asp-for="Description" rows="2" class="form-control form-control-sm"></textarea></div>
+                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsPurchasable" class="form-check-input" /><label asp-for="IsPurchasable" class="form-check-label small"></label></div></div>
+                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsConsumable" class="form-check-input" /><label asp-for="IsConsumable" class="form-check-label small"></label></div></div>
+                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label small"></label></div></div>
                 <div class="col-12 d-flex gap-2"><button class="btn btn-sm btn-success">ذخیره</button><a asp-action="Products" class="btn btn-sm btn-outline-secondary">بازگشت</a></div>
             </form>
         </div>

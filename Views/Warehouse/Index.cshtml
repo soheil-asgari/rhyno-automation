@@ -1,46 +1,418 @@
 @model WarehouseDashboardVM
 @{
     ViewData["Title"] = "انبارداری";
+    var maxTrend = Math.Max(1m, Model.MovementTrends.Any() ? Model.MovementTrends.Max(item => Math.Max(item.Inputs, item.Outputs)) : 1m);
 }
 
-@section Styles {
-    <style>
-        .wh-page { direction: rtl; text-align: right; }
-        .wh-card { border-radius: 12px; }
-        .wh-stat { font-size: .78rem; color: #64748b; }
-        .wh-value { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
-    </style>
-}
-
-<div class="container-fluid py-4 wh-page">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+<div class="page-shell wh-page">
+    <div class="section-header mb-3">
         <div>
-            <h5 class="fw-bold mb-1">مدیریت انبارداری</h5>
-            <p class="text-muted small mb-0">رسید، خروج، موجودی و انبارگردانی یکپارچه</p>
+            <h1 class="section-title">هاب تصمیم انبار</h1>
+            <p class="section-subtitle">وضعیت عملیاتی انبار، اسناد باز، کالاهای بحرانی و روند ورود و خروج در یک نگاه</p>
         </div>
     </div>
 
-    <div class="row g-2 g-md-3 mb-3">
-        <div class="col-6 col-md-2"><div class="card border-0 shadow-sm wh-card"><div class="card-body py-2"><div class="wh-stat">کالا</div><div class="wh-value">@Model.ProductCount</div></div></div></div>
-        <div class="col-6 col-md-2"><div class="card border-0 shadow-sm wh-card"><div class="card-body py-2"><div class="wh-stat">انبار</div><div class="wh-value">@Model.WarehouseCount</div></div></div></div>
-        <div class="col-6 col-md-2"><div class="card border-0 shadow-sm wh-card"><div class="card-body py-2"><div class="wh-stat">رسید</div><div class="wh-value">@Model.ReceiptCount</div></div></div></div>
-        <div class="col-6 col-md-2"><div class="card border-0 shadow-sm wh-card"><div class="card-body py-2"><div class="wh-stat">خروج</div><div class="wh-value">@Model.IssuanceCount</div></div></div></div>
-        <div class="col-6 col-md-2"><div class="card border-0 shadow-sm wh-card"><div class="card-body py-2"><div class="wh-stat">انبارگردانی Draft</div><div class="wh-value">@Model.CountingDraftCount</div></div></div></div>
-        <div class="col-6 col-md-2"><div class="card border-0 shadow-sm wh-card"><div class="card-body py-2"><div class="wh-stat">کسری/صفر</div><div class="wh-value text-danger">@Model.LowStockCount</div></div></div></div>
+    <div class="warehouse-stats-grid mb-4">
+        <a asp-action="Products" class="warehouse-stat-link">
+            <div class="warehouse-stat-card">
+                <div class="wh-stat">کالاها</div>
+                <div class="wh-value">@Model.ProductCount</div>
+                <div class="wh-hint">فهرست کالاهای فعال</div>
+            </div>
+        </a>
+        <a asp-action="Warehouses" class="warehouse-stat-link">
+            <div class="warehouse-stat-card">
+                <div class="wh-stat">انبارها</div>
+                <div class="wh-value">@Model.WarehouseCount</div>
+                <div class="wh-hint">مراکز فعال</div>
+            </div>
+        </a>
+        <a asp-action="Receipts" class="warehouse-stat-link">
+            <div class="warehouse-stat-card">
+                <div class="wh-stat">رسیدها</div>
+                <div class="wh-value">@Model.ReceiptCount</div>
+                <div class="wh-hint">ورودهای ثبت شده</div>
+            </div>
+        </a>
+        <a asp-action="Issuances" class="warehouse-stat-link">
+            <div class="warehouse-stat-card">
+                <div class="wh-stat">خروج‌ها</div>
+                <div class="wh-value">@Model.IssuanceCount</div>
+                <div class="wh-hint">خروج‌های ثبت شده</div>
+            </div>
+        </a>
+        <a asp-action="Countings" class="warehouse-stat-link">
+            <div class="warehouse-stat-card">
+                <div class="wh-stat">پیش‌نویس‌ها</div>
+                <div class="wh-value">@Model.CountingDraftCount</div>
+                <div class="wh-hint">انبارگردانی‌های نیمه‌تمام</div>
+            </div>
+        </a>
+        <a asp-action="Stock" class="warehouse-stat-link">
+            <div class="warehouse-stat-card danger">
+                <div class="wh-stat">هشدار</div>
+                <div class="wh-value text-danger">@Model.LowStockCount</div>
+                <div class="wh-hint">کالای زیر حداقل</div>
+            </div>
+        </a>
     </div>
 
-    <div class="card border-0 shadow-sm wh-card">
-        <div class="card-body p-3">
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-outline-primary" asp-action="Products">کالاها</a>
-                <a class="btn btn-sm btn-outline-primary" asp-action="Warehouses">انبارها</a>
-                <a class="btn btn-sm btn-outline-primary" asp-action="Receipts">رسید انبار</a>
-                <a class="btn btn-sm btn-outline-primary" asp-action="Issuances">خروج انبار</a>
-                <a class="btn btn-sm btn-outline-primary" asp-action="Stock">موجودی</a>
-                <a class="btn btn-sm btn-outline-primary" asp-action="TransferRequests">درخواست انتقال</a>
-                <a class="btn btn-sm btn-outline-primary" asp-action="Countings">انبارگردانی</a>
-                <a class="btn btn-sm btn-outline-danger" asp-action="Closing">بستن پایان سال</a>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-8">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1 fw-bold">روند ورود و خروج</h5>
+                        <div class="text-muted small">هفت روز اخیر</div>
+                    </div>
+                </div>
+                @if (Model.MovementTrends.Any())
+                {
+                    <div class="trend-list">
+                        @foreach (var item in Model.MovementTrends)
+                        {
+                            var inputWidth = Math.Max(5m, (item.Inputs / maxTrend) * 100m);
+                            var outputWidth = Math.Max(5m, (item.Outputs / maxTrend) * 100m);
+                            <div class="trend-row">
+                                <div class="trend-label">@item.Label</div>
+                                <div class="trend-bars">
+                                    <div class="trend-bar inbound" style="width:@inputWidth.ToString("0.##")%"></div>
+                                    <div class="trend-bar outbound" style="width:@outputWidth.ToString("0.##")%"></div>
+                                </div>
+                                <div class="trend-values">
+                                    <span>ورود: @item.Inputs.ToString("N0")</span>
+                                    <span>خروج: @item.Outputs.ToString("N0")</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state small">هنوز داده‌ای برای نمایش روند ثبت نشده است.</div>
+                }
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="form-card h-100">
+                <h5 class="mb-3 fw-bold">عملیات امروز</h5>
+                <div class="quick-list">
+                    <a asp-action="CreateReceipt" class="quick-link">ثبت رسید جدید</a>
+                    <a asp-action="CreateIssuance" class="quick-link">ثبت خروج جدید</a>
+                    <a asp-action="CreateCounting" class="quick-link">ثبت انبارگردانی</a>
+                    <a asp-action="Closing" class="quick-link">بستن سال انبار</a>
+                    <a asp-action="TransferRequests" class="quick-link">بررسی انتقال‌ها</a>
+                    <a asp-action="Stock" class="quick-link">بررسی موجودی</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-6">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-1 fw-bold">کالاهای بحرانی</h5>
+                        <div class="text-muted small">زیر حداقل یا نزدیک به حداقل</div>
+                    </div>
+                    <a asp-action="Stock" class="btn btn-sm btn-outline-primary">مشاهده همه</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>کالا</th>
+                                <th>انبار</th>
+                                <th>موجودی</th>
+                                <th>حداقل</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.CriticalStocks)
+                            {
+                                <tr>
+                                    <td>@item.ProductName<div class="text-muted small">@item.ProductCode</div></td>
+                                    <td>@item.WarehouseName</td>
+                                    <td><span class="badge text-bg-danger">@item.CurrentQuantity.ToString("N3")</span></td>
+                                    <td>@item.MinimumStock</td>
+                                </tr>
+                            }
+                            @if (!Model.CriticalStocks.Any())
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">مورد بحرانی یافت نشد.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-1 fw-bold">اسناد معلق</h5>
+                        <div class="text-muted small">رسیدها، خروج‌ها و انتقال‌های در انتظار اقدام</div>
+                    </div>
+                    <a asp-action="TransferRequests" class="btn btn-sm btn-outline-primary">جزئیات</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>نوع</th>
+                                <th>شماره</th>
+                                <th>انبار</th>
+                                <th>وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.PendingTransfers)
+                            {
+                                <tr>
+                                    <td>انتقال</td>
+                                    <td>#@item.Id</td>
+                                    <td>@item.SourceWarehouseName → @item.DestinationWarehouseName</td>
+                                    <td><span class="badge text-bg-warning">@item.Status</span></td>
+                                </tr>
+                            }
+                            @if (!Model.PendingTransfers.Any())
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">درخواستی در انتظار بررسی نیست.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-4">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">آخرین رسیدها</h5>
+                    <a asp-action="Receipts" class="btn btn-sm btn-outline-primary">همه</a>
+                </div>
+                <div class="d-grid gap-2">
+                    @foreach (var item in Model.RecentReceipts)
+                    {
+                        <a asp-action="ReceiptDetails" asp-route-id="@item.Id" class="doc-item">
+                            <div>
+                                <strong>@item.Number</strong>
+                                <div class="text-muted small">@item.WarehouseName - @item.DateShamsi</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge @WorkflowStatus.BadgeCss(item.Status)">@WorkflowStatus.Label(item.Status)</span>
+                                <div class="text-muted small mt-1">@item.TotalQuantity.ToString("N3")</div>
+                            </div>
+                        </a>
+                    }
+                    @if (!Model.RecentReceipts.Any())
+                    {
+                        <div class="empty-state small">رسیدی برای نمایش وجود ندارد.</div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">آخرین خروج‌ها</h5>
+                    <a asp-action="Issuances" class="btn btn-sm btn-outline-primary">همه</a>
+                </div>
+                <div class="d-grid gap-2">
+                    @foreach (var item in Model.RecentIssuances)
+                    {
+                        <a asp-action="IssuanceDetails" asp-route-id="@item.Id" class="doc-item">
+                            <div>
+                                <strong>@item.Number</strong>
+                                <div class="text-muted small">@item.WarehouseName - @item.DateShamsi</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge @WorkflowStatus.BadgeCss(item.Status)">@WorkflowStatus.Label(item.Status)</span>
+                                <div class="text-muted small mt-1">@item.TotalQuantity.ToString("N3")</div>
+                            </div>
+                        </a>
+                    }
+                    @if (!Model.RecentIssuances.Any())
+                    {
+                        <div class="empty-state small">خروجی برای نمایش وجود ندارد.</div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">مغایرت‌های انبارگردانی</h5>
+                    <a asp-action="Countings" class="btn btn-sm btn-outline-primary">همه</a>
+                </div>
+                <div class="d-grid gap-2">
+                    @foreach (var item in Model.CountingIssues)
+                    {
+                        <a asp-action="CountingDetails" asp-route-id="@item.Id" class="doc-item">
+                            <div>
+                                <strong>@item.DocumentNumber</strong>
+                                <div class="text-muted small">@item.WarehouseName</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge text-bg-warning">@item.Status</span>
+                                <div class="text-muted small mt-1">@item.TotalDiscrepancy.ToString("N3")</div>
+                            </div>
+                        </a>
+                    }
+                    @if (!Model.CountingIssues.Any())
+                    {
+                        <div class="empty-state small">مغایرت ثبت شده‌ای وجود ندارد.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-xl-6">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">انبارهای پرریسک</h5>
+                    <a asp-action="Warehouses" class="btn btn-sm btn-outline-primary">مدیریت</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>انبار</th>
+                                <th>اسناد باز</th>
+                                <th>کمبود</th>
+                                <th>منفی</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.RiskWarehouses)
+                            {
+                                <tr>
+                                    <td>@item.WarehouseName</td>
+                                    <td>@item.OpenDocuments</td>
+                                    <td>@item.LowStockCount</td>
+                                    <td>@item.NegativeStockCount</td>
+                                </tr>
+                            }
+                            @if (!Model.RiskWarehouses.Any())
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">مورد پرریسکی یافت نشد.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="form-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">میان‌برها</h5>
+                    <span class="text-muted small">اقدام سریع</span>
+                </div>
+                <div class="warehouse-actions">
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Products">کالاها</a>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Warehouses">انبارها</a>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Receipts">رسید انبار</a>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Issuances">خروج انبار</a>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Stock">موجودی</a>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="TransferRequests">درخواست انتقال</a>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Countings">انبارگردانی</a>
+                    <a class="btn btn-sm btn-outline-danger" asp-action="Closing">بستن پایان سال</a>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .warehouse-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .warehouse-stat-link { text-decoration: none; color: inherit; }
+    .warehouse-stat-card {
+        border: 1px solid var(--ds-border);
+        border-radius: 18px;
+        padding: 16px 18px;
+        min-height: 108px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .warehouse-stat-link:hover .warehouse-stat-card {
+        transform: translateY(-3px);
+        border-color: rgba(59, 130, 246, 0.45);
+        box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+    }
+    .warehouse-stat-card.danger { border-color: rgba(239, 68, 68, 0.18); }
+    .wh-stat { font-size: .78rem; color: #64748b; }
+    .wh-value { font-size: 1.4rem; font-weight: 900; color: #0f172a; margin-top: 4px; }
+    .wh-hint { margin-top: 6px; font-size: .76rem; color: #64748b; }
+    .trend-list { display: grid; gap: 12px; }
+    .trend-row { display: grid; gap: 8px; }
+    .trend-label { font-size: .85rem; color: #334155; font-weight: 700; }
+    .trend-bars { display: flex; gap: 8px; align-items: center; min-height: 18px; }
+    .trend-bar { height: 12px; border-radius: 999px; }
+    .trend-bar.inbound { background: linear-gradient(90deg, #4f46e5, #38bdf8); }
+    .trend-bar.outbound { background: linear-gradient(90deg, #f97316, #ef4444); }
+    .trend-values { display:flex; justify-content: space-between; gap: 12px; font-size: .78rem; color: #64748b; }
+    .quick-list { display:grid; gap: 10px; }
+    .quick-link, .doc-item {
+        display:flex;
+        justify-content: space-between;
+        align-items:center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--ds-border);
+        border-radius: 14px;
+        text-decoration:none;
+        color: inherit;
+        background: rgba(255,255,255,.68);
+    }
+    .quick-link:hover, .doc-item:hover {
+        border-color: rgba(59, 130, 246, 0.35);
+        box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+    }
+    .empty-state {
+        border: 1px dashed var(--ds-border);
+        border-radius: 14px;
+        padding: 18px;
+        color: #64748b;
+        text-align: center;
+    }
+    .warehouse-actions { display:flex; flex-wrap: wrap; gap: 8px; }
+    html.theme-dark .warehouse-stat-card,
+    html[data-theme="dark"] .warehouse-stat-card,
+    body[data-theme="dark"] .warehouse-stat-card {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
+        border-color: var(--ds-border-strong);
+    }
+    html.theme-dark .wh-value,
+    html[data-theme="dark"] .wh-value,
+    body[data-theme="dark"] .wh-value { color: #edf4ff; }
+    html.theme-dark .wh-stat,
+    html.theme-dark .wh-hint,
+    html[data-theme="dark"] .wh-stat,
+    html[data-theme="dark"] .wh-hint,
+    body[data-theme="dark"] .wh-stat,
+    body[data-theme="dark"] .wh-hint { color: #97a8c6; }
+    html.theme-dark .quick-link,
+    html.theme-dark .doc-item,
+    html[data-theme="dark"] .quick-link,
+    html[data-theme="dark"] .doc-item,
+    body[data-theme="dark"] .quick-link,
+    body[data-theme="dark"] .doc-item {
+        background: rgba(15, 23, 42, 0.7);
+        border-color: var(--ds-border-strong);
+    }
+    html.theme-dark .trend-label,
+    html[data-theme="dark"] .trend-label,
+    body[data-theme="dark"] .trend-label { color: #dbe7ff; }
+    @@media (max-width: 992px) { .warehouse-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @@media (max-width: 576px) { .warehouse-stats-grid { grid-template-columns: 1fr; } }
+</style>

@@ -1,0 +1,284 @@
+@model WarehouseTransferDetailsVM
+@{
+    ViewData["Title"] = "جزئیات درخواست انتقال";
+    var canManageTransfer = ViewBag.CanManageTransfer as bool? == true;
+    var canCancelTransfer = ViewBag.CanCancelTransfer as bool? == true;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">جزئیات درخواست انتقال</h5>
+            <div class="text-muted small">ردگیری، تصمیم‌ها، و اثر نهایی انتقال از اینجا قابل مشاهده است.</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="TransferRequests" class="btn btn-outline-secondary btn-sm">بازگشت به فهرست</a>
+            <a asp-action="CreateTransferRequest" class="btn btn-primary btn-sm">درخواست جدید</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">وضعیت</div>
+                    <div class="fw-bold"><span class="badge @WorkflowStatus.BadgeCss(Model.Request.Status)">@WorkflowStatus.Label(Model.Request.Status)</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">انبار مبدأ</div>
+                    <div class="fw-bold">@Model.Request.SourceWarehouse?.Name</div>
+                    <div class="small text-muted">@Model.Request.SourceWarehouse?.Code</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">انبار مقصد</div>
+                    <div class="fw-bold">@Model.Request.DestinationWarehouse?.Name</div>
+                    <div class="small text-muted">@Model.Request.DestinationWarehouse?.Code</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">کالا</div>
+                    <div class="fw-bold">@Model.Request.Product?.Name</div>
+                    <div class="small text-muted">@Model.Request.Product?.Code</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">اطلاعات درخواست</h6>
+                        <span class="text-muted small">شماره: #@Model.Request.Id</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">درخواست‌کننده</div>
+                            <div class="fw-semibold">@Model.Request.RequestedByUser?.FullName</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">مقدار</div>
+                            <div class="fw-semibold">@Model.Request.Quantity.ToString("N3")</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">زمان ثبت</div>
+                            <div class="fw-semibold">@Model.Request.CreatedAt.ToString("yyyy/MM/dd HH:mm")</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="text-muted small">توضیح</div>
+                            <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.Request.Description) ? Model.Request.Description : "-")</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">تاییدکننده</div>
+                            <div class="fw-semibold">@((Model.Request.ApprovedByUser?.FullName) ?? "-")</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">ردکننده</div>
+                            <div class="fw-semibold">@((Model.Request.RejectedByUser?.FullName) ?? "-")</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">لغوکننده</div>
+                            <div class="fw-semibold">@((Model.Request.CanceledByUser?.FullName) ?? "-")</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">تایید شد</div>
+                            <div class="fw-semibold">@((Model.Request.ApprovedAt?.ToString("yyyy/MM/dd HH:mm")) ?? "-")</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">رد شد</div>
+                            <div class="fw-semibold">@((Model.Request.RejectedAt?.ToString("yyyy/MM/dd HH:mm")) ?? "-")</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-muted small">لغو شد</div>
+                            <div class="fw-semibold">@((Model.Request.CanceledAt?.ToString("yyyy/MM/dd HH:mm")) ?? "-")</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="text-muted small">دلیل رد</div>
+                            <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.Request.RejectReason) ? Model.Request.RejectReason : "-")</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="text-muted small">دلیل لغو</div>
+                            <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.Request.CancelReason) ? Model.Request.CancelReason : "-")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">اقدام‌ها</h6>
+                    @if ((Model.Request.Status is WorkflowStatus.PendingApproval or WorkflowStatus.PendingManager) && canManageTransfer)
+                    {
+                        <form asp-action="ApproveTransferRequest" asp-route-id="@Model.Request.Id" method="post" class="mb-3">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success w-100">تایید و اجرای انتقال</button>
+                        </form>
+
+                        <form asp-action="RejectTransferRequest" asp-route-id="@Model.Request.Id" method="post" class="mb-3">
+                            @Html.AntiForgeryToken()
+                            <label class="form-label small mb-1">دلیل رد</label>
+                            <textarea name="rejectReason" rows="3" class="form-control mb-2" placeholder="دلیل رد را بنویس"></textarea>
+                            <button type="submit" class="btn btn-outline-danger w-100">رد درخواست</button>
+                        </form>
+                    }
+
+                    @if (canCancelTransfer && (Model.Request.Status is WorkflowStatus.PendingApproval or WorkflowStatus.PendingManager))
+                    {
+                        <form asp-action="CancelTransferRequest" asp-route-id="@Model.Request.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <label class="form-label small mb-1">دلیل لغو</label>
+                            <textarea name="cancelReason" rows="3" class="form-control mb-2" placeholder="دلیل لغو را بنویس"></textarea>
+                            <button type="submit" class="btn btn-outline-secondary w-100">لغو درخواست</button>
+                        </form>
+                    }
+
+                    @if (!canManageTransfer && !canCancelTransfer)
+                    {
+                        <div class="alert alert-light border small mb-0">
+                            این درخواست فقط قابل مشاهده است.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">تاریخچه تصمیم‌ها</h6>
+                    <div class="d-grid gap-2">
+                        <div class="border rounded-3 p-3">
+                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                <strong>ثبت درخواست</strong>
+                                <small class="text-muted">@Model.Request.CreatedAt.ToString("yyyy/MM/dd HH:mm")</small>
+                            </div>
+                            <div class="small text-muted mt-1">@Model.Request.RequestedByUser?.FullName</div>
+                        </div>
+
+                        @if (Model.Request.ApprovedAt.HasValue)
+                        {
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                    <strong>تایید و اجرا</strong>
+                                    <small class="text-muted">@Model.Request.ApprovedAt.Value.ToString("yyyy/MM/dd HH:mm")</small>
+                                </div>
+                                <div class="small text-muted mt-1">@((Model.Request.ApprovedByUser?.FullName) ?? "-")</div>
+                            </div>
+                        }
+
+                        @if (Model.Request.RejectedAt.HasValue)
+                        {
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                    <strong>رد درخواست</strong>
+                                    <small class="text-muted">@Model.Request.RejectedAt.Value.ToString("yyyy/MM/dd HH:mm")</small>
+                                </div>
+                                <div class="small text-muted mt-1">@((Model.Request.RejectedByUser?.FullName) ?? "-")</div>
+                                @if (!string.IsNullOrWhiteSpace(Model.Request.RejectReason))
+                                {
+                                    <div class="small mt-1">دلیل: @Model.Request.RejectReason</div>
+                                }
+                            </div>
+                        }
+
+                        @if (Model.Request.CanceledAt.HasValue)
+                        {
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                    <strong>لغو درخواست</strong>
+                                    <small class="text-muted">@Model.Request.CanceledAt.Value.ToString("yyyy/MM/dd HH:mm")</small>
+                                </div>
+                                <div class="small text-muted mt-1">@((Model.Request.CanceledByUser?.FullName) ?? "-")</div>
+                                @if (!string.IsNullOrWhiteSpace(Model.Request.CancelReason))
+                                {
+                                    <div class="small mt-1">دلیل: @Model.Request.CancelReason</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">گزارش رویدادها</h6>
+                    <div class="d-grid gap-2">
+                        @foreach (var item in Model.AuditEntries)
+                        {
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <strong>@item.Caption</strong>
+                                    <small class="text-muted">@item.OccurredAt.LocalDateTime.ToString("yyyy/MM/dd HH:mm")</small>
+                                </div>
+                                <div class="small text-muted mt-1">@(!string.IsNullOrWhiteSpace(item.ActorName) ? item.ActorName : "کاربر ناشناس")</div>
+                            </div>
+                        }
+                        @if (!Model.AuditEntries.Any())
+                        {
+                            <div class="text-muted small">رویداد ثبت نشده است.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3">اثر موجودی</h6>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>کالا</th>
+                            <th>انبار</th>
+                            <th>ورود</th>
+                            <th>خروج</th>
+                            <th>مانده</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.MovementEntries)
+                        {
+                            <tr>
+                                <td>@item.ProductName <div class="text-muted small">@item.ProductCode</div></td>
+                                <td>@item.WarehouseName</td>
+                                <td>@item.QuantityIn.ToString("N3")</td>
+                                <td>@item.QuantityOut.ToString("N3")</td>
+                                <td>@item.BalanceAfter.ToString("N3")</td>
+                            </tr>
+                        }
+                        @if (!Model.MovementEntries.Any())
+                        {
+                            <tr><td colspan="5" class="text-center text-muted py-3">برای این درخواست هنوز حرکتی ثبت نشده است.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

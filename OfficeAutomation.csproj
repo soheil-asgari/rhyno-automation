@@ -38,4 +38,8 @@
     <None Include="wwwroot\js\_SignatureHandler.js" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="OfficeAutomation.Tests\**\*.cs" />
+  </ItemGroup>
+
 </Project>

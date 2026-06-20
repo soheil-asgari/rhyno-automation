@@ -157,6 +157,14 @@ namespace OfficeAutomation.Controllers
                 .Select(item => item.Name)
                 .Where(item => item != null)
                 .ToListAsync(cancellationToken);
+
+            ViewBag.RolePermissionMap = new Dictionary<string, string[]>
+            {
+                ["Admin"] = ["Security.Manage", "Users.Manage", "Letters.Read", "Finance.View", "Warehouse.View", "HR.View", "SystemSettings.View"],
+                ["FinanceManager"] = ["Finance.View", "Finance.Create", "Finance.Edit", "Finance.Delete", "Finance.Export"],
+                ["WarehouseManager"] = ["Warehouse.View", "Warehouse.Create", "Warehouse.Edit", "Warehouse.Delete", "Warehouse.Export"],
+                ["HrManager"] = ["HR.View", "HR.Create", "HR.Edit", "HR.Delete", "HR.Export"]
+            };
         }
     }
 }

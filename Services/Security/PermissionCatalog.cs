@@ -68,14 +68,5 @@ namespace OfficeAutomation.Services.Security
                 ["DocumentArchive"] = ["Archive.View"]
             };
 
-        public static readonly IReadOnlyDictionary<string, string[]> LegacyPermissionAliases =
-            new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["Finance"] = ["Finance.View"],
-                ["Warehouse"] = ["Warehouse.View"],
-                ["HumanCapital"] = ["HR.View"],
-                ["SystemSettings"] = ["SystemSettings.View", "SystemSettings.Manage"],
-                ["WorkflowAdministration"] = ["Security.Manage", "AuditLogs.Read"]
-            };
     }
 }

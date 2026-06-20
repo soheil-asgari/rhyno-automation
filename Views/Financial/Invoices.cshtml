@@ -109,6 +109,18 @@
                     </tr>
                 </thead>
                 <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr class="loading-state">
+                        <td colspan="10">
+                            <div class="placeholder-glow">
+                                <span class="placeholder col-4"></span>
+                                <span class="placeholder col-6"></span>
+                                <span class="placeholder col-3"></span>
+                            </div>
+                        </td>
+                    </tr>
+                }
                 @if (Model.Items.Any())
                 {
                     @foreach (var item in Model.Items)
@@ -138,10 +150,18 @@
                 }
                 else
                 {
-                    <tr><td colspan="9" class="text-center text-muted py-4">فاکتوری ثبت نشده است.</td></tr>
+                    <tr>
+                        <td colspan="9">
+                            <partial name="_EmptyState" model='new { Icon = "bi-receipt", Title = "فاکتوری ثبت نشده است.", Description = "از دکمه ثبت فاکتور برای ایجاد اولین سند استفاده کنید." }' />
+                        </td>
+                    </tr>
                 }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<style>
+    .loading-state td { padding: 1.25rem !important; }
+</style>

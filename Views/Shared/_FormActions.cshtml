@@ -1,0 +1,15 @@
+@{
+    var secondaryUrl = ViewData["SecondaryActionUrl"] as string;
+    var secondaryText = ViewData["SecondaryActionText"] as string;
+    var primaryText = ViewData["PrimaryActionText"] as string ?? "ثبت";
+    var primaryCss = ViewData["PrimaryActionCss"] as string ?? "btn btn-primary";
+    var secondaryCss = ViewData["SecondaryActionCss"] as string ?? "btn btn-outline-secondary";
+}
+
+<div class="action-bar mt-4">
+    @if (!string.IsNullOrWhiteSpace(secondaryUrl) && !string.IsNullOrWhiteSpace(secondaryText))
+    {
+        <a href="@secondaryUrl" class="@secondaryCss">@secondaryText</a>
+    }
+    <button type="submit" class="@primaryCss">@primaryText</button>
+</div>

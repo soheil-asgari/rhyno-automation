@@ -14,7 +14,7 @@ public class AiAssistantController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AskAI([FromBody] UserMessage request)
     {
-        var reply = await _ai.AskAsync(request.Message);
+        var reply = await _ai.AskAsync(request.Message ?? string.Empty);
 
         return Json(new { reply });
     }
@@ -28,7 +28,7 @@ public class AiAssistantController : Controller
 
         HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>()?.DisableBuffering();
 
-        await foreach (var chunk in _ai.StreamAsync(request.Message))
+        await foreach (var chunk in _ai.StreamAsync(request.Message ?? string.Empty))
         {
             Console.Write(chunk);
             await Response.WriteAsync($"data: {chunk}\n\n");

@@ -1,246 +1,309 @@
 @model HumanCapitalDetailsVM
 @{
-    ViewData["Title"] = "جزئیات پرونده پرسنلی";
+    ViewData["Title"] = "جزئیات پروندۀ پرسنلی";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
-}
+<link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
 
-<div class="container-fluid py-4 hc-page">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <div>
-            <h5 class="fw-bold mb-1 text-dark">جزئیات پرونده سرمایه انسانی</h5>
-            <p class="text-muted small mb-0">سوابق کامل پرسنل، افزایش حقوق و رخدادهای وضعیت</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">ویرایش پرونده</a>
-            <a asp-action="Index" class="btn btn-outline-primary">بازگشت</a>
-        </div>
+<div class="page-shell hc-page">
+    @{ ViewData["SectionTitle"] = "جزئیات پروندۀ پرسنلی"; ViewData["SectionSubtitle"] = "مشخصات پایه، حقوق فعلی و تاریخچه تغییرات"; }
+    <partial name="_SectionHeader" />
+    <div class="action-bar mb-3">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">ویرایش</a>
+        <a asp-action="Index" class="btn btn-outline-primary">بازگشت</a>
+        <a asp-controller="Payroll" asp-action="Index" asp-route-employeeId="@Model.Id" class="btn btn-outline-success">سابقه حقوق</a>
+        <a asp-controller="Bimeh" asp-action="Index" asp-route-employeeId="@Model.Id" class="btn btn-outline-info">سابقه بیمه</a>
     </div>
 
-    <div class="card border-0 shadow-sm hc-card mb-3">
-        <div class="card-body p-3 p-md-4">
-            <div class="row g-3">
-                <div class="col-12 col-md-4 col-lg-3">
-                    <small class="text-muted d-block">نام پرسنل</small>
-                    <span class="fw-semibold">@Model.FullName</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <small class="text-muted d-block">کد پرسنلی</small>
-                    <span class="fw-semibold">@Model.PersonnelCode</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <small class="text-muted d-block">کد ملی</small>
-                    <span class="fw-semibold">@Model.NationalCode</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <small class="text-muted d-block">تاریخ استخدام</small>
-                    <span class="fw-semibold">@Model.HireDate.ToString("yyyy/MM/dd")</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-3">
-                    <small class="text-muted d-block">عنوان / دپارتمان</small>
-                    <span class="fw-semibold">@Model.PositionTitle - @(Model.DepartmentName ?? "-")</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <small class="text-muted d-block">وضعیت جاری</small>
-                    <span class="badge hc-status-badge @(Model.CurrentStatus == "فعال" ? "hc-status-active" : "hc-status-inactive")">@Model.CurrentStatus</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <small class="text-muted d-block">حقوق فعلی</small>
-                    <span class="fw-semibold">@Model.CurrentSalary.ToString("N0")</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <small class="text-muted d-block">نوع همکاری</small>
-                    <span class="fw-semibold">@Model.EmploymentType</span>
-                </div>
-                <div class="col-6 col-md-4 col-lg-3">
-                    <small class="text-muted d-block">پایان قرارداد</small>
-                    <span class="fw-semibold">@(Model.ContractEndDate?.ToString("yyyy/MM/dd") ?? "-")</span>
-                </div>
-                <div class="col-12 col-md-8 col-lg-3">
-                    <small class="text-muted d-block">تماس</small>
-                    <span class="fw-semibold">@(Model.PhoneNumber ?? "-") - @(Model.Email ?? "-")</span>
-                </div>
-                <div class="col-12">
-                    <small class="text-muted d-block">آدرس / توضیحات</small>
-                    <span class="fw-semibold">@(Model.Address ?? "-")</span>
-                    @if (!string.IsNullOrWhiteSpace(Model.Notes))
-                    {
-                        <div class="small text-muted mt-1">@Model.Notes</div>
-                    }
-                </div>
-            </div>
+    <div class="form-card mb-3">
+        <div class="row g-3">
+            <div class="col-12 col-md-4 col-lg-3"><small class="text-muted d-block">نام پرسنل</small><span class="fw-semibold">@Model.FullName</span></div>
+            <div class="col-6 col-md-4 col-lg-2"><small class="text-muted d-block">کد پرسنلی</small><span class="fw-semibold">@Model.PersonnelCode</span></div>
+            <div class="col-6 col-md-4 col-lg-2"><small class="text-muted d-block">کد ملی</small><span class="fw-semibold">@Model.NationalCode</span></div>
+            <div class="col-6 col-md-4 col-lg-2"><small class="text-muted d-block">استخدام</small><span class="fw-semibold">@Model.HireDate.ToString("yyyy/MM/dd")</span></div>
+            <div class="col-6 col-md-4 col-lg-3"><small class="text-muted d-block">سمت / دپارتمان</small><span class="fw-semibold">@Model.PositionTitle - @(Model.DepartmentName ?? "-")</span></div>
+            <div class="col-6 col-md-4 col-lg-2"><small class="text-muted d-block">وضعیت</small><span class="badge @(Model.CurrentStatus == "فعال" ? "text-bg-success" : "text-bg-secondary")">@Model.CurrentStatus</span></div>
+            <div class="col-6 col-md-4 col-lg-2"><small class="text-muted d-block">حقوق فعلی</small><span class="fw-semibold">@Model.CurrentSalary.ToString("N0")</span></div>
+            <div class="col-6 col-md-4 col-lg-2"><small class="text-muted d-block">نوع همکاری</small><span class="fw-semibold">@Model.EmploymentType</span></div>
+            <div class="col-6 col-md-4 col-lg-3"><small class="text-muted d-block">پایان قرارداد</small><span class="fw-semibold">@(Model.ContractEndDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+            <div class="col-12 col-md-8 col-lg-3"><small class="text-muted d-block">تماس</small><span class="fw-semibold">@(Model.PhoneNumber ?? "-") - @(Model.Email ?? "-")</span></div>
+            <div class="col-12"><small class="text-muted d-block">آدرس / توضیحات</small><span class="fw-semibold">@(Model.Address ?? "-")</span>@if (!string.IsNullOrWhiteSpace(Model.Notes)) { <div class="small text-muted mt-1">@Model.Notes</div> }</div>
         </div>
     </div>
 
     <div class="row g-3 mb-3">
         <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm hc-card h-100">
-                <div class="card-body p-3 p-md-4">
-                    <h6 class="fw-bold mb-3">ثبت افزایش حقوق</h6>
-                    <form asp-action="AddSalaryIncrease" method="post" class="row g-3">
-                        <input asp-for="SalaryIncrease.EmployeeId" type="hidden" />
-                        <div class="col-md-6">
-                            <label asp-for="SalaryIncrease.EffectiveDate" class="form-label"></label>
-                            <input asp-for="SalaryIncrease.EffectiveDate" type="date" class="form-control" />
-                            <span asp-validation-for="SalaryIncrease.EffectiveDate" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="SalaryIncrease.NewSalary" class="form-label"></label>
-                            <input asp-for="SalaryIncrease.NewSalary" type="number" min="0" step="0.01" class="form-control" />
-                            <span asp-validation-for="SalaryIncrease.NewSalary" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="SalaryIncrease.PromotionTitle" class="form-label"></label>
-                            <input asp-for="SalaryIncrease.PromotionTitle" class="form-control" />
-                            <span asp-validation-for="SalaryIncrease.PromotionTitle" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="SalaryIncrease.Reason" class="form-label"></label>
-                            <textarea asp-for="SalaryIncrease.Reason" rows="2" class="form-control"></textarea>
-                            <span asp-validation-for="SalaryIncrease.Reason" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12 d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">ثبت افزایش</button>
-                        </div>
-                    </form>
-                </div>
+            <div class="form-card h-100">
+                <h2 class="section-title mb-3" style="font-size:1rem;">ثبت افزایش حقوق</h2>
+                <form asp-action="AddSalaryIncrease" method="post" class="row g-3">
+                    <input asp-for="SalaryIncrease.EmployeeId" type="hidden" />
+                    <div class="col-md-6">
+                        <label asp-for="SalaryIncrease.EffectiveDate" class="form-label"></label>
+                        <input asp-for="SalaryIncrease.EffectiveDate" type="date" class="form-control" />
+                        <span asp-validation-for="SalaryIncrease.EffectiveDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="SalaryIncrease.NewSalary" class="form-label"></label>
+                        <input asp-for="SalaryIncrease.NewSalary" type="number" min="0" step="0.01" class="form-control" />
+                        <span asp-validation-for="SalaryIncrease.NewSalary" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="SalaryIncrease.PromotionTitle" class="form-label"></label>
+                        <input asp-for="SalaryIncrease.PromotionTitle" class="form-control" />
+                        <span asp-validation-for="SalaryIncrease.PromotionTitle" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="SalaryIncrease.Reason" class="form-label"></label>
+                        <textarea asp-for="SalaryIncrease.Reason" rows="2" class="form-control"></textarea>
+                        <span asp-validation-for="SalaryIncrease.Reason" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        @{ ViewData["PreviewPanelId"] = "salaryPreview"; ViewData["PreviewPanelText"] = "پیش‌نمایش افزایش حقوق پس از تکمیل فیلدها اینجا نمایش داده می‌شود."; ViewData["PreviewPanelTone"] = "success"; }
+                        <partial name="_PreviewPanel" />
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary" data-salary-submit>ثبت افزایش</button>
+                    </div>
+                </form>
             </div>
         </div>
-
         <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm hc-card h-100">
-                <div class="card-body p-3 p-md-4">
-                    <h6 class="fw-bold mb-3">ثبت رخداد وضعیت</h6>
-                    <form asp-action="AddStatusChange" method="post" class="row g-3">
-                        <input asp-for="StatusChange.EmployeeId" type="hidden" />
-                        <div class="col-md-6">
-                            <label asp-for="StatusChange.StatusType" class="form-label"></label>
-                            <select asp-for="StatusChange.StatusType" class="form-select" asp-items="Model.ProcessTypeOptions"></select>
-                            <span asp-validation-for="StatusChange.StatusType" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="StatusChange.EffectiveDate" class="form-label"></label>
-                            <input asp-for="StatusChange.EffectiveDate" type="date" class="form-control" />
-                            <span asp-validation-for="StatusChange.EffectiveDate" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="StatusChange.ReferenceNumber" class="form-label"></label>
-                            <input asp-for="StatusChange.ReferenceNumber" class="form-control" />
-                            <span asp-validation-for="StatusChange.ReferenceNumber" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="StatusChange.Description" class="form-label"></label>
-                            <textarea asp-for="StatusChange.Description" rows="2" class="form-control"></textarea>
-                            <span asp-validation-for="StatusChange.Description" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="StatusChange.ExitReason" class="form-label"></label>
-                            <textarea asp-for="StatusChange.ExitReason" rows="2" class="form-control"></textarea>
-                            <span asp-validation-for="StatusChange.ExitReason" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12 d-flex justify-content-end">
-                            <button type="submit" class="btn btn-outline-primary">ثبت رخداد</button>
-                        </div>
-                    </form>
-                </div>
+            <div class="form-card h-100">
+                <h2 class="section-title mb-3" style="font-size:1rem;">ثبت رخداد وضعیت</h2>
+                <form asp-action="AddStatusChange" method="post" class="row g-3">
+                    <input asp-for="StatusChange.EmployeeId" type="hidden" />
+                    <div class="col-md-6">
+                        <label asp-for="StatusChange.StatusType" class="form-label"></label>
+                        <select asp-for="StatusChange.StatusType" class="form-select" asp-items="Model.ProcessTypeOptions"></select>
+                        <span asp-validation-for="StatusChange.StatusType" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="StatusChange.EffectiveDate" class="form-label"></label>
+                        <input asp-for="StatusChange.EffectiveDate" type="date" class="form-control" />
+                        <span asp-validation-for="StatusChange.EffectiveDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="StatusChange.ReferenceNumber" class="form-label"></label>
+                        <input asp-for="StatusChange.ReferenceNumber" class="form-control" />
+                        <span asp-validation-for="StatusChange.ReferenceNumber" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="StatusChange.Description" class="form-label"></label>
+                        <textarea asp-for="StatusChange.Description" rows="2" class="form-control"></textarea>
+                        <span asp-validation-for="StatusChange.Description" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="StatusChange.ExitReason" class="form-label"></label>
+                        <textarea asp-for="StatusChange.ExitReason" rows="2" class="form-control"></textarea>
+                        <span asp-validation-for="StatusChange.ExitReason" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        @{ ViewData["PreviewPanelId"] = "statusPreview"; ViewData["PreviewPanelText"] = "پیش‌نمایش رخداد وضعیت پس از تکمیل فیلدها اینجا نمایش داده می‌شود."; ViewData["PreviewPanelTone"] = "primary"; }
+                        <partial name="_PreviewPanel" />
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-outline-primary" data-status-submit>ثبت رخداد</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <div class="row g-3">
         <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm hc-card h-100">
-                <div class="card-body p-3 p-md-4">
-                    <h6 class="fw-bold mb-3">تاریخچه افزایش حقوق</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle hc-table mb-0">
-                            <thead class="bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-200">
-                                <tr>
-                                    <th>تاریخ</th>
-                                    <th>قبلی</th>
-                                    <th>جدید</th>
-                                    <th>ارتقا</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model.SalaryHistories.Any())
-                                {
-                                    @foreach (var history in Model.SalaryHistories)
-                                    {
-                                        <tr>
-                                            <td class="text-slate-900 dark:text-slate-100">@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
-                                            <td class="text-slate-900 dark:text-slate-100">@history.PreviousSalary.ToString("N0")</td>
-                                            <td class="text-success fw-semibold">@history.NewSalary.ToString("N0")</td>
-                                            <td>
-                                                <div class="text-slate-900 dark:text-slate-100">@(history.PromotionTitle ?? "-")</div>
-                                                <small class="text-slate-500 dark:text-slate-400">@history.Reason</small>
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                                else
+            <div class="form-card h-100">
+                <h2 class="section-title mb-3" style="font-size:1rem;">تاریخچه افزایش حقوق</h2>
+                <div class="table-responsive">
+                    <table class="table smart-table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>تاریخ</th>
+                                <th>قبلی</th>
+                                <th>جدید</th>
+                                <th>ارتقا</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.SalaryHistories.Any())
+                            {
+                                foreach (var history in Model.SalaryHistories)
                                 {
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted py-3">تاریخچه افزایش حقوق ثبت نشده است.</td>
+                                        <td>@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
+                                        <td>@history.PreviousSalary.ToString("N0")</td>
+                                        <td class="text-success fw-semibold">@history.NewSalary.ToString("N0")</td>
+                                        <td><div>@(history.PromotionTitle ?? "-")</div><div class="small text-muted">@history.Reason</div></td>
                                     </tr>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">تاریخچه‌ای ثبت نشده است.</td></tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-
         <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm hc-card h-100">
-                <div class="card-body p-3 p-md-4">
-                    <h6 class="fw-bold mb-3">تاریخچه وضعیت پرسنل</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle hc-table mb-0">
-                            <thead class="bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-200">
-                                <tr>
-                                    <th>فرآیند</th>
-                                    <th>تاریخ</th>
-                                    <th>شماره مرجع</th>
-                                    <th>شرح</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model.StatusHistories.Any())
-                                {
-                                    @foreach (var history in Model.StatusHistories)
-                                    {
-                                        <tr>
-                                            <td class="text-slate-900 dark:text-slate-100">@history.StatusType</td>
-                                            <td class="text-slate-900 dark:text-slate-100">@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
-                                            <td class="text-slate-900 dark:text-slate-100">@(history.ReferenceNumber ?? "-")</td>
-                                            <td>
-                                                <div class="text-slate-900 dark:text-slate-100">@history.Description</div>
-                                                @if (!string.IsNullOrWhiteSpace(history.ExitReason))
-                                                {
-                                                    <small class="text-danger">دلیل خروج: @history.ExitReason</small>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                                else
+            <div class="form-card h-100">
+                <h2 class="section-title mb-3" style="font-size:1rem;">تاریخچه وضعیت</h2>
+                <div class="table-responsive">
+                    <table class="table smart-table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>فرآیند</th>
+                                <th>تاریخ</th>
+                                <th>مرجع</th>
+                                <th>شرح</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.StatusHistories.Any())
+                            {
+                                foreach (var history in Model.StatusHistories)
                                 {
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted py-3">تاریخچه وضعیت ثبت نشده است.</td>
+                                        <td>@history.StatusType</td>
+                                        <td>@history.EffectiveDate.ToString("yyyy/MM/dd")</td>
+                                        <td>@(history.ReferenceNumber ?? "-")</td>
+                                        <td><div>@history.Description</div>@if (!string.IsNullOrWhiteSpace(history.ExitReason)) { <div class="small text-danger">دلیل خروج: @history.ExitReason</div> }</td>
                                     </tr>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">تاریخچه‌ای ثبت نشده است.</td></tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="form-card mt-3">
+        <h2 class="section-title mb-3" style="font-size:1rem;">Timeline یکپارچه</h2>
+        <div class="timeline-list">
+            @foreach (var item in Model.TimelineItems)
+            {
+                <div class="timeline-item">
+                    <div class="timeline-badge timeline-@item.Tone"></div>
+                    <div class="timeline-body">
+                        <div class="timeline-head">
+                            <strong>@item.Title</strong>
+                            <span class="small text-muted">@item.SortDate.ToString("yyyy/MM/dd HH:mm")</span>
+                        </div>
+                        <div class="small">@item.Description</div>
+                    </div>
+                </div>
+            }
+            @if (!Model.TimelineItems.Any())
+            {
+                <div class="empty-state">
+                    <i class="bi bi-clock-history"></i>
+                    <div>هنوز timeline ثبت نشده است.</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="form-card mt-3">
+        <h2 class="section-title mb-3" style="font-size:1rem;">Audit Trail</h2>
+        <div class="audit-list">
+            @foreach (var item in Model.AuditTrailItems)
+            {
+                <partial name="_AuditTrailItem" model="item" />
+            }
+            @if (!Model.AuditTrailItems.Any())
+            {
+                <div class="empty-state">
+                    <i class="bi bi-shield-check"></i>
+                    <div>هنوز ثبت audit برای این پرونده وجود ندارد.</div>
+                </div>
+            }
+        </div>
+    </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<partial name="_ValidationScriptsPartial" />
+
+<style>
+    .timeline-list { display: grid; gap: 12px; }
+    .timeline-item { display:flex; gap: 12px; align-items:flex-start; }
+    .timeline-badge { width: 12px; height: 12px; border-radius: 999px; margin-top: 6px; flex: 0 0 auto; }
+    .timeline-success { background: #10b981; }
+    .timeline-primary { background: #3b82f6; }
+    .timeline-danger { background: #ef4444; }
+    .timeline-neutral { background: #94a3b8; }
+    .timeline-body { flex: 1; padding-bottom: 10px; border-bottom: 1px solid rgba(148,163,184,.18); }
+    .timeline-head { display:flex; justify-content:space-between; gap: 12px; flex-wrap:wrap; }
+    .audit-list { display: grid; gap: 12px; }
+    .audit-item { border: 1px solid rgba(148,163,184,.18); border-radius: 14px; padding: 12px 14px; background: rgba(248,250,252,.8); }
+    .audit-meta { display:flex; justify-content:space-between; gap: 12px; flex-wrap:wrap; }
+    .preview-panel {
+        border: 1px dashed rgba(148,163,184,.35);
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: rgba(248,250,252,.8);
+        color: #475569;
+        min-height: 58px;
+        white-space: pre-wrap;
+    }
+    html.theme-dark .preview-panel,
+    html[data-theme="dark"] .preview-panel,
+    body[data-theme="dark"] .preview-panel {
+        background: rgba(15,23,42,.9);
+        border-color: rgba(148,163,184,.22);
+        color: #e2e8f0;
+    }
+    .preview-success { border-color: rgba(16,185,129,.35); }
+    .preview-primary { border-color: rgba(59,130,246,.35); }
+    html.theme-dark .audit-item,
+    html[data-theme="dark"] .audit-item,
+    body[data-theme="dark"] .audit-item {
+        background: rgba(15,23,42,.9);
+        border-color: rgba(148,163,184,.18);
+        color: #e2e8f0;
+    }
+</style>
+
+<script>
+    (() => {
+        const salarySalary = document.getElementById('SalaryIncrease_NewSalary');
+        const salaryPrev = document.getElementById('SalaryIncrease_PromotionTitle');
+        const salaryReason = document.getElementById('SalaryIncrease_Reason');
+        const salaryDate = document.getElementById('SalaryIncrease_EffectiveDate');
+        const salaryPreview = document.getElementById('salaryPreview');
+        const statusType = document.getElementById('StatusChange_StatusType');
+        const statusDate = document.getElementById('StatusChange_EffectiveDate');
+        const statusRef = document.getElementById('StatusChange_ReferenceNumber');
+        const statusDesc = document.getElementById('StatusChange_Description');
+        const statusExit = document.getElementById('StatusChange_ExitReason');
+        const statusPreview = document.getElementById('statusPreview');
+
+        const renderSalary = () => {
+            if (!salaryPreview) return;
+            const salary = salarySalary?.value || '';
+            const title = salaryPrev?.value || '';
+            const reason = salaryReason?.value || '';
+            const date = salaryDate?.value || '';
+            salaryPreview.textContent = `تاریخ: ${date || '-'}\nحقوق جدید: ${salary || '-'}\nعنوان ارتقا: ${title || '-'}\nدلیل: ${reason || '-'}`;
+        };
+
+        const renderStatus = () => {
+            if (!statusPreview) return;
+            const type = statusType?.value || '';
+            const date = statusDate?.value || '';
+            const reference = statusRef?.value || '';
+            const description = statusDesc?.value || '';
+            const exitReason = statusExit?.value || '';
+            statusPreview.textContent = `نوع: ${type || '-'}\nتاریخ: ${date || '-'}\nمرجع: ${reference || '-'}\nشرح: ${description || '-'}${exitReason ? `\nدلیل خروج: ${exitReason}` : ''}`;
+        };
+
+        [salarySalary, salaryPrev, salaryReason, salaryDate].forEach(input => input?.addEventListener('input', renderSalary));
+        [statusType, statusDate, statusRef, statusDesc, statusExit].forEach(input => input?.addEventListener('input', renderStatus));
+        renderSalary();
+        renderStatus();
+    })();
+</script>

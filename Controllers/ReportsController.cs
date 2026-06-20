@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
@@ -11,10 +12,12 @@ namespace OfficeAutomation.Controllers
     public class ReportsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuthorizationFacade _authorizationFacade;
 
-        public ReportsController(ApplicationDbContext context)
+        public ReportsController(ApplicationDbContext context, IAuthorizationFacade authorizationFacade)
         {
             _context = context;
+            _authorizationFacade = authorizationFacade;
         }
 
         [HttpGet]
@@ -22,6 +25,113 @@ namespace OfficeAutomation.Controllers
         {
             var model = new ReportsIndexViewModel
             {
+                SummaryCards =
+                [
+                    new() { Title = "Operational", Value = "12", Description = "گزارشهای اجرایی و روزانه", Tone = "primary" },
+                    new() { Title = "Managerial", Value = "8", Description = "داشبوردها و KPIها", Tone = "success" },
+                    new() { Title = "Audit / Compliance", Value = "5", Description = "کنترلهای انطباق و ردگیری", Tone = "warning" },
+                    new() { Title = "Compare Ready", Value = "24", Description = "گزارشهای دارای مقایسه دوره قبل", Tone = "danger" }
+                ],
+                FilterPresets =
+                [
+                    new() { Label = "این ماه", Url = Url.Action("Index", new { period = "current-month" }) ?? "#", Kind = "filter" },
+                    new() { Label = "سه‌ماهه جاری", Url = Url.Action("Index", new { period = "current-quarter" }) ?? "#", Kind = "filter" },
+                    new() { Label = "سال جاری", Url = Url.Action("Index", new { period = "current-year" }) ?? "#", Kind = "filter" },
+                    new() { Label = "فقط موارد مغایر", Url = Url.Action("Index", new { onlyMismatch = true }) ?? "#", Kind = "filter" }
+                ],
+                Sections =
+                [
+                    new()
+                    {
+                        Title = "Operational",
+                        Description = "گزارشهای عملیاتی برای پیگیری روزانه و کنترل جریان کار",
+                        Tone = "primary",
+                        Modules =
+                        [
+                            new()
+                            {
+                                Title = "مالی",
+                                Description = "فاکتورهای فروش/خرید، VAT و معاملات فصلی",
+                                Icon = "bi-cash-coin",
+                                Tone = "success",
+                                Actions =
+                                [
+                                    new() { Label = "هاب مالی", Url = Url.Action("Dashboard", "Financial") ?? "#", Kind = "Report" },
+                                    new() { Label = "VAT", Url = Url.Action("VatDashboard", "Financial") ?? "#", Kind = "Report" },
+                                    new() { Label = "معاملات فصلی", Url = Url.Action("SeasonalTax", "Financial") ?? "#", Kind = "Report" }
+                                ]
+                            },
+                            new()
+                            {
+                                Title = "انبار",
+                                Description = "رسیدها، موجودی و مغایرتهای کالا",
+                                Icon = "bi-box-seam",
+                                Tone = "primary",
+                                Actions =
+                                [
+                                    new() { Label = "موجودی", Url = Url.Action("Index", "Warehouse") ?? "#", Kind = "Search" },
+                                    new() { Label = "رسیدها", Url = Url.Action("Index", "WarehouseReceipts") ?? "#", Kind = "Report" },
+                                    new() { Label = "خروجی اکسل", Url = Url.Action("ExportStockExcel", "Financial") ?? "#", Kind = "Excel" }
+                                ]
+                            }
+                        ]
+                    },
+                    new()
+                    {
+                        Title = "Managerial",
+                        Description = "داشبوردها و گزارشهای تصمیم‌سازی برای مدیران",
+                        Tone = "success",
+                        Modules =
+                        [
+                            new()
+                            {
+                                Title = "داشبورد مدیریتی",
+                                Description = "خلاصه KPI، روندها و وضعیت جاری",
+                                Icon = "bi-graph-up-arrow",
+                                Tone = "success",
+                                Actions =
+                                [
+                                    new() { Label = "داشبورد مالی", Url = Url.Action("Dashboard", "Financial") ?? "#", Kind = "Report" },
+                                    new() { Label = "گزارش مدیریتی", Url = Url.Action("Index", new { focus = "managerial" }) ?? "#", Kind = "Report" }
+                                ]
+                            },
+                            new()
+                            {
+                                Title = "حقوق و منابع انسانی",
+                                Description = "حقوق، بیمه، حضور و ریسکهای نیروی انسانی",
+                                Icon = "bi-people",
+                                Tone = "warning",
+                                Actions =
+                                [
+                                    new() { Label = "حقوق", Url = Url.Action("Index", "Payroll") ?? "#", Kind = "Report" },
+                                    new() { Label = "بیمه", Url = Url.Action("Index", "Bimeh") ?? "#", Kind = "Report" }
+                                ]
+                            }
+                        ]
+                    },
+                    new()
+                    {
+                        Title = "Audit / Compliance",
+                        Description = "خروجیهای کنترلی، انطباق، و مسیرهای قابل ردگیری",
+                        Tone = "warning",
+                        Modules =
+                        [
+                            new()
+                            {
+                                Title = "حسابرسی و انطباق",
+                                Description = "اکسپورتهای قابل پیگیری و داده‌های قابل دفاع",
+                                Icon = "bi-shield-check",
+                                Tone = "danger",
+                                Actions =
+                                [
+                                    new() { Label = "گزارش فصلی", Url = Url.Action("SeasonalTaxReport", "Financial") ?? "#", Kind = "Report" },
+                                    new() { Label = "خروجی نامه‌ها", Url = Url.Action("ExportLettersExcel", new { q = string.Empty }) ?? "#", Kind = "Excel" },
+                                    new() { Label = "خروجی کاربران", Url = Url.Action("ExportUsersExcel", "Reports") ?? "#", Kind = "Excel" }
+                                ]
+                            }
+                        ]
+                    }
+                ],
                 Modules =
                 [
                     new ReportModuleViewModel
@@ -204,7 +314,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportUsersExcel(string? q, CancellationToken cancellationToken)
         {
-            if (!User.IsInRole("Admin"))
+            if (!await _authorizationFacade.IsSecurityAdminAsync(cancellationToken))
             {
                 return Forbid();
             }
@@ -217,7 +327,7 @@ namespace OfficeAutomation.Controllers
             }
 
             var rows = await query.OrderBy(item => item.FullName).Take(5000).ToListAsync(cancellationToken);
-            return ExcelFile("users.xlsx", "Users", ["نام", "ایمیل", "سمت", "مدیر", "مالی", "انبار", "منابع انسانی"], rows.Select(item => new object?[]
+            return ExcelFile("users.xlsx", "Users", ["نام", "ایمیل", "سمت", "مدیر", "Finance.View", "Warehouse.View", "HR.View", "SystemSettings.View"], rows.Select(item => new object?[]
             {
                 item.FullName,
                 item.Email,
@@ -225,7 +335,8 @@ namespace OfficeAutomation.Controllers
                 item.IsManager ? "بله" : "خیر",
                 item.CanAccessFinance ? "بله" : "خیر",
                 item.CanAccessWarehouse ? "بله" : "خیر",
-                item.CanAccessHumanCapital ? "بله" : "خیر"
+                item.CanAccessHumanCapital ? "بله" : "خیر",
+                "بله"
             }));
         }
 

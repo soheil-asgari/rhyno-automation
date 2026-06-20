@@ -1,4 +1,4 @@
-﻿@model OfficeAutomation.Models.Letter
+@model OfficeAutomation.Models.Letter
 
 @{
     Layout = "_Layout";
@@ -13,15 +13,11 @@
 }
 
 <link rel="stylesheet" href="/css/letter.css">
-
 <script src="https://lib.arvancloud.ir/ckeditor5/36.0.1/ckeditor.js"></script>
 
 <div class="word-processor-container">
-
-    <!-- Toolbar -->
     <div class="top-toolbar">
         <div class="toolbar-row">
-
             <div class="left-tools">
                 <div class="input-group receiver-box">
                     <span class="input-group-text"><i class="bi bi-person"></i></span>
@@ -29,13 +25,17 @@
                         <option value="">انتخاب گیرنده یا واحد...</option>
                     </select>
                 </div>
-
                 <input type="text" id="subjectInput" class="form-control subject-input" value="@replySubject" placeholder="موضوع نامه...">
             </div>
-
-            <button class="btn btn-primary fw-bold send-btn" id="btnSendLetter">
-                <i class="bi bi-send"></i> ارسال نهایی
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <span id="draftStatus" class="draft-status">پیش‌نویس ذخیره نشده</span>
+                <button class="btn btn-outline-secondary fw-bold" id="btnPreviewLetter" type="button">
+                    <i class="bi bi-eye"></i> پیش‌نمایش
+                </button>
+                <button class="btn btn-primary fw-bold send-btn" id="btnSendLetter" type="button">
+                    <i class="bi bi-send"></i> ارسال نهایی
+                </button>
+            </div>
         </div>
 
         <div class="reply-mode-title @(isReplyMode ? "" : "d-none")">
@@ -58,27 +58,36 @@
         </div>
     </div>
 
-    <!-- Paper -->
     <div class="paper-wrapper">
         <div id="paper" class="paper">
-
-            <!-- Header -->
             <div class="header-row">
                 <div class="header-info">
                     <div>تاریخ: @persianDate</div>
                     <div>شماره: RH-@now.Ticks.ToString().Substring(12)</div>
                     <div>پیوست: ندارد</div>
                 </div>
-
                 <div class="header-center">
                     <h5 class="fw-bold">بسمه تعالی</h5>
                     <div class="fw-bold mt-2">شرکت فنی مهندسی راینو</div>
                 </div>
-
                 <img src="/images/logo.png" class="letter-logo" alt="لوگو" onerror="this.style.display='none'">
             </div>
 
-            <!-- Receiver / Subject -->
+            <div class="letter-summary-grid">
+                <div class="summary-chip">
+                    <span class="summary-label">گیرنده</span>
+                    <strong id="previewReceiver">انتخاب نشده</strong>
+                </div>
+                <div class="summary-chip">
+                    <span class="summary-label">موضوع</span>
+                    <strong id="previewSubject">-</strong>
+                </div>
+                <div class="summary-chip">
+                    <span class="summary-label">وضعیت</span>
+                    <strong id="previewStatus">پیش‌نویس</strong>
+                </div>
+            </div>
+
             <div class="receiver-block">
                 <div class="fw-bold receiver-line">
                     <span id="gender-prefix">جناب آقای / سرکار خانم</span>
@@ -89,7 +98,6 @@
                 </div>
             </div>
 
-            <!-- Editor -->
             <div id="editor-container">
                 <div id="editor">
                     <p>با سلام و احترام،</p>
@@ -97,25 +105,34 @@
                 </div>
             </div>
 
-            <!-- Signature -->
             <div class="signature-wrapper">
                 <div class="signature-box">
                     <p class="fw-bold mb-1">با تقدیم احترام</p>
                     <p class="fw-bold">@ViewBag.SenderFullName</p>
                     <p class="small text-muted">@ViewBag.SenderRole</p>
-
                     @if (ViewBag.UserSignature != null)
                     {
                         <img src="@ViewBag.UserSignature" class="signature-img" alt="امضا">
                     }
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- Hidden Form -->
+<div id="letterPreviewModal" class="letter-preview-modal d-none" aria-hidden="true">
+    <div class="letter-preview-dialog">
+        <div class="letter-preview-head">
+            <div>
+                <h5>پیش‌نمایش قبل از ارسال</h5>
+                <p>این نسخه همان چیزی است که کاربر قبل از ارسال می‌بیند.</p>
+            </div>
+            <button type="button" id="btnClosePreview" class="btn btn-sm btn-outline-secondary">بستن</button>
+        </div>
+        <div id="letterPreviewBody" class="letter-preview-body"></div>
+    </div>
+</div>
+
 <form id="finalForm" asp-action="Create" method="post" class="d-none">
     <input type="hidden" id="hTitle" name="Title">
     <input type="hidden" id="hContent" name="Body">
@@ -123,74 +140,89 @@
     <input type="hidden" id="hReplyToLetterId" name="ReplyToLetterId" value="@(ViewBag.ReplyToLetterId)">
     @Html.AntiForgeryToken()
 </form>
+
 <script>
     window.usersList = @Html.Raw(ViewBag.UsersData ?? "[]");
-        window.letterReplyConfig = {
-            isReplyMode: @((isReplyMode).ToString().ToLowerInvariant()),
-            replyToLetterId: @Html.Raw((ViewBag.ReplyToLetterId == null ? "null" : ViewBag.ReplyToLetterId.ToString())),
-            defaultSubject: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replySubject ?? string.Empty)),
-            defaultReceiverId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replyReceiverId ?? string.Empty))
-        };
+    window.letterReplyConfig = {
+        isReplyMode: @((isReplyMode).ToString().ToLowerInvariant()),
+        replyToLetterId: @Html.Raw((ViewBag.ReplyToLetterId == null ? "null" : ViewBag.ReplyToLetterId.ToString())),
+        defaultSubject: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replySubject ?? string.Empty)),
+        defaultReceiverId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replyReceiverId ?? string.Empty))
+    };
 </script>
 <script src="/js/letter.js"></script>
 <script src="/js/letters-ai.js"></script>
 
 @section Styles {
     <style>
-        .ai-letter-panel {
-            margin-top: 12px;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            background: #f8fafc;
-        }
-
-        .ai-letter-title,
-        .ai-letter-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .ai-letter-title {
-            margin-bottom: 10px;
-            color: #334155;
-            font-weight: 800;
-            font-size: 0.85rem;
-        }
-
-        .ai-letter-controls input,
-        .ai-letter-controls button {
-            border-radius: 6px !important;
-        }
-
-        .ai-letter-status {
-            min-height: 20px;
-            margin-top: 8px;
+        .draft-status {
             color: #64748b;
             font-size: 0.78rem;
-        }
-
-        .reply-mode-title {
-            margin-top: 10px;
-            margin-bottom: 10px;
-            color: #334155;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
             font-weight: 700;
         }
-
-        html.theme-dark .ai-letter-panel {
-            background: #111827;
-            border-color: #334155;
+        .letter-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
         }
-
-        html.theme-dark .ai-letter-title,
-        html.theme-dark .ai-letter-status,
-        html.theme-dark .reply-mode-title {
-            color: #f1f5f9;
+        .summary-chip {
+            border: 1px solid #dbe4f0;
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,.72);
+        }
+        .summary-label {
+            display: block;
+            color: #64748b;
+            font-size: .75rem;
+            margin-bottom: 4px;
+        }
+        .letter-preview-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, .72);
+            z-index: 2000;
+            padding: 24px;
+            overflow: auto;
+        }
+        .letter-preview-dialog {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            padding: 18px;
+        }
+        .letter-preview-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .letter-preview-head p { margin: 0; color: #64748b; }
+        .letter-preview-body {
+            max-height: calc(100vh - 140px);
+            overflow: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 16px;
+            background: #f8fafc;
+        }
+        html.theme-dark .summary-chip,
+        html[data-theme="dark"] .summary-chip,
+        body[data-theme="dark"] .summary-chip { background: rgba(15,23,42,.92); border-color: rgba(148,163,184,.18); color: #edf4ff; }
+        html.theme-dark .letter-preview-dialog,
+        html[data-theme="dark"] .letter-preview-dialog,
+        body[data-theme="dark"] .letter-preview-dialog { background: #0f172a; color: #edf4ff; }
+        html.theme-dark .letter-preview-body,
+        html[data-theme="dark"] .letter-preview-body,
+        body[data-theme="dark"] .letter-preview-body { background: rgba(15,23,42,.9); border-color: rgba(148,163,184,.18); }
+        @@media (max-width: 992px) {
+            .letter-summary-grid { grid-template-columns: 1fr; }
+            .toolbar-row { flex-direction: column; align-items: stretch; gap: 12px; }
+            .left-tools { flex-direction: column; }
+            .receiver-box, .subject-input { width: 100%; }
         }
     </style>
 }

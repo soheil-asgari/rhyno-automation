@@ -81,18 +81,6 @@ namespace OfficeAutomation.Services.Security
                     .Distinct()
                     .ToListAsync(cancellationToken);
 
-            var expandedPermissions = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
-            foreach (var permission in permissions)
-            {
-                if (PermissionCatalog.LegacyPermissionAliases.TryGetValue(permission, out var aliases))
-                {
-                    foreach (var alias in aliases)
-                    {
-                        expandedPermissions.Add(alias);
-                    }
-                }
-            }
-
             var profile = new PermissionAccessProfile
             {
                 UserId = user.Id,
@@ -100,7 +88,7 @@ namespace OfficeAutomation.Services.Security
                 DepartmentId = user.DepartmentId,
                 HasGlobalAccess = roles.Any(item => string.Equals(item.DataAccessScope, RoleDataAccessScope.Global, StringComparison.OrdinalIgnoreCase)),
                 Roles = roles.Select(item => item.RoleName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(item => item).ToList(),
-                Permissions = expandedPermissions
+                Permissions = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase)
             };
 
             _cache.Set(cacheKey, profile, CacheDuration);

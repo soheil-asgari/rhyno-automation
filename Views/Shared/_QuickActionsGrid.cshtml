@@ -1,0 +1,14 @@
+@model IEnumerable<OfficeAutomation.Models.FinancialQuickActionVM>
+
+<div class="quick-grid">
+    @foreach (var action in Model)
+    {
+        <a href="@action.Url" class="quick-card tone-@action.Tone">
+            <i class="bi @action.Icon"></i>
+            <div>
+                <strong>@action.Title</strong>
+                <span>@action.Description</span>
+            </div>
+        </a>
+    }
+</div>

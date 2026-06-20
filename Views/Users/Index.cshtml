@@ -1,4 +1,14 @@
-﻿@model IEnumerable<OfficeAutomation.Models.User>
+@model IEnumerable<OfficeAutomation.Models.User>
+@{
+    string PermissionBadgeClass(string key) => key switch
+    {
+        "Finance.View" => "text-bg-primary",
+        "Warehouse.View" => "text-bg-info",
+        "HR.View" => "text-bg-warning",
+        "SystemSettings.View" => "text-bg-dark",
+        _ => "text-bg-secondary"
+    };
+}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold"><i class="bi bi-people-fill text-primary"></i> مدیریت همکاران</h2>
@@ -29,10 +39,24 @@
                         <td>@(user.Employee?.PersonnelCode ?? "-")</td>
                         <td>@(user.ParentManagerUser?.FullName ?? "-")</td>
                         <td class="small">
-                            @(user.CanAccessFinance ? "مالی " : "")
-                            @(user.CanAccessWarehouse ? "انبار " : "")
-                            @(user.CanAccessHumanCapital ? "سرمایه انسانی " : "")
-                            @(user.CanAccessSystemSettings ? "تنظیمات" : "")
+                            <div class="d-flex flex-wrap gap-1">
+                                @if (user.CanAccessFinance)
+                                {
+                                    <span class="badge @PermissionBadgeClass("Finance.View")">Finance.View</span>
+                                }
+                                @if (user.CanAccessWarehouse)
+                                {
+                                    <span class="badge @PermissionBadgeClass("Warehouse.View")">Warehouse.View</span>
+                                }
+                                @if (user.CanAccessHumanCapital)
+                                {
+                                    <span class="badge @PermissionBadgeClass("HR.View")">HR.View</span>
+                                }
+                                @if (user.CanAccessSystemSettings)
+                                {
+                                    <span class="badge @PermissionBadgeClass("SystemSettings.View")">SystemSettings.View</span>
+                                }
+                            </div>
                         </td>
                         <td><span class="badge bg-success">فعال</span></td>
                     </tr>

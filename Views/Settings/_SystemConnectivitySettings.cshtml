@@ -46,7 +46,7 @@
             </div>
         </div>
 
-        @if (User.IsInRole("Admin"))
+        @if (User.HasClaim("permission", "Security.Manage"))
         {
             <div class="actions-row">
                 <button type="submit" class="btn settings-btn-primary">

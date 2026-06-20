@@ -1,92 +1,91 @@
 @model HumanCapitalIndexVM
 @{
-    ViewData["Title"] = "سرمایه انسانی";
+    ViewData["Title"] = "مدیریت سرمایه انسانی";
+    ViewData["SectionTitle"] = "مدیریت سرمایه انسانی";
+    ViewData["SectionSubtitle"] = "ثبت، جستجو، وضعیت‌های شغلی و تاریخچه حقوق در یک نمای عملیاتی";
+    ViewData["SectionActionUrl"] = Url.Action("Create", "HumanCapital");
+    ViewData["SectionActionText"] = "استخدام جدید";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
-}
+<link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
 
-<div class="container-fluid py-4 hc-page">
-    <div class="d-flex justify-content-between align-items-center mb-4 hc-header">
-        <div>
-            <h5 class="fw-bold mb-1 text-dark">مدیریت سرمایه انسانی</h5>
-            <p class="text-muted small mb-0">مدیریت چرخه کامل کارکنان: استخدام، افزایش حقوق، تعدیل، ترک کار و پایان خدمت</p>
-        </div>
-        <a asp-action="Create" class="btn btn-primary px-4 hc-new-btn">
-            <i class="bi bi-person-plus ms-1"></i>
-            استخدام جدید
+<div class="page-shell hc-page">
+    <partial name="_SectionHeader" />
+
+    <div class="hc-stats-grid mb-4">
+        <a asp-action="Index" asp-route-workflowView="all" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="hc-stat-link">
+            <div class="hc-stat-card @(string.IsNullOrWhiteSpace(Model.WorkflowView) || Model.WorkflowView == "all" ? "active" : "")">
+                <span class="hc-stat-label">کل پرسنل</span>
+                <span class="hc-stat-value">@Model.TotalCount</span>
+            </div>
+        </a>
+        <a asp-action="Index" asp-route-workflowView="active" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="hc-stat-link">
+            <div class="hc-stat-card @(Model.WorkflowView == "active" ? "active" : "")">
+                <span class="hc-stat-label">پرسنل فعال</span>
+                <span class="hc-stat-value text-success">@Model.ActiveCount</span>
+            </div>
+        </a>
+        <a asp-action="Index" asp-route-workflowView="separated" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="hc-stat-link">
+            <div class="hc-stat-card @(Model.WorkflowView == "separated" ? "active" : "")">
+                <span class="hc-stat-label">خارج‌شده</span>
+                <span class="hc-stat-value text-danger">@Model.SeparatedCount</span>
+            </div>
+        </a>
+        <a asp-action="Index" asp-route-workflowView="@Model.WorkflowView" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="hc-stat-link">
+            <div class="hc-stat-card">
+                <span class="hc-stat-label">نتیجه فیلتر</span>
+                <span class="hc-stat-value text-primary">@Model.FilteredCount</span>
+            </div>
         </a>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm hc-stat-card">
-                <div class="card-body">
-                    <small class="text-muted d-block">کل پرسنل</small>
-                    <span class="fs-5 fw-bold">@Model.TotalCount</span>
-                </div>
+    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترهای اخیر و ذخیره‌شده برای دسترسی سریع‌تر"; ViewData["SavedFiltersSaveButtonId"] = "hc-save-filter"; ViewData["SavedFiltersClearButtonId"] = "hc-clear-filters"; ViewData["SavedFiltersContainerId"] = "hc-saved-filters"; }
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-8">
+            <partial name="_SavedFiltersPanel" />
+            <div class="form-card h-100">
+                <form method="get" asp-action="Index" class="row g-2 g-md-3 align-items-end" id="hc-filter-form">
+                    <input type="hidden" asp-for="WorkflowView" />
+                    <div class="col-12 col-md-4">
+                        <label asp-for="SearchTerm" class="form-label"></label>
+                        <input asp-for="SearchTerm" class="form-control" placeholder="نام، کد پرسنلی، کد ملی یا عنوان شغلی" />
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="">همه وضعیت‌ها</option>
+                            @foreach (var status in Model.StatusOptions)
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label asp-for="DepartmentId" class="form-label"></label>
+                        <select asp-for="DepartmentId" class="form-select" asp-items="Model.DepartmentOptions">
+                            <option value="">همه دپارتمان‌ها</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-grid">
+                        <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                    </div>
+                </form>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm hc-stat-card">
-                <div class="card-body">
-                    <small class="text-muted d-block">پرسنل فعال</small>
-                    <span class="fs-5 fw-bold text-success">@Model.ActiveCount</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm hc-stat-card">
-                <div class="card-body">
-                    <small class="text-muted d-block">پرسنل خارج شده</small>
-                    <span class="fs-5 fw-bold text-danger">@Model.SeparatedCount</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm hc-stat-card">
-                <div class="card-body">
-                    <small class="text-muted d-block">نتایج فیلتر</small>
-                    <span class="fs-5 fw-bold text-primary">@Model.FilteredCount</span>
-                </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="form-card h-100">
+                <div class="section-title h5 mb-1">آخرین بازدیدها</div>
+                <div class="text-muted small mb-3">افرادی که اخیراً باز کرده‌اید اینجا ذخیره می‌شوند.</div>
+                <div id="hc-recent-items" class="recent-items-list"></div>
             </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm hc-card mb-3">
-        <div class="card-body border-bottom p-3 p-md-4">
-            <form method="get" asp-action="Index" class="row g-2 g-md-3 align-items-end">
-                <div class="col-12 col-md-4 col-lg-3">
-                    <label asp-for="SearchTerm" class="form-label small text-muted mb-1"></label>
-                    <input asp-for="SearchTerm" class="form-control hc-filter-control dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400" placeholder="نام، کد پرسنلی، کد ملی یا عنوان شغلی" />
-                </div>
-                <div class="col-6 col-md-4 col-lg-3">
-                    <label asp-for="Status" class="form-label small text-muted mb-1"></label>
-                    <select asp-for="Status" class="form-select hc-filter-control dark:bg-slate-800 dark:border-slate-600 dark:text-white">
-                        <option value="">همه وضعیت‌ها</option>
-                        @foreach (var status in Model.StatusOptions)
-                        {
-                            <option value="@status">@status</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-6 col-md-4 col-lg-3">
-                    <label asp-for="DepartmentId" class="form-label small text-muted mb-1"></label>
-                    <select asp-for="DepartmentId" class="form-select hc-filter-control dark:bg-slate-800 dark:border-slate-600 dark:text-white" asp-items="Model.DepartmentOptions">
-                        <option value="">همه دپارتمان‌ها</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-12 col-lg-3 d-grid d-md-flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-fill">اعمال فیلتر</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">حذف فیلتر</a>
-                </div>
-            </form>
-        </div>
-
+    <div class="form-card">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 hc-table hc-readable-table">
-                <thead class="bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-white">
+            <table class="table smart-table align-middle mb-0">
+                <thead>
                     <tr>
                         <th>پرسنل</th>
                         <th>سمت / دپارتمان</th>
@@ -100,31 +99,29 @@
                 <tbody>
                     @if (Model.Items.Any())
                     {
-                        @foreach (var employee in Model.Items)
+                        foreach (var employee in Model.Items)
                         {
                             <tr>
                                 <td>
-                                    <div class="fw-semibold text-slate-900 dark:text-white">@employee.FullName</div>
-                                    <small class="text-slate-500 dark:text-slate-200">کد پرسنلی: @employee.PersonnelCode</small>
+                                    <div class="fw-semibold">@employee.FullName</div>
+                                    <div class="small text-muted">کد پرسنلی: @employee.PersonnelCode</div>
                                 </td>
                                 <td>
-                                    <div class="text-slate-900 dark:text-white">@employee.PositionTitle</div>
-                                    <small class="text-slate-500 dark:text-slate-200">@(employee.DepartmentName ?? "-")</small>
+                                    <div>@employee.PositionTitle</div>
+                                    <div class="small text-muted">@(employee.DepartmentName ?? "-")</div>
                                 </td>
-                                <td class="text-slate-900 dark:text-white">@employee.HireDate.ToString("yyyy/MM/dd")</td>
-                                <td class="text-slate-900 dark:text-white">@employee.CurrentSalary.ToString("N0")</td>
+                                <td>@employee.HireDate.ToString("yyyy/MM/dd")</td>
+                                <td>@employee.CurrentSalary.ToString("N0")</td>
                                 <td>
-                                    <span class="badge hc-status-badge @(employee.CurrentStatus == "فعال" ? "hc-status-active" : "hc-status-inactive")">
-                                        @employee.CurrentStatus
-                                    </span>
+                                    <span class="badge @(employee.CurrentStatus == "فعال" ? "text-bg-success" : "text-bg-secondary")">@employee.CurrentStatus</span>
                                 </td>
                                 <td>
-                                    <div class="small text-slate-500 dark:text-slate-200">افزایش حقوق: @employee.SalaryChangeCount</div>
-                                    <div class="small text-slate-500 dark:text-slate-200">آخرین رخداد: @(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</div>
+                                    <div class="small text-muted">افزایش حقوق: @employee.SalaryChangeCount</div>
+                                    <div class="small text-muted">آخرین رخداد: @(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</div>
                                 </td>
                                 <td class="text-center">
-                                    <div class="d-inline-flex gap-1">
-                                        <a asp-action="Details" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-primary">جزئیات</a>
+                                    <div class="action-bar justify-content-center">
+                                        <a asp-action="Details" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-primary hc-track-visit" data-id="@employee.Id" data-name="@employee.FullName" data-url="@Url.Action("Details", "HumanCapital", new { id = employee.Id })">جزئیات</a>
                                         <a asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-secondary">ویرایش</a>
                                     </div>
                                 </td>
@@ -134,7 +131,12 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">هیچ پرونده‌ای با فیلتر انتخاب‌شده یافت نشد.</td>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <i class="bi bi-people"></i>
+                                    <div>موردی برای نمایش وجود ندارد.</div>
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -142,3 +144,211 @@
         </div>
     </div>
 </div>
+
+<style>
+    .hc-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .hc-stat-link { text-decoration: none; color: inherit; }
+    .hc-stat-card {
+        border: 1px solid var(--ds-border);
+        border-radius: 18px;
+        padding: 16px 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .hc-stat-link:hover .hc-stat-card,
+    .hc-stat-link:focus-visible .hc-stat-card {
+        transform: translateY(-3px);
+        border-color: rgba(59,130,246,.45);
+        box-shadow: 0 18px 36px rgba(15,23,42,.14);
+    }
+    .hc-stat-card.active {
+        border-color: rgba(59,130,246,.6);
+        box-shadow: 0 0 0 1px rgba(59,130,246,.15), 0 18px 36px rgba(15,23,42,.14);
+    }
+    .hc-stat-label { display:block; font-size:.78rem; color:var(--text-muted); }
+    .hc-stat-value { display:block; font-size:1.8rem; font-weight:900; line-height:1.1; margin-top:6px; color:var(--text-main); }
+    html.theme-dark .hc-stat-card,
+    html[data-theme="dark"] .hc-stat-card,
+    body[data-theme="dark"] .hc-stat-card {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
+        border-color: var(--ds-border-strong);
+    }
+    html.theme-dark .hc-stat-label,
+    html.theme-dark .hc-stat-value,
+    html[data-theme="dark"] .hc-stat-label,
+    html[data-theme="dark"] .hc-stat-value,
+    body[data-theme="dark"] .hc-stat-label,
+    body[data-theme="dark"] .hc-stat-value { color: #edf4ff; }
+    .recent-items-list { display: grid; gap: 10px; }
+    .recent-item {
+        border: 1px solid var(--ds-border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        background: var(--app-surface-soft);
+    }
+    .recent-item a { text-decoration: none; }
+    @@media (max-width: 992px) { .hc-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @@media (max-width: 576px) { .hc-stats-grid { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+    (() => {
+        const storageKey = "rhyno.humanCapital.filters";
+        const recentKey = "rhyno.humanCapital.recent";
+        const preferenceEndpoint = "/table-preferences/human-capital.filters";
+        const form = document.getElementById("hc-filter-form");
+        const savedContainer = document.getElementById("hc-saved-filters");
+        const recentContainer = document.getElementById("hc-recent-items");
+        const saveButton = document.getElementById("hc-save-filter");
+        const clearButton = document.getElementById("hc-clear-filters");
+
+        const readJson = (key, fallback) => {
+            try {
+                return JSON.parse(localStorage.getItem(key) || "null") || fallback;
+            } catch {
+                return fallback;
+            }
+        };
+
+        const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+        const loadSavedFilters = async () => {
+            try {
+                const response = await fetch(preferenceEndpoint, { credentials: "same-origin" });
+                if (!response.ok) {
+                    return readJson(storageKey, []);
+                }
+
+                const items = await response.json();
+                const normalized = Array.isArray(items) ? items : [];
+                if (normalized.length) {
+                    writeJson(storageKey, normalized);
+                }
+
+                return normalized.length ? normalized : readJson(storageKey, []);
+            } catch {
+                return readJson(storageKey, []);
+            }
+        };
+
+        const saveFilters = async (items) => {
+            writeJson(storageKey, items);
+            try {
+                await fetch(preferenceEndpoint, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(items)
+                });
+            } catch {
+                // local cache already updated
+            }
+        };
+
+        const currentFilter = () => ({
+            searchTerm: form.querySelector('[name="SearchTerm"]')?.value?.trim() || "",
+            status: form.querySelector('[name="Status"]')?.value || "",
+            departmentId: form.querySelector('[name="DepartmentId"]')?.value || "",
+            workflowView: form.querySelector('[name="WorkflowView"]')?.value || "all"
+        });
+
+        const filterLabel = (item) => {
+            const parts = [];
+            if (item.searchTerm) parts.push(`جستجو: ${item.searchTerm}`);
+            if (item.status) parts.push(`وضعیت: ${item.status}`);
+            if (item.departmentId) parts.push(`دپارتمان: ${item.departmentId}`);
+            if (item.workflowView && item.workflowView !== "all") parts.push(`نما: ${item.workflowView}`);
+            return parts.length ? parts.join(" | ") : "فیلتر بدون شرط";
+        };
+
+        const renderSaved = () => {
+            const items = readJson(storageKey, []);
+            savedContainer.innerHTML = "";
+            if (!items.length) {
+                savedContainer.innerHTML = '<span class="text-muted small">هنوز فیلتری ذخیره نشده است.</span>';
+                return;
+            }
+
+            items.slice(0, 6).forEach((item, index) => {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "btn btn-sm btn-outline-secondary rounded-pill";
+                chip.textContent = item.name;
+                chip.title = filterLabel(item);
+                chip.addEventListener("click", () => {
+                    form.querySelector('[name="SearchTerm"]').value = item.searchTerm || "";
+                    form.querySelector('[name="Status"]').value = item.status || "";
+                    form.querySelector('[name="DepartmentId"]').value = item.departmentId || "";
+                    form.querySelector('[name="WorkflowView"]').value = item.workflowView || "all";
+                    form.submit();
+                });
+                chip.dataset.index = index;
+                savedContainer.appendChild(chip);
+            });
+        };
+
+        const renderRecent = () => {
+            const items = readJson(recentKey, []);
+            recentContainer.innerHTML = "";
+            if (!items.length) {
+                recentContainer.innerHTML = '<div class="text-muted small">هنوز موردی باز نشده است.</div>';
+                return;
+            }
+
+            items.slice(0, 6).forEach(item => {
+                const row = document.createElement("div");
+                row.className = "recent-item";
+                row.innerHTML = `
+                    <div>
+                        <div class="fw-semibold">${item.name}</div>
+                        <div class="small text-muted">${item.when}</div>
+                    </div>
+                    <a class="btn btn-sm btn-outline-primary" href="${item.url}">باز کردن</a>
+                `;
+                recentContainer.appendChild(row);
+            });
+        };
+
+        saveButton?.addEventListener("click", () => {
+            const next = currentFilter();
+            const name = prompt("نام این فیلتر را وارد کنید:", "فیلتر ذخیره‌شده");
+            if (!name) return;
+            const items = readJson(storageKey, []);
+            items.unshift({ name, ...next });
+            saveFilters(items.slice(0, 8)).finally(renderSaved);
+        });
+
+        clearButton?.addEventListener("click", () => {
+            form.querySelector('[name="SearchTerm"]').value = "";
+            form.querySelector('[name="Status"]').value = "";
+            form.querySelector('[name="DepartmentId"]').value = "";
+            form.querySelector('[name="WorkflowView"]').value = "all";
+            form.submit();
+        });
+
+        document.querySelectorAll(".hc-track-visit").forEach(link => {
+            link.addEventListener("click", () => {
+                const items = readJson(recentKey, []).filter(x => x.id !== link.dataset.id);
+                items.unshift({
+                    id: link.dataset.id,
+                    name: link.dataset.name,
+                    url: link.dataset.url,
+                    when: new Date().toLocaleString("fa-IR")
+                });
+                writeJson(recentKey, items.slice(0, 8));
+            });
+        });
+
+        loadSavedFilters().finally(renderSaved);
+        renderRecent();
+    })();
+</script>

@@ -62,7 +62,10 @@
                     <div class="col-md-4"><label asp-for="GrandTotal" class="form-label small"></label><input asp-for="GrandTotal" class="form-control form-control-sm" readonly /></div>
                 </div>
 
+                <div class="alert alert-light border small mb-3" id="invoicePreviewPanel">پیش‌نمایش فاکتور بعد از تکمیل فرم در همین‌جا نمایش داده می‌شود.</div>
+
                 <div class="d-flex gap-2 mt-3">
+                    <button type="button" id="previewInvoiceButton" class="btn btn-sm btn-outline-primary">پیش‌نمایش</button>
                     <button type="submit" id="submitInvoiceButton" class="btn btn-sm btn-success">ذخیره فاکتور</button>
                     <a asp-action="@backAction" class="btn btn-sm btn-outline-secondary">بازگشت</a>
                 </div>
@@ -102,6 +105,8 @@
             const invoiceTypeSelect = document.getElementById('InvoiceType');
             const invoiceNumberHint = document.getElementById('invoiceNumberHint');
             const submitButton = document.getElementById('submitInvoiceButton');
+            const previewPanel = document.getElementById('invoicePreviewPanel');
+            const previewButton = document.getElementById('previewInvoiceButton');
             const form = document.getElementById('invoiceForm');
             const purchaseOnlyFields = document.querySelectorAll('.purchase-only');
             const saleOnlyFields = document.querySelectorAll('.sale-only');
@@ -114,6 +119,7 @@
             const grandInput = document.querySelector('[name="GrandTotal"]');
             let duplicateInvoiceNumber = false;
             let previousReceiptId = receiptSelect?.value || '';
+            const draftKey = 'rhyno.invoice.draft.create';
 
             function togglePurchaseFields() {
                 const isPurchase = (invoiceTypeSelect?.value || '') === 'Purchase';
@@ -172,6 +178,69 @@
                 subTotalInput.value = totalSub.toFixed(2);
                 vatInput.value = totalVat.toFixed(2);
                 grandInput.value = totalGrand.toFixed(2);
+                renderPreview();
+            }
+
+            function renderPreview() {
+                if (!previewPanel) return;
+                const warnings = [];
+                const rows = [...body.querySelectorAll('tr')];
+                if (!invoiceNumberInput?.value?.trim()) warnings.push('شماره فاکتور وارد نشده است.');
+                if (!(document.getElementById('PartyName')?.value || document.getElementById('EmployerId')?.value)) warnings.push('طرف معامله مشخص نشده است.');
+                if (!rows.some(row => Number(row.querySelector('[data-field="Quantity"]')?.value || 0) > 0 && Number(row.querySelector('[data-field="UnitPrice"]')?.value || 0) > 0)) warnings.push('حداقل یک ردیف معتبر لازم است.');
+                if (Number(subTotalInput.value || 0) <= 0) warnings.push('جمع جزء باید بزرگتر از صفر باشد.');
+                previewPanel.innerHTML = `
+                    <div class="fw-semibold mb-2">پیش‌نمایش سریع</div>
+                    <div class="d-flex justify-content-between"><span>شماره</span><span>${invoiceNumberInput?.value || '-'}</span></div>
+                    <div class="d-flex justify-content-between"><span>نوع</span><span>${invoiceTypeSelect?.value === 'Purchase' ? 'خرید' : 'فروش'}</span></div>
+                    <div class="d-flex justify-content-between"><span>طرف معامله</span><span>${document.getElementById('PartyName')?.value || document.getElementById('EmployerId')?.selectedOptions?.[0]?.text || '-'}</span></div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between"><span>جمع جزء</span><strong>${subTotalInput.value || '0'}</strong></div>
+                    <div class="d-flex justify-content-between"><span>VAT</span><strong>${vatInput.value || '0'}</strong></div>
+                    <div class="d-flex justify-content-between"><span>جمع کل</span><strong>${grandInput.value || '0'}</strong></div>
+                    <div class="mt-3">
+                        <div class="small fw-semibold mb-1">هشدارها</div>
+                        ${warnings.length ? `<ul class="small mb-0">${warnings.map(item => `<li>${item}</li>`).join('')}</ul>` : '<div class="small text-success">هشدار مشخصی وجود ندارد.</div>'}
+                    </div>
+                `;
+                submitButton.disabled = Boolean(warnings.length) || duplicateInvoiceNumber;
+            }
+
+            function saveDraft() {
+                const draft = {
+                    invoiceNumber: invoiceNumberInput?.value || '',
+                    invoiceType: invoiceTypeSelect?.value || '',
+                    dateShamsi: document.getElementById('DateShamsi')?.value || '',
+                    partyName: document.getElementById('PartyName')?.value || '',
+                    nationalCodeOrEconomicId: document.getElementById('NationalCodeOrEconomicId')?.value || '',
+                    notes: document.getElementById('Notes')?.value || '',
+                    items: [...body.querySelectorAll('tr')].map(row => ({
+                        productId: row.querySelector('[data-field="ProductId"]')?.value || '',
+                        itemName: row.querySelector('[data-field="ItemName"]')?.value || '',
+                        quantity: row.querySelector('[data-field="Quantity"]')?.value || '',
+                        unitPrice: row.querySelector('[data-field="UnitPrice"]')?.value || ''
+                    }))
+                };
+                localStorage.setItem(draftKey, JSON.stringify(draft));
+            }
+
+            function restoreDraft() {
+                try {
+                    const raw = localStorage.getItem(draftKey);
+                    if (!raw) return;
+                    const draft = JSON.parse(raw);
+                    if (draft.invoiceNumber) invoiceNumberInput.value = draft.invoiceNumber;
+                    if (draft.invoiceType) invoiceTypeSelect.value = draft.invoiceType;
+                    if (draft.dateShamsi) document.getElementById('DateShamsi').value = draft.dateShamsi;
+                    if (draft.partyName) document.getElementById('PartyName').value = draft.partyName;
+                    if (draft.nationalCodeOrEconomicId) document.getElementById('NationalCodeOrEconomicId').value = draft.nationalCodeOrEconomicId;
+                    if (draft.notes) document.getElementById('Notes').value = draft.notes;
+                    if (Array.isArray(draft.items) && draft.items.length) {
+                        clearRows();
+                        draft.items.forEach(item => addRow(item));
+                    }
+                    renderPreview();
+                } catch { }
             }
 
             function setInvoiceNumberState(isDuplicate, message) {
@@ -328,11 +397,14 @@
 
             invoiceNumberInput?.addEventListener('blur', checkInvoiceNumberDuplicate);
             invoiceNumberInput?.addEventListener('change', checkInvoiceNumberDuplicate);
+            [invoiceNumberInput, invoiceTypeSelect, document.getElementById('DateShamsi'), document.getElementById('PartyName'), document.getElementById('NationalCodeOrEconomicId'), document.getElementById('Notes')].forEach(el => el?.addEventListener('input', saveDraft));
             invoiceTypeSelect?.addEventListener('change', () => {
                 togglePurchaseFields();
                 checkInvoiceNumberDuplicate();
             });
             receiptSelect?.addEventListener('change', () => populateItemsFromReceipt(false));
+            previewButton?.addEventListener('click', renderPreview);
+            form?.addEventListener('input', renderPreview);
 
             form?.addEventListener('submit', async (event) => {
                 await checkInvoiceNumberDuplicate();
@@ -351,6 +423,9 @@
 
             togglePurchaseFields();
             checkInvoiceNumberDuplicate();
+            restoreDraft();
+            setInterval(saveDraft, 10000);
+            renderPreview();
 
             if ((invoiceTypeSelect?.value || '') === 'Purchase' && receiptSelect?.value) {
                 populateItemsFromReceipt(true);

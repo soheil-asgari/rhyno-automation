@@ -1,0 +1,157 @@
+@model WarehouseReceiptDetailsVM
+@{
+    ViewData["Title"] = "جزئیات رسید";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">جزئیات رسید انبار</h5>
+            <p class="text-muted small mb-0">ردگیری سند، ردیف‌ها، رویدادها و ثبت‌های موجودی</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Receipts" class="btn btn-outline-secondary btn-sm">بازگشت</a>
+            <a asp-action="CreateReceipt" class="btn btn-primary btn-sm">ثبت رسید جدید</a>
+            @if (Model.Receipt.WorkflowStatus != WorkflowStatus.Approved)
+            {
+                <form asp-action="ApproveReceipt" asp-route-id="@Model.Receipt.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('رسید تایید و موجودی ثبت شود؟');">تایید و ثبت</button>
+                </form>
+                <form asp-action="RejectReceipt" asp-route-id="@Model.Receipt.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('رسید رد شود؟');">رد</button>
+                </form>
+                <form asp-action="CancelReceipt" asp-route-id="@Model.Receipt.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-dark" onclick="return confirm('رسید ابطال شود؟');">ابطال</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="ReopenReceipt" asp-route-id="@Model.Receipt.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('رسید برای ویرایش دوباره باز شود؟');">بازگشایی</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">شماره رسید</div><div class="fw-bold">@Model.Receipt.ReceiptNumber</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">تاریخ</div><div class="fw-bold">@Model.Receipt.DateShamsi</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">انبار</div><div class="fw-bold">@Model.Receipt.Warehouse.Name</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">وضعیت</div><div class="fw-bold"><span class="badge @WorkflowStatus.BadgeCss(Model.Receipt.WorkflowStatus)">@WorkflowStatus.Label(Model.Receipt.WorkflowStatus)</span></div></div></div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">ردیف‌ها</h6>
+                        <div class="small text-muted">تعداد کل: @Model.TotalQuantity.ToString("N3") | مبلغ کل: @Model.TotalAmount.ToString("N0")</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>کالا</th>
+                                    <th>تعداد</th>
+                                    <th>فی</th>
+                                    <th>جمع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Receipt.Items)
+                                {
+                                    <tr>
+                                        <td>@item.Product.Name <div class="text-muted small">@item.Product.Code</div></td>
+                                        <td>@item.Quantity.ToString("N3")</td>
+                                        <td>@item.UnitPrice.ToString("N0")</td>
+                                        <td>@(item.Quantity * item.UnitPrice).ToString("N0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">اطلاعات تکمیلی</h6>
+                    <div class="small text-muted">تامین‌کننده</div>
+                    <div class="mb-2">@((Model.Receipt.Vendor?.Name) ?? Model.Receipt.SupplierOrSource)</div>
+                    <div class="small text-muted">یادداشت</div>
+                    <div class="mb-2">@(!string.IsNullOrWhiteSpace(Model.Receipt.Notes) ? Model.Receipt.Notes : "-")</div>
+                    <div class="small text-muted">ثبت اولیه</div>
+                    <div>@Model.Receipt.CreatedAt.ToString("yyyy/MM/dd HH:mm")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">timeline رویدادها</h6>
+                    <div class="d-grid gap-2">
+                        @foreach (var item in Model.AuditEntries)
+                        {
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <strong>@item.Caption</strong>
+                                    <small class="text-muted">@item.OccurredAt.LocalDateTime.ToString("yyyy/MM/dd HH:mm")</small>
+                                </div>
+                                <div class="small text-muted mt-1">@(!string.IsNullOrWhiteSpace(item.ActorName) ? item.ActorName : "کاربر نامشخص")</div>
+                            </div>
+                        }
+                        @if (!Model.AuditEntries.Any())
+                        {
+                            <div class="text-muted small">ردی از تغییرات ثبت نشده است.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">ledger موجودی</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>کالا</th>
+                                    <th>ورود</th>
+                                    <th>خروج</th>
+                                    <th>مانده</th>
+                                    <th>کاربر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.MovementEntries)
+                                {
+                                    <tr>
+                                        <td>@item.ProductName <div class="text-muted small">@item.ProductCode</div></td>
+                                        <td>@item.QuantityIn.ToString("N3")</td>
+                                        <td>@item.QuantityOut.ToString("N3")</td>
+                                        <td>@item.BalanceAfter.ToString("N3")</td>
+                                        <td>@(!string.IsNullOrWhiteSpace(item.ActorName) ? item.ActorName : "-")</td>
+                                    </tr>
+                                }
+                                @if (!Model.MovementEntries.Any())
+                                {
+                                    <tr><td colspan="5" class="text-center text-muted py-3">ledger برای این سند ثبت نشده است.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -481,6 +481,14 @@ namespace OfficeAutomation.Controllers
 
             var totalRevenue = invoices.Where(item => item.InvoiceType == "Sale").Sum(item => item.GrandTotal);
             var totalPurchaseCost = invoices.Where(item => item.InvoiceType == "Purchase").Sum(item => item.GrandTotal);
+            var pendingSalesInvoices = invoices.Count(item => item.InvoiceType == "Sale" && item.WorkflowStatus != WorkflowStatus.Approved && item.WorkflowStatus != WorkflowStatus.Archived);
+            var pendingPurchaseInvoices = invoices.Count(item => item.InvoiceType == "Purchase" && item.WorkflowStatus != WorkflowStatus.Approved && item.WorkflowStatus != WorkflowStatus.Archived);
+            var duePurchaseDeadlines = invoices.Count(item => item.InvoiceType == "Purchase" && item.DeadlineDateShamsi != null && item.WorkflowStatus != WorkflowStatus.Approved && item.WorkflowStatus != WorkflowStatus.Archived);
+            var validationWarnings = invoices.Count(item =>
+                string.IsNullOrWhiteSpace(item.InvoiceNumber) ||
+                string.IsNullOrWhiteSpace(item.PartyName) ||
+                item.GrandTotal <= 0 ||
+                item.VatAmount < 0);
 
             var payrollCost = await _context.PayrollLists
                 .AsNoTracking()
@@ -546,6 +554,50 @@ namespace OfficeAutomation.Controllers
 
             var model = new FinancialDashboardVM
             {
+                PendingSalesInvoices = pendingSalesInvoices,
+                PendingPurchaseInvoices = pendingPurchaseInvoices,
+                DuePurchaseDeadlines = duePurchaseDeadlines,
+                ValidationWarnings = validationWarnings,
+                HubKpis =
+                [
+                    new FinancialHubKpiVM
+                    {
+                        Title = "فاکتورهای فروش باز",
+                        Value = pendingSalesInvoices.ToString("N0"),
+                        Description = "فاکتورهای ثبت شده اما هنوز نهایی نشده",
+                        Tone = "success"
+                    },
+                    new FinancialHubKpiVM
+                    {
+                        Title = "فاکتورهای خرید باز",
+                        Value = pendingPurchaseInvoices.ToString("N0"),
+                        Description = "خریدهای در گردش یا در انتظار بررسی",
+                        Tone = "primary"
+                    },
+                    new FinancialHubKpiVM
+                    {
+                        Title = "سررسیدهای نزدیک",
+                        Value = duePurchaseDeadlines.ToString("N0"),
+                        Description = "مواردی که باید همین حالا پیگیری شوند",
+                        Tone = "warning"
+                    },
+                    new FinancialHubKpiVM
+                    {
+                        Title = "هشدارهای اعتبارسنجی",
+                        Value = validationWarnings.ToString("N0"),
+                        Description = "رکوردهای ناقص یا مشکوک",
+                        Tone = "danger"
+                    }
+                ],
+                QuickActions =
+                [
+                    new FinancialQuickActionVM { Title = "فروش", Description = "ثبت و پیگیری فاکتورهای فروش", Url = Url.Action(nameof(Sales)) ?? "#", Icon = "bi-graph-up-arrow", Tone = "success" },
+                    new FinancialQuickActionVM { Title = "خرید", Description = "ثبت و پیگیری فاکتورهای خرید", Url = Url.Action(nameof(Purchases)) ?? "#", Icon = "bi-cart", Tone = "primary" },
+                    new FinancialQuickActionVM { Title = "VAT", Description = "کنترل VAT و مغایرت‌ها", Url = Url.Action(nameof(VatDashboard)) ?? "#", Icon = "bi-percent", Tone = "warning" },
+                    new FinancialQuickActionVM { Title = "معاملات فصلی", Description = "گزارش ماده 169 و خروجی‌ها", Url = Url.Action(nameof(SeasonalTax)) ?? "#", Icon = "bi-journal-text", Tone = "info" },
+                    new FinancialQuickActionVM { Title = "حقوق", Description = "ورود به مدیریت حقوق و دستمزد", Url = Url.Action("Index", "Payroll") ?? "#", Icon = "bi-cash-stack", Tone = "secondary" },
+                    new FinancialQuickActionVM { Title = "بیمه", Description = "ورود به مدیریت بیمه و لیست‌ها", Url = Url.Action("Index", "Bimeh") ?? "#", Icon = "bi-shield-lock", Tone = "dark" }
+                ],
                 TotalRevenue = Math.Round(totalRevenue, 2),
                 TotalPurchaseCost = Math.Round(totalPurchaseCost, 2),
                 TotalPayrollCost = Math.Round(payrollCost, 2),
@@ -558,6 +610,17 @@ namespace OfficeAutomation.Controllers
                 TotalVatCollected = Math.Round(invoices.Where(item => item.InvoiceType == "Sale").Sum(item => item.VatAmount), 2),
                 TotalVatPaid = Math.Round(invoices.Where(item => item.InvoiceType == "Purchase").Sum(item => item.VatAmount), 2),
                 NetVatPayableOrRefundable = Math.Round(invoices.Where(item => item.InvoiceType == "Sale").Sum(item => item.VatAmount) - invoices.Where(item => item.InvoiceType == "Purchase").Sum(item => item.VatAmount), 2),
+                TotalVatLineCalculated = Math.Round(invoices.SelectMany(item => item.Items).Sum(item => item.LineVatAmount), 2),
+                VatReconciliationDifference = Math.Round(
+                    invoices.Sum(item => item.VatAmount) - invoices.SelectMany(item => item.Items).Sum(item => item.LineVatAmount),
+                    2),
+                VatMismatchInvoices = invoices.Count(item =>
+                    item.Items.Any() &&
+                    Math.Round(item.Items.Sum(row => row.LineVatAmount), 2) != Math.Round(item.VatAmount, 2)),
+                MonthlySalesTotal = Math.Round(invoices.Where(item => item.InvoiceType == "Sale").Sum(item => item.GrandTotal), 2),
+                MonthlyPurchaseTotal = Math.Round(invoices.Where(item => item.InvoiceType == "Purchase").Sum(item => item.GrandTotal), 2),
+                MonthlyTaxPayable = Math.Round(invoices.Where(item => item.InvoiceType == "Sale").Sum(item => item.VatAmount) - invoices.Where(item => item.InvoiceType == "Purchase").Sum(item => item.VatAmount), 2),
+                OverdueInvoices = invoices.Count(item => !string.IsNullOrWhiteSpace(item.DeadlineDateShamsi) && item.WorkflowStatus != WorkflowStatus.Approved && item.WorkflowStatus != WorkflowStatus.Archived),
                 VatRows = invoices
                     .OrderByDescending(item => item.DateShamsi)
                     .ThenByDescending(item => item.CreatedAt)
@@ -571,6 +634,18 @@ namespace OfficeAutomation.Controllers
                         SubTotal = item.SubTotal,
                         VatAmount = item.VatAmount,
                         GrandTotal = item.GrandTotal
+                    })
+                    .ToList(),
+                RecentActivities = invoices
+                    .OrderByDescending(item => item.CreatedAt)
+                    .Take(8)
+                    .Select(item => new FinancialActivityVM
+                    {
+                        Title = $"{item.InvoiceNumber} - {item.PartyName}",
+                        Subtitle = $"{(item.InvoiceType == "Sale" ? "فروش" : "خرید")} | {WorkflowStatus.Label(item.WorkflowStatus)} | {item.DateShamsi}",
+                        Url = Url.Action(nameof(EditInvoice), new { id = item.Id }) ?? "#",
+                        Badge = item.GrandTotal.ToString("N0"),
+                        BadgeTone = item.InvoiceType == "Sale" ? "success" : "primary"
                     })
                     .ToList()
             };
@@ -631,68 +706,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> ReportingHub(int? year, CancellationToken cancellationToken)
         {
-            var targetYear = year ?? GetCurrentShamsiYear();
-
-            var invoices = await _context.Invoices
-                .AsNoTracking()
-                .Where(item => item.DateShamsi.StartsWith(targetYear.ToString()))
-                .ToListAsync(cancellationToken);
-
-            var payrollByMonth = await _context.PayrollLists
-                .AsNoTracking()
-                .Include(item => item.Items)
-                .Where(item => item.Year == targetYear)
-                .Select(item => new
-                {
-                    item.Month,
-                    Total = item.Items.Sum(row => row.NetPayable)
-                })
-                .ToListAsync(cancellationToken);
-
-            var warehouseMovements = await _context.WarehouseReceipts
-                .AsNoTracking()
-                .Include(item => item.Items)
-                .Where(item => item.DateShamsi.StartsWith(targetYear.ToString()))
-                .SelectMany(item => item.Items.Select(row => new { MonthToken = item.DateShamsi, Qty = row.Quantity }))
-                .ToListAsync(cancellationToken);
-
-            var warehouseIssuances = await _context.WarehouseIssuances
-                .AsNoTracking()
-                .Include(item => item.Items)
-                .Where(item => item.DateShamsi.StartsWith(targetYear.ToString()))
-                .SelectMany(item => item.Items.Select(row => new { MonthToken = item.DateShamsi, Qty = row.Quantity }))
-                .ToListAsync(cancellationToken);
-
-            var labels = Enumerable.Range(1, 12).Select(item => $"{item:00}").ToList();
-            var revenueSeries = new List<decimal>();
-            var costSeries = new List<decimal>();
-            var payrollSeries = new List<decimal>();
-            var stockMovementSeries = new List<decimal>();
-
-            for (var month = 1; month <= 12; month++)
-            {
-                var monthToken = $"/{month:00}/";
-                var monthRevenue = invoices.Where(item => item.InvoiceType == "Sale" && item.DateShamsi.Contains(monthToken)).Sum(item => item.GrandTotal);
-                var monthPurchaseCost = invoices.Where(item => item.InvoiceType == "Purchase" && item.DateShamsi.Contains(monthToken)).Sum(item => item.GrandTotal);
-                var monthPayroll = payrollByMonth.Where(item => item.Month == month).Sum(item => item.Total);
-
-                var incoming = warehouseMovements.Where(item => item.MonthToken.Contains(monthToken)).Sum(item => item.Qty);
-                var outgoing = warehouseIssuances.Where(item => item.MonthToken.Contains(monthToken)).Sum(item => item.Qty);
-                var movementVolume = Math.Round(incoming + outgoing, 3);
-
-                revenueSeries.Add(Math.Round(monthRevenue, 2));
-                costSeries.Add(Math.Round(monthPurchaseCost + monthPayroll, 2));
-                payrollSeries.Add(Math.Round(monthPayroll, 2));
-                stockMovementSeries.Add(Math.Round(movementVolume, 3));
-            }
-
-            ViewBag.Year = targetYear;
-            ViewBag.MonthLabels = labels;
-            ViewBag.RevenueSeries = revenueSeries;
-            ViewBag.CostSeries = costSeries;
-            ViewBag.PayrollSeries = payrollSeries;
-            ViewBag.StockMovementSeries = stockMovementSeries;
-            return View();
+            return await Dashboard(year, cancellationToken);
         }
 
         private async Task<IActionResult> VatDashboardInternal(int? year, CancellationToken cancellationToken)

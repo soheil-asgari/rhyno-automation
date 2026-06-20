@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
@@ -11,10 +12,12 @@ namespace OfficeAutomation.Controllers
     public class SearchController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuthorizationFacade _authorizationFacade;
 
-        public SearchController(ApplicationDbContext context)
+        public SearchController(ApplicationDbContext context, IAuthorizationFacade authorizationFacade)
         {
             _context = context;
+            _authorizationFacade = authorizationFacade;
         }
 
         [HttpGet]
@@ -73,7 +76,7 @@ namespace OfficeAutomation.Controllers
                 .Include(item => item.Receiver)
                 .Where(item => item.Title.Contains(term) || item.Body.Contains(term));
 
-            if (!User.IsInRole("Admin") && !string.IsNullOrWhiteSpace(userId))
+            if (!await _authorizationFacade.IsSecurityAdminAsync(cancellationToken) && !string.IsNullOrWhiteSpace(userId))
             {
                 query = query.Where(item => item.SenderId == userId || item.ReceiverId == userId || item.FinalReceiverId == userId);
             }
@@ -209,7 +212,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<GlobalSearchResultViewModel>> SearchUsersAsync(string term, CancellationToken cancellationToken, int take = 12)
         {
-            if (!User.IsInRole("Admin"))
+            if (!await _authorizationFacade.IsSecurityAdminAsync(cancellationToken))
             {
                 return new List<GlobalSearchResultViewModel>();
             }

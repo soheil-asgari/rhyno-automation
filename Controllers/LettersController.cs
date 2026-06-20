@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,13 +23,15 @@ namespace OfficeAutomation.Controllers
         // اضافه کردن مدیریت کاربران
         private readonly UserManager<User> _userManager;
         private readonly AiService _ai;
+        private readonly Services.Security.IPermissionAccessService _permissionAccessService;
 
         // تزریق هر دو سرویس در سازنده کلاس
-        public LettersController(ApplicationDbContext context, UserManager<User> userManager, AiService ai)
+        public LettersController(ApplicationDbContext context, UserManager<User> userManager, AiService ai, Services.Security.IPermissionAccessService permissionAccessService)
         {
             _context = context;
             _userManager = userManager;
             _ai = ai;
+            _permissionAccessService = permissionAccessService;
         }
 
         // GET: Letters
@@ -77,7 +80,7 @@ namespace OfficeAutomation.Controllers
 
             var senderUnit = currentUser.Department?.Name ?? currentUser.ServiceLocation ?? currentUser.JobTitle ?? "نامشخص";
             var receiverUnit = receiver.Department?.Name ?? receiver.ServiceLocation ?? receiver.JobTitle ?? "نامشخص";
-            var existingBody = StripHtml(request.CurrentBody);
+            var existingBody = HtmlSanitizer.StripTags(request.CurrentBody);
 
             var prompt = $"""
             شما دستیار نگارش نامه‌های اداری فارسی در یک سامانه اتوماسیون اداری هستید.
@@ -151,7 +154,7 @@ namespace OfficeAutomation.Controllers
                 گیرنده فعلی: {item.Receiver?.FullName ?? "نامشخص"}
                 تاریخ: {item.SentDate:yyyy/MM/dd HH:mm}
                 وضعیت گردش: {(item.IsWorkflowCompleted ? "تکمیل شده" : $"در گردش - مرحله {item.CurrentWorkflowStep}")}
-                متن: {StripHtml(item.Body)}
+                متن: {HtmlSanitizer.StripTags(item.Body)}
                 """));
 
             var prompt = $"""
@@ -204,7 +207,7 @@ namespace OfficeAutomation.Controllers
             فرستنده نامه اصلی: {letter.Sender?.FullName ?? "نامشخص"}
             گیرنده فعلی: {letter.Receiver?.FullName ?? "نامشخص"}
             وضعیت گردش: {(letter.IsWorkflowCompleted ? "تکمیل شده" : $"در گردش - مرحله {letter.CurrentWorkflowStep}")}
-            متن نامه اصلی: {StripHtml(letter.Body)}
+            متن نامه اصلی: {HtmlSanitizer.StripTags(letter.Body)}
             نظر/درخواست کاربر برای پاسخ: {request.Intent}
 
             اگر نظر کاربر تأیید است، متن را به شکل تأییدیه اداری بنویس. اگر نیاز به اصلاح یا توضیح دارد، همان را رسمی و شفاف کن.
@@ -306,6 +309,8 @@ namespace OfficeAutomation.Controllers
 
             if (currentUser == null) return Unauthorized();
 
+            letter.Title = (letter.Title ?? string.Empty).Trim();
+            letter.Body = HtmlSanitizer.Sanitize(letter.Body);
             letter.SenderId = currentUser.Id;
             letter.SentDate = DateTime.Now;
             letter.DocumentType = "Letter";
@@ -370,7 +375,8 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            if (letter.ReceiverId != currentUserId && !User.IsInRole("Admin"))
+            var canBypass = await _permissionAccessService.UserHasPermissionAsync(currentUserId, "Security.Manage");
+            if (letter.ReceiverId != currentUserId && !canBypass)
             {
                 return Forbid();
             }
@@ -438,17 +444,6 @@ namespace OfficeAutomation.Controllers
         private static bool CanAccessLetter(Letter letter, string userId)
         {
             return letter.SenderId == userId || letter.ReceiverId == userId || letter.FinalReceiverId == userId;
-        }
-
-        private static string StripHtml(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return string.Empty;
-            }
-
-            var withoutTags = Regex.Replace(value, "<.*?>", " ");
-            return Regex.Replace(WebUtility.HtmlDecode(withoutTags), @"\s+", " ").Trim();
         }
 
         private async Task ApplyWorkflowRoutingOnCreateAsync(Letter letter)

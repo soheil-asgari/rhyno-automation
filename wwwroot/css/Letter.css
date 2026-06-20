@@ -146,3 +146,129 @@
 .ck.ck-reset.ck-editor__main > .ck-editor__editable {
     min-height: auto !important;
 }
+
+html.theme-dark .word-processor-container,
+html[data-theme="dark"] .word-processor-container,
+body[data-theme="dark"] .word-processor-container {
+    background:
+        radial-gradient(circle at top right, rgba(139, 92, 246, 0.16), transparent 28%),
+        radial-gradient(circle at left 20%, rgba(34, 211, 238, 0.1), transparent 22%),
+        linear-gradient(180deg, #081120 0%, #0f172a 100%) !important;
+    color: #edf4ff !important;
+}
+
+html.theme-dark .top-toolbar,
+html[data-theme="dark"] .top-toolbar,
+body[data-theme="dark"] .top-toolbar {
+    background: rgba(15, 23, 42, 0.94) !important;
+    border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+    box-shadow: 0 16px 36px rgba(2, 6, 23, 0.32);
+}
+
+html.theme-dark .top-toolbar .input-group-text,
+html[data-theme="dark"] .top-toolbar .input-group-text,
+body[data-theme="dark"] .top-toolbar .input-group-text {
+    background: rgba(26, 36, 61, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #93c5fd !important;
+}
+
+html.theme-dark .top-toolbar .form-control,
+html.theme-dark .top-toolbar .form-select,
+html.theme-dark .top-toolbar .btn,
+html[data-theme="dark"] .top-toolbar .form-control,
+html[data-theme="dark"] .top-toolbar .form-select,
+html[data-theme="dark"] .top-toolbar .btn,
+body[data-theme="dark"] .top-toolbar .form-control,
+body[data-theme="dark"] .top-toolbar .form-select,
+body[data-theme="dark"] .top-toolbar .btn {
+    background-color: rgba(26, 36, 61, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #edf4ff !important;
+}
+
+html.theme-dark .paper-wrapper,
+html[data-theme="dark"] .paper-wrapper,
+body[data-theme="dark"] .paper-wrapper {
+    background: transparent !important;
+}
+
+html.theme-dark .paper,
+html[data-theme="dark"] .paper,
+body[data-theme="dark"] .paper {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%) !important;
+    color: #0f172a !important;
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.34) !important;
+}
+
+html.theme-dark .header-row,
+html.theme-dark .receiver-block,
+html.theme-dark .signature-box,
+html[data-theme="dark"] .header-row,
+html[data-theme="dark"] .receiver-block,
+html[data-theme="dark"] .signature-box,
+body[data-theme="dark"] .header-row,
+body[data-theme="dark"] .receiver-block,
+body[data-theme="dark"] .signature-box {
+    color: #0f172a !important;
+}
+
+html.theme-dark #editor-container .ck.ck-editor__top .ck-sticky-panel__content,
+html[data-theme="dark"] #editor-container .ck.ck-editor__top .ck-sticky-panel__content,
+body[data-theme="dark"] #editor-container .ck.ck-editor__top .ck-sticky-panel__content,
+html.theme-dark #editor-container .ck-toolbar,
+html[data-theme="dark"] #editor-container .ck-toolbar,
+body[data-theme="dark"] #editor-container .ck-toolbar {
+    background: rgba(15, 23, 42, 0.96) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+html.theme-dark #editor-container .ck-editor__editable,
+html.theme-dark #editor-container .ck-content,
+html[data-theme="dark"] #editor-container .ck-editor__editable,
+html[data-theme="dark"] #editor-container .ck-content,
+body[data-theme="dark"] #editor-container .ck-editor__editable,
+body[data-theme="dark"] #editor-container .ck-content {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+html.theme-dark .ai-letter-panel,
+html[data-theme="dark"] .ai-letter-panel,
+body[data-theme="dark"] .ai-letter-panel {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    color: #edf4ff !important;
+}
+
+html.theme-dark .ai-letter-title,
+html.theme-dark .ai-letter-status,
+html.theme-dark .reply-mode-title,
+html[data-theme="dark"] .ai-letter-title,
+html[data-theme="dark"] .ai-letter-status,
+html[data-theme="dark"] .reply-mode-title,
+body[data-theme="dark"] .ai-letter-title,
+body[data-theme="dark"] .ai-letter-status,
+body[data-theme="dark"] .reply-mode-title {
+    color: #edf4ff !important;
+}
+
+html.theme-dark .ai-letter-controls .form-control,
+html.theme-dark .ai-letter-controls .btn,
+html[data-theme="dark"] .ai-letter-controls .form-control,
+html[data-theme="dark"] .ai-letter-controls .btn,
+body[data-theme="dark"] .ai-letter-controls .form-control,
+body[data-theme="dark"] .ai-letter-controls .btn {
+    background-color: rgba(26, 36, 61, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #edf4ff !important;
+}
+
+html.theme-dark .subject-input::placeholder,
+html.theme-dark .ai-letter-controls input::placeholder,
+html[data-theme="dark"] .subject-input::placeholder,
+html[data-theme="dark"] .ai-letter-controls input::placeholder,
+body[data-theme="dark"] .subject-input::placeholder,
+body[data-theme="dark"] .ai-letter-controls input::placeholder {
+    color: #97a8c6 !important;
+}

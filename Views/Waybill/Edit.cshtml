@@ -3,148 +3,144 @@
     ViewData["Title"] = "ویرایش بارنامه";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/Waybill.css" asp-append-version="true" />
-}
+<div class="page-shell waybill-page">
+    <div class="section-header">
+        <div>
+            <h1 class="section-title">ویرایش بارنامه</h1>
+            <p class="section-subtitle">اطلاعات بارنامه را به‌روزرسانی کنید.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+    </div>
 
-<div class="container-fluid py-4 waybill-page">
-    <div class="card border-0 shadow-sm waybill-card">
-        <div class="card-body p-4 p-md-5">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-                <div>
-                    <h5 class="fw-bold mb-1 text-dark">ویرایش بارنامه</h5>
-                    <p class="text-muted small mb-0">اطلاعات بارنامه را به‌روزرسانی کنید.</p>
+    <div class="form-card">
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="section-title mb-2">اطلاعات بارنامه</div>
                 </div>
-                <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+                <div class="col-md-6 col-lg-4">
+                    <label asp-for="WaybillNumber" class="form-label"></label>
+                    <input asp-for="WaybillNumber" class="form-control" maxlength="50" />
+                    <span asp-validation-for="WaybillNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <label asp-for="IssueDate" class="form-label"></label>
+                    <input asp-for="IssueDate" type="date" class="form-control" />
+                    <span asp-validation-for="IssueDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <label asp-for="LoadingDate" class="form-label"></label>
+                    <input asp-for="LoadingDate" type="date" class="form-control" />
+                    <span asp-validation-for="LoadingDate" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12 mt-2">
+                    <div class="section-title mb-2">فرستنده و گیرنده</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="SenderName" class="form-label"></label>
+                    <input asp-for="SenderName" class="form-control" maxlength="150" />
+                    <span asp-validation-for="SenderName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ReceiverName" class="form-label"></label>
+                    <input asp-for="ReceiverName" class="form-control" maxlength="150" />
+                    <span asp-validation-for="ReceiverName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="OriginCity" class="form-label"></label>
+                    <input asp-for="OriginCity" class="form-control" maxlength="100" />
+                    <span asp-validation-for="OriginCity" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="DestinationCity" class="form-label"></label>
+                    <input asp-for="DestinationCity" class="form-control" maxlength="100" />
+                    <span asp-validation-for="DestinationCity" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12 mt-2">
+                    <div class="section-title mb-2">راننده و خودرو</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="DriverName" class="form-label"></label>
+                    <input asp-for="DriverName" class="form-control" maxlength="120" />
+                    <span asp-validation-for="DriverName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="DriverNationalId" class="form-label"></label>
+                    <input asp-for="DriverNationalId" class="form-control" maxlength="10" inputmode="numeric" />
+                    <span asp-validation-for="DriverNationalId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="DriverPhone" class="form-label"></label>
+                    <input asp-for="DriverPhone" class="form-control" maxlength="15" inputmode="tel" />
+                    <span asp-validation-for="DriverPhone" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="VehicleType" class="form-label"></label>
+                    <select asp-for="VehicleType" class="form-select">
+                        <option value="">انتخاب کنید</option>
+                        @foreach (var vehicleType in Model.AvailableVehicleTypes)
+                        {
+                            <option value="@vehicleType">@vehicleType</option>
+                        }
+                    </select>
+                    <span asp-validation-for="VehicleType" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="VehiclePlateNumber" class="form-label"></label>
+                    <input asp-for="VehiclePlateNumber" class="form-control" maxlength="20" />
+                    <span asp-validation-for="VehiclePlateNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CargoType" class="form-label"></label>
+                    <input asp-for="CargoType" class="form-control" maxlength="120" />
+                    <span asp-validation-for="CargoType" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12 mt-2">
+                    <div class="section-title mb-2">مالی و وضعیت پرداخت</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label asp-for="Weight" class="form-label"></label>
+                    <input asp-for="Weight" type="number" step="0.001" min="0.001" class="form-control" />
+                    <span asp-validation-for="Weight" class="text-danger small"></span>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label asp-for="TotalFreightCharges" class="form-label"></label>
+                    <input asp-for="TotalFreightCharges" type="number" step="0.01" min="0" class="form-control" />
+                    <span asp-validation-for="TotalFreightCharges" class="text-danger small"></span>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label asp-for="DriverCommission" class="form-label"></label>
+                    <input asp-for="DriverCommission" type="number" step="0.01" min="0" class="form-control" />
+                    <span asp-validation-for="DriverCommission" class="text-danger small"></span>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label asp-for="NetPayToDriver" class="form-label"></label>
+                    <input asp-for="NetPayToDriver" type="number" step="0.01" min="0" class="form-control" />
+                    <span asp-validation-for="NetPayToDriver" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <label asp-for="PaymentStatus" class="form-label"></label>
+                    <select asp-for="PaymentStatus" class="form-select">
+                        @foreach (var status in Model.AvailablePaymentStatuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                    <span asp-validation-for="PaymentStatus" class="text-danger small"></span>
+                </div>
             </div>
 
-            <form asp-action="Edit" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-                <input type="hidden" asp-for="Id" />
-
-                <div class="waybill-section-title">اطلاعات بارنامه</div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="WaybillNumber" class="form-label"></label>
-                        <input asp-for="WaybillNumber" class="form-control" maxlength="50" />
-                        <span asp-validation-for="WaybillNumber" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="IssueDate" class="form-label"></label>
-                        <input asp-for="IssueDate" type="date" class="form-control" />
-                        <span asp-validation-for="IssueDate" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="LoadingDate" class="form-label"></label>
-                        <input asp-for="LoadingDate" type="date" class="form-control" />
-                        <span asp-validation-for="LoadingDate" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="waybill-section-title">فرستنده و گیرنده</div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <label asp-for="SenderName" class="form-label"></label>
-                        <input asp-for="SenderName" class="form-control" maxlength="150" />
-                        <span asp-validation-for="SenderName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="ReceiverName" class="form-label"></label>
-                        <input asp-for="ReceiverName" class="form-control" maxlength="150" />
-                        <span asp-validation-for="ReceiverName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="OriginCity" class="form-label"></label>
-                        <input asp-for="OriginCity" class="form-control" maxlength="100" />
-                        <span asp-validation-for="OriginCity" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="DestinationCity" class="form-label"></label>
-                        <input asp-for="DestinationCity" class="form-control" maxlength="100" />
-                        <span asp-validation-for="DestinationCity" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="waybill-section-title">راننده و خودرو</div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="DriverName" class="form-label"></label>
-                        <input asp-for="DriverName" class="form-control" maxlength="120" />
-                        <span asp-validation-for="DriverName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="DriverNationalId" class="form-label"></label>
-                        <input asp-for="DriverNationalId" class="form-control" maxlength="10" inputmode="numeric" />
-                        <span asp-validation-for="DriverNationalId" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="DriverPhone" class="form-label"></label>
-                        <input asp-for="DriverPhone" class="form-control" maxlength="15" inputmode="tel" />
-                        <span asp-validation-for="DriverPhone" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="VehicleType" class="form-label"></label>
-                        <select asp-for="VehicleType" class="form-select">
-                            <option value="">انتخاب کنید</option>
-                            @foreach (var vehicleType in Model.AvailableVehicleTypes)
-                            {
-                                <option value="@vehicleType">@vehicleType</option>
-                            }
-                        </select>
-                        <span asp-validation-for="VehicleType" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="VehiclePlateNumber" class="form-label"></label>
-                        <input asp-for="VehiclePlateNumber" class="form-control" maxlength="20" />
-                        <span asp-validation-for="VehiclePlateNumber" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="CargoType" class="form-label"></label>
-                        <input asp-for="CargoType" class="form-control" maxlength="120" />
-                        <span asp-validation-for="CargoType" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="waybill-section-title">مالی و وضعیت پرداخت</div>
-                <div class="row g-3 mb-4">
-                    <div class="col-6 col-lg-3">
-                        <label asp-for="Weight" class="form-label"></label>
-                        <input asp-for="Weight" type="number" step="0.001" min="0.001" class="form-control" />
-                        <span asp-validation-for="Weight" class="text-danger small"></span>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <label asp-for="TotalFreightCharges" class="form-label"></label>
-                        <input asp-for="TotalFreightCharges" type="number" step="0.01" min="0" class="form-control" />
-                        <span asp-validation-for="TotalFreightCharges" class="text-danger small"></span>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <label asp-for="DriverCommission" class="form-label"></label>
-                        <input asp-for="DriverCommission" type="number" step="0.01" min="0" class="form-control" />
-                        <span asp-validation-for="DriverCommission" class="text-danger small"></span>
-                    </div>
-                    <div class="col-6 col-lg-3">
-                        <label asp-for="NetPayToDriver" class="form-label"></label>
-                        <input asp-for="NetPayToDriver" type="number" step="0.01" min="0" class="form-control" />
-                        <span asp-validation-for="NetPayToDriver" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="PaymentStatus" class="form-label"></label>
-                        <select asp-for="PaymentStatus" class="form-select">
-                            @foreach (var status in Model.AvailablePaymentStatuses)
-                            {
-                                <option value="@status">@status</option>
-                            }
-                        </select>
-                        <span asp-validation-for="PaymentStatus" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 pt-2 border-top">
-                    <a asp-action="Index" class="btn btn-outline-secondary px-4">انصراف</a>
-                    <button type="submit" class="btn btn-success px-4">ذخیره تغییرات</button>
-                </div>
-            </form>
-        </div>
+            <div class="action-bar mt-4 pt-3 border-top">
+                <a asp-action="Index" class="btn btn-outline-secondary px-4">انصراف</a>
+                <button type="submit" class="btn btn-success px-4">ذخیره تغییرات</button>
+            </div>
+        </form>
     </div>
 </div>
 

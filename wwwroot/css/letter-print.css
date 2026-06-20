@@ -122,6 +122,80 @@ body {
 
     /* جلوگیری از نصف شدن امضا یا پاراگراف‌ها در مرز صفحه */
     .letter-header, .letter-footer, .letter-body {
-        page-break-inside: avoid;
+    page-break-inside: avoid;
     }
+}
+
+html.theme-dark body,
+html[data-theme="dark"] body,
+body[data-theme="dark"] {
+    background:
+        radial-gradient(circle at top right, rgba(139, 92, 246, 0.16), transparent 28%),
+        radial-gradient(circle at left 20%, rgba(34, 211, 238, 0.1), transparent 22%),
+        linear-gradient(180deg, #081120 0%, #0f172a 100%) !important;
+    color: #edf4ff !important;
+}
+
+html.theme-dark .letter-container,
+html[data-theme="dark"] .letter-container,
+body[data-theme="dark"] .letter-container {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%) !important;
+    color: #0f172a !important;
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.34) !important;
+}
+
+html.theme-dark .letter-header,
+html.theme-dark .letter-body,
+html.theme-dark .letter-footer,
+html[data-theme="dark"] .letter-header,
+html[data-theme="dark"] .letter-body,
+html[data-theme="dark"] .letter-footer,
+body[data-theme="dark"] .letter-header,
+body[data-theme="dark"] .letter-body,
+body[data-theme="dark"] .letter-footer {
+    color: #0f172a !important;
+}
+
+html.theme-dark .letter-body .letter-content,
+html[data-theme="dark"] .letter-body .letter-content,
+body[data-theme="dark"] .letter-body .letter-content {
+    color: #0f172a !important;
+}
+
+html.theme-dark .letter-body .letter-content *,
+html[data-theme="dark"] .letter-body .letter-content *,
+body[data-theme="dark"] .letter-body .letter-content * {
+    color: inherit !important;
+    background-color: transparent !important;
+}
+
+html.theme-dark .letter-ai-panel,
+html[data-theme="dark"] .letter-ai-panel,
+body[data-theme="dark"] .letter-ai-panel {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    color: #edf4ff !important;
+}
+
+html.theme-dark .letter-ai-title,
+html[data-theme="dark"] .letter-ai-title,
+body[data-theme="dark"] .letter-ai-title {
+    color: #edf4ff !important;
+}
+
+html.theme-dark .letter-ai-panel .form-control,
+html.theme-dark .letter-ai-panel .btn,
+html[data-theme="dark"] .letter-ai-panel .form-control,
+html[data-theme="dark"] .letter-ai-panel .btn,
+body[data-theme="dark"] .letter-ai-panel .form-control,
+body[data-theme="dark"] .letter-ai-panel .btn {
+    background-color: rgba(26, 36, 61, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #edf4ff !important;
+}
+
+html.theme-dark .letter-ai-panel .text-muted,
+html[data-theme="dark"] .letter-ai-panel .text-muted,
+body[data-theme="dark"] .letter-ai-panel .text-muted {
+    color: #97a8c6 !important;
 }

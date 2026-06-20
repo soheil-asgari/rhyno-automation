@@ -24,7 +24,7 @@ namespace OfficeAutomation.Models
         public string? Notes { get; set; }
 
         [StringLength(30)]
-        public string WorkflowStatus { get; set; } = Models.WorkflowStatus.Approved;
+        public string WorkflowStatus { get; set; } = Models.WorkflowStatus.Draft;
 
         public int WarehouseId { get; set; }
 

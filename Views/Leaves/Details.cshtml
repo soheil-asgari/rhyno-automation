@@ -1,48 +1,54 @@
-﻿@model OfficeAutomation.Models.Leave
-
+@model OfficeAutomation.Models.Leave
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "جزئیات مرخصی";
+    var fullName = Model.User?.FullName ?? Model.User?.UserName ?? "کاربر";
 }
 
-<h1>Details</h1>
+<div class="page-shell leaves-page">
+    <div class="section-header">
+        <div>
+            <h1 class="section-title">جزئیات مرخصی</h1>
+            <p class="section-subtitle">نمایش اطلاعات درخواست با ساختار خوانا و سازگار با dark mode.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+    </div>
 
-<div>
-    <h4>Leave</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.User)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.User.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StartDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StartDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.EndDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.EndDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Reason)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Reason)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="form-card">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar-circle">@(!string.IsNullOrWhiteSpace(fullName) ? fullName.Substring(0, 1) : "؟")</div>
+                <div>
+                    <div class="fw-semibold fs-5">@fullName</div>
+                    <div class="text-muted small">@WorkflowStatus.Label(Model.Status)</div>
+                </div>
+            </div>
+            <span class="badge @WorkflowStatus.BadgeCss(Model.Status)">@WorkflowStatus.Label(Model.Status)</span>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="info-card">
+                    <div class="info-label">شروع</div>
+                    <div class="info-value">@Model.StartDate.ToString("yyyy/MM/dd")</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-card">
+                    <div class="info-label">پایان</div>
+                    <div class="info-value">@Model.EndDate.ToString("yyyy/MM/dd")</div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="info-card">
+                    <div class="info-label">علت</div>
+                    <div class="info-value">@Model.Reason</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar mt-4">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">ویرایش</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">بازگشت به لیست</a>
+        </div>
+    </div>
 </div>

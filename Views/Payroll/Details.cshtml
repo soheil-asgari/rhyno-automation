@@ -38,6 +38,20 @@
         </div>
     </div>
 
+    <div class="row g-2 mb-3">
+        @foreach (var summary in Model.ChangeSummary)
+        {
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-3">
+                        <small class="text-muted d-block">@summary.Label</small>
+                        <strong class="d-block text-@summary.Tone">@summary.Value</strong>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
     <div class="card border-0 shadow-sm">
         <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-center mb-2">

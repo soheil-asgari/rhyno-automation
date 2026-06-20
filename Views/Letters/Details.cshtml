@@ -1,4 +1,5 @@
-﻿@model OfficeAutomation.Models.Letter
+@model OfficeAutomation.Models.Letter
+@using OfficeAutomation.Utilities
 
 @{
     Layout = null;
@@ -7,12 +8,15 @@
     string senderJob = Model.Sender?.JobTitle ?? "سمت نامشخص";
     string? currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     bool canApprove = !Model.IsWorkflowCompleted && Model.ReceiverId == currentUserId;
-
-    // بهینه‌سازی: انتقال منطق تبدیل تاریخ به این قسمت برای تمیزی HTML
     var pc = new System.Globalization.PersianCalendar();
-    string shamsiDate = Model.SentDate != default
-        ? $"{pc.GetYear(Model.SentDate)}/{pc.GetMonth(Model.SentDate):D2}/{pc.GetDayOfMonth(Model.SentDate):D2}"
-        : "نامشخص";
+    string shamsiDate = Model.SentDate != default ? $"{pc.GetYear(Model.SentDate)}/{pc.GetMonth(Model.SentDate):D2}/{pc.GetDayOfMonth(Model.SentDate):D2}" : "نامشخص";
+    var timeline = new[]
+    {
+        new { Title = "ایجاد شد", State = "created", Active = true, Description = $"نامه توسط {senderName} ثبت شد." },
+        new { Title = "در مسیر", State = "routing", Active = Model.CurrentWorkflowStep > 0 || Model.IsWorkflowCompleted, Description = Model.IsWorkflowCompleted ? "فرآیند به پایان رسیده است." : $"مرحله فعلی: {Model.CurrentWorkflowStep}" },
+        new { Title = "خوانده شد", State = "read", Active = Model.IsRead, Description = Model.IsRead && Model.ReadDate.HasValue ? $"در {Model.ReadDate:yyyy/MM/dd HH:mm} دیده شد." : "هنوز خوانده نشده است." },
+        new { Title = "تایید نهایی", State = "approved", Active = Model.IsWorkflowCompleted, Description = Model.IsWorkflowCompleted ? "Workflow تکمیل شده است." : "در انتظار اقدام مرحله بعد." }
+    };
 }
 
 <!DOCTYPE html>
@@ -20,160 +24,149 @@
 <head>
     <meta charset="utf-8" />
     <title>نامه شماره @Model.Id</title>
-
-    <!-- Bootstrap RTL -->
+    <script>
+        (() => {
+            const html = document.documentElement;
+            const storedPreference = localStorage.getItem('rhyno.theme.preference');
+            const fallbackPreference = document.body?.getAttribute('data-theme') || 'System';
+            const normalized = (storedPreference || fallbackPreference || 'System').toLowerCase();
+            html.classList.remove('theme-light', 'theme-dark');
+            html.setAttribute('data-theme', normalized);
+            if (normalized === 'light') { html.classList.add('theme-light'); return; }
+            if (normalized === 'dark') { html.classList.add('theme-dark'); return; }
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
+        })();
+    </script>
     <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/css/bootstrap.rtl.min.css">
     <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
-
-    <!-- فایل استایل اختصاصی نامه که جدا شده است -->
     <link rel="stylesheet" href="~/css/letter-print.css" />
     <style>
-        .letter-ai-panel {
-            max-width: 900px;
-            margin: 18px auto;
-            padding: 14px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            background: #fff;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        .letter-detail-shell {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 24px;
         }
-
-        .letter-ai-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            font-weight: 800;
-            color: #1e293b;
-        }
-
-        .letter-ai-controls {
+        .workflow-grid {
             display: grid;
-            grid-template-columns: minmax(220px, 1fr) auto;
-            gap: 10px;
+            grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
+            gap: 18px;
         }
-
-        .letter-ai-panel input,
-        .letter-ai-panel textarea,
-        .letter-ai-panel button {
-            border-radius: 6px !important;
+        .timeline-card, .meta-card, .letter-ai-panel {
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            padding: 16px;
+            box-shadow: 0 12px 30px rgba(15,23,42,.06);
         }
-
-        #aiLetterReplyResult {
-            min-height: 140px;
-            margin-top: 10px;
-            line-height: 1.9;
-            resize: vertical;
-        }
-
-        .letter-ai-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        @@media print {
-            .letter-ai-panel {
-                display: none !important;
-            }
-        }
+        .timeline-step { display: flex; gap: 12px; margin-bottom: 12px; }
+        .timeline-dot { width: 12px; height: 12px; border-radius: 999px; margin-top: 6px; background: #cbd5e1; }
+        .timeline-step.active .timeline-dot { background: linear-gradient(135deg, #8b5cf6, #38bdf8); box-shadow: 0 0 0 4px rgba(139,92,246,.12); }
+        .timeline-step p { margin: 0; color: #64748b; }
+        .timeline-step strong { color: #0f172a; }
+        .letter-body .letter-content { overflow-wrap: anywhere; }
+        .letter-content img { max-width: 100%; height: auto; }
+        .letter-content table { width: 100%; }
+        .detail-toolbar { display:flex; flex-wrap:wrap; gap: 10px; justify-content: center; padding: 14px; background: rgba(15,23,42,.94); }
+        html.theme-dark .timeline-card, html.theme-dark .meta-card, html.theme-dark .letter-ai-panel,
+        html[data-theme="dark"] .timeline-card, html[data-theme="dark"] .meta-card, html[data-theme="dark"] .letter-ai-panel { background: rgba(15,23,42,.92); border-color: rgba(148,163,184,.18); color: #edf4ff; }
+        html.theme-dark .timeline-step strong, html.theme-dark .timeline-step p { color: #edf4ff; }
+        html.theme-dark .letter-container,
+        html[data-theme="dark"] .letter-container,
+        body[data-theme="dark"] .letter-container { background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%) !important; color: #0f172a !important; box-shadow: 0 24px 60px rgba(2, 6, 23, 0.34) !important; }
+        @@media (max-width: 992px) { .workflow-grid { grid-template-columns: 1fr; } }
+        @@media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
-
-    <!-- نوار ابزار (هنگام چاپ مخفی می‌شود) -->
-    <div class="no-print d-flex justify-content-center gap-2 py-3 bg-dark">
+    <div class="no-print detail-toolbar">
         @Html.AntiForgeryToken()
-        <button onclick="window.print()" class="btn btn-success btn-sm">
-            چاپ یا ذخیره PDF
-        </button>
+        <button onclick="window.print()" class="btn btn-success btn-sm">چاپ یا ذخیره PDF</button>
         <a href="/Letters/Index" class="btn btn-outline-light btn-sm">بازگشت به لیست</a>
-        <a href="@Url.Action("Create", new { replyToId = Model.Id })" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-reply-fill"></i> پاسخ به نامه
-        </a>
+        <a href="@Url.Action("Create", new { replyToId = Model.Id })" class="btn btn-outline-primary btn-sm"><i class="bi bi-reply-fill"></i> پاسخ به نامه</a>
     </div>
 
-    <!-- بدنه اصلی نامه -->
-    <main class="letter-container">
+    <div class="letter-detail-shell">
+        <div class="workflow-grid">
+            <main class="letter-container">
+                <header class="letter-header">
+                    <div class="header-info">
+                        <p><strong>شماره:</strong> @Model.Id.ToString("0000")</p>
+                        <p><strong>تاریخ:</strong> @shamsiDate</p>
+                        <p><strong>وضعیت:</strong> @WorkflowStatus.Label(Model.WorkflowStatus)</p>
+                    </div>
+                    <div class="text-center">
+                        <h5 class="fw-bold mb-1">بسمه تعالی</h5>
+                        <h4 class="fw-bold">پورتال سازمانی راینو</h4>
+                    </div>
+                    <div><img src="/images/logo.png" width="80" alt="لوگو سازمان"></div>
+                </header>
+                <article class="letter-body">
+                    <h5 class="fw-bold mb-4">@receiverPrefix @(Model.Receiver?.FullName ?? "....................")</h5>
+                    <h6 class="fw-bold mb-3">موضوع: @Model.Title</h6>
+                    <div class="letter-content">@Html.Raw(HtmlSanitizer.Sanitize(Model.Body))</div>
+                </article>
+                <footer class="letter-footer">
+                    <div class="signature-area">
+                        <p class="mb-1">با احترام</p>
+                        <p class="fw-bold mb-0">@senderName</p>
+                        <p class="small text-muted mb-2">@senderJob</p>
+                        @if (!string.IsNullOrEmpty(Model.Sender?.SignaturePath))
+                        {
+                            <img src="@Model.Sender.SignaturePath" class="signature-img" alt="امضای @senderName" />
+                        }
+                    </div>
+                </footer>
+            </main>
 
-        <header class="letter-header">
-            <div class="header-info">
-                <p><strong>شماره:</strong> @Model.Id.ToString("0000")</p>
-                <p><strong>تاریخ:</strong> @shamsiDate</p>
-                <p><strong>پیوست:</strong> ندارد</p>
-            </div>
-            <div class="text-center">
-                <h5 class="fw-bold mb-1">بسمه تعالی</h5>
-                <h4 class="fw-bold">پورتال سازمانی راینو</h4>
-            </div>
-            <div>
-                <img src="/images/logo.png" width="80" alt="لوگو سازمان">
-            </div>
-        </header>
+            <aside class="d-grid gap-3">
+                <section class="meta-card">
+                    <h5 class="fw-bold mb-3">خلاصه وضعیت</h5>
+                    <div class="d-grid gap-2">
+                        <div><strong>خوانده شده:</strong> @(Model.IsRead ? "بله" : "خیر")</div>
+                        <div><strong>مرحله گردش:</strong> @(Model.IsWorkflowCompleted ? "تکمیل شده" : Model.CurrentWorkflowStep.ToString())</div>
+                        <div><strong>گیرنده فعلی:</strong> @(Model.Receiver?.FullName ?? "نامشخص")</div>
+                        <div><strong>گیرنده نهایی:</strong> @(Model.FinalReceiver?.FullName ?? "نامشخص")</div>
+                    </div>
+                </section>
 
-        <article class="letter-body">
-            <h5 class="fw-bold mb-4">
-                @receiverPrefix @(Model.Receiver?.FullName ?? "....................")
-            </h5>
+                <section class="timeline-card">
+                    <h5 class="fw-bold mb-3">Timeline گردش نامه</h5>
+                    @foreach (var step in timeline)
+                    {
+                        <div class="timeline-step @(step.Active ? "active" : "")">
+                            <div class="timeline-dot"></div>
+                            <div>
+                                <strong>@step.Title</strong>
+                                <p>@step.Description</p>
+                            </div>
+                        </div>
+                    }
+                </section>
 
-            <h6 class="fw-bold mb-3">موضوع: @Model.Title</h6>
-
-            <div class="letter-content">
-                @Html.Raw(Model.Body)
-            </div>
-        </article>
-
-        <footer class="letter-footer">
-            <div class="signature-area">
-                <p class="mb-1">با احترام</p>
-                <p class="fw-bold mb-0">@senderName</p>
-                <p class="small text-muted mb-2">@senderJob</p>
-
-                @if (!string.IsNullOrEmpty(Model.Sender?.SignaturePath))
-                {
-                    <img src="@Model.Sender.SignaturePath" class="signature-img" alt="امضای @senderName" />
-                }
-            </div>
-        </footer>
-
-    </main>
-
-    <section class="letter-ai-panel no-print">
-        <div class="letter-ai-title">
-            <i class="bi bi-stars"></i>
-            <span>پاسخ و تأییدیه با دستیار هوش مصنوعی</span>
+                <section class="letter-ai-panel no-print">
+                    <div class="letter-ai-title"><i class="bi bi-stars"></i><span>پاسخ و تأییدیه با دستیار هوش مصنوعی</span></div>
+                    <div class="letter-ai-controls">
+                        <input id="aiReplyIntent" class="form-control" value="این نامه از نظر من تایید است" placeholder="نظر خود را بنویسید...">
+                        <button id="btnGenerateLetterReply" type="button" class="btn btn-primary" data-letter-id="@Model.Id"><i class="bi bi-magic"></i> تولید پاسخ</button>
+                    </div>
+                    <textarea id="aiLetterReplyResult" class="form-control" placeholder="متن پیشنهادی هوش مصنوعی اینجا نمایش داده می‌شود."></textarea>
+                    <div class="letter-ai-actions">
+                        <small class="text-muted">ارسال نهایی باید بعد از بازبینی کاربر انجام شود.</small>
+                        @if (canApprove)
+                        {
+                            <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> تایید و ارجاع نامه</button>
+                            </form>
+                        }
+                    </div>
+                </section>
+            </aside>
         </div>
-        <div class="letter-ai-controls">
-            <input id="aiReplyIntent" class="form-control" value="این نامه از نظر من تایید است" placeholder="نظر خود را بنویسید؛ مثلاً: تایید است، نیاز به اصلاح دارد، پاسخ رسمی آماده کن...">
-            <button id="btnGenerateLetterReply" type="button" class="btn btn-primary" data-letter-id="@Model.Id">
-                <i class="bi bi-magic"></i>
-                تولید پاسخ
-            </button>
-        </div>
-        <textarea id="aiLetterReplyResult" class="form-control" placeholder="متن پیشنهادی هوش مصنوعی اینجا نمایش داده می‌شود. قبل از ارسال یا تأیید، متن را بازبینی کنید."></textarea>
-        <div class="letter-ai-actions">
-            <small class="text-muted">ارسال نهایی باید بعد از بازبینی کاربر انجام شود.</small>
-            @if (canApprove)
-            {
-                <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="m-0">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check2-circle"></i>
-                        تایید و ارجاع نامه
-                    </button>
-                </form>
-            }
-        </div>
-    </section>
+    </div>
 
-    <!-- انتقال دیتای سرورساید به جاوااسکریپت -->
-    <script>
-        window.allUsers = @Html.Raw(ViewBag.UsersData ?? "[]");
-    </script>
-
-    <!-- فایل اسکریپت اختصاصی که جدا شده است -->
+    <script>window.allUsers = @Html.Raw(ViewBag.UsersData ?? "[]");</script>
     <script src="~/js/letter-form.js"></script>
     <script src="~/js/letters-ai.js"></script>
 </body>

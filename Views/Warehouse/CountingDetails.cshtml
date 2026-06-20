@@ -1,0 +1,135 @@
+@model WarehouseCountingDetailsVM
+@{
+    ViewData["Title"] = "جزئیات انبارگردانی";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">جزئیات انبارگردانی</h5>
+            <p class="text-muted small mb-0">ردگیری سند، اختلاف‌ها، تایید و ثبت‌های موجودی</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Countings" class="btn btn-outline-secondary btn-sm">بازگشت</a>
+            <a asp-action="CreateCounting" class="btn btn-primary btn-sm">ثبت انبارگردانی جدید</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">شماره سند</div><div class="fw-bold">@Model.Counting.DocumentNumber</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">تاریخ</div><div class="fw-bold">@Model.Counting.DateShamsi</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">انبار</div><div class="fw-bold">@Model.Counting.Warehouse.Name</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">وضعیت</div><div class="fw-bold"><span class="badge @(Model.Counting.Status == "Approved" ? "text-bg-success" : "text-bg-secondary")">@Model.Counting.Status</span></div></div></div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">ردیف‌ها</h6>
+                        <div class="small text-muted">تعداد ردیف: @Model.Counting.Items.Count</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>کالا</th>
+                                    <th>سیستمی</th>
+                                    <th>فیزیکی</th>
+                                    <th>اختلاف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Counting.Items)
+                                {
+                                    <tr>
+                                        <td>@item.Product.Name <div class="text-muted small">@item.Product.Code</div></td>
+                                        <td>@item.SystemQuantity.ToString("N3")</td>
+                                        <td>@item.PhysicalQuantity.ToString("N3")</td>
+                                        <td class="@(item.DiscrepancyQuantity >= 0 ? "text-success" : "text-danger")">@item.DiscrepancyQuantity.ToString("N3")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">اطلاعات تکمیلی</h6>
+                    <div class="small text-muted">یادداشت</div>
+                    <div class="mb-2">@(!string.IsNullOrWhiteSpace(Model.Counting.Notes) ? Model.Counting.Notes : "-")</div>
+                    <div class="small text-muted">زمان ثبت</div>
+                    <div class="mb-2">@Model.Counting.CreatedAt.ToString("yyyy/MM/dd HH:mm")</div>
+                    <div class="small text-muted">زمان تایید</div>
+                    <div>@((Model.Counting.ApprovedAt?.ToString("yyyy/MM/dd HH:mm")) ?? "-")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">timeline رویدادها</h6>
+                    <div class="d-grid gap-2">
+                        @foreach (var item in Model.AuditEntries)
+                        {
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <strong>@item.Caption</strong>
+                                    <small class="text-muted">@item.OccurredAt.LocalDateTime.ToString("yyyy/MM/dd HH:mm")</small>
+                                </div>
+                                <div class="small text-muted mt-1">@(!string.IsNullOrWhiteSpace(item.ActorName) ? item.ActorName : "کاربر نامشخص")</div>
+                            </div>
+                        }
+                        @if (!Model.AuditEntries.Any())
+                        {
+                            <div class="text-muted small">ردی از تغییرات ثبت نشده است.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">ledger موجودی</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>کالا</th>
+                                    <th>انبار</th>
+                                    <th>ورود</th>
+                                    <th>خروج</th>
+                                    <th>مانده</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.MovementEntries)
+                                {
+                                    <tr>
+                                        <td>@item.ProductName <div class="text-muted small">@item.ProductCode</div></td>
+                                        <td>@item.WarehouseName</td>
+                                        <td>@item.QuantityIn.ToString("N3")</td>
+                                        <td>@item.QuantityOut.ToString("N3")</td>
+                                        <td>@item.BalanceAfter.ToString("N3")</td>
+                                    </tr>
+                                }
+                                @if (!Model.MovementEntries.Any())
+                                {
+                                    <tr><td colspan="5" class="text-center text-muted py-3">ledger برای این سند ثبت نشده است.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

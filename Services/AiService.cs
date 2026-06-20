@@ -9,6 +9,10 @@ public class AiService
     public AiService(IConfiguration config)
     {
         var apiKey = config["OpenAI:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
+        }
 
         var options = new OpenAIClientOptions
         {

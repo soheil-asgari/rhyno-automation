@@ -2,6 +2,12 @@
 @{
     ViewData["Title"] = "لیست بیمه";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var quickActions = new List<OfficeAutomation.Models.FinancialQuickActionVM>
+    {
+        new() { Title = "لیست جدید", Description = "ساخت لیست بیمه جدید", Url = Url.Action("Create", "Bimeh") ?? "#", Icon = "bi-plus-circle", Tone = "primary" },
+        new() { Title = "هاب مالی", Description = "بازگشت به هاب مالی", Url = Url.Action("Dashboard", "Financial") ?? "#", Icon = "bi-speedometer2", Tone = "success" },
+        new() { Title = "لیست حقوق", Description = "مشاهده هم‌راستا با حقوق", Url = Url.Action("Index", "Payroll") ?? "#", Icon = "bi-cash-stack", Tone = "warning" }
+    };
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
@@ -11,11 +17,25 @@
     <div class="d-flex justify-content-between align-items-center mb-4 bimeh-header">
         <div>
             <h5 class="fw-bold mb-1 text-dark">مدیریت لیست بیمه</h5>
-            <p class="text-muted small mb-0">لیست و وضعیت درخواست‌های ثبت شده در سیستم</p>
+            <p class="text-muted small mb-0">لیست و وضعیت درخواست‌های ثبت‌شده در سیستم</p>
         </div>
         <a class="btn btn-primary px-4 shadow-sm bimeh-new-btn" asp-action="Create">
             <i class="bi bi-plus-lg ms-1"></i> لیست جدید
         </a>
+    </div>
+
+    @if (Model.QualityWarnings.Any())
+    {
+        <div class="alert alert-warning small mb-3">
+            @foreach (var warning in Model.QualityWarnings)
+            {
+                <div>@warning</div>
+            }
+        </div>
+    }
+
+    <div class="mb-3">
+        <partial name="_QuickActionsGrid" model="quickActions" />
     </div>
 
     <div class="card border-0 shadow-sm bimeh-card">
@@ -51,6 +71,7 @@
             <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
                 <small class="text-muted">تعداد کل: @Model.TotalCount</small>
                 <small class="text-muted">نتایج فیلتر: @Model.FilteredCount</small>
+                <small class="text-muted">گروه تکراری: @Model.DuplicateGroupCount</small>
             </div>
         </div>
         <div class="table-responsive">
@@ -94,7 +115,7 @@
                     {
                         <tr>
                             <td colspan="6" class="text-center py-4 text-muted">
-                                هنوز لیست بیمه‌ای ثبت نشده است.
+                                <partial name="_EmptyState" model='new { Icon = "bi-shield-lock", Title = "هنوز لیست بیمه‌ای ثبت نشده است.", Description = "از دکمه لیست جدید برای شروع استفاده کنید." }' />
                             </td>
                         </tr>
                     }

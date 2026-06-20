@@ -79,7 +79,7 @@ namespace OfficeAutomation.Filters
                     "Warehouse" => ["Warehouse.View"],
                     "HumanCapital" => ["HR.View"],
                     "SystemSettings" => ["SystemSettings.View"],
-                    "WorkflowAdministration" => ["Security.Manage"],
+                    "Security" => ["Security.Manage"],
                     _ => [area]
                 };
             }

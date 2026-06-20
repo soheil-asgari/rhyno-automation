@@ -19,5 +19,11 @@ namespace OfficeAutomation.Models
         public List<InsuranceList> Items { get; set; } = new List<InsuranceList>();
 
         public List<string> AvailableStatuses { get; set; } = new List<string>();
+
+        public int DuplicateGroupCount { get; set; }
+
+        public int MissingHrLinkCount { get; set; }
+
+        public List<string> QualityWarnings { get; set; } = new List<string>();
     }
 }

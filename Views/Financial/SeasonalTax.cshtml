@@ -1,26 +1,20 @@
 @model SeasonalTaxReportVM
 @{
-    ViewData["Title"] = "گزارش معاملات فصلی - ماده ۱۶۹";
+    ViewData["Title"] = "گزارش معاملات فصلی";
     var selectableYears = Enumerable.Range(Model.Year - 3, 7).Where(item => item >= 1300).OrderByDescending(item => item).ToList();
+    var totalRows = Model.Rows.Count;
+    var missingNationalIdCount = Model.Rows.Count(item => string.IsNullOrWhiteSpace(item.NationalId));
 }
 
-@section Styles {
-    <style>
-        .seasonal-page { direction: rtl; text-align: right; }
-        .seasonal-card { border-radius: 12px; }
-        .seasonal-table { font-size: .8rem; }
-    </style>
-}
-
-<div class="container-fluid py-4 seasonal-page">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+<div class="container-fluid py-4 seasonal-page" dir="rtl">
+    <div class="section-header mb-3">
         <div>
-            <h5 class="fw-bold mb-1">گزارش معاملات فصلی - ماده ۱۶۹</h5>
-            <p class="text-muted small mb-0">فیلتر معاملات خرید/فروش بر اساس سال و فصل شمسی</p>
+            <h1 class="section-title">گزارش معاملات فصلی</h1>
+            <p class="section-subtitle">کنترل مجموع، داده‌های ناقص و خروجی آماده برای ارسال</p>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm seasonal-card mb-3">
+    <div class="card border-0 shadow-sm mb-3">
         <div class="card-body p-3">
             <form method="get" asp-action="SeasonalTax" class="row g-2 align-items-end">
                 <div class="col-6 col-md-2">
@@ -51,19 +45,50 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm seasonal-card">
-        <div class="card-body p-2 border-bottom">
-            <small class="text-muted">جمع جزء: <strong>@Model.TotalAmount.ToString("N0")</strong> | جمع VAT: <strong>@Model.TotalVat.ToString("N0")</strong></small>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">جمع مبلغ</div>
+                    <div class="fs-5 fw-bold">@Model.TotalAmount.ToString("N0")</div>
+                </div>
+            </div>
         </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">جمع VAT</div>
+                    <div class="fs-5 fw-bold">@Model.TotalVat.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">ردیفهای ناقص</div>
+                    <div class="fs-5 fw-bold @(missingNationalIdCount > 0 ? "text-warning" : "text-success")">@missingNationalIdCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (missingNationalIdCount > 0)
+    {
+        <div class="alert alert-warning small mb-3">
+            تعدادی از ردیف‌ها شناسه ملی / اقتصادی ندارند. برای ارسال قابل‌دفاع، این داده‌ها باید تکمیل شوند.
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0 seasonal-table">
+            <table class="table table-sm table-hover align-middle mb-0" style="font-size:.82rem;">
                 <thead>
                     <tr>
                         <th>نوع معامله</th>
                         <th>نام طرف معامله</th>
                         <th>کد ملی / شناسه اقتصادی</th>
                         <th>جمع جزء</th>
-                        <th>VAT 10%</th>
+                        <th>VAT</th>
                         <th>جمع کل</th>
                     </tr>
                 </thead>
@@ -73,7 +98,7 @@
                     @foreach (var row in Model.Rows)
                     {
                         var grandTotal = row.Amount + row.Vat;
-                        <tr>
+                        <tr class="@(string.IsNullOrWhiteSpace(row.NationalId) ? "table-warning" : "")">
                             <td><span class="badge @(row.TransactionType == "فروش" ? "text-bg-success" : "text-bg-primary")">@row.TransactionType</span></td>
                             <td>@row.PartyName</td>
                             <td>@(row.NationalId ?? "-")</td>
@@ -85,7 +110,7 @@
                 }
                 else
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-4">داده‌ای برای بازه انتخابی یافت نشد.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">برای فصل انتخاب‌شده داده‌ای یافت نشد.</td></tr>
                 }
                 </tbody>
             </table>

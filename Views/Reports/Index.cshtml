@@ -1,36 +1,68 @@
 @model ReportsIndexViewModel
 @{
-    ViewData["Title"] = "گزارش‌ساز و خروجی‌ها";
+    ViewData["Title"] = "گزارش‌ها و خروجی‌ها";
 }
 
-<div class="container-fluid py-3" dir="rtl">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+<div class="page-shell reports-page" dir="rtl">
+    <div class="section-header">
         <div>
-            <h5 class="fw-bold mb-1">گزارش‌ساز و خروجی‌ها</h5>
-            <p class="text-muted small mb-0">مرکز واحد خروجی Excel، چاپ و گزارش‌های استاندارد بخش‌های اصلی</p>
+            <h1 class="section-title">گزارش‌ها و خروجی‌ها</h1>
+            <p class="section-subtitle">گزارش‌ها را بر اساس سطح عملیاتی، مدیریتی و انطباق ببینید؛ نه فقط به‌عنوان فایل خروجی.</p>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-dark" onclick="window.print()">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
             <i class="bi bi-printer"></i> چاپ صفحه
         </button>
     </div>
 
-    <div class="row g-3">
-        @foreach (var module in Model.Modules)
+    <div class="reports-summary-grid mb-3">
+        @foreach (var card in Model.SummaryCards)
         {
-            <div class="col-12 col-lg-6">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-start gap-2 mb-3">
-                            <div class="rounded-2 bg-@module.Tone bg-opacity-10 text-@module.Tone d-flex align-items-center justify-content-center" style="width:34px;height:34px;">
+            <div class="report-summary-card report-@card.Tone">
+                <div class="summary-label">@card.Title</div>
+                <div class="summary-value">@card.Value</div>
+                <div class="summary-desc">@card.Description</div>
+            </div>
+        }
+    </div>
+
+    <div class="report-filter-bar mb-4">
+        <div class="filter-title">Preset filter</div>
+        <div class="filter-actions">
+            @foreach (var preset in Model.FilterPresets)
+            {
+                <a href="@preset.Url" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-funnel"></i> @preset.Label
+                </a>
+            }
+        </div>
+    </div>
+
+    @foreach (var reportSection in Model.Sections)
+    {
+        <section class="report-section mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h2 class="report-section-title">@reportSection.Title</h2>
+                    <p class="report-section-desc">@reportSection.Description</p>
+                </div>
+                <span class="badge text-bg-@reportSection.Tone">@reportSection.Title</span>
+            </div>
+
+            <div class="reports-grid">
+                @foreach (var module in reportSection.Modules)
+                {
+                    <article class="report-module-card">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="report-icon report-@module.Tone">
                                 <i class="bi @module.Icon"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-1">@module.Title</h6>
-                                <p class="text-muted small mb-0">@module.Description</p>
+                                <h3 class="report-title">@module.Title</h3>
+                                <p class="report-description">@module.Description</p>
                             </div>
                         </div>
 
-                        <div class="d-flex flex-wrap gap-2">
+                        <div class="report-actions">
                             @foreach (var action in module.Actions)
                             {
                                 var icon = action.Kind == "Excel" ? "bi-file-earmark-excel" : action.Kind == "Search" ? "bi-search" : "bi-bar-chart";
@@ -39,9 +71,110 @@
                                 </a>
                             }
                         </div>
-                    </div>
-                </div>
+                    </article>
+                }
             </div>
-        }
-    </div>
+        </section>
+    }
+
+    <section class="report-section">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h2 class="report-section-title">Legacy modules</h2>
+                <p class="report-section-desc">خروجی‌های فعلی برای سازگاری حفظ شده‌اند، اما بهتر است تدریجاً به viewهای تحلیلی منتقل شوند.</p>
+            </div>
+        </div>
+        <div class="reports-grid">
+            @foreach (var module in Model.Modules)
+            {
+                <article class="report-module-card">
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <div class="report-icon report-@module.Tone">
+                            <i class="bi @module.Icon"></i>
+                        </div>
+                        <div>
+                            <h3 class="report-title">@module.Title</h3>
+                            <p class="report-description">@module.Description</p>
+                        </div>
+                    </div>
+
+                    <div class="report-actions">
+                        @foreach (var action in module.Actions)
+                        {
+                            var icon = action.Kind == "Excel" ? "bi-file-earmark-excel" : action.Kind == "Search" ? "bi-search" : "bi-bar-chart";
+                            <a href="@action.Url" class="btn btn-sm @(action.Kind == "Excel" ? "btn-outline-success" : "btn-outline-primary")">
+                                <i class="bi @icon"></i> @action.Label
+                            </a>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
 </div>
+
+<style>
+    .reports-summary-grid, .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .report-summary-card, .report-module-card {
+        border: 1px solid var(--ds-border);
+        border-radius: 18px;
+        padding: 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+    .summary-label { font-size: .78rem; color: var(--text-muted); margin-bottom: 6px; }
+    .summary-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); }
+    .summary-desc { font-size: .84rem; color: var(--text-muted); margin-top: 6px; }
+    .report-filter-bar {
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        align-items:center;
+        flex-wrap:wrap;
+        border:1px dashed var(--ds-border);
+        border-radius:16px;
+        padding:14px 16px;
+        background: rgba(148,163,184,.06);
+    }
+    .filter-title, .report-section-title { font-weight: 800; color: var(--text-main); }
+    .report-section-desc { margin: 0; color: var(--text-muted); font-size: .88rem; }
+    .report-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        flex:0 0 auto;
+    }
+    .report-success { background: rgba(16,185,129,.12); color:#059669; }
+    .report-primary { background: rgba(59,130,246,.12); color:#2563eb; }
+    .report-danger { background: rgba(239,68,68,.12); color:#dc2626; }
+    .report-warning { background: rgba(245,158,11,.12); color:#d97706; }
+    .report-title { margin: 0; font-size: 1rem; font-weight: 800; color: var(--text-main); }
+    .report-description { margin: 0; color: var(--text-muted); font-size: .86rem; }
+    .report-actions { display:flex; flex-wrap: wrap; gap: 8px; }
+    .report-primary { background: rgba(59,130,246,.12); color:#2563eb; }
+    .report-success { background: rgba(16,185,129,.12); color:#059669; }
+    .report-warning { background: rgba(245,158,11,.12); color:#d97706; }
+    .report-danger { background: rgba(239,68,68,.12); color:#dc2626; }
+    html.theme-dark .report-summary-card,
+    html.theme-dark .report-module-card,
+    html[data-theme="dark"] .report-summary-card,
+    html[data-theme="dark"] .report-module-card,
+    body[data-theme="dark"] .report-summary-card,
+    body[data-theme="dark"] .report-module-card {
+        background: linear-gradient(180deg, rgba(15,23,42,.96), rgba(17,24,39,.94));
+        border-color: var(--ds-border-strong);
+    }
+    @@media (max-width: 1200px) {
+        .reports-summary-grid, .reports-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 768px) {
+        .reports-summary-grid, .reports-grid { grid-template-columns: 1fr; }
+    }
+</style>

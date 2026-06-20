@@ -27,6 +27,9 @@ namespace OfficeAutomation.Models
         [Display(Name = "وضعیت")]
         public string? Status { get; set; }
 
+        [Display(Name = "نمای وضعیت")]
+        public string? WorkflowView { get; set; }
+
         [Display(Name = "دپارتمان")]
         public int? DepartmentId { get; set; }
 
@@ -206,6 +209,10 @@ namespace OfficeAutomation.Models
 
         public List<HumanCapitalStatusHistoryVM> StatusHistories { get; set; } = new();
 
+        public List<HumanCapitalTimelineItemVM> TimelineItems { get; set; } = new();
+
+        public List<HumanCapitalAuditTrailItemVM> AuditTrailItems { get; set; } = new();
+
         public HumanCapitalSalaryIncreaseVM SalaryIncrease { get; set; } = new();
 
         public HumanCapitalStatusChangeVM StatusChange { get; set; } = new();
@@ -241,6 +248,28 @@ namespace OfficeAutomation.Models
         public string? ExitReason { get; set; }
 
         public DateTime CreatedAt { get; set; }
+    }
+
+    public class HumanCapitalTimelineItemVM
+    {
+        public DateTime SortDate { get; set; }
+
+        public string Title { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public string Tone { get; set; } = "neutral";
+    }
+
+    public class HumanCapitalAuditTrailItemVM
+    {
+        public DateTimeOffset When { get; set; }
+
+        public string Title { get; set; } = string.Empty;
+
+        public string Detail { get; set; } = string.Empty;
+
+        public string Source { get; set; } = string.Empty;
     }
 
     public class HumanCapitalSalaryIncreaseVM

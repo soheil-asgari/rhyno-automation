@@ -63,6 +63,10 @@ namespace OfficeAutomation.Models
         [Display(Name = "مقدار")]
         public decimal Quantity { get; set; }
 
+        [StringLength(600)]
+        [Display(Name = "توضیح")]
+        public string? Description { get; set; }
+
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
 
         public List<SelectListItem> ProductOptions { get; set; } = new();

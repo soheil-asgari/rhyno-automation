@@ -40,6 +40,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditContextProvider, HttpAuditContextProvider>();
 builder.Services.AddScoped<IPermissionAccessService, PermissionAccessService>();
 builder.Services.AddScoped<ICurrentUserContextAccessor, CurrentUserContextAccessor>();
+builder.Services.AddScoped<IAuthorizationFacade, AuthorizationFacade>();
 builder.Services.AddScoped<IDataIsolationService, DataIsolationService>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();

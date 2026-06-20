@@ -1,0 +1,21 @@
+@{
+    var title = ViewData["SectionTitle"] as string ?? string.Empty;
+    var subtitle = ViewData["SectionSubtitle"] as string ?? string.Empty;
+    var actionUrl = ViewData["SectionActionUrl"] as string;
+    var actionText = ViewData["SectionActionText"] as string;
+    var actionCss = ViewData["SectionActionCss"] as string ?? "btn btn-primary";
+}
+
+<div class="section-header">
+    <div>
+        <h1 class="section-title">@title</h1>
+        @if (!string.IsNullOrWhiteSpace(subtitle))
+        {
+            <p class="section-subtitle">@subtitle</p>
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(actionUrl) && !string.IsNullOrWhiteSpace(actionText))
+    {
+        <a href="@actionUrl" class="@actionCss">@actionText</a>
+    }
+</div>

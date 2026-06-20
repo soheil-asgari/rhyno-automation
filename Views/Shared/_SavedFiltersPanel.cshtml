@@ -1,0 +1,24 @@
+@{
+    var panelTitle = ViewData["SavedFiltersTitle"] as string ?? "فیلترهای ذخیره‌شده";
+    var panelSubtitle = ViewData["SavedFiltersSubtitle"] as string ?? string.Empty;
+    var saveButtonId = ViewData["SavedFiltersSaveButtonId"] as string ?? string.Empty;
+    var clearButtonId = ViewData["SavedFiltersClearButtonId"] as string ?? string.Empty;
+    var containerId = ViewData["SavedFiltersContainerId"] as string ?? string.Empty;
+}
+
+<div class="form-card mb-3 saved-filters-panel">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
+        <div>
+            <h5 class="mb-1">@panelTitle</h5>
+            @if (!string.IsNullOrWhiteSpace(panelSubtitle))
+            {
+                <div class="text-muted small">@panelSubtitle</div>
+            }
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="@saveButtonId">ذخیره فیلتر</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="@clearButtonId">پاک کردن</button>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2" id="@containerId"></div>
+</div>

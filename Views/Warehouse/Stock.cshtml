@@ -1,63 +1,107 @@
 @model InventoryStockIndexVM
 @{
-    ViewData["Title"] = "موجودی انبار";
+    ViewData["Title"] = "موجودی جاری";
     var warehouseOptions = ViewBag.WarehouseOptions as List<SelectListItem> ?? new();
 }
 
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">موجودی جاری انبار</h6>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">موجودی جاری انبارها</h5>
+            <div class="text-muted small">کالاهای بحرانی و موجودی‌های فعلی را با فیلترهای سریع ببین.</div>
+        </div>
         <div class="d-flex gap-2">
-            <a asp-controller="Financial" asp-action="ExportStockExcel" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
+            <a asp-controller="Financial" asp-action="ExportStockExcel" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-success btn-sm">خروجی اکسل</a>
+            <a asp-action="Index" class="btn btn-primary btn-sm">هاب انبار</a>
+        </div>
+    </div>
+
+    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترهای موجودی را ذخیره کن."; ViewData["SavedFiltersSaveButtonId"] = "stockSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "stockClearFilter"; ViewData["SavedFiltersContainerId"] = "stockSavedFilters"; }
+    <partial name="_SavedFiltersPanel" />
+
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+            <form method="get" class="row g-3 align-items-end" data-warehouse-filter-form data-filters-key="warehouse-stock" data-save-button-id="stockSaveFilter" data-clear-button-id="stockClearFilter" data-presets-container-id="stockSavedFilters">
+                <div class="col-12 col-md-4">
+                    <label asp-for="SearchTerm" class="form-label small mb-1">جستجو</label>
+                    <input asp-for="SearchTerm" class="form-control" data-filter-key="searchTerm" placeholder="نام کالا یا کد کالا" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label asp-for="WarehouseId" class="form-label small mb-1">انبار</label>
+                    <select asp-for="WarehouseId" class="form-select" data-filter-key="warehouseId">
+                        <option value="">همه انبارها</option>
+                        @foreach (var option in warehouseOptions)
+                        {
+                            <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <div class="form-check mt-4">
+                        <input asp-for="CriticalOnly" class="form-check-input" data-filter-key="criticalOnly" />
+                        <label asp-for="CriticalOnly" class="form-check-label">فقط کالاهای بحرانی</label>
+                    </div>
+                </div>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">اعمال</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <div class="card border-0 shadow-sm">
-        <div class="card-body p-3 border-bottom">
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label asp-for="SearchTerm" class="form-label small text-muted mb-1">جستجو</label>
-                    <input asp-for="SearchTerm" class="form-control form-control-sm" placeholder="نام یا کد کالا" />
-                </div>
-                <div class="col-6 col-md-3">
-                    <label asp-for="WarehouseId" class="form-label small text-muted mb-1">انبار</label>
-                    <select asp-for="WarehouseId" asp-items="warehouseOptions" class="form-select form-select-sm">
-                        <option value="">همه انبارها</option>
-                    </select>
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-sm btn-primary">اعمال</button>
-                </div>
-            </form>
-        </div>
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead><tr><th>کد</th><th>کالا</th><th>واحد</th><th>انبار</th><th>حداقل</th><th>ورودی</th><th>خروجی</th><th>موجودی فعلی</th><th>آخرین بروزرسانی</th></tr></thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>کد</th>
+                        <th>کالا</th>
+                        <th>واحد</th>
+                        <th>انبار</th>
+                        <th>حداقل</th>
+                        <th>آخرین قیمت</th>
+                        <th>میانگین موزون</th>
+                        <th>ارزش موجودی</th>
+                        <th class="text-success">ورودی</th>
+                        <th class="text-danger">خروجی</th>
+                        <th>موجودی فعلی</th>
+                        <th>آخرین بروزرسانی</th>
+                    </tr>
+                </thead>
                 <tbody>
-                @if (Model.Items.Any())
-                {
-                    @foreach (var item in Model.Items)
+                    @if (Model.Items.Any())
                     {
-                        var isLowStock = item.CurrentQuantity <= item.MinimumStock;
+                        @foreach (var item in Model.Items)
+                        {
+                            var isLowStock = item.CurrentQuantity <= item.MinimumStock;
+                            <tr class="@(isLowStock ? "table-warning" : string.Empty)">
+                                <td>@item.ProductCode</td>
+                                <td>@item.ProductName</td>
+                                <td>@item.Unit</td>
+                                <td>@item.WarehouseName</td>
+                                <td>@item.MinimumStock</td>
+                                <td>@item.LastPurchasePrice.ToString("N2")</td>
+                                <td>@item.AverageCost.ToString("N2")</td>
+                                <td>@item.InventoryValue.ToString("N2")</td>
+                                <td class="text-success">@item.TotalInput.ToString("N3")</td>
+                                <td class="text-danger">@item.TotalOutput.ToString("N3")</td>
+                                <td class="fw-semibold @(isLowStock ? "text-danger" : "")">@item.CurrentQuantity.ToString("N3")</td>
+                                <td>@item.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
                         <tr>
-                            <td>@item.ProductCode</td>
-                            <td>@item.ProductName</td>
-                            <td>@item.Unit</td>
-                            <td>@item.WarehouseName</td>
-                            <td>@item.MinimumStock</td>
-                            <td class="text-success">@item.TotalInput.ToString("N3")</td>
-                            <td class="text-danger">@item.TotalOutput.ToString("N3")</td>
-                            <td class="fw-semibold @(isLowStock ? "text-danger" : "")">@item.CurrentQuantity.ToString("N3")</td>
-                            <td>@item.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                            <td colspan="12" class="text-center text-muted py-4">موجودی‌ای با این فیلترها پیدا نشد.</td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr><td colspan="9" class="text-center text-muted py-3">موجودی یافت نشد.</td></tr>
-                }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/warehouse-filters.js" asp-append-version="true"></script>
+}

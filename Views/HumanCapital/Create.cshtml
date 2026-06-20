@@ -3,141 +3,116 @@
     ViewData["Title"] = "استخدام جدید";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
-}
+<link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
 
-<div class="container-fluid py-4 hc-page">
-    <div class="card border-0 shadow-sm hc-card">
-        <div class="card-body p-4 p-md-5">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-                <div>
-                    <h5 class="fw-bold mb-1 text-dark">ثبت استخدام / ورود به کار</h5>
-                    <p class="text-muted small mb-0">ثبت اطلاعات هویتی، قرارداد، حقوق اولیه و رخداد استخدام</p>
+<div class="page-shell hc-page">
+    @{ ViewData["SectionTitle"] = "استخدام جدید"; ViewData["SectionSubtitle"] = "ثبت مشخصات پایه، قرارداد و رخداد اولیه"; ViewData["SectionActionUrl"] = Url.Action("Index", "HumanCapital"); ViewData["SectionActionText"] = "بازگشت"; ViewData["SectionActionCss"] = "btn btn-outline-secondary"; }
+    <partial name="_SectionHeader" />
+
+    <div class="form-card">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="PersonnelCode" class="form-label"></label>
+                    <input asp-for="PersonnelCode" class="form-control" />
+                    <span asp-validation-for="PersonnelCode" class="text-danger small"></span>
                 </div>
-                <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="NationalCode" class="form-label"></label>
+                    <input asp-for="NationalCode" class="form-control" />
+                    <span asp-validation-for="NationalCode" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="BirthDate" class="form-label"></label>
+                    <input asp-for="BirthDate" type="date" class="form-control" />
+                    <span asp-validation-for="BirthDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="HireDate" class="form-label"></label>
+                    <input asp-for="HireDate" type="date" class="form-control" />
+                    <span asp-validation-for="HireDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="ContractEndDate" class="form-label"></label>
+                    <input asp-for="ContractEndDate" type="date" class="form-control" />
+                    <span asp-validation-for="ContractEndDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="EmploymentType" class="form-label"></label>
+                    <select asp-for="EmploymentType" class="form-select" asp-items="Model.EmploymentTypeOptions"></select>
+                    <span asp-validation-for="EmploymentType" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="DepartmentId" class="form-label"></label>
+                    <select asp-for="DepartmentId" class="form-select" asp-items="Model.DepartmentOptions">
+                        <option value="">بدون دپارتمان</option>
+                    </select>
+                    <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="PositionTitle" class="form-label"></label>
+                    <input asp-for="PositionTitle" class="form-control" />
+                    <span asp-validation-for="PositionTitle" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="CurrentSalary" class="form-label"></label>
+                    <input asp-for="CurrentSalary" type="number" min="0" step="0.01" class="form-control" />
+                    <span asp-validation-for="CurrentSalary" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="PhoneNumber" class="form-label"></label>
+                    <input asp-for="PhoneNumber" class="form-control" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <label asp-for="Address" class="form-label"></label>
+                    <input asp-for="Address" class="form-control" />
+                    <span asp-validation-for="Address" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <input asp-for="Notes" class="form-control" />
+                    <span asp-validation-for="Notes" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <label asp-for="InitialStatusDate" class="form-label"></label>
+                    <input asp-for="InitialStatusDate" type="date" class="form-control" />
+                    <span asp-validation-for="InitialStatusDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <label asp-for="InitialReferenceNumber" class="form-label"></label>
+                    <input asp-for="InitialReferenceNumber" class="form-control" />
+                    <span asp-validation-for="InitialReferenceNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-12 col-lg-4 d-flex align-items-end">
+                    <div class="form-check form-switch">
+                        <input asp-for="OnboardingCompleted" class="form-check-input" />
+                        <label asp-for="OnboardingCompleted" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label asp-for="InitialStatusDescription" class="form-label"></label>
+                    <textarea asp-for="InitialStatusDescription" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="InitialStatusDescription" class="text-danger small"></span>
+                </div>
             </div>
 
-            <form asp-action="Create" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="PersonnelCode" class="form-label"></label>
-                        <input asp-for="PersonnelCode" class="form-control" />
-                        <span asp-validation-for="PersonnelCode" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="NationalCode" class="form-label"></label>
-                        <input asp-for="NationalCode" class="form-control" />
-                        <span asp-validation-for="NationalCode" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="FullName" class="form-label"></label>
-                        <input asp-for="FullName" class="form-control" />
-                        <span asp-validation-for="FullName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="BirthDate" class="form-label"></label>
-                        <input asp-for="BirthDate" type="date" class="form-control" />
-                        <span asp-validation-for="BirthDate" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="HireDate" class="form-label"></label>
-                        <input asp-for="HireDate" type="date" class="form-control" />
-                        <span asp-validation-for="HireDate" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="ContractEndDate" class="form-label"></label>
-                        <input asp-for="ContractEndDate" type="date" class="form-control" />
-                        <span asp-validation-for="ContractEndDate" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="EmploymentType" class="form-label"></label>
-                        <select asp-for="EmploymentType" class="form-select" asp-items="Model.EmploymentTypeOptions"></select>
-                        <span asp-validation-for="EmploymentType" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="DepartmentId" class="form-label"></label>
-                        <select asp-for="DepartmentId" class="form-select" asp-items="Model.DepartmentOptions">
-                            <option value="">بدون دپارتمان</option>
-                        </select>
-                        <span asp-validation-for="DepartmentId" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="PositionTitle" class="form-label"></label>
-                        <input asp-for="PositionTitle" class="form-control" />
-                        <span asp-validation-for="PositionTitle" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="CurrentSalary" class="form-label"></label>
-                        <input asp-for="CurrentSalary" type="number" min="0" step="0.01" class="form-control" />
-                        <span asp-validation-for="CurrentSalary" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="PhoneNumber" class="form-label"></label>
-                        <input asp-for="PhoneNumber" class="form-control" />
-                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <label asp-for="Email" class="form-label"></label>
-                        <input asp-for="Email" class="form-control" />
-                        <span asp-validation-for="Email" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-6">
-                        <label asp-for="Address" class="form-label"></label>
-                        <input asp-for="Address" class="form-control" />
-                        <span asp-validation-for="Address" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-6">
-                        <label asp-for="Notes" class="form-label"></label>
-                        <input asp-for="Notes" class="form-control" />
-                        <span asp-validation-for="Notes" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="InitialStatusDate" class="form-label"></label>
-                        <input asp-for="InitialStatusDate" type="date" class="form-control" />
-                        <span asp-validation-for="InitialStatusDate" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <label asp-for="InitialReferenceNumber" class="form-label"></label>
-                        <input asp-for="InitialReferenceNumber" class="form-control" />
-                        <span asp-validation-for="InitialReferenceNumber" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-12 col-lg-4 d-flex align-items-end">
-                        <div class="form-check form-switch">
-                            <input asp-for="OnboardingCompleted" class="form-check-input" />
-                            <label asp-for="OnboardingCompleted" class="form-check-label"></label>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <label asp-for="InitialStatusDescription" class="form-label"></label>
-                        <textarea asp-for="InitialStatusDescription" class="form-control" rows="3"></textarea>
-                        <span asp-validation-for="InitialStatusDescription" class="text-danger small"></span>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2">
-                    <a asp-action="Index" class="btn btn-outline-secondary px-4">انصراف</a>
-                    <button type="submit" class="btn btn-primary px-4">ثبت پرونده و استخدام</button>
-                </div>
-            </form>
-        </div>
+            @{ ViewData["SecondaryActionUrl"] = Url.Action("Index", "HumanCapital"); ViewData["SecondaryActionText"] = "انصراف"; ViewData["PrimaryActionText"] = "ثبت پروندۀ پرسنلی"; }
+            <partial name="_FormActions" />
+        </form>
     </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<partial name="_ValidationScriptsPartial" />

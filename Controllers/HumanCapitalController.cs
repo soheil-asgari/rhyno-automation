@@ -61,6 +61,15 @@ namespace OfficeAutomation.Controllers
                 query = query.Where(employee => employee.CurrentStatus == status);
             }
 
+            if (string.Equals(filter.WorkflowView, "active", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(employee => employee.CurrentStatus == "فعال");
+            }
+            else if (string.Equals(filter.WorkflowView, "separated", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(employee => employee.CurrentStatus != "فعال");
+            }
+
             if (filter.DepartmentId.HasValue)
             {
                 query = query.Where(employee => employee.DepartmentId == filter.DepartmentId.Value);
@@ -72,6 +81,7 @@ namespace OfficeAutomation.Controllers
             filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "فعال");
             filter.SeparatedCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus != "فعال");
             filter.FilteredCount = await query.CountAsync();
+            filter.WorkflowView ??= "all";
 
             filter.Items = await query
                 .OrderByDescending(employee => employee.UpdatedAt)
@@ -113,6 +123,7 @@ namespace OfficeAutomation.Controllers
         {
             await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode);
             ValidateEmployeeDates(model.BirthDate, model.HireDate, model.ContractEndDate);
+            ValidateInitialStatus(model.InitialStatusDate, model.HireDate, model.InitialStatusDescription);
 
             if (!ModelState.IsValid)
             {
@@ -231,6 +242,7 @@ namespace OfficeAutomation.Controllers
 
             await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode, id);
             ValidateEmployeeDates(model.BirthDate, model.HireDate, model.ContractEndDate);
+            ValidateCurrentStatus(model.CurrentStatus);
 
             if (!ModelState.IsValid)
             {
@@ -317,6 +329,16 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
+            if (!string.Equals(employee.CurrentStatus, "فعال", StringComparison.Ordinal))
+            {
+                ModelState.AddModelError(string.Empty, "برای پرسنل غیرفعال، افزایش حقوق ثبت نمی‌شود.");
+            }
+
+            if (model.EffectiveDate.Date < employee.HireDate.Date)
+            {
+                ModelState.AddModelError("SalaryIncrease.EffectiveDate", "تاریخ اعمال نمی‌تواند قبل از تاریخ استخدام باشد.");
+            }
+
             if (model.NewSalary <= employee.CurrentSalary)
             {
                 ModelState.AddModelError("SalaryIncrease.NewSalary", "حقوق جدید باید بیشتر از حقوق فعلی باشد.");
@@ -370,9 +392,19 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
+            if (model.EffectiveDate.Date < employee.HireDate.Date)
+            {
+                ModelState.AddModelError("StatusChange.EffectiveDate", "تاریخ رخداد نمی‌تواند قبل از تاریخ استخدام باشد.");
+            }
+
             if (!HumanCapitalProcessTypes.All.Contains(model.StatusType))
             {
                 ModelState.AddModelError("StatusChange.StatusType", "نوع فرآیند انتخاب‌شده معتبر نیست.");
+            }
+
+            if (string.Equals(employee.CurrentStatus, MapCurrentStatus(model.StatusType), StringComparison.Ordinal))
+            {
+                ModelState.AddModelError("StatusChange.StatusType", "وضعیت فعلی با وضعیت انتخاب‌شده یکسان است.");
             }
 
             if (RequiresExitReason(model.StatusType) && string.IsNullOrWhiteSpace(model.ExitReason))
@@ -447,6 +479,74 @@ namespace OfficeAutomation.Controllers
                 StatusType = HumanCapitalProcessTypes.Termination
             };
             statusVm.EmployeeId = employee.Id;
+            if (string.Equals(employee.CurrentStatus, "فعال", StringComparison.Ordinal))
+            {
+                statusVm.StatusType = HumanCapitalProcessTypes.Resignation;
+            }
+
+            var salaryHistories = employee.SalaryHistories
+                .OrderByDescending(item => item.EffectiveDate)
+                .ThenByDescending(item => item.CreatedAt)
+                .Select(item => new HumanCapitalSalaryHistoryVM
+                {
+                    EffectiveDate = item.EffectiveDate,
+                    PreviousSalary = item.PreviousSalary,
+                    NewSalary = item.NewSalary,
+                    PromotionTitle = item.PromotionTitle,
+                    Reason = item.Reason,
+                    CreatedAt = item.CreatedAt
+                })
+                .ToList();
+
+            var statusHistories = employee.StatusHistories
+                .OrderByDescending(item => item.EffectiveDate)
+                .ThenByDescending(item => item.CreatedAt)
+                .Select(item => new HumanCapitalStatusHistoryVM
+                {
+                    StatusType = item.StatusType,
+                    EffectiveDate = item.EffectiveDate,
+                    ReferenceNumber = item.ReferenceNumber,
+                    Description = item.Description,
+                    ExitReason = item.ExitReason,
+                    CreatedAt = item.CreatedAt
+                })
+                .ToList();
+
+            var timelineItems = salaryHistories
+                .Select(item => new HumanCapitalTimelineItemVM
+                {
+                    SortDate = item.CreatedAt,
+                    Title = "افزایش حقوق",
+                    Description = $"{item.PreviousSalary:N0} -> {item.NewSalary:N0}" + (string.IsNullOrWhiteSpace(item.PromotionTitle) ? string.Empty : $" | {item.PromotionTitle}"),
+                    Tone = "success"
+                })
+                .Concat(statusHistories.Select(item => new HumanCapitalTimelineItemVM
+                {
+                    SortDate = item.CreatedAt,
+                    Title = "رخداد وضعیت",
+                    Description = $"{item.StatusType}" + (string.IsNullOrWhiteSpace(item.ReferenceNumber) ? string.Empty : $" | {item.ReferenceNumber}") + $" | {item.Description}",
+                    Tone = RequiresExitReason(item.StatusType) ? "danger" : "primary"
+                }))
+                .OrderByDescending(item => item.SortDate)
+                .ToList();
+
+            var auditTrailItems = salaryHistories
+                .Select(item => new HumanCapitalAuditTrailItemVM
+                {
+                    When = new DateTimeOffset(item.CreatedAt, TimeSpan.Zero),
+                    Title = "ثبت افزایش حقوق",
+                    Detail = $"{item.PreviousSalary:N0} -> {item.NewSalary:N0}" + (string.IsNullOrWhiteSpace(item.PromotionTitle) ? string.Empty : $" | {item.PromotionTitle}"),
+                    Source = "SalaryHistory"
+                })
+                .Concat(statusHistories.Select(item => new HumanCapitalAuditTrailItemVM
+                {
+                    When = new DateTimeOffset(item.CreatedAt, TimeSpan.Zero),
+                    Title = "ثبت رخداد وضعیت",
+                    Detail = $"{item.StatusType}" + (string.IsNullOrWhiteSpace(item.ReferenceNumber) ? string.Empty : $" | {item.ReferenceNumber}") + $" | {item.Description}",
+                    Source = "StatusHistory"
+                }))
+                .OrderByDescending(item => item.When)
+                .ToList();
 
             return new HumanCapitalDetailsVM
             {
@@ -470,32 +570,11 @@ namespace OfficeAutomation.Controllers
                 SalaryIncrease = salaryVm,
                 StatusChange = statusVm,
                 ProcessTypeOptions = BuildProcessTypeOptions(statusVm.StatusType),
-                SalaryHistories = employee.SalaryHistories
-                    .OrderByDescending(item => item.EffectiveDate)
-                    .ThenByDescending(item => item.CreatedAt)
-                    .Select(item => new HumanCapitalSalaryHistoryVM
-                    {
-                        EffectiveDate = item.EffectiveDate,
-                        PreviousSalary = item.PreviousSalary,
-                        NewSalary = item.NewSalary,
-                        PromotionTitle = item.PromotionTitle,
-                        Reason = item.Reason,
-                        CreatedAt = item.CreatedAt
-                    })
-                    .ToList(),
-                StatusHistories = employee.StatusHistories
-                    .OrderByDescending(item => item.EffectiveDate)
-                    .ThenByDescending(item => item.CreatedAt)
-                    .Select(item => new HumanCapitalStatusHistoryVM
-                    {
-                        StatusType = item.StatusType,
-                        EffectiveDate = item.EffectiveDate,
-                        ReferenceNumber = item.ReferenceNumber,
-                        Description = item.Description,
-                        ExitReason = item.ExitReason,
-                        CreatedAt = item.CreatedAt
-                    })
-                    .ToList()
+                SalaryHistories = salaryHistories,
+                StatusHistories = statusHistories,
+                TimelineItems = timelineItems
+                    ,
+                AuditTrailItems = auditTrailItems
             };
         }
 
@@ -548,6 +627,33 @@ namespace OfficeAutomation.Controllers
                     Selected = string.Equals(type, model.EmploymentType, StringComparison.Ordinal)
                 })
                 .ToList();
+        }
+
+        private void ValidateInitialStatus(DateTime statusDate, DateTime hireDate, string? description)
+        {
+            if (statusDate.Date < hireDate.Date)
+            {
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDate), "تاریخ رخداد اولیه نمی‌تواند قبل از تاریخ استخدام باشد.");
+            }
+
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDescription), "توضیح رخداد اولیه الزامی است.");
+            }
+        }
+
+        private void ValidateCurrentStatus(string currentStatus)
+        {
+            if (string.IsNullOrWhiteSpace(currentStatus))
+            {
+                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "وضعیت فعلی الزامی است.");
+                return;
+            }
+
+            if (!string.Equals(currentStatus, "فعال", StringComparison.Ordinal) && !string.Equals(currentStatus, "تعدیل شده", StringComparison.Ordinal) && !string.Equals(currentStatus, "ترک کار", StringComparison.Ordinal) && !string.Equals(currentStatus, "پایان خدمت", StringComparison.Ordinal))
+            {
+                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "وضعیت انتخاب‌شده معتبر نیست.");
+            }
         }
 
         private async Task ValidateEmployeeUniquenessAsync(string personnelCode, string nationalCode, int? employeeId = null)

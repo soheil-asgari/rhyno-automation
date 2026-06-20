@@ -13,7 +13,7 @@ namespace OfficeAutomation.Controllers
     public class BimehController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private static readonly string[] DefaultStatuses = ["Draft", "Submitted", "Approved", "Finalized"];
+        private static readonly string[] DefaultStatuses = ["Draft", "Submitted", "UnderReview", "Approved", "Closed"];
 
         public BimehController(ApplicationDbContext context)
         {
@@ -22,11 +22,17 @@ namespace OfficeAutomation.Controllers
 
         [HttpGet]
         [PermissionAuthorize("HR.View")]
-        public async Task<IActionResult> Index(InsuranceIndexVM filter)
+        public async Task<IActionResult> Index(InsuranceIndexVM filter, int? employeeId)
         {
             var query = _context.InsuranceLists
                 .AsNoTracking()
+                .Include(item => item.Employees)
                 .AsQueryable();
+
+            if (employeeId.HasValue)
+            {
+                query = query.Where(item => item.Employees.Any(row => row.HumanCapitalEmployeeId == employeeId.Value));
+            }
 
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
             {
@@ -58,6 +64,22 @@ namespace OfficeAutomation.Controllers
                 .OrderByDescending(item => item.CreatedDate)
                 .ToListAsync();
             filter.AvailableStatuses = await GetAvailableStatusesAsync();
+            filter.DuplicateGroupCount = await _context.InsuranceLists
+                .AsNoTracking()
+                .GroupBy(item => new { item.ProjectName, item.Month, item.Year })
+                .CountAsync(group => group.Count() > 1);
+            filter.MissingHrLinkCount = await _context.InsuranceEmployees
+                .AsNoTracking()
+                .CountAsync(item => item.HumanCapitalEmployeeId == null);
+            filter.QualityWarnings = new List<string>();
+            if (filter.DuplicateGroupCount > 0)
+            {
+                filter.QualityWarnings.Add("چند لیست تکراری با پروژه/ماه/سال یکسان پیدا شد.");
+            }
+            if (filter.MissingHrLinkCount > 0)
+            {
+                filter.QualityWarnings.Add("برخی ردیف‌های بیمه به HR link متصل نیستند.");
+            }
 
             return View(filter);
         }
@@ -388,6 +410,19 @@ namespace OfficeAutomation.Controllers
             if (rows.Count == 0)
             {
                 return (false, 0, "حداقل یک کارمند باید ثبت شود.");
+            }
+
+            var duplicateExists = await _context.InsuranceLists
+                .AsNoTracking()
+                .AnyAsync(item =>
+                    item.ProjectName == request.ProjectName.Trim() &&
+                    item.Month == request.Month &&
+                    item.Year == request.Year &&
+                    (!request.Id.HasValue || item.Id != request.Id.Value), cancellationToken);
+
+            if (duplicateExists)
+            {
+                return (false, 0, "یک لیست بیمه با همین پروژه/ماه/سال قبلاً ثبت شده است.");
             }
 
             var employees = new List<InsuranceEmployee>();

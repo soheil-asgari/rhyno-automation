@@ -26,7 +26,7 @@ namespace OfficeAutomation.Models
         // برای ریست کردن رمز عبور توسط ادمین
         public string? NewPassword { get; set; }
 
-        public Department Department { get; set; }
+        public Department? Department { get; set; }
 
         public bool IsManager { get; set; }
 

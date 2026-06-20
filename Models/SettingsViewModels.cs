@@ -169,6 +169,12 @@ namespace OfficeAutomation.Models
         public bool IsFinalized { get; set; }
         public string Status { get; set; } = "Draft";
         public List<PayrollEmployeeRowViewModel> Items { get; set; } = new();
+        public decimal PreviousMonthTotalNetPayable { get; set; }
+        public decimal CurrentMonthTotalNetPayable { get; set; }
+        public decimal NetPayableDelta { get; set; }
+        public int MissingHrLockCount { get; set; }
+        public int DataQualityWarnings { get; set; }
+        public List<PayrollQualityWarningVM> Warnings { get; set; } = new();
     }
 
     public class PayrollHistoryIndexViewModel
@@ -198,6 +204,9 @@ namespace OfficeAutomation.Models
         public decimal TotalBaseSalary { get; set; }
         public decimal TotalInsurance { get; set; }
         public decimal TotalNetPayable { get; set; }
+        public decimal PreviousMonthTotalNetPayable { get; set; }
+        public decimal NetPayableDelta { get; set; }
+        public List<PayrollChangeSummaryVM> ChangeSummary { get; set; } = new();
         public List<PayrollEmployeeRowViewModel> Items { get; set; } = new();
     }
 
@@ -260,5 +269,23 @@ namespace OfficeAutomation.Models
         public decimal NetPayable { get; set; }
 
         public bool IsLockedFromHr { get; set; }
+    }
+
+    public class PayrollQualityWarningVM
+    {
+        public string Title { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public string Tone { get; set; } = "warning";
+    }
+
+    public class PayrollChangeSummaryVM
+    {
+        public string Label { get; set; } = string.Empty;
+
+        public string Value { get; set; } = string.Empty;
+
+        public string Tone { get; set; } = "primary";
     }
 }

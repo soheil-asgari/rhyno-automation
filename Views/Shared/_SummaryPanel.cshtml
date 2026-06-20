@@ -1,0 +1,15 @@
+@model IEnumerable<OfficeAutomation.Models.FinancialHubKpiVM>
+<div class="row g-3">
+    @foreach (var item in Model)
+    {
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">@item.Title</div>
+                    <div class="fs-5 fw-bold">@item.Value</div>
+                    <div class="small text-muted">@item.Description</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

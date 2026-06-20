@@ -4,8 +4,15 @@
 }
 
 <div class="container-fluid py-4">
-    <h6 class="fw-bold mb-3">ثبت رسید انبار</h6>
-    <div class="card border-0 shadow-sm">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">ثبت رسید انبار</h5>
+            <p class="text-muted small mb-0">خلاصه زنده، پیش‌نمایش نهایی و ارسال برای بررسی</p>
+        </div>
+        <a asp-action="Receipts" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
         <div class="card-body p-3">
             <form asp-action="CreateReceipt" method="post" id="receiptForm">
                 <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
@@ -19,19 +26,50 @@
                             <option value="">انتخاب تامین‌کننده</option>
                         </select>
                     </div>
-                    <div class="col-md-2"><label class="form-label small">عملیات</label><button type="button" id="addReceiptRow" class="btn btn-sm btn-outline-secondary d-block">+ ردیف</button></div>
+                    <div class="col-md-2">
+                        <label class="form-label small">عملیات</label>
+                        <button type="button" id="addReceiptRow" class="btn btn-sm btn-outline-secondary d-block w-100">+ ردیف</button>
+                    </div>
                     <div class="col-md-4 d-none"><label asp-for="SupplierOrSource" class="form-label small"></label><input asp-for="SupplierOrSource" class="form-control form-control-sm" /></div>
                     <div class="col-12"><label asp-for="Notes" class="form-label small"></label><textarea asp-for="Notes" rows="2" class="form-control form-control-sm"></textarea></div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered align-middle" id="receiptItemsTable">
-                        <thead><tr><th>کالا</th><th>تعداد</th><th>فی واحد</th><th></th></tr></thead>
-                        <tbody id="receiptItemsBody"></tbody>
-                    </table>
+                <div class="summary-bar mb-3" id="receiptSummaryBar">
+                    <div><span class="text-muted small">تعداد ردیف</span><div class="fw-bold" id="receiptRowCount">0</div></div>
+                    <div><span class="text-muted small">جمع تعداد</span><div class="fw-bold" id="receiptTotalQty">0.000</div></div>
+                    <div><span class="text-muted small">جمع مبلغ</span><div class="fw-bold" id="receiptTotalAmount">0</div></div>
                 </div>
 
-                <div class="d-flex gap-2 mt-2"><button class="btn btn-sm btn-success">ذخیره</button><a asp-action="Receipts" class="btn btn-sm btn-outline-secondary">بازگشت</a></div>
+                <div class="row g-3">
+                    <div class="col-12 col-xl-8">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle" id="receiptItemsTable">
+                                <thead><tr><th>کالا</th><th>تعداد</th><th>فی واحد</th><th>وضعیت</th><th></th></tr></thead>
+                                <tbody id="receiptItemsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">پیش‌نمایش نهایی</h6>
+                                <div class="preview-line"><span>شماره رسید</span><strong id="previewReceiptNumber">-</strong></div>
+                                <div class="preview-line"><span>تاریخ</span><strong id="previewDateShamsi">-</strong></div>
+                                <div class="preview-line"><span>انبار</span><strong id="previewWarehouse">-</strong></div>
+                                <div class="preview-line"><span>تامین‌کننده</span><strong id="previewVendor">-</strong></div>
+                                <div class="preview-line"><span>ردیف‌ها</span><strong id="previewLines">0</strong></div>
+                                <div class="preview-line"><span>جمع مبلغ</span><strong id="previewAmount">0</strong></div>
+                                <div class="small text-muted mt-3">این پیش‌نمایش هنگام تایپ به‌روزرسانی می‌شود.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <button type="submit" name="SaveAsDraft" value="true" class="btn btn-sm btn-outline-secondary">ذخیره پیش نویس</button>
+                    <button type="submit" name="SaveAsDraft" value="false" class="btn btn-sm btn-success">ارسال برای بررسی</button>
+                    <a asp-action="Receipts" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+                </div>
             </form>
         </div>
     </div>
@@ -48,11 +86,34 @@
                 }
             </select>
         </td>
-        <td><input type="number" data-field="Quantity" class="form-control form-control-sm" min="0.001" step="0.001" /></td>
-        <td><input type="number" data-field="UnitPrice" class="form-control form-control-sm" min="0" step="0.01" /></td>
+        <td><input type="number" data-field="Quantity" class="form-control form-control-sm quantity-input" min="0.001" step="0.001" /></td>
+        <td><input type="number" data-field="UnitPrice" class="form-control form-control-sm price-input" min="0" step="0.01" /></td>
+        <td><div class="small text-muted row-feedback">در انتظار انتخاب کالا</div></td>
         <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger removeRow">حذف</button></td>
     </tr>
 </template>
+
+<style>
+    .summary-bar {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--ds-border);
+        border-radius: 16px;
+        background: rgba(255,255,255,.65);
+    }
+    .preview-line {
+        display:flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--ds-border);
+    }
+    .preview-line:last-of-type { border-bottom: 0; }
+    html[data-theme="dark"] .summary-bar,
+    body[data-theme="dark"] .summary-bar { background: rgba(15,23,42,.55); }
+</style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -60,14 +121,40 @@
         (() => {
             const body = document.getElementById('receiptItemsBody');
             const tpl = document.getElementById('receiptRowTemplate');
+            const vendorSelect = document.getElementById('VendorId');
+            const warehouseSelect = document.getElementById('WarehouseId');
+
+            function money(v) { return Number(v || 0).toLocaleString('fa-IR'); }
+            function qty(v) { return Number(v || 0).toFixed(3); }
 
             function updateNames() {
                 [...body.querySelectorAll('tr')].forEach((row, index) => {
                     row.querySelectorAll('[data-field]').forEach(field => {
-                        const f = field.getAttribute('data-field');
-                        field.name = `Items[${index}].${f}`;
+                        field.name = `Items[${index}].${field.getAttribute('data-field')}`;
                     });
                 });
+            }
+
+            function updatePreview() {
+                const rows = [...body.querySelectorAll('tr')];
+                let totalQty = 0;
+                let totalAmount = 0;
+                rows.forEach(row => {
+                    const q = Number(row.querySelector('[data-field="Quantity"]').value || 0);
+                    const p = Number(row.querySelector('[data-field="UnitPrice"]').value || 0);
+                    totalQty += q;
+                    totalAmount += q * p;
+                });
+
+                document.getElementById('receiptRowCount').textContent = rows.length;
+                document.getElementById('receiptTotalQty').textContent = qty(totalQty);
+                document.getElementById('receiptTotalAmount').textContent = money(totalAmount);
+                document.getElementById('previewReceiptNumber').textContent = document.getElementById('ReceiptNumber').value || '-';
+                document.getElementById('previewDateShamsi').textContent = document.getElementById('DateShamsi').value || '-';
+                document.getElementById('previewWarehouse').textContent = warehouseSelect.selectedOptions[0]?.text || '-';
+                document.getElementById('previewVendor').textContent = vendorSelect.selectedOptions[0]?.text || 'انتخاب نشده';
+                document.getElementById('previewLines').textContent = rows.length;
+                document.getElementById('previewAmount').textContent = money(totalAmount);
             }
 
             function addRow(item) {
@@ -79,7 +166,13 @@
                     row.querySelector('[data-field="Quantity"]').value = item.quantity || '';
                     row.querySelector('[data-field="UnitPrice"]').value = item.unitPrice || '';
                 }
+                row.querySelectorAll('input, select').forEach(el => el.addEventListener('input', () => {
+                    updateNames();
+                    updatePreview();
+                }));
+                row.querySelector('[data-field="ProductId"]').addEventListener('change', updatePreview);
                 updateNames();
+                updatePreview();
             }
 
             document.getElementById('addReceiptRow').addEventListener('click', () => addRow());
@@ -88,6 +181,12 @@
                 e.target.closest('tr')?.remove();
                 if (!body.querySelector('tr')) addRow();
                 updateNames();
+                updatePreview();
+            });
+
+            [vendorSelect, warehouseSelect, document.getElementById('ReceiptNumber'), document.getElementById('DateShamsi')].forEach(el => {
+                el?.addEventListener('input', updatePreview);
+                el?.addEventListener('change', updatePreview);
             });
 
             const initialItems = @Html.Raw(Json.Serialize(Model.Items ?? new List<WarehouseReceiptItemVM>()));

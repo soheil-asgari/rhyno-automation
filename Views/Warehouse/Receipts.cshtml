@@ -1,57 +1,125 @@
 @model List<WarehouseReceipt>
 @{
-    ViewData["Title"] = "رسید انبار";
+    ViewData["Title"] = "رسیدهای انبار";
     var warehouseOptions = ViewBag.WarehouseOptions as List<SelectListItem> ?? new();
-    var selectedWarehouseId = ViewBag.WarehouseId as int?;
+    var vendorOptions = ViewBag.VendorOptions as List<SelectListItem> ?? new();
 }
 
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">رسیدهای انبار</h6>
-        <a asp-action="CreateReceipt" class="btn btn-sm btn-primary">ثبت رسید جدید</a>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">رسیدهای انبار</h5>
+            <div class="text-muted small">با فیلترهای وضعیت، تاریخ، انبار و تامین‌کننده سریع‌تر بررسی کن.</div>
+        </div>
+        <a asp-action="CreateReceipt" class="btn btn-primary btn-sm">ثبت رسید جدید</a>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-3 border-bottom">
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-12 col-md-4"><label class="form-label small text-muted mb-1">جستجو</label><input name="searchTerm" value="@ViewBag.SearchTerm" class="form-control form-control-sm" placeholder="شماره رسید/منبع" /></div>
+    @if (TempData["WarehouseMessage"] is string message)
+    {
+        <div class="alert alert-info border-0 shadow-sm small">@message</div>
+    }
+
+    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترهای رسید را ذخیره کن."; ViewData["SavedFiltersSaveButtonId"] = "receiptSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "receiptClearFilter"; ViewData["SavedFiltersContainerId"] = "receiptSavedFilters"; }
+    <partial name="_SavedFiltersPanel" />
+
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+            <form method="get" class="row g-3 align-items-end" data-warehouse-filter-form data-filters-key="warehouse-receipts" data-save-button-id="receiptSaveFilter" data-clear-button-id="receiptClearFilter" data-presets-container-id="receiptSavedFilters">
                 <div class="col-12 col-md-3">
-                    <label class="form-label small text-muted mb-1">انبار</label>
-                    <select name="warehouseId" class="form-select form-select-sm">
+                    <label class="form-label small mb-1">جستجو</label>
+                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="form-control" data-filter-key="searchTerm" placeholder="شماره رسید، منبع یا توضیح" />
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">وضعیت</label>
+                    <select name="status" class="form-select" data-filter-key="status">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="@WorkflowStatus.Draft" selected="@(ViewBag.Status as string == WorkflowStatus.Draft ? "selected" : null)">پیش‌نویس</option>
+                        <option value="@WorkflowStatus.PendingApproval" selected="@(ViewBag.Status as string == WorkflowStatus.PendingApproval ? "selected" : null)">در انتظار تایید</option>
+                        <option value="@WorkflowStatus.Approved" selected="@(ViewBag.Status as string == WorkflowStatus.Approved ? "selected" : null)">تایید شده</option>
+                        <option value="@WorkflowStatus.Rejected" selected="@(ViewBag.Status as string == WorkflowStatus.Rejected ? "selected" : null)">رد شده</option>
+                        <option value="@WorkflowStatus.Canceled" selected="@(ViewBag.Status as string == WorkflowStatus.Canceled ? "selected" : null)">ابطال شده</option>
+                        <option value="@WorkflowStatus.Completed" selected="@(ViewBag.Status as string == WorkflowStatus.Completed ? "selected" : null)">انجام شده</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">انبار</label>
+                    <select name="warehouseId" class="form-select" data-filter-key="warehouseId">
                         <option value="">همه انبارها</option>
                         @foreach (var option in warehouseOptions)
                         {
-                            <option value="@option.Value" selected="@(selectedWarehouseId.HasValue && selectedWarehouseId.Value.ToString() == option.Value)">@option.Text</option>
+                            <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
                         }
                     </select>
                 </div>
-                <div class="col-auto"><button class="btn btn-sm btn-primary">اعمال</button></div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">تامین‌کننده</label>
+                    <select name="vendorId" class="form-select" data-filter-key="vendorId">
+                        <option value="">همه تامین‌کنندگان</option>
+                        @foreach (var option in vendorOptions)
+                        {
+                            <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-1">
+                    <label class="form-label small mb-1">از</label>
+                    <input type="date" name="dateFrom" value="@ViewBag.DateFrom" class="form-control" data-filter-key="dateFrom" />
+                </div>
+                <div class="col-6 col-md-1">
+                    <label class="form-label small mb-1">تا</label>
+                    <input type="date" name="dateTo" value="@ViewBag.DateTo" class="form-control" data-filter-key="dateTo" />
+                </div>
+                <div class="col-12 col-md-1 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">اعمال</button>
+                </div>
             </form>
         </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead><tr><th>شماره</th><th>تاریخ</th><th>انبار</th><th>تامین‌کننده</th><th>اقلام</th></tr></thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>شماره</th>
+                        <th>تاریخ</th>
+                        <th>انبار</th>
+                        <th>تامین‌کننده</th>
+                        <th>تعداد</th>
+                        <th>وضعیت</th>
+                        <th class="text-center">عملیات</th>
+                    </tr>
+                </thead>
                 <tbody>
-                @if (Model.Any())
-                {
-                    @foreach (var item in Model)
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.ReceiptNumber</td>
+                                <td>@item.DateShamsi</td>
+                                <td>@item.Warehouse.Name</td>
+                                <td>@(item.Vendor?.Name ?? item.SupplierOrSource)</td>
+                                <td>@item.Items.Sum(row => row.Quantity).ToString("N3")</td>
+                                <td><span class="badge @WorkflowStatus.BadgeCss(item.WorkflowStatus)">@WorkflowStatus.Label(item.WorkflowStatus)</span></td>
+                                <td class="text-center">
+                                    <a asp-action="ReceiptDetails" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">جزئیات</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td>@item.ReceiptNumber</td>
-                            <td>@item.DateShamsi</td>
-                            <td>@item.Warehouse.Name</td>
-                            <td>@(item.Vendor?.Name ?? item.SupplierOrSource)</td>
-                            <td>@item.Items.Sum(row => row.Quantity).ToString("N3")</td>
-                            <td><span class="badge @WorkflowStatus.BadgeCss(item.WorkflowStatus)">@WorkflowStatus.Label(item.WorkflowStatus)</span></td>
+                            <td colspan="7" class="text-center text-muted py-4">رسیدی با این فیلترها پیدا نشد.</td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr><td colspan="5" class="text-center text-muted py-3">رسیدی ثبت نشده است.</td></tr>
-                }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/warehouse-filters.js" asp-append-version="true"></script>
+}

@@ -4,51 +4,106 @@
     var currentUserId = ViewBag.CurrentUserId as string;
 }
 
-@section Styles {
-    <style>
-        .transfer-page .table th,
-        .transfer-page .table td {
-            color: var(--text-dark) !important;
-        }
-        .transfer-page .table-responsive {
-            overflow: visible;
-        }
-        .transfer-page .dropdown-menu {
-            z-index: 10001 !important;
-        }
-        html.theme-dark .transfer-page .table th,
-        html.theme-dark .transfer-page .table td,
-        html.theme-dark .transfer-page .table th *,
-        html.theme-dark .transfer-page .table td * {
-            color: var(--text-dark) !important;
-        }
-    </style>
-}
-
-<div class="container-fluid py-4 transfer-page">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">درخواست‌های انتقال بین پروژه‌ها/انبارها</h6>
-        <a asp-action="CreateTransferRequest" class="btn btn-sm btn-primary">درخواست جدید</a>
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">درخواست‌های انتقال بین انبارها</h5>
+            <div class="text-muted small">فیلتر، بررسی، تایید و رد درخواست‌ها از این صفحه انجام می‌شود.</div>
+        </div>
+        <a asp-action="CreateTransferRequest" class="btn btn-primary btn-sm">درخواست جدید</a>
     </div>
 
     @if (TempData["WarehouseMessage"] is string message)
     {
-        <div class="alert alert-info py-2 small">@message</div>
+        <div class="alert alert-info border-0 shadow-sm small">@message</div>
     }
 
-    <div class="card shadow-sm border-0">
+    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترها را ذخیره کن تا بعداً سریع‌تر برگردی."; ViewData["SavedFiltersSaveButtonId"] = "transferSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "transferClearFilter"; ViewData["SavedFiltersContainerId"] = "transferSavedFilters"; }
+    <partial name="_SavedFiltersPanel" />
+
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+            <form method="get" class="row g-3 align-items-end" data-warehouse-filter-form data-filters-key="warehouse-transfer-requests" data-save-button-id="transferSaveFilter" data-clear-button-id="transferClearFilter" data-presets-container-id="transferSavedFilters">
+                <div class="col-12 col-md-4">
+                    <label class="form-label small mb-1">جستجو</label>
+                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="form-control" data-filter-key="searchTerm" placeholder="نام کالا، کد کالا یا توضیح" />
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">وضعیت</label>
+                    <select name="status" class="form-select" data-filter-key="status">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="@WorkflowStatus.PendingManager" selected="@(ViewBag.Status as string == WorkflowStatus.PendingManager ? "selected" : null)">در انتظار مدیر</option>
+                        <option value="@WorkflowStatus.PendingApproval" selected="@(ViewBag.Status as string == WorkflowStatus.PendingApproval ? "selected" : null)">در انتظار تایید</option>
+                        <option value="@WorkflowStatus.Approved" selected="@(ViewBag.Status as string == WorkflowStatus.Approved ? "selected" : null)">تایید شده</option>
+                        <option value="@WorkflowStatus.Rejected" selected="@(ViewBag.Status as string == WorkflowStatus.Rejected ? "selected" : null)">رد شده</option>
+                        <option value="@WorkflowStatus.Canceled" selected="@(ViewBag.Status as string == WorkflowStatus.Canceled ? "selected" : null)">ابطال شده</option>
+                        <option value="@WorkflowStatus.Completed" selected="@(ViewBag.Status as string == WorkflowStatus.Completed ? "selected" : null)">انجام شده</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small mb-1">انبار مبدأ</label>
+                    <select name="sourceWarehouseId" class="form-select" data-filter-key="sourceWarehouseId">
+                        @foreach (var option in ViewBag.SourceWarehouseOptions as List<SelectListItem> ?? new())
+                        {
+                            <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small mb-1">انبار مقصد</label>
+                    <select name="destinationWarehouseId" class="form-select" data-filter-key="destinationWarehouseId">
+                        @foreach (var option in ViewBag.DestinationWarehouseOptions as List<SelectListItem> ?? new())
+                        {
+                            <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small mb-1">کالا</label>
+                    <select name="productId" class="form-select" data-filter-key="productId">
+                        @foreach (var option in ViewBag.ProductOptions as List<SelectListItem> ?? new())
+                        {
+                            <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small mb-1">درخواست‌کننده</label>
+                    <select name="requestedById" class="form-select" data-filter-key="requestedById">
+                        @foreach (var option in ViewBag.RequestedByOptions as List<SelectListItem> ?? new())
+                        {
+                            <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">از تاریخ</label>
+                    <input type="date" name="dateFrom" value="@ViewBag.DateFrom" class="form-control" data-filter-key="dateFrom" />
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">تا تاریخ</label>
+                    <input type="date" name="dateTo" value="@ViewBag.DateTo" class="form-control" data-filter-key="dateTo" />
+                </div>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">اعمال</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>مبدا</th>
+                        <th>مبدأ</th>
                         <th>مقصد</th>
                         <th>کالا</th>
                         <th>مقدار</th>
-                        <th>درخواست‌دهنده</th>
+                        <th>درخواست‌کننده</th>
                         <th>وضعیت</th>
-                        <th>تاییدکننده</th>
+                        <th>زمان</th>
                         <th class="text-center">عملیات</th>
                     </tr>
                 </thead>
@@ -57,8 +112,10 @@
                     {
                         @foreach (var item in Model)
                         {
-                            var canManage = (WorkflowStatus.IsPending(item.Status) || item.Status == "PendingManager") &&
-                                            (User.IsInRole("Admin") || item.SourceWarehouse?.ManagerUserId == currentUserId);
+                            var canManage = WorkflowStatus.IsActionPending(item.Status) &&
+                                            (!string.IsNullOrWhiteSpace(currentUserId) &&
+                                             (item.SourceWarehouse?.ManagerUserId == currentUserId || User.HasClaim("permission", "Security.Manage")));
+                            var canCancel = WorkflowStatus.IsActionPending(item.Status) && item.RequestedByUserId == currentUserId;
                             <tr>
                                 <td>@item.Id</td>
                                 <td>@item.SourceWarehouse?.Name</td>
@@ -66,22 +123,23 @@
                                 <td>@item.Product?.Name</td>
                                 <td>@item.Quantity.ToString("N3")</td>
                                 <td>@item.RequestedByUser?.FullName</td>
-                                <td>
-                                    <span class="badge @WorkflowStatus.BadgeCss(item.Status)">
-                                        @WorkflowStatus.Label(item.Status)
-                                    </span>
-                                </td>
-                                <td>@(item.ApprovedByUser?.FullName ?? "-")</td>
+                                <td><span class="badge @WorkflowStatus.BadgeCss(item.Status)">@WorkflowStatus.Label(item.Status)</span></td>
+                                <td>@item.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
                                 <td class="text-center">
+                                    <a asp-action="TransferRequestDetails" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">جزئیات</a>
                                     @if (canManage)
                                     {
                                         <form asp-action="ApproveTransferRequest" asp-route-id="@item.Id" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-sm btn-outline-success">تایید</button>
                                         </form>
-                                        <form asp-action="RejectTransferRequest" asp-route-id="@item.Id" method="post" class="d-inline">
+                                    }
+                                    @if (canCancel)
+                                    {
+                                        <form asp-action="CancelTransferRequest" asp-route-id="@item.Id" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">رد</button>
+                                            <input type="hidden" name="cancelReason" value="لغو از فهرست" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">لغو</button>
                                         </form>
                                     }
                                 </td>
@@ -90,10 +148,16 @@
                     }
                     else
                     {
-                        <tr><td colspan="9" class="text-center text-muted py-3">درخواستی ثبت نشده است.</td></tr>
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">درخواستی ثبت نشده است.</td>
+                        </tr>
                     }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/warehouse-filters.js" asp-append-version="true"></script>
+}

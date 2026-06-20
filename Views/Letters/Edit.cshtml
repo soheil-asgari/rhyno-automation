@@ -1,64 +1,79 @@
-﻿@model OfficeAutomation.Models.Letter
-
+@model OfficeAutomation.Models.Letter
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "ویرایش نامه";
 }
 
-<h1>Edit</h1>
+<div class="page-shell letters-page">
+    <div class="section-header">
+        <div>
+            <h1 class="section-title">ویرایش نامه</h1>
+            <p class="section-subtitle">اطلاعات اصلی نامه را اصلاح و ذخیره کنید.</p>
+        </div>
+        <div class="action-bar">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-right"></i>
+                بازگشت
+            </a>
+        </div>
+    </div>
 
-<h4>Letter</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
+    <div class="form-card">
+        <form asp-action="Edit" method="post" class="row g-3">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
+
+            <div class="col-12 col-lg-6">
+                <label asp-for="Title" class="form-label"></label>
                 <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
+                <span asp-validation-for="Title" class="text-danger small"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Body" class="control-label"></label>
-                <input asp-for="Body" class="form-control" />
-                <span asp-validation-for="Body" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="SentDate" class="control-label"></label>
+
+            <div class="col-12 col-lg-6">
+                <label asp-for="SentDate" class="form-label"></label>
                 <input asp-for="SentDate" class="form-control" />
-                <span asp-validation-for="SentDate" class="text-danger"></span>
+                <span asp-validation-for="SentDate" class="text-danger small"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="SenderId" class="control-label"></label>
-                <select asp-for="SenderId" class="form-control" asp-items="ViewBag.SenderId"></select>
-                <span asp-validation-for="SenderId" class="text-danger"></span>
+
+            <div class="col-12">
+                <label asp-for="Body" class="form-label"></label>
+                <textarea asp-for="Body" class="form-control" rows="8"></textarea>
+                <span asp-validation-for="Body" class="text-danger small"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="ReceiverId" class="control-label"></label>
-                <select asp-for="ReceiverId" class="form-control" asp-items="ViewBag.ReceiverId"></select>
-                <span asp-validation-for="ReceiverId" class="text-danger"></span>
+
+            <div class="col-12 col-lg-6">
+                <label asp-for="SenderId" class="form-label"></label>
+                <select asp-for="SenderId" class="form-select" asp-items="ViewBag.SenderId"></select>
+                <span asp-validation-for="SenderId" class="text-danger small"></span>
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsRead" /> @Html.DisplayNameFor(model => model.IsRead)
-                </label>
+
+            <div class="col-12 col-lg-6">
+                <label asp-for="ReceiverId" class="form-label"></label>
+                <select asp-for="ReceiverId" class="form-select" asp-items="ViewBag.ReceiverId"></select>
+                <span asp-validation-for="ReceiverId" class="text-danger small"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="ReadDate" class="control-label"></label>
+
+            <div class="col-12 col-lg-6">
+                <label asp-for="ReadDate" class="form-label"></label>
                 <input asp-for="ReadDate" class="form-control" />
-                <span asp-validation-for="ReadDate" class="text-danger"></span>
+                <span asp-validation-for="ReadDate" class="text-danger small"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+                <div class="form-check mb-0">
+                    <input class="form-check-input" asp-for="IsRead" />
+                    <label class="form-check-label" asp-for="IsRead"></label>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex justify-content-between align-items-center pt-2">
+                <a asp-action="Index" class="btn btn-light">انصراف</a>
+                <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

@@ -1,24 +1,28 @@
 @model FinancialDashboardVM
 @{
-    ViewData["Title"] = "مالیات بر ارزش افزوده (VAT)";
+    ViewData["Title"] = "داشبورد مالیات بر ارزش افزوده";
     var year = ViewBag.Year as int? ?? DateTime.Now.Year;
+    var vatGap = Math.Abs(Model.VatReconciliationDifference);
+    var hasMismatch = vatGap > 0 || Model.VatMismatchInvoices > 0;
 }
 
 @section Styles {
     <style>
         .vat-page { direction: rtl; text-align: right; }
-        .vat-card { border-radius: 12px; }
-        .vat-label { font-size: .76rem; color: #64748b; }
-        .vat-value { font-size: 1.02rem; font-weight: 700; }
-        .vat-table { font-size: .8rem; }
+        .vat-card { border-radius: 16px; }
+        .vat-kpi { min-height: 110px; }
+        .vat-label { font-size: .76rem; color: var(--text-muted); }
+        .vat-value { font-size: 1.15rem; font-weight: 800; color: var(--text-main); }
+        .vat-table { font-size: .82rem; }
+        .vat-row-warning { background: rgba(245, 158, 11, .08); }
     </style>
 }
 
 <div class="container-fluid py-4 vat-page">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="section-header mb-3">
         <div>
-            <h5 class="fw-bold mb-1">داشبورد مالیات بر ارزش افزوده</h5>
-            <p class="text-muted small mb-0">خلاصه VAT دریافت‌شده، پرداخت‌شده و مانده پرداخت/استرداد</p>
+            <h1 class="section-title">داشبورد مالیات بر ارزش افزوده</h1>
+            <p class="section-subtitle">تطبیق VAT سطح فاکتور، هشدار مغایرت و خروجی قابل حسابرسی</p>
         </div>
         <div class="d-flex gap-2">
             <a asp-action="ExportInvoicesExcel" asp-route-year="@year" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
@@ -26,45 +30,93 @@
         </div>
     </div>
 
-    <div class="row g-2 mb-3">
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm vat-card">
-                <div class="card-body py-2 px-3">
-                    <div class="vat-label">کل VAT وصولی (فروش)</div>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm vat-card vat-kpi">
+                <div class="card-body">
+                    <div class="vat-label">VAT وصولی فروش</div>
                     <div class="vat-value text-success">@Model.TotalVatCollected.ToString("N0")</div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm vat-card">
-                <div class="card-body py-2 px-3">
-                    <div class="vat-label">کل VAT پرداختی (خرید)</div>
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm vat-card vat-kpi">
+                <div class="card-body">
+                    <div class="vat-label">VAT پرداختی خرید</div>
                     <div class="vat-value text-primary">@Model.TotalVatPaid.ToString("N0")</div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm vat-card">
-                <div class="card-body py-2 px-3">
-                    <div class="vat-label">خالص VAT پرداختنی / استردادی</div>
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm vat-card vat-kpi">
+                <div class="card-body">
+                    <div class="vat-label">VAT محاسبه‌شده از خطوط</div>
+                    <div class="vat-value">@Model.TotalVatLineCalculated.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm vat-card vat-kpi">
+                <div class="card-body">
+                    <div class="vat-label">خالص پرداختنی / استردادی</div>
                     <div class="vat-value @(Model.NetVatPayableOrRefundable >= 0 ? "text-danger" : "text-info")">@Model.NetVatPayableOrRefundable.ToString("N0")</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm vat-card">
+                <div class="card-body">
+                    <div class="vat-label">اختلاف reconcile</div>
+                    <div class="vat-value @(hasMismatch ? "text-danger" : "text-success")">@Model.VatReconciliationDifference.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm vat-card">
+                <div class="card-body">
+                    <div class="vat-label">فاکتورهای مشکوک</div>
+                    <div class="vat-value @(Model.VatMismatchInvoices > 0 ? "text-warning" : "text-success")">@Model.VatMismatchInvoices.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm vat-card">
+                <div class="card-body">
+                    <div class="vat-label">وضعیت کنترل</div>
+                    <div class="vat-value @(hasMismatch ? "text-warning" : "text-success")">@(hasMismatch ? "نیاز به بررسی" : "تأیید شده")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (hasMismatch)
+    {
+        <div class="alert alert-warning small mb-3">
+            <strong>هشدار مغایرت:</strong> مجموع VAT خطوط با VAT ثبت‌شده یکسان نیست یا چند فاکتور mismatch دارند. قبل از ارسال نهایی، موارد زیر را بررسی کنید:
+            <ul class="mb-0 mt-2">
+                <li>گرد کردن مبلغ خطوط</li>
+                <li>فاکتورهای بدون ردیف یا با subtotal صفر</li>
+                <li>اختلاف بین گزارش فصلی و مجموع فاکتور</li>
+            </ul>
+        </div>
+    }
+
     <div class="card border-0 shadow-sm vat-card">
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0 vat-table">
                 <thead>
                     <tr>
-                        <th>شماره فاکتور</th>
+                        <th>شماره</th>
                         <th>نوع</th>
                         <th>تاریخ</th>
                         <th>طرف معامله</th>
                         <th>جمع جزء</th>
-                        <th>VAT 10%</th>
-                        <th>جمع کل</th>
+                        <th>VAT ثبت‌شده</th>
+                        <th>VAT خطی</th>
+                        <th>اختلاف</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,20 +124,23 @@
                 {
                     @foreach (var item in Model.VatRows)
                     {
-                        <tr>
+                        var calculatedVat = Math.Round(item.SubTotal * 0.10m, 2);
+                        var diff = Math.Round(item.VatAmount - calculatedVat, 2);
+                        <tr class="@(Math.Abs(diff) > 0 ? "vat-row-warning" : "")">
                             <td>@item.InvoiceNumber</td>
                             <td><span class="badge @(item.InvoiceType == "Sale" ? "text-bg-success" : "text-bg-primary")">@(item.InvoiceType == "Sale" ? "فروش" : "خرید")</span></td>
                             <td>@item.DateShamsi</td>
                             <td>@item.PartyName</td>
                             <td>@item.SubTotal.ToString("N0")</td>
-                            <td class="fw-semibold">@item.VatAmount.ToString("N0")</td>
-                            <td>@item.GrandTotal.ToString("N0")</td>
+                            <td>@item.VatAmount.ToString("N0")</td>
+                            <td>@calculatedVat.ToString("N0")</td>
+                            <td class="fw-semibold @(Math.Abs(diff) > 0 ? "text-danger" : "text-success")">@diff.ToString("N0")</td>
                         </tr>
                     }
                 }
                 else
                 {
-                    <tr><td colspan="7" class="text-center text-muted py-4">برای سال انتخاب‌شده داده VAT ثبت نشده است.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">برای سال انتخاب‌شده داده VAT ثبت نشده است.</td></tr>
                 }
                 </tbody>
             </table>

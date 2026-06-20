@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
@@ -38,7 +39,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [PermissionAuthorize("Security.Manage")]
         public async Task<IActionResult> UpdateGeneral([Bind(Prefix = "General")] GeneralSettingsViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
@@ -146,7 +147,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [PermissionAuthorize("Security.Manage")]
         public async Task<IActionResult> UpdateSystem([Bind(Prefix = "System")] SystemConnectivitySettingsViewModel model, CancellationToken cancellationToken)
         {
             var systemSetting = await _context.SystemSettings
@@ -205,28 +206,28 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [PermissionAuthorize("Security.Manage")]
         public IActionResult UserSignatureManagement()
         {
             return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [PermissionAuthorize("Security.Manage")]
         public IActionResult AddNewUser()
         {
             return RedirectToAction("Create", "Users");
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [PermissionAuthorize("Security.Manage")]
         public IActionResult CreateUser()
         {
             return RedirectToAction("Create", "Users");
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [PermissionAuthorize("Security.Manage")]
         public async Task<IActionResult> SaveSignature([FromBody] SignatureUploadModel? model)
         {
             if (string.IsNullOrWhiteSpace(model?.ImageData))

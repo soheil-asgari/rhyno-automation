@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,12 +19,14 @@ namespace OfficeAutomation.Controllers
         private readonly ApplicationDbContext _context;
         // اضافه کردن UserManager برای شناسایی کاربر لاگین شده
         private readonly UserManager<User> _userManager;
+        private readonly IAuthorizationFacade _authorizationFacade;
 
         // تزریق سرویس‌ها در سازنده (Constructor)
-        public LeavesController(ApplicationDbContext context, UserManager<User> userManager)
+        public LeavesController(ApplicationDbContext context, UserManager<User> userManager, IAuthorizationFacade authorizationFacade)
         {
             _context = context;
             _userManager = userManager;
+            _authorizationFacade = authorizationFacade;
         }
 
         // GET: Leaves
@@ -175,7 +178,7 @@ namespace OfficeAutomation.Controllers
             var leave = await _context.Leaves.FirstOrDefaultAsync(item => item.Id == id);
             if (leave == null) return NotFound();
 
-            if (!User.IsInRole("Admin")) return Forbid();
+            if (!await _authorizationFacade.IsSecurityAdminAsync()) return Forbid();
 
             leave.Status = WorkflowStatus.Approved;
             await _context.SaveChangesAsync();
@@ -189,7 +192,7 @@ namespace OfficeAutomation.Controllers
             var leave = await _context.Leaves.FirstOrDefaultAsync(item => item.Id == id);
             if (leave == null) return NotFound();
 
-            if (!User.IsInRole("Admin")) return Forbid();
+            if (!await _authorizationFacade.IsSecurityAdminAsync()) return Forbid();
 
             leave.Status = WorkflowStatus.Rejected;
             await _context.SaveChangesAsync();

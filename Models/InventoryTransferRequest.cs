@@ -28,6 +28,15 @@ namespace OfficeAutomation.Models
         [StringLength(30)]
         public string Status { get; set; } = WorkflowStatus.PendingApproval;
 
+        [StringLength(600)]
+        public string? Description { get; set; }
+
+        [StringLength(600)]
+        public string? RejectReason { get; set; }
+
+        [StringLength(600)]
+        public string? CancelReason { get; set; }
+
         [Required]
         public string RequestedByUserId { get; set; } = string.Empty;
 
@@ -37,8 +46,22 @@ namespace OfficeAutomation.Models
 
         public User? ApprovedByUser { get; set; }
 
+        public string? RejectedByUserId { get; set; }
+
+        public User? RejectedByUser { get; set; }
+
+        public string? CanceledByUserId { get; set; }
+
+        public User? CanceledByUser { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public DateTime? ApprovedAt { get; set; }
+
+        public DateTime? RejectedAt { get; set; }
+
+        public DateTime? CanceledAt { get; set; }
+
+        public DateTime? CompletedAt { get; set; }
     }
 }

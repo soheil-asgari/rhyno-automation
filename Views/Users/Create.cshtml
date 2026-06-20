@@ -1,104 +1,112 @@
-﻿@model OfficeAutomation.Models.UserViewModel
+@model OfficeAutomation.Models.UserViewModel
+@{
+    var roleOptions = ViewBag.RoleOptions as IEnumerable<string> ?? Array.Empty<string>();
+    var rolePermissionMap = ViewBag.RolePermissionMap as Dictionary<string, string[]> ?? new();
+}
 
-<div class="row justify-content-center users-create">
-    <div class="col-md-6">
-        <div class="card shadow border-0">
-            <div class="card-header bg-primary text-white py-3">
-                <h5 class="mb-0">تعریف همکار جدید</h5>
-            </div>
-            <div class="card-body p-4">
-                <form asp-action="Create" method="post">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="All" class="text-danger small"></div>
-
-                    <div class="mb-3">
-                        <label class="form-label">نام و نام خانوادگی</label>
-                        <input asp-for="FullName" class="form-control" required readonly />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">نام کاربری (کد پرسنلی یا نام)</label>
-                        <input asp-for="Email" class="form-control" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">اتصال به کارمند</label>
-                        <select asp-for="EmployeeId" class="form-select" required>
-                            <option value="">انتخاب کارمند</option>
-                            @foreach (var employee in (IEnumerable<dynamic>)(ViewBag.EmployeeOptions ?? new List<dynamic>()))
-                            {
-                                <option value="@employee.Id">@employee.FullName (@employee.PersonnelCode)</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">مدیر مستقیم</label>
-                        <select asp-for="ParentManagerUserId" class="form-select">
-                            <option value="">بدون مدیر</option>
-                            @foreach (var manager in (IEnumerable<dynamic>)(ViewBag.ManagerOptions ?? new List<dynamic>()))
-                            {
-                                <option value="@manager.Id">@manager.FullName</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">نقش</label>
-                        <select asp-for="Role" class="form-select" required>
-                            <option value="">انتخاب نقش</option>
-                            @foreach (var role in (IEnumerable<string>)(ViewBag.RoleOptions ?? new List<string>()))
-                            {
-                                <option value="@role">@role</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">رمز عبور پیش‌فرض</label>
-                        <input asp-for="Password" type="password" class="form-control" required />
-                        <small class="text-muted">حداقل ۶ کاراکتر، شامل عدد و حروف بزرگ</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <small class="text-muted">دسترسی‌ها به‌صورت پویا از ماتریس نقش تعیین می‌شود.</small>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-success">ذخیره و ایجاد اکانت</button>
-                        <a asp-action="Index" class="btn btn-light">انصراف</a>
-                    </div>
-                </form>
-            </div>
+<div class="page-shell">
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">تعریف همکار جدید</h2>
+            <p class="section-subtitle">کاربر جدید را به کارمند، مدیر و نقش سازمانی وصل کنید.</p>
         </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
+    </div>
+
+    <div class="form-card">
+        <form asp-action="Create" method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger small"></div>
+
+            <div class="col-md-6">
+                <label asp-for="FullName" class="form-label">نام و نام خانوادگی</label>
+                <input asp-for="FullName" class="form-control" required />
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label">نام کاربری / ایمیل</label>
+                <input asp-for="Email" class="form-control" required />
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="EmployeeId" class="form-label">اتصال به کارمند</label>
+                <select asp-for="EmployeeId" class="form-select" required id="EmployeeId">
+                    <option value="">انتخاب کارمند</option>
+                    @foreach (var employee in (IEnumerable<dynamic>)(ViewBag.EmployeeOptions ?? Array.Empty<dynamic>()))
+                    {
+                        <option value="@employee.Id">@employee.FullName (@employee.PersonnelCode)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="ParentManagerUserId" class="form-label">مدیر مستقیم</label>
+                <select asp-for="ParentManagerUserId" class="form-select">
+                    <option value="">بدون مدیر</option>
+                    @foreach (var manager in (IEnumerable<dynamic>)(ViewBag.ManagerOptions ?? Array.Empty<dynamic>()))
+                    {
+                        <option value="@manager.Id">@manager.FullName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Role" class="form-label">نقش</label>
+                <select asp-for="Role" class="form-select" required>
+                    <option value="">انتخاب نقش</option>
+                    @foreach (var role in roleOptions)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Password" class="form-label">رمز عبور پیش‌فرض</label>
+                <input asp-for="Password" type="password" class="form-control" required />
+                <div class="form-text">رمز باید با سیاست فعلی Identity هم‌خوان باشد.</div>
+            </div>
+
+            <div class="col-12">
+                <div class="app-state">
+                    <div>
+                        <i class="bi bi-shield-lock"></i>
+                        <h5 class="mb-1 mt-2">نقش انتخابی، permissionها را تعیین می‌کند</h5>
+                        <p class="mb-0 text-muted">در این نسخه، دسترسی واقعی از policy و permission table خوانده می‌شود.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Permissionهای نقش انتخابی</label>
+                <div id="rolePermissionPreview" class="d-flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-success">ذخیره و ایجاد اکانت</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">انصراف</a>
+            </div>
+        </form>
     </div>
 </div>
-
-@section Styles {
-    <style>
-        .users-create .dropdown-menu {
-            z-index: 10001 !important;
-        }
-    </style>
-}
 
 @section Scripts {
     <script>
         (() => {
-            const employeeSelect = document.getElementById('EmployeeId');
-            const fullNameInput = document.getElementById('FullName');
-            if (!employeeSelect || !fullNameInput) return;
+            const roleSelect = document.querySelector('select[name="Role"]');
+            const preview = document.getElementById('rolePermissionPreview');
+            const map = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rolePermissionMap));
 
-            employeeSelect.addEventListener('change', () => {
-                const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
-                if (!selectedOption || !selectedOption.value) {
-                    fullNameInput.value = '';
-                    return;
-                }
-                const optionText = selectedOption.textContent || '';
-                const namePart = optionText.split('(')[0]?.trim() || '';
-                fullNameInput.value = namePart;
-            });
+            const render = () => {
+                if (!preview || !roleSelect) return;
+                const permissions = map[roleSelect.value] || [];
+                preview.innerHTML = permissions.length
+                    ? permissions.map(p => `<span class="badge text-bg-primary">${p}</span>`).join('')
+                    : '<span class="text-muted small">نقشی انتخاب نشده است.</span>';
+            };
+
+            roleSelect?.addEventListener('change', render);
+            render();
         })();
     </script>
 }

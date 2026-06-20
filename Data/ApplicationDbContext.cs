@@ -45,6 +45,7 @@ namespace OfficeAutomation.Data
         public DbSet<WarehouseClosing> WarehouseClosings { get; set; }
         public DbSet<WarehouseClosingItem> WarehouseClosingItems { get; set; }
         public DbSet<InventoryOpeningBalanceLedger> InventoryOpeningBalanceLedgers { get; set; }
+        public DbSet<InventoryMovementLedger> InventoryMovementLedgers { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Employer> Employers { get; set; }
@@ -525,6 +526,10 @@ namespace OfficeAutomation.Data
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<InsuranceEmployee>()
+                .Property(emp => emp.Salary)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<InsuranceEmployee>()
                 .HasOne(emp => emp.HumanCapitalEmployee)
                 .WithMany()
                 .HasForeignKey(emp => emp.HumanCapitalEmployeeId)
@@ -551,6 +556,10 @@ namespace OfficeAutomation.Data
                 .HasMaxLength(200);
 
             modelBuilder.Entity<Warehouse>()
+                .Property(warehouse => warehouse.Capacity)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Warehouse>()
                 .HasOne(warehouse => warehouse.ManagerUser)
                 .WithMany()
                 .HasForeignKey(warehouse => warehouse.ManagerUserId)
@@ -571,6 +580,18 @@ namespace OfficeAutomation.Data
             modelBuilder.Entity<Product>()
                 .Property(product => product.Description)
                 .HasMaxLength(600);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.ReorderPoint)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.MaximumStock)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Product>()
+                .Property(product => product.LastPurchasePrice)
+                .HasPrecision(18, 2);
 
             modelBuilder.Entity<Product>()
                 .Property(product => product.MinimumStock)
@@ -793,6 +814,18 @@ namespace OfficeAutomation.Data
                 .WithMany(warehouse => warehouse.Stocks)
                 .HasForeignKey(stock => stock.WarehouseId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryMovementLedger>()
+                .Property(item => item.QuantityIn)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryMovementLedger>()
+                .Property(item => item.QuantityOut)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<InventoryMovementLedger>()
+                .Property(item => item.BalanceAfter)
+                .HasPrecision(18, 3);
 
             modelBuilder.Entity<InventoryCounting>()
                 .HasIndex(counting => counting.DocumentNumber)

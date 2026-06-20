@@ -8,9 +8,9 @@ namespace OfficeAutomation.Models
 
         public int? HumanCapitalEmployeeId { get; set; }
 
-        public string FullName { get; set; }
+        public string FullName { get; set; } = string.Empty;
 
-        public string JobTitle { get; set; }
+        public string JobTitle { get; set; } = string.Empty;
 
         public DateTime StartWork { get; set; }
 
@@ -20,7 +20,7 @@ namespace OfficeAutomation.Models
 
         public decimal Salary { get; set; }
 
-        public InsuranceList InsuranceList { get; set; }
+        public InsuranceList InsuranceList { get; set; } = null!;
 
         public HumanCapitalEmployee? HumanCapitalEmployee { get; set; }
     }

@@ -1,58 +1,59 @@
 @model InventoryTransferRequestCreateVM
 @{
-    ViewData["Title"] = "ثبت درخواست انتقال بین انبارها";
+    ViewData["Title"] = "ثبت درخواست انتقال";
 }
 
-@section Styles {
-    <style>
-        .wf-card { background: var(--glass-bg); border: 1px solid rgba(148, 163, 184, .35); }
-        .transfer-create .table th,
-        .transfer-create .table td {
-            color: var(--text-dark) !important;
-        }
-        html.theme-dark .transfer-create .table th,
-        html.theme-dark .transfer-create .table td,
-        html.theme-dark .transfer-create .table th *,
-        html.theme-dark .transfer-create .table td * {
-            color: var(--text-dark) !important;
-        }
-        .transfer-create .dropdown-menu { z-index: 10001 !important; }
-    </style>
-}
-
-<div class="container-fluid py-4 transfer-create">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">ثبت درخواست انتقال بین پروژه‌ها/انبارها</h6>
-        <a asp-action="TransferRequests" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">ثبت درخواست انتقال بین انبارها</h5>
+            <div class="text-muted small">برای انتقال، انبار مبدأ، انبار مقصد، کالا و مقدار را مشخص کن.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="TransferRequests" class="btn btn-outline-secondary btn-sm">بازگشت به فهرست</a>
+            <a asp-action="Index" class="btn btn-primary btn-sm">هاب انبار</a>
+        </div>
     </div>
 
-    <div class="card shadow-sm border-0 wf-card">
-        <div class="card-body">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
             <form asp-action="CreateTransferRequest" method="post" class="row g-3">
                 @Html.AntiForgeryToken()
                 <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
-                <div class="col-md-4">
-                    <label asp-for="SourceWarehouseId" class="form-label small"></label>
-                    <select asp-for="SourceWarehouseId" asp-items="Model.WarehouseOptions" class="form-select form-select-sm"></select>
+
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label small mb-1"></label>
+                    <textarea asp-for="Description" rows="3" class="form-control" placeholder="دلیل انتقال، توضیح درخواست یا نکته عملیاتی را بنویس"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="SourceWarehouseId" class="form-label small mb-1"></label>
+                    <select asp-for="SourceWarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
                     <span asp-validation-for="SourceWarehouseId" class="text-danger small"></span>
                 </div>
-                <div class="col-md-4">
-                    <label asp-for="DestinationWarehouseId" class="form-label small"></label>
-                    <select asp-for="DestinationWarehouseId" asp-items="Model.WarehouseOptions" class="form-select form-select-sm"></select>
+                <div class="col-md-6">
+                    <label asp-for="DestinationWarehouseId" class="form-label small mb-1"></label>
+                    <select asp-for="DestinationWarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
                     <span asp-validation-for="DestinationWarehouseId" class="text-danger small"></span>
                 </div>
-                <div class="col-md-4">
-                    <label asp-for="ProductId" class="form-label small"></label>
-                    <select asp-for="ProductId" asp-items="Model.ProductOptions" class="form-select form-select-sm"></select>
+                <div class="col-md-6">
+                    <label asp-for="ProductId" class="form-label small mb-1"></label>
+                    <select asp-for="ProductId" asp-items="Model.ProductOptions" class="form-select"></select>
                     <span asp-validation-for="ProductId" class="text-danger small"></span>
                 </div>
-                <div class="col-md-4">
-                    <label asp-for="Quantity" class="form-label small"></label>
-                    <input asp-for="Quantity" class="form-control form-control-sm" />
+                <div class="col-md-6">
+                    <label asp-for="Quantity" class="form-label small mb-1"></label>
+                    <input asp-for="Quantity" class="form-control" />
                     <span asp-validation-for="Quantity" class="text-danger small"></span>
                 </div>
                 <div class="col-12">
-                    <button type="submit" class="btn btn-sm btn-primary">ثبت درخواست</button>
+                    <div class="alert alert-info small mb-0">
+                        درخواست ابتدا در وضعیت <strong>در انتظار مدیر</strong> ثبت می‌شود و فقط بعد از تایید نهایی به موجودی اثر می‌گذارد.
+                    </div>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">ثبت درخواست</button>
+                    <a asp-action="TransferRequests" class="btn btn-outline-secondary">انصراف</a>
                 </div>
             </form>
         </div>
