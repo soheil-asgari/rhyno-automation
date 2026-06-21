@@ -476,6 +476,104 @@
 }
 
 /* Final dashboard override: dense, data-first, sharp-edged UI */
+.executive-dashboard .dashboard-header,
+.executive-dashboard .home-customization-panel,
+.executive-dashboard .dashboard-panel,
+.executive-dashboard .dashboard-shortcuts,
+.executive-dashboard .metric-card,
+.executive-dashboard .dashboard-shortcut {
+    border-radius: 24px !important;
+}
+
+.executive-dashboard .dashboard-header,
+.executive-dashboard .home-customization-panel,
+.executive-dashboard .dashboard-panel,
+.executive-dashboard .dashboard-shortcuts {
+    background: var(--surface-highlight, linear-gradient(145deg, rgba(255,255,255,.94), rgba(239,246,255,.88)));
+    border: 1px solid var(--app-border);
+    box-shadow: var(--app-shadow);
+    backdrop-filter: blur(18px);
+}
+
+.executive-dashboard .dashboard-header {
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.executive-dashboard .dashboard-header::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.10), transparent 22%);
+    pointer-events: none;
+}
+
+.executive-dashboard .metric-card,
+.executive-dashboard .dashboard-shortcut {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.9));
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    box-shadow: 0 18px 36px rgba(37, 99, 235, 0.10);
+}
+
+.executive-dashboard .metric-card:hover,
+.executive-dashboard .dashboard-shortcut:hover,
+.executive-dashboard .dashboard-panel:hover {
+    box-shadow: var(--app-shadow-strong);
+}
+
+.executive-dashboard .metric-icon,
+.executive-dashboard .dashboard-shortcut > i,
+.executive-dashboard .work-item > i,
+.executive-dashboard .alert-item > i {
+    background: var(--icon-tint);
+    box-shadow: var(--icon-shadow);
+    border-radius: 16px;
+}
+
+.executive-dashboard .metric-icon {
+    width: 54px;
+    height: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.executive-dashboard .panel-head h2,
+.executive-dashboard .dashboard-header h1 {
+    letter-spacing: -0.02em;
+}
+
+.executive-dashboard .panel-head span,
+.executive-dashboard .dashboard-header p,
+.executive-dashboard .metric-body small,
+.executive-dashboard .metric-body span {
+    line-height: 1.8;
+}
+
+html.theme-dark .executive-dashboard .dashboard-header,
+html.theme-dark .executive-dashboard .home-customization-panel,
+html.theme-dark .executive-dashboard .dashboard-panel,
+html.theme-dark .executive-dashboard .dashboard-shortcuts,
+html[data-theme="dark"] .executive-dashboard .dashboard-header,
+html[data-theme="dark"] .executive-dashboard .home-customization-panel,
+html[data-theme="dark"] .executive-dashboard .dashboard-panel,
+html[data-theme="dark"] .executive-dashboard .dashboard-shortcuts {
+    background: var(--surface-highlight, linear-gradient(160deg, rgba(16,29,54,.96), rgba(12,23,43,.9)));
+    border-color: var(--app-border-strong);
+    box-shadow: var(--app-shadow-strong);
+}
+
+html.theme-dark .executive-dashboard .metric-card,
+html.theme-dark .executive-dashboard .dashboard-shortcut,
+html[data-theme="dark"] .executive-dashboard .metric-card,
+html[data-theme="dark"] .executive-dashboard .dashboard-shortcut {
+    background: linear-gradient(160deg, rgba(17, 27, 48, 0.96), rgba(15, 23, 42, 0.92));
+    border-color: var(--app-border-strong);
+}
+
 .rhino-premium-panel {
     background-image: none !important;
     padding: 12px !important;

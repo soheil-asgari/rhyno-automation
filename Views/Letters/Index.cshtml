@@ -226,6 +226,64 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/letters-index.css" />
     <style>
+        .letters-page {
+            --letters-surface: var(--surface-highlight);
+            --letters-border: var(--app-border);
+            --letters-shadow: var(--app-shadow);
+        }
+
+        .letters-page .header-section,
+        .letters-page .letter-row-card,
+        .letters-page .letters-ai-summary,
+        .letters-page .letters-stat-card,
+        .letters-page .letter-filter-btn,
+        .letters-page .search-box-modern input,
+        .letters-page .letters-advanced-filters .form-select,
+        .letters-page .letters-advanced-filters .form-control {
+            border-radius: 20px !important;
+        }
+
+        .letters-page .header-section,
+        .letters-page .letter-row-card,
+        .letters-page .letters-ai-summary {
+            background: var(--letters-surface);
+            border: 1px solid var(--letters-border);
+            box-shadow: var(--letters-shadow);
+        }
+
+        .letters-page .brand-icon-box,
+        .letters-page .document-icon {
+            background: var(--icon-tint);
+            box-shadow: var(--icon-shadow);
+        }
+
+        .letters-page .letters-stat-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.88));
+            border: 1px solid var(--letters-border);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
+        }
+
+        .letters-page .letters-stat-card.active {
+            border-color: var(--app-border-strong);
+            box-shadow: var(--app-shadow-strong);
+        }
+
+        .letters-page .letter-filter-btn {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid var(--letters-border);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        .letters-page .letter-filter-btn.active,
+        .letters-page .letter-filter-btn:hover {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(79, 70, 229, 0.14));
+            border-color: var(--app-border-strong);
+        }
+
+        .letters-page .letters-ai-summary {
+            background: var(--letters-surface);
+        }
+
         html.theme-dark .letters-page .header-section,
         html.theme-dark .letters-page .letter-row-card {
             background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.9)) !important;

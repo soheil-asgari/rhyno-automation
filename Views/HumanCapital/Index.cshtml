@@ -7,12 +7,178 @@
     ViewData["SectionActionText"] = "استخدام جدید";
 }
 
-<link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/human-capital.css" asp-append-version="true" />
+    <style>
+        .hc-page {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .hc-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .hc-stat-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .hc-stat-card {
+            border: 1px solid var(--ds-border);
+            border-radius: 18px;
+            padding: 16px 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+
+        .hc-stat-link:hover .hc-stat-card,
+        .hc-stat-link:focus-visible .hc-stat-card {
+            transform: translateY(-3px);
+            border-color: rgba(59,130,246,.45);
+            box-shadow: 0 18px 36px rgba(15,23,42,.14);
+        }
+
+        .hc-stat-card.active {
+            border-color: rgba(59,130,246,.6);
+            box-shadow: 0 0 0 1px rgba(59,130,246,.15), 0 18px 36px rgba(15,23,42,.14);
+        }
+
+        .hc-stat-label {
+            display: block;
+            font-size: .78rem;
+            color: var(--text-muted);
+        }
+
+        .hc-stat-value {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-top: 6px;
+            color: var(--text-main);
+        }
+
+        .hc-content-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2.1fr) minmax(320px, 0.9fr);
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .hc-stack {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .hc-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .hc-card-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .hc-card-subtitle {
+            margin: .3rem 0 0;
+            font-size: .85rem;
+            color: var(--text-muted);
+        }
+
+        .hc-list-card {
+            overflow: hidden;
+        }
+
+        .hc-list-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .hc-list-count {
+            font-size: .9rem;
+            color: var(--text-muted);
+        }
+
+        .recent-items-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .recent-item {
+            border: 1px solid var(--ds-border);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            background: var(--app-surface-soft);
+        }
+
+        .recent-item a {
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        html.theme-dark .hc-stat-card,
+        html[data-theme="dark"] .hc-stat-card,
+        body[data-theme="dark"] .hc-stat-card {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
+            border-color: var(--ds-border-strong);
+        }
+
+        html.theme-dark .hc-stat-label,
+        html.theme-dark .hc-stat-value,
+        html[data-theme="dark"] .hc-stat-label,
+        html[data-theme="dark"] .hc-stat-value,
+        body[data-theme="dark"] .hc-stat-label,
+        body[data-theme="dark"] .hc-stat-value {
+            color: #edf4ff;
+        }
+
+        @@media (max-width: 1200px) {
+            .hc-content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 992px) {
+            .hc-stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .hc-stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hc-list-toolbar,
+            .hc-card-head {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+}
 
 <div class="page-shell hc-page">
     <partial name="_SectionHeader" />
 
-    <div class="hc-stats-grid mb-4">
+    <div class="hc-stats-grid">
         <a asp-action="Index" asp-route-workflowView="all" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="hc-stat-link">
             <div class="hc-stat-card @(string.IsNullOrWhiteSpace(Model.WorkflowView) || Model.WorkflowView == "all" ? "active" : "")">
                 <span class="hc-stat-label">کل پرسنل</span>
@@ -40,10 +206,17 @@
     </div>
 
     @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترهای اخیر و ذخیره‌شده برای دسترسی سریع‌تر"; ViewData["SavedFiltersSaveButtonId"] = "hc-save-filter"; ViewData["SavedFiltersClearButtonId"] = "hc-clear-filters"; ViewData["SavedFiltersContainerId"] = "hc-saved-filters"; }
-    <div class="row g-3 mb-3">
-        <div class="col-12 col-xl-8">
-            <partial name="_SavedFiltersPanel" />
-            <div class="form-card h-100">
+
+    <div class="hc-content-grid">
+        <div class="hc-stack">
+            <div class="form-card">
+                <div class="hc-card-head">
+                    <div>
+                        <h2 class="hc-card-title">فیلتر و جستجو</h2>
+                        <p class="hc-card-subtitle">لیست پرسنل را بر اساس نام، وضعیت و دپارتمان محدود کنید.</p>
+                    </div>
+                </div>
+                <partial name="_SavedFiltersPanel" />
                 <form method="get" asp-action="Index" class="row g-2 g-md-3 align-items-end" id="hc-filter-form">
                     <input type="hidden" asp-for="WorkflowView" />
                     <div class="col-12 col-md-4">
@@ -71,134 +244,91 @@
                     </div>
                 </form>
             </div>
+
+            <div class="form-card hc-list-card">
+                <div class="hc-list-toolbar">
+                    <div>
+                        <h2 class="hc-card-title">لیست کارمندان</h2>
+                        <p class="hc-card-subtitle">نمای عملیاتی پرسنل با دسترسی سریع به جزئیات و ویرایش.</p>
+                    </div>
+                    <div class="hc-list-count">@Model.FilteredCount رکورد نمایش داده می‌شود</div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table smart-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>پرسنل</th>
+                                <th>سمت / دپارتمان</th>
+                                <th>استخدام</th>
+                                <th>حقوق فعلی</th>
+                                <th>وضعیت</th>
+                                <th>سوابق</th>
+                                <th class="text-center">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Items.Any())
+                            {
+                                foreach (var employee in Model.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@employee.FullName</div>
+                                            <div class="small text-muted">کد پرسنلی: @employee.PersonnelCode</div>
+                                        </td>
+                                        <td>
+                                            <div>@employee.PositionTitle</div>
+                                            <div class="small text-muted">@(employee.DepartmentName ?? "-")</div>
+                                        </td>
+                                        <td>@employee.HireDate.ToString("yyyy/MM/dd")</td>
+                                        <td>@employee.CurrentSalary.ToString("N0")</td>
+                                        <td>
+                                            <span class="badge @(employee.CurrentStatus == "فعال" ? "text-bg-success" : "text-bg-secondary")">@employee.CurrentStatus</span>
+                                        </td>
+                                        <td>
+                                            <div class="small text-muted">افزایش حقوق: @employee.SalaryChangeCount</div>
+                                            <div class="small text-muted">آخرین رخداد: @(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="action-bar justify-content-center">
+                                                <a asp-action="Details" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-primary hc-track-visit" data-id="@employee.Id" data-name="@employee.FullName" data-url="@Url.Action("Details", "HumanCapital", new { id = employee.Id })">جزئیات</a>
+                                                <a asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-secondary">ویرایش</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <i class="bi bi-people"></i>
+                                            <div>موردی برای نمایش وجود ندارد.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <div class="col-12 col-xl-4">
-            <div class="form-card h-100">
-                <div class="section-title h5 mb-1">آخرین بازدیدها</div>
-                <div class="text-muted small mb-3">افرادی که اخیراً باز کرده‌اید اینجا ذخیره می‌شوند.</div>
+        <div class="hc-stack">
+            <div class="form-card">
+                <div class="hc-card-head">
+                    <div>
+                        <h2 class="hc-card-title">آخرین بازدیدها</h2>
+                        <p class="hc-card-subtitle">افرادی که اخیراً باز کرده‌اید اینجا ذخیره می‌شوند.</p>
+                    </div>
+                </div>
                 <div id="hc-recent-items" class="recent-items-list"></div>
             </div>
         </div>
     </div>
-
-    <div class="form-card">
-        <div class="table-responsive">
-            <table class="table smart-table align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>پرسنل</th>
-                        <th>سمت / دپارتمان</th>
-                        <th>استخدام</th>
-                        <th>حقوق فعلی</th>
-                        <th>وضعیت</th>
-                        <th>سوابق</th>
-                        <th class="text-center">عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Items.Any())
-                    {
-                        foreach (var employee in Model.Items)
-                        {
-                            <tr>
-                                <td>
-                                    <div class="fw-semibold">@employee.FullName</div>
-                                    <div class="small text-muted">کد پرسنلی: @employee.PersonnelCode</div>
-                                </td>
-                                <td>
-                                    <div>@employee.PositionTitle</div>
-                                    <div class="small text-muted">@(employee.DepartmentName ?? "-")</div>
-                                </td>
-                                <td>@employee.HireDate.ToString("yyyy/MM/dd")</td>
-                                <td>@employee.CurrentSalary.ToString("N0")</td>
-                                <td>
-                                    <span class="badge @(employee.CurrentStatus == "فعال" ? "text-bg-success" : "text-bg-secondary")">@employee.CurrentStatus</span>
-                                </td>
-                                <td>
-                                    <div class="small text-muted">افزایش حقوق: @employee.SalaryChangeCount</div>
-                                    <div class="small text-muted">آخرین رخداد: @(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="action-bar justify-content-center">
-                                        <a asp-action="Details" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-primary hc-track-visit" data-id="@employee.Id" data-name="@employee.FullName" data-url="@Url.Action("Details", "HumanCapital", new { id = employee.Id })">جزئیات</a>
-                                        <a asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-secondary">ویرایش</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="7">
-                                <div class="empty-state">
-                                    <i class="bi bi-people"></i>
-                                    <div>موردی برای نمایش وجود ندارد.</div>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
-
-<style>
-    .hc-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-    }
-    .hc-stat-link { text-decoration: none; color: inherit; }
-    .hc-stat-card {
-        border: 1px solid var(--ds-border);
-        border-radius: 18px;
-        padding: 16px 18px;
-        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
-        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-        transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
-    }
-    .hc-stat-link:hover .hc-stat-card,
-    .hc-stat-link:focus-visible .hc-stat-card {
-        transform: translateY(-3px);
-        border-color: rgba(59,130,246,.45);
-        box-shadow: 0 18px 36px rgba(15,23,42,.14);
-    }
-    .hc-stat-card.active {
-        border-color: rgba(59,130,246,.6);
-        box-shadow: 0 0 0 1px rgba(59,130,246,.15), 0 18px 36px rgba(15,23,42,.14);
-    }
-    .hc-stat-label { display:block; font-size:.78rem; color:var(--text-muted); }
-    .hc-stat-value { display:block; font-size:1.8rem; font-weight:900; line-height:1.1; margin-top:6px; color:var(--text-main); }
-    html.theme-dark .hc-stat-card,
-    html[data-theme="dark"] .hc-stat-card,
-    body[data-theme="dark"] .hc-stat-card {
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
-        border-color: var(--ds-border-strong);
-    }
-    html.theme-dark .hc-stat-label,
-    html.theme-dark .hc-stat-value,
-    html[data-theme="dark"] .hc-stat-label,
-    html[data-theme="dark"] .hc-stat-value,
-    body[data-theme="dark"] .hc-stat-label,
-    body[data-theme="dark"] .hc-stat-value { color: #edf4ff; }
-    .recent-items-list { display: grid; gap: 10px; }
-    .recent-item {
-        border: 1px solid var(--ds-border);
-        border-radius: 14px;
-        padding: 12px 14px;
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: center;
-        background: var(--app-surface-soft);
-    }
-    .recent-item a { text-decoration: none; }
-    @@media (max-width: 992px) { .hc-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @@media (max-width: 576px) { .hc-stats-grid { grid-template-columns: 1fr; } }
-</style>
 
 <script>
     (() => {
@@ -250,7 +380,6 @@
                     body: JSON.stringify(items)
                 });
             } catch {
-                // local cache already updated
             }
         };
 

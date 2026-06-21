@@ -3,8 +3,10 @@
 <div class="quick-grid">
     @foreach (var action in Model)
     {
-        <a href="@action.Url" class="quick-card tone-@action.Tone">
-            <i class="bi @action.Icon"></i>
+        <a href="@action.Url" class="quick-card tone-@action.Tone" data-tone="@action.Tone">
+            <span class="quick-card-icon-wrap">
+                <i class="bi @action.Icon"></i>
+            </span>
             <div>
                 <strong>@action.Title</strong>
                 <span>@action.Description</span>

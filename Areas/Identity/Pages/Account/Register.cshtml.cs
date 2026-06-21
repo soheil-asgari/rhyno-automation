@@ -79,7 +79,7 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
 
         public async Task OnGetAsync(string? returnUrl = null)
         {
-            ReturnUrl = returnUrl;
+            ReturnUrl = returnUrl ?? string.Empty;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
@@ -94,16 +94,14 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
                 // ۲. مقداردهی فیلد FullName قبل از ذخیره در دیتابیس
                 user.FullName = Input.FullName;
                 user.Role = "User";
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                await _userStore.SetUserNameAsync(user, Input.Email!, CancellationToken.None);
+                await _emailStore.SetEmailAsync(user, Input.Email!, CancellationToken.None);
 
-                var result = await _userManager.CreateAsync(user, Input.Password);
+                var result = await _userManager.CreateAsync(user, Input.Password!);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
-
-                    var userId = await _userManager.GetUserIdAsync(user);
 
                     // به دلیل اینکه سیستم ارسال ایمیل را هنوز تنظیم نکرده‌ایم، مستقیم کاربر را وارد می‌کنیم
                     await _signInManager.SignInAsync(user, isPersistent: false);

@@ -176,15 +176,23 @@
             min-height: calc(100vh - 180px);
             overflow-x: hidden;
         }
+        .fin-topline,
+        .fin-card {
+            background: var(--surface-highlight);
+            border: 1px solid var(--app-border);
+            box-shadow: var(--app-shadow);
+        }
         .fin-topline {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             gap: 16px;
             flex-wrap: wrap;
+            padding: 22px 24px;
+            border-radius: 24px;
         }
         .fin-card {
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
         }
         .hub-kpi {
@@ -226,27 +234,6 @@
             border: 1px solid rgba(148, 163, 184, .16);
             background: var(--app-surface-soft);
         }
-        .quick-card {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            border-radius: 16px;
-            text-decoration: none;
-            color: inherit;
-        }
-        .quick-card i {
-            font-size: 1.2rem;
-            width: 30px;
-            height: 30px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: rgba(148, 163, 184, .12);
-        }
-        .quick-card strong { display: block; font-size: .86rem; }
-        .quick-card span { display: block; font-size: .72rem; color: var(--text-muted); }
         .activity-list,
         .hub-alert-list {
             display: grid;
@@ -274,6 +261,14 @@
         .hub-alert.tone-danger { border-color: rgba(239, 68, 68, .35); }
         .hub-alert.tone-info { border-color: rgba(59, 130, 246, .35); }
         .hub-alert.tone-success { border-color: rgba(16, 185, 129, .35); }
+        html.theme-dark .fin-topline,
+        html.theme-dark .fin-card,
+        html[data-theme="dark"] .fin-topline,
+        html[data-theme="dark"] .fin-card {
+            background: var(--surface-highlight);
+            border-color: var(--app-border-strong);
+            box-shadow: var(--app-shadow-strong);
+        }
         @@media (max-width: 768px) {
             .fin-topline { flex-direction: column; }
             .chart-shell { min-height: 260px; height: 300px; }

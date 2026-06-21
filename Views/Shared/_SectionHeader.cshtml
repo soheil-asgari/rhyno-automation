@@ -4,10 +4,11 @@
     var actionUrl = ViewData["SectionActionUrl"] as string;
     var actionText = ViewData["SectionActionText"] as string;
     var actionCss = ViewData["SectionActionCss"] as string ?? "btn btn-primary";
+    var sectionTone = ViewData["SectionTone"] as string ?? "primary";
 }
 
-<div class="section-header">
-    <div>
+<div class="section-header section-header-toned section-tone-@sectionTone">
+    <div class="section-header-copy">
         <h1 class="section-title">@title</h1>
         @if (!string.IsNullOrWhiteSpace(subtitle))
         {

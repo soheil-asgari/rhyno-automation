@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Globalization;
+using System.Threading.RateLimiting;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
@@ -9,6 +13,10 @@ using OfficeAutomation.Services.Auditing;
 using OfficeAutomation.Services.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // 1. تنظیمات دیتابیس
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -55,8 +63,36 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<LeaveWorkflowService>();
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database");
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User?.Identity?.IsAuthenticated == true
+                ? context.User.Identity!.Name ?? "authenticated-user"
+                : context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var faCulture = new CultureInfo("fa-IR");
+    var enCulture = new CultureInfo("en-US");
+    options.DefaultRequestCulture = new RequestCulture(faCulture);
+    options.SupportedCultures = [faCulture, enCulture];
+    options.SupportedUICultures = [faCulture, enCulture];
+});
 
 var app = builder.Build();
+var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 
 // 3. تنظیمات محیط اجرا
 if (!app.Environment.IsDevelopment())
@@ -69,6 +105,29 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRequestLocalization();
+app.UseRateLimiter();
+app.Use(async (context, next) =>
+{
+    var start = DateTimeOffset.UtcNow;
+    try
+    {
+        await next();
+    }
+    finally
+    {
+        var elapsed = DateTimeOffset.UtcNow - start;
+        if (elapsed.TotalMilliseconds >= 500)
+        {
+            logger.LogInformation(
+                "Slow request {Method} {Path} responded {StatusCode} in {ElapsedMs}ms",
+                context.Request.Method,
+                context.Request.Path,
+                context.Response.StatusCode,
+                elapsed.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture));
+        }
+    }
+});
 
 // 4. ترتیب حیاتی احراز هویت
 app.UseAuthentication();
@@ -79,6 +138,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+app.MapHealthChecks("/health");
 
 // 6. خودکارسازی دیتابیس و ساخت نقش و کاربر ادمین (کاملاً ناهمگام و ایمن)
 using (var scope = app.Services.CreateScope())
@@ -128,69 +188,88 @@ using (var scope = app.Services.CreateScope())
         var adminEmail = builder.Configuration["BootstrapAdmin:Email"] ?? "admin@alpha.com";
         var adminPassword = builder.Configuration["BootstrapAdmin:Password"];
 
-        if (string.IsNullOrWhiteSpace(adminPassword) || adminPassword.Length < 12)
+        if (string.IsNullOrWhiteSpace(adminPassword))
         {
-            adminPassword = "DefaultSecurePass123!"; // یک پسورد ثابت و قوی لوکال برای دوقدم اول توسعه
-            Console.WriteLine("WARNING: Bootstrap admin password was missing/weak. Used default secure password.");
+            logger.LogWarning("Bootstrap admin password is missing. Skipping admin user provisioning.");
         }
-
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
-        if (adminUser == null)
+        else
         {
-            adminUser = new User
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                FullName = "مدیر سیستم",
-                EmailConfirmed = true
-            };
-            var createResult = await userManager.CreateAsync(adminUser, adminPassword);
-            if (!createResult.Succeeded)
-            {
-                Console.WriteLine("خطا در ایجاد ادمین پیش‌فرض: " + string.Join(" | ", createResult.Errors.Select(item => item.Description)));
-            }
-        }
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            var bootstrapRole = await roleManager.FindByNameAsync("Admin");
 
-        // ج) مطمئن شویم یوزر ادمین، نقش Admin را دارد
-        if (adminUser != null && !await userManager.IsInRoleAsync(adminUser, "Admin"))
-        {
-            await userManager.AddToRoleAsync(adminUser, "Admin");
-        }
-
-        var adminRole = await roleManager.FindByNameAsync("Admin");
-        if (adminRole != null)
-        {
-            adminRole.DataAccessScope = RoleDataAccessScope.Global;
-            await roleManager.UpdateAsync(adminRole);
-
-            var permissionKeys = PermissionCatalog.CorePermissions.Select(item => item.Key).ToArray();
-            foreach (var key in permissionKeys)
+            if (adminUser == null)
             {
-                var existing = await context.RolePermissions
-                    .FirstOrDefaultAsync(item => item.RoleId == adminRole.Id && item.PermissionKey == key);
-                if (existing == null)
+                adminUser = new User
                 {
-                    context.RolePermissions.Add(new RolePermission
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    FullName = "مدیر سیستم",
+                    EmailConfirmed = true
+                };
+
+                var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+                if (!createResult.Succeeded)
+                {
+                    logger.LogError(
+                        "Failed to create bootstrap admin user {AdminEmail}: {Errors}",
+                        adminEmail,
+                        string.Join(" | ", createResult.Errors.Select(item => item.Description)));
+                }
+            }
+
+            if (adminUser != null && !await userManager.IsInRoleAsync(adminUser, "Admin"))
+            {
+                var roleResult = await userManager.AddToRoleAsync(adminUser, "Admin");
+                if (!roleResult.Succeeded)
+                {
+                    logger.LogError(
+                        "Failed to assign Admin role to bootstrap user {AdminEmail}: {Errors}",
+                        adminEmail,
+                        string.Join(" | ", roleResult.Errors.Select(item => item.Description)));
+                }
+            }
+
+            if (bootstrapRole != null)
+            {
+                bootstrapRole.DataAccessScope = RoleDataAccessScope.Global;
+                var updateRoleResult = await roleManager.UpdateAsync(bootstrapRole);
+                if (!updateRoleResult.Succeeded)
+                {
+                    logger.LogError(
+                        "Failed to update Admin role scope: {Errors}",
+                        string.Join(" | ", updateRoleResult.Errors.Select(item => item.Description)));
+                }
+
+                var permissionKeys = PermissionCatalog.CorePermissions.Select(item => item.Key).ToArray();
+                foreach (var key in permissionKeys)
+                {
+                    var existing = await context.RolePermissions
+                        .FirstOrDefaultAsync(item => item.RoleId == bootstrapRole.Id && item.PermissionKey == key);
+                    if (existing == null)
                     {
-                        RoleId = adminRole.Id,
-                        PermissionKey = key,
-                        IsAllowed = true
-                    });
+                        context.RolePermissions.Add(new RolePermission
+                        {
+                            RoleId = bootstrapRole.Id,
+                            PermissionKey = key,
+                            IsAllowed = true
+                        });
+                    }
+                    else if (!existing.IsAllowed)
+                    {
+                        existing.IsAllowed = true;
+                    }
                 }
-                else if (!existing.IsAllowed)
-                {
-                    existing.IsAllowed = true;
-                }
-            }
 
-            await context.SaveChangesAsync();
+                await context.SaveChangesAsync();
+            }
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine("خطا در راه‌اندازی اولیه دیتابیس: " + ex.Message);
+        logger.LogError(ex, "Error during startup bootstrap and database initialization.");
     }
 }
 
 app.Run();
+
+public partial class Program { }

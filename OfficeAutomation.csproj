@@ -26,20 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EditorConfigFiles Remove="C:\Users\soheil\source\repos\OfficeAutomation\OfficeAutomation\.editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="C:\Users\soheil\source\repos\OfficeAutomation\OfficeAutomation\.editorconfig" />
-    <None Include="wwwroot\css\leave-custom.css" />
-    <None Include="wwwroot\css\leave-form.css" />
-    <None Include="wwwroot\js\leave-create-handler.js" />
-    <None Include="wwwroot\js\leave-handler.js" />
-    <None Include="wwwroot\js\_SignatureHandler.js" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="OfficeAutomation.Tests\**\*.cs" />
+    <Content Remove="OfficeAutomation.Tests\**" />
+    <None Remove="OfficeAutomation.Tests\**" />
+    <EmbeddedResource Remove="OfficeAutomation.Tests\**" />
   </ItemGroup>
 
 </Project>

@@ -5,9 +5,9 @@
 }
 
 <div class="page-shell wh-page">
-    <div class="section-header mb-3">
-        <div>
-            <h1 class="section-title">هاب تصمیم انبار</h1>
+    <div class="section-header section-header-toned section-tone-info mb-3">
+        <div class="section-header-copy">
+            <h1 class="section-title">داشبورد انبار</h1>
             <p class="section-subtitle">وضعیت عملیاتی انبار، اسناد باز، کالاهای بحرانی و روند ورود و خروج در یک نگاه</p>
         </div>
     </div>
@@ -31,14 +31,14 @@
             <div class="warehouse-stat-card">
                 <div class="wh-stat">رسیدها</div>
                 <div class="wh-value">@Model.ReceiptCount</div>
-                <div class="wh-hint">ورودهای ثبت شده</div>
+                <div class="wh-hint">ورودهای ثبت‌شده</div>
             </div>
         </a>
         <a asp-action="Issuances" class="warehouse-stat-link">
             <div class="warehouse-stat-card">
-                <div class="wh-stat">خروج‌ها</div>
+                <div class="wh-stat">خروجی‌ها</div>
                 <div class="wh-value">@Model.IssuanceCount</div>
-                <div class="wh-hint">خروج‌های ثبت شده</div>
+                <div class="wh-hint">خروجی‌های ثبت‌شده</div>
             </div>
         </a>
         <a asp-action="Countings" class="warehouse-stat-link">
@@ -152,7 +152,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <h5 class="mb-1 fw-bold">اسناد معلق</h5>
-                        <div class="text-muted small">رسیدها، خروج‌ها و انتقال‌های در انتظار اقدام</div>
+                        <div class="text-muted small">رسیدها، خروجی‌ها و انتقال‌های در انتظار اقدام</div>
                     </div>
                     <a asp-action="TransferRequests" class="btn btn-sm btn-outline-primary">جزئیات</a>
                 </div>
@@ -218,7 +218,7 @@
         <div class="col-12 col-xl-4">
             <div class="form-card h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0 fw-bold">آخرین خروج‌ها</h5>
+                    <h5 class="mb-0 fw-bold">آخرین خروجی‌ها</h5>
                     <a asp-action="Issuances" class="btn btn-sm btn-outline-primary">همه</a>
                 </div>
                 <div class="d-grid gap-2">
@@ -237,7 +237,7 @@
                     }
                     @if (!Model.RecentIssuances.Any())
                     {
-                        <div class="empty-state small">خروجی برای نمایش وجود ندارد.</div>
+                        <div class="empty-state small">خروجی‌ای برای نمایش وجود ندارد.</div>
                     }
                 </div>
             </div>
@@ -264,7 +264,7 @@
                     }
                     @if (!Model.CountingIssues.Any())
                     {
-                        <div class="empty-state small">مغایرت ثبت شده‌ای وجود ندارد.</div>
+                        <div class="empty-state small">مغایرت ثبت‌شده‌ای وجود ندارد.</div>
                     }
                 </div>
             </div>

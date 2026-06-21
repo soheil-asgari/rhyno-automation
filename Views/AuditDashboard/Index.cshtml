@@ -5,25 +5,126 @@
     ViewData["SectionSubtitle"] = "نمای سریع و قابل‌فیلتر از رخدادهای امنیتی، حذف‌ها و تغییرات حساس";
 }
 
-<div class="page-shell">
+@section Styles {
+    <style>
+        .audit-dashboard-page .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .audit-dashboard-page .section-subtitle {
+            margin: 0.35rem 0 0;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .audit-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .audit-stat-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid #dbe7f3;
+            border-radius: 18px;
+            padding: 1.1rem 1.2rem;
+            box-shadow: 0 12px 30px -22px rgba(15, 23, 42, 0.28);
+        }
+
+        .audit-stat-card.is-active {
+            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+            border-color: #1d4ed8;
+            color: #fff;
+        }
+
+        .audit-stat-label {
+            display: block;
+            font-size: 0.86rem;
+            color: #64748b;
+            margin-bottom: 0.45rem;
+        }
+
+        .audit-stat-card.is-active .audit-stat-label {
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .audit-stat-value {
+            display: block;
+            font-size: 2rem;
+            line-height: 1;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .audit-stat-card.is-active .audit-stat-value {
+            color: #fff;
+        }
+
+        .audit-json {
+            direction: ltr;
+            text-align: left;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 14px;
+            padding: 1rem;
+            min-height: 140px;
+            overflow: auto;
+            font-size: 0.82rem;
+        }
+
+        .audit-inline-detail .audit-json {
+            min-height: auto;
+            max-height: 220px;
+            padding: 0.75rem;
+            border-radius: 12px;
+        }
+
+        @@media (max-width: 992px) {
+            .audit-stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .audit-dashboard-page .section-header {
+                align-items: start;
+            }
+
+            .audit-stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .audit-stat-value {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+}
+
+<div class="page-shell audit-dashboard-page">
     <partial name="_SectionHeader" />
 
-    <div class="hc-stats-grid mb-4">
-        <div class="hc-stat-card active">
-            <span class="hc-stat-label">کل رویدادها</span>
-            <span class="hc-stat-value">@Model.TotalEvents</span>
+    <div class="audit-stats-grid">
+        <div class="audit-stat-card is-active">
+            <span class="audit-stat-label">کل رویدادها</span>
+            <span class="audit-stat-value">@Model.TotalEvents</span>
         </div>
-        <div class="hc-stat-card">
-            <span class="hc-stat-label">رویدادهای هفته</span>
-            <span class="hc-stat-value text-primary">@Model.WeekEvents</span>
+        <div class="audit-stat-card">
+            <span class="audit-stat-label">رویدادهای هفته</span>
+            <span class="audit-stat-value text-primary">@Model.WeekEvents</span>
         </div>
-        <div class="hc-stat-card">
-            <span class="hc-stat-label">رویداد حساس امروز</span>
-            <span class="hc-stat-value text-warning">@Model.SensitiveEventsToday</span>
+        <div class="audit-stat-card">
+            <span class="audit-stat-label">رویداد حساس امروز</span>
+            <span class="audit-stat-value text-warning">@Model.SensitiveEventsToday</span>
         </div>
-        <div class="hc-stat-card">
-            <span class="hc-stat-label">حذف امروز</span>
-            <span class="hc-stat-value text-danger">@Model.DeletesToday</span>
+        <div class="audit-stat-card">
+            <span class="audit-stat-label">حذف امروز</span>
+            <span class="audit-stat-value text-danger">@Model.DeletesToday</span>
         </div>
     </div>
 
@@ -124,11 +225,11 @@
         <div class="section-title h5 mb-3">جزئیات ردیف انتخاب‌شده</div>
         <div class="row g-3">
             <div class="col-12 col-md-6">
-                <div class="small text-muted mb-1">Old Values</div>
+                <div class="small text-muted mb-1">مقادیر قبلی</div>
                 <pre class="mb-0 audit-json" id="audit-old-values"></pre>
             </div>
             <div class="col-12 col-md-6">
-                <div class="small text-muted mb-1">New Values</div>
+                <div class="small text-muted mb-1">مقادیر جدید</div>
                 <pre class="mb-0 audit-json" id="audit-new-values"></pre>
             </div>
         </div>
@@ -259,9 +360,9 @@
                         <div class="small text-muted">${escape(item.affectedColumns || "-")}</div>
                         <div class="small">${item.newValues ? "دارای داده جدید" : "بدون داده جدید"}</div>
                         <div class="audit-inline-detail mt-2" style="display:none;">
-                            <div class="small text-muted mb-1">Old Values</div>
+                            <div class="small text-muted mb-1">مقادیر قبلی</div>
                             <pre class="mb-2 audit-json">${escape(formatJson(item.oldValues))}</pre>
-                            <div class="small text-muted mb-1">New Values</div>
+                            <div class="small text-muted mb-1">مقادیر جدید</div>
                             <pre class="mb-0 audit-json">${escape(formatJson(item.newValues))}</pre>
                         </div>
                     </td>

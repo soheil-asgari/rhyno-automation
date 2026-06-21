@@ -13,6 +13,7 @@ namespace OfficeAutomation.Models
         public SystemConnectivitySettingsViewModel System { get; set; } = new();
         public UiPreferencesViewModel Ui { get; set; } = new();
         public string? CurrentUserSignaturePath { get; set; }
+        public bool CanManageSecurity { get; set; }
 
         public IReadOnlyCollection<SelectListItem> Languages { get; set; } = Array.Empty<SelectListItem>();
         public IReadOnlyCollection<SelectListItem> TimeZones { get; set; } = Array.Empty<SelectListItem>();

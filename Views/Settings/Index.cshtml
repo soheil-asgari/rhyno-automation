@@ -21,9 +21,9 @@
     <header class="settings-header-card">
         <div>
             <h1 class="settings-title">تنظیمات سامانه</h1>
-            <p class="settings-subtitle">مدیریت یکپارچه پیکربندی، امنیت و تجربه کاربری</p>
+            <p class="settings-subtitle">مدیریت هویت سامانه، امنیت کاربر و تنظیمات عملیاتی</p>
         </div>
-        <span class="settings-badge">Rhyno Settings Hub</span>
+        <span class="settings-badge">Settings Hub</span>
     </header>
 
     <div class="settings-shell">
@@ -44,7 +44,7 @@
                 <i class="bi bi-palette2"></i>
                 <span>تنظیمات ظاهری</span>
             </button>
-            @if (User.HasClaim("permission", "Security.Manage"))
+            @if (Model.CanManageSecurity)
             {
                 <button class="nav-link" id="signature-admin-tab" data-bs-toggle="pill" data-bs-target="#signature-admin-pane" type="button" role="tab" aria-controls="signature-admin-pane" aria-selected="false">
                     <i class="bi bi-pen"></i>
@@ -70,13 +70,13 @@
             <div class="tab-pane fade" id="ui-pane" role="tabpanel" aria-labelledby="ui-tab" tabindex="0">
                 @await Html.PartialAsync("_UiPreferencesSettings", Model)
             </div>
-            @if (User.HasClaim("permission", "Security.Manage"))
+            @if (Model.CanManageSecurity)
             {
                 <div class="tab-pane fade" id="signature-admin-pane" role="tabpanel" aria-labelledby="signature-admin-tab" tabindex="0">
                     <div class="settings-panel">
                         <div class="section-head">
                             <h2>مدیریت امضای کاربر</h2>
-                            <p>ترسیم، آپلود و ذخیره مستقیم امضای دیجیتال بدون خروج از تنظیمات</p>
+                            <p>بارگذاری یا رسم امضای دیجیتال برای استفاده در اسناد سامانه</p>
                         </div>
 
                         <div class="signature-admin-grid">
@@ -130,7 +130,7 @@
                         </div>
                         <div class="role-hint mb-3">
                             <i class="bi bi-shield-check"></i>
-                            <span>برای ثبت کاربر جدید از فرم مدیریت کاربران استفاده کنید.</span>
+                            <span>برای ثبت کاربر جدید از فرم مدیریتی کاربران استفاده کنید.</span>
                         </div>
                         <div class="actions-row justify-content-start">
                             <a asp-controller="Settings" asp-action="AddNewUser" class="btn settings-btn-primary">

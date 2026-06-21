@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Data;
-using OfficeAutomation.Filters;
-using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers

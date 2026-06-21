@@ -13,7 +13,7 @@ namespace OfficeAutomation.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20260615100127_nitialreate")]
-    partial class nitialreate
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
