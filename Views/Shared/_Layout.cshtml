@@ -942,6 +942,7 @@
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/css/visual-refresh.css" asp-append-version="true">
 </head>
 
 <body data-theme="@themePreference.ToLowerInvariant()">
@@ -953,7 +954,7 @@
         <aside class="sidebar-right" id="appSidebar">
             <div class="sidebar-header" style="padding: 20px 15px; border-bottom: 1px solid var(--layout-border);">
                 <div class="logo-wrapper" style="display: flex; align-items: center; gap: 10px;">
-                    <div class="logo-icon" style="background: transparent; color:var(--primary); padding: 6px 10px; border-radius: 6px !important;">
+                    <div class="logo-icon" style="background: var(--icon-tint); color:var(--primary); padding: 6px 9px; border-radius: 10px !important;">
                         <i class="bi bi-box-seam"></i>
                     </div>
                     <div class="logo-text">
