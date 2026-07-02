@@ -59,6 +59,11 @@ namespace OfficeAutomation.Models
         [Required(ErrorMessage = "تاریخ فاکتور الزامی است.")]
         public DateTime InvoiceDate { get; set; }
 
+        [StringLength(450)]
+        public string? CreatedByUserId { get; set; }
+
+        public User? CreatedByUser { get; set; }
+
         [Timestamp]
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 

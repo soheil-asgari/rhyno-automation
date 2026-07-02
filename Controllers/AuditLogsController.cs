@@ -1,10 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
+using System.Text.Json;
 
 namespace OfficeAutomation.Controllers
 {
@@ -15,11 +18,13 @@ namespace OfficeAutomation.Controllers
     public class AuditLogsController : ControllerBase
     {
         private static readonly string[] SupportedActions = ["Create", "Update", "Delete"];
-        private readonly ApplicationDbContext _context;
+        private readonly PlatformDbContext _context;
+        private readonly IdentityDbContext _identityContext;
 
-        public AuditLogsController(ApplicationDbContext context)
+        public AuditLogsController(PlatformDbContext context, IdentityDbContext identityContext)
         {
             _context = context;
+            _identityContext = identityContext;
         }
 
         [HttpGet]
@@ -82,7 +87,7 @@ namespace OfficeAutomation.Controllers
 
             var userMap = userIds.Count == 0
                 ? new Dictionary<string, string>(StringComparer.Ordinal)
-                : await _context.Users
+                : await _identityContext.Users
                     .AsNoTracking()
                     .Where(item => userIds.Contains(item.Id))
                     .Select(item => new
@@ -110,7 +115,10 @@ namespace OfficeAutomation.Controllers
                     UserIP = item.UserIP,
                     UserAgent = item.UserAgent,
                     IsSensitive = item.IsSensitive,
-                    Module = ResolveModuleName(item.TableName)
+                    Module = ResolveModuleName(item.TableName),
+                    Severity = item.Severity,
+                    ComplianceCategory = item.ComplianceCategory,
+                    StructuredPayload = item.StructuredPayload
                 }).ToList(),
                 Page = page,
                 PageSize = pageSize,
@@ -141,7 +149,7 @@ namespace OfficeAutomation.Controllers
 
             var users = userIds.Count == 0
                 ? []
-                : await _context.Users
+                : await _identityContext.Users
                     .AsNoTracking()
                     .Where(item => userIds.Contains(item.Id))
                     .OrderBy(item => item.FullName ?? item.UserName)
@@ -244,6 +252,67 @@ namespace OfficeAutomation.Controllers
             return File(bytes, "text/csv;charset=utf-8", $"audit-logs-{DateTime.Now:yyyyMMddHHmmss}.csv");
         }
 
+        [HttpGet("export/siem")]
+        [PermissionAuthorize("AuditLogs.Export")]
+        public async Task<IActionResult> ExportSiemAuditLogs(
+            [FromQuery] AuditLogQueryParameters query,
+            CancellationToken cancellationToken)
+        {
+            var auditedTableNames = GetAuditedTableNames();
+            var auditQuery = _context.AuditLogs
+                .AsNoTracking()
+                .Where(item => auditedTableNames.Contains(item.TableName));
+
+            if (!string.IsNullOrWhiteSpace(query.UserId))
+            {
+                auditQuery = auditQuery.Where(item => item.UserId == query.UserId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Action))
+            {
+                auditQuery = auditQuery.Where(item => item.Action == query.Action);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.TableName))
+            {
+                auditQuery = auditQuery.Where(item => item.TableName == query.TableName);
+            }
+
+            auditQuery = ApplyModuleFilter(auditQuery, query.Module);
+
+            if (query.SensitiveOnly == true)
+            {
+                auditQuery = auditQuery.Where(item => item.IsSensitive);
+            }
+
+            if (query.From.HasValue)
+            {
+                auditQuery = auditQuery.Where(item => item.DateTime >= query.From.Value);
+            }
+
+            if (query.To.HasValue)
+            {
+                auditQuery = auditQuery.Where(item => item.DateTime <= query.To.Value);
+            }
+
+            var events = await auditQuery
+                .OrderByDescending(item => item.DateTime)
+                .Take(5000)
+                .Select(item => item.StructuredPayload)
+                .ToListAsync(cancellationToken);
+
+            var envelope = new SiemExportEnvelopeDto
+            {
+                Events = events
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Select(item => JsonSerializer.Deserialize<SiemAuditLogDto>(item!)!)
+                    .Where(item => item != null)
+                    .ToList()
+            };
+
+            return Ok(envelope);
+        }
+
         private HashSet<string> GetAuditedTableNames()
         {
             return _context.Model
@@ -321,3 +390,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

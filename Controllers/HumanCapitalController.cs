@@ -1,8 +1,8 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -12,30 +12,32 @@ namespace OfficeAutomation.Controllers
     [PermissionAuthorize("HR.View")]
     public class HumanCapitalController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly OfficeDbContext _context;
         private readonly IDataIsolationService _dataIsolationService;
+        private readonly ISecurityFieldMaskingService _securityFieldMaskingService;
 
         private static readonly string[] DefaultEmploymentTypes =
         [
-            "ØªÙ…Ø§Ù…â€ŒÙˆÙ‚Øª",
-            "Ù¾Ø§Ø±Ù‡â€ŒÙˆÙ‚Øª",
-            "Ù¾Ø±ÙˆÚ˜Ù‡â€ŒØ§ÛŒ",
-            "Ù‚Ø±Ø§Ø±Ø¯Ø§Ø¯ÛŒ",
-            "Ú©Ø§Ø±Ø¢Ù…ÙˆØ²"
+            "ÊãÇãæŞÊ",
+            "ÇÑåæŞÊ",
+            "ÑæåÇí",
+            "ŞÑÇÑÏÇÏí",
+            "˜ÇÑÂãæÒ"
         ];
 
         private static readonly string[] DefaultStatuses =
         [
-            "ÙØ¹Ø§Ù„",
-            "ØªØ¹Ø¯ÛŒÙ„ Ø´Ø¯Ù‡",
-            "ØªØ±Ú© Ú©Ø§Ø±",
-            "Ù¾Ø§ÛŒØ§Ù† Ø®Ø¯Ù…Øª"
+            "İÚÇá",
+            "ÊÚÏíá ÔÏå",
+            "ÊÑ˜ ˜ÇÑ",
+            "ÇíÇä ÎÏãÊ"
         ];
 
-        public HumanCapitalController(ApplicationDbContext context, IDataIsolationService dataIsolationService)
+        public HumanCapitalController(OfficeDbContext context, IDataIsolationService dataIsolationService, ISecurityFieldMaskingService securityFieldMaskingService)
         {
             _context = context;
             _dataIsolationService = dataIsolationService;
+            _securityFieldMaskingService = securityFieldMaskingService;
         }
 
         public async Task<IActionResult> Index(HumanCapitalIndexVM filter)
@@ -63,11 +65,11 @@ namespace OfficeAutomation.Controllers
 
             if (string.Equals(filter.WorkflowView, "active", StringComparison.OrdinalIgnoreCase))
             {
-                query = query.Where(employee => employee.CurrentStatus == "ÙØ¹Ø§Ù„");
+                query = query.Where(employee => employee.CurrentStatus == "İÚÇá");
             }
             else if (string.Equals(filter.WorkflowView, "separated", StringComparison.OrdinalIgnoreCase))
             {
-                query = query.Where(employee => employee.CurrentStatus != "ÙØ¹Ø§Ù„");
+                query = query.Where(employee => employee.CurrentStatus != "İÚÇá");
             }
 
             if (filter.DepartmentId.HasValue)
@@ -78,8 +80,8 @@ namespace OfficeAutomation.Controllers
             var fullListQuery = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.HumanCapitalEmployees.AsNoTracking());
 
             filter.TotalCount = await fullListQuery.CountAsync();
-            filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "ÙØ¹Ø§Ù„");
-            filter.SeparatedCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus != "ÙØ¹Ø§Ù„");
+            filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "İÚÇá");
+            filter.SeparatedCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus != "İÚÇá");
             filter.FilteredCount = await query.CountAsync();
             filter.WorkflowView ??= "all";
 
@@ -105,6 +107,7 @@ namespace OfficeAutomation.Controllers
 
             filter.DepartmentOptions = await BuildDepartmentOptionsAsync(filter.DepartmentId);
             filter.StatusOptions = await BuildStatusOptionsAsync();
+            await _securityFieldMaskingService.MaskHumanCapitalIndexAsync(filter);
 
             return View(filter);
         }
@@ -145,7 +148,7 @@ namespace OfficeAutomation.Controllers
                 PositionTitle = model.PositionTitle.Trim(),
                 EmploymentType = model.EmploymentType.Trim(),
                 CurrentSalary = model.CurrentSalary,
-                CurrentStatus = "ÙØ¹Ø§Ù„",
+                CurrentStatus = "İÚÇá",
                 PhoneNumber = model.PhoneNumber?.Trim(),
                 Email = model.Email?.Trim(),
                 Address = model.Address?.Trim(),
@@ -165,8 +168,8 @@ namespace OfficeAutomation.Controllers
                 EffectiveDate = employee.HireDate,
                 PreviousSalary = 0,
                 NewSalary = employee.CurrentSalary,
-                PromotionTitle = "Ø«Ø¨Øª Ø§ÙˆÙ„ÛŒÙ‡",
-                Reason = "Ø«Ø¨Øª Ø­Ù‚ÙˆÙ‚ Ø§ÙˆÙ„ÛŒÙ‡ Ø¯Ø± Ø²Ù…Ø§Ù† Ø§Ø³ØªØ®Ø¯Ø§Ù…",
+                PromotionTitle = "ËÈÊ Çæáíå",
+                Reason = "ËÈÊ ÍŞæŞ Çæáíå ÏÑ ÒãÇä ÇÓÊÎÏÇã",
                 CreatedAt = now
             });
 
@@ -282,8 +285,8 @@ namespace OfficeAutomation.Controllers
                     EffectiveDate = now.Date,
                     PreviousSalary = previousSalary,
                     NewSalary = model.CurrentSalary,
-                    PromotionTitle = "ÙˆÛŒØ±Ø§ÛŒØ´ Ù¾Ø±ÙˆÙ†Ø¯Ù‡",
-                    Reason = "Ø§ØµÙ„Ø§Ø­ Ø­Ù‚ÙˆÙ‚ Ø¯Ø± ÙØ±Ø¢ÛŒÙ†Ø¯ ÙˆÛŒØ±Ø§ÛŒØ´ Ù¾Ø±ÙˆÙ†Ø¯Ù‡ Ù¾Ø±Ø³Ù†Ù„ÛŒ",
+                    PromotionTitle = "æíÑÇíÔ ÑæäÏå",
+                    Reason = "ÇÕáÇÍ ÍŞæŞ ÏÑ İÑÂíäÏ æíÑÇíÔ ÑæäÏå ÑÓäáí",
                     CreatedAt = now
                 });
             }
@@ -295,7 +298,7 @@ namespace OfficeAutomation.Controllers
                     EmployeeId = employee.Id,
                     StatusType = model.CurrentStatus.Trim(),
                     EffectiveDate = now.Date,
-                    Description = "ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª Ø§Ø² Ø·Ø±ÛŒÙ‚ ÙˆÛŒØ±Ø§ÛŒØ´ Ù¾Ø±ÙˆÙ†Ø¯Ù‡",
+                    Description = "ÊÛííÑ æÖÚíÊ ÇÒ ØÑíŞ æíÑÇíÔ ÑæäÏå",
                     CreatedAt = now
                 });
             }
@@ -314,6 +317,8 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
+            await _securityFieldMaskingService.MaskHumanCapitalDetailsAsync(model);
+
             return View(model);
         }
 
@@ -329,19 +334,19 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            if (!string.Equals(employee.CurrentStatus, "ÙØ¹Ø§Ù„", StringComparison.Ordinal))
+            if (!string.Equals(employee.CurrentStatus, "İÚÇá", StringComparison.Ordinal))
             {
-                ModelState.AddModelError(string.Empty, "Ø¨Ø±Ø§ÛŒ Ù¾Ø±Ø³Ù†Ù„ ØºÛŒØ±ÙØ¹Ø§Ù„ØŒ Ø§ÙØ²Ø§ÛŒØ´ Ø­Ù‚ÙˆÙ‚ Ø«Ø¨Øª Ù†Ù…ÛŒâ€ŒØ´ÙˆØ¯.");
+                ModelState.AddModelError(string.Empty, "ÈÑÇí ÑÓäá ÛíÑİÚÇá¡ ÇİÒÇíÔ ÍŞæŞ ËÈÊ äãíÔæÏ.");
             }
 
             if (model.EffectiveDate.Date < employee.HireDate.Date)
             {
-                ModelState.AddModelError("SalaryIncrease.EffectiveDate", "ØªØ§Ø±ÛŒØ® Ø§Ø¹Ù…Ø§Ù„ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù‚Ø¨Ù„ Ø§Ø² ØªØ§Ø±ÛŒØ® Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¨Ø§Ø´Ø¯.");
+                ModelState.AddModelError("SalaryIncrease.EffectiveDate", "ÊÇÑíÎ ÇÚãÇá äãíÊæÇäÏ ŞÈá ÇÒ ÊÇÑíÎ ÇÓÊÎÏÇã ÈÇÔÏ.");
             }
 
             if (model.NewSalary <= employee.CurrentSalary)
             {
-                ModelState.AddModelError("SalaryIncrease.NewSalary", "Ø­Ù‚ÙˆÙ‚ Ø¬Ø¯ÛŒØ¯ Ø¨Ø§ÛŒØ¯ Ø¨ÛŒØ´ØªØ± Ø§Ø² Ø­Ù‚ÙˆÙ‚ ÙØ¹Ù„ÛŒ Ø¨Ø§Ø´Ø¯.");
+                ModelState.AddModelError("SalaryIncrease.NewSalary", "ÍŞæŞ ÌÏíÏ ÈÇíÏ ÈíÔÊÑ ÇÒ ÍŞæŞ İÚáí ÈÇÔÏ.");
             }
 
             if (!ModelState.IsValid)
@@ -394,22 +399,22 @@ namespace OfficeAutomation.Controllers
 
             if (model.EffectiveDate.Date < employee.HireDate.Date)
             {
-                ModelState.AddModelError("StatusChange.EffectiveDate", "ØªØ§Ø±ÛŒØ® Ø±Ø®Ø¯Ø§Ø¯ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù‚Ø¨Ù„ Ø§Ø² ØªØ§Ø±ÛŒØ® Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¨Ø§Ø´Ø¯.");
+                ModelState.AddModelError("StatusChange.EffectiveDate", "ÊÇÑíÎ ÑÎÏÇÏ äãíÊæÇäÏ ŞÈá ÇÒ ÊÇÑíÎ ÇÓÊÎÏÇã ÈÇÔÏ.");
             }
 
             if (!HumanCapitalProcessTypes.All.Contains(model.StatusType))
             {
-                ModelState.AddModelError("StatusChange.StatusType", "Ù†ÙˆØ¹ ÙØ±Ø¢ÛŒÙ†Ø¯ Ø§Ù†ØªØ®Ø§Ø¨â€ŒØ´Ø¯Ù‡ Ù…Ø¹ØªØ¨Ø± Ù†ÛŒØ³Øª.");
+                ModelState.AddModelError("StatusChange.StatusType", "äæÚ İÑÂíäÏ ÇäÊÎÇÈÔÏå ãÚÊÈÑ äíÓÊ.");
             }
 
             if (string.Equals(employee.CurrentStatus, MapCurrentStatus(model.StatusType), StringComparison.Ordinal))
             {
-                ModelState.AddModelError("StatusChange.StatusType", "ÙˆØ¶Ø¹ÛŒØª ÙØ¹Ù„ÛŒ Ø¨Ø§ ÙˆØ¶Ø¹ÛŒØª Ø§Ù†ØªØ®Ø§Ø¨â€ŒØ´Ø¯Ù‡ ÛŒÚ©Ø³Ø§Ù† Ø§Ø³Øª.");
+                ModelState.AddModelError("StatusChange.StatusType", "æÖÚíÊ İÚáí ÈÇ æÖÚíÊ ÇäÊÎÇÈÔÏå í˜ÓÇä ÇÓÊ.");
             }
 
             if (RequiresExitReason(model.StatusType) && string.IsNullOrWhiteSpace(model.ExitReason))
             {
-                ModelState.AddModelError("StatusChange.ExitReason", "Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† ÙØ±Ø¢ÛŒÙ†Ø¯ØŒ Ø¯Ù„ÛŒÙ„ Ø®Ø±ÙˆØ¬ Ø§Ù„Ø²Ø§Ù…ÛŒ Ø§Ø³Øª.");
+                ModelState.AddModelError("StatusChange.ExitReason", "ÈÑÇí Çíä İÑÂíäÏ¡ Ïáíá ÎÑæÌ ÇáÒÇãí ÇÓÊ.");
             }
 
             if (!ModelState.IsValid)
@@ -479,7 +484,7 @@ namespace OfficeAutomation.Controllers
                 StatusType = HumanCapitalProcessTypes.Termination
             };
             statusVm.EmployeeId = employee.Id;
-            if (string.Equals(employee.CurrentStatus, "ÙØ¹Ø§Ù„", StringComparison.Ordinal))
+            if (string.Equals(employee.CurrentStatus, "İÚÇá", StringComparison.Ordinal))
             {
                 statusVm.StatusType = HumanCapitalProcessTypes.Resignation;
             }
@@ -516,14 +521,14 @@ namespace OfficeAutomation.Controllers
                 .Select(item => new HumanCapitalTimelineItemVM
                 {
                     SortDate = item.CreatedAt,
-                    Title = "Ø§ÙØ²Ø§ÛŒØ´ Ø­Ù‚ÙˆÙ‚",
+                    Title = "ÇİÒÇíÔ ÍŞæŞ",
                     Description = $"{item.PreviousSalary:N0} -> {item.NewSalary:N0}" + (string.IsNullOrWhiteSpace(item.PromotionTitle) ? string.Empty : $" | {item.PromotionTitle}"),
                     Tone = "success"
                 })
                 .Concat(statusHistories.Select(item => new HumanCapitalTimelineItemVM
                 {
                     SortDate = item.CreatedAt,
-                    Title = "Ø±Ø®Ø¯Ø§Ø¯ ÙˆØ¶Ø¹ÛŒØª",
+                    Title = "ÑÎÏÇÏ æÖÚíÊ",
                     Description = $"{item.StatusType}" + (string.IsNullOrWhiteSpace(item.ReferenceNumber) ? string.Empty : $" | {item.ReferenceNumber}") + $" | {item.Description}",
                     Tone = RequiresExitReason(item.StatusType) ? "danger" : "primary"
                 }))
@@ -534,14 +539,14 @@ namespace OfficeAutomation.Controllers
                 .Select(item => new HumanCapitalAuditTrailItemVM
                 {
                     When = new DateTimeOffset(item.CreatedAt, TimeSpan.Zero),
-                    Title = "Ø«Ø¨Øª Ø§ÙØ²Ø§ÛŒØ´ Ø­Ù‚ÙˆÙ‚",
+                    Title = "ËÈÊ ÇİÒÇíÔ ÍŞæŞ",
                     Detail = $"{item.PreviousSalary:N0} -> {item.NewSalary:N0}" + (string.IsNullOrWhiteSpace(item.PromotionTitle) ? string.Empty : $" | {item.PromotionTitle}"),
                     Source = "SalaryHistory"
                 })
                 .Concat(statusHistories.Select(item => new HumanCapitalAuditTrailItemVM
                 {
                     When = new DateTimeOffset(item.CreatedAt, TimeSpan.Zero),
-                    Title = "Ø«Ø¨Øª Ø±Ø®Ø¯Ø§Ø¯ ÙˆØ¶Ø¹ÛŒØª",
+                    Title = "ËÈÊ ÑÎÏÇÏ æÖÚíÊ",
                     Detail = $"{item.StatusType}" + (string.IsNullOrWhiteSpace(item.ReferenceNumber) ? string.Empty : $" | {item.ReferenceNumber}") + $" | {item.Description}",
                     Source = "StatusHistory"
                 }))
@@ -633,12 +638,12 @@ namespace OfficeAutomation.Controllers
         {
             if (statusDate.Date < hireDate.Date)
             {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDate), "ØªØ§Ø±ÛŒØ® Ø±Ø®Ø¯Ø§Ø¯ Ø§ÙˆÙ„ÛŒÙ‡ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù‚Ø¨Ù„ Ø§Ø² ØªØ§Ø±ÛŒØ® Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¨Ø§Ø´Ø¯.");
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDate), "ÊÇÑíÎ ÑÎÏÇÏ Çæáíå äãíÊæÇäÏ ŞÈá ÇÒ ÊÇÑíÎ ÇÓÊÎÏÇã ÈÇÔÏ.");
             }
 
             if (string.IsNullOrWhiteSpace(description))
             {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDescription), "ØªÙˆØ¶ÛŒØ­ Ø±Ø®Ø¯Ø§Ø¯ Ø§ÙˆÙ„ÛŒÙ‡ Ø§Ù„Ø²Ø§Ù…ÛŒ Ø§Ø³Øª.");
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDescription), "ÊæÖíÍ ÑÎÏÇÏ Çæáíå ÇáÒÇãí ÇÓÊ.");
             }
         }
 
@@ -646,13 +651,13 @@ namespace OfficeAutomation.Controllers
         {
             if (string.IsNullOrWhiteSpace(currentStatus))
             {
-                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "ÙˆØ¶Ø¹ÛŒØª ÙØ¹Ù„ÛŒ Ø§Ù„Ø²Ø§Ù…ÛŒ Ø§Ø³Øª.");
+                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "æÖÚíÊ İÚáí ÇáÒÇãí ÇÓÊ.");
                 return;
             }
 
-            if (!string.Equals(currentStatus, "ÙØ¹Ø§Ù„", StringComparison.Ordinal) && !string.Equals(currentStatus, "ØªØ¹Ø¯ÛŒÙ„ Ø´Ø¯Ù‡", StringComparison.Ordinal) && !string.Equals(currentStatus, "ØªØ±Ú© Ú©Ø§Ø±", StringComparison.Ordinal) && !string.Equals(currentStatus, "Ù¾Ø§ÛŒØ§Ù† Ø®Ø¯Ù…Øª", StringComparison.Ordinal))
+            if (!string.Equals(currentStatus, "İÚÇá", StringComparison.Ordinal) && !string.Equals(currentStatus, "ÊÚÏíá ÔÏå", StringComparison.Ordinal) && !string.Equals(currentStatus, "ÊÑ˜ ˜ÇÑ", StringComparison.Ordinal) && !string.Equals(currentStatus, "ÇíÇä ÎÏãÊ", StringComparison.Ordinal))
             {
-                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "ÙˆØ¶Ø¹ÛŒØª Ø§Ù†ØªØ®Ø§Ø¨â€ŒØ´Ø¯Ù‡ Ù…Ø¹ØªØ¨Ø± Ù†ÛŒØ³Øª.");
+                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "æÖÚíÊ ÇäÊÎÇÈÔÏå ãÚÊÈÑ äíÓÊ.");
             }
         }
 
@@ -669,7 +674,7 @@ namespace OfficeAutomation.Controllers
 
             if (duplicatePersonnelCode)
             {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.PersonnelCode), "Ø§ÛŒÙ† Ú©Ø¯ Ù¾Ø±Ø³Ù†Ù„ÛŒ Ù‚Ø¨Ù„Ø§Ù‹ Ø«Ø¨Øª Ø´Ø¯Ù‡ Ø§Ø³Øª.");
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.PersonnelCode), "Çíä ˜Ï ÑÓäáí ŞÈáÇğ ËÈÊ ÔÏå ÇÓÊ.");
             }
 
             var duplicateNationalCode = await _context.HumanCapitalEmployees
@@ -680,7 +685,7 @@ namespace OfficeAutomation.Controllers
 
             if (duplicateNationalCode)
             {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.NationalCode), "Ø§ÛŒÙ† Ú©Ø¯ Ù…Ù„ÛŒ Ù‚Ø¨Ù„Ø§Ù‹ Ø«Ø¨Øª Ø´Ø¯Ù‡ Ø§Ø³Øª.");
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.NationalCode), "Çíä ˜Ï ãáí ŞÈáÇğ ËÈÊ ÔÏå ÇÓÊ.");
             }
         }
 
@@ -688,12 +693,12 @@ namespace OfficeAutomation.Controllers
         {
             if (birthDate.Date >= hireDate.Date)
             {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.BirthDate), "ØªØ§Ø±ÛŒØ® ØªÙˆÙ„Ø¯ Ø¨Ø§ÛŒØ¯ Ù‚Ø¨Ù„ Ø§Ø² ØªØ§Ø±ÛŒØ® Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¨Ø§Ø´Ø¯.");
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.BirthDate), "ÊÇÑíÎ ÊæáÏ ÈÇíÏ ŞÈá ÇÒ ÊÇÑíÎ ÇÓÊÎÏÇã ÈÇÔÏ.");
             }
 
             if (contractEndDate.HasValue && contractEndDate.Value.Date < hireDate.Date)
             {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.ContractEndDate), "ØªØ§Ø±ÛŒØ® Ù¾Ø§ÛŒØ§Ù† Ù‚Ø±Ø§Ø±Ø¯Ø§Ø¯ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù‚Ø¨Ù„ Ø§Ø² ØªØ§Ø±ÛŒØ® Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¨Ø§Ø´Ø¯.");
+                ModelState.AddModelError(nameof(HumanCapitalCreateVM.ContractEndDate), "ÊÇÑíÎ ÇíÇä ŞÑÇÑÏÇÏ äãíÊæÇäÏ ŞÈá ÇÒ ÊÇÑíÎ ÇÓÊÎÏÇã ÈÇÔÏ.");
             }
         }
 
@@ -701,10 +706,10 @@ namespace OfficeAutomation.Controllers
         {
             return statusType switch
             {
-                HumanCapitalProcessTypes.Termination => "ØªØ¹Ø¯ÛŒÙ„ Ø´Ø¯Ù‡",
-                HumanCapitalProcessTypes.Resignation => "ØªØ±Ú© Ú©Ø§Ø±",
-                HumanCapitalProcessTypes.EndOfService => "Ù¾Ø§ÛŒØ§Ù† Ø®Ø¯Ù…Øª",
-                _ => "ÙØ¹Ø§Ù„"
+                HumanCapitalProcessTypes.Termination => "ÊÚÏíá ÔÏå",
+                HumanCapitalProcessTypes.Resignation => "ÊÑ˜ ˜ÇÑ",
+                HumanCapitalProcessTypes.EndOfService => "ÇíÇä ÎÏãÊ",
+                _ => "İÚÇá"
             };
         }
 

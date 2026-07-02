@@ -3,6 +3,7 @@
     ViewData["Title"] = "جزئیات درخواست انتقال";
     var canManageTransfer = ViewBag.CanManageTransfer as bool? == true;
     var canCancelTransfer = ViewBag.CanCancelTransfer as bool? == true;
+    var workflowDetail = ViewBag.WorkflowDetail as OfficeAutomation.Models.WorkflowDetailPanelVM;
 }
 
 <div class="container-fluid py-4">
@@ -281,4 +282,11 @@
             </div>
         </div>
     </div>
+
+    @if (workflowDetail != null)
+    {
+        <div class="mt-3">
+            <partial name="_WorkflowDetailPanel" model="workflowDetail" />
+        </div>
+    }
 </div>

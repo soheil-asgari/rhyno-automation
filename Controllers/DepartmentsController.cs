@@ -1,17 +1,20 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 
 [Authorize]
 public class DepartmentsController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IdentityDbContext _context;
+    private readonly OfficeDbContext _officeContext;
 
-    public DepartmentsController(ApplicationDbContext context)
+    public DepartmentsController(IdentityDbContext context, OfficeDbContext officeContext)
     {
         _context = context;
+        _officeContext = officeContext;
     }
 
     public async Task<IActionResult> Index()
@@ -26,7 +29,7 @@ public class DepartmentsController : Controller
     public async Task<IActionResult> Create(CancellationToken cancellationToken)
     {
         ViewBag.Users = _context.Users.ToList();
-        ViewBag.Employees = await _context.HumanCapitalEmployees
+        ViewBag.Employees = await _officeContext.HumanCapitalEmployees
             .AsNoTracking()
             .Where(item => item.CurrentStatus == "فعال")
             .OrderBy(item => item.FullName)
@@ -48,7 +51,7 @@ public class DepartmentsController : Controller
         }
 
         ViewBag.Users = _context.Users.ToList();
-        ViewBag.Employees = await _context.HumanCapitalEmployees
+        ViewBag.Employees = await _officeContext.HumanCapitalEmployees
             .AsNoTracking()
             .Where(item => item.CurrentStatus == "فعال")
             .OrderBy(item => item.FullName)
@@ -62,3 +65,4 @@ public class DepartmentsController : Controller
 
 
 }
+

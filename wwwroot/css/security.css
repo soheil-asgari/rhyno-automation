@@ -1,0 +1,15 @@
+.security-page .table th,
+        .security-page .table td {
+            color: var(--text-dark) !important;
+        }
+        html.theme-dark .security-page .table th,
+        html.theme-dark .security-page .table td,
+        html.theme-dark .security-page .table th *,
+        html.theme-dark .security-page .table td * {
+            color: var(--text-dark) !important;
+        }
+        .security-page .dropdown-menu {
+            z-index: 10001 !important;
+        }
+
+.security-role-name-input { max-width: 170px; }

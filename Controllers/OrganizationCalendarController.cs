@@ -1,8 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -12,11 +13,13 @@ namespace OfficeAutomation.Controllers
     [PermissionAuthorize("Calendar.View")]
     public class OrganizationCalendarController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly OfficeDbContext _context;
+        private readonly FinanceDbContext _financeContext;
 
-        public OrganizationCalendarController(ApplicationDbContext context)
+        public OrganizationCalendarController(OfficeDbContext context, FinanceDbContext financeContext)
         {
             _context = context;
+            _financeContext = financeContext;
         }
 
         [HttpGet]
@@ -115,7 +118,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<CalendarEventItemVM>> BuildInvoiceDeadlineEventsAsync(DateTime from, DateTime to, CancellationToken cancellationToken)
         {
-            var rawItems = await _context.Invoices
+            var rawItems = await _financeContext.Invoices
                 .AsNoTracking()
                 .Where(item => item.InvoiceType == "Purchase" && item.DeadlineDateShamsi != null)
                 .Select(item => new { item.Id, item.InvoiceNumber, item.PartyName, item.DeadlineDateShamsi, item.GrandTotal })
@@ -144,7 +147,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<CalendarEventItemVM>> BuildPayrollEventsAsync(int year, int month, CancellationToken cancellationToken)
         {
-            var payrollLists = await _context.PayrollLists
+            var payrollLists = await _financeContext.PayrollLists
                 .AsNoTracking()
                 .Where(item => item.Year == year && item.Month == month)
                 .ToListAsync(cancellationToken);
@@ -287,3 +290,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

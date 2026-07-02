@@ -5,6 +5,8 @@ namespace OfficeAutomation.Services.Security
     public interface ICurrentUserContextAccessor
     {
         string? UserId { get; }
+        PermissionAccessProfile? CurrentProfile { get; }
+        void SetCurrentProfile(PermissionAccessProfile? profile);
         Task<PermissionAccessProfile?> GetAccessProfileAsync(CancellationToken cancellationToken = default);
     }
 
@@ -22,9 +24,20 @@ namespace OfficeAutomation.Services.Security
         }
 
         public string? UserId => _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        public PermissionAccessProfile? CurrentProfile { get; private set; }
+
+        public void SetCurrentProfile(PermissionAccessProfile? profile)
+        {
+            CurrentProfile = profile;
+        }
 
         public Task<PermissionAccessProfile?> GetAccessProfileAsync(CancellationToken cancellationToken = default)
         {
+            if (CurrentProfile != null)
+            {
+                return Task.FromResult<PermissionAccessProfile?>(CurrentProfile);
+            }
+
             if (string.IsNullOrWhiteSpace(UserId))
             {
                 return Task.FromResult<PermissionAccessProfile?>(null);

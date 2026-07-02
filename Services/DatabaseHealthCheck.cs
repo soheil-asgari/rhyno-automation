@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 
 namespace OfficeAutomation.Services;
 
 public sealed class DatabaseHealthCheck : IHealthCheck
 {
-    private readonly ApplicationDbContext _context;
+    private readonly PlatformDbContext _context;
 
-    public DatabaseHealthCheck(ApplicationDbContext context)
+    public DatabaseHealthCheck(PlatformDbContext context)
     {
         _context = context;
     }

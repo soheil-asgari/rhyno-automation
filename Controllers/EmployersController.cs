@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 
@@ -11,11 +12,13 @@ namespace OfficeAutomation.Controllers
     [RequireAccessArea("Warehouse")]
     public class EmployersController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly FinanceDbContext _context;
+        private readonly InventoryDbContext _inventoryContext;
 
-        public EmployersController(ApplicationDbContext context)
+        public EmployersController(FinanceDbContext context, InventoryDbContext inventoryContext)
         {
             _context = context;
+            _inventoryContext = inventoryContext;
         }
 
         [HttpGet]
@@ -114,7 +117,7 @@ namespace OfficeAutomation.Controllers
             }
 
             var hasReferences =
-                await _context.WarehouseIssuances.AnyAsync(item => item.EmployerId == id, cancellationToken) ||
+                await _inventoryContext.WarehouseIssuances.AnyAsync(item => item.EmployerId == id, cancellationToken) ||
                 await _context.Invoices.AnyAsync(item => item.EmployerId == id, cancellationToken);
             if (hasReferences)
             {
@@ -130,3 +133,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

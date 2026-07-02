@@ -1,5 +1,9 @@
 @model OfficeAutomation.Models.Letter
 @using OfficeAutomation.Utilities
+@{
+    var workflowDecisions = ViewBag.WorkflowDecisions as List<OfficeAutomation.Models.WorkflowDecision> ?? new List<OfficeAutomation.Models.WorkflowDecision>();
+    var workflowDetail = ViewBag.WorkflowDetail as OfficeAutomation.Models.WorkflowDetailPanelVM;
+}
 
 @{
     Layout = null;
@@ -143,6 +147,32 @@
                         </div>
                     }
                 </section>
+
+                @if (workflowDecisions.Count > 0)
+                {
+                    <section class="timeline-card">
+                        <h5 class="fw-bold mb-3">تاریخچه تصمیم‌ها</h5>
+                        @foreach (var decision in workflowDecisions)
+                        {
+                            <div class="timeline-step active">
+                                <div class="timeline-dot"></div>
+                                <div>
+                                    <strong>@WorkflowStatus.Label(decision.Decision)</strong>
+                                    <p>@((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId) - @decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</p>
+                                    @if (!string.IsNullOrWhiteSpace(decision.Comment))
+                                    {
+                                        <p>@decision.Comment</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </section>
+                }
+
+                @if (workflowDetail != null)
+                {
+                    <partial name="_WorkflowDetailPanel" model="workflowDetail" />
+                }
 
                 <section class="letter-ai-panel no-print">
                     <div class="letter-ai-title"><i class="bi bi-stars"></i><span>پاسخ و تأییدیه با دستیار هوش مصنوعی</span></div>

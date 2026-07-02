@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using OfficeAutomation.Models;
 
+[Authorize]
+[EnableRateLimiting("ai")]
 public class AiAssistantController : Controller
 {
     private readonly AiService _ai;
@@ -15,22 +19,22 @@ public class AiAssistantController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AskAI([FromBody] UserMessage request)
+    public async Task<IActionResult> AskAI([FromBody] UserMessage request, CancellationToken cancellationToken)
     {
-        var reply = await _ai.AskAsync(request.Message ?? string.Empty);
+        var reply = await _ai.AskAsync(request.Message ?? string.Empty, cancellationToken);
         return Json(new { reply });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task StreamAI([FromBody] UserMessage request)
+    public async Task StreamAI([FromBody] UserMessage request, CancellationToken cancellationToken)
     {
         Response.Headers.ContentType = "text/event-stream";
         Response.Headers["Cache-Control"] = "no-cache";
 
         HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>()?.DisableBuffering();
 
-        await foreach (var chunk in _ai.StreamAsync(request.Message ?? string.Empty))
+        await foreach (var chunk in _ai.StreamAsync(request.Message ?? string.Empty, cancellationToken))
         {
             _logger.LogDebug("Streaming AI chunk with length {ChunkLength}", chunk.Length);
             await Response.WriteAsync($"data: {chunk}\n\n");

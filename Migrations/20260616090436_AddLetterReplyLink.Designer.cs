@@ -11,7 +11,7 @@ using OfficeAutomation.Data;
 
 namespace OfficeAutomation.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(OfficeAutomation.Modules.Platform.Infrastructure.Persistence.PlatformDbContext))]
     [Migration("20260616090436_AddLetterReplyLink")]
     partial class AddLetterReplyLink
     {
@@ -3138,3 +3138,5 @@ namespace OfficeAutomation.Migrations
         }
     }
 }
+
+

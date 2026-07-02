@@ -1,12 +1,18 @@
-using System.Globalization;
+﻿using System.Globalization;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
+using OfficeAutomation.Modules.Finance.Application;
+using OfficeAutomation.Modules.Finance.Domain;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Platform.Application.SavedViews;
+using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
+using OfficeAutomation.Services;
 using OfficeAutomation.Services.Security;
 using OfficeAutomation.Utilities;
 
@@ -16,11 +22,51 @@ namespace OfficeAutomation.Controllers
     [RequireAccessArea("Finance")]
     public class FinancialController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly FinanceDbContext _context;
+        private readonly InventoryDbContext _inventoryContext;
+        private readonly OfficeDbContext _officeContext;
+        private readonly FinancialInvoiceService _invoiceService;
+        private readonly FinanceLedgerService _ledgerService;
+        private readonly PeriodClosingService _periodClosingService;
+        private readonly TrialBalanceService _trialBalanceService;
+        private readonly VoucherRenumberingService _voucherRenumberingService;
+        private readonly WorkflowService _workflowService;
+        private readonly ISegregationOfDutiesService _segregationOfDutiesService;
+        private readonly IAbacAuthorizationService _abacAuthorizationService;
+        private readonly ICurrentUserContextAccessor _currentUserContextAccessor;
+        private readonly ISecurityFieldMaskingService _securityFieldMaskingService;
+        private readonly ITableSchemaRegistry _tableSchemaRegistry;
 
-        public FinancialController(ApplicationDbContext context)
+        public FinancialController(
+            FinanceDbContext context,
+            InventoryDbContext inventoryContext,
+            OfficeDbContext officeContext,
+            FinancialInvoiceService invoiceService,
+            FinanceLedgerService ledgerService,
+            PeriodClosingService periodClosingService,
+            TrialBalanceService trialBalanceService,
+            VoucherRenumberingService voucherRenumberingService,
+            WorkflowService workflowService,
+            ISegregationOfDutiesService segregationOfDutiesService,
+            IAbacAuthorizationService abacAuthorizationService,
+            ICurrentUserContextAccessor currentUserContextAccessor,
+            ISecurityFieldMaskingService securityFieldMaskingService,
+            ITableSchemaRegistry tableSchemaRegistry)
         {
             _context = context;
+            _inventoryContext = inventoryContext;
+            _officeContext = officeContext;
+            _invoiceService = invoiceService;
+            _ledgerService = ledgerService;
+            _periodClosingService = periodClosingService;
+            _trialBalanceService = trialBalanceService;
+            _voucherRenumberingService = voucherRenumberingService;
+            _workflowService = workflowService;
+            _segregationOfDutiesService = segregationOfDutiesService;
+            _abacAuthorizationService = abacAuthorizationService;
+            _currentUserContextAccessor = currentUserContextAccessor;
+            _securityFieldMaskingService = securityFieldMaskingService;
+            _tableSchemaRegistry = tableSchemaRegistry;
         }
 
         [HttpGet]
@@ -39,6 +85,7 @@ namespace OfficeAutomation.Controllers
         public async Task<IActionResult> Sales(FinancialInvoiceIndexVM filter, CancellationToken cancellationToken)
         {
             var model = await BuildInvoiceIndexAsync(filter, "Sale", cancellationToken);
+            await _securityFieldMaskingService.MaskInvoicesAsync(model, cancellationToken);
             ViewData["Title"] = "مدیریت فاکتورهای فروش";
             ViewBag.PageTitle = "مدیریت فاکتورهای فروش (درآمد)";
             ViewBag.PageDescription = "مدیریت فرآیند فروش، ثبت اسناد و پیگیری درآمد";
@@ -53,6 +100,7 @@ namespace OfficeAutomation.Controllers
         public async Task<IActionResult> Purchases(FinancialInvoiceIndexVM filter, CancellationToken cancellationToken)
         {
             var model = await BuildInvoiceIndexAsync(filter, "Purchase", cancellationToken);
+            await _securityFieldMaskingService.MaskInvoicesAsync(model, cancellationToken);
             ViewData["Title"] = "مدیریت فاکتورهای خرید";
             ViewBag.PageTitle = "مدیریت فاکتورهای خرید (هزینه)";
             ViewBag.PageDescription = "مدیریت هزینه‌ها و اتصال اسناد خرید به رسید انبار";
@@ -91,14 +139,11 @@ namespace OfficeAutomation.Controllers
                 return Json(new { isDuplicate = false, message = string.Empty });
             }
 
-            var normalizedType = string.IsNullOrWhiteSpace(invoiceType) ? "Sale" : invoiceType.Trim();
-            var duplicate = await _context.Invoices
-                .AsNoTracking()
-                .AnyAsync(item =>
-                    item.InvoiceNumber == normalizedNumber &&
-                    item.InvoiceType == normalizedType &&
-                    (!currentInvoiceId.HasValue || item.Id != currentInvoiceId.Value),
-                    cancellationToken);
+            var duplicate = await _invoiceService.IsDuplicateInvoiceNumberAsync(
+                normalizedNumber,
+                invoiceType,
+                currentInvoiceId,
+                cancellationToken);
 
             return Json(new
             {
@@ -110,7 +155,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetReceiptItemsJson(int receiptId, CancellationToken cancellationToken)
         {
-            var receipt = await _context.WarehouseReceipts
+            var receipt = await _inventoryContext.WarehouseReceipts
                 .AsNoTracking()
                 .Include(item => item.Items)
                 .ThenInclude(item => item.Product)
@@ -160,20 +205,11 @@ namespace OfficeAutomation.Controllers
                 return View(model);
             }
 
-            var validItems = model.Items
-                .Where(item => !string.IsNullOrWhiteSpace(item.ItemName) && item.Quantity > 0)
-                .ToList();
-
-            foreach (var item in validItems)
-            {
-                item.LineSubTotal = Math.Round(item.Quantity * item.UnitPrice, 2);
-                item.LineVatAmount = Math.Round(item.LineSubTotal * 0.10m, 2);
-                item.LineGrandTotal = item.LineSubTotal + item.LineVatAmount;
-            }
-
-            model.SubTotal = validItems.Sum(item => item.LineSubTotal);
-            model.VatAmount = validItems.Sum(item => item.LineVatAmount);
-            model.GrandTotal = validItems.Sum(item => item.LineGrandTotal);
+            var calculation = _invoiceService.CalculateTotals(model.Items);
+            var validItems = calculation.ValidItems;
+            model.SubTotal = calculation.SubTotal;
+            model.VatAmount = calculation.VatAmount;
+            model.GrandTotal = calculation.GrandTotal;
 
             var invoiceDate = TryParseShamsiDate(model.DateShamsi, out var parsedDate)
                 ? parsedDate
@@ -202,6 +238,7 @@ namespace OfficeAutomation.Controllers
                 VendorName = resolvedPartyName,
                 InvoiceDate = invoiceDate,
                 CreatedAt = DateTime.Now,
+                CreatedByUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
                 Items = validItems.Select(item => new InvoiceItem
                 {
                     ProductId = item.ProductId,
@@ -227,6 +264,12 @@ namespace OfficeAutomation.Controllers
                 ViewBag.BackToListAction = model.InvoiceType == "Purchase" ? nameof(Purchases) : nameof(Sales);
                 return View(model);
             }
+
+            await _workflowService.StartRoutingAsync(
+                "Invoice",
+                User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
+                User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
+                entity.Id);
 
             var targetAction = model.InvoiceType == "Purchase" ? nameof(Purchases) : nameof(Sales);
             return RedirectToAction(targetAction);
@@ -314,20 +357,11 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            var validItems = model.Items
-                .Where(item => !string.IsNullOrWhiteSpace(item.ItemName) && item.Quantity > 0)
-                .ToList();
-
-            foreach (var item in validItems)
-            {
-                item.LineSubTotal = Math.Round(item.Quantity * item.UnitPrice, 2);
-                item.LineVatAmount = Math.Round(item.LineSubTotal * 0.10m, 2);
-                item.LineGrandTotal = item.LineSubTotal + item.LineVatAmount;
-            }
-
-            model.SubTotal = validItems.Sum(item => item.LineSubTotal);
-            model.VatAmount = validItems.Sum(item => item.LineVatAmount);
-            model.GrandTotal = validItems.Sum(item => item.LineGrandTotal);
+            var calculation = _invoiceService.CalculateTotals(model.Items);
+            var validItems = calculation.ValidItems;
+            model.SubTotal = calculation.SubTotal;
+            model.VatAmount = calculation.VatAmount;
+            model.GrandTotal = calculation.GrandTotal;
 
             var invoiceDate = TryParseShamsiDate(model.DateShamsi, out var parsedDate)
                 ? parsedDate
@@ -420,6 +454,90 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Approve")]
+        public async Task<IActionResult> ApproveInvoice(int id, string? returnTo, CancellationToken cancellationToken)
+        {
+            var invoice = await _context.Invoices.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (invoice == null)
+            {
+                return NotFound();
+            }
+
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var sodResult = await _segregationOfDutiesService.ValidateFinanceApprovalAsync(invoice, currentUserId, cancellationToken);
+            if (!sodResult.Allowed)
+            {
+                TempData["ErrorMessage"] = sodResult.Reason ?? "سیاست تفکیک وظایف اجازه تایید این فاکتور را نمی‌دهد.";
+                return RedirectToInvoiceList(returnTo, invoice.InvoiceType);
+            }
+
+            var profile = await _currentUserContextAccessor.GetAccessProfileAsync(cancellationToken);
+            var abacResult = await _abacAuthorizationService.AuthorizeAsync(profile, new AbacResourceContext("Finance", "Approve", invoice.CreatedByUserId, null, true), cancellationToken);
+            if (!abacResult.Allowed)
+            {
+                return Forbid();
+            }
+
+            invoice.WorkflowStatus = WorkflowStatus.Approved;
+            await _context.SaveChangesAsync(cancellationToken);
+            await _ledgerService.PostInvoiceAsync(invoice, cancellationToken);
+            await _workflowService.RecordDecisionAsync(
+                "Invoice",
+                invoice.Id,
+                1,
+                User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
+                WorkflowStatus.Approved,
+                cancellationToken: cancellationToken);
+            await _invoiceService.PublishInvoiceDecisionNotificationAsync(
+                invoice,
+                WorkflowStatus.Approved,
+                NotificationSeverity.Success,
+                cancellationToken);
+
+            TempData["SuccessMessage"] = "فاکتور تایید شد.";
+            return RedirectToInvoiceList(returnTo, invoice.InvoiceType);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Approve")]
+        public async Task<IActionResult> RejectInvoice(int id, string? returnTo, CancellationToken cancellationToken)
+        {
+            var invoice = await _context.Invoices.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (invoice == null)
+            {
+                return NotFound();
+            }
+
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var profile = await _currentUserContextAccessor.GetAccessProfileAsync(cancellationToken);
+            var abacResult = await _abacAuthorizationService.AuthorizeAsync(profile, new AbacResourceContext("Finance", "Approve", invoice.CreatedByUserId, null, true), cancellationToken);
+            if (!abacResult.Allowed)
+            {
+                return Forbid();
+            }
+
+            invoice.WorkflowStatus = WorkflowStatus.Rejected;
+            await _context.SaveChangesAsync(cancellationToken);
+            await _workflowService.RecordDecisionAsync(
+                "Invoice",
+                invoice.Id,
+                1,
+                User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
+                WorkflowStatus.Rejected,
+                cancellationToken: cancellationToken);
+            await _invoiceService.PublishInvoiceDecisionNotificationAsync(
+                invoice,
+                WorkflowStatus.Rejected,
+                NotificationSeverity.Danger,
+                cancellationToken);
+
+            TempData["SuccessMessage"] = "فاکتور رد شد.";
+            return RedirectToInvoiceList(returnTo, invoice.InvoiceType);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [PermissionAuthorize("Finance.Delete")]
         public async Task<IActionResult> DeleteInvoice(int id, string? returnTo, CancellationToken cancellationToken)
         {
@@ -467,6 +585,16 @@ namespace OfficeAutomation.Controllers
             TempData["SuccessMessage"] = "فاکتور با موفقیت حذف شد.";
             var targetRedirect = entity.InvoiceType == "Purchase" ? nameof(Purchases) : nameof(Sales);
             return RedirectToAction(targetRedirect);
+        }
+
+        private IActionResult RedirectToInvoiceList(string? returnTo, string invoiceType)
+        {
+            var targetAction = string.Equals(returnTo, "Purchase", StringComparison.OrdinalIgnoreCase) ||
+                               string.Equals(invoiceType, "Purchase", StringComparison.OrdinalIgnoreCase)
+                ? nameof(Purchases)
+                : nameof(Sales);
+
+            return RedirectToAction(targetAction);
         }
 
         [HttpGet]
@@ -593,7 +721,7 @@ namespace OfficeAutomation.Controllers
                 [
                     new FinancialQuickActionVM { Title = "فروش", Description = "ثبت و پیگیری فاکتورهای فروش", Url = Url.Action(nameof(Sales)) ?? "#", Icon = "bi-graph-up-arrow", Tone = "success" },
                     new FinancialQuickActionVM { Title = "خرید", Description = "ثبت و پیگیری فاکتورهای خرید", Url = Url.Action(nameof(Purchases)) ?? "#", Icon = "bi-cart", Tone = "primary" },
-                    new FinancialQuickActionVM { Title = "VAT", Description = "کنترل VAT و مغایرت‌ها", Url = Url.Action(nameof(VatDashboard)) ?? "#", Icon = "bi-percent", Tone = "warning" },
+                    new FinancialQuickActionVM { Title = "مالیات بر ارزش افزوده", Description = "کنترل مالیات بر ارزش افزوده و مغایرت‌ها", Url = Url.Action(nameof(VatDashboard)) ?? "#", Icon = "bi-percent", Tone = "warning" },
                     new FinancialQuickActionVM { Title = "معاملات فصلی", Description = "گزارش ماده 169 و خروجی‌ها", Url = Url.Action(nameof(SeasonalTax)) ?? "#", Icon = "bi-journal-text", Tone = "info" },
                     new FinancialQuickActionVM { Title = "حقوق", Description = "ورود به مدیریت حقوق و دستمزد", Url = Url.Action("Index", "Payroll") ?? "#", Icon = "bi-cash-stack", Tone = "secondary" },
                     new FinancialQuickActionVM { Title = "بیمه", Description = "ورود به مدیریت بیمه و لیست‌ها", Url = Url.Action("Index", "Bimeh") ?? "#", Icon = "bi-shield-lock", Tone = "dark" }
@@ -709,6 +837,274 @@ namespace OfficeAutomation.Controllers
             return await Dashboard(year, cancellationToken);
         }
 
+        [HttpGet]
+        [PermissionAuthorize("Finance.View")]
+        public async Task<IActionResult> LedgerOperations(CancellationToken cancellationToken)
+        {
+            await EnsureCurrentFiscalYearAsync(cancellationToken);
+            var model = await BuildLedgerOperationsModelAsync(cancellationToken);
+            return View(model);
+        }
+
+        [HttpGet]
+        [PermissionAuthorize("Finance.View")]
+        public async Task<IActionResult> GetTrialBalance(
+            Guid? fiscalPeriodId,
+            bool includeMoatagh = false,
+            bool groupByFloatingDetail = false,
+            bool sixColumn = true,
+            string? format = null,
+            CancellationToken cancellationToken = default)
+        {
+            await EnsureCurrentFiscalYearAsync(cancellationToken);
+            var model = await BuildTrialBalancePageModelAsync(
+                fiscalPeriodId,
+                includeMoatagh,
+                groupByFloatingDetail,
+                sixColumn,
+                cancellationToken);
+
+            if (string.Equals(format, "json", StringComparison.OrdinalIgnoreCase))
+            {
+                return Json(model.Report);
+            }
+
+            return View("TrialBalance", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> UpdateFiscalPeriodStatus(Guid id, string status, CancellationToken cancellationToken)
+        {
+            if (status is not (FiscalPeriodStatus.Open or FiscalPeriodStatus.SoftLocked or FiscalPeriodStatus.HardLocked))
+            {
+                TempData["ErrorMessage"] = "وضعیت دوره مالی معتبر نیست.";
+                return RedirectToAction(nameof(LedgerOperations));
+            }
+
+            var period = await _context.FiscalPeriods.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            if (period == null)
+            {
+                return NotFound();
+            }
+
+            period.Status = status;
+            await _context.SaveChangesAsync(cancellationToken);
+            TempData["SuccessMessage"] = "وضعیت دوره مالی به‌روزرسانی شد.";
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> CreateExchangeRate(CurrencyExchangeRateCreateVM model, CancellationToken cancellationToken)
+        {
+            if (model.CurrencyId == Guid.Empty || model.BuyRate <= 0 || model.SellRate <= 0)
+            {
+                TempData["ErrorMessage"] = "ارز و نرخ‌های خرید/فروش باید معتبر باشند.";
+                return RedirectToAction(nameof(LedgerOperations));
+            }
+
+            var rateDate = model.RateDate.Date;
+            var existing = await _context.CurrencyExchangeRates
+                .FirstOrDefaultAsync(item => item.CurrencyId == model.CurrencyId && item.RateDate == rateDate, cancellationToken);
+
+            if (existing == null)
+            {
+                _context.CurrencyExchangeRates.Add(new CurrencyExchangeRate
+                {
+                    CurrencyId = model.CurrencyId,
+                    RateDate = rateDate,
+                    BuyRate = model.BuyRate,
+                    SellRate = model.SellRate
+                });
+            }
+            else
+            {
+                existing.BuyRate = model.BuyRate;
+                existing.SellRate = model.SellRate;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            TempData["SuccessMessage"] = "نرخ ارز ذخیره شد.";
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLatestCurrencyRate(Guid currencyId, DateTime? rateDate, CancellationToken cancellationToken)
+        {
+            var date = (rateDate ?? DateTime.Today).Date;
+            var rate = await _context.CurrencyExchangeRates
+                .AsNoTracking()
+                .Where(item => item.CurrencyId == currencyId && item.RateDate <= date)
+                .OrderByDescending(item => item.RateDate)
+                .Select(item => new { item.SellRate, item.BuyRate, item.RateDate })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return Json(rate == null
+                ? new { found = false, exchangeRate = 1m }
+                : new { found = true, exchangeRate = rate.SellRate, rateDate = rate.RateDate.ToString("yyyy-MM-dd") });
+        }
+
+        [HttpGet]
+        [PermissionAuthorize("Finance.View")]
+        public async Task<IActionResult> GetFloatingDetailsForSubsidiaryAccount(int subsidiaryAccountId, CancellationToken cancellationToken)
+        {
+            if (subsidiaryAccountId <= 0)
+            {
+                return Json(Array.Empty<object>());
+            }
+
+            var allowsFloatingDetail = await _context.SubsidiaryAccounts
+                .AsNoTracking()
+                .Where(item => item.Id == subsidiaryAccountId && item.IsActive)
+                .Select(item => item.AllowsFloatingDetail)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!allowsFloatingDetail)
+            {
+                return Json(Array.Empty<object>());
+            }
+
+            var items = await _context.SubsidiaryAccountFloatingDetails
+                .AsNoTracking()
+                .Where(item => item.SubsidiaryAccountId == subsidiaryAccountId && item.FloatingDetailAccount.IsActive)
+                .OrderBy(item => item.FloatingDetailAccount.Code)
+                .Select(item => new
+                {
+                    id = item.FloatingDetailAccountId.ToString(),
+                    text = item.FloatingDetailAccount.Code + " - " + item.FloatingDetailAccount.Name,
+                    code = item.FloatingDetailAccount.Code,
+                    name = item.FloatingDetailAccount.Name
+                })
+                .ToListAsync(cancellationToken);
+
+            return Json(items);
+        }
+
+        [HttpGet]
+        [PermissionAuthorize("Finance.View")]
+        public async Task<IActionResult> GetSubsidiaryAccounts(string? term, CancellationToken cancellationToken)
+        {
+            var normalizedTerm = (term ?? string.Empty).Trim();
+
+            var query = _context.SubsidiaryAccounts
+                .AsNoTracking()
+                .Where(item => item.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(normalizedTerm))
+            {
+                query = query.Where(item =>
+                    item.Code.Contains(normalizedTerm) ||
+                    item.Name.Contains(normalizedTerm));
+            }
+
+            var items = await query
+                .OrderBy(item => item.Code)
+                .Take(40)
+                .Select(item => new
+                {
+                    id = item.Id,
+                    text = item.Code + " - " + item.Name,
+                    code = item.Code,
+                    name = item.Name
+                })
+                .ToListAsync(cancellationToken);
+
+            return Json(items);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Create")]
+        public async Task<IActionResult> CreateVoucher(SimpleVoucherCreateVM model, CancellationToken cancellationToken)
+        {
+            await EnsureCurrentFiscalYearAsync(cancellationToken);
+            try
+            {
+                await _ledgerService.CreateManualVoucherAsync(model, cancellationToken);
+                TempData["SuccessMessage"] = "سند حسابداری ذخیره شد.";
+                return RedirectToAction(nameof(LedgerOperations));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction(nameof(LedgerOperations));
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> RenumberVouchers(Guid fiscalPeriodId, CancellationToken cancellationToken)
+        {
+            if (fiscalPeriodId == Guid.Empty)
+            {
+                TempData["ErrorMessage"] = "دوره مالی برای بازچینی اسناد مشخص نشده است.";
+                return RedirectToAction(nameof(LedgerOperations));
+            }
+
+            var affectedCount = await _voucherRenumberingService.RenumberAsync(fiscalPeriodId, cancellationToken);
+            TempData["SuccessMessage"] = $"{affectedCount} سند غیرقطعی بازشماره‌گذاری شد.";
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> CloseTemporaryAccounts(PeriodClosingRequestVM model, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var voucher = await _periodClosingService.CloseTemporaryAccountsAsync(
+                    model.FiscalPeriodId,
+                    model.DestinationAccountId,
+                    cancellationToken);
+
+                TempData["SuccessMessage"] = $"سند بستن حساب‌های موقت صادر شد. شماره سند: {voucher.DocumentNumber}";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> ChangeVoucherStatus([FromBody] ChangeVoucherStatusRequest request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (!Enum.TryParse<VoucherStatus>(request.TargetStatus, true, out var targetStatus))
+                {
+                    Response.StatusCode = StatusCodes.Status400BadRequest;
+                    return Json(new { success = false, message = "وضعیت هدف نامعتبر است." });
+                }
+
+                var voucher = await _ledgerService.ChangeVoucherStatusAsync(request.VoucherId, targetStatus, cancellationToken);
+                return Json(new
+                {
+                    success = true,
+                    voucherId = voucher.Id,
+                    status = voucher.Status.ToString(),
+                    message = "وضعیت سند به‌روزرسانی شد."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
         private async Task<IActionResult> VatDashboardInternal(int? year, CancellationToken cancellationToken)
         {
             var targetYear = year ?? GetCurrentShamsiYear();
@@ -797,7 +1193,7 @@ namespace OfficeAutomation.Controllers
         [PermissionAuthorize("Finance.Export")]
         public async Task<IActionResult> ExportStockExcel(int? warehouseId, CancellationToken cancellationToken)
         {
-            var query = _context.InventoryStocks
+            var query = _inventoryContext.InventoryStocks
                 .AsNoTracking()
                 .Include(item => item.Product)
                 .Include(item => item.Warehouse)
@@ -916,7 +1312,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> PrintWarehouseReceiptPdf(int id, CancellationToken cancellationToken)
         {
-            var receipt = await _context.WarehouseReceipts
+            var receipt = await _inventoryContext.WarehouseReceipts
                 .AsNoTracking()
                 .Include(item => item.Warehouse)
                 .Include(item => item.Items)
@@ -953,6 +1349,287 @@ namespace OfficeAutomation.Controllers
             ViewBag.PayrollYear = payroll.Year;
             ViewBag.PayrollMonth = payroll.Month;
             return View("PrintPayslip", payrollItem);
+        }
+
+        private async Task<FinanceLedgerOperationsVM> BuildLedgerOperationsModelAsync(CancellationToken cancellationToken)
+        {
+            var accessTokens = await GetCurrentAccessTokensAsync(cancellationToken);
+            var visibleColumns = _tableSchemaRegistry
+                .GetAllowedColumns("Finance_Vouchers", accessTokens)
+                .Select(item => item.ColumnId)
+                .ToList();
+
+            var currencies = await _context.Currencies
+                .AsNoTracking()
+                .Where(item => item.IsActive)
+                .OrderBy(item => item.Code)
+                .ToListAsync(cancellationToken);
+
+            var accounts = await _context.SubsidiaryAccounts
+                .AsNoTracking()
+                .Where(item => item.IsActive)
+                .OrderBy(item => item.Code)
+                .Select(item => new SelectListItem { Value = item.Id.ToString(), Text = item.Code + " - " + item.Name })
+                .ToListAsync(cancellationToken);
+
+            var journals = await _context.JournalTypes
+                .AsNoTracking()
+                .Where(item => item.IsActive)
+                .OrderBy(item => item.Code)
+                .Select(item => new SelectListItem { Value = item.Id.ToString(), Text = item.Code + " - " + item.Name })
+                .ToListAsync(cancellationToken);
+
+            if (journals.Count == 0)
+            {
+                var journal = await EnsureDefaultJournalTypeAsync(cancellationToken);
+                journals.Add(new SelectListItem { Value = journal.Id.ToString(), Text = journal.Code + " - " + journal.Name });
+            }
+
+            var defaultClosingDestinationAccountId = await _context.SubsidiaryAccounts
+                .AsNoTracking()
+                .Where(item => item.IsActive && item.SystemKey == FinanceAccountKeys.RetainedEarnings)
+                .Select(item => item.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var currentFiscalYear = await _context.FiscalYears
+                .AsNoTracking()
+                .Where(item => item.StartDate <= DateTime.Today && item.EndDate >= DateTime.Today)
+                .OrderByDescending(item => item.StartDate)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var periodQuery = _context.FiscalPeriods.AsNoTracking().AsQueryable();
+            if (currentFiscalYear != null)
+            {
+                periodQuery = periodQuery.Where(item => item.FiscalYearId == currentFiscalYear.Id);
+            }
+
+            var currentPeriodId = currentFiscalYear == null
+                ? null
+                : await _context.FiscalPeriods
+                    .AsNoTracking()
+                    .Where(item =>
+                        item.FiscalYearId == currentFiscalYear.Id &&
+                        item.StartDate <= DateTime.Today &&
+                        item.EndDate >= DateTime.Today)
+                    .Select(item => (Guid?)item.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+            return new FinanceLedgerOperationsVM
+            {
+                FiscalPeriods = await periodQuery
+                    .OrderBy(item => item.PeriodNumber)
+                    .Select(item => new FiscalPeriodRowVM
+                    {
+                        Id = item.Id,
+                        Name = item.Name,
+                        PeriodNumber = item.PeriodNumber,
+                        StartDate = item.StartDate,
+                        EndDate = item.EndDate,
+                        Status = item.Status
+                    })
+                    .ToListAsync(cancellationToken),
+                ExchangeRates = await _context.CurrencyExchangeRates
+                    .AsNoTracking()
+                    .Include(item => item.Currency)
+                    .OrderByDescending(item => item.RateDate)
+                    .ThenBy(item => item.Currency.Code)
+                    .Take(20)
+                    .Select(item => new CurrencyRateRowVM
+                    {
+                        CurrencyCode = item.Currency.Code,
+                        RateDate = item.RateDate,
+                        BuyRate = item.BuyRate,
+                        SellRate = item.SellRate
+                    })
+                    .ToListAsync(cancellationToken),
+                Vouchers = await _context.VoucherHeaders
+                    .AsNoTracking()
+                    .Include(item => item.JournalType)
+                    .Include(item => item.Lines)
+                    .ThenInclude(item => item.FloatingDetailAccount)
+                    .OrderByDescending(item => item.VoucherDate)
+                    .ThenByDescending(item => item.Id)
+                    .Take(50)
+                    .Select(item => new VoucherGridRowVM
+                    {
+                        Id = item.Id,
+                        SequenceNumber = item.SequenceNumber,
+                        VoucherNumber = item.VoucherNumber,
+                        VoucherDate = item.VoucherDate,
+                        Description = item.Description ?? string.Empty,
+                        JournalType = item.JournalType.Code,
+                        TotalAmount = item.TotalDebits,
+                        Status = item.Status,
+                        PostingStatus = item.PostingStatus
+                    })
+                    .ToListAsync(cancellationToken),
+                VisibleVoucherColumns = visibleColumns,
+                CurrentFiscalPeriodId = currentPeriodId,
+                CurrencyOptions = currencies
+                    .Where(item => !item.IsBaseCurrency)
+                    .Select(item => new SelectListItem { Value = item.Id.ToString(), Text = item.Code + " - " + item.Name })
+                    .ToList(),
+                CurrencyLookupOptions = currencies
+                    .Where(item => !item.IsBaseCurrency)
+                    .Select(item => new SelectListItem { Value = item.Id.ToString(), Text = item.Code + " - " + item.Name })
+                    .ToList(),
+                AccountOptions = accounts,
+                JournalTypeOptions = journals,
+                ExchangeRate = new CurrencyExchangeRateCreateVM
+                {
+                    RateDate = DateTime.Today,
+                    CurrencyId = currencies.FirstOrDefault(item => !item.IsBaseCurrency)?.Id ?? Guid.Empty
+                },
+                Voucher = new SimpleVoucherCreateVM
+                {
+                    VoucherDate = DateTime.Today,
+                    JournalTypeId = int.TryParse(journals.FirstOrDefault()?.Value, out var journalId) ? journalId : 0
+                },
+                PeriodClosing = new PeriodClosingRequestVM
+                {
+                    FiscalPeriodId = currentPeriodId ?? Guid.Empty,
+                    DestinationAccountId = defaultClosingDestinationAccountId
+                }
+            };
+        }
+
+        private async Task<TrialBalancePageVM> BuildTrialBalancePageModelAsync(
+            Guid? fiscalPeriodId,
+            bool includeMoatagh,
+            bool groupByFloatingDetail,
+            bool sixColumn,
+            CancellationToken cancellationToken)
+        {
+            var periods = await _context.FiscalPeriods
+                .AsNoTracking()
+                .Include(item => item.FiscalYear)
+                .OrderByDescending(item => item.StartDate)
+                .ThenByDescending(item => item.PeriodNumber)
+                .Select(item => new
+                {
+                    item.Id,
+                    item.Name,
+                    item.StartDate,
+                    item.EndDate,
+                    FiscalYearName = item.FiscalYear.YearName
+                })
+                .ToListAsync(cancellationToken);
+
+            var selectedPeriodId = fiscalPeriodId.GetValueOrDefault();
+            if (selectedPeriodId == Guid.Empty)
+            {
+                selectedPeriodId = periods
+                    .Where(item => item.StartDate.Date <= DateTime.Today && item.EndDate.Date >= DateTime.Today)
+                    .Select(item => item.Id)
+                    .FirstOrDefault();
+            }
+
+            if (selectedPeriodId == Guid.Empty)
+            {
+                selectedPeriodId = periods.Select(item => item.Id).FirstOrDefault();
+            }
+
+            var report = selectedPeriodId == Guid.Empty
+                ? new TrialBalanceDto()
+                : await _trialBalanceService.GetTrialBalanceAsync(
+                    selectedPeriodId,
+                    includeMoatagh,
+                    groupByFloatingDetail,
+                    cancellationToken);
+
+            return new TrialBalancePageVM
+            {
+                FiscalPeriodId = selectedPeriodId,
+                IncludeMoatagh = includeMoatagh,
+                GroupByFloatingDetail = groupByFloatingDetail,
+                SixColumn = sixColumn,
+                FiscalPeriodOptions = periods
+                    .OrderBy(item => item.StartDate)
+                    .ThenBy(item => item.Name)
+                    .Select(item => new SelectListItem
+                    {
+                        Value = item.Id.ToString(),
+                        Text = item.FiscalYearName + " - " + item.Name,
+                        Selected = item.Id == selectedPeriodId
+                    })
+                    .ToList(),
+                Report = report
+            };
+        }
+
+        private async Task<IReadOnlyCollection<string>> GetCurrentAccessTokensAsync(CancellationToken cancellationToken)
+        {
+            var profile = await _currentUserContextAccessor.GetAccessProfileAsync(cancellationToken);
+            var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (profile != null)
+            {
+                foreach (var role in profile.Roles)
+                {
+                    tokens.Add(role);
+                }
+
+                foreach (var permission in profile.Permissions)
+                {
+                    tokens.Add(permission);
+                }
+            }
+
+            foreach (var role in User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(item => item.Value))
+            {
+                tokens.Add(role);
+            }
+
+            return tokens;
+        }
+
+        private async Task EnsureCurrentFiscalYearAsync(CancellationToken cancellationToken)
+        {
+            var year = GetCurrentShamsiYear();
+            var yearName = year.ToString(CultureInfo.InvariantCulture);
+            if (await _context.FiscalYears.AnyAsync(item => item.YearName == yearName, cancellationToken))
+            {
+                return;
+            }
+
+            var persianCalendar = new PersianCalendar();
+            var fiscalYear = new FiscalYear
+            {
+                YearName = yearName,
+                StartDate = persianCalendar.ToDateTime(year, 1, 1, 0, 0, 0, 0),
+                EndDate = persianCalendar.ToDateTime(year, 12, persianCalendar.GetDaysInMonth(year, 12), 23, 59, 59, 999),
+                FiscalPeriods = Enumerable.Range(1, 12)
+                    .Select(month =>
+                    {
+                        var days = persianCalendar.GetDaysInMonth(year, month);
+                        return new FiscalPeriod
+                        {
+                            Name = $"{yearName}/{month:00}",
+                            PeriodNumber = month,
+                            StartDate = persianCalendar.ToDateTime(year, month, 1, 0, 0, 0, 0),
+                            EndDate = persianCalendar.ToDateTime(year, month, days, 23, 59, 59, 999),
+                            Status = FiscalPeriodStatus.Open
+                        };
+                    })
+                    .ToList()
+            };
+
+            _context.FiscalYears.Add(fiscalYear);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        private async Task<JournalType> EnsureDefaultJournalTypeAsync(CancellationToken cancellationToken)
+        {
+            var journal = await _context.JournalTypes.FirstOrDefaultAsync(item => item.Code == JournalTypeCodes.General, cancellationToken);
+            if (journal != null)
+            {
+                return journal;
+            }
+
+            journal = new JournalType { Code = JournalTypeCodes.General, Name = "General Journal", IsActive = true };
+            _context.JournalTypes.Add(journal);
+            await _context.SaveChangesAsync(cancellationToken);
+            return journal;
         }
 
         private async Task ValidateInvoiceAsync(FinancialInvoiceUpsertVM model, CancellationToken cancellationToken, int? currentInvoiceId = null)
@@ -1000,7 +1677,7 @@ namespace OfficeAutomation.Controllers
             var productIds = validItems.Where(item => item.ProductId.HasValue).Select(item => item.ProductId!.Value).Distinct().ToList();
             if (productIds.Count > 0)
             {
-                var validProductIds = await _context.Products
+                var validProductIds = await _inventoryContext.Products
                     .AsNoTracking()
                     .Where(item => item.IsActive && !item.IsDeleted && productIds.Contains(item.Id))
                     .Select(item => item.Id)
@@ -1023,7 +1700,7 @@ namespace OfficeAutomation.Controllers
                 if (model.WarehouseReceiptId.HasValue)
                 {
                     var warehouseReceiptId = model.WarehouseReceiptId.Value;
-                    var receiptExists = await _context.WarehouseReceipts
+                    var receiptExists = await _inventoryContext.WarehouseReceipts
                         .AsNoTracking()
                         .AnyAsync(item => item.Id == warehouseReceiptId, cancellationToken);
 
@@ -1050,7 +1727,7 @@ namespace OfficeAutomation.Controllers
 
                 if (model.FollowUpEmployeeId.HasValue)
                 {
-                    var employeeExists = await _context.HumanCapitalEmployees
+                    var employeeExists = await _officeContext.HumanCapitalEmployees
                         .AsNoTracking()
                         .AnyAsync(item => item.Id == model.FollowUpEmployeeId.Value && item.CurrentStatus == "فعال", cancellationToken);
 
@@ -1074,48 +1751,13 @@ namespace OfficeAutomation.Controllers
 
         private async Task<FinancialInvoiceIndexVM> BuildInvoiceIndexAsync(FinancialInvoiceIndexVM filter, string invoiceType, CancellationToken cancellationToken)
         {
-            var query = _context.Invoices
-                .AsNoTracking()
-                .Include(item => item.Items)
-                .Where(item => item.InvoiceType == invoiceType)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-            {
-                var term = filter.SearchTerm.Trim();
-                query = query.Where(item =>
-                    item.InvoiceNumber.Contains(term) ||
-                    item.PartyName.Contains(term) ||
-                    item.VendorName.Contains(term) ||
-                    (item.NationalCodeOrEconomicId ?? string.Empty).Contains(term));
-            }
-
-            if (filter.Year.HasValue)
-            {
-                var yearText = filter.Year.Value.ToString();
-                query = query.Where(item => item.DateShamsi.StartsWith(yearText));
-            }
-
-            if (filter.Quarter is >= 1 and <= 4)
-            {
-                var quarterTokens = GetQuarterMonthTokens(filter.Quarter.Value);
-                query = query.Where(item => quarterTokens.Any(token => item.DateShamsi.Contains(token)));
-            }
-
-            return new FinancialInvoiceIndexVM
-            {
-                SearchTerm = filter.SearchTerm,
-                Year = filter.Year,
-                Quarter = filter.Quarter,
-                InvoiceType = invoiceType,
-                Items = await query.OrderByDescending(item => item.CreatedAt).ToListAsync(cancellationToken)
-            };
+            return await _invoiceService.BuildInvoiceIndexAsync(filter, invoiceType, cancellationToken);
         }
 
         private async Task PopulateProductOptionsAsync(List<SelectListItem> options, CancellationToken cancellationToken)
         {
             options.Clear();
-            var items = await _context.Products
+            var items = await _inventoryContext.Products
                 .AsNoTracking()
                 .Where(item => item.IsActive && !item.IsDeleted)
                 .OrderBy(item => item.Name)
@@ -1143,7 +1785,7 @@ namespace OfficeAutomation.Controllers
                 .Select(item => item.WarehouseReceiptId!.Value)
                 .ToListAsync(cancellationToken);
 
-            var receiptItems = await _context.WarehouseReceipts
+            var receiptItems = await _inventoryContext.WarehouseReceipts
                 .AsNoTracking()
                 .Where(item =>
                     !mappedReceiptIds.Contains(item.Id) ||
@@ -1165,7 +1807,7 @@ namespace OfficeAutomation.Controllers
                 Text = $"{item.ReceiptNumber} - {item.SupplierOrSource} ({item.DateShamsi})"
             }));
 
-            var employeeItems = await _context.HumanCapitalEmployees
+            var employeeItems = await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(item => item.CurrentStatus == "فعال")
                 .OrderBy(item => item.FullName)
@@ -1305,3 +1947,4 @@ namespace OfficeAutomation.Controllers
 
     }
 }
+

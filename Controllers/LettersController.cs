@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services;
 using OfficeAutomation.Utilities;
 using System;
 using System.Collections.Generic;
@@ -19,19 +21,27 @@ namespace OfficeAutomation.Controllers
     [Services.Security.PermissionAuthorize("Letters.Read")]
     public class LettersController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        // اضافه کردن مدیریت کاربران
+        private readonly OfficeDbContext _context;
+        private readonly WorkflowDbContext _workflowContext;
+        // اضافه کردن مديريت کاربران
         private readonly UserManager<User> _userManager;
         private readonly AiService _ai;
         private readonly Services.Security.IPermissionAccessService _permissionAccessService;
+        private readonly NotificationService _notificationService;
+        private readonly WorkflowService _workflowService;
+        private readonly WorkflowDetailService _workflowDetailService;
 
-        // تزریق هر دو سرویس در سازنده کلاس
-        public LettersController(ApplicationDbContext context, UserManager<User> userManager, AiService ai, Services.Security.IPermissionAccessService permissionAccessService)
+        // تزريق هر دو سرويس در سازنده کلاس
+        public LettersController(OfficeDbContext context, WorkflowDbContext workflowContext, UserManager<User> userManager, AiService ai, Services.Security.IPermissionAccessService permissionAccessService, NotificationService notificationService, WorkflowService workflowService, WorkflowDetailService workflowDetailService)
         {
             _context = context;
+            _workflowContext = workflowContext;
             _userManager = userManager;
             _ai = ai;
             _permissionAccessService = permissionAccessService;
+            _notificationService = notificationService;
+            _workflowService = workflowService;
+            _workflowDetailService = workflowDetailService;
         }
 
         // GET: Letters
@@ -65,7 +75,7 @@ namespace OfficeAutomation.Controllers
 
             if (string.IsNullOrWhiteSpace(request.ReceiverId))
             {
-                return BadRequest(new { message = "گیرنده نامه مشخص نیست." });
+                return BadRequest(new { message = "گيرنده نامه مشخص نيست." });
             }
 
             var receiver = await _context.Users
@@ -75,7 +85,7 @@ namespace OfficeAutomation.Controllers
 
             if (receiver == null)
             {
-                return BadRequest(new { message = "گیرنده انتخاب‌شده معتبر نیست." });
+                return BadRequest(new { message = "گيرنده انتخاب‌شده معتبر نيست." });
             }
 
             var senderUnit = currentUser.Department?.Name ?? currentUser.ServiceLocation ?? currentUser.JobTitle ?? "نامشخص";
@@ -83,21 +93,21 @@ namespace OfficeAutomation.Controllers
             var existingBody = HtmlSanitizer.StripTags(request.CurrentBody);
 
             var prompt = $"""
-            شما دستیار نگارش نامه‌های اداری فارسی در یک سامانه اتوماسیون اداری هستید.
-            یک متن رسمی، دقیق و قابل ارسال تولید کنید. فقط متن نامه را برگردانید و هیچ توضیح اضافه‌ای ننویسید.
+            شما دستيار نگارش نامه‌هاي اداري فارسي در يک سامانه اتوماسيون اداري هستيد.
+            يک متن رسمي، دقيق و قابل ارسال توليد کنيد. فقط متن نامه را برگردانيد و هيچ توضيح اضافه‌اي ننويسيد.
 
             فرستنده: {currentUser.FullName ?? "نامشخص"}
             واحد/سمت فرستنده: {senderUnit}
-            گیرنده: {receiver.FullName ?? "نامشخص"}
-            واحد/سمت گیرنده: {receiverUnit}
+            گيرنده: {receiver.FullName ?? "نامشخص"}
+            واحد/سمت گيرنده: {receiverUnit}
             موضوع: {request.Subject}
             خواسته کاربر: {request.Instruction}
-            متن فعلی نامه، در صورت وجود: {existingBody}
+            متن فعلي نامه، در صورت وجود: {existingBody}
 
-            متن باید با «با سلام و احترام» شروع شود، لحن رسمی داشته باشد و بدون امضا تمام شود.
+            متن بايد با «با سلام و احترام» شروع شود، لحن رسمي داشته باشد و بدون امضا تمام شود.
             """;
 
-            var reply = await _ai.AskAsync(prompt);
+            var reply = await _ai.AskAsync(prompt, HttpContext.RequestAborted);
             return Json(new { reply });
         }
 
@@ -143,7 +153,7 @@ namespace OfficeAutomation.Controllers
 
             if (letters.Count == 0)
             {
-                return Json(new { reply = "نامه‌ای برای خلاصه‌سازی در این بازه یا حالت پیدا نشد." });
+                return Json(new { reply = "نامه‌اي براي خلاصه‌سازي در اين بازه يا حالت پيدا نشد." });
             }
 
             var letterText = string.Join("\n\n---\n\n", letters.Select(item =>
@@ -151,25 +161,25 @@ namespace OfficeAutomation.Controllers
                 شناسه: {item.Id}
                 موضوع: {item.Title}
                 فرستنده: {item.Sender?.FullName ?? "نامشخص"}
-                گیرنده فعلی: {item.Receiver?.FullName ?? "نامشخص"}
-                تاریخ: {item.SentDate:yyyy/MM/dd HH:mm}
-                وضعیت گردش: {(item.IsWorkflowCompleted ? "تکمیل شده" : $"در گردش - مرحله {item.CurrentWorkflowStep}")}
+                گيرنده فعلي: {item.Receiver?.FullName ?? "نامشخص"}
+                تاريخ: {item.SentDate:yyyy/MM/dd HH:mm}
+                وضعيت گردش: {(item.IsWorkflowCompleted ? "تکميل شده" : $"در گردش - مرحله {item.CurrentWorkflowStep}")}
                 متن: {HtmlSanitizer.StripTags(item.Body)}
                 """));
 
             var prompt = $"""
-            این داده‌ها مربوط به نامه‌های اداری کاربر در سامانه اتوماسیون است.
-            بر اساس حالت انتخاب‌شده، خلاصه‌ای کاربردی و مدیریتی به فارسی تولید کن.
-            اگر یک نامه انتخاب شده، گردش نامه، موضوع، وضعیت، فرستنده، گیرنده و متن کامل/خلاصه را منظم توضیح بده.
-            اگر چند نامه است، اول جمع‌بندی کوتاه بده، سپس فهرست موضوع‌ها و اقدام‌های پیشنهادی را بنویس.
-            اگر پاراف جداگانه‌ای در داده‌ها نیست، فقط وضعیت گردش موجود را گزارش کن و چیزی جعل نکن.
+            اين داده‌ها مربوط به نامه‌هاي اداري کاربر در سامانه اتوماسيون است.
+            بر اساس حالت انتخاب‌شده، خلاصه‌اي کاربردي و مديريتي به فارسي توليد کن.
+            اگر يک نامه انتخاب شده، گردش نامه، موضوع، وضعيت، فرستنده، گيرنده و متن کامل/خلاصه را منظم توضيح بده.
+            اگر چند نامه است، اول جمع‌بندي کوتاه بده، سپس فهرست موضوع‌ها و اقدام‌هاي پيشنهادي را بنويس.
+            اگر پاراف جداگانه‌اي در داده‌ها نيست، فقط وضعيت گردش موجود را گزارش کن و چيزي جعل نکن.
 
             حالت: {mode}
             نامه‌ها:
             {letterText}
             """;
 
-            var reply = await _ai.AskAsync(prompt);
+            var reply = await _ai.AskAsync(prompt, HttpContext.RequestAborted);
             return Json(new { reply });
         }
 
@@ -200,20 +210,20 @@ namespace OfficeAutomation.Controllers
             }
 
             var prompt = $"""
-            شما دستیار پاسخ‌گویی به نامه‌های اداری فارسی هستید.
-            برای نامه زیر یک متن پاسخ رسمی و کامل تولید کن. فقط متن پاسخ را بنویس.
+            شما دستيار پاسخ‌گويي به نامه‌هاي اداري فارسي هستيد.
+            براي نامه زير يک متن پاسخ رسمي و کامل توليد کن. فقط متن پاسخ را بنويس.
 
-            موضوع نامه اصلی: {letter.Title}
-            فرستنده نامه اصلی: {letter.Sender?.FullName ?? "نامشخص"}
-            گیرنده فعلی: {letter.Receiver?.FullName ?? "نامشخص"}
-            وضعیت گردش: {(letter.IsWorkflowCompleted ? "تکمیل شده" : $"در گردش - مرحله {letter.CurrentWorkflowStep}")}
-            متن نامه اصلی: {HtmlSanitizer.StripTags(letter.Body)}
-            نظر/درخواست کاربر برای پاسخ: {request.Intent}
+            موضوع نامه اصلي: {letter.Title}
+            فرستنده نامه اصلي: {letter.Sender?.FullName ?? "نامشخص"}
+            گيرنده فعلي: {letter.Receiver?.FullName ?? "نامشخص"}
+            وضعيت گردش: {(letter.IsWorkflowCompleted ? "تکميل شده" : $"در گردش - مرحله {letter.CurrentWorkflowStep}")}
+            متن نامه اصلي: {HtmlSanitizer.StripTags(letter.Body)}
+            نظر/درخواست کاربر براي پاسخ: {request.Intent}
 
-            اگر نظر کاربر تأیید است، متن را به شکل تأییدیه اداری بنویس. اگر نیاز به اصلاح یا توضیح دارد، همان را رسمی و شفاف کن.
+            اگر نظر کاربر تأييد است، متن را به شکل تأييديه اداري بنويس. اگر نياز به اصلاح يا توضيح دارد، همان را رسمي و شفاف کن.
             """;
 
-            var reply = await _ai.AskAsync(prompt);
+            var reply = await _ai.AskAsync(prompt, HttpContext.RequestAborted);
             return Json(new { reply });
         }
 
@@ -230,19 +240,36 @@ namespace OfficeAutomation.Controllers
 
             if (letter == null) return NotFound();
 
-            // تعیین پیشوند هوشمند
-            string prefix = "جناب آقای / سرکار خانم";
+            // تعيين پيشوند هوشمند
+            string prefix = "جناب آقاي / سرکار خانم";
             if (letter.Receiver != null)
             {
                 prefix = letter.Receiver.Gender switch
                 {
-                    "Male" => "جناب آقای",
+                    "Male" => "جناب آقاي",
                     "Female" => "سرکار خانم",
                     "Department" => "واحد محترم",
-                    _ => "جناب آقای / سرکار خانم"
+                    _ => "جناب آقاي / سرکار خانم"
                 };
             }
             ViewBag.Prefix = prefix;
+            ViewBag.WorkflowDecisions = await _workflowContext.WorkflowDecisions
+                .AsNoTracking()
+                .Include(item => item.DecidedByUser)
+                .Include(item => item.WorkflowInstance)
+                .Where(item => item.WorkflowInstance != null &&
+                               item.WorkflowInstance.DocumentType == letter.DocumentType &&
+                               item.WorkflowInstance.DocumentId == letter.Id)
+                .OrderByDescending(item => item.DecidedAt)
+                .ToListAsync();
+            ViewBag.WorkflowDetail = await _workflowDetailService.BuildAsync(
+                letter.DocumentType,
+                letter.Id,
+                letter.Title,
+                HtmlSanitizer.StripTags(letter.Body),
+                _userManager.GetUserId(User) ?? string.Empty,
+                "Letters.Approve",
+                HttpContext.RequestAborted);
 
             return View(letter);
         }
@@ -250,10 +277,10 @@ namespace OfficeAutomation.Controllers
         // GET: Letters/Create
         public async Task<IActionResult> Create(int? replyToId = null)
         {
-            // ۱. دریافت یوزری که لاگین کرده به روش ایمن
+            // ?. دريافت يوزري که لاگين کرده به روش ايمن
             var currentUser = await _userManager.GetUserAsync(User);
 
-            // مقداردهی برای امضا (حتی اگر کاربر پیدا نشد، سیستم کرش نکند)
+            // مقداردهي براي امضا (حتي اگر کاربر پيدا نشد، سيستم کرش نکند)
             ViewBag.SenderFullName = currentUser?.FullName ?? "نامشخص";
             ViewBag.SenderRole = currentUser?.JobTitle ;
             ViewBag.UserSignature = currentUser?.SignaturePath;
@@ -262,7 +289,7 @@ namespace OfficeAutomation.Controllers
             ViewBag.ReplyToSubject = string.Empty;
             ViewBag.ReplyToReceiverId = string.Empty;
 
-            // ۲. دریافت لیست کاربران به همراه جنسیت
+            // ?. دريافت ليست کاربران به همراه جنسيت
             var rawUsers = await _context.Users
                 .Select(u => new { u.Id, u.FullName, u.Gender })
                 .ToListAsync();
@@ -289,10 +316,10 @@ namespace OfficeAutomation.Controllers
                 ViewBag.ReplyToReceiverId = replyToLetter.SenderId;
             }
 
-            // جلوگیری از ارور SelectList در صورت خالی بودن دیتابیس
+            // جلوگيري از ارور SelectList در صورت خالي بودن ديتابيس
             ViewData["ReceiverId"] = new SelectList(rawUsers, "Id", "FullName", ViewBag.ReplyToReceiverId);
 
-            // تبدیل به JSON برای اسکریپت پیشوند هوشمند
+            // تبديل به JSON براي اسکريپت پيشوند هوشمند
             ViewBag.UsersData = System.Text.Json.JsonSerializer.Serialize(rawUsers);
 
             return View();
@@ -302,7 +329,7 @@ namespace OfficeAutomation.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Services.Security.PermissionAuthorize("Letters.Create")]
-        // تغییر مهم: فیلد Content به Body تغییر یافت تا با مدل همخوانی داشته باشد
+        // تغيير مهم: فيلد Content به Body تغيير يافت تا با مدل همخواني داشته باشد
         public async Task<IActionResult> Create([Bind("Title,Body,ReceiverId,ReplyToLetterId")] Letter letter)
         {
             var currentUser = await _userManager.GetUserAsync(User);
@@ -338,6 +365,20 @@ namespace OfficeAutomation.Controllers
                 await ApplyWorkflowRoutingOnCreateAsync(letter);
                 _context.Add(letter);
                 await _context.SaveChangesAsync();
+                await _workflowService.StartRoutingAsync(
+                    letter.DocumentType,
+                    letter.SenderId,
+                    letter.ReceiverId,
+                    letter.Id);
+                await _notificationService.CreateAsync(
+                    letter.ReceiverId,
+                    "نامه جديد",
+                    $"نامه «{letter.Title}» براي شما ارسال شد.",
+                    letter.WorkflowStatus == WorkflowStatus.PendingApproval ? NotificationSeverity.Warning : NotificationSeverity.Info,
+                    $"/Letters/Details/{letter.Id}",
+                    "Letters",
+                    nameof(Letter),
+                    letter.Id);
                 return RedirectToAction(nameof(Index));
             }
 
@@ -381,30 +422,34 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            var nextApprover = await GetNextWorkflowApproverAsync(letter.DocumentType, letter.CurrentWorkflowStep + 1);
-            if (!string.IsNullOrWhiteSpace(nextApprover))
-            {
-                letter.CurrentWorkflowStep += 1;
-                letter.ReceiverId = nextApprover;
-                letter.IsWorkflowCompleted = false;
-                letter.WorkflowStatus = WorkflowStatus.PendingApproval;
-            }
-            else
-            {
-                letter.CurrentWorkflowStep = Math.Max(1, letter.CurrentWorkflowStep);
-                letter.ReceiverId = letter.FinalReceiverId ?? letter.ReceiverId;
-                letter.IsWorkflowCompleted = true;
-                letter.WorkflowStatus = WorkflowStatus.Approved;
-            }
+            var routing = await _workflowService.AdvanceRoutingAsync(
+                letter.DocumentType,
+                letter.CurrentWorkflowStep,
+                letter.ReceiverId,
+                letter.FinalReceiverId,
+                letter.Id,
+                currentUserId);
+            ApplyWorkflowRouting(letter, routing);
 
             letter.IsRead = false;
             letter.ReadDate = null;
 
             await _context.SaveChangesAsync();
+            await _notificationService.CreateAsync(
+                letter.ReceiverId,
+                letter.IsWorkflowCompleted ? "گردش نامه تکميل شد" : "نامه در انتظار تاييد",
+                letter.IsWorkflowCompleted
+                    ? $"نامه «{letter.Title}» تاييد و به گيرنده نهايي ارسال شد."
+                    : $"نامه «{letter.Title}» براي مرحله بعدي تاييد به شما ارجاع شد.",
+                letter.IsWorkflowCompleted ? NotificationSeverity.Success : NotificationSeverity.Warning,
+                $"/Letters/Details/{letter.Id}",
+                "Letters",
+                nameof(Letter),
+                letter.Id);
             return RedirectToAction(nameof(Index));
         }
 
-        // بقیه متدها (Edit و Delete) را فعلاً تغییر نده...
+        // بقيه متدها (Edit و Delete) را فعلاً تغيير نده...
 
         // GET: Letters/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -448,44 +493,20 @@ namespace OfficeAutomation.Controllers
 
         private async Task ApplyWorkflowRoutingOnCreateAsync(Letter letter)
         {
-            var firstApprover = await GetNextWorkflowApproverAsync(letter.DocumentType, 1);
-            if (!string.IsNullOrWhiteSpace(firstApprover))
-            {
-                letter.ReceiverId = firstApprover;
-                letter.CurrentWorkflowStep = 1;
-                letter.IsWorkflowCompleted = false;
-                letter.WorkflowStatus = WorkflowStatus.PendingApproval;
-                return;
-            }
-
-            var sender = await _context.Users
-                .AsNoTracking()
-                .Where(item => item.Id == letter.SenderId)
-                .Select(item => new { item.ParentManagerUserId })
-                .FirstOrDefaultAsync();
-
-            if (!string.IsNullOrWhiteSpace(sender?.ParentManagerUserId))
-            {
-                letter.ReceiverId = sender.ParentManagerUserId;
-                letter.CurrentWorkflowStep = 1;
-                letter.IsWorkflowCompleted = false;
-                letter.WorkflowStatus = WorkflowStatus.PendingApproval;
-                return;
-            }
-
-            letter.IsWorkflowCompleted = true;
-            letter.WorkflowStatus = WorkflowStatus.Sent;
+            var routing = await _workflowService.StartRoutingAsync(
+                letter.DocumentType,
+                letter.SenderId,
+                letter.ReceiverId,
+                letter.Id);
+            ApplyWorkflowRouting(letter, routing);
         }
 
-        private async Task<string?> GetNextWorkflowApproverAsync(string documentType, int step)
+        private static void ApplyWorkflowRouting(Letter letter, WorkflowRoutingResult routing)
         {
-            var approverUserId = await _context.WorkflowRoutes
-                .AsNoTracking()
-                .Where(item => item.IsActive && item.DocumentType == documentType && item.StepNumber == step)
-                .Select(item => item.ApproverUserId)
-                .FirstOrDefaultAsync();
-
-            return string.IsNullOrWhiteSpace(approverUserId) ? null : approverUserId;
+            letter.ReceiverId = routing.ReceiverId;
+            letter.CurrentWorkflowStep = routing.StepNumber;
+            letter.IsWorkflowCompleted = routing.IsCompleted;
+            letter.WorkflowStatus = routing.Status;
         }
 
         public sealed class LetterDraftRequest
@@ -509,3 +530,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

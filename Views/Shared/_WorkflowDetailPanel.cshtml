@@ -1,0 +1,223 @@
+@model OfficeAutomation.Models.WorkflowDetailPanelVM
+@using System.Globalization
+@{
+    var pc = new PersianCalendar();
+    string ToPersian(DateTimeOffset? value)
+    {
+        if (!value.HasValue) return "-";
+        var local = value.Value.ToLocalTime().DateTime;
+        return $"{pc.GetYear(local):0000}/{pc.GetMonth(local):00}/{pc.GetDayOfMonth(local):00} {local:HH:mm}";
+    }
+}
+
+<section class="card border-0 shadow-sm workflow-detail-panel">
+    <div class="card-body d-grid gap-4">
+        <div>
+            <h5 class="fw-bold mb-2">جزئیات گردش کار</h5>
+            <div class="small text-muted">@Model.Title</div>
+            <div class="small">@Model.Summary</div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-3"><div class="small text-muted">وضعیت</div><div><span class="badge @OfficeAutomation.Models.WorkflowStatus.BadgeCss(Model.CurrentStatus)">@OfficeAutomation.Models.WorkflowStatus.Label(Model.CurrentStatus)</span></div></div>
+            <div class="col-md-3"><div class="small text-muted">مسئول فعلی</div><div class="fw-semibold">@(Model.CurrentAssigneeName ?? "-")</div></div>
+            <div class="col-md-3"><div class="small text-muted">مهلت</div><div class="fw-semibold">@ToPersian(Model.Deadline)</div></div>
+            <div class="col-md-3"><div class="small text-muted">سطح خدمت</div><div class="fw-semibold">@Model.SlaState</div></div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <h6 class="fw-bold">خط زمانی</h6>
+                <div class="d-grid gap-2">
+                    @foreach (var item in Model.Timeline)
+                    {
+                        <div class="border rounded-3 p-3">
+                            <div class="d-flex justify-content-between gap-2">
+                                <strong>@item.ActionType</strong>
+                                <small class="text-muted">@ToPersian(item.OccurredAt)</small>
+                            </div>
+                            <div class="small text-muted">@((item.ActorUser?.FullName) ?? item.ActorUserId)</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                            {
+                                <div class="small mt-1">@item.Description</div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <h6 class="fw-bold">تصمیم‌ها</h6>
+                <div class="d-grid gap-2">
+                    @foreach (var item in Model.Decisions)
+                    {
+                        <div class="border rounded-3 p-3">
+                            <div class="d-flex justify-content-between gap-2">
+                                <strong>@item.DecisionType</strong>
+                                <small class="text-muted">@ToPersian(item.DecidedAt)</small>
+                            </div>
+                            <div class="small text-muted">@((item.DecidedByUser?.FullName) ?? item.DecidedByUserId)</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Comment))
+                            {
+                                <div class="small mt-1">@item.Comment</div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <h6 class="fw-bold">نظرها</h6>
+                <div class="d-grid gap-2 mb-3">
+                    @foreach (var item in Model.Comments)
+                    {
+                        <div class="border rounded-3 p-3">
+                            <div class="d-flex justify-content-between gap-2">
+                                <strong>@((item.AuthorUser?.FullName) ?? item.AuthorUserId)</strong>
+                                <small class="text-muted">@ToPersian(item.CreatedAt)</small>
+                            </div>
+                            <div class="small mt-1">@item.Body</div>
+                        </div>
+                    }
+                </div>
+                <form asp-controller="WorkInbox" asp-action="AddComment" method="post" class="d-grid gap-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="documentType" value="@Model.DocumentType" />
+                    <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                    <input type="hidden" name="workflowStepId" value="@Model.CurrentWorkflowStepId" />
+                    <textarea name="body" rows="3" class="form-control" placeholder="ثبت نظر جدید"></textarea>
+                    <button type="submit" class="btn btn-outline-primary">ثبت نظر</button>
+                </form>
+            </div>
+
+            <div class="col-lg-6">
+                <h6 class="fw-bold">پیوست‌ها</h6>
+                <div class="d-grid gap-2 mb-3">
+                    @foreach (var item in Model.Attachments)
+                    {
+                        <a class="border rounded-3 p-3 text-decoration-none text-reset" href="@item.FilePath" target="_blank">
+                            <div class="d-flex justify-content-between gap-2">
+                                <strong>@item.FileName</strong>
+                                <small class="text-muted">@ToPersian(item.UploadedAt)</small>
+                            </div>
+                            <div class="small text-muted">@((item.UploadedByUser?.FullName) ?? item.UploadedByUserId)</div>
+                        </a>
+                    }
+                </div>
+                <form asp-controller="WorkInbox" asp-action="Decide" method="post" enctype="multipart/form-data" class="d-grid gap-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="documentType" value="@Model.DocumentType" />
+                    <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                    <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
+                    <input type="hidden" name="decisionType" value="Comment" />
+                    <input type="file" name="attachments" class="form-control" />
+                    <button type="submit" class="btn btn-outline-secondary">بارگذاری پیوست</button>
+                </form>
+            </div>
+        </div>
+
+        @if (Model.CanApprove || Model.CanReject || Model.CanReturn || Model.CanRequestChanges || Model.CanForward || Model.CanDelegate)
+        {
+            <div>
+                <h6 class="fw-bold mb-3">اقدام‌ها</h6>
+                <div class="row g-3">
+                    @if (Model.CanApprove)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="d-grid gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" value="@Model.DocumentType" />
+                                <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                                <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
+                                <input type="hidden" name="decisionType" value="Approve" />
+                                <textarea name="note" rows="2" class="form-control" placeholder="توضیح تایید"></textarea>
+                                <button type="submit" class="btn btn-success">تایید</button>
+                            </form>
+                        </div>
+                    }
+                    @if (Model.CanReject)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="d-grid gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" value="@Model.DocumentType" />
+                                <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                                <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
+                                <input type="hidden" name="decisionType" value="Reject" />
+                                <textarea name="note" rows="2" class="form-control" placeholder="دلیل رد"></textarea>
+                                <button type="submit" class="btn btn-danger">رد</button>
+                            </form>
+                        </div>
+                    }
+                    @if (Model.CanReturn)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="d-grid gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" value="@Model.DocumentType" />
+                                <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                                <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
+                                <input type="hidden" name="decisionType" value="Return" />
+                                <textarea name="note" rows="2" class="form-control" placeholder="علت بازگشت"></textarea>
+                                <button type="submit" class="btn btn-outline-secondary">بازگشت</button>
+                            </form>
+                        </div>
+                    }
+                    @if (Model.CanRequestChanges)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="d-grid gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" value="@Model.DocumentType" />
+                                <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                                <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
+                                <input type="hidden" name="decisionType" value="RequestChanges" />
+                                <textarea name="note" rows="2" class="form-control" placeholder="درخواست اصلاح"></textarea>
+                                <button type="submit" class="btn btn-warning">درخواست اصلاح</button>
+                            </form>
+                        </div>
+                    }
+                    @if (Model.CanForward)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="d-grid gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" value="@Model.DocumentType" />
+                                <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                                <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
+                                <input type="hidden" name="decisionType" value="Forward" />
+                                <select name="forwardToUserId" class="form-select">
+                                    @foreach (var user in Model.UserOptions)
+                                    {
+                                        <option value="@user.Id">@user.FullName</option>
+                                    }
+                                </select>
+                                <textarea name="note" rows="2" class="form-control" placeholder="توضیح ارجاع"></textarea>
+                                <button type="submit" class="btn btn-primary">ارجاع</button>
+                            </form>
+                        </div>
+                    }
+                    @if (Model.CanDelegate && Model.CurrentWorkflowStepId.HasValue)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <form asp-controller="WorkInbox" asp-action="Delegate" method="post" class="d-grid gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="workflowStepId" value="@Model.CurrentWorkflowStepId" />
+                                <select name="toUserId" class="form-select">
+                                    @foreach (var user in Model.UserOptions)
+                                    {
+                                        <option value="@user.Id">@user.FullName</option>
+                                    }
+                                </select>
+                                <textarea name="note" rows="2" class="form-control" placeholder="توضیح واگذاری"></textarea>
+                                <button type="submit" class="btn btn-dark">واگذاری</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</section>

@@ -12,7 +12,7 @@
         </div>
         <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
             <label class="small text-muted mb-0">سال</label>
-            <input name="year" value="@year" type="number" min="1300" max="1700" class="form-control form-control-sm" style="width: 96px;" />
+            <input name="year" value="@year" type="number" min="1300" max="1700" class="form-control form-control-sm compact-year-input" />
             <button class="btn btn-sm btn-outline-primary">اعمال</button>
         </form>
     </div>
@@ -171,109 +171,7 @@
 </div>
 
 @section Styles {
-    <style>
-        .fin-hub {
-            min-height: calc(100vh - 180px);
-            overflow-x: hidden;
-        }
-        .fin-topline,
-        .fin-card {
-            background: var(--surface-highlight);
-            border: 1px solid var(--app-border);
-            box-shadow: var(--app-shadow);
-        }
-        .fin-topline {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-            flex-wrap: wrap;
-            padding: 22px 24px;
-            border-radius: 24px;
-        }
-        .fin-card {
-            border-radius: 24px;
-            overflow: hidden;
-        }
-        .hub-kpi {
-            border-radius: 20px;
-            padding: 16px 18px;
-            min-height: 128px;
-            color: #fff;
-            box-shadow: 0 14px 30px rgba(15, 23, 42, .10);
-        }
-        .hub-kpi-label { font-size: .78rem; opacity: .88; }
-        .hub-kpi-value { font-size: 2rem; font-weight: 900; line-height: 1.05; margin: 8px 0 4px; }
-        .hub-kpi-desc { font-size: .78rem; opacity: .9; }
-        .hub-tone-success { background: linear-gradient(135deg, #059669, #10b981); }
-        .hub-tone-primary { background: linear-gradient(135deg, #2563eb, #60a5fa); }
-        .hub-tone-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
-        .hub-tone-danger { background: linear-gradient(135deg, #dc2626, #ef4444); }
-        .hub-tone-info { background: linear-gradient(135deg, #0891b2, #38bdf8); }
-        .hub-tone-secondary { background: linear-gradient(135deg, #475569, #64748b); }
-        .hub-tone-dark { background: linear-gradient(135deg, #111827, #334155); }
-        .chart-shell {
-            position: relative;
-            min-height: 320px;
-            height: clamp(280px, 42vh, 420px);
-            width: 100%;
-        }
-        .chart-shell canvas {
-            width: 100% !important;
-            height: 100% !important;
-            display: block;
-        }
-        .chart-mode.is-active {
-            background: var(--bs-primary);
-            color: #fff;
-        }
-        .quick-grid { display: grid; gap: 10px; }
-        .quick-card,
-        .activity-item,
-        .hub-alert {
-            border: 1px solid rgba(148, 163, 184, .16);
-            background: var(--app-surface-soft);
-        }
-        .activity-list,
-        .hub-alert-list {
-            display: grid;
-            gap: 10px;
-        }
-        .activity-item {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            text-decoration: none;
-            color: inherit;
-            border-radius: 14px;
-            padding: 12px 14px;
-        }
-        .activity-item strong { display: block; font-size: .86rem; }
-        .activity-item span { display: block; font-size: .72rem; color: var(--text-muted); }
-        .hub-alert {
-            border-radius: 14px;
-            padding: 12px 14px;
-        }
-        .hub-alert strong { display: block; margin-bottom: 4px; }
-        .hub-alert span { font-size: .75rem; color: var(--text-muted); }
-        .hub-alert.tone-warning { border-color: rgba(245, 158, 11, .35); }
-        .hub-alert.tone-danger { border-color: rgba(239, 68, 68, .35); }
-        .hub-alert.tone-info { border-color: rgba(59, 130, 246, .35); }
-        .hub-alert.tone-success { border-color: rgba(16, 185, 129, .35); }
-        html.theme-dark .fin-topline,
-        html.theme-dark .fin-card,
-        html[data-theme="dark"] .fin-topline,
-        html[data-theme="dark"] .fin-card {
-            background: var(--surface-highlight);
-            border-color: var(--app-border-strong);
-            box-shadow: var(--app-shadow-strong);
-        }
-        @@media (max-width: 768px) {
-            .fin-topline { flex-direction: column; }
-            .chart-shell { min-height: 260px; height: 300px; }
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/financial-dashboard.css" asp-append-version="true" />
 }
 
 @section Scripts {

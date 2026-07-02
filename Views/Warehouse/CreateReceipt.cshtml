@@ -93,28 +93,10 @@
     </tr>
 </template>
 
-<style>
-    .summary-bar {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-        padding: 14px 16px;
-        border: 1px solid var(--ds-border);
-        border-radius: 16px;
-        background: rgba(255,255,255,.65);
-    }
-    .preview-line {
-        display:flex;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--ds-border);
-    }
-    .preview-line:last-of-type { border-bottom: 0; }
-    html[data-theme="dark"] .summary-bar,
-    body[data-theme="dark"] .summary-bar { background: rgba(15,23,42,.55); }
-</style>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/warehouse-forms.css" asp-append-version="true" />
+}
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>

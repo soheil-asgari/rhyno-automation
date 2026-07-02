@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
@@ -13,12 +14,14 @@ namespace OfficeAutomation.Controllers
     [PermissionAuthorize("Security.Manage")]
     public class SecurityController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IdentityDbContext _context;
+        private readonly WorkflowDbContext _workflowContext;
         private readonly RoleManager<ApplicationRole> _roleManager;
 
-        public SecurityController(ApplicationDbContext context, RoleManager<ApplicationRole> roleManager)
+        public SecurityController(IdentityDbContext context, WorkflowDbContext workflowContext, RoleManager<ApplicationRole> roleManager)
         {
             _context = context;
+            _workflowContext = workflowContext;
             _roleManager = roleManager;
         }
 
@@ -217,7 +220,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> WorkflowRoutes(CancellationToken cancellationToken)
         {
-            var routes = await _context.WorkflowRoutes
+            var routes = await _workflowContext.WorkflowRoutes
                 .AsNoTracking()
                 .Include(item => item.ApproverUser)
                 .OrderBy(item => item.DocumentType)
@@ -235,7 +238,7 @@ namespace OfficeAutomation.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateWorkflowRoute(string documentType, int stepNumber, string approverUserId, CancellationToken cancellationToken)
+        public async Task<IActionResult> CreateWorkflowRoute(string documentType, int stepNumber, string? approverUserId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(documentType) || string.IsNullOrWhiteSpace(approverUserId) || stepNumber <= 0)
             {
@@ -243,7 +246,7 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(WorkflowRoutes));
             }
 
-            var exists = await _context.WorkflowRoutes
+            var exists = await _workflowContext.WorkflowRoutes
                 .AnyAsync(item => item.DocumentType == documentType.Trim() && item.StepNumber == stepNumber, cancellationToken);
             if (exists)
             {
@@ -251,10 +254,12 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(WorkflowRoutes));
             }
 
-            _context.WorkflowRoutes.Add(new WorkflowRoute
+            _workflowContext.WorkflowRoutes.Add(new WorkflowRoute
             {
                 DocumentType = documentType.Trim(),
                 StepNumber = stepNumber,
+                StepName = $"مرحله {stepNumber}",
+                AssignmentMode = WorkflowAssignmentMode.User,
                 ApproverUserId = approverUserId,
                 IsActive = true
             });
@@ -268,16 +273,17 @@ namespace OfficeAutomation.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteWorkflowRoute(int id, CancellationToken cancellationToken)
         {
-            var route = await _context.WorkflowRoutes.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            var route = await _workflowContext.WorkflowRoutes.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
             if (route == null)
             {
                 return NotFound();
             }
 
-            _context.WorkflowRoutes.Remove(route);
+            _workflowContext.WorkflowRoutes.Remove(route);
             await _context.SaveChangesAsync(cancellationToken);
             TempData["SecurityMessage"] = "گام گردش کار حذف شد.";
             return RedirectToAction(nameof(WorkflowRoutes));
         }
     }
 }
+

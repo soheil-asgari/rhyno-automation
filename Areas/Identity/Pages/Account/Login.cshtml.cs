@@ -98,9 +98,14 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                var loginName = Input.Email?.Trim();
+                var password = Input.Password?.Trim();
+                var user = await _signInManager.UserManager.FindByNameAsync(loginName)
+                    ?? await _signInManager.UserManager.FindByEmailAsync(loginName);
+                var userName = user?.UserName ?? loginName;
+
+                // Count failed attempts so repeated bad credentials trigger Identity lockout.
+                var result = await _signInManager.PasswordSignInAsync(userName, password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");

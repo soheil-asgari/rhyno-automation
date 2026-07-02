@@ -1,0 +1,966 @@
+Using launch settings from C:\Users\esmaeili\Desktop\rhyno-automation-1\rhyno-automation\Properties\launchSettings.json...
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5124
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\esmaeili\Desktop\rhyno-automation-1\rhyno-automation
+info: Startup[0]
+      Startup bootstrap: begin.
+info: Startup[0]
+      Startup bootstrap: tenant initialized for default.
+info: Startup[0]
+      Startup bootstrap: ApplicationDbContext resolved.
+info: Startup[0]
+      Startup bootstrap: applying database migrations.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10622]
+      Entity 'HumanCapitalEmployee' has a global query filter defined and is the required end of a relationship with the entity 'HumanCapitalSalaryHistory'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10622]
+      Entity 'HumanCapitalEmployee' has a global query filter defined and is the required end of a relationship with the entity 'HumanCapitalStatusHistory'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (26ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Migrations[20411]
+      Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (48ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (48ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (14ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DECLARE @result int;
+      EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+      SELECT @result
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+      BEGIN
+          CREATE TABLE [__EFMigrationsHistory] (
+              [MigrationId] nvarchar(150) NOT NULL,
+              [ProductVersion] nvarchar(32) NOT NULL,
+              CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+          );
+      END;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [MigrationId], [ProductVersion]
+      FROM [__EFMigrationsHistory]
+      ORDER BY [MigrationId];
+info: Microsoft.EntityFrameworkCore.Migrations[20405]
+      No migrations were applied. The database is already up to date.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      DECLARE @result int;
+      EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+      SELECT @result
+info: Startup[0]
+      Startup bootstrap: database migrations completed.
+info: Startup[0]
+      Startup bootstrap: identity managers resolved.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [w].[Id], [w].[CanceledAt], [w].[CancellationReason], [w].[CompletedAt], [w].[CreatedAt], [w].[ScheduledFor], [w].[Status], [w].[WorkflowInstanceId], [w].[WorkflowStepId]
+      FROM [WorkflowSlaJobs] AS [w]
+      WHERE [w].[Status] = N'Scheduled'
+      ORDER BY [w].[ScheduledFor]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p1='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LockedUntil] = @p0
+      OUTPUT 1
+      WHERE [Id] = @p1;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [p].[Key]
+      FROM [Permissions] AS [p]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@_8__locals1_role_Id='?' (Size = 450), @key='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [r].[Id], [r].[IsAllowed], [r].[PermissionKey], [r].[RoleId]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @_8__locals1_role_Id AND [r].[PermissionKey] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[@normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[CanAccessFinance], [a].[CanAccessHumanCapital], [a].[CanAccessSystemSettings], [a].[CanAccessWarehouse], [a].[ConcurrencyStamp], [a].[DepartmentId], [a].[Email], [a].[EmailConfirmed], [a].[EmployeeId], [a].[FullName], [a].[Gender], [a].[IsManager], [a].[JobTitle], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[ManagerId], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[ParentManagerUserId], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[Role], [a].[SecurityStamp], [a].[ServiceLocation], [a].[SignaturePath], [a].[TwoFactorEnabled], [a].[UserName]
+      FROM [AspNetUsers] AS [a]
+      WHERE [a].[NormalizedEmail] = @normalizedEmail
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@normalizedUserName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[CanAccessFinance], [a].[CanAccessHumanCapital], [a].[CanAccessSystemSettings], [a].[CanAccessWarehouse], [a].[ConcurrencyStamp], [a].[DepartmentId], [a].[Email], [a].[EmailConfirmed], [a].[EmployeeId], [a].[FullName], [a].[Gender], [a].[IsManager], [a].[JobTitle], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[ManagerId], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[ParentManagerUserId], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[Role], [a].[SecurityStamp], [a].[ServiceLocation], [a].[SignaturePath], [a].[TwoFactorEnabled], [a].[UserName]
+      FROM [AspNetUsers] AS [a]
+      WHERE [a].[NormalizedUserName] = @normalizedUserName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (16ms) [Parameters=[@p29='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (DbType = Boolean), @p2='?' (DbType = Boolean), @p3='?' (DbType = Boolean), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p30='?' (Size = 4000), @p6='?' (DbType = Int32), @p7='?' (Size = 256), @p8='?' (DbType = Boolean), @p9='?' (DbType = Int32), @p10='?' (Size = 4000), @p11='?' (Size = 4000), @p12='?' (DbType = Boolean), @p13='?' (Size = 4000), @p14='?' (DbType = Boolean), @p15='?' (DbType = DateTimeOffset), @p16='?' (Size = 450), @p17='?' (Size = 256), @p18='?' (Size = 256), @p19='?' (Size = 450), @p20='?' (Size = 4000), @p21='?' (Size = 4000), @p22='?' (DbType = Boolean), @p23='?' (Size = 4000), @p24='?' (Size = 4000), @p25='?' (Size = 4000), @p26='?' (Size = 4000), @p27='?' (DbType = Boolean), @p28='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [CanAccessFinance] = @p1, [CanAccessHumanCapital] = @p2, [CanAccessSystemSettings] = @p3, [CanAccessWarehouse] = @p4, [ConcurrencyStamp] = @p5, [DepartmentId] = @p6, [Email] = @p7, [EmailConfirmed] = @p8, [EmployeeId] = @p9, [FullName] = @p10, [Gender] = @p11, [IsManager] = @p12, [JobTitle] = @p13, [LockoutEnabled] = @p14, [LockoutEnd] = @p15, [ManagerId] = @p16, [NormalizedEmail] = @p17, [NormalizedUserName] = @p18, [ParentManagerUserId] = @p19, [PasswordHash] = @p20, [PhoneNumber] = @p21, [PhoneNumberConfirmed] = @p22, [Role] = @p23, [SecurityStamp] = @p24, [ServiceLocation] = @p25, [SignaturePath] = @p26, [TwoFactorEnabled] = @p27, [UserName] = @p28
+      OUTPUT 1
+      WHERE [Id] = @p29 AND [ConcurrencyStamp] = @p30;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@normalizedRoleName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(2) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedRoleName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p='?' (Size = 450), @p1='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[UserId], [a].[RoleId]
+      FROM [AspNetUserRoles] AS [a]
+      WHERE [a].[UserId] = @p AND [a].[RoleId] = @p1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@p5='?' (Size = 450), @p0='?' (Size = 4000), @p6='?' (Size = 4000), @p1='?' (Size = 32), @p2='?' (Size = 256), @p3='?' (Size = 256), @p4='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [AspNetRoles] SET [ConcurrencyStamp] = @p0, [DataAccessScope] = @p1, [Description] = @p2, [Name] = @p3, [NormalizedName] = @p4
+      OUTPUT 1
+      WHERE [Id] = @p5 AND [ConcurrencyStamp] = @p6;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT CASE
+          WHEN EXISTS (
+              SELECT 1
+              FROM [WorkflowInstances] AS [w]
+              WHERE [w].[DocumentType] = N'SeedLetter') THEN CAST(1 AS bit)
+          ELSE CAST(0 AS bit)
+      END
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT CASE
+          WHEN EXISTS (
+              SELECT 1
+              FROM [Letters] AS [l]
+              WHERE [l].[Title] LIKE N'\[DEMO]%' ESCAPE N'\') THEN CAST(1 AS bit)
+          ELSE CAST(0 AS bit)
+      END
+info: Startup[0]
+      Startup bootstrap: finished.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Startup[0]
+      After authentication /Identity/Account/Login Authenticated=False
+info: Startup[0]
+      Current-user middleware enter /Identity/Account/Login
+info: Startup[0]
+      After authorization /Identity/Account/Login
+info: Startup[0]
+      After authorization complete /Identity/Account/Login
+info: Startup[0]
+      Current-user middleware exit /Identity/Account/Login
+info: Startup[0]
+      After authentication complete /Identity/Account/Login
+info: Startup[0]
+      After authentication /Identity/Account/Login Authenticated=False
+info: Startup[0]
+      Current-user middleware enter /Identity/Account/Login
+info: Startup[0]
+      After authorization /Identity/Account/Login
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@normalizedUserName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[CanAccessFinance], [a].[CanAccessHumanCapital], [a].[CanAccessSystemSettings], [a].[CanAccessWarehouse], [a].[ConcurrencyStamp], [a].[DepartmentId], [a].[Email], [a].[EmailConfirmed], [a].[EmployeeId], [a].[FullName], [a].[Gender], [a].[IsManager], [a].[JobTitle], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[ManagerId], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[ParentManagerUserId], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[Role], [a].[SecurityStamp], [a].[ServiceLocation], [a].[SignaturePath], [a].[TwoFactorEnabled], [a].[UserName]
+      FROM [AspNetUsers] AS [a]
+      WHERE [a].[NormalizedUserName] = @normalizedUserName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@normalizedUserName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[CanAccessFinance], [a].[CanAccessHumanCapital], [a].[CanAccessSystemSettings], [a].[CanAccessWarehouse], [a].[ConcurrencyStamp], [a].[DepartmentId], [a].[Email], [a].[EmailConfirmed], [a].[EmployeeId], [a].[FullName], [a].[Gender], [a].[IsManager], [a].[JobTitle], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[ManagerId], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[ParentManagerUserId], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[Role], [a].[SecurityStamp], [a].[ServiceLocation], [a].[SignaturePath], [a].[TwoFactorEnabled], [a].[UserName]
+      FROM [AspNetUsers] AS [a]
+      WHERE [a].[NormalizedUserName] = @normalizedUserName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@user_Id='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT [a].[Id], [a].[ClaimType], [a].[ClaimValue], [a].[UserId]
+      FROM [AspNetUserClaims] AS [a]
+      WHERE [a].[UserId] = @user_Id
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@userId='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT [a0].[Name]
+      FROM [AspNetUserRoles] AS [a]
+      INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+      WHERE [a].[UserId] = @userId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@normalizedName='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[DataAccessScope], [a].[Description], [a].[Name], [a].[NormalizedName]
+      FROM [AspNetRoles] AS [a]
+      WHERE [a].[NormalizedName] = @normalizedName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@role_Id='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT [a].[ClaimType], [a].[ClaimValue]
+      FROM [AspNetRoleClaims] AS [a]
+      WHERE [a].[RoleId] = @role_Id
+info: OfficeAutomation.Areas.Identity.Pages.Account.LoginModel[0]
+      User logged in.
+info: Startup[0]
+      After authorization complete /Identity/Account/Login
+info: Startup[0]
+      Current-user middleware exit /Identity/Account/Login
+info: Startup[0]
+      After authentication complete /Identity/Account/Login
+info: Startup[0]
+      After authentication / Authenticated=True
+info: Startup[0]
+      Current-user middleware enter /
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@userId='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], CASE
+          WHEN [a].[FullName] = N'' THEN COALESCE([a].[UserName], [a].[Email], [a].[Id])
+          ELSE [a].[FullName]
+      END AS [DisplayName], [a].[DepartmentId]
+      FROM [AspNetUsers] AS [a]
+      WHERE [a].[Id] = @userId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@userId='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT [a0].[Id], COALESCE([a0].[Name], [a0].[Id]) AS [RoleName], [a0].[DataAccessScope]
+      FROM [AspNetUserRoles] AS [a]
+      INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+      WHERE [a].[UserId] = @userId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (13ms) [Parameters=[@roleIds1='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT DISTINCT [r].[PermissionKey]
+      FROM [RolePermissions] AS [r]
+      WHERE [r].[RoleId] = @roleIds1 AND [r].[IsAllowed] = CAST(1 AS bit)
+info: Startup[0]
+      After authorization /
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[@weekStart='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT [a].[Action], [a].[TableName], [a].[DateTime]
+      FROM [AuditLogs] AS [a]
+      WHERE [a].[DateTime] >= @weekStart
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [AuditLogs] AS [a]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [AuditLogs] AS [a]
+      WHERE [a].[Action] IN (N'Create', N'Insert')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [AuditLogs] AS [a]
+      WHERE [a].[Action] IN (N'Update', N'Edit')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [AuditLogs] AS [a]
+      WHERE [a].[Action] = N'Delete'
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Letters] AS [l]
+      WHERE [l].[IsRead] = CAST(0 AS bit)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Leaves] AS [l]
+      WHERE [l].[Status] IN (N'PendingApproval', N'در انتظار تایید', N'در انتظار تأیید')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Letters] AS [l]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [AspNetUsers] AS [a]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Invoices] AS [i]
+      WHERE [i].[WorkflowStatus] IN (N'Draft', N'Sent', N'PendingApproval')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (15ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [InventoryStocks] AS [i]
+      INNER JOIN [Products] AS [p] ON [i].[ProductId] = [p].[Id]
+      WHERE [p].[MinimumStock] > 0 AND [i].[CurrentQuantity] <= CAST([p].[MinimumStock] AS decimal(18,3))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [InventoryTransferRequests] AS [i]
+      WHERE [i].[Status] IN (N'PendingApproval', N'PendingManager')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Letters] AS [l]
+      WHERE [l].[WorkflowStatus] = N'PendingApproval' OR ([l].[IsWorkflowCompleted] = CAST(0 AS bit) AND [l].[CurrentWorkflowStep] > 0)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@today='?' (DbType = DateTime2)], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Letters] AS [l]
+      WHERE CONVERT(date, [l].[SentDate]) = @today
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@today='?' (DbType = DateTime2)], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [Invoices] AS [i]
+      WHERE CONVERT(date, [i].[CreatedAt]) = @today
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@today='?' (DbType = DateTime2)], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [WarehouseReceipts] AS [w]
+      WHERE CONVERT(date, [w].[CreatedAt]) = @today
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@today='?' (DbType = DateTime2)], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [WarehouseIssuances] AS [w]
+      WHERE CONVERT(date, [w].[CreatedAt]) = @today
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[@utcTodayStart='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*)
+      FROM [AuditLogs] AS [a]
+      WHERE [a].[DateTime] >= @utcTodayStart AND ([a].[Action] = N'Delete' OR [a].[TableName] LIKE N'%Role%' OR [a].[TableName] LIKE N'%Permission%')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [i].[DeadlineDateShamsi]
+      FROM [Invoices] AS [i]
+      WHERE [i].[InvoiceType] = N'Purchase' AND [i].[DeadlineDateShamsi] IS NOT NULL AND [i].[WorkflowStatus] <> N'Approved' AND [i].[WorkflowStatus] <> N'Archived'
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT CAST(1 AS bit), [a].[FullName], [l0].[Status], [l0].[StartDate]
+      FROM (
+          SELECT TOP(@p) [l].[StartDate], [l].[Status], [l].[UserId]
+          FROM [Leaves] AS [l]
+          WHERE [l].[Status] IN (N'PendingApproval', N'در انتظار تایید', N'در انتظار تأیید')
+          ORDER BY [l].[StartDate] DESC
+      ) AS [l0]
+      INNER JOIN [AspNetUsers] AS [a] ON [l0].[UserId] = [a].[Id]
+      ORDER BY [l0].[StartDate] DESC
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [l].[Title], [l].[WorkflowStatus], [l].[SentDate], [l].[Id]
+      FROM [Letters] AS [l]
+      WHERE [l].[WorkflowStatus] = N'PendingApproval' OR ([l].[IsWorkflowCompleted] = CAST(0 AS bit) AND [l].[CurrentWorkflowStep] > 0)
+      ORDER BY [l].[SentDate] DESC
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [i].[InvoiceNumber] + N' - ' + [i].[PartyName], CASE
+          WHEN [i].[InvoiceType] = N'Purchase' THEN N'فاکتور خرید'
+          ELSE N'فاکتور فروش'
+      END, [i].[WorkflowStatus], [i].[DateShamsi], [i].[Id]
+      FROM [Invoices] AS [i]
+      WHERE [i].[WorkflowStatus] IN (N'Draft', N'Sent', N'PendingApproval')
+      ORDER BY [i].[CreatedAt] DESC
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@currentUserId='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [u].[ThemePreference]
+      FROM [UserPreferences] AS [u]
+      WHERE [u].[UserId] = @currentUserId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (11ms) [Parameters=[@p='?' (DbType = Int32), @userId='?' (Size = 450), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [n].[Id], [n].[Title], [n].[Message], COALESCE([n].[LinkUrl], N'/Notifications'), [n].[Severity]
+      FROM [Notifications] AS [n]
+      WHERE [n].[RecipientUserId] = @userId AND ([n].[ExpiresAt] IS NULL OR [n].[ExpiresAt] > @now) AND [n].[IsRead] = CAST(0 AS bit)
+      ORDER BY [n].[CreatedAt] DESC
+info: Startup[0]
+      After authorization complete /
+info: Startup[0]
+      Current-user middleware exit /
+info: Startup[0]
+      After authentication complete /
+info: Startup[0]
+      Slow request GET / responded 200 in 1574ms
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (9ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (11ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (9ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (11ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (12ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Startup[0]
+      After authentication /health Authenticated=False
+info: Startup[0]
+      Current-user middleware enter /health
+info: Startup[0]
+      After authorization /health
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Startup[0]
+      After authorization complete /health
+info: Startup[0]
+      Current-user middleware exit /health
+info: Startup[0]
+      After authentication complete /health
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (9ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [w].[Id], [w].[CanceledAt], [w].[CancellationReason], [w].[CompletedAt], [w].[CreatedAt], [w].[ScheduledFor], [w].[Status], [w].[WorkflowInstanceId], [w].[WorkflowStepId]
+      FROM [WorkflowSlaJobs] AS [w]
+      WHERE [w].[Status] = N'Scheduled'
+      ORDER BY [w].[ScheduledFor]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (9ms) [Parameters=[@p1='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LockedUntil] = @p0
+      OUTPUT 1
+      WHERE [Id] = @p1;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@tenantId='?' (Size = 64), @jobName='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [t].[Id], [t].[JobName], [t].[JobNamespace], [t].[LastCompletedAt], [t].[LastError], [t].[LastFailedAt], [t].[LastStartedAt], [t].[LockedBy], [t].[LockedUntil], [t].[TenantId]
+      FROM [TenantBackgroundJobStates] AS [t]
+      WHERE [t].[TenantId] = @tenantId AND [t].[JobName] = @jobName
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastStartedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@p='?' (DbType = Int32), @tenantId='?' (Size = 64), @_options_MaxRetryCount='?' (DbType = Int32), @now='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(@p) [o].[Id], [o].[AggregateId], [o].[AggregateType], [o].[CorrelationId], [o].[EventType], [o].[ExchangeName], [o].[LastAttemptAt], [o].[LastError], [o].[LockedUntil], [o].[OccurredAt], [o].[PayloadJson], [o].[ProcessedAt], [o].[RetryCount], [o].[RoutingKey], [o].[Status], [o].[TenantId]
+      FROM [OutboxMessages] AS [o]
+      WHERE [o].[TenantId] = @tenantId AND [o].[Status] IN (N'Pending', N'Failed') AND [o].[RetryCount] < @_options_MaxRetryCount AND ([o].[LockedUntil] IS NULL OR [o].[LockedUntil] < @now)
+      ORDER BY [o].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = DateTimeOffset), @p1='?' (DbType = DateTimeOffset)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [TenantBackgroundJobStates] SET [LastCompletedAt] = @p0, [LockedUntil] = @p1
+      OUTPUT 1
+      WHERE [Id] = @p2;

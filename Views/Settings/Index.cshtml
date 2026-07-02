@@ -8,6 +8,20 @@
 }
 
 <div class="settings-page" dir="rtl">
+    @{
+        var databaseStatusLabel = Model.System.IsDatabaseConnected ? "پایدار" : "نیازمند بررسی";
+        var databaseStatusClass = Model.System.IsDatabaseConnected ? "ok" : "fail";
+        var environmentLabel = string.IsNullOrWhiteSpace(Model.System.ActiveEnvironment) ? "Unknown" : Model.System.ActiveEnvironment;
+        var themeLabel = Model.Ui.ThemePreference switch
+        {
+            "Dark" => "تیره",
+            "Light" => "روشن",
+            _ => "سیستمی"
+        };
+        var sidebarLabel = Model.Ui.SidebarCollapsedByDefault ? "جمع‌شده" : "باز";
+        var settingsSectionCount = Model.CanManageSecurity ? 6 : 4;
+    }
+
     @if (TempData["SettingsSuccess"] is string message)
     {
         <div class="alert alert-success settings-alert" role="alert">
@@ -19,40 +33,94 @@
     <div asp-validation-summary="ModelOnly" class="alert alert-danger settings-alert"></div>
 
     <header class="settings-header-card">
-        <div>
+        <div class="settings-header-copy">
             <h1 class="settings-title">تنظیمات سامانه</h1>
-            <p class="settings-subtitle">مدیریت هویت سامانه، امنیت کاربر و تنظیمات عملیاتی</p>
+            <p class="settings-subtitle">مدیریت هویت سامانه، امنیت کاربر، وضعیت زیرساخت و تجربه کاربری در یک هاب متمرکز</p>
+            <div class="settings-header-meta">
+                <span><i class="bi bi-grid-1x2"></i> <strong>@settingsSectionCount</strong> بخش تنظیماتی</span>
+                <span><i class="bi bi-palette2"></i> تم فعال: <strong>@themeLabel</strong></span>
+                <span><i class="bi bi-layout-sidebar"></i> سایدبار: <strong>@sidebarLabel</strong></span>
+            </div>
         </div>
         <span class="settings-badge">Settings Hub</span>
     </header>
 
+    <section class="settings-overview-grid" aria-label="خلاصه تنظیمات">
+        <article class="settings-overview-card">
+            <div class="settings-overview-icon"><i class="bi bi-shield-check"></i></div>
+            <div>
+                <div class="settings-overview-label">سطح دسترسی</div>
+                <div class="settings-overview-value">@(Model.CanManageSecurity ? "مدیریت کامل" : "کاربر عادی")</div>
+                <p class="settings-overview-text">@(Model.CanManageSecurity ? "همه بخش‌های مدیریتی و امنیتی در دسترس است." : "فقط تنظیمات پروفایل و ترجیحات شخصی قابل تغییر است.")</p>
+            </div>
+        </article>
+        <article class="settings-overview-card">
+            <div class="settings-overview-icon"><i class="bi bi-hdd-network"></i></div>
+            <div>
+                <div class="settings-overview-label">وضعیت زیرساخت</div>
+                <div class="settings-overview-value">@(environmentLabel)</div>
+                <p class="settings-overview-text">اتصال دیتابیس: <span class="settings-inline-status @databaseStatusClass">@databaseStatusLabel</span></p>
+            </div>
+        </article>
+        <article class="settings-overview-card">
+            <div class="settings-overview-icon"><i class="bi bi-person-badge"></i></div>
+            <div>
+                <div class="settings-overview-label">پروفایل کاربر</div>
+                <div class="settings-overview-value">@(string.IsNullOrWhiteSpace(Model.Profile.FullName) ? "تکمیل نشده" : Model.Profile.FullName)</div>
+                <p class="settings-overview-text">@(string.IsNullOrWhiteSpace(Model.Profile.JobTitle) ? "سمت سازمانی ثبت نشده است." : Model.Profile.JobTitle)</p>
+            </div>
+        </article>
+    </section>
+
     <div class="settings-shell">
         <aside class="settings-side-nav nav nav-pills" id="settings-tab" role="tablist" aria-orientation="vertical">
+            <div class="settings-side-nav-head">
+                <div class="settings-side-nav-title">دسترسی سریع</div>
+                <div class="settings-side-nav-text">بخش موردنظر را انتخاب کنید</div>
+            </div>
             <button class="nav-link active" id="general-tab" data-bs-toggle="pill" data-bs-target="#general-pane" type="button" role="tab" aria-controls="general-pane" aria-selected="true">
                 <i class="bi bi-sliders"></i>
-                <span>تنظیمات عمومی</span>
+                <span class="settings-nav-copy">
+                    <strong>تنظیمات عمومی</strong>
+                    <small>هویت سامانه و منطقه زمانی</small>
+                </span>
             </button>
             <button class="nav-link" id="security-tab" data-bs-toggle="pill" data-bs-target="#security-pane" type="button" role="tab" aria-controls="security-pane" aria-selected="false">
                 <i class="bi bi-shield-lock"></i>
-                <span>پروفایل و امنیت</span>
+                <span class="settings-nav-copy">
+                    <strong>پروفایل و امنیت</strong>
+                    <small>اطلاعات حساب و رمز عبور</small>
+                </span>
             </button>
             <button class="nav-link" id="system-tab" data-bs-toggle="pill" data-bs-target="#system-pane" type="button" role="tab" aria-controls="system-pane" aria-selected="false">
                 <i class="bi bi-hdd-network"></i>
-                <span>اتصال دیتابیس و شبکه</span>
+                <span class="settings-nav-copy">
+                    <strong>اتصال دیتابیس و شبکه</strong>
+                    <small>وضعیت زیرساخت و نگهداری</small>
+                </span>
             </button>
             <button class="nav-link" id="ui-tab" data-bs-toggle="pill" data-bs-target="#ui-pane" type="button" role="tab" aria-controls="ui-pane" aria-selected="false">
                 <i class="bi bi-palette2"></i>
-                <span>تنظیمات ظاهری</span>
+                <span class="settings-nav-copy">
+                    <strong>تنظیمات ظاهری</strong>
+                    <small>تم و رفتار رابط کاربری</small>
+                </span>
             </button>
             @if (Model.CanManageSecurity)
             {
                 <button class="nav-link" id="signature-admin-tab" data-bs-toggle="pill" data-bs-target="#signature-admin-pane" type="button" role="tab" aria-controls="signature-admin-pane" aria-selected="false">
                     <i class="bi bi-pen"></i>
-                    <span>مدیریت امضای کاربر</span>
+                    <span class="settings-nav-copy">
+                        <strong>مدیریت امضای کاربر</strong>
+                        <small>ثبت و پیش‌نمایش امضای دیجیتال</small>
+                    </span>
                 </button>
                 <button class="nav-link" id="add-user-admin-tab" data-bs-toggle="pill" data-bs-target="#add-user-admin-pane" type="button" role="tab" aria-controls="add-user-admin-pane" aria-selected="false">
                     <i class="bi bi-person-plus"></i>
-                    <span>افزودن کاربر</span>
+                    <span class="settings-nav-copy">
+                        <strong>افزودن کاربر</strong>
+                        <small>مدیریت حساب‌های جدید</small>
+                    </span>
                 </button>
             }
         </aside>

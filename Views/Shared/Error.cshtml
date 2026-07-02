@@ -1,25 +1,25 @@
-﻿@model ErrorViewModel
+@model ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "خطا";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<h1 class="text-danger">خطا</h1>
+<h2 class="text-danger">در پردازش درخواست شما خطایی رخ داد.</h2>
 
 @if (Model.ShowRequestId)
 {
     <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+        <strong>شناسه درخواست:</strong> <code>@Model.RequestId</code>
     </p>
 }
 
-<h3>Development Mode</h3>
+<h3>حالت توسعه</h3>
 <p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
+    اگر برنامه در محیط <strong>توسعه</strong> اجرا شود، جزئیات بیشتری از خطای رخ‌داده نمایش داده می‌شود.
 </p>
 <p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
+    <strong>فعال بودن محیط توسعه در سامانه عملیاتی توصیه نمی‌شود.</strong>
+    این حالت ممکن است اطلاعات حساس مربوط به خطاها را به کاربران نهایی نمایش دهد.
+    برای اشکال‌زدایی محلی، مقدار متغیر محیطی <strong>ASPNETCORE_ENVIRONMENT</strong> را روی <strong>Development</strong> قرار دهید
+    و برنامه را دوباره اجرا کنید.
 </p>

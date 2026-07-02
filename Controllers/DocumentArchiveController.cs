@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 using OfficeAutomation.Services.Security;
 using System.Security.Claims;
 
@@ -12,18 +12,21 @@ namespace OfficeAutomation.Controllers
     [PermissionAuthorize("Archive.View")]
     public class DocumentArchiveController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IWorkflowDbContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly IPermissionAccessService _permissionAccessService;
+        private readonly Services.Tenancy.ITenantPathResolver _tenantPathResolver;
 
         public DocumentArchiveController(
-            ApplicationDbContext context,
+            IWorkflowDbContext context,
             IWebHostEnvironment environment,
-            IPermissionAccessService permissionAccessService)
+            IPermissionAccessService permissionAccessService,
+            Services.Tenancy.ITenantPathResolver tenantPathResolver)
         {
             _context = context;
             _environment = environment;
             _permissionAccessService = permissionAccessService;
+            _tenantPathResolver = tenantPathResolver;
         }
 
         [HttpGet]
@@ -82,6 +85,8 @@ namespace OfficeAutomation.Controllers
                     ContentType = item.ContentType,
                     FileSize = item.FileSize,
                     IsPreviewable = item.IsPreviewable,
+                    IsUnderLegalHold = item.IsUnderLegalHold,
+                    HoldReason = item.HoldReason,
                     CreatedAt = item.CreatedAt,
                     CreatorName = item.CreatedByUser?.FullName ?? item.CreatedByUser?.UserName ?? "کاربر"
                 }).ToList()
@@ -105,7 +110,7 @@ namespace OfficeAutomation.Controllers
             var safeTitle = model.Title.Trim();
             var extension = Path.GetExtension(model.File.FileName);
             var storedFileName = $"{Guid.NewGuid():N}{extension}";
-            var uploadRoot = Path.Combine(_environment.WebRootPath, "uploads", "archive");
+            var uploadRoot = _tenantPathResolver.GetArchiveRoot(_environment.WebRootPath);
             Directory.CreateDirectory(uploadRoot);
             var fullPath = Path.Combine(uploadRoot, storedFileName);
 
@@ -118,7 +123,7 @@ namespace OfficeAutomation.Controllers
                 ? "application/octet-stream"
                 : model.File.ContentType;
 
-            var relativePath = $"/uploads/archive/{storedFileName}";
+            var relativePath = _tenantPathResolver.GetTenantRelativePath("uploads", "archive", storedFileName);
             _context.DocumentArchiveItems.Add(new DocumentArchiveItem
             {
                 Title = safeTitle,
@@ -183,7 +188,7 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            var physicalPath = Path.Combine(_environment.WebRootPath, item.RelativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var physicalPath = _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, item.RelativePath);
             if (!System.IO.File.Exists(physicalPath))
             {
                 return NotFound();
@@ -191,6 +196,47 @@ namespace OfficeAutomation.Controllers
 
             var bytes = await System.IO.File.ReadAllBytesAsync(physicalPath, cancellationToken);
             return File(bytes, item.ContentType ?? "application/octet-stream", item.FileName);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Archive.Delete")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var item = await _context.DocumentArchiveItems
+                .FirstOrDefaultAsync(row => row.Id == id, cancellationToken);
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            if (!await CanReadItemAsync(userId, item, cancellationToken))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                EnsureNotUnderLegalHold(item);
+            }
+            catch (InvalidOperationException error)
+            {
+                TempData["ArchiveMessage"] = error.Message;
+                return BadRequest(error.Message);
+            }
+
+            var physicalPath = _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, item.RelativePath);
+            _context.DocumentArchiveItems.Remove(item);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            if (System.IO.File.Exists(physicalPath))
+            {
+                System.IO.File.Delete(physicalPath);
+            }
+
+            TempData["ArchiveMessage"] = "سند با موفقیت از بایگانی حذف شد.";
+            return RedirectToAction(nameof(Index));
         }
 
         private static bool IsPreviewableContentType(string contentType)
@@ -222,6 +268,20 @@ namespace OfficeAutomation.Controllers
                 DocumentArchiveModules.Warehouse => await _permissionAccessService.UserHasPermissionAsync(userId, "Warehouse.View", cancellationToken),
                 _ => true
             };
+        }
+
+        public static void EnsureNotUnderLegalHold(DocumentArchiveItem item)
+        {
+            if (!item.IsUnderLegalHold)
+            {
+                return;
+            }
+
+            var reason = string.IsNullOrWhiteSpace(item.HoldReason)
+                ? "این سند تحت نگهداری قانونی است."
+                : item.HoldReason.Trim();
+            throw new InvalidOperationException(
+                $"امکان حذف یا ویرایش سند به دلیل فرآیندهای قانونی وجود ندارد. دلیل نگهداری: {reason}");
         }
     }
 }

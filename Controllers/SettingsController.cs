@@ -1,9 +1,10 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -30,24 +31,30 @@ public class SettingsController : Controller
         "System"
     };
 
-    private readonly ApplicationDbContext _context;
+    private readonly PlatformDbContext _context;
+        private readonly IdentityDbContext _identityContext;
     private readonly UserManager<User> _userManager;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<SettingsController> _logger;
     private readonly IAuthorizationService _authorizationService;
+    private readonly Services.Tenancy.ITenantSettingsService _tenantSettingsService;
 
     public SettingsController(
-        ApplicationDbContext context,
+        PlatformDbContext context,
+            IdentityDbContext identityContext,
         UserManager<User> userManager,
         IWebHostEnvironment environment,
         ILogger<SettingsController> logger,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        Services.Tenancy.ITenantSettingsService tenantSettingsService)
     {
         _context = context;
+            _identityContext = identityContext;
         _userManager = userManager;
         _environment = environment;
         _logger = logger;
         _authorizationService = authorizationService;
+        _tenantSettingsService = tenantSettingsService;
     }
 
     [HttpGet]
@@ -86,20 +93,15 @@ public class SettingsController : Controller
             return View("Index", vmWithErrors);
         }
 
-        var systemSetting = await _context.SystemSettings.FirstOrDefaultAsync(cancellationToken);
-        if (systemSetting == null)
+        await _tenantSettingsService.UpdateSystemSettingsAsync(systemSetting =>
         {
-            systemSetting = new SystemSetting();
-            _context.SystemSettings.Add(systemSetting);
-        }
+            systemSetting.ApplicationTitle = model.ApplicationTitle.Trim();
+            systemSetting.SystemLanguage = model.SystemLanguage;
+            systemSetting.TimeZoneId = model.TimeZoneId;
+            systemSetting.ActiveEnvironment = _environment.EnvironmentName;
+        }, cancellationToken);
 
-        systemSetting.ApplicationTitle = model.ApplicationTitle.Trim();
-        systemSetting.SystemLanguage = model.SystemLanguage;
-        systemSetting.TimeZoneId = model.TimeZoneId;
-        systemSetting.ActiveEnvironment = _environment.EnvironmentName;
-        systemSetting.UpdatedAtUtc = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync(cancellationToken);
+        var systemSetting = await _tenantSettingsService.GetSystemSettingsAsync(cancellationToken);
 
         _logger.LogInformation(
             "General settings updated by {UserId}. Title={ApplicationTitle}, Language={Language}, TimeZone={TimeZone}",
@@ -201,18 +203,13 @@ public class SettingsController : Controller
             return View("Index", vmWithErrors);
         }
 
-        var systemSetting = await _context.SystemSettings.FirstOrDefaultAsync(cancellationToken);
-        if (systemSetting == null)
+        await _tenantSettingsService.UpdateSystemSettingsAsync(systemSetting =>
         {
-            systemSetting = new SystemSetting();
-            _context.SystemSettings.Add(systemSetting);
-        }
+            systemSetting.MaintenanceMode = model.MaintenanceMode;
+            systemSetting.ActiveEnvironment = _environment.EnvironmentName;
+        }, cancellationToken);
 
-        systemSetting.MaintenanceMode = model.MaintenanceMode;
-        systemSetting.ActiveEnvironment = _environment.EnvironmentName;
-        systemSetting.UpdatedAtUtc = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync(cancellationToken);
+        var systemSetting = await _tenantSettingsService.GetSystemSettingsAsync(cancellationToken);
 
         _logger.LogWarning(
             "System settings updated by {UserId}. MaintenanceMode={MaintenanceMode}, Environment={Environment}",
@@ -249,11 +246,11 @@ public class SettingsController : Controller
             return NotFound();
         }
 
-        var preference = await _context.UserPreferences.FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        var preference = await _identityContext.UserPreferences.FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
         if (preference == null)
         {
             preference = new UserPreference { UserId = user.Id };
-            _context.UserPreferences.Add(preference);
+            _identityContext.UserPreferences.Add(preference);
         }
 
         preference.SidebarCollapsedByDefault = model.SidebarCollapsedByDefault;
@@ -337,8 +334,8 @@ public class SettingsController : Controller
             };
         }
 
-        var systemSetting = await _context.SystemSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
-        var userPreference = await _context.UserPreferences.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        var systemSetting = await _tenantSettingsService.GetSystemSettingsAsync(cancellationToken);
+        var userPreference = await _identityContext.UserPreferences.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
         var canConnectDb = await _context.Database.CanConnectAsync(cancellationToken);
         var resolvedSystem = systemSetting ?? BuildDefaultSystemSetting();
 
@@ -448,3 +445,4 @@ public class SettingsController : Controller
         public string? ImageData { get; set; }
     }
 }
+

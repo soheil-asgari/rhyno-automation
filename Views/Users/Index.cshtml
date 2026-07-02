@@ -8,6 +8,14 @@
         "SystemSettings.View" => "text-bg-dark",
         _ => "text-bg-secondary"
     };
+    string PermissionLabel(string key) => key switch
+    {
+        "Finance.View" => "دسترسی مالی",
+        "Warehouse.View" => "دسترسی انبار",
+        "HR.View" => "دسترسی منابع انسانی",
+        "SystemSettings.View" => "دسترسی تنظیمات",
+        _ => key
+    };
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -42,19 +50,19 @@
                             <div class="d-flex flex-wrap gap-1">
                                 @if (user.CanAccessFinance)
                                 {
-                                    <span class="badge @PermissionBadgeClass("Finance.View")">Finance.View</span>
+                                    <span class="badge @PermissionBadgeClass("Finance.View")">@PermissionLabel("Finance.View")</span>
                                 }
                                 @if (user.CanAccessWarehouse)
                                 {
-                                    <span class="badge @PermissionBadgeClass("Warehouse.View")">Warehouse.View</span>
+                                    <span class="badge @PermissionBadgeClass("Warehouse.View")">@PermissionLabel("Warehouse.View")</span>
                                 }
                                 @if (user.CanAccessHumanCapital)
                                 {
-                                    <span class="badge @PermissionBadgeClass("HR.View")">HR.View</span>
+                                    <span class="badge @PermissionBadgeClass("HR.View")">@PermissionLabel("HR.View")</span>
                                 }
                                 @if (user.CanAccessSystemSettings)
                                 {
-                                    <span class="badge @PermissionBadgeClass("SystemSettings.View")">SystemSettings.View</span>
+                                    <span class="badge @PermissionBadgeClass("SystemSettings.View")">@PermissionLabel("SystemSettings.View")</span>
                                 }
                             </div>
                         </td>

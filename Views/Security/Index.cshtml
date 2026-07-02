@@ -4,21 +4,7 @@
 }
 
 @section Styles {
-    <style>
-        .security-page .table th,
-        .security-page .table td {
-            color: var(--text-dark) !important;
-        }
-        html.theme-dark .security-page .table th,
-        html.theme-dark .security-page .table td,
-        html.theme-dark .security-page .table th *,
-        html.theme-dark .security-page .table td * {
-            color: var(--text-dark) !important;
-        }
-        .security-page .dropdown-menu {
-            z-index: 10001 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/security.css" asp-append-version="true" />
 }
 
 <div class="container-fluid py-4 security-page">
@@ -72,7 +58,7 @@
                                     {
                                         <form asp-action="RenameRole" asp-route-id="@role.Id" method="post" class="d-inline-flex gap-1 align-items-center">
                                             @Html.AntiForgeryToken()
-                                            <input type="text" name="newName" class="form-control form-control-sm" value="@role.Name" style="max-width: 170px;" />
+                                            <input type="text" name="newName" class="form-control form-control-sm security-role-name-input" value="@role.Name" />
                                             <button type="submit" class="btn btn-sm btn-outline-primary">ثبت</button>
                                         </form>
                                     }

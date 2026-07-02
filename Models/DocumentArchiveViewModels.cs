@@ -40,6 +40,8 @@ namespace OfficeAutomation.Models
         public string? ContentType { get; init; }
         public long FileSize { get; init; }
         public bool IsPreviewable { get; init; }
+        public bool IsUnderLegalHold { get; init; }
+        public string? HoldReason { get; init; }
         public DateTime CreatedAt { get; init; }
         public string CreatorName { get; init; } = string.Empty;
     }

@@ -1,0 +1,242 @@
+.fin-hub {
+            min-height: calc(100vh - 180px);
+            overflow-x: hidden;
+        }
+        .fin-topline,
+        .fin-card {
+            background: var(--surface-highlight);
+            border: 1px solid var(--app-border);
+            box-shadow: var(--app-shadow);
+        }
+        .fin-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 22px 24px;
+            border-radius: 24px;
+        }
+        .fin-card {
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        .hub-kpi {
+            border-radius: 20px;
+            padding: 16px 18px;
+            min-height: 128px;
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, .10);
+        }
+        .hub-kpi-label { font-size: .78rem; opacity: .88; }
+        .hub-kpi-value { font-size: 2rem; font-weight: 900; line-height: 1.05; margin: 8px 0 4px; }
+        .hub-kpi-desc { font-size: .78rem; opacity: .9; }
+        .hub-tone-success { background: linear-gradient(135deg, #059669, #10b981); }
+        .hub-tone-primary { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+        .hub-tone-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+        .hub-tone-danger { background: linear-gradient(135deg, #dc2626, #ef4444); }
+        .hub-tone-info { background: linear-gradient(135deg, #0891b2, #38bdf8); }
+        .hub-tone-secondary { background: linear-gradient(135deg, #475569, #64748b); }
+        .hub-tone-dark { background: linear-gradient(135deg, #111827, #334155); }
+        .chart-shell {
+            position: relative;
+            min-height: 320px;
+            height: clamp(280px, 42vh, 420px);
+            width: 100%;
+        }
+        .chart-shell canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+        .chart-mode.is-active {
+            background: var(--bs-primary);
+            color: #fff;
+        }
+        .quick-grid { display: grid; gap: 10px; }
+        .quick-card,
+        .activity-item,
+        .hub-alert {
+            border: 1px solid rgba(148, 163, 184, .16);
+            background: var(--app-surface-soft);
+        }
+        .activity-list,
+        .hub-alert-list {
+            display: grid;
+            gap: 10px;
+        }
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+        .activity-item strong { display: block; font-size: .86rem; }
+        .activity-item span { display: block; font-size: .72rem; color: var(--text-muted); }
+        .hub-alert {
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+        .hub-alert strong { display: block; margin-bottom: 4px; }
+        .hub-alert span { font-size: .75rem; color: var(--text-muted); }
+        .hub-alert.tone-warning { border-color: rgba(245, 158, 11, .35); }
+        .hub-alert.tone-danger { border-color: rgba(239, 68, 68, .35); }
+        .hub-alert.tone-info { border-color: rgba(59, 130, 246, .35); }
+        .hub-alert.tone-success { border-color: rgba(16, 185, 129, .35); }
+        html.theme-dark .fin-topline,
+        html.theme-dark .fin-card,
+        html[data-theme="dark"] .fin-topline,
+        html[data-theme="dark"] .fin-card {
+            background: var(--surface-highlight);
+            border-color: var(--app-border-strong);
+            box-shadow: var(--app-shadow-strong);
+        }
+        @media (max-width: 768px) {
+            .fin-topline { flex-direction: column; }
+            .chart-shell { min-height: 260px; height: 300px; }
+        }
+
+.compact-year-input { width: 96px; }
+
+/* High-contrast finance dashboard skin for accounting operators. */
+.fin-hub {
+    --fin-bg: #f5f7fb;
+    --fin-surface: #ffffff;
+    --fin-border: #cbd5e1;
+    --fin-border-strong: #94a3b8;
+    --fin-text: #0f172a;
+    --fin-muted: #475569;
+    --fin-primary: #1d4ed8;
+    background: var(--fin-bg);
+    color: var(--fin-text);
+}
+
+.fin-hub .fin-topline,
+.fin-hub .fin-card,
+.fin-hub .card {
+    background: var(--fin-surface) !important;
+    border: 1px solid var(--fin-border) !important;
+    color: var(--fin-text) !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .07) !important;
+}
+
+.fin-hub h1,
+.fin-hub h2,
+.fin-hub h3,
+.fin-hub h4,
+.fin-hub h5,
+.fin-hub h6,
+.fin-hub strong {
+    color: var(--fin-text) !important;
+}
+
+.fin-hub .text-muted,
+.fin-hub .small,
+.fin-hub label,
+.fin-hub .activity-item span,
+.fin-hub .hub-alert span {
+    color: var(--fin-muted) !important;
+}
+
+.fin-hub .form-control,
+.fin-hub .form-select {
+    background: #fff !important;
+    border: 1px solid var(--fin-border-strong) !important;
+    color: var(--fin-text) !important;
+    min-height: 34px;
+}
+
+.fin-hub .btn {
+    font-weight: 800;
+    border-width: 1.5px;
+    min-height: 32px;
+}
+
+.fin-hub .btn-primary {
+    background: var(--fin-primary) !important;
+    border-color: var(--fin-primary) !important;
+    color: #fff !important;
+}
+
+.fin-hub .btn-outline-primary,
+.fin-hub .btn-outline-success,
+.fin-hub .btn-outline-warning,
+.fin-hub .btn-outline-info,
+.fin-hub .btn-outline-secondary {
+    background: #fff !important;
+    color: #1f2937 !important;
+    border-color: #64748b !important;
+}
+
+.fin-hub .btn-outline-primary:hover,
+.fin-hub .btn-outline-success:hover,
+.fin-hub .btn-outline-warning:hover,
+.fin-hub .btn-outline-info:hover,
+.fin-hub .btn-outline-secondary:hover,
+.fin-hub .chart-mode.is-active {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #fff !important;
+}
+
+.fin-hub .quick-card,
+.fin-hub .activity-item,
+.fin-hub .hub-alert {
+    background: #f8fafc !important;
+    border: 1px solid var(--fin-border) !important;
+    color: var(--fin-text) !important;
+}
+
+.fin-hub .hub-kpi {
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, .35);
+}
+
+.fin-hub .hub-kpi-label,
+.fin-hub .hub-kpi-desc {
+    color: rgba(255, 255, 255, .94) !important;
+    opacity: 1;
+}
+
+.fin-hub .hub-kpi-value {
+    color: #fff !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .22);
+}
+
+html.theme-dark .fin-hub,
+html[data-theme="dark"] .fin-hub {
+    --fin-bg: #0b1120;
+    --fin-surface: #111827;
+    --fin-border: #334155;
+    --fin-border-strong: #64748b;
+    --fin-text: #f8fafc;
+    --fin-muted: #cbd5e1;
+    background: var(--fin-bg);
+    color: var(--fin-text);
+}
+
+html.theme-dark .fin-hub .fin-topline,
+html.theme-dark .fin-hub .fin-card,
+html.theme-dark .fin-hub .card,
+html[data-theme="dark"] .fin-hub .fin-topline,
+html[data-theme="dark"] .fin-hub .fin-card,
+html[data-theme="dark"] .fin-hub .card {
+    background: var(--fin-surface) !important;
+    border-color: var(--fin-border) !important;
+    color: var(--fin-text) !important;
+}
+
+html.theme-dark .fin-hub .quick-card,
+html.theme-dark .fin-hub .activity-item,
+html.theme-dark .fin-hub .hub-alert,
+html[data-theme="dark"] .fin-hub .quick-card,
+html[data-theme="dark"] .fin-hub .activity-item,
+html[data-theme="dark"] .fin-hub .hub-alert {
+    background: #172033 !important;
+    border-color: var(--fin-border) !important;
+    color: var(--fin-text) !important;
+}

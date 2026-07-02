@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OfficeAutomation.Models
@@ -165,36 +165,36 @@ namespace OfficeAutomation.Models
         public string? Description { get; set; }
 
         [StringLength(80)]
-        [Display(Name = "ط¯ط³طھظ‡")]
+        [Display(Name = "دسته")]
         public string? Category { get; set; }
 
         [StringLength(50)]
-        [Display(Name = "ط¨ط§ط±ع©ط¯")]
+        [Display(Name = "بارکد")]
         public string? Barcode { get; set; }
 
         [StringLength(200)]
-        [Display(Name = "طھظˆط¶غŒط­ ظپظ†غŒ")]
+        [Display(Name = "توضیح فنی")]
         public string? TechnicalDescription { get; set; }
 
-        [Display(Name = "ظ‚ط§ط¨ظ„ ط®ط±غŒط¯")]
+        [Display(Name = "قابل خرید")]
         public bool IsPurchasable { get; set; } = true;
 
-        [Display(Name = "ظ‚ط§ط¨ظ„ طµط±ظپ")]
+        [Display(Name = "قابل مصرف")]
         public bool IsConsumable { get; set; } = true;
 
         [StringLength(30)]
-        [Display(Name = "ظˆط§ط­ط¯ ع¯ط²غŒظ†")]
+        [Display(Name = "واحد جایگزین")]
         public string? SecondaryUnit { get; set; }
 
         [Range(0, 999999)]
-        [Display(Name = "ظ†ظ‚ط·ظ‡ ط³ظپط§ط±ط´")]
+        [Display(Name = "نقطه سفارش")]
         public decimal ReorderPoint { get; set; }
 
         [Range(0, 999999)]
-        [Display(Name = "ط­ط¯ط§ع©ط«ط±")]
+        [Display(Name = "حداکثر")]
         public decimal MaximumStock { get; set; }
 
-        [Display(Name = "ط¢ط®ط±غŒظ† ظ‚غŒظ…طھ")]
+        [Display(Name = "آخرین قیمت")]
         public decimal? LastPurchasePrice { get; set; }
 
         [Range(0, 999999)]
@@ -230,11 +230,11 @@ namespace OfficeAutomation.Models
         [Display(Name = "موقعیت")]
         public string? Location { get; set; }
         [StringLength(50)]
-        [Display(Name = "ظ†ظˆط¹ ط§ظ†ط¨ط§ط±")]
+        [Display(Name = "نوع انبار")]
         public string? WarehouseType { get; set; }
 
         [Range(0, 999999)]
-        [Display(Name = "ظˆط³ط¹طھ")]
+        [Display(Name = "وسعت")]
         public decimal Capacity { get; set; }
 
         [Display(Name = "مدیر انبار")]
@@ -246,7 +246,7 @@ namespace OfficeAutomation.Models
         [Display(Name = "بسته")]
         public bool IsClosed { get; set; }
         [StringLength(600)]
-        [Display(Name = "ظ‚ظˆط§ظ†غŒظ† ط¨ط³طھظ†")]
+        [Display(Name = "قوانین بستن")]
         public string? ClosingRules { get; set; }
 
         public List<SelectListItem> ManagerOptions { get; set; } = new();
@@ -256,7 +256,7 @@ namespace OfficeAutomation.Models
     {
         public int? Id { get; set; }
 
-        [Display(Name = "ذخیره به صورت پیش نویس")]
+        [Display(Name = "ذخیره به صورت پیش‌نویس")]
         public bool SaveAsDraft { get; set; }
 
         [Required]
@@ -309,7 +309,7 @@ namespace OfficeAutomation.Models
     {
         public int? Id { get; set; }
 
-        [Display(Name = "ذخیره به صورت پیش نویس")]
+        [Display(Name = "ذخیره به صورت پیش‌نویس")]
         public bool SaveAsDraft { get; set; }
 
         [Required]
@@ -550,3 +550,5 @@ namespace OfficeAutomation.Models
         public List<WarehouseMovementEntryVM> MovementEntries { get; set; } = new();
     }
 }
+
+

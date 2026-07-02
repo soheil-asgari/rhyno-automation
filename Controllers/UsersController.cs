@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -14,13 +15,22 @@ namespace OfficeAutomation.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly ApplicationDbContext _context;
+        private readonly IdentityDbContext _context;
+        private readonly OfficeDbContext _officeContext;
+        private readonly ISegregationOfDutiesService _segregationOfDutiesService;
 
-        public UsersController(UserManager<User> userManager, RoleManager<ApplicationRole> roleManager, ApplicationDbContext context)
+        public UsersController(
+            UserManager<User> userManager,
+            RoleManager<ApplicationRole> roleManager,
+            IdentityDbContext context,
+            OfficeDbContext officeContext,
+            ISegregationOfDutiesService segregationOfDutiesService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
+            _officeContext = officeContext;
+            _segregationOfDutiesService = segregationOfDutiesService;
         }
 
         public async Task<IActionResult> Index()
@@ -52,7 +62,7 @@ namespace OfficeAutomation.Controllers
             HumanCapitalEmployee? employee = null;
             if (model.EmployeeId.HasValue)
             {
-                employee = await _context.HumanCapitalEmployees
+                employee = await _officeContext.HumanCapitalEmployees
                     .AsNoTracking()
                     .FirstOrDefaultAsync(item => item.Id == model.EmployeeId.Value && item.CurrentStatus == "فعال", cancellationToken);
 
@@ -68,6 +78,18 @@ namespace OfficeAutomation.Controllers
                     if (alreadyLinked)
                     {
                         ModelState.AddModelError(nameof(model.EmployeeId), "برای این کارمند قبلاً حساب کاربری تعریف شده است.");
+                    }
+                }
+            }
+
+            if (ModelState.IsValid)
+            {
+                if (!string.IsNullOrWhiteSpace(model.Role))
+                {
+                    var sodResult = await _segregationOfDutiesService.ValidateRoleAssignmentAsync(string.Empty, [model.Role], cancellationToken);
+                    if (!sodResult.Allowed)
+                    {
+                        ModelState.AddModelError(nameof(model.Role), sodResult.Reason ?? "ترکیب نقش انتخاب‌شده با سیاست تفکیک وظایف سازگار نیست.");
                     }
                 }
             }
@@ -113,7 +135,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task PopulateEmployeesAsync(CancellationToken cancellationToken)
         {
-            var employees = await _context.HumanCapitalEmployees
+            var employees = await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(item => item.CurrentStatus == "فعال")
                 .OrderBy(item => item.FullName)
@@ -160,11 +182,12 @@ namespace OfficeAutomation.Controllers
 
             ViewBag.RolePermissionMap = new Dictionary<string, string[]>
             {
-                ["Admin"] = ["Security.Manage", "Users.Manage", "Letters.Read", "Finance.View", "Warehouse.View", "HR.View", "SystemSettings.View"],
-                ["FinanceManager"] = ["Finance.View", "Finance.Create", "Finance.Edit", "Finance.Delete", "Finance.Export"],
-                ["WarehouseManager"] = ["Warehouse.View", "Warehouse.Create", "Warehouse.Edit", "Warehouse.Delete", "Warehouse.Export"],
-                ["HrManager"] = ["HR.View", "HR.Create", "HR.Edit", "HR.Delete", "HR.Export"]
+                ["Admin"] = ["Security.Manage", "Users.Manage", "Letters.Read", "Finance.View", "Warehouse.View", "HR.View", "SystemSettings.View", "تحلیل.مشاهده", "تحلیل.خروجی"],
+                ["FinanceManager"] = ["Finance.View", "Finance.Create", "Finance.Edit", "Finance.Delete", "Finance.Export", "تحلیل.مشاهده", "تحلیل.خروجی"],
+                ["WarehouseManager"] = ["Warehouse.View", "Warehouse.Create", "Warehouse.Edit", "Warehouse.Delete", "Warehouse.Export", "تحلیل.مشاهده"],
+                ["HrManager"] = ["HR.View", "HR.Create", "HR.Edit", "HR.Delete", "HR.Export", "تحلیل.مشاهده"]
             };
         }
     }
 }
+

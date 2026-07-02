@@ -79,6 +79,11 @@ namespace OfficeAutomation.Models
 
         public bool IsPreviewable { get; set; }
 
+        public bool IsUnderLegalHold { get; set; }
+
+        [StringLength(1000)]
+        public string? HoldReason { get; set; }
+
         [Required]
         public string CreatedByUserId { get; set; } = string.Empty;
 

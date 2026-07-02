@@ -511,6 +511,7 @@
         (() => {
             const preferenceEndpoint = "/table-preferences/letters.filters";
             const storageKey = "rhyno.letters.filters";
+            const antiForgeryToken = document.querySelector('meta[name="request-verification-token"]')?.content || "";
             const savedContainer = document.getElementById("lettersSavedFilters");
             const saveButton = document.getElementById("lettersSaveFilter");
             const clearButton = document.getElementById("lettersClearSaved");
@@ -548,7 +549,10 @@
                     await fetch(preferenceEndpoint, {
                         method: "POST",
                         credentials: "same-origin",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...(antiForgeryToken ? { RequestVerificationToken: antiForgeryToken } : {})
+                        },
                         body: JSON.stringify(items)
                     });
                 } catch { }

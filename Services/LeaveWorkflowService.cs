@@ -1,32 +1,26 @@
-﻿using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data; // نام فضای نام دیتابیس خود را جایگزین کنید
+using Microsoft.EntityFrameworkCore;
+using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 
 namespace OfficeAutomation.Services
 {
     public class LeaveWorkflowService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IWorkflowDbContext _context;
+        private readonly WorkflowService _workflowService;
 
-        public LeaveWorkflowService(ApplicationDbContext context)
+        public LeaveWorkflowService(IWorkflowDbContext context, WorkflowService workflowService)
         {
             _context = context;
+            _workflowService = workflowService;
         }
 
         /// <summary>
-        /// تعیین وضعیت متنی بعدی بر اساس تایید یا رد
+        /// ����� ����� ���� ���� �� ���� ����� �� ��
         /// </summary>
         public string GetNextStatus(string currentStatus, bool isApproved)
         {
-            if (!isApproved) return "رد شده";
-
-            return currentStatus switch
-            {
-                "ثبت اولیه" => "در انتظار تایید مدیر واحد",
-                "در انتظار تایید مدیر واحد" => "در انتظار منابع انسانی",
-                "در انتظار منابع انسانی" => "تایید نهایی",
-                _ => currentStatus
-            };
+            return _workflowService.GetLeaveNextStatus(currentStatus, isApproved);
         }
 
         public async Task<string?> GetManagerIdForUser(string userId)
@@ -34,13 +28,13 @@ namespace OfficeAutomation.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return null;
 
-            // ۱. اول چک کن آیا مدیر مستقیم برایش تعریف شده؟
+            // ?. ��� �� �� ��� ���� ������ ����� ����� ���
             if (!string.IsNullOrEmpty(user.ManagerId))
             {
                 return user.ManagerId;
             }
 
-            // ۲. اگر مدیر مستقیم نداشت، طبق منطق قبلی در واحد خودش دنبال مدیر بگرد
+            // ?. ǐ� ���� ������ ����ʡ ��� ���� ���� �� ���� ���� ����� ���� Ȑ��
             var manager = await _context.Users
                 .FirstOrDefaultAsync(u => u.Department == user.Department
                                        && u.IsManager == true

@@ -4,13 +4,21 @@
 
     const normalize = value => (value || '').toString().trim().toLowerCase();
     const getRows = table => Array.from(table.tBodies[0]?.rows || []);
+    const getAntiForgeryToken = () =>
+        document.querySelector('meta[name="request-verification-token"]')?.content ||
+        document.querySelector('input[name="__RequestVerificationToken"]')?.value ||
+        '';
 
     const savePreference = async (key, state) => {
         try {
             localStorage.setItem(`pro-table:${key}`, JSON.stringify(state));
+            const token = getAntiForgeryToken();
             await fetch(`/table-preferences/${encodeURIComponent(key)}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { RequestVerificationToken: token } : {})
+                },
                 body: JSON.stringify(state)
             });
         } catch {

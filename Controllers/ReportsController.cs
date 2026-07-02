@@ -1,8 +1,11 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -11,12 +14,23 @@ namespace OfficeAutomation.Controllers
     [Authorize]
     public class ReportsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly FinanceDbContext _context;
+        private readonly OfficeDbContext _officeContext;
+        private readonly InventoryDbContext _inventoryContext;
+        private readonly IdentityDbContext _identityContext;
         private readonly IAuthorizationFacade _authorizationFacade;
 
-        public ReportsController(ApplicationDbContext context, IAuthorizationFacade authorizationFacade)
+        public ReportsController(
+            FinanceDbContext context,
+            OfficeDbContext officeContext,
+            InventoryDbContext inventoryContext,
+            IdentityDbContext identityContext,
+            IAuthorizationFacade authorizationFacade)
         {
             _context = context;
+            _officeContext = officeContext;
+            _inventoryContext = inventoryContext;
+            _identityContext = identityContext;
             _authorizationFacade = authorizationFacade;
         }
 
@@ -27,10 +41,10 @@ namespace OfficeAutomation.Controllers
             {
                 SummaryCards =
                 [
-                    new() { Title = "Operational", Value = "12", Description = "گزارشهای اجرایی و روزانه", Tone = "primary" },
-                    new() { Title = "Managerial", Value = "8", Description = "داشبوردها و KPIها", Tone = "success" },
-                    new() { Title = "Audit / Compliance", Value = "5", Description = "کنترلهای انطباق و ردگیری", Tone = "warning" },
-                    new() { Title = "Compare Ready", Value = "24", Description = "گزارشهای دارای مقایسه دوره قبل", Tone = "danger" }
+                    new() { Title = "عملیاتی", Value = "12", Description = "گزارشهای اجرایی و روزانه", Tone = "primary" },
+                    new() { Title = "مدیریتی", Value = "8", Description = "داشبوردها و KPIها", Tone = "success" },
+                    new() { Title = "ممیزی و انطباق", Value = "5", Description = "کنترلهای انطباق و ردگیری", Tone = "warning" },
+                    new() { Title = "آماده مقایسه", Value = "24", Description = "گزارشهای دارای مقایسه دوره قبل", Tone = "danger" }
                 ],
                 FilterPresets =
                 [
@@ -43,7 +57,7 @@ namespace OfficeAutomation.Controllers
                 [
                     new()
                     {
-                        Title = "Operational",
+                        Title = "عملیاتی",
                         Description = "گزارشهای عملیاتی برای پیگیری روزانه و کنترل جریان کار",
                         Tone = "primary",
                         Modules =
@@ -51,13 +65,13 @@ namespace OfficeAutomation.Controllers
                             new()
                             {
                                 Title = "مالی",
-                                Description = "فاکتورهای فروش/خرید، VAT و معاملات فصلی",
+                                Description = "فاکتورهای فروش/خرید، مالیات بر ارزش افزوده و معاملات فصلی",
                                 Icon = "bi-cash-coin",
                                 Tone = "success",
                                 Actions =
                                 [
                                     new() { Label = "هاب مالی", Url = Url.Action("Dashboard", "Financial") ?? "#", Kind = "Report" },
-                                    new() { Label = "VAT", Url = Url.Action("VatDashboard", "Financial") ?? "#", Kind = "Report" },
+                                    new() { Label = "مالیات بر ارزش افزوده", Url = Url.Action("VatDashboard", "Financial") ?? "#", Kind = "Report" },
                                     new() { Label = "معاملات فصلی", Url = Url.Action("SeasonalTax", "Financial") ?? "#", Kind = "Report" }
                                 ]
                             },
@@ -78,7 +92,7 @@ namespace OfficeAutomation.Controllers
                     },
                     new()
                     {
-                        Title = "Managerial",
+                        Title = "مدیریتی",
                         Description = "داشبوردها و گزارشهای تصمیم‌سازی برای مدیران",
                         Tone = "success",
                         Modules =
@@ -111,7 +125,7 @@ namespace OfficeAutomation.Controllers
                     },
                     new()
                     {
-                        Title = "Audit / Compliance",
+                        Title = "ممیزی و انطباق",
                         Description = "خروجیهای کنترلی، انطباق، و مسیرهای قابل ردگیری",
                         Tone = "warning",
                         Modules =
@@ -144,7 +158,7 @@ namespace OfficeAutomation.Controllers
                         [
                             new() { Label = "اکسل فاکتورهای فروش", Url = Url.Action("ExportInvoicesExcel", "Financial", new { invoiceType = "Sale" }) ?? "#", Kind = "Excel" },
                             new() { Label = "اکسل فاکتورهای خرید", Url = Url.Action("ExportInvoicesExcel", "Financial", new { invoiceType = "Purchase" }) ?? "#", Kind = "Excel" },
-                            new() { Label = "داشبورد VAT", Url = Url.Action("VatDashboard", "Financial") ?? "#", Kind = "Report" },
+                            new() { Label = "داشبورد مالیات بر ارزش افزوده", Url = Url.Action("VatDashboard", "Financial") ?? "#", Kind = "Report" },
                             new() { Label = "معاملات فصلی", Url = Url.Action("SeasonalTax", "Financial") ?? "#", Kind = "Report" }
                         ]
                     },
@@ -197,7 +211,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportLettersExcel(string? q, CancellationToken cancellationToken)
         {
-            var query = _context.Letters.AsNoTracking().Include(item => item.Sender).Include(item => item.Receiver).AsQueryable();
+            var query = _officeContext.Letters.AsNoTracking().Include(item => item.Sender).Include(item => item.Receiver).AsQueryable();
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var term = q.Trim();
@@ -250,7 +264,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportProductsExcel(string? q, CancellationToken cancellationToken)
         {
-            var query = _context.Products.AsNoTracking().Where(item => !item.IsDeleted);
+            var query = _inventoryContext.Products.AsNoTracking().Where(item => !item.IsDeleted);
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var term = q.Trim();
@@ -292,7 +306,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportPeopleExcel(string? q, CancellationToken cancellationToken)
         {
-            var query = _context.HumanCapitalEmployees.AsNoTracking().Include(item => item.Department).AsQueryable();
+            var query = _officeContext.HumanCapitalEmployees.AsNoTracking().Include(item => item.Department).AsQueryable();
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var term = q.Trim();
@@ -319,7 +333,7 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            var query = _context.Users.AsNoTracking().AsQueryable();
+            var query = _identityContext.Users.AsNoTracking().AsQueryable();
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var term = q.Trim();
@@ -400,3 +414,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

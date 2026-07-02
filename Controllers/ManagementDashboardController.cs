@@ -8,9 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services;
 
 namespace OfficeAutomation.Controllers
 {
@@ -19,20 +20,26 @@ namespace OfficeAutomation.Controllers
     public class ManagementDashboardController : Controller
     {
         private readonly AiService _aiService;
-        private readonly ApplicationDbContext _context;
+        private readonly PlatformDbContext _context;
         private readonly IDataProtector _passwordProtector;
         private readonly ILogger<ManagementDashboardController> _logger;
+        private readonly IWebHostEnvironment _environment;
+        private readonly AiSqlSafetyService _sqlSafetyService;
 
         public ManagementDashboardController(
             AiService aiService,
-            ApplicationDbContext context,
+            PlatformDbContext context,
             IDataProtectionProvider dataProtectionProvider,
-            ILogger<ManagementDashboardController> logger)
+            ILogger<ManagementDashboardController> logger,
+            IWebHostEnvironment environment,
+            AiSqlSafetyService sqlSafetyService)
         {
             _aiService = aiService;
             _context = context;
             _passwordProtector = dataProtectionProvider.CreateProtector("ManagementDashboard.DatabasePasswords.v1");
             _logger = logger;
+            _environment = environment;
+            _sqlSafetyService = sqlSafetyService;
         }
 
         [HttpGet]
@@ -250,7 +257,7 @@ namespace OfficeAutomation.Controllers
                 {
                     success = false,
                     message = "اتصال برقرار نشد. آدرس، پورت، نام دیتابیس و دسترسی را بررسی کنید.",
-                    detail = ex.Message
+                    detail = _environment.IsDevelopment() ? ex.Message : null
                 });
             }
         }
@@ -295,7 +302,7 @@ namespace OfficeAutomation.Controllers
                 Do not invent SQL queries. Keep it under 110 words.
                 """;
 
-                var aiText = await _aiService.AskAsync(aiPrompt);
+                var aiText = await _aiService.AskAsync(aiPrompt, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(aiText))
                 {
                     report = report with
@@ -331,8 +338,8 @@ namespace OfficeAutomation.Controllers
                     return null;
                 }
 
-                var sqlPlan = await CreateSqlPlanAsync(request.Prompt, schema, chartType);
-                if (sqlPlan == null || !IsReadOnlySql(sqlPlan.Sql))
+                var sqlPlan = await CreateSqlPlanAsync(request.Prompt, schema, chartType, cancellationToken);
+                if (sqlPlan == null || !_sqlSafetyService.IsReadOnlySelect(sqlPlan.Sql))
                 {
                     _logger.LogWarning("AI generated invalid or unsafe SQL for management dashboard.");
                     return null;
@@ -352,7 +359,7 @@ namespace OfficeAutomation.Controllers
                         Insights = ["برای نتیجه بهتر، نام مرکز هزینه، سال یا بازه زمانی را دقیق‌تر وارد کنید."],
                         ChartType = chartType,
                         IsFromDatabase = true,
-                        GeneratedSql = sqlPlan.Sql
+                        GeneratedSql = _environment.IsDevelopment() ? sqlPlan.Sql : null
                     };
                 }
 
@@ -371,7 +378,7 @@ namespace OfficeAutomation.Controllers
                     Values = values,
                     ChartType = chartType,
                     IsFromDatabase = true,
-                    GeneratedSql = sqlPlan.Sql,
+                    GeneratedSql = _environment.IsDevelopment() ? sqlPlan.Sql : null,
                     Insights =
                     [
                         $"ماه/دسته «{labels[maxIndex]}» بیشترین هزینه را دارد و باید با اسناد پشتیبان بررسی شود.",
@@ -460,7 +467,11 @@ namespace OfficeAutomation.Controllers
             return builder.ToString();
         }
 
-        private async Task<SqlReportPlan?> CreateSqlPlanAsync(string userPrompt, string schema, string chartType)
+        private async Task<SqlReportPlan?> CreateSqlPlanAsync(
+            string userPrompt,
+            string schema,
+            string chartType,
+            CancellationToken cancellationToken)
         {
             var prompt = $"""
                 You are a senior SQL Server BI engineer.
@@ -493,7 +504,7 @@ namespace OfficeAutomation.Controllers
                 {schema}
                 """;
 
-            var raw = await _aiService.AskAsync(prompt);
+            var raw = await _aiService.AskAsync(prompt, cancellationToken);
             if (string.IsNullOrWhiteSpace(raw))
             {
                 return null;
@@ -662,33 +673,6 @@ namespace OfficeAutomation.Controllers
             }
 
             return raw[start..(end + 1)];
-        }
-
-        private static bool IsReadOnlySql(string? sql)
-        {
-            if (string.IsNullOrWhiteSpace(sql))
-            {
-                return false;
-            }
-
-            var normalized = sql.Trim();
-            var lower = normalized.ToLowerInvariant();
-
-            if (!lower.StartsWith("select ", StringComparison.Ordinal) &&
-                !lower.StartsWith("with ", StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            var forbiddenTokens = new[]
-            {
-                ";", "--", "/*", "*/", "@@", " insert ", " update ", " delete ", " drop ",
-                " alter ", " create ", " merge ", " truncate ", " exec ", " execute ",
-                " sp_", " xp_", " into ", " openrowset", " opendatasource"
-            };
-
-            var padded = $" {lower} ";
-            return !forbiddenTokens.Any(token => padded.Contains(token, StringComparison.Ordinal));
         }
 
         private sealed record SqlReportPlan(string Title, string Sql);

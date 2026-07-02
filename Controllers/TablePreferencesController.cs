@@ -1,9 +1,9 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 
 namespace OfficeAutomation.Controllers
@@ -12,9 +12,9 @@ namespace OfficeAutomation.Controllers
     [Route("table-preferences")]
     public class TablePreferencesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IdentityDbContext _context;
 
-        public TablePreferencesController(ApplicationDbContext context)
+        public TablePreferencesController(IdentityDbContext context)
         {
             _context = context;
         }
@@ -39,7 +39,7 @@ namespace OfficeAutomation.Controllers
         }
 
         [HttpPost("{key}")]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(string key, [FromBody] JsonElement value, CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -90,3 +90,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

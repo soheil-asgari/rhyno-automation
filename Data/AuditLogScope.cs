@@ -35,8 +35,13 @@ namespace OfficeAutomation.Data
             typeof(Employer),
             typeof(InventoryTransferRequest),
             typeof(WorkflowRoute),
+            typeof(WorkflowInstance),
+            typeof(WorkflowStep),
+            typeof(WorkflowDecision),
+            typeof(WorkflowDelegation),
             typeof(OrganizationCalendarEvent),
-            typeof(DocumentArchiveItem)
+            typeof(DocumentArchiveItem),
+            typeof(Notification)
         ];
 
         public static bool IsAuditedEntity(Type entityType)

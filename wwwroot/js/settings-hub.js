@@ -5,8 +5,20 @@
 
     const settingsPage = document.querySelector('.settings-page');
     const tabButtons = document.querySelectorAll('#settings-tab [data-bs-toggle="pill"]');
+    const tabPanes = document.querySelectorAll('.settings-content .tab-pane');
     const themeSelect = document.querySelector('select[name="Ui.ThemePreference"]');
     const htmlRoot = document.documentElement;
+    const updateActiveTabState = (targetSelector) => {
+        tabButtons.forEach((button) => {
+            const isActive = button.getAttribute('data-bs-target') === targetSelector;
+            button.classList.toggle('is-current', isActive);
+        });
+
+        tabPanes.forEach((pane) => {
+            const isActive = `#${pane.id}` === targetSelector;
+            pane.classList.toggle('is-activated', isActive);
+        });
+    };
 
     if (!settingsPage) {
         return;
@@ -59,12 +71,19 @@
     };
 
     const activateStoredTab = () => {
-        const storedSelector = localStorage.getItem(TAB_STORAGE_KEY);
-        if (!storedSelector) {
+        const hashSelector = window.location.hash && window.location.hash.startsWith('#')
+            ? window.location.hash
+            : null;
+        const preferredSelector = hashSelector || localStorage.getItem(TAB_STORAGE_KEY);
+        if (!preferredSelector) {
+            const defaultTab = document.querySelector('#settings-tab .nav-link.active');
+            if (defaultTab) {
+                updateActiveTabState(defaultTab.getAttribute('data-bs-target'));
+            }
             return;
         }
 
-        const tabButton = document.querySelector(`#settings-tab [data-bs-target="${storedSelector}"]`);
+        const tabButton = document.querySelector(`#settings-tab [data-bs-target="${preferredSelector}"]`);
         if (!tabButton || typeof bootstrap === 'undefined' || !bootstrap.Tab) {
             return;
         }
@@ -77,6 +96,17 @@
             const selected = event.target?.getAttribute('data-bs-target');
             if (selected) {
                 localStorage.setItem(TAB_STORAGE_KEY, selected);
+                if (history.replaceState) {
+                    history.replaceState(null, '', selected);
+                }
+                updateActiveTabState(selected);
+            }
+        });
+
+        button.addEventListener('click', () => {
+            const selected = button.getAttribute('data-bs-target');
+            if (selected) {
+                updateActiveTabState(selected);
             }
         });
     });
@@ -88,6 +118,10 @@
             applyGlobalThemePreview(selectedTheme);
             localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, selectedTheme);
             localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
+            settingsPage.classList.remove('theme-swap-pulse');
+            requestAnimationFrame(() => {
+                settingsPage.classList.add('theme-swap-pulse');
+            });
         });
 
         const hostingForm = themeSelect.closest('form');
@@ -103,6 +137,24 @@
     const initialTheme = getInitialThemeValue();
     applyPreviewTheme(initialTheme);
     applyGlobalThemePreview(initialTheme);
+
+    const initialActiveTab = document.querySelector('#settings-tab .nav-link.active');
+    if (initialActiveTab) {
+        updateActiveTabState(initialActiveTab.getAttribute('data-bs-target'));
+    }
+
+    const forms = settingsPage.querySelectorAll('form.settings-form');
+    forms.forEach((form) => {
+        form.addEventListener('submit', () => {
+            const submitButton = form.querySelector('button[type="submit"], .btn[type="submit"]');
+            if (!submitButton) {
+                return;
+            }
+
+            submitButton.classList.add('is-submitting');
+            submitButton.setAttribute('aria-busy', 'true');
+        });
+    });
 
     const signatureTabButton = document.querySelector('#settings-tab [data-bs-target="#signature-admin-pane"]');
     const signatureCanvas = document.getElementById('signature-canvas');

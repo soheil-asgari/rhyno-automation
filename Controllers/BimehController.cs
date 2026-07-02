@@ -1,8 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -12,12 +13,14 @@ namespace OfficeAutomation.Controllers
     [PermissionAuthorize("HR.View")]
     public class BimehController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly FinanceDbContext _context;
+        private readonly OfficeDbContext _officeContext;
         private static readonly string[] DefaultStatuses = ["Draft", "Submitted", "UnderReview", "Approved", "Closed"];
 
-        public BimehController(ApplicationDbContext context)
+        public BimehController(FinanceDbContext context, OfficeDbContext officeContext)
         {
             _context = context;
+            _officeContext = officeContext;
         }
 
         [HttpGet]
@@ -432,7 +435,7 @@ namespace OfficeAutomation.Controllers
                 .Distinct()
                 .ToList();
 
-            var hrEmployees = await _context.HumanCapitalEmployees
+            var hrEmployees = await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(item => hrEmployeeIds.Contains(item.Id) && item.CurrentStatus == "فعال")
                 .ToDictionaryAsync(item => item.Id, cancellationToken);
@@ -580,7 +583,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployees(string? search)
         {
-            var query = _context.HumanCapitalEmployees
+            var query = _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(e => e.CurrentStatus == "فعال");
 
@@ -612,7 +615,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployeeById(int id)
         {
-            var employee = await _context.HumanCapitalEmployees
+            var employee = await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(e => e.Id == id)
                 .Select(e => new
@@ -636,3 +639,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

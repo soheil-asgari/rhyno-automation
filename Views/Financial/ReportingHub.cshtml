@@ -9,16 +9,7 @@
 }
 
 @section Styles {
-    <style>
-        .hub-page { direction: rtl; text-align: right; }
-        .hub-card { border-radius: 12px; }
-        .hub-tabs .nav-link { font-size: .8rem; padding: .4rem .7rem; }
-        .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .65rem; }
-        .hub-action-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: .7rem; background: #fff; }
-        .hub-action-card h6 { font-size: .82rem; margin: 0 0 .3rem; }
-        .hub-action-card p { font-size: .74rem; color: #64748b; margin: 0 0 .5rem; }
-        .hub-chart-wrap { height: 320px; }
-    </style>
+    <link rel="stylesheet" href="~/css/financial-pages.css" asp-append-version="true" />
 }
 
 <div class="container-fluid py-4 hub-page">
@@ -29,7 +20,7 @@
         </div>
         <form method="get" class="d-flex gap-2 align-items-center">
             <label class="small text-muted mb-0">سال:</label>
-            <input name="year" value="@year" type="number" min="1300" max="1700" class="form-control form-control-sm" style="width: 96px;" />
+            <input name="year" value="@year" type="number" min="1300" max="1700" class="form-control form-control-sm compact-year-input" />
             <button class="btn btn-sm btn-outline-primary">اعمال</button>
         </form>
     </div>
@@ -111,6 +102,7 @@
         </div>
     </div>
 </div>
+
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

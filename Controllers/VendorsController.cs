@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 
@@ -11,11 +12,13 @@ namespace OfficeAutomation.Controllers
     [RequireAccessArea("Warehouse")]
     public class VendorsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly FinanceDbContext _context;
+        private readonly InventoryDbContext _inventoryContext;
 
-        public VendorsController(ApplicationDbContext context)
+        public VendorsController(FinanceDbContext context, InventoryDbContext inventoryContext)
         {
             _context = context;
+            _inventoryContext = inventoryContext;
         }
 
         [HttpGet]
@@ -115,7 +118,7 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            var hasReferences = await _context.WarehouseReceipts.AnyAsync(item => item.VendorId == id, cancellationToken);
+            var hasReferences = await _inventoryContext.WarehouseReceipts.AnyAsync(item => item.VendorId == id, cancellationToken);
             if (hasReferences)
             {
                 entity.IsActive = false;
@@ -130,3 +133,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

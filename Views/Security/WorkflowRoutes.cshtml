@@ -5,21 +5,7 @@
 }
 
 @section Styles {
-    <style>
-        .security-routes .table th,
-        .security-routes .table td {
-            color: var(--text-dark) !important;
-        }
-        html.theme-dark .security-routes .table th,
-        html.theme-dark .security-routes .table td,
-        html.theme-dark .security-routes .table th *,
-        html.theme-dark .security-routes .table td * {
-            color: var(--text-dark) !important;
-        }
-        .security-routes .dropdown-menu {
-            z-index: 10001 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/security-routes.css" asp-append-version="true" />
 }
 
 <div class="container-fluid py-4 security-routes">

@@ -1,0 +1,271 @@
+.trial-balance-page {
+    --tb-border: #d7dde5;
+    --tb-border-strong: #aeb8c5;
+    --tb-text: #101828;
+    --tb-muted: #64748b;
+    --tb-bg: #ffffff;
+    --tb-soft: #f6f8fb;
+    padding: 0.75rem;
+    color: var(--tb-text);
+    font-size: 11px;
+}
+
+.trial-balance-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+}
+
+.trial-balance-head h1 {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.trial-balance-head span,
+.trial-balance-totals span {
+    color: var(--tb-muted);
+    font-size: 0.68rem;
+}
+
+.trial-balance-totals {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding: 0.28rem 0.45rem;
+    border: 1px solid var(--tb-border);
+    background: var(--tb-soft);
+}
+
+.trial-balance-toolbar {
+    display: flex;
+    align-items: end;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.55rem;
+    padding: 0.45rem;
+    border: 1px solid var(--tb-border);
+    background: var(--tb-bg);
+}
+
+.trial-balance-toolbar label,
+.field-stack label {
+    margin: 0 0 0.15rem;
+    color: #344054;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.field-stack {
+    min-width: 210px;
+}
+
+.tb-control,
+.tb-submit,
+.tb-json {
+    border-radius: 0 !important;
+    min-height: 28px;
+    font-size: 11px;
+}
+
+.tb-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    min-height: 28px;
+    margin: 0;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--tb-border);
+    background: var(--tb-soft);
+    white-space: nowrap;
+}
+
+.tb-check input {
+    margin: 0;
+}
+
+.tb-segment {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border: 1px solid var(--tb-border-strong);
+    background: var(--tb-soft);
+}
+
+.tb-segment-button {
+    min-width: 72px;
+    min-height: 26px;
+    border: 0;
+    border-left: 1px solid var(--tb-border-strong);
+    border-radius: 0;
+    background: transparent;
+    color: var(--tb-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.tb-segment-button:first-child {
+    border-left: 0;
+}
+
+.tb-segment-button.is-active {
+    background: #111827;
+    color: #fff;
+}
+
+.trial-balance-grid-wrap {
+    max-height: calc(100vh - 210px);
+    overflow: auto;
+    border: 1px solid var(--tb-border-strong);
+    background: var(--tb-bg);
+}
+
+.trial-balance-grid {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.trial-balance-grid th,
+.trial-balance-grid td {
+    padding: 0.18rem 0.32rem;
+    border: 1px solid var(--tb-border);
+    vertical-align: middle;
+}
+
+.trial-balance-grid thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #edf1f6;
+    color: #1f2937;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.trial-balance-grid thead tr:nth-child(2) th {
+    top: 25px;
+    background: #f5f7fa;
+}
+
+.trial-balance-grid tbody tr:nth-child(even) {
+    background: #fbfcfe;
+}
+
+.trial-balance-grid tbody tr:hover {
+    background: #eef6ff;
+}
+
+.trial-balance-grid tfoot td {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    background: #e7ecf3;
+    font-weight: 800;
+}
+
+.tb-code-col {
+    width: 92px;
+}
+
+.tb-name-col {
+    width: 190px;
+}
+
+.tb-code {
+    color: #344054;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.tb-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tb-amount {
+    width: 112px;
+    direction: ltr;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.tb-closing {
+    font-weight: 700;
+}
+
+.tb-empty {
+    height: 4rem;
+    color: var(--tb-muted);
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .trial-balance-page {
+        padding: 0.5rem;
+    }
+
+    .trial-balance-head,
+    .trial-balance-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .field-stack,
+    .tb-submit,
+    .tb-json,
+    .tb-check,
+    .tb-segment {
+        width: 100%;
+    }
+
+    .tb-segment-button {
+        flex: 1;
+    }
+}
+
+.trial-balance-page {
+    padding: 6px;
+    background: #f3f5f7;
+    font-size: 11px;
+}
+
+.trial-balance-head,
+.trial-balance-toolbar,
+.trial-balance-grid-wrap {
+    border-radius: 0 !important;
+}
+
+.trial-balance-toolbar {
+    gap: 4px;
+    padding: 4px 6px;
+}
+
+.trial-balance-totals,
+.tb-check,
+.tb-segment {
+    border-radius: 0;
+}
+
+.trial-balance-grid-wrap {
+    max-height: calc(100vh - 185px);
+}
+
+.trial-balance-grid th,
+.trial-balance-grid td {
+    padding: 2px 4px;
+}
+
+.trial-balance-grid th {
+    font-size: 11px;
+}

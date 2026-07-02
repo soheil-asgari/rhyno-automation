@@ -1,0 +1,364 @@
+@model FinanceLedgerOperationsVM
+@using System.Globalization
+@using System.Text.Json
+@using OfficeAutomation.Modules.Finance.Domain
+@{
+    ViewData["Title"] = "عملیات دفتر کل";
+    var visible = Model.VisibleVoucherColumns.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var persianCalendar = new PersianCalendar();
+    var accountLookupJson = JsonSerializer.Serialize(
+        Model.AccountOptions.Select(item => new
+        {
+            id = item.Value,
+            text = item.Text,
+            code = item.Text.Split(" - ").FirstOrDefault() ?? item.Text,
+            name = item.Text.Contains(" - ", StringComparison.Ordinal) ? item.Text.Split(" - ", 2)[1] : item.Text
+        }));
+    var currencyLookupJson = JsonSerializer.Serialize(
+        Model.CurrencyLookupOptions.Select(item => new
+        {
+            id = item.Value,
+            text = item.Text,
+            code = item.Text.Split(" - ").FirstOrDefault() ?? item.Text,
+            name = item.Text.Contains(" - ", StringComparison.Ordinal) ? item.Text.Split(" - ", 2)[1] : item.Text
+        }));
+
+    string FormatCompactDate(DateTime value)
+    {
+        var normalized = value.Date;
+        if (normalized.Year is >= 1300 and <= 1600)
+        {
+            return $"{normalized.Year:0000}/{normalized.Month:00}/{normalized.Day:00}";
+        }
+
+        try
+        {
+            return $"{persianCalendar.GetYear(normalized):0000}/{persianCalendar.GetMonth(normalized):00}/{persianCalendar.GetDayOfMonth(normalized):00}";
+        }
+        catch
+        {
+            return normalized.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+        }
+    }
+}
+
+<div class="container-fluid ledger-ops" dir="rtl">
+    @Html.AntiForgeryToken()
+
+    <header class="ledger-hero">
+        <div>
+            <h1 class="ledger-title">عملیات دفتر کل</h1>
+            <p class="ledger-subtitle">دوره‌های مالی، نرخ ارز روزانه و اسناد حسابداری در یک صفحه متراکم و عملیاتی.</p>
+        </div>
+    </header>
+
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="alert alert-success ledger-alert">@success</div>
+    }
+    @if (TempData["ErrorMessage"] is string error)
+    {
+        <div class="alert alert-danger ledger-alert">@error</div>
+    }
+
+    <section class="ops-panel ledger-period-closing-panel" id="period-closing-panel">
+        <div class="ops-panel-header ops-panel-header-toolbar">
+            <div>
+                <strong>عملیات پایان دوره</strong>
+                <span>صدور فشرده سند بستن حساب‌های موقت و انتقال خلاصه سود و زیان</span>
+            </div>
+        </div>
+        <form asp-action="CloseTemporaryAccounts" method="post" class="period-closing-form">
+            @Html.AntiForgeryToken()
+            <div class="field-stack">
+                <label asp-for="PeriodClosing.FiscalPeriodId" class="field-label">دوره مالی</label>
+                <select asp-for="PeriodClosing.FiscalPeriodId" class="form-select form-select-sm sharp-control">
+                    <option value="">انتخاب دوره</option>
+                    @foreach (var period in Model.FiscalPeriods)
+                    {
+                        <option value="@period.Id" selected="@(Model.PeriodClosing.FiscalPeriodId == period.Id)">
+                            @period.Name (@FormatCompactDate(period.StartDate) - @FormatCompactDate(period.EndDate))
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="field-stack">
+                <label asp-for="PeriodClosing.DestinationAccountId" class="field-label">حساب مقصد خلاصه سود و زیان</label>
+                <select asp-for="PeriodClosing.DestinationAccountId" asp-items="Model.AccountOptions" class="form-select form-select-sm sharp-control"></select>
+            </div>
+            <div class="field-stack field-stack-action">
+                <span class="field-label">&nbsp;</span>
+                <button type="submit" class="btn btn-sm btn-dark sharp-control ledger-submit">صدور سند بستن حساب‌های موقت</button>
+            </div>
+        </form>
+    </section>
+
+    <details class="ledger-settings-drawer">
+        <summary>
+            <span>پیکربندی مالی و نرخ‌ها</span>
+            <small>دوره‌های مالی و نرخ ارز از بدنه اصلی صفحه جدا شده‌اند.</small>
+        </summary>
+        <div class="ledger-settings-grid">
+        <section class="ops-panel ops-panel-settings">
+            <div class="ops-panel-header">
+                <div>
+                    <strong>دوره‌های مالی سال جاری</strong>
+                    <span>@Model.FiscalPeriods.Count دوره</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 dense-table dense-grid-table">
+                    <thead>
+                        <tr>
+                            <th>شماره دوره</th>
+                            <th>نام دوره</th>
+                            <th>شروع</th>
+                            <th>پایان</th>
+                            <th>وضعیت</th>
+                            <th>عملیات تغییر وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var period in Model.FiscalPeriods)
+                        {
+                            <tr>
+                                <td class="period-number-cell">@period.PeriodNumber</td>
+                                <td class="period-name-cell">@period.Name</td>
+                                <td>@FormatCompactDate(period.StartDate)</td>
+                                <td>@FormatCompactDate(period.EndDate)</td>
+                                <td><span class="status-chip">@period.Status</span></td>
+                                <td class="period-status-cell">
+                                    <form asp-action="UpdateFiscalPeriodStatus" method="post" class="period-status-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@period.Id" />
+                                        <select name="status" class="form-select form-select-sm sharp-control" onchange="this.form.submit()">
+                                            <option value="@FiscalPeriodStatus.Open" selected="@(period.Status == FiscalPeriodStatus.Open)">Open</option>
+                                            <option value="@FiscalPeriodStatus.SoftLocked" selected="@(period.Status == FiscalPeriodStatus.SoftLocked)">SoftLocked</option>
+                                            <option value="@FiscalPeriodStatus.HardLocked" selected="@(period.Status == FiscalPeriodStatus.HardLocked)">HardLocked</option>
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        </section>
+
+        <section class="ops-panel ops-panel-settings">
+            <div class="ops-panel-header">
+                <div>
+                    <strong>نرخ ارز روزانه</strong>
+                    <span>ثبت فشرده و مشاهده آخرین نرخ‌ها</span>
+                </div>
+            </div>
+
+            <form asp-action="CreateExchangeRate" method="post" class="inline-entry-form">
+                @Html.AntiForgeryToken()
+                <div class="field-stack">
+                    <label asp-for="ExchangeRate.CurrencyId" class="field-label">ارز</label>
+                    <select asp-for="ExchangeRate.CurrencyId" asp-items="Model.CurrencyOptions" class="form-select form-select-sm sharp-control"></select>
+                </div>
+                <div class="field-stack">
+                    <label asp-for="ExchangeRate.RateDate" class="field-label">تاریخ</label>
+                    <input asp-for="ExchangeRate.RateDate" type="date" class="form-control form-control-sm sharp-control" />
+                </div>
+                <div class="field-stack">
+                    <label asp-for="ExchangeRate.BuyRate" class="field-label">خرید</label>
+                    <input asp-for="ExchangeRate.BuyRate" type="number" step="0.0001" min="0" class="form-control form-control-sm sharp-control" />
+                </div>
+                <div class="field-stack">
+                    <label asp-for="ExchangeRate.SellRate" class="field-label">فروش</label>
+                    <input asp-for="ExchangeRate.SellRate" type="number" step="0.0001" min="0" class="form-control form-control-sm sharp-control" />
+                </div>
+                <div class="field-stack field-stack-action">
+                    <span class="field-label">&nbsp;</span>
+                    <button class="btn btn-sm btn-dark sharp-control ledger-submit">ثبت</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 dense-table dense-grid-table">
+                    <thead>
+                        <tr>
+                            <th>ارز</th>
+                            <th>تاریخ</th>
+                            <th>خرید</th>
+                            <th>فروش</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rate in Model.ExchangeRates)
+                        {
+                            <tr>
+                                <td>@rate.CurrencyCode</td>
+                                <td>@FormatCompactDate(rate.RateDate)</td>
+                                <td>@rate.BuyRate.ToString("N4")</td>
+                                <td>@rate.SellRate.ToString("N4")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        </section>
+        </div>
+    </details>
+
+    <section class="ledger-workspace">
+        <section class="ops-panel ledger-main-panel">
+            <div class="ops-panel-header">
+                <div>
+                    <strong>ثبت سند چندارزی</strong>
+                    <span>فرم فلت برای ورود سریع خطوط سند</span>
+                </div>
+            </div>
+            <form asp-action="CreateVoucher" method="post" id="voucherForm">
+                @Html.AntiForgeryToken()
+
+                <div class="voucher-entry-toolbar" id="voucherEntryToolbar">
+                    <span class="workflow-current-status" id="voucherEntryMode">حالت ورود: سند جدید</span>
+                    <button type="button" class="btn btn-sm btn-outline-dark sharp-control" id="addVoucherRowButton">سطر جدید</button>
+                    <button type="button" class="btn btn-sm btn-outline-dark sharp-control" id="removeVoucherRowButton">حذف سطر</button>
+                </div>
+
+                <div class="voucher-top-grid">
+                    <div class="field-stack">
+                        <label asp-for="Voucher.VoucherDate" class="field-label">تاریخ سند</label>
+                        <input asp-for="Voucher.VoucherDate" type="date" class="form-control form-control-sm sharp-control" accesskey="d" />
+                    </div>
+                    <div class="field-stack">
+                        <label asp-for="Voucher.JournalTypeId" class="field-label">ژورنال</label>
+                        <select asp-for="Voucher.JournalTypeId" asp-items="Model.JournalTypeOptions" class="form-select form-select-sm sharp-control"></select>
+                    </div>
+                    <div class="field-stack field-span-2">
+                        <label asp-for="Voucher.Description" class="field-label">شرح سند</label>
+                        <input asp-for="Voucher.Description" class="form-control form-control-sm sharp-control" accesskey="n" />
+                    </div>
+                    <div class="field-stack field-stack-action">
+                        <span class="field-label">&nbsp;</span>
+                        <button class="btn btn-sm btn-dark sharp-control ledger-submit" id="saveVoucherButton">ذخیره سند</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive ledger-table-wrap ledger-entry-grid-wrap">
+                    <table class="table table-sm align-middle mb-0 dense-table dense-grid-table voucher-lines-table" id="voucherLinesTable">
+                        <thead>
+                            <tr>
+                                <th>حساب</th>
+                                <th>حساب تفصیلی</th>
+                                <th>ارز</th>
+                                <th>نرخ</th>
+                                <th>مبلغ ارزی</th>
+                                <th>بدهکار</th>
+                                <th>بستانکار</th>
+                                <th>شرح</th>
+                            </tr>
+                        </thead>
+                        <tbody id="voucherLinesBody" data-next-index="@Model.Voucher.Lines.Count" data-account-options='@Html.Raw(accountLookupJson)' data-currency-options='@Html.Raw(currencyLookupJson)'>
+                            @for (var i = 0; i < Model.Voucher.Lines.Count; i++)
+                            {
+                                <tr class="voucher-line-row" data-row-index="@i">
+                                    <td class="d-none"><input type="hidden" name="Voucher.Lines.Index" value="@i" class="voucher-line-index" /></td>
+                                    <td>
+                                        <div class="account-lookup">
+                                            <input asp-for="Voucher.Lines[i].SubsidiaryAccountId" type="hidden" class="account-id-field" />
+                                            <input type="text" class="form-control form-control-sm sharp-control voucher-cell account-lookup-input" data-nav="account" autocomplete="off" value="@Model.AccountOptions.FirstOrDefault(item => item.Value == Model.Voucher.Lines[i].SubsidiaryAccountId.ToString())?.Text" />
+                                            <div class="account-lookup-menu" hidden></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="floating-detail-lookup">
+                                            <input asp-for="Voucher.Lines[i].FloatingDetailAccountId" type="hidden" class="floating-detail-id-field" />
+                                            <input type="text" class="form-control form-control-sm sharp-control voucher-cell floating-detail-lookup-input" data-nav="floatingDetail" autocomplete="off" value="" disabled />
+                                            <div class="floating-detail-lookup-menu" hidden></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="currency-lookup">
+                                            <input asp-for="Voucher.Lines[i].CurrencyId" type="hidden" class="currency-id-field" />
+                                            <input type="text" class="form-control form-control-sm sharp-control fx-currency voucher-cell currency-lookup-input" data-nav="currency" autocomplete="off" value="@Model.CurrencyLookupOptions.FirstOrDefault(item => item.Value == Model.Voucher.Lines[i].CurrencyId?.ToString())?.Text" />
+                                            <div class="currency-lookup-menu" hidden></div>
+                                        </div>
+                                    </td>
+                                    <td><input asp-for="Voucher.Lines[i].ExchangeRate" type="number" step="0.0001" min="0" class="form-control form-control-sm sharp-control fx-rate voucher-cell" data-nav="rate" /></td>
+                                    <td><input asp-for="Voucher.Lines[i].ForeignAmount" type="number" step="0.0001" class="form-control form-control-sm sharp-control fx-foreign voucher-cell" data-nav="foreign" /></td>
+                                    <td><input asp-for="Voucher.Lines[i].DebitAmount" type="number" step="0.01" min="0" class="form-control form-control-sm sharp-control line-debit voucher-cell" data-nav="debit" /></td>
+                                    <td><input asp-for="Voucher.Lines[i].CreditAmount" type="number" step="0.01" min="0" class="form-control form-control-sm sharp-control line-credit voucher-cell" data-nav="credit" /></td>
+                                    <td><input asp-for="Voucher.Lines[i].Narration" class="form-control form-control-sm sharp-control voucher-cell" data-nav="narration" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="formula-note">فرمول محاسبه: مبلغ پایه = مبلغ ارزی × نرخ تبدیل. در خطوط ارزی، مقدار بدهکار یا بستانکار بر اساس همین رابطه تکمیل می‌شود.</p>
+            </form>
+        </section>
+
+        <section class="ops-panel ledger-main-panel mt-2">
+            <div class="ops-panel-header ops-panel-header-toolbar">
+                <div>
+                    <strong>مرور اسناد حسابداری</strong>
+                    <span>@Model.Vouchers.Count ردیف</span>
+                </div>
+                <div class="saved-view-toolbar" data-grid-id="Finance_Vouchers">
+                    <form asp-action="RenumberVouchers" method="post" class="renumber-toolbar-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="fiscalPeriodId" value="@Model.CurrentFiscalPeriodId" />
+                        <button type="submit" class="btn btn-sm btn-outline-dark sharp-control" disabled="@(!Model.CurrentFiscalPeriodId.HasValue)">مرتب‌سازی و شماره‌گذاری مجدد اسناد</button>
+                    </form>
+                    <select id="savedViewSelect" class="form-select form-select-sm sharp-control">
+                        <option value="">نمای پیش‌فرض</option>
+                    </select>
+                    <input id="savedViewName" class="form-control form-control-sm sharp-control" placeholder="نام نما" />
+                    <button type="button" id="saveViewButton" class="btn btn-sm btn-outline-dark sharp-control">ذخیره نما</button>
+                </div>
+            </div>
+
+            <div class="voucher-workflow-toolbar" id="voucherWorkflowToolbar" data-change-status-url="@Url.Action("ChangeVoucherStatus", "Financial")">
+                <span class="workflow-current-status" id="workflowCurrentStatus">وضعیت جاری: بدون انتخاب</span>
+                <button type="button" class="btn btn-sm btn-outline-dark sharp-control workflow-action-button" data-target-status="Reviewed" disabled>تایید بررسی</button>
+                <button type="button" class="btn btn-sm btn-outline-dark sharp-control workflow-action-button" data-target-status="Approved" disabled>تصویب سند</button>
+                <button type="button" class="btn btn-sm btn-outline-dark sharp-control workflow-action-button" data-target-status="Permanent" disabled>قطعی کردن نهایی</button>
+            </div>
+
+            <div class="table-responsive ledger-table-wrap ledger-voucher-grid-wrap">
+                <table class="table table-sm table-hover align-middle mb-0 dense-table dense-grid-table" id="financeVoucherGrid">
+                    <thead>
+                        <tr>
+                            @if (visible.Contains("voucherNumber")) { <th data-column-id="voucherNumber">شماره سند</th> }
+                            @if (visible.Contains("status")) { <th data-column-id="status">وضعیت</th> }
+                            @if (visible.Contains("voucherDate")) { <th data-column-id="voucherDate">تاریخ</th> }
+                            @if (visible.Contains("description")) { <th data-column-id="description">شرح</th> }
+                            @if (visible.Contains("journalType")) { <th data-column-id="journalType">ژورنال</th> }
+                            @if (visible.Contains("totalAmount")) { <th data-column-id="totalAmount">مبلغ کل</th> }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var voucher in Model.Vouchers)
+                        {
+                            <tr class="voucher-grid-row" data-voucher-id="@voucher.Id" data-voucher-status="@voucher.Status">
+                                @if (visible.Contains("voucherNumber")) { <td data-column-id="voucherNumber">@(voucher.VoucherNumber?.ToString() ?? "-")</td> }
+                                @if (visible.Contains("status")) { <td data-column-id="status"><span class="status-chip">@voucher.Status</span></td> }
+                                @if (visible.Contains("voucherDate")) { <td data-column-id="voucherDate">@FormatCompactDate(voucher.VoucherDate)</td> }
+                                @if (visible.Contains("description")) { <td data-column-id="description">@voucher.Description</td> }
+                                @if (visible.Contains("journalType")) { <td data-column-id="journalType">@voucher.JournalType</td> }
+                                @if (visible.Contains("totalAmount")) { <td data-column-id="totalAmount">@voucher.TotalAmount.ToString("N0")</td> }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/finance-ledger-operations.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/finance-ledger-operations.js" asp-append-version="true"></script>
+}

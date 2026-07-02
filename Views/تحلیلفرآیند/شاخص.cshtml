@@ -1,0 +1,421 @@
+@{
+    ViewData["Title"] = "داشبورد تحلیل فرآیند";
+}
+
+@section Styles {
+    <style>
+        .تحلیل-صفحه {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .تحلیل-قهرمان,
+        .تحلیل-فیلترها,
+        .تحلیل-کارت,
+        .تحلیل-جدول {
+            border: 1px solid var(--border-color, #ddd);
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fffdf8 0%, #fff 100%);
+            box-shadow: 0 12px 32px rgba(44, 33, 16, .06);
+        }
+
+        .تحلیل-قهرمان,
+        .تحلیل-فیلترها,
+        .تحلیل-کارت,
+        .تحلیل-جدول {
+            padding: 1rem 1.15rem;
+        }
+
+        .تحلیل-قهرمان {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .تحلیل-قهرمان h1 {
+            margin: 0 0 .35rem;
+            font-size: 1.6rem;
+            font-weight: 900;
+        }
+
+        .تحلیل-قهرمان p {
+            margin: 0;
+            color: var(--text-muted, #6b7280);
+        }
+
+        .تحلیل-فیلترها {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .75rem;
+            align-items: end;
+        }
+
+        .تحلیل-فیلد {
+            display: grid;
+            gap: .35rem;
+        }
+
+        .تحلیل-فیلد label {
+            font-size: .8rem;
+            font-weight: 800;
+            color: #6b7280;
+        }
+
+        .تحلیل-چکیده {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .85rem;
+        }
+
+        .تحلیل-کارت strong {
+            display: block;
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin-bottom: .2rem;
+        }
+
+        .تحلیل-کارت span {
+            color: #6b7280;
+            font-size: .82rem;
+        }
+
+        .تحلیل-شبکه {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .تحلیل-باکس-نمودار {
+            display: grid;
+            gap: .75rem;
+        }
+
+        .تحلیل-باکس-نمودار h2,
+        .تحلیل-جدول h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 900;
+        }
+
+        .تحلیل-باکس-نمودار p,
+        .تحلیل-جدول p {
+            margin: 0;
+            color: #6b7280;
+            font-size: .82rem;
+        }
+
+        .تحلیل-نمودار {
+            min-height: 280px;
+        }
+
+        .تحلیل-جدول {
+            overflow: hidden;
+        }
+
+        .تحلیل-جدول table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .86rem;
+        }
+
+        .تحلیل-جدول th,
+        .تحلیل-جدول td {
+            padding: .75rem .5rem;
+            border-bottom: 1px solid #eee4d7;
+            text-align: right;
+        }
+
+        .تحلیل-جدول th {
+            color: #7c6b56;
+            font-size: .78rem;
+        }
+
+        .تحلیل-بارگذاری {
+            color: #6b7280;
+            font-size: .85rem;
+        }
+
+        @@media (max-width: 980px) {
+            .تحلیل-فیلترها,
+            .تحلیل-چکیده,
+            .تحلیل-شبکه {
+                grid-template-columns: 1fr;
+            }
+
+            .تحلیل-قهرمان {
+                display: grid;
+            }
+        }
+    </style>
+}
+
+<section class="تحلیل-صفحه"
+         data-نشانی-داده="@Url.Action("دادگانمودار", "تحلیلفرآیند")">
+    <div class="تحلیل-قهرمان">
+        <div>
+            <h1>داشبورد تحلیل فرآیند</h1>
+            <p>زمان چرخه، گلوگاه‌ها، ماندگاری تایید و رویدادهای ممیزی را با خروجی کاملاً فارسی بررسی کنید.</p>
+        </div>
+        <div class="تحلیل-بارگذاری" id="وضعیتبارگذاری">آماده دریافت داده</div>
+    </div>
+
+    <form class="تحلیل-فیلترها" id="فرمفیلتر">
+        <div class="تحلیل-فیلد">
+            <label for="ازتاریخ">از تاریخ</label>
+            <input id="ازتاریخ" name="ازتاریخ" class="form-control" type="date" />
+        </div>
+        <div class="تحلیل-فیلد">
+            <label for="تاتاریخ">تا تاریخ</label>
+            <input id="تاتاریخ" name="تاتاریخ" class="form-control" type="date" />
+        </div>
+        <div class="تحلیل-فیلد">
+            <label for="تعدادبیشینه">تعداد نمایش</label>
+            <select id="تعدادبیشینه" name="تعدادبیشینه" class="form-select">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <div class="تحلیل-فیلد">
+            <button class="btn btn-primary" type="submit">به‌روزرسانی داشبورد</button>
+        </div>
+        <div class="تحلیل-فیلد">
+            <a class="btn btn-outline-success" id="پیوندخروجیاکسل" href="#">خروجی اکسل</a>
+        </div>
+    </form>
+
+    <div class="تحلیل-چکیده">
+        <div class="تحلیل-کارت">
+            <strong id="خلاصهمیانگینچرخه">0</strong>
+            <span>میانگین زمان چرخه (ساعت)</span>
+        </div>
+        <div class="تحلیل-کارت">
+            <strong id="خلاصهنمونهها">0</strong>
+            <span>تعداد نمونه‌های تکمیل‌شده</span>
+        </div>
+        <div class="تحلیل-کارت">
+            <strong id="خلاصهدرانتظار">0</strong>
+            <span>تعداد در انتظار تایید</span>
+        </div>
+        <div class="تحلیل-کارت">
+            <strong id="خلاصهرویدادحساس">0</strong>
+            <span>رویدادهای حساس ممیزی</span>
+        </div>
+    </div>
+
+    <div class="تحلیل-شبکه">
+        <section class="تحلیل-کارت تحلیل-باکس-نمودار">
+            <h2>روند زمان چرخه</h2>
+            <p>میانگین زمان پایان فرآیندها در بازه انتخاب‌شده</p>
+            <div class="تحلیل-نمودار"><canvas id="نمودارزمانچرخه"></canvas></div>
+        </section>
+
+        <section class="تحلیل-کارت تحلیل-باکس-نمودار">
+            <h2>گلوگاه‌های اصلی</h2>
+            <p>مرحله‌هایی که بیشترین توقف را ایجاد کرده‌اند</p>
+            <div class="تحلیل-نمودار"><canvas id="نمودارگلوگاه"></canvas></div>
+        </section>
+
+        <section class="تحلیل-کارت تحلیل-باکس-نمودار">
+            <h2>توزیع ماندگاری تایید</h2>
+            <p>تعداد اقلام در بازه‌های مختلف انتظار</p>
+            <div class="تحلیل-نمودار"><canvas id="نمودارماندگاری"></canvas></div>
+        </section>
+
+        <section class="تحلیل-کارت تحلیل-باکس-نمودار">
+            <h2>رویدادهای ممیزی</h2>
+            <p>حجم رویدادها و رخدادهای حساس به تفکیک ماژول</p>
+            <div class="تحلیل-نمودار"><canvas id="نمودارممیزی"></canvas></div>
+        </section>
+    </div>
+
+    <div class="تحلیل-شبکه">
+        <section class="تحلیل-جدول">
+            <h2>جزئیات زمان چرخه</h2>
+            <p>خلاصه هر فرآیند برای تحلیل روند تکمیل</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>فرآیند</th>
+                        <th>تعداد</th>
+                        <th>میانگین ساعت</th>
+                        <th>میانه ساعت</th>
+                        <th>بیشینه ساعت</th>
+                    </tr>
+                </thead>
+                <tbody id="جدولزمانچرخه"></tbody>
+            </table>
+        </section>
+
+        <section class="تحلیل-جدول">
+            <h2>جزئیات گلوگاه و ماندگاری</h2>
+            <p>پرریسک‌ترین بخش‌های فرآیند و وضعیت اقلام در انتظار</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>نوع</th>
+                        <th>شرح</th>
+                        <th>تعداد</th>
+                        <th>میانگین ساعت</th>
+                        <th>بیشینه ساعت</th>
+                    </tr>
+                </thead>
+                <tbody id="جدولترکیبی"></tbody>
+            </table>
+        </section>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (() => {
+            const صفحه = document.querySelector('.تحلیل-صفحه');
+            if (!صفحه) return;
+
+            const فرمداده = document.getElementById('فرمفیلتر');
+            const وضعیتبارگذاری = document.getElementById('وضعیتبارگذاری');
+            const نشانی = صفحه.dataset.نشانیداده;
+            const پیوندخروجیاکسل = document.getElementById('پیوندخروجیاکسل');
+            const نمودارها = {};
+
+            const عناصر = {
+                خلاصهمیانگینچرخه: document.getElementById('خلاصهمیانگینچرخه'),
+                خلاصهنمونهها: document.getElementById('خلاصهنمونهها'),
+                خلاصهدرانتظار: document.getElementById('خلاصهدرانتظار'),
+                خلاصهرویدادحساس: document.getElementById('خلاصهرویدادحساس'),
+                جدولزمانچرخه: document.getElementById('جدولزمانچرخه'),
+                جدولترکیبی: document.getElementById('جدولترکیبی')
+            };
+
+            function قالبعدد(مقدار) {
+                return new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(مقدار ?? 0);
+            }
+
+            function ساختتنظیمنمودار(داده, نوع) {
+                return {
+                    type: نوع,
+                    data: {
+                        labels: داده.برچسبها,
+                        datasets: داده.سریها.map(سری => ({
+                            label: سری.برچسب,
+                            data: سری.مقادیر,
+                            backgroundColor: نوع === 'line' ? 'rgba(0,0,0,0)' : سری.رنگ,
+                            borderColor: سری.رنگ,
+                            borderWidth: 2,
+                            tension: .3,
+                            fill: false
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    font: { family: 'Vazir' }
+                                }
+                            }
+                        },
+                        scales: نوع === 'doughnut' ? {} : {
+                            x: { ticks: { font: { family: 'Vazir' } } },
+                            y: { ticks: { font: { family: 'Vazir' } } }
+                        }
+                    }
+                };
+            }
+
+            function رندرنمودار(شناسه, داده, نوع) {
+                if (نمودارها[شناسه]) {
+                    نمودارها[شناسه].destroy();
+                }
+
+                const زمینه = document.getElementById(شناسه);
+                نمودارها[شناسه] = new Chart(زمینه.getContext('2d'), ساختتنظیمنمودار(داده, نوع));
+            }
+
+            function رندرجداول(گزارش) {
+                عناصر.جدولزمانچرخه.innerHTML = گزارش.زمانچرخه.اقلام.map(مورد => `
+                    <tr>
+                        <td>${مورد.نامفرآیند}</td>
+                        <td>${قالبعدد(مورد.تعداد)}</td>
+                        <td>${قالبعدد(مورد.میانگینساعت)}</td>
+                        <td>${قالبعدد(مورد.میانهساعت)}</td>
+                        <td>${قالبعدد(مورد.بیشینهساعت)}</td>
+                    </tr>`).join('');
+
+                const ردیفهایگلوگاه = گزارش.گلوگاهها.اقلام.map(مورد => `
+                    <tr>
+                        <td>گلوگاه</td>
+                        <td>${مورد.نامفرآیند} - ${مورد.ناممرحله}</td>
+                        <td>${قالبعدد(مورد.تعداد)}</td>
+                        <td>${قالبعدد(مورد.میانگینساعتتوقف)}</td>
+                        <td>${قالبعدد(مورد.بیشینهساعتتوقف)}</td>
+                    </tr>`);
+
+                const ردیفهایانتظار = گزارش.ماندگاریتایید.اقلام.map(مورد => `
+                    <tr>
+                        <td>در انتظار تایید</td>
+                        <td>${مورد.نامفرآیند}</td>
+                        <td>${قالبعدد(مورد.تعداددرانتظار)}</td>
+                        <td>${قالبعدد(مورد.میانگینساعتانتظار)}</td>
+                        <td>${قالبعدد(مورد.بیشینهساعتانتظار)}</td>
+                    </tr>`);
+
+                عناصر.جدولترکیبی.innerHTML = [...ردیفهایگلوگاه, ...ردیفهایانتظار].join('');
+            }
+
+            function رندرگزارش(گزارش) {
+                عناصر.خلاصهمیانگینچرخه.textContent = قالبعدد(گزارش.زمانچرخه.میانگینساعت);
+                عناصر.خلاصهنمونهها.textContent = قالبعدد(گزارش.زمانچرخه.تعدادنمونه);
+                عناصر.خلاصهدرانتظار.textContent = قالبعدد(گزارش.ماندگاریتایید.تعدادکل);
+                عناصر.خلاصهرویدادحساس.textContent = قالبعدد(گزارش.رویدادهایممیزی.تعدادحساس);
+
+                رندرنمودار('نمودارزمانچرخه', گزارش.زمانچرخه.نمودارروند, 'line');
+                رندرنمودار('نمودارگلوگاه', گزارش.گلوگاهها.نمودارگلوگاهها, 'bar');
+                رندرنمودار('نمودارماندگاری', گزارش.ماندگاریتایید.نمودارتوزیع, 'doughnut');
+                رندرنمودار('نمودارممیزی', گزارش.رویدادهایممیزی.نموداررویدادها, 'bar');
+                رندرجداول(گزارش);
+            }
+
+            async function بارگذاریگزارش() {
+                وضعیتبارگذاری.textContent = 'در حال بارگذاری...';
+                const دادهفرم = new FormData(فرمداده);
+                const پارامترها = new URLSearchParams();
+                for (const [کلید, مقدار] of دادهفرم.entries()) {
+                    if (مقدار) پارامترها.set(کلید, مقدار.toString());
+                }
+
+                پیوندخروجیاکسل.href = `${نشانی.replace('/دادگانمودار', '/خروجیاکسل')}?${پارامترها.toString()}`;
+
+                const پاسخ = await fetch(`${نشانی}?${پارامترها.toString()}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!پاسخ.ok) {
+                    وضعیتبارگذاری.textContent = 'دریافت داده ناموفق بود';
+                    return;
+                }
+
+                const گزارش = await پاسخ.json();
+                رندرگزارش(گزارش);
+                وضعیتبارگذاری.textContent = 'آخرین به‌روزرسانی انجام شد';
+            }
+
+            فرمداده.addEventListener('submit', async رویداد => {
+                رویداد.preventDefault();
+                await بارگذاریگزارش();
+            });
+
+            const امروز = new Date();
+            const از = new Date();
+            از.setDate(امروز.getDate() - 30);
+            document.getElementById('تاتاریخ').value = امروز.toISOString().slice(0, 10);
+            document.getElementById('ازتاریخ').value = از.toISOString().slice(0, 10);
+
+            بارگذاریگزارش();
+        })();
+    </script>
+}

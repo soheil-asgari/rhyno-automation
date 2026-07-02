@@ -8,48 +8,7 @@
 }
 
 @section Styles {
-    <style>
-        .fin-page { direction: rtl; text-align: right; }
-        .fin-card { border-radius: 12px; }
-        .fin-compact { font-size: .82rem; }
-        html.theme-dark .fin-page,
-        html.theme-dark .fin-page h5,
-        html.theme-dark .fin-page .small,
-        html.theme-dark .fin-page td,
-        html.theme-dark .fin-page th,
-        html.theme-dark .fin-page label {
-            color: #e2e8f0 !important;
-        }
-        html.theme-dark .fin-page .text-muted { color: #94a3b8 !important; }
-        html.theme-dark .fin-page .card,
-        html.theme-dark .fin-page .fin-card,
-        html.theme-dark .fin-page .table,
-        html.theme-dark .fin-page .table-responsive {
-            background-color: #0f172a !important;
-            border-color: #334155 !important;
-        }
-        html.theme-dark .fin-page .form-control,
-        html.theme-dark .fin-page .form-select {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-            color: #f8fafc !important;
-        }
-        html.theme-dark .fin-page .form-control::placeholder { color: #94a3b8 !important; }
-        .fin-page .table thead th {
-            background-color: #f1f5f9 !important;
-            color: #334155 !important;
-        }
-        html.theme-dark .fin-page .table thead th {
-            background-color: #172033 !important;
-            color: #e2e8f0 !important;
-        }
-        .fin-page .table tbody td {
-            color: #0f172a;
-        }
-        html.theme-dark .fin-page .table tbody td {
-            color: #f1f5f9 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/financial-pages.css" asp-append-version="true" />
 }
 
 <div class="container-fluid py-4 fin-page">
@@ -138,6 +97,20 @@
                             <td class="text-center">
                                 <div class="d-inline-flex gap-1">
                                     <a asp-action="EditInvoice" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">ویرایش</a>
+                                    @if (!WorkflowStatus.IsApproved(item.WorkflowStatus))
+                                    {
+                                        <form asp-action="ApproveInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-success">تایید</button>
+                                        </form>
+                                    }
+                                    @if (!WorkflowStatus.IsRejected(item.WorkflowStatus))
+                                    {
+                                        <form asp-action="RejectInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">رد</button>
+                                        </form>
+                                    }
                                     <form asp-action="DeleteInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo" method="post" class="d-inline" onsubmit="return confirm('فاکتور حذف شود؟');">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
@@ -162,6 +135,3 @@
     </div>
 </div>
 
-<style>
-    .loading-state td { padding: 1.25rem !important; }
-</style>

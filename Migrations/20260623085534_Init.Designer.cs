@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OfficeAutomation.Data;
 
@@ -10,10 +11,12 @@ using OfficeAutomation.Data;
 
 namespace OfficeAutomation.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(OfficeAutomation.Modules.Platform.Infrastructure.Persistence.PlatformDbContext))]
+    [Migration("20260623085534_Init")]
+    partial class Init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -588,6 +591,7 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Salary")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("StartWork")
@@ -735,7 +739,8 @@ namespace OfficeAutomation.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("BalanceAfter")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -762,10 +767,12 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("QuantityIn")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("QuantityOut")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<int>("WarehouseId")
                         .HasColumnType("int");
@@ -1815,9 +1822,11 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal?>("LastPurchasePrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MaximumStock")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("MinimumStock")
@@ -1831,6 +1840,7 @@ namespace OfficeAutomation.Migrations
                         .HasColumnType("nvarchar(150)");
 
                     b.Property<decimal>("ReorderPoint")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("SecondaryUnit")
@@ -2129,6 +2139,7 @@ namespace OfficeAutomation.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Capacity")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ClosingRules")
@@ -3238,3 +3249,5 @@ namespace OfficeAutomation.Migrations
         }
     }
 }
+
+

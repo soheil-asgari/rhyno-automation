@@ -1,8 +1,12 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -11,12 +15,20 @@ namespace OfficeAutomation.Controllers
     [Authorize]
     public class SearchController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly PlatformDbContext _context;
+        private readonly OfficeDbContext _officeContext;
+        private readonly FinanceDbContext _financeContext;
+        private readonly InventoryDbContext _inventoryContext;
+        private readonly IdentityDbContext _identityContext;
         private readonly IAuthorizationFacade _authorizationFacade;
 
-        public SearchController(ApplicationDbContext context, IAuthorizationFacade authorizationFacade)
+        public SearchController(PlatformDbContext context, OfficeDbContext officeContext, FinanceDbContext financeContext, InventoryDbContext inventoryContext, IdentityDbContext identityContext, IAuthorizationFacade authorizationFacade)
         {
             _context = context;
+            _officeContext = officeContext;
+            _financeContext = financeContext;
+            _inventoryContext = inventoryContext;
+            _identityContext = identityContext;
             _authorizationFacade = authorizationFacade;
         }
 
@@ -70,7 +82,7 @@ namespace OfficeAutomation.Controllers
         private async Task<List<GlobalSearchResultViewModel>> SearchLettersAsync(string term, CancellationToken cancellationToken, int take = 12)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var query = _context.Letters
+            var query = _officeContext.Letters
                 .AsNoTracking()
                 .Include(item => item.Sender)
                 .Include(item => item.Receiver)
@@ -98,7 +110,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<GlobalSearchResultViewModel>> SearchPeopleAsync(string term, CancellationToken cancellationToken, int take = 12)
         {
-            return await _context.HumanCapitalEmployees
+            return await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(item =>
                     item.FullName.Contains(term) ||
@@ -121,7 +133,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<GlobalSearchResultViewModel>> SearchInvoicesAsync(string term, CancellationToken cancellationToken, int take = 12)
         {
-            return await _context.Invoices
+            return await _financeContext.Invoices
                 .AsNoTracking()
                 .Where(item =>
                     item.InvoiceNumber.Contains(term) ||
@@ -144,7 +156,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<GlobalSearchResultViewModel>> SearchProductsAsync(string term, CancellationToken cancellationToken, int take = 12)
         {
-            return await _context.Products
+            return await _inventoryContext.Products
                 .AsNoTracking()
                 .Where(item => !item.IsDeleted && (item.Name.Contains(term) || item.Code.Contains(term) || (item.Description ?? string.Empty).Contains(term)))
                 .OrderBy(item => item.Name)
@@ -163,7 +175,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<GlobalSearchResultViewModel>> SearchVendorsAsync(string term, CancellationToken cancellationToken, int take = 12)
         {
-            return await _context.Vendors
+            return await _financeContext.Vendors
                 .AsNoTracking()
                 .Where(item =>
                     item.Name.Contains(term) ||
@@ -186,7 +198,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<List<GlobalSearchResultViewModel>> SearchWaybillsAsync(string term, CancellationToken cancellationToken, int take = 12)
         {
-            return await _context.Waybills
+            return await _financeContext.Waybills
                 .AsNoTracking()
                 .Where(item => !item.IsDeleted &&
                     (item.WaybillNumber.Contains(term) ||
@@ -217,7 +229,7 @@ namespace OfficeAutomation.Controllers
                 return new List<GlobalSearchResultViewModel>();
             }
 
-            return await _context.Users
+            return await _identityContext.Users
                 .AsNoTracking()
                 .Where(item =>
                     (item.FullName ?? string.Empty).Contains(term) ||
@@ -239,3 +251,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

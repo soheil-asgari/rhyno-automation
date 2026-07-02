@@ -1,0 +1,309 @@
+گزارش تحلیل شکاف معماری ERP
+تاریخ: 2026-06-30
+دامنه بررسی: ساختار فعلی پروژه، فایل های تغییر یافته اخیر، و نقاط کلیدی Multi-Tenancy، Finance، Security، EDMS، Module Lifecycle و Operational UX.
+
+جمع بندی بی تعارف:
+این سیستم از یک مونوکلیت خام فاصله گرفته، اما هنوز ERP تراز Enterprise نیست. بخش زیادی از قابلیت ها فقط به شکل اسکلت، نام کلاس، فیلد یا کنترلر CRUD دیده می شوند. هنوز موتور واقعی حکمرانی tenant، حسابداری پایان دوره، امضای قابل دفاع حقوقی، مدیریت چرخه عمر اسناد، ماژولاریتی قابل نصب/ارتقا، و APIهای عملیاتی عمیق وجود ندارد.
+
+1) Advanced Multi-Tenancy
+
+1.1. Tenant registry هنوز config-driven و static است.
+شاهد:
+- Models/TenantDefinition.cs:12-62 فقط فیلدهای تعریف tenant را نگه می دارد.
+- Services/Tenancy/TenantRegistry.cs:17-47 tenantها را از IOptions می خواند و همان آبجکت config را normalize می کند.
+مشکل:
+هیچ tenant catalog دیتابیسی، tenant onboarding workflow، lifecycle state، plan، suspension، billing state، migration version، یا health state وجود ندارد. tenant در runtime عملا از appsettings می آید.
+ریسک:
+اضافه کردن tenant جدید، تغییر connection string، یا suspend کردن tenant بدون redeploy/config change عملیاتی و امن نیست.
+کار لازم:
+TenantCatalog مستقل با وضعیت lifecycle، نسخه schema، plan/quota، provisioning job، و admin API لازم است.
+
+1.2. Migration per tenant وجود ندارد.
+شاهد:
+- Program.cs:54-71 همه DbContextها را با یک resolver کانکشن ثبت می کند، اما هیچ HostedService/CLI/Orchestrator برای اجرای migration روی همه tenantها وجود ندارد.
+- Services/Tenancy/TenantConnectionStringResolver.cs فقط connection string جاری را برمی گرداند.
+مشکل:
+DatabasePerTenant اعلام شده، اما schema evolution per tenant پیاده نشده است. هیچ جدول TenantMigrationHistory، lock مهاجرت، dry-run، rollout/canary، rollback، یا گزارش drift دیده نمی شود.
+ریسک:
+در SaaS واقعی، یک tenant می تواند روی schema قدیمی بماند یا migration نیمه کاره کل عملیات را بشکند.
+کار لازم:
+TenantMigrationOrchestrator، distributed migration lock، per-context migration runner، و migration status dashboard.
+
+1.3. Noisy-neighbor throttling سطحی است.
+شاهد:
+- Program.cs:140-176 فقط FixedWindowRateLimiter برای کل tenant و policy AI دارد.
+- Models/TenantDefinition.cs:58-59 فقط RequestsPerMinute و AiRequestsPerMinute دارد.
+مشکل:
+این فقط rate limit HTTP است. CPU-bound job، query سنگین، export سنگین، file upload، outbox backlog، connector execution و گزارش گیری BI را مهار نمی کند.
+ریسک:
+یک tenant پرمصرف هنوز می تواند worker، دیتابیس، فایل سیستم یا SQL external report را خفه کند.
+کار لازم:
+TenantBudgetService برای CPU/job/export/storage/query، queue partition backpressure، per-tenant circuit breaker، و telemetry/chargeback.
+
+1.4. Quota control فقط یک check منفعل است.
+شاهد:
+- Services/Tenancy/TenantQuotaService.cs:34-65 فقط active users و اندازه فایل ها را می شمارد.
+- هیچ استفاده فراگیر از ValidateWriteAsync در upload، create user، import، outbox یا domain save دیده نشد.
+مشکل:
+Quota در مسیرهای write enforce نشده است. شمارش فایل با Directory.EnumerateFiles در request path هم برای storage بزرگ خودش bottleneck است.
+ریسک:
+quota هم قابل دور زدن است، هم در tenantهای بزرگ کند می شود.
+کار لازم:
+Quota reservation، usage ledger، middleware/filter برای write endpoints، async storage accounting، و fail-fast در upload/import/user-create.
+
+2) Financial Ledger Depth
+
+2.1. Multi-currency فقط فیلد خام است، نه موتور ارزی.
+شاهد:
+- Modules/Finance/Domain/VoucherLine.cs:21-25 شامل CurrencyId، CurrencyRate، ForeignAmount است.
+- Modules/Finance/Application/FinanceLedgerService.cs:190-207 همه خطوط را با CurrencyId = "IRR"، CurrencyRate = 1 و ForeignAmount برابر مبلغ ریالی می سازد.
+مشکل:
+Currency entity، exchange rate table، base currency، valuation date، rounding policy، realized/unrealized FX gain/loss و کنترل تراز ارزی وجود ندارد.
+ریسک:
+گزارش مانده ارزی، تسعیر پایان دوره، سود و زیان ارزی و audit مالی قابل اتکا نیست.
+کار لازم:
+Currency، ExchangeRate، CurrencyLedgerBalance، FX revaluation voucher، realized FX settlement، و تست های تراز ارزی.
+
+2.2. Fiscal period locking بسیار ضعیف است.
+شاهد:
+- Modules/Finance/Domain/FiscalYear.cs:3-15 فقط IsClosed دارد.
+- FinanceDbContext.cs:76-107 فقط روی FiscalYear.IsClosed guard می گذارد.
+مشکل:
+دوره مالی ماهانه/فصلی، lock مرحله ای، reopen approval، per-module close، soft close/hard close و audit trail بستن دوره وجود ندارد.
+ریسک:
+کنترل داخلی بستن دوره در سطح enterprise قابل دفاع نیست.
+کار لازم:
+FiscalPeriod entity، PeriodStatus، CloseChecklist، approval workflow، reopen voucher و immutable closing snapshot.
+
+2.3. Closing entries وجود ندارد.
+شاهد:
+- FinanceLedgerService.cs:17-78 فقط invoice را به voucher تبدیل می کند.
+- هیچ متد CloseRevenueExpenseAccounts، OpenRetainedEarnings، CarryForwardBalances یا BalanceSheetRollForward دیده نشد.
+مشکل:
+حساب های موقت و دائم در پایان دوره بسته نمی شوند. سود/زیان به حقوق صاحبان سهام منتقل نمی شود.
+ریسک:
+ترازنامه و سود و زیان پایان سال فقط گزارش نمایشی خواهند بود، نه ledger-grade.
+کار لازم:
+Temporary account closing vouchers، retained earnings account، balance carry-forward، trial balance قبل/بعد از بستن.
+
+2.4. Chart of Accounts هنوز hard-seeded و invoice-centric است.
+شاهد:
+- FinanceLedgerService.cs:282-337 در runtime حساب ها و journalها را با نام انگلیسی seed می کند.
+- FinanceLedgerService.cs:160-187 فقط فروش/خرید/مالیات را پوشش می دهد.
+مشکل:
+COA lifecycle، نسخه بندی کدینگ، inactive شدن حساب، mapping ruleهای tenant-specific، rule engine حسابداری و account policy وجود ندارد.
+ریسک:
+هر فرآیند جدید مالی دوباره به کد C# وابسته می شود.
+کار لازم:
+AccountingRule table، posting profile، account mapping per module/tenant، و UI مدیریت کدینگ با validation.
+
+2.5. کنترل داخلی ledger ناقص است.
+شاهد:
+- FinanceLedgerService.cs:218-228 فقط Debit == Credit را چک می کند.
+- FinanceDbContext.cs:110-140 فقط posted voucher را immutable می کند.
+مشکل:
+trial balance، subledger reconciliation، duplicate voucher sequencing under concurrency، approval قبل از posting، attachment evidence، و SoD مخصوص posting وجود ندارد.
+ریسک:
+ledger قابل حسابرسی بیرونی نیست.
+کار لازم:
+Voucher lifecycle service، posting approval workflow، sequential number lock، reconciliation engine، و ledger integrity jobs.
+
+3) Enterprise Security & Non-Repudiation
+
+3.1. امضای دیجیتال واقعی نیست.
+شاهد:
+- Models/DocumentSignature.cs:26-41 فقط PayloadHash، HashAlgorithm، SignatureKeyId و CanonicalPayload دارد.
+- Controllers/SettingsController.cs:293-318 امضا را به صورت ImageData در User.SignaturePath ذخیره می کند.
+مشکل:
+هیچ X.509 certificate، private key operation، signature bytes، certificate chain، timestamp authority، revocation check، canonicalization contract یا verification service وجود ندارد.
+ریسک:
+امضا در دادگاه/ممیزی قابل اتکا نیست؛ بیشتر شبیه تصویر امضا است.
+کار لازم:
+DigitalSignatureService با X509Certificate2، canonical payload schema، detached signature، certificate chain validation، OCSP/CRL، trusted timestamp و verification endpoint.
+
+3.2. Canonical payload تعریف قراردادی ندارد.
+شاهد:
+- DocumentSignature.CanonicalPayload فقط string آزاد است.
+مشکل:
+canonicalization اگر آزاد و per-call باشد، hash قابل بازتولید و قابل دفاع نیست.
+ریسک:
+بعد از تغییر serializer، ترتیب propertyها یا culture، امضا قابل verify نخواهد بود.
+کار لازم:
+Canonical payload versioning، JSON canonicalization استاندارد، signed fields manifest، و تست golden hash.
+
+3.3. Session policy پایه ای است.
+شاهد:
+- Program.cs:72-92 فقط password/lockout ساده Identity را تنظیم می کند.
+- Login.cshtml.cs طبق الگوی Identity lockout کار می کند، اما device/session governance دیده نمی شود.
+مشکل:
+MFA enforcement policy، session timeout per risk، concurrent session control، device trust، impossible travel، admin session re-auth و token revocation dashboard وجود ندارد.
+ریسک:
+برای ERP مالی، سطح امنیت نشست ناکافی است.
+کار لازم:
+SessionPolicyService، user session table، MFA/risk policy، forced logout، remembered device governance، و audit روی session changes.
+
+3.4. Permission console خام و fragile است.
+شاهد:
+- Controllers/SecurityController.cs:117-153 matrix را از PermissionCatalog.CorePermissions می سازد.
+- Controllers/SecurityController.cs:156-217 TogglePermission فقط یک RolePermission را upsert می کند.
+- Services/Security/PermissionCatalog.cs:7-52 catalog hard-coded و حتی متون فارسی آن mojibake است.
+مشکل:
+Permissionها versioned نیستند، dependency/deny/condition ندارند، explain access وجود ندارد، change approval وجود ندارد، و permission localization خراب است.
+ریسک:
+تغییر دسترسی ها audit-grade و قابل کنترل نیست. متن خراب در کنسول امنیتی خودش نشانه ضعف release hygiene است.
+کار لازم:
+Permission registry دیتابیسی/versioned، permission dependency graph، ABAC conditions UI، approval workflow، diff/audit، و اصلاح encoding.
+
+4) EDMS Lifecycle & Legal Hold
+
+4.1. Full-text search روی محتوای فایل وجود ندارد.
+شاهد:
+- Controllers/DocumentArchiveController.cs:40-44 فقط Title و FileName را Contains می کند.
+- Models/DocumentArchiveItem.cs:39-88 هیچ ContentText، OCR status، extracted metadata یا index status ندارد.
+مشکل:
+فایل PDF/Office/Image upload می شود ولی محتوای آن استخراج و index نمی شود.
+ریسک:
+EDMS واقعی نیست؛ فقط file attachment registry است.
+کار لازم:
+DocumentContentExtractionJob، OCR، SQL Server Full-Text یا search engine، language-aware analyzer، indexing status و retry/dead-letter برای extraction.
+
+4.2. Legal Hold وجود ندارد.
+شاهد:
+- Models/DocumentArchiveItem.cs:39-88 فیلد LegalHold، HoldReason، HoldUntil، HoldBy ندارد.
+- DocumentArchiveController.cs:147-197 preview/download دارد، اما hold/delete/update policy ندارد.
+مشکل:
+هیچ مکانیزمی برای freeze سند در دعوای حقوقی/مالی وجود ندارد.
+ریسک:
+حذف یا تغییر سند تحت دعوا از نظر compliance قابل کنترل نیست.
+کار لازم:
+LegalHold entity، hold policy، immutable retention lock، release approval، و audit ویژه legal hold.
+
+4.3. Retention tiering واقعی نیست.
+شاهد:
+- TenantPathResolver فقط مسیر tenant archive می دهد.
+- DocumentArchiveItem فقط RelativePath/StoredFileName/FileSize دارد.
+مشکل:
+hot/warm/cold storage، archive class، retention schedule، purge eligibility، WORM storage و lifecycle transition وجود ندارد.
+ریسک:
+هزینه و compliance نگهداری فایل ها قابل مدیریت نیست.
+کار لازم:
+RetentionPolicy، RetentionTier، StorageProvider abstraction، lifecycle worker، purge guard و legal-hold override.
+
+4.4. کنترل upload ضعیف است.
+شاهد:
+- DocumentArchiveController.cs:99-143 فایل را مستقیم با extension اصلی در wwwroot tenant archive می نویسد.
+مشکل:
+malware scanning، content sniffing، max file size per tenant، duplicate hash، encryption-at-rest و path hardening دیده نمی شود.
+ریسک:
+ریسک امنیتی و compliance مستقیم.
+کار لازم:
+FileIngestionService، AV scan، SHA-256 content hash، encrypted object storage، quota enforcement و signed download URLs.
+
+5) Module Registry & Lifecycle
+
+5.1. ماژول ها hard-coded هستند.
+شاهد:
+- Program.cs:65-71 همه DbContextها صریح ثبت شده اند.
+- Program.cs:94-137 سرویس ها و controller filters صریح ثبت شده اند.
+مشکل:
+Module manifest، module discovery، dependency graph، install/upgrade/uninstall lifecycle، per-tenant enable/disable و migration package مستقل وجود ندارد.
+ریسک:
+سیستم هنوز Odoo-like نیست؛ هر تغییر ماژول compile/redeploy می خواهد.
+کار لازم:
+IModuleDefinition، module manifest JSON، assembly scanning، module migration runner، module state per tenant، و compatibility/version checks.
+
+5.2. Permission و navigation نیز static هستند.
+شاهد:
+- PermissionCatalog.cs:7-73 permissionها و controller fallbackها hard-coded هستند.
+مشکل:
+ماژول جدید نمی تواند permission/menu/route/report خودش را بدون تغییر سورس مرکزی اضافه کند.
+ریسک:
+هر ماژول تازه coupling به shell و security ایجاد می کند.
+کار لازم:
+Module contribution model برای menu، permissions، routes، jobs، reports و seed data.
+
+6) Operational UX/UI Backing
+
+6.1. Saved views فقط JSON خام است.
+شاهد:
+- Models/UserPreference.cs:20 فقط TablePreferencesJson دارد.
+- Controllers/TablePreferencesController.cs:22-69 یک key/value JSON per user ذخیره می کند.
+مشکل:
+هیچ entity برای SavedView، filter definition، sort، grouping، sharing، default view، validation against schema یا migration of preference schema وجود ندارد.
+ریسک:
+فیلترهای ذخیره شده با تغییر UI/schema می شکنند و قابل sharing/admin نیستند.
+کار لازم:
+SavedView entity، typed filter schema، versioning، ownership/share scope، و API CRUD.
+
+6.2. Dynamic column chooser schema-aware نیست.
+شاهد:
+- TablePreferencesController.cs:43-64 هر JSON دلخواه را ذخیره می کند.
+مشکل:
+ستون های مجاز، نوع داده، permission-sensitive columns، server-side projection و export alignment وجود ندارد.
+ریسک:
+UI و API از هم جدا می شوند؛ ستون حساس ممکن است در client فقط پنهان باشد نه secure.
+کار لازم:
+TableSchemaRegistry، ColumnDefinition، permission-aware projection، و export respecting selected columns.
+
+6.3. Drill-down reconciliation واقعی نیست.
+شاهد:
+- FinancialController.Dashboard در کد فعلی VAT reconciliation summary می سازد، اما evidence drilldown/service مستقل دیده نمی شود.
+- FinanceLedgerService فقط posting می سازد؛ reconciliation engine ندارد.
+مشکل:
+از گزارش کل به سند منبع، voucher line، invoice line، tax evidence و exception workflow مسیر قابل کلیک و audit-grade وجود ندارد.
+ریسک:
+گزارش ها نمایشی هستند؛ کاربر مالی نمی تواند مغایرت را تا سند اصلاحی پیگیری کند.
+کار لازم:
+ReconciliationCase، ReconciliationFinding، source document links، drilldown API، assignment workflow، و export evidence pack.
+
+7) نقص های عرضی که نباید نادیده گرفته شوند
+
+7.1. Encoding هنوز خراب است.
+شاهد:
+- Controllers/DocumentArchiveController.cs:89، 103، 143، 166 هنوز mojibake دارد.
+- Services/Security/PermissionCatalog.cs:7-52 و 72 هنوز mojibake دارد.
+ریسک:
+این فقط cosmetic نیست؛ permission key فارسی mojibake و متن های security/archive خراب، اعتماد کاربر و صحت policy mapping را تخریب می کند.
+کار لازم:
+اسکن کامل cp1256 mojibake با تست snapshot متون UI و قفل کردن encoding در editorconfig/CI.
+
+7.2. Generated migrations هنوز بوی معماری قدیمی دارند.
+شاهد:
+- search_code نشان داد چند migration/designer قدیمی هنوز using OfficeAutomation.Data و DbContextهای قدیمی را حمل می کنند.
+ریسک:
+EF tooling در آینده drift ایجاد می کند، مخصوصا بعد از split context.
+کار لازم:
+بازسازی migration strategy per modular context و حذف/اصلاح snapshotهای legacy.
+
+7.3. Outbox producer بهتر شده، اما consumer idempotency خارج از سیستم است.
+شاهد:
+- Models/OutboxMessage.cs:9-12 MessageId دارد.
+- Services/Outbox/OutboxPublisherBackgroundService.cs:95-114 MessageId را publish و DeadLetter را set می کند.
+مشکل:
+هیچ Inbox/ProcessedMessage table برای consumer-side idempotency در این repo دیده نمی شود.
+ریسک:
+در retry یا duplicate delivery، مصرف کننده داخلی/خارجی ممکن است دوبار اثر بگذارد.
+کار لازم:
+Inbox pattern، processed message registry، handler idempotency contract، و replay tooling.
+
+اولویت پیشنهادی اصلاح:
+P0:
+- Tenant migration orchestrator per context/per tenant
+- Finance fiscal period locking + closing entries
+- X.509 real digital signature verification
+- EDMS legal hold + content hash + malware/quota gate
+- Encoding cleanup کامل PermissionCatalog و archive
+
+P1:
+- FX revaluation/realized-unrealized gain/loss
+- SavedView typed API و TableSchemaRegistry
+- Module manifest/registry with per-tenant module state
+- Consumer inbox/idempotency
+
+P2:
+- Retention tiering و OCR/full-text
+- Permission graph و explain-access
+- Reconciliation cases و drilldown evidence pack
+
+فاصله تا ERP بی نقص:
+از نظر ساختار کد، پروژه از monolith خام عبور کرده اما هنوز بیشتر قابلیت های enterprise به سطح "نام و اسکلت" رسیده اند، نه "مکانیزم کامل". برای ERP جهانی، فاصله اصلی دیگر CRUD نیست؛ فاصله در governance، auditability، lifecycle automation، financial controls و operational evidence است.

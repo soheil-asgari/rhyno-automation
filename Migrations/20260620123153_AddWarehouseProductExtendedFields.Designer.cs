@@ -11,7 +11,7 @@ using OfficeAutomation.Data;
 
 namespace OfficeAutomation.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(OfficeAutomation.Modules.Platform.Infrastructure.Persistence.PlatformDbContext))]
     [Migration("20260620123153_AddWarehouseProductExtendedFields")]
     partial class AddWarehouseProductExtendedFields
     {
@@ -3241,3 +3241,5 @@ namespace OfficeAutomation.Migrations
         }
     }
 }
+
+

@@ -1,0 +1,82 @@
+@model OfficeAutomation.Models.NotificationCenterVM
+
+@{
+    ViewData["Title"] = "مرکز اعلان‌ها";
+}
+
+<section class="notifications-page">
+    <div class="section-header">
+        <div>
+            <h1>مرکز اعلان‌ها</h1>
+            <p>پیگیری اعلان‌های خوانده‌نشده، هشدارهای عملیاتی و ارجاع‌های سیستم.</p>
+        </div>
+        <form asp-action="MarkAllRead" method="post">
+            <button class="btn btn-sm btn-outline-primary" type="submit" disabled="@(Model.UnreadCount == 0)">
+                <i class="bi bi-check2-all"></i>
+                خواندن همه
+            </button>
+        </form>
+    </div>
+
+    <div class="notification-stats">
+        <div>
+            <span>@Model.TotalCount.ToString("N0")</span>
+            <small>کل اعلان‌ها</small>
+        </div>
+        <div>
+            <span>@Model.UnreadCount.ToString("N0")</span>
+            <small>خوانده‌نشده</small>
+        </div>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty-state">اعلانی برای نمایش وجود ندارد.</div>
+    }
+    else
+    {
+        <div class="notification-list-page">
+            @foreach (var item in Model.Items)
+            {
+                <article class="notification-row @(item.IsRead ? "is-read" : "is-unread") notification-row-@item.CssTone">
+                    <i class="bi @item.Icon"></i>
+                    <div class="notification-row-body">
+                        <div class="notification-row-title">
+                            <strong>@item.Title</strong>
+                            <span>@item.CreatedAtText</span>
+                        </div>
+                        <p>@item.Message</p>
+                        @if (!string.IsNullOrWhiteSpace(item.SourceModule))
+                        {
+                            <small>@item.SourceModule</small>
+                        }
+                    </div>
+                    <div class="notification-row-actions">
+                        @if (!string.IsNullOrWhiteSpace(item.LinkUrl))
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" href="@item.LinkUrl">
+                                <i class="bi bi-arrow-left"></i>
+                                مشاهده
+                            </a>
+                        }
+                        @if (!item.IsRead)
+                        {
+                            <form asp-action="MarkRead" method="post">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                <button class="btn btn-sm btn-primary" type="submit">
+                                    <i class="bi bi-check2"></i>
+                                    خواندم
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
+}

@@ -1,8 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -12,11 +13,13 @@ namespace OfficeAutomation.Controllers
     [PermissionAuthorize("Finance.View")]
     public class PayrollController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly FinanceDbContext _context;
+        private readonly OfficeDbContext _officeContext;
 
-        public PayrollController(ApplicationDbContext context)
+        public PayrollController(FinanceDbContext context, OfficeDbContext officeContext)
         {
             _context = context;
+            _officeContext = officeContext;
         }
 
         [HttpGet]
@@ -66,7 +69,6 @@ namespace OfficeAutomation.Controllers
             var payroll = await _context.PayrollLists
                 .AsNoTracking()
                 .Include(list => list.Items)
-                .ThenInclude(item => item.HumanCapitalEmployee)
                 .FirstOrDefaultAsync(list => list.Month == activeMonth && list.Year == activeYear, cancellationToken);
 
             var model = new PayrollListPageViewModel
@@ -208,7 +210,7 @@ namespace OfficeAutomation.Controllers
                 return BadRequest(new { success = false, message = "پارامترهای محاسبه معتبر نیست." });
             }
 
-            var sourceEmployees = await _context.HumanCapitalEmployees
+            var sourceEmployees = await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .OrderBy(employee => employee.FullName)
                 .ToListAsync(cancellationToken);
@@ -307,7 +309,7 @@ namespace OfficeAutomation.Controllers
                 .Distinct()
                 .ToList();
 
-            var employeeMap = await _context.HumanCapitalEmployees
+            var employeeMap = await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(item => employeeIds.Contains(item.Id) && item.CurrentStatus == "فعال")
                 .ToDictionaryAsync(item => item.Id, cancellationToken);
@@ -406,7 +408,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployees(string? search)
         {
-            var query = _context.HumanCapitalEmployees
+            var query = _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(e => e.CurrentStatus == "فعال");
 
@@ -438,7 +440,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployeeById(int id, CancellationToken cancellationToken)
         {
-            var employee = await _context.HumanCapitalEmployees
+            var employee = await _officeContext.HumanCapitalEmployees
                 .AsNoTracking()
                 .Where(e => e.Id == id)
                 .Select(e => new
@@ -519,3 +521,4 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 
@@ -14,13 +14,13 @@ namespace OfficeAutomation.Controllers
     [PermissionAuthorize("Security.Manage")]
     public class RolesManagementController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IdentityDbContext _context;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly UserManager<User> _userManager;
         private readonly IPermissionAccessService _permissionAccessService;
 
         public RolesManagementController(
-            ApplicationDbContext context,
+            IdentityDbContext context,
             RoleManager<ApplicationRole> roleManager,
             UserManager<User> userManager,
             IPermissionAccessService permissionAccessService)
@@ -57,8 +57,8 @@ namespace OfficeAutomation.Controllers
                 Users = users,
                 DataAccessScopes =
                 [
-                    new LookupItemDto { Value = RoleDataAccessScope.Department, Label = "Department only" },
-                    new LookupItemDto { Value = RoleDataAccessScope.Global, Label = "Global" }
+                    new LookupItemDto { Value = RoleDataAccessScope.Department, Label = "فقط واحد مربوطه" },
+                    new LookupItemDto { Value = RoleDataAccessScope.Global, Label = "سراسری" }
                 ]
             });
         }

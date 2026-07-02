@@ -11,7 +11,7 @@ using OfficeAutomation.Data;
 
 namespace OfficeAutomation.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(OfficeAutomation.Modules.Platform.Infrastructure.Persistence.PlatformDbContext))]
     [Migration("20260615100127_nitialreate")]
     partial class InitialCreate
     {
@@ -3066,3 +3066,5 @@ namespace OfficeAutomation.Migrations
         }
     }
 }
+
+

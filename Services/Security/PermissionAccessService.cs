@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Models;
+using System.Globalization;
 
 namespace OfficeAutomation.Services.Security
 {
@@ -15,13 +16,15 @@ namespace OfficeAutomation.Services.Security
     public sealed class PermissionAccessService : IPermissionAccessService
     {
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
-        private readonly ApplicationDbContext _context;
+        private readonly IdentityDbContext _context;
         private readonly IMemoryCache _cache;
+        private readonly Services.Tenancy.ITenantCacheKeyProvider? _tenantCacheKeyProvider;
 
-        public PermissionAccessService(ApplicationDbContext context, IMemoryCache cache)
+        public PermissionAccessService(IdentityDbContext context, IMemoryCache cache, Services.Tenancy.ITenantCacheKeyProvider? tenantCacheKeyProvider = null)
         {
             _context = context;
             _cache = cache;
+            _tenantCacheKeyProvider = tenantCacheKeyProvider;
         }
 
         public async Task<bool> UserHasPermissionAsync(string userId, string permission, CancellationToken cancellationToken = default)
@@ -37,7 +40,7 @@ namespace OfficeAutomation.Services.Security
                 return null;
             }
 
-            var cacheKey = $"rbac:profile:{userId}";
+            var cacheKey = _tenantCacheKeyProvider?.Prefix($"rbac:profile:{userId}") ?? $"rbac:profile:{userId}";
             if (_cache.TryGetValue(cacheKey, out PermissionAccessProfile? cachedProfile))
             {
                 return cachedProfile;
@@ -87,8 +90,19 @@ namespace OfficeAutomation.Services.Security
                 DisplayName = user.DisplayName,
                 DepartmentId = user.DepartmentId,
                 HasGlobalAccess = roles.Any(item => string.Equals(item.DataAccessScope, RoleDataAccessScope.Global, StringComparison.OrdinalIgnoreCase)),
+                Clearance = permissions.Contains("Security.Manage", StringComparer.OrdinalIgnoreCase) ||
+                            permissions.Contains("AuditLogs.Read", StringComparer.OrdinalIgnoreCase)
+                    ? "Privileged"
+                    : permissions.Any(item => item.EndsWith(".ViewSensitive", StringComparison.OrdinalIgnoreCase))
+                        ? "Sensitive"
+                        : "Standard",
                 Roles = roles.Select(item => item.RoleName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(item => item).ToList(),
-                Permissions = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase)
+                Permissions = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase),
+                Attributes = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["departmentId"] = user.DepartmentId?.ToString(CultureInfo.InvariantCulture),
+                    ["clearance"] = permissions.Contains("Security.Manage", StringComparer.OrdinalIgnoreCase) ? "Privileged" : "Standard"
+                }
             };
 
             _cache.Set(cacheKey, profile, CacheDuration);
@@ -97,7 +111,7 @@ namespace OfficeAutomation.Services.Security
 
         public Task InvalidateUserAsync(string userId)
         {
-            _cache.Remove($"rbac:profile:{userId}");
+            _cache.Remove(_tenantCacheKeyProvider?.Prefix($"rbac:profile:{userId}") ?? $"rbac:profile:{userId}");
             return Task.CompletedTask;
         }
     }

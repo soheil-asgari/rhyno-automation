@@ -1,0 +1,13 @@
+.security-routes .table th,
+        .security-routes .table td {
+            color: var(--text-dark) !important;
+        }
+        html.theme-dark .security-routes .table th,
+        html.theme-dark .security-routes .table td,
+        html.theme-dark .security-routes .table th *,
+        html.theme-dark .security-routes .table td * {
+            color: var(--text-dark) !important;
+        }
+        .security-routes .dropdown-menu {
+            z-index: 10001 !important;
+        }

@@ -1,0 +1,557 @@
+@model OfficeAutomation.Models.WorkInboxVM
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "کارتابل مرکزی";
+    string Active(string filter) => Model.ActiveFilter == filter ? "active" : "";
+    var itemsJson = JsonSerializer.Serialize(Model.Items);
+    var assigneesJson = JsonSerializer.Serialize(Model.Assignees);
+}
+
+<section class="work-inbox-page">
+    <div class="section-header">
+        <div>
+            <h1>کارتابل پیشرفته</h1>
+            <p>کارتابل عملیاتی با گروه‌بندی، نماهای ذخیره‌شده، اقدام‌های گروهی و پنل جزئیات سریع.</p>
+        </div>
+        <a class="btn btn-sm btn-outline-secondary" href="/Notifications">
+            <i class="bi bi-bell"></i>
+            مرکز اعلان‌ها
+        </a>
+    </div>
+
+    <div class="inbox-summary">
+        <a class="@Active("All")" asp-action="Index"><strong>@Model.TotalCount.ToString("N0")</strong><span>همه</span></a>
+        <a class="@Active("Approvals")" asp-action="Index" asp-route-filter="Approvals"><strong>@Model.ApprovalCount.ToString("N0")</strong><span>تاییدها</span></a>
+        <a class="@Active("Letters")" asp-action="Index" asp-route-filter="Letters"><strong>@Model.LetterCount.ToString("N0")</strong><span>نامه‌ها</span></a>
+        <a class="@Active("Alerts")" asp-action="Index" asp-route-filter="Alerts"><strong>@Model.AlertCount.ToString("N0")</strong><span>هشدارها</span></a>
+        <a class="@Active("Overdue")" asp-action="Index" asp-route-filter="Overdue"><strong>@Model.OverdueCount.ToString("N0")</strong><span>تاخیردار</span></a>
+        <a class="@Active("DueSoon")" asp-action="Index" asp-route-filter="DueSoon"><strong>@Model.DueSoonCount.ToString("N0")</strong><span>نزدیک موعد</span></a>
+        <a class="@Active("Unread")" asp-action="Index" asp-route-filter="Unread"><strong>@Model.UnreadCount.ToString("N0")</strong><span>خوانده‌نشده</span></a>
+    </div>
+
+    @if (TempData["WorkInboxMessage"] is string inboxMessage && !string.IsNullOrWhiteSpace(inboxMessage))
+    {
+        <div class="alert alert-success">@inboxMessage</div>
+    }
+    @if (TempData["WorkInboxUnauthorized"] is string unauthorizedMessage && !string.IsNullOrWhiteSpace(unauthorizedMessage))
+    {
+        <div class="alert alert-warning">@unauthorizedMessage</div>
+    }
+    @if (TempData["WorkInboxError"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="inbox-workspace"
+         data-items='@Html.Raw(itemsJson)'
+         data-assignees='@Html.Raw(assigneesJson)'>
+        <form asp-action="BulkAction" method="post" class="inbox-bulk-form" id="bulkActionForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Filter" value="@Model.ActiveFilter" />
+
+            <div class="inbox-control-bar">
+                <div class="inbox-search-shell">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="inboxSearchInput" class="form-control" placeholder="جستجو در عنوان، ماژول، فرستنده یا وضعیت" />
+                </div>
+
+                <div class="inbox-filter-grid">
+                    <select class="form-select form-select-sm" id="groupBySelect">
+                        <option value="none">بدون گروه‌بندی</option>
+                        <option value="module">گروه بر اساس ماژول</option>
+                        <option value="status">گروه بر اساس وضعیت</option>
+                        <option value="sla">گروه بر اساس سطح خدمت</option>
+                        <option value="priority">گروه بر اساس اولویت</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="moduleFilterSelect">
+                        <option value="">همه ماژول‌ها</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="statusFilterSelect">
+                        <option value="">همه وضعیت‌ها</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="readFilterSelect">
+                        <option value="">خواندن: همه</option>
+                        <option value="unread">فقط خوانده‌نشده</option>
+                        <option value="read">فقط خوانده‌شده</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="actionFilterSelect">
+                        <option value="">اقدام: همه</option>
+                        <option value="required">نیازمند اقدام</option>
+                        <option value="high">اولویت بالا</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="saved-views-bar">
+                <div class="saved-views-header">
+                    <strong>نماهای ذخیره‌شده</strong>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" id="saveCurrentViewBtn">ذخیره نمای فعلی</button>
+                </div>
+                <div class="saved-views-list" id="savedViewsList"></div>
+            </div>
+
+            <div class="inbox-bulk-toolbar">
+                <label class="inbox-check-all">
+                    <input class="form-check-input" type="checkbox" id="inboxSelectAll" />
+                    انتخاب همه موارد فیلترشده
+                </label>
+                <div class="inbox-selection-meta" id="selectionMeta">0 مورد انتخاب شده</div>
+                <select class="form-select form-select-sm" name="Action" id="bulkActionSelect" required>
+                    <option value="">انتخاب عملیات</option>
+                    <option value="approve">تایید گروهی</option>
+                    <option value="reject">رد گروهی</option>
+                    <option value="mark-read">خوانده شد</option>
+                    <option value="mark-unread">خوانده نشده</option>
+                    <option value="delegate">واگذاری</option>
+                </select>
+                <select class="form-select form-select-sm" name="ToUserId" id="bulkAssigneeSelect">
+                    <option value="">کاربر مقصد</option>
+                    @foreach (var assignee in Model.Assignees)
+                    {
+                        <option value="@assignee.UserId">@assignee.DisplayName</option>
+                    }
+                </select>
+                <input class="form-control form-control-sm" name="Note" id="bulkNoteInput" placeholder="یادداشت مشترک برای اقدام گروهی" />
+                <button class="btn btn-sm btn-primary" type="submit">
+                    <i class="bi bi-check2-square"></i>
+                    اجرا
+                </button>
+            </div>
+
+            <div class="inbox-layout">
+                <div class="inbox-list-pane">
+                    @if (Model.Items.Count == 0)
+                    {
+                        <div class="empty-state">فعلاً موردی برای این فیلتر وجود ندارد.</div>
+                    }
+                    else
+                    {
+                        <div id="inboxGroupsHost" class="inbox-groups-host"></div>
+                    }
+                </div>
+
+                <aside class="inbox-detail-pane" id="inboxDetailPane">
+                    <div class="inbox-detail-empty" id="detailEmptyState">
+                        <i class="bi bi-layout-sidebar-inset"></i>
+                        <strong>یک آیتم را انتخاب کنید</strong>
+                        <p>جزئیات، اقدام سریع و کامنت اینلاین اینجا نمایش داده می‌شود.</p>
+                    </div>
+
+                    <div class="inbox-detail-card d-none" id="detailCard">
+                        <div class="inbox-detail-scroll">
+                            <div class="detail-eyebrow" id="detailEyebrow"></div>
+                            <h2 id="detailTitle"></h2>
+                            <p id="detailSummary"></p>
+
+                            <div class="detail-meta-grid">
+                                <div><span>ماژول</span><strong id="detailModule"></strong></div>
+                                <div><span>وضعیت</span><strong id="detailStatus"></strong></div>
+                                <div><span>موعد</span><strong id="detailSla"></strong></div>
+                                <div><span>زمان</span><strong id="detailCreatedAt"></strong></div>
+                            </div>
+
+                            <div class="detail-chips" id="detailChips"></div>
+
+                            <div class="detail-actions-stack">
+                                <a class="btn btn-outline-secondary" id="detailOpenLink" href="#" target="_self">
+                                    <i class="bi bi-box-arrow-up-left"></i>
+                                    باز کردن جزئیات
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="detail-sticky-bar" id="detailStickyBar">
+                            <form asp-action="Decide" method="post" class="detail-quick-form d-none" id="quickApproveForm">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" id="quickApproveDocumentType" />
+                                <input type="hidden" name="documentId" id="quickApproveDocumentId" />
+                                <input type="hidden" name="stepNumber" id="quickApproveStepNumber" />
+                                <input type="hidden" name="decisionType" value="Approve" />
+                                <input type="hidden" name="note" value="تایید از کارتابل" />
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check2-circle"></i>
+                                    تایید یک‌کلیکی
+                                </button>
+                            </form>
+
+                            <form asp-action="Decide" method="post" class="detail-inline-form d-none" id="quickRejectForm">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" id="quickRejectDocumentType" />
+                                <input type="hidden" name="documentId" id="quickRejectDocumentId" />
+                                <input type="hidden" name="stepNumber" id="quickRejectStepNumber" />
+                                <input type="hidden" name="decisionType" value="Reject" />
+                                <input type="text" name="note" class="form-control form-control-sm" placeholder="دلیل رد" />
+                                <button type="submit" class="btn btn-outline-danger">رد</button>
+                            </form>
+
+                            <form asp-action="AddComment" method="post" class="detail-inline-form d-none" id="quickCommentForm">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentType" id="quickCommentDocumentType" />
+                                <input type="hidden" name="documentId" id="quickCommentDocumentId" />
+                                <input type="hidden" name="workflowStepId" id="quickCommentWorkflowStepId" />
+                                <input type="text" name="body" class="form-control form-control-sm" placeholder="ثبت کامنت اینلاین" />
+                                <button type="submit" class="btn btn-dark">ثبت کامنت</button>
+                            </form>
+
+                            <form asp-action="Delegate" method="post" class="detail-inline-form d-none" id="quickDelegateForm">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="workflowStepId" id="quickDelegateWorkflowStepId" />
+                                <select name="toUserId" class="form-select form-select-sm" id="quickDelegateToUserId">
+                                    @foreach (var assignee in Model.Assignees)
+                                    {
+                                        <option value="@assignee.UserId">@assignee.DisplayName</option>
+                                    }
+                                </select>
+                                <input type="text" name="note" class="form-control form-control-sm" placeholder="یادداشت واگذاری" />
+                                <button type="submit" class="btn btn-outline-primary">واگذاری</button>
+                            </form>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/work-inbox.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const workspace = document.querySelector('.inbox-workspace');
+            if (!workspace) return;
+
+            const items = JSON.parse(workspace.dataset.items || '[]');
+            const assignees = JSON.parse(workspace.dataset.assignees || '[]');
+            const groupsHost = document.getElementById('inboxGroupsHost');
+            const searchInput = document.getElementById('inboxSearchInput');
+            const groupBySelect = document.getElementById('groupBySelect');
+            const moduleFilterSelect = document.getElementById('moduleFilterSelect');
+            const statusFilterSelect = document.getElementById('statusFilterSelect');
+            const readFilterSelect = document.getElementById('readFilterSelect');
+            const actionFilterSelect = document.getElementById('actionFilterSelect');
+            const savedViewsList = document.getElementById('savedViewsList');
+            const saveCurrentViewBtn = document.getElementById('saveCurrentViewBtn');
+            const selectAll = document.getElementById('inboxSelectAll');
+            const selectionMeta = document.getElementById('selectionMeta');
+            const actionSelect = document.getElementById('bulkActionSelect');
+            const assigneeSelect = document.getElementById('bulkAssigneeSelect');
+            const noteInput = document.getElementById('bulkNoteInput');
+
+            const detailEmptyState = document.getElementById('detailEmptyState');
+            const detailCard = document.getElementById('detailCard');
+            const detailEyebrow = document.getElementById('detailEyebrow');
+            const detailTitle = document.getElementById('detailTitle');
+            const detailSummary = document.getElementById('detailSummary');
+            const detailModule = document.getElementById('detailModule');
+            const detailStatus = document.getElementById('detailStatus');
+            const detailSla = document.getElementById('detailSla');
+            const detailCreatedAt = document.getElementById('detailCreatedAt');
+            const detailChips = document.getElementById('detailChips');
+            const detailOpenLink = document.getElementById('detailOpenLink');
+
+            const quickApproveForm = document.getElementById('quickApproveForm');
+            const quickRejectForm = document.getElementById('quickRejectForm');
+            const quickCommentForm = document.getElementById('quickCommentForm');
+            const quickDelegateForm = document.getElementById('quickDelegateForm');
+
+            const storageKey = 'workInbox.savedViews.v1';
+            const state = {
+                search: '',
+                groupBy: 'none',
+                module: '',
+                status: '',
+                read: '',
+                action: '',
+                selectedIds: new Set(),
+                activeItemId: null
+            };
+
+            function uniqueValues(field) {
+                return [...new Set(items.map(item => item[field]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            }
+
+            function fillSelect(select, values) {
+                values.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+            }
+
+            fillSelect(moduleFilterSelect, uniqueValues('module'));
+            fillSelect(statusFilterSelect, uniqueValues('status'));
+
+            function getSavedViews() {
+                try {
+                    return JSON.parse(localStorage.getItem(storageKey) || '[]');
+                } catch {
+                    return [];
+                }
+            }
+
+            function setSavedViews(views) {
+                localStorage.setItem(storageKey, JSON.stringify(views));
+            }
+
+            function renderSavedViews() {
+                const views = getSavedViews();
+                savedViewsList.innerHTML = '';
+
+                if (views.length === 0) {
+                    const empty = document.createElement('span');
+                    empty.className = 'saved-view-empty';
+                    empty.textContent = 'هیچ نمای ذخیره‌شده‌ای وجود ندارد.';
+                    savedViewsList.appendChild(empty);
+                    return;
+                }
+
+                views.forEach(view => {
+                    const chip = document.createElement('div');
+                    chip.className = 'saved-view-chip';
+
+                    const apply = document.createElement('button');
+                    apply.type = 'button';
+                    apply.className = 'btn btn-sm btn-light';
+                    apply.textContent = view.name;
+                    apply.addEventListener('click', () => {
+                        Object.assign(state, view.state);
+                        syncControls();
+                        renderInbox();
+                    });
+
+                    const remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.className = 'btn btn-sm btn-link text-danger';
+                    remove.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    remove.addEventListener('click', () => {
+                        setSavedViews(getSavedViews().filter(item => item.name !== view.name));
+                        renderSavedViews();
+                    });
+
+                    chip.append(apply, remove);
+                    savedViewsList.appendChild(chip);
+                });
+            }
+
+            function syncControls() {
+                searchInput.value = state.search;
+                groupBySelect.value = state.groupBy;
+                moduleFilterSelect.value = state.module;
+                statusFilterSelect.value = state.status;
+                readFilterSelect.value = state.read;
+                actionFilterSelect.value = state.action;
+            }
+
+            function passesFilters(item) {
+                const searchText = `${item.searchText || ''}`.toLowerCase();
+                if (state.search && !searchText.includes(state.search.toLowerCase())) return false;
+                if (state.module && item.module !== state.module) return false;
+                if (state.status && item.status !== state.status) return false;
+                if (state.read === 'read' && !item.isRead) return false;
+                if (state.read === 'unread' && item.isRead) return false;
+                if (state.action === 'required' && !item.requiresAction) return false;
+                if (state.action === 'high' && item.priority !== 'High') return false;
+                return true;
+            }
+
+            function getGroupName(item) {
+                switch (state.groupBy) {
+                    case 'module': return item.groupLabel || item.module;
+                    case 'status': return item.status;
+                    case 'sla': return item.slaState;
+                    case 'priority': return item.priority;
+                    default: return 'همه موارد';
+                }
+            }
+
+            function updateSelectionMeta() {
+                selectionMeta.textContent = `${state.selectedIds.size} مورد انتخاب شده`;
+            }
+
+            function updateBulkFieldRules() {
+                const value = actionSelect.value || '';
+                assigneeSelect.required = value === 'delegate';
+                assigneeSelect.disabled = value !== 'delegate';
+                noteInput.required = value === 'reject';
+            }
+
+            function renderDetail(item) {
+                if (!item) {
+                    detailEmptyState.classList.remove('d-none');
+                    detailCard.classList.add('d-none');
+                    return;
+                }
+
+                detailEmptyState.classList.add('d-none');
+                detailCard.classList.remove('d-none');
+
+                detailEyebrow.textContent = item.detailCaption || item.type;
+                detailTitle.textContent = item.detailTitle || item.title;
+                detailSummary.textContent = item.detailSummary || item.description;
+                detailModule.textContent = item.module;
+                detailStatus.textContent = item.status;
+                detailSla.textContent = item.slaText || '-';
+                detailCreatedAt.textContent = item.createdAtText;
+                detailOpenLink.href = item.url || '#';
+
+                detailChips.innerHTML = '';
+                [item.priority, item.requiresAction ? 'نیازمند اقدام' : '', !item.isRead ? 'خوانده‌نشده' : '', item.isOverdue ? 'نقض سطح خدمت' : '']
+                    .filter(Boolean)
+                    .forEach(label => {
+                        const chip = document.createElement('span');
+                        chip.className = 'detail-chip';
+                        chip.textContent = label;
+                        detailChips.appendChild(chip);
+                    });
+
+                quickApproveForm.classList.toggle('d-none', !item.canInlineApprove || !item.documentType || !item.documentId || !item.stepNumber);
+                quickRejectForm.classList.toggle('d-none', !item.canInlineReject || !item.documentType || !item.documentId || !item.stepNumber);
+                quickCommentForm.classList.toggle('d-none', !item.canInlineComment || !item.documentType || !item.documentId);
+                quickDelegateForm.classList.toggle('d-none', !item.canInlineDelegate || !item.workflowStepId);
+
+                if (item.documentType) {
+                    document.getElementById('quickApproveDocumentType').value = item.documentType;
+                    document.getElementById('quickRejectDocumentType').value = item.documentType;
+                    document.getElementById('quickCommentDocumentType').value = item.documentType;
+                }
+                if (item.documentId) {
+                    document.getElementById('quickApproveDocumentId').value = item.documentId;
+                    document.getElementById('quickRejectDocumentId').value = item.documentId;
+                    document.getElementById('quickCommentDocumentId').value = item.documentId;
+                }
+                if (item.stepNumber) {
+                    document.getElementById('quickApproveStepNumber').value = item.stepNumber;
+                    document.getElementById('quickRejectStepNumber').value = item.stepNumber;
+                }
+                document.getElementById('quickCommentWorkflowStepId').value = item.workflowStepId || '';
+                document.getElementById('quickDelegateWorkflowStepId').value = item.workflowStepId || '';
+            }
+
+            function renderInbox() {
+                const filteredItems = items.filter(passesFilters);
+                const groups = filteredItems.reduce((acc, item) => {
+                    const key = getGroupName(item);
+                    acc[key] ??= [];
+                    acc[key].push(item);
+                    return acc;
+                }, {});
+
+                groupsHost.innerHTML = '';
+
+                if (filteredItems.length === 0) {
+                    groupsHost.innerHTML = '<div class="empty-state">هیچ موردی با این ترکیب فیلتر و جستجو پیدا نشد.</div>';
+                    renderDetail(null);
+                    updateSelectionMeta();
+                    return;
+                }
+
+                Object.entries(groups).forEach(([groupName, groupItems]) => {
+                    const section = document.createElement('section');
+                    section.className = 'inbox-group';
+
+                    const header = document.createElement('div');
+                    header.className = 'inbox-group-header';
+                    header.innerHTML = `<strong>${groupName}</strong><span>${groupItems.length} مورد</span>`;
+
+                    const body = document.createElement('div');
+                    body.className = 'inbox-list';
+
+                    groupItems.forEach(item => {
+                        const row = document.createElement('article');
+                        row.className = `inbox-item ${item.priorityCssClass || ''}${state.activeItemId === item.id ? ' is-active' : ''}`;
+                        row.dataset.itemId = item.id;
+
+                        const checked = state.selectedIds.has(item.id) ? 'checked' : '';
+                        const unread = !item.isRead ? '<span class="badge text-bg-dark">خوانده‌نشده</span>' : '';
+                        const overdue = item.isOverdue ? '<span class="badge text-bg-danger">نقض سطح خدمت</span>' : '';
+                        const actionFlag = item.requiresAction ? '<span class="inbox-action-flag">نیازمند اقدام</span>' : '';
+
+                        row.innerHTML = `
+                            <input class="form-check-input inbox-item-check" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
+                            <button type="button" class="inbox-item-surface">
+                                <span class="inbox-item-icon"><i class="bi ${item.icon}"></i></span>
+                                <span class="inbox-item-body">
+                                    <span class="inbox-title-row">
+                                        <strong>${item.title}</strong>
+                                        <small>${item.createdAtText}</small>
+                                    </span>
+                                    <span class="inbox-description">${item.description}</span>
+                                    <span class="inbox-meta">
+                                        <em>${item.module}</em>
+                                        <span class="badge ${item.statusCssClass}">${item.status}</span>
+                                        <span class="badge text-bg-light">${item.slaText}</span>
+                                        ${unread}
+                                        ${overdue}
+                                        ${actionFlag}
+                                    </span>
+                                </span>
+                            </button>
+                            <a class="inbox-open-icon" href="${item.url}" aria-label="باز کردن ${item.title}">
+                                <i class="bi bi-arrow-left-short"></i>
+                            </a>`;
+
+                        const checkbox = row.querySelector('.inbox-item-check');
+                        checkbox.addEventListener('change', () => {
+                            if (checkbox.checked) state.selectedIds.add(item.id);
+                            else state.selectedIds.delete(item.id);
+                            updateSelectionMeta();
+                        });
+
+                        row.querySelector('.inbox-item-surface').addEventListener('click', () => {
+                            state.activeItemId = item.id;
+                            renderInbox();
+                            renderDetail(item);
+                        });
+
+                        body.appendChild(row);
+                    });
+
+                    section.append(header, body);
+                    groupsHost.appendChild(section);
+                });
+
+                const activeItem = filteredItems.find(item => item.id === state.activeItemId) || filteredItems[0];
+                state.activeItemId = activeItem?.id || null;
+                renderDetail(activeItem || null);
+                updateSelectionMeta();
+            }
+
+            selectAll.addEventListener('change', () => {
+                const currentRows = groupsHost.querySelectorAll('.inbox-item-check');
+                currentRows.forEach(check => {
+                    check.checked = selectAll.checked;
+                    if (selectAll.checked) state.selectedIds.add(check.value);
+                    else state.selectedIds.delete(check.value);
+                });
+                updateSelectionMeta();
+            });
+
+            searchInput.addEventListener('input', () => { state.search = searchInput.value.trim(); renderInbox(); });
+            groupBySelect.addEventListener('change', () => { state.groupBy = groupBySelect.value; renderInbox(); });
+            moduleFilterSelect.addEventListener('change', () => { state.module = moduleFilterSelect.value; renderInbox(); });
+            statusFilterSelect.addEventListener('change', () => { state.status = statusFilterSelect.value; renderInbox(); });
+            readFilterSelect.addEventListener('change', () => { state.read = readFilterSelect.value; renderInbox(); });
+            actionFilterSelect.addEventListener('change', () => { state.action = actionFilterSelect.value; renderInbox(); });
+            actionSelect.addEventListener('change', updateBulkFieldRules);
+
+            saveCurrentViewBtn.addEventListener('click', () => {
+                const name = prompt('نام نمای ذخیره‌شده را وارد کنید');
+                if (!name) return;
+                const views = getSavedViews().filter(item => item.name !== name);
+                views.push({ name, state: { ...state, selectedIds: [] } });
+                setSavedViews(views);
+                renderSavedViews();
+            });
+
+            syncControls();
+            updateBulkFieldRules();
+            renderSavedViews();
+            renderInbox();
+        })();
+    </script>
+}

@@ -1,16 +1,12 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
-using OfficeAutomation.Models;
 using OfficeAutomation.Services.Auditing;
 
 namespace OfficeAutomation.Data
 {
-    internal sealed class PendingAuditLogEntry
+    public sealed class PendingAuditLogEntry
     {
-        private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
-
         public PendingAuditLogEntry(EntityEntry entry, AuditRequestInfo requestInfo)
         {
             Entry = entry;
@@ -22,6 +18,7 @@ namespace OfficeAutomation.Data
         public AuditRequestInfo RequestInfo { get; }
         public string Action { get; set; } = string.Empty;
         public string TableName { get; }
+        public string? EntityId { get; private set; }
         public Dictionary<string, object?> OldValues { get; } = new(StringComparer.Ordinal);
         public Dictionary<string, object?> NewValues { get; } = new(StringComparer.Ordinal);
         public List<string> AffectedColumns { get; } = [];
@@ -42,28 +39,32 @@ namespace OfficeAutomation.Data
                     }
                 }
             }
+
+            EntityId ??= ResolveEntityId();
         }
 
-        public AuditLog ToAuditLog()
+        private string? ResolveEntityId()
         {
-            var isSensitive = string.Equals(Action, "Delete", StringComparison.OrdinalIgnoreCase) ||
-                              TableName.Contains("Permission", StringComparison.OrdinalIgnoreCase) ||
-                              TableName.Contains("Role", StringComparison.OrdinalIgnoreCase) ||
-                              TableName.Contains("User", StringComparison.OrdinalIgnoreCase);
-
-            return new AuditLog
+            var key = Entry.Metadata.FindPrimaryKey();
+            if (key == null || key.Properties.Count == 0)
             {
-                UserId = RequestInfo.UserId,
-                Action = Action,
-                TableName = TableName,
-                DateTime = DateTimeOffset.UtcNow,
-                OldValues = OldValues.Count == 0 ? null : JsonSerializer.Serialize(OldValues, SerializerOptions),
-                NewValues = NewValues.Count == 0 ? null : JsonSerializer.Serialize(NewValues, SerializerOptions),
-                AffectedColumns = AffectedColumns.Count == 0 ? null : JsonSerializer.Serialize(AffectedColumns, SerializerOptions),
-                UserIP = RequestInfo.UserIP,
-                UserAgent = RequestInfo.UserAgent,
-                IsSensitive = isSensitive
-            };
+                return null;
+            }
+
+            var parts = new List<string>(key.Properties.Count);
+            foreach (var keyProperty in key.Properties)
+            {
+                var propertyEntry = Entry.Property(keyProperty.Name);
+                var value = propertyEntry.CurrentValue ?? propertyEntry.OriginalValue;
+                if (value == null)
+                {
+                    continue;
+                }
+
+                parts.Add(Convert.ToString(NormalizeValue(value), System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty);
+            }
+
+            return parts.Count == 0 ? null : string.Join("|", parts);
         }
 
         public static object? NormalizeValue(object? value)

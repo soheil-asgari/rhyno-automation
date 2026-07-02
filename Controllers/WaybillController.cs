@@ -1,17 +1,21 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 
 namespace OfficeAutomation.Controllers
 {
+    [Authorize]
+    [RequireAccessArea("Warehouse")]
     public class WaybillController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly FinanceDbContext _context;
         private static readonly string[] DefaultPaymentStatuses = ["Paid", "Pending", "Internal"];
         private static readonly string[] DefaultVehicleTypes = ["تریلی", "خاور", "کامیون"];
 
-        public WaybillController(ApplicationDbContext context)
+        public WaybillController(FinanceDbContext context)
         {
             _context = context;
         }

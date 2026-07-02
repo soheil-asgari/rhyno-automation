@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
+using OfficeAutomation.Services;
 using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
@@ -11,16 +12,22 @@ namespace OfficeAutomation.Controllers
     [Route("admin/audit-dashboard")]
     public class AuditDashboardController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly PlatformDbContext _context;
+        private readonly SecurityAuditNotificationService _securityAuditNotificationService;
 
-        public AuditDashboardController(ApplicationDbContext context)
+        public AuditDashboardController(
+            PlatformDbContext context,
+            SecurityAuditNotificationService securityAuditNotificationService)
         {
             _context = context;
+            _securityAuditNotificationService = securityAuditNotificationService;
         }
 
         [HttpGet("")]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
+            await _securityAuditNotificationService.PublishRecentSensitiveEventsAsync(cancellationToken);
+
             var todayStart = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
             var weekStart = todayStart.AddDays(-6);
 

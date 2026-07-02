@@ -15,6 +15,9 @@ namespace OfficeAutomation.Models
         public string? UserAgent { get; init; }
         public bool IsSensitive { get; init; }
         public string Module { get; init; } = string.Empty;
+        public string? Severity { get; init; }
+        public string? ComplianceCategory { get; init; }
+        public string? StructuredPayload { get; init; }
     }
 
     public sealed class AuditLogFilterOptionDto
@@ -38,5 +41,11 @@ namespace OfficeAutomation.Models
         public required int PageSize { get; init; }
         public required int TotalCount { get; init; }
         public int TotalPages => PageSize <= 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
+    }
+
+    public sealed class SiemExportEnvelopeDto
+    {
+        public string ExportedAtUtc { get; init; } = DateTimeOffset.UtcNow.ToString("O");
+        public IReadOnlyList<SiemAuditLogDto> Events { get; init; } = [];
     }
 }

@@ -12,10 +12,14 @@ namespace OfficeAutomation.Services.Security
     public sealed class DataIsolationService : IDataIsolationService
     {
         private readonly ICurrentUserContextAccessor _currentUserContextAccessor;
+        private readonly ICurrentDataAccessScope _currentDataAccessScope;
 
-        public DataIsolationService(ICurrentUserContextAccessor currentUserContextAccessor)
+        public DataIsolationService(
+            ICurrentUserContextAccessor currentUserContextAccessor,
+            ICurrentDataAccessScope currentDataAccessScope)
         {
             _currentUserContextAccessor = currentUserContextAccessor;
+            _currentDataAccessScope = currentDataAccessScope;
         }
 
         public async Task<IQueryable<T>> ApplyDepartmentScopeAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
@@ -27,7 +31,7 @@ namespace OfficeAutomation.Services.Security
                 return query;
             }
 
-            var profile = await _currentUserContextAccessor.GetAccessProfileAsync(cancellationToken);
+            var profile = _currentUserContextAccessor.CurrentProfile ?? await _currentUserContextAccessor.GetAccessProfileAsync(cancellationToken);
             if (profile == null)
             {
                 return query.Where(_ => false);
@@ -45,7 +49,7 @@ namespace OfficeAutomation.Services.Security
 
             var parameter = Expression.Parameter(typeof(T), "entity");
             var property = Expression.Property(parameter, departmentProperty);
-            var constant = Expression.Constant(profile.DepartmentId, departmentProperty.PropertyType);
+            var constant = Expression.Constant(_currentDataAccessScope.DepartmentId ?? profile.DepartmentId, departmentProperty.PropertyType);
             var predicate = Expression.Lambda<Func<T, bool>>(Expression.Equal(property, constant), parameter);
             return query.Where(predicate);
         }

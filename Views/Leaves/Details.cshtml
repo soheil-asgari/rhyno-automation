@@ -1,5 +1,9 @@
 @model OfficeAutomation.Models.Leave
 @{
+    var workflowDecisions = ViewBag.WorkflowDecisions as List<OfficeAutomation.Models.WorkflowDecision> ?? new List<OfficeAutomation.Models.WorkflowDecision>();
+    var workflowDetail = ViewBag.WorkflowDetail as OfficeAutomation.Models.WorkflowDetailPanelVM;
+}
+@{
     ViewData["Title"] = "جزئیات مرخصی";
     var fullName = Model.User?.FullName ?? Model.User?.UserName ?? "کاربر";
 }
@@ -45,6 +49,36 @@
                 </div>
             </div>
         </div>
+
+        @if (workflowDecisions.Count > 0)
+        {
+            <div class="mt-4">
+                <h2 class="h6 fw-bold mb-3">تاریخچه تصمیم‌ها</h2>
+                <div class="d-grid gap-2">
+                    @foreach (var decision in workflowDecisions)
+                    {
+                        <div class="info-card">
+                            <div class="d-flex justify-content-between gap-2 flex-wrap">
+                                <strong>@WorkflowStatus.Label(decision.Decision)</strong>
+                                <span class="text-muted small">@decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</span>
+                            </div>
+                            <div class="small text-muted mt-1">@((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId)</div>
+                            @if (!string.IsNullOrWhiteSpace(decision.Comment))
+                            {
+                                <div class="mt-2">@decision.Comment</div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (workflowDetail != null)
+        {
+            <div class="mt-4">
+                <partial name="_WorkflowDetailPanel" model="workflowDetail" />
+            </div>
+        }
 
         <div class="action-bar mt-4">
             <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">ویرایش</a>

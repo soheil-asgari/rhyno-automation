@@ -11,7 +11,7 @@ using OfficeAutomation.Data;
 
 namespace OfficeAutomation.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(OfficeAutomation.Modules.Platform.Infrastructure.Persistence.PlatformDbContext))]
     [Migration("20260620120902_AddTransferRequestWorkflowFields")]
     partial class AddTransferRequestWorkflowFields
     {
@@ -3193,3 +3193,5 @@ namespace OfficeAutomation.Migrations
         }
     }
 }
+
+

@@ -1,9 +1,13 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeAutomation.Data;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 
 namespace OfficeAutomation.Controllers
@@ -11,12 +15,20 @@ namespace OfficeAutomation.Controllers
     [Authorize]
     public class HomeController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly PlatformDbContext _context;
+        private readonly OfficeDbContext _officeContext;
+        private readonly FinanceDbContext _financeContext;
+        private readonly IdentityDbContext _identityContext;
+        private readonly InventoryDbContext _inventoryContext;
         private static readonly CultureInfo FaCulture = CultureInfo.GetCultureInfo("fa-IR");
 
-        public HomeController(ApplicationDbContext context)
+        public HomeController(PlatformDbContext context, OfficeDbContext officeContext, FinanceDbContext financeContext, IdentityDbContext identityContext, InventoryDbContext inventoryContext)
         {
             _context = context;
+            _officeContext = officeContext;
+            _financeContext = financeContext;
+            _identityContext = identityContext;
+            _inventoryContext = inventoryContext;
         }
 
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -40,33 +52,33 @@ namespace OfficeAutomation.Controllers
             var createEvents = await _context.AuditLogs.CountAsync(item => item.Action == "Create" || item.Action == "Insert", cancellationToken);
             var updateEvents = await _context.AuditLogs.CountAsync(item => item.Action == "Update" || item.Action == "Edit", cancellationToken);
             var deleteEvents = await _context.AuditLogs.CountAsync(item => item.Action == "Delete", cancellationToken);
-            var newLetters = await _context.Letters.CountAsync(item => !item.IsRead, cancellationToken);
-            var pendingLeaves = await _context.Leaves.CountAsync(item =>
+            var newLetters = await _officeContext.Letters.CountAsync(item => !item.IsRead, cancellationToken);
+            var pendingLeaves = await _officeContext.Leaves.CountAsync(item =>
                 item.Status == WorkflowStatus.PendingApproval ||
                 item.Status == "در انتظار تایید" ||
                 item.Status == "در انتظار تأیید",
                 cancellationToken);
-            var sentLetters = await _context.Letters.CountAsync(cancellationToken);
-            var users = await _context.Users.CountAsync(cancellationToken);
-            var openInvoices = await _context.Invoices.CountAsync(item =>
+            var sentLetters = await _officeContext.Letters.CountAsync(cancellationToken);
+            var users = await _identityContext.Users.CountAsync(cancellationToken);
+            var openInvoices = await _financeContext.Invoices.CountAsync(item =>
                 item.WorkflowStatus == WorkflowStatus.Draft ||
                 item.WorkflowStatus == WorkflowStatus.Sent ||
                 item.WorkflowStatus == WorkflowStatus.PendingApproval,
                 cancellationToken);
-            var criticalStockItems = await _context.InventoryStocks.CountAsync(item =>
+            var criticalStockItems = await _inventoryContext.InventoryStocks.CountAsync(item =>
                 item.Product.MinimumStock > 0 && item.CurrentQuantity <= item.Product.MinimumStock,
                 cancellationToken);
-            var pendingTransfers = await _context.InventoryTransferRequests.CountAsync(item =>
+            var pendingTransfers = await _inventoryContext.InventoryTransferRequests.CountAsync(item =>
                 item.Status == WorkflowStatus.PendingApproval || item.Status == "PendingManager",
                 cancellationToken);
-            var pendingLetters = await _context.Letters.CountAsync(item =>
+            var pendingLetters = await _officeContext.Letters.CountAsync(item =>
                 item.WorkflowStatus == WorkflowStatus.PendingApproval ||
                 (!item.IsWorkflowCompleted && item.CurrentWorkflowStep > 0),
                 cancellationToken);
-            var todayLetters = await _context.Letters.CountAsync(item => item.SentDate.Date == today, cancellationToken);
-            var todayInvoices = await _context.Invoices.CountAsync(item => item.CreatedAt.Date == today, cancellationToken);
-            var todayReceipts = await _context.WarehouseReceipts.CountAsync(item => item.CreatedAt.Date == today, cancellationToken);
-            var todayIssuances = await _context.WarehouseIssuances.CountAsync(item => item.CreatedAt.Date == today, cancellationToken);
+            var todayLetters = await _officeContext.Letters.CountAsync(item => item.SentDate.Date == today, cancellationToken);
+            var todayInvoices = await _financeContext.Invoices.CountAsync(item => item.CreatedAt.Date == today, cancellationToken);
+            var todayReceipts = await _inventoryContext.WarehouseReceipts.CountAsync(item => item.CreatedAt.Date == today, cancellationToken);
+            var todayIssuances = await _inventoryContext.WarehouseIssuances.CountAsync(item => item.CreatedAt.Date == today, cancellationToken);
             var utcTodayStart = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
             var securityEventsToday = await _context.AuditLogs.CountAsync(item =>
                 item.DateTime >= utcTodayStart &&
@@ -212,7 +224,7 @@ namespace OfficeAutomation.Controllers
         {
             var items = new List<DashboardWorkItem>();
 
-            items.AddRange(await _context.Leaves
+            items.AddRange(await _officeContext.Leaves
                 .AsNoTracking()
                 .Include(item => item.User)
                 .Where(item =>
@@ -233,7 +245,7 @@ namespace OfficeAutomation.Controllers
                 })
                 .ToListAsync(cancellationToken));
 
-            items.AddRange(await _context.Letters
+            items.AddRange(await _officeContext.Letters
                 .AsNoTracking()
                 .Where(item =>
                     item.WorkflowStatus == WorkflowStatus.PendingApproval ||
@@ -252,7 +264,7 @@ namespace OfficeAutomation.Controllers
                 })
                 .ToListAsync(cancellationToken));
 
-            items.AddRange(await _context.Invoices
+            items.AddRange(await _financeContext.Invoices
                 .AsNoTracking()
                 .Where(item =>
                     item.WorkflowStatus == WorkflowStatus.Draft ||
@@ -336,7 +348,7 @@ namespace OfficeAutomation.Controllers
 
         private async Task<int> CountUpcomingInvoiceDeadlinesAsync(CancellationToken cancellationToken)
         {
-            var candidates = await _context.Invoices
+            var candidates = await _financeContext.Invoices
                 .AsNoTracking()
                 .Where(item =>
                     item.InvoiceType == "Purchase" &&
@@ -416,3 +428,5 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
+
+

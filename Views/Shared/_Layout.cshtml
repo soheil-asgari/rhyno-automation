@@ -1,11 +1,15 @@
 ﻿@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
-@using OfficeAutomation.Data
+@using Microsoft.AspNetCore.Antiforgery
 @using OfficeAutomation.Models
+@using OfficeAutomation.Services
 @using OfficeAutomation.Services.Security
-@inject ApplicationDbContext DbContext
+@inject OfficeAutomation.Modules.Identity.Infrastructure.Persistence.IdentityDbContext DbContext
 @inject IAuthorizationFacade AuthorizationFacade
+@inject IAntiforgery Antiforgery
+@inject NotificationService NotificationService
 @{
+    var antiforgeryTokens = Antiforgery.GetAndStoreTokens(Context);
     var displayName = User?.FindFirst("name")?.Value
                       ?? User?.FindFirst(ClaimTypes.Name)?.Value
                       ?? User?.Identity?.Name;
@@ -67,6 +71,7 @@
     var userCanAccessWarehouse = userHasSecurityAccess;
     var userCanAccessHumanCapital = userHasSecurityAccess;
     var userCanAccessSystemSettings = userHasSecurityAccess;
+    var userCanAccessProcessAnalytics = userHasSecurityAccess;
     if (User?.Identity?.IsAuthenticated == true && !userHasSecurityAccess)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -92,72 +97,18 @@
                 userCanAccessSystemSettings = permission.CanAccessSystemSettings;
             }
         }
+
+        userCanAccessProcessAnalytics = await AuthorizationFacade.HasPermissionAsync("تحلیل.مشاهده");
     }
 
-    var headerNotifications = new List<(string Title, string Description, string Url, string Icon, string Tone)>();
+    var headerNotifications = new List<HeaderNotificationVM>();
     if (User?.Identity?.IsAuthenticated == true)
     {
         var notificationUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var todayStart = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
 
         if (!string.IsNullOrWhiteSpace(notificationUserId))
         {
-            var unreadLetters = await DbContext.Letters
-                .AsNoTracking()
-                .CountAsync(item => !item.IsRead && (item.ReceiverId == notificationUserId || item.FinalReceiverId == notificationUserId));
-            if (unreadLetters > 0)
-            {
-                headerNotifications.Add(("نامه جدید", $"{unreadLetters:N0} نامه خوانده نشده دارید.", "/Letters", "bi-envelope", "primary"));
-            }
-
-            var approvedLeaves = await DbContext.Leaves
-                .AsNoTracking()
-                .CountAsync(item => item.UserId == notificationUserId && item.Status == WorkflowStatus.Approved);
-            if (approvedLeaves > 0)
-            {
-                headerNotifications.Add(("تایید مرخصی", $"{approvedLeaves:N0} درخواست مرخصی تایید شده دارید.", "/Leaves", "bi-calendar-check", "success"));
-            }
-        }
-
-        if (userHasSecurityAccess)
-        {
-            var pendingLeavesForApproval = await DbContext.Leaves
-                .AsNoTracking()
-                .CountAsync(item => item.Status == WorkflowStatus.PendingApproval || item.Status == "در انتظار تایید" || item.Status == "در انتظار تأیید");
-            if (pendingLeavesForApproval > 0)
-            {
-                headerNotifications.Add(("مرخصی در انتظار", $"{pendingLeavesForApproval:N0} درخواست مرخصی نیاز به بررسی دارد.", "/Leaves", "bi-hourglass-split", "warning"));
-            }
-        }
-
-        var lowStock = await DbContext.InventoryStocks
-            .AsNoTracking()
-            .CountAsync(item => item.Product.MinimumStock > 0 && item.CurrentQuantity <= item.Product.MinimumStock);
-        if (lowStock > 0)
-        {
-            headerNotifications.Add(("کاهش موجودی", $"{lowStock:N0} قلم کالا به حداقل موجودی رسیده است.", "/Warehouse/Stock", "bi-box-seam", "danger"));
-        }
-
-        var dueInvoices = await DbContext.Invoices
-            .AsNoTracking()
-            .CountAsync(item =>
-                item.InvoiceType == "Purchase" &&
-                item.DeadlineDateShamsi != null &&
-                item.WorkflowStatus != WorkflowStatus.Approved &&
-                item.WorkflowStatus != WorkflowStatus.Archived);
-        if (dueInvoices > 0)
-        {
-            headerNotifications.Add(("سررسید مالی/پرداخت", $"{dueInvoices:N0} فاکتور خرید نیاز به پیگیری موعد دارد.", "/Financial/Purchases", "bi-calendar2-week", "warning"));
-        }
-
-        var securityChanges = await DbContext.AuditLogs
-            .AsNoTracking()
-            .CountAsync(item =>
-                item.DateTime >= todayStart &&
-                (item.Action == "Delete" || item.TableName.Contains("Role") || item.TableName.Contains("Permission")));
-        if (securityChanges > 0)
-        {
-            headerNotifications.Add(("تغییر امنیتی", $"{securityChanges:N0} رخداد حساس امروز ثبت شده است.", "/admin/audit-dashboard", "bi-shield-check", "info"));
+            headerNotifications = (await NotificationService.GetHeaderNotificationsAsync(notificationUserId)).ToList();
         }
     }
 
@@ -168,781 +119,17 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="request-verification-token" content="@antiforgeryTokens.RequestToken" />
     <title>@ViewData["Title"] - پنل مدیریت راینو</title>
-
-    <script src="https://lib.arvancloud.ir/sweetalert2/9.17.4/sweetalert2.all.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/css/bootstrap.rtl.min.css">
-    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/main.css" asp-append-version="true">
-
-    <style>
-        :root {
-            --app-sidebar-width: 232px;
-            --app-content-gutter: 14px;
-            --layout-shell-bg: var(--app-shell-bg);
-            --layout-surface: var(--app-surface-strong);
-            --layout-surface-soft: var(--app-surface-soft);
-            --layout-border: var(--app-border-strong);
-            --layout-text: var(--text-main);
-            --layout-text-muted: var(--text-muted);
-            --layout-shadow: var(--app-shadow);
-        }
-
-        /* فیکس کردن ارتفاع بدنه و اسکرول سایدبار */
-        body {
-            background-color: var(--layout-shell-bg);
-            color: var(--layout-text);
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        .app-shell {
-            display: block;
-            height: auto;
-            min-height: 100vh;
-            overflow-x: hidden;
-            overflow-y: visible;
-            width: 100%;
-        }
-
-        /* استایل سایدبار راست با اسکرول فعال مستقل */
-        .sidebar-right,
-        #appSidebar.sidebar-right {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: var(--app-sidebar-width) !important;
-            min-width: var(--app-sidebar-width) !important;
-            max-width: var(--app-sidebar-width) !important;
-            background-color: var(--layout-surface);
-            border-left: 1px solid var(--layout-border);
-            z-index: 1030;
-        }
-
-        #appSidebar i,
-        #appSidebar .bi,
-        .custom-topbar i,
-        .custom-topbar .bi {
-            background-image: none !important;
-            border-radius: 6px !important;
-            line-height: 1;
-        }
-
-        .logo-icon,
-        .user-avatar-box {
-            border: 1px solid var(--layout-border);
-            color: var(--primary);
-        }
-
-        .sidebar-content {
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
-            padding: 8px;
-            overscroll-behavior: contain;
-        }
-
-            .sidebar-content::-webkit-scrollbar {
-                width: 4px;
-            }
-
-            .sidebar-content::-webkit-scrollbar-thumb {
-                background-color: #cbd5e1;
-                border-radius: 6px !important;
-            }
-
-        /* نوار بالای صفحه همرنگ بدنه (بدون حاشیه اضافی) */
-        .custom-topbar {
-            background-color: var(--layout-shell-bg);
-            padding: 10px 18px;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: center;
-            gap: 12px;
-            min-height: 56px;
-            overflow: visible;
-        }
-
-        .topbar-cluster,
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
-            white-space: nowrap;
-        }
-
-        .topbar-right-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.72rem;
-            color: var(--layout-text-muted);
-        }
-
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 6px !important;
-            margin-left: 4px;
-        }
-
-        .topbar-clock-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.76rem;
-            font-weight: 600;
-            color: var(--layout-text);
-            background: var(--layout-surface);
-            padding: 5px 10px;
-            border-radius: 6px !important;
-            border: 1px solid var(--layout-border);
-            box-shadow: var(--layout-shadow);
-            flex: 0 0 auto;
-            white-space: nowrap;
-        }
-
-        .notification-center {
-            position: relative;
-        }
-
-        .notification-toggle {
-            position: relative;
-            width: 32px;
-            height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--layout-border);
-            background: var(--layout-surface);
-            color: var(--layout-text);
-            padding: 0;
-        }
-
-        .notification-count {
-            position: absolute;
-            top: -6px;
-            left: -6px;
-            min-width: 18px;
-            height: 18px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: #ef4444;
-            color: #fff;
-            border: 2px solid var(--layout-surface);
-            font-size: .62rem;
-            font-weight: 900;
-            line-height: 1;
-        }
-
-        .notification-menu {
-            width: min(360px, 88vw);
-            padding: 0;
-            border: 1px solid var(--layout-border);
-            box-shadow: var(--layout-shadow);
-            background: var(--layout-surface);
-            overflow: hidden;
-        }
-
-        .notification-menu-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--layout-border);
-            background: var(--layout-surface-soft);
-        }
-
-        .notification-menu-head strong {
-            font-size: .78rem;
-        }
-
-        .notification-menu-head span {
-            font-size: .66rem;
-            color: var(--layout-text-muted);
-            font-weight: 800;
-        }
-
-        .notification-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 9px 12px;
-            color: inherit;
-            text-decoration: none;
-            border-bottom: 1px solid var(--layout-border);
-        }
-
-        .notification-item:last-child {
-            border-bottom: 0;
-        }
-
-        .notification-item:hover {
-            background: var(--layout-surface-soft);
-        }
-
-        .notification-item i {
-            width: 26px;
-            height: 26px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--layout-border);
-            color: var(--primary);
-            flex: 0 0 auto;
-        }
-
-        .notification-item strong {
-            display: block;
-            font-size: .74rem;
-            margin-bottom: 2px;
-        }
-
-        .notification-item small {
-            display: block;
-            color: var(--layout-text-muted);
-            font-size: .66rem;
-            line-height: 1.6;
-        }
-
-        .notification-empty {
-            padding: 16px 12px;
-            text-align: center;
-            color: var(--layout-text-muted);
-            font-size: .72rem;
-        }
-
-        .topbar-search {
-            position: relative;
-            width: min(220px, 24vw);
-            min-width: 160px;
-            flex: 0 1 220px;
-        }
-
-        .sidebar-quick-search {
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            background: var(--layout-surface);
-            padding-bottom: 7px;
-            margin-bottom: 6px;
-        }
-
-        .sidebar-quick-search .search-box {
-            position: relative;
-        }
-
-        .sidebar-quick-search .form-control {
-            height: 32px;
-            border: 1px solid var(--layout-border);
-            background: var(--layout-surface-soft);
-            color: var(--layout-text);
-            font-size: .72rem;
-            font-weight: 700;
-            padding-right: 28px;
-        }
-
-        .sidebar-quick-search .form-control:focus {
-            border-color: #6366f1;
-            background: var(--layout-surface);
-            box-shadow: 0 0 0 .18rem rgba(99, 102, 241, .14);
-        }
-
-        .sidebar-quick-search .bi-search {
-            position: absolute;
-            right: 9px;
-            top: 8px;
-            color: var(--layout-text-muted);
-            font-size: .76rem;
-            pointer-events: none;
-        }
-
-        .sidebar-search-meta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            margin-top: 5px;
-            color: var(--layout-text-muted);
-            font-size: .66rem;
-            font-weight: 800;
-        }
-
-        .sidebar-search-clear {
-            border: 0;
-            background: transparent;
-            color: var(--primary);
-            padding: 0;
-            font-size: .66rem;
-            font-weight: 850;
-        }
-
-        .sidebar-search-clear.d-none {
-            display: none !important;
-        }
-
-        .sidebar-search-hidden {
-            display: none !important;
-        }
-
-        .sidebar-search-no-results {
-            display: none;
-            border: 1px dashed var(--layout-border);
-            background: var(--layout-surface-soft);
-            color: var(--layout-text-muted);
-            border-radius: 6px !important;
-            padding: 8px;
-            font-size: .7rem;
-            font-weight: 750;
-            line-height: 1.7;
-        }
-
-        .sidebar-search-no-results.is-visible {
-            display: block;
-        }
-
-        .main-wrapper {
-            width: calc(100% - var(--app-sidebar-width)) !important;
-            max-width: calc(100% - var(--app-sidebar-width)) !important;
-            margin-right: var(--app-sidebar-width) !important;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: visible;
-            min-width: 0;
-        }
-
-        #main-content-wrapper {
-            width: 100%;
-            max-width: 100%;
-            min-width: 0;
-            overflow-x: hidden;
-            box-sizing: border-box;
-        }
-
-        #main-content-wrapper > * {
-            max-width: 100%;
-        }
-
-        #main-content-wrapper .container,
-        #main-content-wrapper .container-fluid {
-            max-width: 100%;
-        }
-
-        #main-content-wrapper .table-responsive {
-            overflow-x: auto;
-        }
-
-        .sidebar-accordion .accordion-item {
-            border: 0;
-            border-radius: 6px !important;
-            overflow: visible;
-            background: transparent;
-            margin-bottom: 4px;
-        }
-
-        .sidebar-accordion .accordion-button {
-            background: var(--layout-surface-soft);
-            color: var(--layout-text);
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 6px 8px;
-            box-shadow: none;
-            border-radius: 6px !important;
-        }
-
-            .sidebar-accordion .accordion-button:not(.collapsed) {
-                background: rgba(99, 102, 241, 0.16);
-                color: var(--primary);
-            }
-
-            .sidebar-accordion .accordion-button::after {
-                width: 0.68rem;
-                height: 0.68rem;
-                background-size: 0.68rem;
-            }
-
-        .sidebar-group-nav {
-            padding: 4px 0 1px;
-        }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            border-radius: 6px !important;
-            font-size: 0.7rem;
-            color: var(--layout-text);
-            padding: 5px 8px;
-        }
-
-            .sidebar-link:hover {
-                background: var(--layout-surface-soft);
-                color: var(--layout-text);
-            }
-
-            .sidebar-link.sidebar-active {
-                background: rgba(99, 102, 241, 0.14);
-                color: var(--primary);
-                font-weight: 700;
-            }
-
-        .user-profile-link .user-profile-pill {
-            transition: background-color 0.2s ease;
-        }
-
-        .sidebar-footer {
-            flex: 0 0 auto;
-            margin-top: auto;
-            padding: 0;
-            border-top: 1px solid var(--layout-border);
-            background: var(--layout-surface);
-        }
-
-        .user-profile-link {
-            display: block;
-            text-decoration: none;
-            color: inherit;
-            cursor: pointer;
-        }
-
-        .user-profile-pill {
-            padding: 8px 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--layout-surface);
-            border-radius: 6px !important;
-            border: 1px solid var(--layout-border);
-        }
-
-        .user-avatar-box {
-            width: 28px;
-            height: 28px;
-            background: transparent;
-            border-radius: 6px !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .online-status {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 7px;
-            height: 7px;
-            background: #10b981;
-            border: 2px solid var(--layout-surface);
-            border-radius: 6px !important;
-        }
-
-        #appSidebar,
-        #appSidebar *,
-        .main-wrapper,
-        .custom-topbar,
-        .topbar-clock-box,
-        .topbar-search .form-control,
-        .topbar-actions .btn,
-        #main-content-wrapper,
-        #main-content-wrapper .card,
-        #main-content-wrapper .btn,
-        #main-content-wrapper .form-control,
-        #main-content-wrapper .form-select,
-        #main-content-wrapper textarea,
-        #main-content-wrapper select,
-        #main-content-wrapper input,
-        button,
-        .btn,
-        .card,
-        input,
-        select,
-        textarea,
-        #main-content-wrapper .badge,
-        #main-content-wrapper .modal-content {
-            border-radius: 6px !important;
-        }
-
-        .user-profile-link:hover .user-profile-pill,
-        .user-profile-link:focus-visible .user-profile-pill {
-            background-color: var(--layout-surface-soft);
-        }
-
-        #main-content-wrapper,
-        #main-content-wrapper table,
-        #main-content-wrapper .table,
-        #main-content-wrapper .table th,
-        #main-content-wrapper .table td,
-        #main-content-wrapper .table th *,
-        #main-content-wrapper .table td *,
-        #main-content-wrapper .grid,
-        #main-content-wrapper .matrix {
-            color: var(--text-dark) !important;
-        }
-    </style>
-    <style>
-        html.theme-dark body,
-        html.dark-mode body,
-        html[data-theme="dark"] body {
-            background-color: var(--layout-shell-bg) !important;
-            color: var(--layout-text) !important;
-        }
-
-        html.theme-dark .app-shell,
-        html.theme-dark .main-wrapper,
-        html.theme-dark .main-content,
-        html.dark-mode .app-shell,
-        html.dark-mode .main-wrapper,
-        html.dark-mode .main-content,
-        html[data-theme="dark"] .app-shell,
-        html[data-theme="dark"] .main-wrapper,
-        html[data-theme="dark"] .main-content {
-            background-color: var(--layout-shell-bg) !important;
-            color: var(--layout-text) !important;
-        }
-
-        html.theme-dark .custom-topbar,
-        html.theme-dark .topbar-clock-box,
-        html.theme-dark .sidebar-right,
-        html.theme-dark .user-profile-pill,
-        html.theme-dark .notification-menu,
-        html.theme-dark .notification-toggle,
-        html.theme-dark .sidebar-quick-search,
-        html.dark-mode .custom-topbar,
-        html.dark-mode .topbar-clock-box,
-        html.dark-mode .sidebar-right,
-        html.dark-mode .user-profile-pill,
-        html.dark-mode .notification-menu,
-        html.dark-mode .notification-toggle,
-        html.dark-mode .sidebar-quick-search,
-        html[data-theme="dark"] .custom-topbar,
-        html[data-theme="dark"] .topbar-clock-box,
-        html[data-theme="dark"] .sidebar-right,
-        html[data-theme="dark"] .user-profile-pill,
-        html[data-theme="dark"] .notification-menu,
-        html[data-theme="dark"] .notification-toggle,
-        html[data-theme="dark"] .sidebar-quick-search {
-            background-color: var(--layout-surface) !important;
-            background-image: linear-gradient(180deg, rgba(139, 92, 246, 0.06), rgba(34, 211, 238, 0.03)) !important;
-            border-color: var(--layout-border) !important;
-            color: var(--layout-text) !important;
-        }
-
-        html.theme-dark .sidebar-accordion .accordion-button,
-        html.dark-mode .sidebar-accordion .accordion-button,
-        html[data-theme="dark"] .sidebar-accordion .accordion-button {
-            background: var(--layout-surface-soft) !important;
-            color: var(--layout-text) !important;
-        }
-
-        html.theme-dark .sidebar-quick-search .form-control,
-        html.dark-mode .sidebar-quick-search .form-control,
-        html[data-theme="dark"] .sidebar-quick-search .form-control {
-            background: var(--layout-surface-soft) !important;
-            border-color: var(--layout-border) !important;
-            color: var(--layout-text) !important;
-        }
-
-        html.theme-dark #main-content-wrapper [style*="background-color: #fff"],
-        html.theme-dark #main-content-wrapper [style*="background: #fff"],
-        html.theme-dark #main-content-wrapper [style*="background-color:#fff"],
-        html.theme-dark #main-content-wrapper [style*="background:#fff"],
-        html.theme-dark #main-content-wrapper [style*="background-color: #f8fafc"],
-        html.theme-dark #main-content-wrapper [style*="background: #f8fafc"],
-        html.theme-dark #main-content-wrapper [style*="background-color: #fff9f0"],
-        html.theme-dark #main-content-wrapper [style*="color:#1e293b"],
-        html.theme-dark #main-content-wrapper [style*="color: #1e293b"],
-        html.theme-dark #main-content-wrapper [style*="color:#64748b"],
-        html.theme-dark #main-content-wrapper [style*="color: #64748b"],
-        html.theme-dark #appSidebar [style*="background-color: #fff"],
-        html.theme-dark #appSidebar [style*="background: #fff"],
-        html.theme-dark #appSidebar [style*="background-color:#fff"],
-        html.theme-dark #appSidebar [style*="background:#fff"],
-        html.theme-dark #appSidebar [style*="color:#1e293b"],
-        html.theme-dark #appSidebar [style*="color: #1e293b"],
-        html.theme-dark #appSidebar [style*="color:#64748b"],
-        html.theme-dark #appSidebar [style*="color: #64748b"] {
-            background-color: var(--layout-surface) !important;
-            border-color: var(--layout-border) !important;
-            color: var(--layout-text) !important;
-        }
-
-        html.theme-dark .sidebar-search-meta,
-        html.theme-dark .sidebar-search-no-results,
-        html.dark-mode .sidebar-search-meta,
-        html.dark-mode .sidebar-search-no-results,
-        html[data-theme="dark"] .sidebar-search-meta,
-        html[data-theme="dark"] .sidebar-search-no-results {
-            color: var(--layout-text-muted) !important;
-        }
-
-        html.theme-dark .sidebar-search-no-results,
-        html.dark-mode .sidebar-search-no-results,
-        html[data-theme="dark"] .sidebar-search-no-results {
-            background: var(--layout-surface-soft) !important;
-            border-color: var(--layout-border) !important;
-        }
-
-            html.theme-dark .sidebar-accordion .accordion-button:not(.collapsed),
-            html.dark-mode .sidebar-accordion .accordion-button:not(.collapsed),
-            html[data-theme="dark"] .sidebar-accordion .accordion-button:not(.collapsed) {
-                background: rgba(99, 102, 241, 0.16) !important;
-                color: var(--primary) !important;
-            }
-
-        html.theme-dark .sidebar-link,
-        html.dark-mode .sidebar-link,
-        html[data-theme="dark"] .sidebar-link {
-            color: var(--layout-text) !important;
-        }
-
-            html.theme-dark .sidebar-link:hover,
-            html.theme-dark .sidebar-link.sidebar-active,
-            html.dark-mode .sidebar-link:hover,
-            html.dark-mode .sidebar-link.sidebar-active,
-            html[data-theme="dark"] .sidebar-link:hover,
-            html[data-theme="dark"] .sidebar-link.sidebar-active {
-                background: rgba(99, 102, 241, 0.14) !important;
-                color: var(--primary) !important;
-            }
-
-        html.theme-dark .main-content,
-        html.dark-mode .main-content,
-        html[data-theme="dark"] .main-content {
-            background-color: var(--layout-shell-bg) !important;
-        }
-
-        html.theme-dark .logo-icon,
-        html.theme-dark .user-avatar-box,
-        html.dark-mode .logo-icon,
-        html.dark-mode .user-avatar-box,
-        html[data-theme="dark"] .logo-icon,
-        html[data-theme="dark"] .user-avatar-box {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(56, 189, 248, 0.12)) !important;
-            background-color: transparent !important;
-            border-color: rgba(139, 92, 246, 0.34) !important;
-            color: #dbeafe !important;
-        }
-
-        html.theme-dark .text-muted,
-        html.theme-dark .text-secondary,
-        html.theme-dark .text-dark,
-        html.theme-dark .brand-status,
-        html.theme-dark .u-role,
-        html.dark-mode .text-muted,
-        html.dark-mode .text-secondary,
-        html.dark-mode .text-dark,
-        html.dark-mode .brand-status,
-        html.dark-mode .u-role,
-        html[data-theme="dark"] .text-muted,
-        html[data-theme="dark"] .text-secondary,
-        html[data-theme="dark"] .text-dark,
-        html[data-theme="dark"] .brand-status,
-        html[data-theme="dark"] .u-role {
-            color: var(--layout-text-muted) !important;
-        }
-
-        html.theme-dark .text-dark,
-        html.dark-mode .text-dark,
-        html[data-theme="dark"] .text-dark {
-            color: var(--layout-text) !important;
-        }
-
-        html.theme-dark i,
-        html.theme-dark .bi,
-        html.dark-mode i,
-        html.dark-mode .bi,
-        html[data-theme="dark"] i,
-        html[data-theme="dark"] .bi {
-            color: currentColor !important;
-        }
-
-        html.theme-dark .notification-toggle,
-        html.dark-mode .notification-toggle,
-        html[data-theme="dark"] .notification-toggle {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.16), rgba(34, 211, 238, 0.12)) !important;
-            color: #e0f2fe !important;
-        }
-
-        html.theme-dark .notification-menu-head,
-        html.dark-mode .notification-menu-head,
-        html[data-theme="dark"] .notification-menu-head {
-            background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(139, 92, 246, 0.08)) !important;
-        }
-
-        html.theme-dark .notification-item i,
-        html.dark-mode .notification-item i,
-        html[data-theme="dark"] .notification-item i {
-            background: color-mix(in srgb, currentColor 14%, var(--layout-surface)) !important;
-            border-color: color-mix(in srgb, currentColor 36%, var(--layout-border)) !important;
-            color: currentColor !important;
-        }
-
-        html.theme-dark .topbar-clock-box i,
-        html.dark-mode .topbar-clock-box i,
-        html[data-theme="dark"] .topbar-clock-box i {
-            color: var(--info) !important;
-        }
-
-        html.theme-dark .status-dot,
-        html.dark-mode .status-dot,
-        html[data-theme="dark"] .status-dot {
-            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.14);
-        }
-
-        @@media (max-width: 1199.98px) {
-            :root {
-                --app-sidebar-width: 224px;
-            }
-        }
-
-        @@media (max-width: 991.98px) {
-            .app-shell {
-                display: block;
-            }
-
-            .sidebar-right,
-            #appSidebar.sidebar-right {
-                width: min(82vw, 260px) !important;
-                min-width: min(82vw, 260px) !important;
-                max-width: min(82vw, 260px) !important;
-                transform: translateX(100%);
-                transition: transform .2s ease;
-            }
-
-            .sidebar-right.is-open {
-                transform: translateX(0);
-            }
-
-            .main-wrapper {
-                width: 100% !important;
-                margin-right: 0 !important;
-            }
-
-            .custom-topbar {
-                padding: 8px 10px;
-                grid-template-columns: minmax(0, 1fr);
-            }
-
-            .topbar-actions {
-                justify-content: flex-start;
-                overflow-x: auto;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/main-foundation.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/main-legacy.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/app-shell.css" asp-append-version="true">
     @await RenderSectionAsync("Styles", required: false)
-    <link rel="stylesheet" href="~/css/visual-refresh.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/visual-refresh-core.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/visual-refresh-legacy.css" asp-append-version="true">
 </head>
 
 <body data-theme="@themePreference.ToLowerInvariant()">
@@ -952,41 +139,62 @@
     <div class="app-shell">
 
         <aside class="sidebar-right" id="appSidebar">
-            <div class="sidebar-header" style="padding: 20px 15px; border-bottom: 1px solid var(--layout-border);">
-                <div class="logo-wrapper" style="display: flex; align-items: center; gap: 10px;">
-                    <div class="logo-icon" style="background: var(--icon-tint); color:var(--primary); padding: 6px 9px; border-radius: 10px !important;">
+            <div class="sidebar-header">
+                <div class="logo-wrapper">
+                    <div class="logo-icon">
                         <i class="bi bi-box-seam"></i>
                     </div>
                     <div class="logo-text">
-                        <span class="brand-name" style="display:block; font-weight:bold; font-size:0.95rem;">پنل راینو</span>
-                        <span class="brand-status" style="font-size:0.75rem; color:var(--layout-text-muted);">نسخه سازمانی 2026</span>
+                        <span class="brand-name">پنل راینو</span>
+                        <span class="brand-status">نسخه سازمانی 2026</span>
                     </div>
                 </div>
             </div>
 
             <div class="sidebar-content" id="sidebarScrollContainer">
-                <div class="sidebar-quick-search">
-                    <div class="search-box">
-                        <input id="sidebarMenuSearch" type="search" class="form-control" autocomplete="off" placeholder="جستجوی سریع منو... (Ctrl+K)" aria-label="جستجوی سریع منو">
-                        <i class="bi bi-search"></i>
+                <div class="sidebar-fixed-top">
+                    <div class="sidebar-quick-search">
+                        <div class="search-box">
+                            <input id="sidebarMenuSearch" type="search" class="form-control" autocomplete="off" placeholder="جستجوی سریع منو..." aria-label="جستجوی سریع منو">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <div class="sidebar-search-meta">
+                            <span id="sidebarSearchCount">همه بخش‌ها</span>
+                            <button id="sidebarSearchClear" type="button" class="sidebar-search-clear d-none">پاک کردن</button>
+                        </div>
                     </div>
-                    <div class="sidebar-search-meta">
-                        <span id="sidebarSearchCount">همه بخش‌ها</span>
-                        <button id="sidebarSearchClear" type="button" class="sidebar-search-clear d-none">پاک کردن</button>
+
+                    <section class="sidebar-section sidebar-section-pinned">
+                        <div class="sidebar-section-head">
+                            <span>صفحات منتخب</span>
+                            <small>دسترسی سریع</small>
+                        </div>
+                        <nav class="nav flex-column sidebar-shortcuts">
+                            <a class="nav-link sidebar-link @(currentController == "Home" ? "sidebar-active" : "")" data-nav-id="home-index" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-grid text-primary"></i> <span class="link-text">میز کار مرکزی</span>
+                            </a>
+                            <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index">
+                                <i class="bi bi-inboxes text-warning"></i> <span class="link-text">کارتابل مرکزی</span>
+                            </a>
+                            <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance">
+                                <i class="bi bi-layout-text-window-reverse text-primary"></i> <span class="link-text">تراز آزمایشی انترپرایز</span>
+                            </a>
+                        </nav>
+                    </section>
+                </div>
+
+                <div class="sidebar-middle">
+                    <div id="sidebarSearchNoResults" class="sidebar-search-no-results">
+                        نتیجه‌ای در منو پیدا نشد.
                     </div>
-                </div>
 
-                <div id="sidebarSearchNoResults" class="sidebar-search-no-results">
-                    نتیجه‌ای در منو پیدا نشد.
-                </div>
-
-                <div class="mb-2">
-                    <a class="nav-link sidebar-link @(currentController == "Home" ? "sidebar-active" : "")" asp-controller="Home" asp-action="Index">
-                        <i class="bi bi-grid text-primary"></i> <span class="link-text">میز کار مرکزی</span>
-                    </a>
-                </div>
-
-                <div class="accordion sidebar-accordion" id="sidebarAccordion">
+                    <section class="sidebar-section sidebar-section-scroll">
+                        <div class="sidebar-section-head">
+                            <span>همه صفحات</span>
+                            <small>دسته‌بندی ماژولار</small>
+                        </div>
+                        <div class="sidebar-pages-scroll">
+                            <div class="accordion sidebar-accordion" id="sidebarAccordion">
                     @if (userCanAccessHumanCapital)
                     {
                         <div class="accordion-item">
@@ -998,9 +206,9 @@
                             <div id="collapseHumanCapital" class="accordion-collapse collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "show" : "")" aria-labelledby="headingHumanCapital" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "HumanCapital" ? "sidebar-active" : "")" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-people text-warning"></i> <span class="link-text">سرمایه انسانی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Leaves" ? "sidebar-active" : "")" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar-check text-success"></i> <span class="link-text">درخواست مرخصی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Letters" ? "sidebar-active" : "")" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope-paper text-danger"></i> <span class="link-text">مدیریت نامه‌ها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "HumanCapital" ? "sidebar-active" : "")" data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-people text-warning"></i> <span class="link-text">سرمایه انسانی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Leaves" ? "sidebar-active" : "")" data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar-check text-success"></i> <span class="link-text">درخواست مرخصی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Letters" ? "sidebar-active" : "")" data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope-paper text-danger"></i> <span class="link-text">مدیریت نامه‌ها</span></a>
                                     </nav>
                                 </div>
                             </div>
@@ -1018,14 +226,17 @@
                             <div id="collapseFinancial" class="accordion-collapse collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "show" : "")" aria-labelledby="headingFinancial" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Sales" ? "sidebar-active" : "")" asp-controller="Financial" asp-action="Sales"><i class="bi bi-graph-up text-success"></i> <span class="link-text">مدیریت فاکتورهای فروش (درآمد)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Purchases" ? "sidebar-active" : "")" asp-controller="Financial" asp-action="Purchases"><i class="bi bi-cart text-primary"></i> <span class="link-text">مدیریت فاکتورهای خرید (هزینه)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "Dashboard" || currentAction == "ReportingHub") ? "sidebar-active" : "")" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-speedometer2 text-info"></i> <span class="link-text">داشبورد مالی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "VatDashboard" || currentAction == "Dashboard") ? "sidebar-active" : "")" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent text-warning"></i> <span class="link-text">مالیات بر ارزش افزوده</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "SeasonalTax" || currentAction == "SeasonalTaxReport") ? "sidebar-active" : "")" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-journal-text text-info"></i> <span class="link-text">معاملات فصلی (ماده ۱۶۹)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "ReportingHub" ? "sidebar-active" : "")" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart text-secondary"></i> <span class="link-text">گزارشات و داشبورد مدیریتی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Payroll" ? "sidebar-active" : "")" asp-controller="Payroll" asp-action="Index"><i class="bi bi-cash-stack text-warning"></i> <span class="link-text">لیست حقوق</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Bimeh" ? "sidebar-active" : "")" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-lock text-info"></i> <span class="link-text">لیست بیمه</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Sales" ? "sidebar-active" : "")" data-nav-id="financial-sales" asp-controller="Financial" asp-action="Sales"><i class="bi bi-graph-up text-success"></i> <span class="link-text">مدیریت فاکتورهای فروش (درآمد)</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Purchases" ? "sidebar-active" : "")" data-nav-id="financial-purchases" asp-controller="Financial" asp-action="Purchases"><i class="bi bi-cart text-primary"></i> <span class="link-text">مدیریت فاکتورهای خرید (هزینه)</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-table text-dark"></i> <span class="link-text">دفتر کل و عملیات مالی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-period-closing" asp-controller="Financial" asp-action="LedgerOperations" asp-fragment="period-closing-panel"><i class="bi bi-hourglass-split text-danger"></i> <span class="link-text">عملیات پایان دوره</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-layout-text-window-reverse text-primary"></i> <span class="link-text">تراز آزمایشی انترپرایز</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "Dashboard" || currentAction == "ReportingHub") ? "sidebar-active" : "")" data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-speedometer2 text-info"></i> <span class="link-text">داشبورد مالی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "VatDashboard" || currentAction == "Dashboard") ? "sidebar-active" : "")" data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent text-warning"></i> <span class="link-text">مالیات بر ارزش افزوده</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "SeasonalTax" || currentAction == "SeasonalTaxReport") ? "sidebar-active" : "")" data-nav-id="financial-seasonal" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-journal-text text-info"></i> <span class="link-text">معاملات فصلی (ماده ۱۶۹)</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "ReportingHub" ? "sidebar-active" : "")" data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart text-secondary"></i> <span class="link-text">گزارشات و داشبورد مدیریتی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Payroll" ? "sidebar-active" : "")" data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-cash-stack text-warning"></i> <span class="link-text">لیست حقوق</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Bimeh" ? "sidebar-active" : "")" data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-lock text-info"></i> <span class="link-text">لیست بیمه</span></a>
                                     </nav>
                                 </div>
                             </div>
@@ -1043,7 +254,7 @@
                             <div id="collapseWarehouse" class="accordion-collapse collapse @((currentController == "Warehouse" || currentController == "Vendors" || currentController == "Employers") ? "show" : "")" aria-labelledby="headingWarehouse" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Index" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam text-primary"></i> <span class="link-text">داشبورد انبار</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Index" ? "sidebar-active" : "")" data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam text-primary"></i> <span class="link-text">داشبورد انبار</span></a>
                                         <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Products" || currentAction == "CreateProduct" || currentAction == "EditProduct") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box-seam text-info"></i> <span class="link-text">کالاها</span></a>
                                         <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Warehouses" || currentAction == "CreateWarehouse" || currentAction == "EditWarehouse") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Warehouses"><i class="bi bi-building text-secondary"></i> <span class="link-text">انبارها</span></a>
                                         <a class="nav-link sidebar-link @(currentController == "Vendors" ? "sidebar-active" : "")" asp-controller="Vendors" asp-action="Index"><i class="bi bi-truck text-success"></i> <span class="link-text">تامین‌کنندگان</span></a>
@@ -1064,11 +275,11 @@
                     {
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingSettings">
-                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
+                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "تحلیلفرآیند") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
                                     تنظیمات
                                 </button>
                             </h2>
-                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
+                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "تحلیلفرآیند") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
                                         @if (userHasSecurityAccess)
@@ -1078,9 +289,14 @@
                                             </a>
                                         }
 
-                                        <a class="nav-link sidebar-link @(currentController == "ManagementDashboard" ? "sidebar-active" : "")" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-grid-1x2 text-primary"></i> <span class="link-text">داشبورد مدیریتی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Search" ? "sidebar-active" : "")" asp-controller="Search" asp-action="Index"><i class="bi bi-search text-primary"></i> <span class="link-text">جستجوی سراسری</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Reports" ? "sidebar-active" : "")" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph text-success"></i> <span class="link-text">گزارش‌ساز و خروجی‌ها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "ManagementDashboard" ? "sidebar-active" : "")" data-nav-id="managementdashboard-index" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-grid-1x2 text-primary"></i> <span class="link-text">داشبورد مدیریتی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes text-warning"></i> <span class="link-text">کارتابل مرکزی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Search" ? "sidebar-active" : "")" data-nav-id="search-index" asp-controller="Search" asp-action="Index"><i class="bi bi-search text-primary"></i> <span class="link-text">جستجوی سراسری</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Reports" ? "sidebar-active" : "")" data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph text-success"></i> <span class="link-text">گزارش‌ساز و خروجی‌ها</span></a>
+                                        @if (userCanAccessProcessAnalytics)
+                                        {
+                                            <a class="nav-link sidebar-link @(currentController == "تحلیلفرآیند" ? "sidebar-active" : "")" asp-controller="تحلیلفرآیند" asp-action="شاخص"><i class="bi bi-bar-chart-line text-danger"></i> <span class="link-text">تحلیل فرآیند</span></a>
+                                        }
                                         <a class="nav-link sidebar-link @(currentController == "OrganizationCalendar" ? "sidebar-active" : "")" asp-controller="OrganizationCalendar" asp-action="Index"><i class="bi bi-calendar3 text-primary"></i> <span class="link-text">تقویم سازمانی</span></a>
                                         <a class="nav-link sidebar-link @(currentController == "DocumentArchive" ? "sidebar-active" : "")" asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive text-warning"></i> <span class="link-text">بایگانی اسناد</span></a>
 
@@ -1095,19 +311,44 @@
                             </div>
                         </div>
                     }
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="sidebar-fixed-bottom">
+                    <section class="sidebar-section">
+                        <div class="sidebar-section-head">
+                            <span>صفحات پرکاربرد</span>
+                            <small>پرمراجعه</small>
+                        </div>
+                        <nav class="nav flex-column sidebar-dynamic-nav" id="frequentPagesNav">
+                            <span class="sidebar-empty-state">هنوز داده‌ای ثبت نشده است.</span>
+                        </nav>
+                    </section>
+
+                    <section class="sidebar-section">
+                        <div class="sidebar-section-head">
+                            <span>آخرین بازدیدها</span>
+                            <small>دسترسی اخیر</small>
+                        </div>
+                        <nav class="nav flex-column sidebar-dynamic-nav" id="recentPagesNav">
+                            <span class="sidebar-empty-state">هنوز صفحه‌ای ثبت نشده است.</span>
+                        </nav>
+                    </section>
                 </div>
             </div>
 
             <div class="sidebar-footer">
                 <a asp-controller="Settings" asp-action="Index" class="user-profile-link">
                     <div class="user-profile-pill">
-                            <div class="user-avatar" style="position: relative;">
+                            <div class="user-avatar" >
                             <div class="user-avatar-box"><i class="bi bi-person-fill text-secondary"></i></div>
                             <span class="online-status"></span>
                             </div>
-                            <div class="user-info" style="flex: 1;">
-                                <span class="u-name" style="display: block; font-size: 0.85rem; font-weight: bold; color:var(--layout-text);">تنظیمات سامانه</span>
-                                <span class="u-role" style="font-size: 0.7rem; color: var(--layout-text-muted);">@displayName - @userRoleLabel</span>
+                            <div class="user-info" >
+                                <span class="u-name" >تنظیمات سامانه</span>
+                                <span class="u-role" >@displayName - @userRoleLabel</span>
                             </div>
                         </div>
                     </a>
@@ -1121,7 +362,7 @@
                     <div class="topbar-clock-box">
                         <i class="bi bi-clock-history text-primary"></i>
                         <span id="topbarTime">--:--:--</span>
-                        <span style="color: var(--layout-border);">|</span>
+                        <span class="topbar-divider">|</span>
                         <span id="topbarDate">۱۴۰۵/۰۲/۲۷</span>
                     </div>
 
@@ -1157,32 +398,39 @@
                                         <i class="bi @notification.Icon text-@notification.Tone"></i>
                                         <span>
                                             <strong>@notification.Title</strong>
-                                            <small>@notification.Description</small>
+                                            <small>@notification.Message</small>
                                         </span>
                                     </a>
                                 }
                             }
+                            <a class="notification-item" href="/Notifications">
+                                <i class="bi bi-list-check text-secondary"></i>
+                                <span>
+                                    <strong>مشاهده همه اعلان‌ها</strong>
+                                    <small>مرکز اعلان‌ها و وضعیت خوانده‌شدن</small>
+                                </span>
+                            </a>
                         </div>
                     </div>
                     <div class="topbar-right-info d-none d-lg-flex">
-                        <span><span class="status-dot" style="background-color: #22c55e;"></span> سرور: <span class="fw-bold text-success">فعال</span></span>
-                        <span><span class="status-dot" style="background-color: #38bdf8;"></span> دیتابیس: <span class="fw-bold text-info">متصل</span></span>
+                        <span><span class="status-dot status-dot-success"></span> سرور: <span class="fw-bold text-success">فعال</span></span>
+                        <span><span class="status-dot status-dot-info"></span> دیتابیس: <span class="fw-bold text-info">متصل</span></span>
                     </div>
-                    <button class="btn btn-primary btn-sm px-3 py-1.5" style="background-color: var(--primary); border:none; font-size:0.8rem;">
+                    <button class="btn btn-primary btn-sm topbar-new-request">
                         <i class="bi bi-plus-lg me-1"></i> درخواست جدید
                     </button>
                 </div>
             </header>
 
-            <main id="main-content-wrapper" class="px-3 py-3" style="color: var(--layout-text); background: transparent;">
+            <main id="main-content-wrapper" class="px-3 py-3">
                 @RenderBody()
             </main>
         </div>
 
     </div>
 
-    <script src="https://lib.arvancloud.ir/jquery/3.6.3/jquery.min.js"></script>
-    <script src="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/js/layout.js" asp-append-version="true"></script>
     <script src="~/js/professional-table.js" asp-append-version="true"></script>
     <script>
@@ -1388,13 +636,6 @@
             });
 
             document.addEventListener('keydown', (event) => {
-                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-                    event.preventDefault();
-                    input.focus();
-                    input.select();
-                    sidebarContainer.scrollTop = 0;
-                }
-
                 if (event.key === 'Escape' && document.activeElement === input) {
                     input.value = '';
                     resetSearch();
@@ -1421,7 +662,98 @@
         </div>
     </div>
 
+    <div class="modal fade" id="appCommandPalette" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content command-palette">
+                <div class="command-palette-head">
+                    <i class="bi bi-command"></i>
+                    <input id="appCommandInput" type="search" autocomplete="off" placeholder="جستجوی فرمان، صفحه یا گزارش..." aria-label="جستجوی فرمان">
+                    <kbd>Ctrl K</kbd>
+                </div>
+                <div id="appCommandList" class="command-palette-list"></div>
+                <div class="command-palette-foot">Enter برای اجرا، Esc برای بستن</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const frequentNav = document.getElementById('frequentPagesNav');
+            const recentNav = document.getElementById('recentPagesNav');
+            const trackedLinks = Array.from(document.querySelectorAll('a.sidebar-link[data-nav-id]'));
+            if (!frequentNav || !recentNav || trackedLinks.length === 0) {
+                return;
+            }
+
+            const recentKey = 'rhyno.sidebar.recent';
+            const usageKey = 'rhyno.sidebar.usage';
+            const maxItems = 6;
+
+            const catalog = new Map(trackedLinks.map((link) => [link.dataset.navId, {
+                id: link.dataset.navId,
+                href: link.getAttribute('href') || '#',
+                iconClass: link.querySelector('i')?.className || 'bi bi-file-earmark',
+                text: (link.querySelector('.link-text')?.textContent || link.textContent || '').trim(),
+                active: link.classList.contains('sidebar-active')
+            }]));
+
+            const readState = (key, fallback) => {
+                try {
+                    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+                } catch {
+                    return fallback;
+                }
+            };
+
+            const writeList = (container, ids, emptyText) => {
+                container.innerHTML = '';
+                const items = ids
+                    .map((id) => catalog.get(id))
+                    .filter((item, index, array) => item && array.findIndex((entry) => entry.id === item.id) === index);
+
+                if (items.length === 0) {
+                    const empty = document.createElement('span');
+                    empty.className = 'sidebar-empty-state';
+                    empty.textContent = emptyText;
+                    container.appendChild(empty);
+                    return;
+                }
+
+                items.forEach((item) => {
+                    const anchor = document.createElement('a');
+                    anchor.className = `nav-link sidebar-link sidebar-link-compact${item.active ? ' sidebar-active' : ''}`;
+                    anchor.href = item.href;
+                    anchor.innerHTML = `<i class="${item.iconClass}"></i><span class="link-text">${item.text}</span>`;
+                    container.appendChild(anchor);
+                });
+            };
+
+            const activeId = trackedLinks.find((link) => link.classList.contains('sidebar-active'))?.dataset.navId;
+            const recent = readState(recentKey, []);
+            const usage = readState(usageKey, {});
+            if (activeId) {
+                localStorage.setItem(recentKey, JSON.stringify([activeId, ...recent.filter((id) => id !== activeId)].slice(0, maxItems)));
+                localStorage.setItem(usageKey, JSON.stringify({ ...usage, [activeId]: Number(usage[activeId] || 0) + 1 }));
+            }
+
+            const nextRecent = readState(recentKey, []);
+            const nextUsage = readState(usageKey, {});
+            const frequent = Object.entries(nextUsage)
+                .sort((left, right) => Number(right[1]) - Number(left[1]))
+                .map((entry) => entry[0])
+                .slice(0, maxItems);
+
+            writeList(frequentNav, frequent, 'هنوز صفحه پرکاربردی ثبت نشده است.');
+            writeList(recentNav, nextRecent, 'هنوز صفحه‌ای باز نشده است.');
+        })();
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
     <script src="~/js/app-ui.js" asp-append-version="true"></script>
 </body>
 </html>
+
+
+
+
+

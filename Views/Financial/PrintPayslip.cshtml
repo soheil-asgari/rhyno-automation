@@ -7,15 +7,9 @@
 <head>
     <meta charset="utf-8" />
     <title>Pay Slip Print</title>
-    <style>
-        body { font-family: Tahoma, sans-serif; margin: 24px; color: #111827; font-size: 12px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-        .label { color: #4b5563; }
-        .value { font-weight: 700; }
-    </style>
 </head>
 <body onload="window.print()">
-    <h3 style="margin-bottom:10px;">فیش حقوقی</h3>
+    <h3 class="print-title-md">فیش حقوقی</h3>
     <div class="row"><span class="label">کارمند</span><span class="value">@Model.EmployeeName</span></div>
     <div class="row"><span class="label">دوره</span><span class="value">@ViewBag.PayrollYear/@ViewBag.PayrollMonth</span></div>
     <hr />
@@ -28,3 +22,7 @@
     <div class="row"><span class="label">خالص پرداختی</span><span class="value">@Model.NetPayable.ToString("N0")</span></div>
 </body>
 </html>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/financial-print.css" asp-append-version="true" />
+}
