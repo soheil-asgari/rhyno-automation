@@ -220,7 +220,7 @@
 
 @section Scripts {
     <script>
-        (() => {
+        (async () => {
             const workspace = document.querySelector('.inbox-workspace');
             if (!workspace) return;
 
@@ -258,7 +258,12 @@
             const quickCommentForm = document.getElementById('quickCommentForm');
             const quickDelegateForm = document.getElementById('quickDelegateForm');
 
-            const storageKey = 'workInbox.savedViews.v1';
+            const antiForgeryToken = document.querySelector('#bulkActionForm input[name="__RequestVerificationToken"]')?.value || '';
+            const preferenceEndpoint = '/api/saved-views/WorkInbox';
+            const storageKey = 'workInbox.savedViews.v2';
+            const allowedIconPattern = /^bi-[a-z0-9-]+$/i;
+            const allowedBadgePattern = /^(badge\s+)?text-bg-[a-z-]+$/i;
+            const allowedPriorityPattern = /^inbox-priority-(high|normal)$/i;
             const state = {
                 search: '',
                 groupBy: 'none',
@@ -298,9 +303,79 @@
                 localStorage.setItem(storageKey, JSON.stringify(views));
             }
 
-            function renderSavedViews() {
-                const views = getSavedViews();
-                savedViewsList.innerHTML = '';
+            async function loadSavedViews() {
+                try {
+                    const response = await fetch(preferenceEndpoint, { credentials: 'same-origin' });
+                    const payload = response.ok ? await response.json() : [];
+                    const views = Array.isArray(payload)
+                        ? payload.map(item => {
+                            try {
+                                return { name: item.name, state: JSON.parse(item.filterQueryJson || '{}') };
+                            } catch {
+                                return null;
+                            }
+                        }).filter(Boolean)
+                        : [];
+
+                    if (views.length > 0) {
+                        setSavedViews(views);
+                        return views;
+                    }
+                } catch {
+                }
+
+                return getSavedViews();
+            }
+
+            async function persistSavedViews(views) {
+                setSavedViews(views);
+                try {
+                    await Promise.all(views.map(view => fetch(preferenceEndpoint, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(antiForgeryToken ? { RequestVerificationToken: antiForgeryToken } : {})
+                        },
+                        body: JSON.stringify({
+                            name: view.name,
+                            targetGridId: 'WorkInbox',
+                            filterQueryJson: JSON.stringify(view.state),
+                            columnLayoutJson: '[]'
+                        })
+                    })));
+                } catch {
+                }
+            }
+
+            function sanitizeIcon(icon) {
+                return allowedIconPattern.test(icon || '') ? icon : 'bi-circle';
+            }
+
+            function sanitizeBadgeClass(className) {
+                return allowedBadgePattern.test(className || '') ? className : 'text-bg-secondary';
+            }
+
+            function sanitizePriorityClass(className) {
+                return allowedPriorityPattern.test(className || '') ? className : 'inbox-priority-normal';
+            }
+
+            function sanitizeUrl(url) {
+                if (!url || typeof url !== 'string') return '#';
+                return /^(\/|https?:\/\/)/i.test(url) ? url : '#';
+            }
+
+            function escapeHtml(value) {
+                return `${value ?? ''}`
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#39;');
+            }
+
+            function renderSavedViews(views = getSavedViews()) {
+                savedViewsList.replaceChildren();
 
                 if (views.length === 0) {
                     const empty = document.createElement('span');
@@ -327,10 +402,21 @@
                     const remove = document.createElement('button');
                     remove.type = 'button';
                     remove.className = 'btn btn-sm btn-link text-danger';
-                    remove.innerHTML = '<i class="bi bi-x-lg"></i>';
-                    remove.addEventListener('click', () => {
-                        setSavedViews(getSavedViews().filter(item => item.name !== view.name));
-                        renderSavedViews();
+                    const removeIcon = document.createElement('i');
+                    removeIcon.className = 'bi bi-x-lg';
+                    remove.appendChild(removeIcon);
+                    remove.addEventListener('click', async () => {
+                        const nextViews = getSavedViews().filter(item => item.name !== view.name);
+                        setSavedViews(nextViews);
+                        try {
+                            await fetch(`${preferenceEndpoint}/${encodeURIComponent(view.name)}`, {
+                                method: 'DELETE',
+                                credentials: 'same-origin',
+                                headers: antiForgeryToken ? { RequestVerificationToken: antiForgeryToken } : {}
+                            });
+                        } catch {
+                        }
+                        renderSavedViews(nextViews);
                     });
 
                     chip.append(apply, remove);
@@ -397,9 +483,9 @@
                 detailStatus.textContent = item.status;
                 detailSla.textContent = item.slaText || '-';
                 detailCreatedAt.textContent = item.createdAtText;
-                detailOpenLink.href = item.url || '#';
+                detailOpenLink.href = sanitizeUrl(item.url);
 
-                detailChips.innerHTML = '';
+                detailChips.replaceChildren();
                 [item.priority, item.requiresAction ? 'نیازمند اقدام' : '', !item.isRead ? 'خوانده‌نشده' : '', item.isOverdue ? 'نقض سطح خدمت' : '']
                     .filter(Boolean)
                     .forEach(label => {
@@ -441,10 +527,10 @@
                     return acc;
                 }, {});
 
-                groupsHost.innerHTML = '';
+                groupsHost.replaceChildren();
 
                 if (filteredItems.length === 0) {
-                    groupsHost.innerHTML = '<div class="empty-state">هیچ موردی با این ترکیب فیلتر و جستجو پیدا نشد.</div>';
+                    groupsHost.innerHTML = '<div class="empty-state">No matching items found.</div>';
                     renderDetail(null);
                     updateSelectionMeta();
                     return;
@@ -456,14 +542,14 @@
 
                     const header = document.createElement('div');
                     header.className = 'inbox-group-header';
-                    header.innerHTML = `<strong>${groupName}</strong><span>${groupItems.length} مورد</span>`;
+                    header.innerHTML = `<strong>${escapeHtml(groupName)}</strong><span>${groupItems.length} items</span>`;
 
                     const body = document.createElement('div');
                     body.className = 'inbox-list';
 
                     groupItems.forEach(item => {
                         const row = document.createElement('article');
-                        row.className = `inbox-item ${item.priorityCssClass || ''}${state.activeItemId === item.id ? ' is-active' : ''}`;
+                        row.className = `inbox-item ${sanitizePriorityClass(item.priorityCssClass)}${state.activeItemId === item.id ? ' is-active' : ''}`;
                         row.dataset.itemId = item.id;
 
                         const checked = state.selectedIds.has(item.id) ? 'checked' : '';
@@ -474,24 +560,24 @@
                         row.innerHTML = `
                             <input class="form-check-input inbox-item-check" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
                             <button type="button" class="inbox-item-surface">
-                                <span class="inbox-item-icon"><i class="bi ${item.icon}"></i></span>
+                                <span class="inbox-item-icon"><i class="bi ${sanitizeIcon(item.icon)}"></i></span>
                                 <span class="inbox-item-body">
                                     <span class="inbox-title-row">
-                                        <strong>${item.title}</strong>
-                                        <small>${item.createdAtText}</small>
+                                        <strong>${escapeHtml(item.title)}</strong>
+                                        <small>${escapeHtml(item.createdAtText)}</small>
                                     </span>
-                                    <span class="inbox-description">${item.description}</span>
+                                    <span class="inbox-description">${escapeHtml(item.description)}</span>
                                     <span class="inbox-meta">
-                                        <em>${item.module}</em>
-                                        <span class="badge ${item.statusCssClass}">${item.status}</span>
-                                        <span class="badge text-bg-light">${item.slaText}</span>
+                                        <em>${escapeHtml(item.module)}</em>
+                                        <span class="badge ${sanitizeBadgeClass(item.statusCssClass)}">${escapeHtml(item.status)}</span>
+                                        <span class="badge text-bg-light">${escapeHtml(item.slaText)}</span>
                                         ${unread}
                                         ${overdue}
                                         ${actionFlag}
                                     </span>
                                 </span>
                             </button>
-                            <a class="inbox-open-icon" href="${item.url}" aria-label="باز کردن ${item.title}">
+                            <a class="inbox-open-icon" href="${sanitizeUrl(item.url)}" aria-label="Open ${escapeHtml(item.title)}">
                                 <i class="bi bi-arrow-left-short"></i>
                             </a>`;
 
@@ -539,19 +625,22 @@
             actionFilterSelect.addEventListener('change', () => { state.action = actionFilterSelect.value; renderInbox(); });
             actionSelect.addEventListener('change', updateBulkFieldRules);
 
-            saveCurrentViewBtn.addEventListener('click', () => {
+            saveCurrentViewBtn.addEventListener('click', async () => {
                 const name = prompt('نام نمای ذخیره‌شده را وارد کنید');
                 if (!name) return;
                 const views = getSavedViews().filter(item => item.name !== name);
                 views.push({ name, state: { ...state, selectedIds: [] } });
-                setSavedViews(views);
-                renderSavedViews();
+                await persistSavedViews(views);
+                renderSavedViews(views);
             });
 
             syncControls();
             updateBulkFieldRules();
-            renderSavedViews();
+            renderSavedViews(await loadSavedViews());
             renderInbox();
         })();
     </script>
 }
+
+
+

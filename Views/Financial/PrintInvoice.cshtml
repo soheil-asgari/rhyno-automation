@@ -1,47 +1,343 @@
 @model Invoice
 @{
     Layout = null;
+    var isSale = Model.InvoiceType == "Sale";
+
+    var sellerName      = isSale ? (string.IsNullOrEmpty(Model.VendorName) ? "شرکت راینو خودرو (سهامی خاص)" : Model.VendorName) : Model.PartyName;
+    var sellerEconomicId  = isSale ? "411589763248" : (Model.NationalCodeOrEconomicId ?? "-");
+    var sellerNationalCode = isSale ? "10103568890" : "-";
+    var sellerPostalCode   = isSale ? "۱۴۷۳۹۵۸۲۶۱" : "-";
+    var sellerAddress      = isSale ? "تهران، بزرگراه ستاری، خیابان خلیل نظری، پلاک ۴۲، طبقه سوم" : (Model.PartyName + " - آدرس ثبت شده");
+    var sellerPhone        = isSale ? "۰۲۱-۴۴۹۸۷۶۵۴" : "-";
+
+    var buyerName       = isSale ? Model.PartyName : (string.IsNullOrEmpty(Model.VendorName) ? "شرکت راینو خودرو (سهامی خاص)" : Model.VendorName);
+    var buyerEconomicId   = isSale ? (Model.NationalCodeOrEconomicId ?? "-") : "411589763248";
+    var buyerNationalCode  = isSale ? "-" : "10103568890";
+    var buyerPostalCode    = isSale ? "-" : "۱۴۷۳۹۵۸۲۶۱";
+    var buyerAddress       = isSale ? (Model.PartyName + " - آدرس ثبت شده در سامانه مشتریان") : "تهران، بزرگراه ستاری، خیابان خلیل نظری، پلاک ۴۲، طبقه سوم";
+    var buyerPhone         = isSale ? "-" : "۰۲۱-۴۴۹۸۷۶۵۴";
+}
+@functions {
+    public static string NumberToPersianWords(decimal number)
+    {
+        if (number == 0) return "صفر";
+        long val = (long)number;
+        string[] units    = { "", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه" };
+        string[] tens_    = { "", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود" };
+        string[] teens    = { "ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده" };
+        string[] hundreds = { "", "صد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد" };
+        string[] scales   = { "", "هزار", "میلیون", "میلیارد" };
+
+        string Wordify(long n, int level)
+        {
+            if (n == 0) return "";
+            string t = "";
+            int h = (int)(n / 100), d = (int)((n % 100) / 10), u = (int)(n % 10);
+            if (h > 0) t += hundreds[h] + " و ";
+            if (d == 1) { t += teens[u] + " و "; }
+            else { if (d > 1) t += tens_[d] + " و "; if (u > 0) t += units[u] + " و "; }
+            if (t.EndsWith(" و ")) t = t[..^3];
+            if (level > 0 && n > 0) t += " " + scales[level];
+            return t;
+        }
+
+        string result = ""; int lv = 0;
+        while (val > 0)
+        {
+            long part = val % 1000;
+            string pw = Wordify(part, lv);
+            if (!string.IsNullOrEmpty(pw)) result = pw + (string.IsNullOrEmpty(result) ? "" : " و ") + result;
+            val /= 1000; lv++;
+        }
+        return result.Trim();
+    }
 }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="utf-8" />
-    <title>Invoice Print</title>
-</head>
-<body onload="window.print()">
-    <div class="head">
-        <div class="title">فاکتور @(Model.InvoiceType == "Sale" ? "فروش" : "خرید")</div>
-        <div class="meta">شماره: @Model.InvoiceNumber | تاریخ: @Model.DateShamsi</div>
-        <div class="meta">طرف معامله: @Model.PartyName | شناسه: @(Model.NationalCodeOrEconomicId ?? "-")</div>
-    </div>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>صورتحساب رسمی - @Model.InvoiceNumber</title>
+<style>
+    /* ─── Reset ─── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <table>
-        <thead>
-            <tr><th>شرح</th><th>تعداد</th><th>فی</th><th>جمع جزء</th><th>VAT</th><th>جمع کل</th></tr>
-        </thead>
-        <tbody>
+    /* ─── Base ─── */
+    body {
+        font-family: Tahoma, Arial, sans-serif;
+        font-size: 9pt;
+        color: #000;
+        direction: rtl;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* ─── Outer wrapper: full width for A4 ─── */
+    .page-wrap {
+        width: 100%;
+        padding: 4mm;
+    }
+
+    /* ─── Double-border box ─── */
+    .outer-border {
+        border: 2pt solid #000;
+        padding: 2pt;
+        width: 100%;
+    }
+    .inner-border {
+        border: 1pt solid #000;
+        padding: 3mm;
+        width: 100%;
+    }
+
+    /* ─── All tables use 100% width and collapsed borders ─── */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    td, th {
+        border: 1pt solid #000;
+        padding: 3pt 5pt;
+        font-size: 8.5pt;
+        vertical-align: middle;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    th {
+        font-weight: bold;
+        background-color: #e8e8e8 !important;
+        text-align: center;
+    }
+
+    /* ─── Section header row (as table row, not div) ─── */
+    .sec-hdr td {
+        background-color: #f0f0f0 !important;
+        font-weight: bold;
+        font-size: 9pt;
+        padding: 3pt 6pt;
+        text-align: right;
+    }
+
+    .lbl { font-weight: bold; background-color: #fafafa !important; width: 18%; }
+    .val { width: 32%; }
+
+    .c { text-align: center; }
+    .r { text-align: right; }
+    .l { text-align: left; }
+    .bold { font-weight: bold; }
+
+    .sum-lbl { font-weight: bold; background-color: #f0f0f0 !important; text-align: right; }
+    .sum-val { text-align: left; }
+    .grand-lbl { font-weight: bold; background-color: #ddd !important; text-align: right; }
+    .grand-val { font-weight: bold; background-color: #ddd !important; text-align: left; }
+
+    /* ─── Spacer between sections ─── */
+    .gap { height: 4pt; }
+
+    /* ─── Print overrides ─── */
+    @@media print {
+        @@page {
+            size: A4 portrait;
+            margin: 8mm 8mm 8mm 8mm;
+        }
+        body { padding: 0; margin: 0; }
+        .page-wrap { padding: 0; }
+        tr { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+<div class="outer-border">
+<div class="inner-border">
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<table>
+    <tr>
+        <td style="width:22%; text-align:center; font-weight:bold; font-size:10pt;">
+            شرکت راینو خودرو<br/>
+            <span style="font-size:7pt; font-weight:normal;">سامانه اتوماسیون اداری</span>
+        </td>
+        <td style="width:56%; text-align:center; font-size:12pt; font-weight:bold;">
+            صورتحساب رسمی فروش کالا و خدمات
+            <br/><span style="font-size:7.5pt; font-weight:normal;">فاکتور رسمی خرید و فروش کارگاه‌ها و شرکت‌های تجاری</span>
+        </td>
+        <td style="width:22%; font-size:8pt; line-height:1.8;">
+            <strong>شماره:</strong> @Model.InvoiceNumber<br/>
+            <strong>تاریخ:</strong> @Model.DateShamsi<br/>
+            <strong>نوع:</strong> @(isSale ? "فروش" : "خرید")
+        </td>
+    </tr>
+</table>
+
+<tr class="gap"><td colspan="4" style="border:none; padding:2pt;"></td></tr>
+
+<!-- ═══════════════════════ SECTION 1 - SELLER ═══════════════════════ -->
+<table style="margin-top:3pt;">
+    <tr class="sec-hdr"><td colspan="4">۱.  مشخصات فروشنده</td></tr>
+    <tr>
+        <td class="lbl">نام شخص حقیقی/حقوقی:</td>
+        <td class="val">@sellerName</td>
+        <td class="lbl">شماره اقتصادی:</td>
+        <td class="val">@sellerEconomicId</td>
+    </tr>
+    <tr>
+        <td class="lbl">شماره ملی / شناسه ملی:</td>
+        <td class="val">@sellerNationalCode</td>
+        <td class="lbl">کد پستی:</td>
+        <td class="val">@sellerPostalCode</td>
+    </tr>
+    <tr>
+        <td class="lbl">نشانی کامل:</td>
+        <td class="val" colspan="3">@sellerAddress</td>
+    </tr>
+    <tr>
+        <td class="lbl">تلفن / نمابر:</td>
+        <td class="val">@sellerPhone</td>
+        <td class="lbl">سایت / ایمیل:</td>
+        <td class="val">-</td>
+    </tr>
+</table>
+
+<!-- ═══════════════════════ SECTION 2 - BUYER ═══════════════════════ -->
+<table style="margin-top:3pt;">
+    <tr class="sec-hdr"><td colspan="4">۲.  مشخصات خریدار</td></tr>
+    <tr>
+        <td class="lbl">نام شخص حقیقی/حقوقی:</td>
+        <td class="val">@buyerName</td>
+        <td class="lbl">شماره اقتصادی:</td>
+        <td class="val">@buyerEconomicId</td>
+    </tr>
+    <tr>
+        <td class="lbl">شماره ملی / شناسه ملی:</td>
+        <td class="val">@buyerNationalCode</td>
+        <td class="lbl">کد پستی:</td>
+        <td class="val">@buyerPostalCode</td>
+    </tr>
+    <tr>
+        <td class="lbl">نشانی کامل:</td>
+        <td class="val" colspan="3">@buyerAddress</td>
+    </tr>
+    <tr>
+        <td class="lbl">تلفن / نمابر:</td>
+        <td class="val">@buyerPhone</td>
+        <td class="lbl">سایت / ایمیل:</td>
+        <td class="val">-</td>
+    </tr>
+</table>
+
+<!-- ═══════════════════════ SECTION 3 - ITEMS TABLE ═══════════════════════ -->
+<table style="margin-top:3pt;">
+    <thead>
+        <tr class="sec-hdr"><th colspan="8">۳.  مشخصات کالا یا خدمات مورد معامله</th></tr>
+        <tr>
+            <th style="width:5%;">ردیف</th>
+            <th style="width:9%;">کد کالا</th>
+            <th style="width:30%;">شرح کالا یا خدمات</th>
+            <th style="width:7%;">تعداد</th>
+            <th style="width:7%;">واحد</th>
+            <th style="width:14%;">مبلغ واحد (ریال)</th>
+            <th style="width:14%;">مبلغ کل (ریال)</th>
+            <th style="width:14%;">مالیات ۱۰٪ (ریال)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ int rowIdx = 1; }
         @foreach (var item in Model.Items)
         {
             <tr>
-                <td>@item.ItemName</td>
-                <td>@item.Quantity.ToString("N3")</td>
-                <td>@item.UnitPrice.ToString("N0")</td>
-                <td>@item.LineSubTotal.ToString("N0")</td>
-                <td>@item.LineVatAmount.ToString("N0")</td>
-                <td>@item.LineGrandTotal.ToString("N0")</td>
+                <td class="c">@rowIdx</td>
+                <td class="c">@(item.Product?.Code ?? "-")</td>
+                <td class="r">@item.ItemName</td>
+                <td class="c">@item.Quantity.ToString("N0")</td>
+                <td class="c">@(item.Product?.Unit ?? "عدد")</td>
+                <td class="l">@item.UnitPrice.ToString("N0")</td>
+                <td class="l">@item.LineSubTotal.ToString("N0")</td>
+                <td class="l">@item.LineVatAmount.ToString("N0")</td>
+            </tr>
+            rowIdx++;
+        }
+        @* Pad to 5 rows minimum for proper official invoice appearance *@
+        @for (int p = Model.Items.Count; p < 5; p++)
+        {
+            <tr>
+                <td class="c">@(p + 1)</td>
+                <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+                <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
             </tr>
         }
-        </tbody>
-    </table>
+    </tbody>
+</table>
 
-    <div class="totals">
-        <div>جمع جزء: <strong>@Model.SubTotal.ToString("N0")</strong></div>
-        <div>مالیات 10٪: <strong>@Model.VatAmount.ToString("N0")</strong></div>
-        <div>جمع کل: <strong>@Model.GrandTotal.ToString("N0")</strong></div>
-    </div>
+<!-- ═══════════════════════ SECTION 4 - TOTALS ═══════════════════════ -->
+<table style="margin-top:3pt;">
+    <tr>
+        <td rowspan="4" style="width:55%; vertical-align:top; padding:5pt; font-size:8.5pt; line-height:1.7;">
+            <strong>مبلغ کل به حروف (ریال):</strong><br/>
+            @NumberToPersianWords(Model.GrandTotal * 10) ریال
+            <br/><br/>
+            <strong>مبلغ کل به حروف (تومان):</strong><br/>
+            @NumberToPersianWords(Model.GrandTotal) تومان
+            <br/><br/>
+            <strong>شرایط تسویه:</strong>
+            &nbsp; نقدی [ &nbsp;&nbsp; ] &nbsp;&nbsp;&nbsp; تعهدی [ &nbsp;&nbsp; ]
+        </td>
+        <td class="sum-lbl" style="width:27%;">جمع جزء (ریال):</td>
+        <td class="sum-val" style="width:18%;">@((Model.SubTotal * 10).ToString("N0"))</td>
+    </tr>
+    <tr>
+        <td class="sum-lbl">تخفیف کل (ریال):</td>
+        <td class="sum-val">۰</td>
+    </tr>
+    <tr>
+        <td class="sum-lbl">جمع مالیات و عوارض (ریال):</td>
+        <td class="sum-val">@((Model.VatAmount * 10).ToString("N0"))</td>
+    </tr>
+    <tr>
+        <td class="grand-lbl">جمع کل نهایی (ریال):</td>
+        <td class="grand-val">@((Model.GrandTotal * 10).ToString("N0"))</td>
+    </tr>
+</table>
+
+<!-- ═══════════════════════ SECTION 5 - SIGNATURES ═══════════════════════ -->
+<table style="margin-top:3pt; height:80pt;">
+    <tr>
+        <td style="width:50%; text-align:center; vertical-align:top; padding-top:6pt; font-weight:bold; font-size:9pt;">
+            مهر و امضای فروشنده
+            <br/><br/><br/>
+            <span style="font-size:7.5pt; font-weight:normal;">شرکت راینو خودرو (سهامی خاص)</span>
+        </td>
+        <td style="width:50%; text-align:center; vertical-align:top; padding-top:6pt; font-weight:bold; font-size:9pt;">
+            مهر و امضای خریدار
+            <br/><br/><br/>
+            <span style="font-size:7.5pt; font-weight:normal;">بدینوسیله صحت اقلام و مبالغ مندرج تأیید می‌گردد.</span>
+        </td>
+    </tr>
+</table>
+
+<!-- ═══════════════════════ NOTES ═══════════════════════ -->
+<table style="margin-top:3pt;">
+    <tr>
+        <td style="font-size:8pt; line-height:1.5;">
+            <strong>توضیحات:</strong>&nbsp;
+            @(string.IsNullOrEmpty(Model.Notes) ? "ثبت فاکتور در دفاتر قانونی انجام گردیده و منوط به تأیید نهایی طرفین است." : Model.Notes)
+        </td>
+    </tr>
+</table>
+
+</div><!-- inner-border -->
+</div><!-- outer-border -->
+</div><!-- page-wrap -->
+
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        setTimeout(function () {
+            window.print();
+            window.close();
+        }, 300);
+    });
+</script>
 </body>
 </html>
-
-@section Styles {
-    <link rel="stylesheet" href="~/css/financial-print.css" asp-append-version="true" />
-}

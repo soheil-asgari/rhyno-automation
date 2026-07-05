@@ -76,7 +76,7 @@
             : null;
         const preferredSelector = hashSelector || localStorage.getItem(TAB_STORAGE_KEY);
         if (!preferredSelector) {
-            const defaultTab = document.querySelector('#settings-tab .nav-link.active');
+            const defaultTab = document.querySelector('#settings-tab .active[data-bs-toggle="pill"]');
             if (defaultTab) {
                 updateActiveTabState(defaultTab.getAttribute('data-bs-target'));
             }
@@ -104,7 +104,7 @@
         });
 
         button.addEventListener('click', () => {
-            const selected = button.getAttribute('data-bs-target');
+        const selected = button.getAttribute('data-bs-target');
             if (selected) {
                 updateActiveTabState(selected);
             }
@@ -112,8 +112,20 @@
     });
 
     if (themeSelect) {
+        const normalizeThemeValue = (value) => {
+            const normalized = (value || 'System').toLowerCase();
+            if (normalized === 'light') {
+                return 'Light';
+            }
+            if (normalized === 'dark') {
+                return 'Dark';
+            }
+            return 'System';
+        };
+
         themeSelect.addEventListener('change', () => {
-            const selectedTheme = themeSelect.value || 'System';
+            const selectedTheme = normalizeThemeValue(themeSelect.value);
+            themeSelect.value = selectedTheme;
             applyPreviewTheme(selectedTheme);
             applyGlobalThemePreview(selectedTheme);
             localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, selectedTheme);
@@ -127,8 +139,10 @@
         const hostingForm = themeSelect.closest('form');
         if (hostingForm) {
             hostingForm.addEventListener('submit', () => {
-                localStorage.removeItem(THEME_STORAGE_KEY);
-                localStorage.removeItem(GLOBAL_THEME_STORAGE_KEY);
+                const selectedTheme = normalizeThemeValue(themeSelect.value);
+                themeSelect.value = selectedTheme;
+                localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, selectedTheme);
+                localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
             });
         }
     }
@@ -138,7 +152,7 @@
     applyPreviewTheme(initialTheme);
     applyGlobalThemePreview(initialTheme);
 
-    const initialActiveTab = document.querySelector('#settings-tab .nav-link.active');
+    const initialActiveTab = document.querySelector('#settings-tab .active[data-bs-toggle="pill"]');
     if (initialActiveTab) {
         updateActiveTabState(initialActiveTab.getAttribute('data-bs-target'));
     }

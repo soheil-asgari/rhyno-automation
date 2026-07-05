@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using OfficeAutomation.Data;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
@@ -36,6 +36,7 @@ builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddScoped<AuditRetentionService>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RowLevelSecuritySaveChangesInterceptor>();
+builder.Services.AddScoped<TenantSchemaCommandInterceptor>();
 
 builder.Services.AddDbContext<PlatformDbContext>((serviceProvider, options) =>
     options
@@ -50,7 +51,8 @@ builder.Services.AddDbContext<WorkflowDbContext>((serviceProvider, options) =>
         .ReplaceService<IModelCacheKeyFactory, TenantDbContextModelCacheKeyFactory>()
         .AddInterceptors(
             serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(),
-            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>()));
+            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>(),
+            serviceProvider.GetRequiredService<TenantSchemaCommandInterceptor>()));
 builder.Services.AddScoped<IWorkflowDbContext>(sp => sp.GetRequiredService<WorkflowDbContext>());
 
 builder.Services.AddDbContext<OfficeDbContext>((serviceProvider, options) =>
@@ -59,7 +61,8 @@ builder.Services.AddDbContext<OfficeDbContext>((serviceProvider, options) =>
         .ReplaceService<IModelCacheKeyFactory, TenantDbContextModelCacheKeyFactory>()
         .AddInterceptors(
             serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(),
-            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>()));
+            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>(),
+            serviceProvider.GetRequiredService<TenantSchemaCommandInterceptor>()));
 
 builder.Services.AddDbContext<FinanceDbContext>((serviceProvider, options) =>
     options
@@ -67,7 +70,8 @@ builder.Services.AddDbContext<FinanceDbContext>((serviceProvider, options) =>
         .ReplaceService<IModelCacheKeyFactory, TenantDbContextModelCacheKeyFactory>()
         .AddInterceptors(
             serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(),
-            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>()));
+            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>(),
+            serviceProvider.GetRequiredService<TenantSchemaCommandInterceptor>()));
 
 builder.Services.AddDbContext<InventoryDbContext>((serviceProvider, options) =>
     options
@@ -75,7 +79,8 @@ builder.Services.AddDbContext<InventoryDbContext>((serviceProvider, options) =>
         .ReplaceService<IModelCacheKeyFactory, TenantDbContextModelCacheKeyFactory>()
         .AddInterceptors(
             serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(),
-            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>()));
+            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>(),
+            serviceProvider.GetRequiredService<TenantSchemaCommandInterceptor>()));
 
 builder.Services.AddDbContext<IdentityDbContext>((serviceProvider, options) =>
     options
@@ -83,7 +88,8 @@ builder.Services.AddDbContext<IdentityDbContext>((serviceProvider, options) =>
         .ReplaceService<IModelCacheKeyFactory, TenantDbContextModelCacheKeyFactory>()
         .AddInterceptors(
             serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(),
-            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>()));
+            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>(),
+            serviceProvider.GetRequiredService<TenantSchemaCommandInterceptor>()));
 builder.Services.AddScoped<IOutboxService, OutboxService>();
 builder.Services.AddSingleton<IEventBusPublisher, RabbitMqEventBusPublisher>();
 builder.Services.AddScoped<NotificationService>();

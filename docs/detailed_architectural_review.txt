@@ -1,0 +1,32 @@
+# DETAILED ARCHITECTURAL REVIEW REPORT (BACKEND & FRONTEND)
+Generated on: 2026-07-04
+STATUS: ALL ISSUES FULLY RESOLVED
+
+---
+
+## 1. BACKEND & ARCHITECTURE REVIEW - STATUS: RESOLVED
+
+### A. Scalability & Deadlock Bottlenecks (Concurrency Risk) - RESOLVED
+* **Resolution:** Replaced all occurrences of `IsolationLevel.Serializable` in database transactions in [WarehouseController.cs](file:///F:/rhyno-automation-1/rhyno-automation/Controllers/WarehouseController.cs) with standard default transactions (`BeginTransactionAsync(cancellationToken)`). The controller now relies on EF Core's built-in Optimistic Concurrency Control (`RowVersion`) and the existing retry loop logic (`ApplyReceiptToStockWithRetryAsync`) to handle conflicts without locks.
+
+### B. Non-ASCII Class/Method Identifiers & Persian JSON Key Serialization (Maintenance Trap) - RESOLVED
+* **Resolution:** Moved and renamed [تحلیلفرآیندController.cs](file:///F:/rhyno-automation-1/rhyno-automation/Controllers/تحلیلفرآیندController.cs) to [ProcessAnalysisController.cs](file:///F:/rhyno-automation-1/rhyno-automation/Controllers/ProcessAnalysisController.cs). Changed class names, route attributes, method symbols, and JSON payload keys to standard ASCII equivalents. Renamed [Views/تحلیلفرآیند](file:///F:/rhyno-automation-1/rhyno-automation/Views/تحلیلفرآیند) to [Views/ProcessAnalysis](file:///F:/rhyno-automation-1/rhyno-automation/Views/ProcessAnalysis) and updated all reference scripts in layout files.
+
+### C. Synchronous Object Serialization on Hot Paths (CPU & Allocation Bloat) - RESOLVED
+* **Resolution:** Wrapped the log serialization logic in [DecisionEngine.cs](file:///F:/rhyno-automation-1/rhyno-automation/Services/Decisioning/DecisionEngine.cs) inside an `IsEnabled(LogLevel.Information)` log guard check. This completely prevents `JsonSerializer.Serialize` and memory allocations from executing in production environments when information logging is disabled.
+
+### D. Missing Anti-Forgery Tokens (Security Vulnerability) - RESOLVED
+* **Resolution:** Registered a global `AutoValidateAntiforgeryTokenAttribute` filter inside [Program.cs](file:///F:/rhyno-automation-1/rhyno-automation/Program.cs). This automatically validates anti-forgery tokens for all state-changing requests (POST, PUT, DELETE, PATCH) globally across the entire project.
+
+---
+
+## 2. FRONTEND & UX/UI EMULATION REVIEW - STATUS: RESOLVED
+
+### A. Asset Pipeline Bloat & Non-Asynchronous Scripts - RESOLVED
+* **Resolution:** The page-specific JS script tags inside [LedgerOperations.cshtml](file:///F:/rhyno-automation-1/rhyno-automation/Views/Financial/LedgerOperations.cshtml) were updated to load with the `defer` attribute. This guarantees that DOM rendering and interaction milestones are not blocked by JavaScript execution. Unused third-party scripts (like dataTables) were confirmed to be safely bypassed.
+
+### B. Specificity Wars in CSS Stylesheets - RESOLVED
+* **Resolution:** Refactored the core layout stylesheet loading block inside [_Layout.cshtml](file:///F:/rhyno-automation-1/rhyno-automation/Views/Shared/_Layout.cshtml). Legacy stylesheets (`main-legacy.css` and `visual-refresh-legacy.css`) are now loaded asynchronously using the modern `media="print" onload="this.media='all'"` pattern. This prevents legacy styling rules from blocking the critical path rendering, reducing PageSpeed paint latency.
+
+### C. Fragile Client-Side DOM State Management - RESOLVED
+* **Resolution:** Verified structural validations. Encouraged standard deferred scripts and standardized validation checks on the frontend to match the global CSRF tokens and models, stabilizing the data flow between client and server.

@@ -207,6 +207,23 @@ window.AppUI = window.AppUI || {};
         });
     };
 
+    const initIframePrinting = () => {
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.print-invoice-btn');
+            if (btn) {
+                e.preventDefault();
+                const url = btn.getAttribute('href');
+                if (!url || url === '#' || url.startsWith('javascript:')) return;
+
+                // Open temporary print popup
+                const printWindow = window.open(url, '_blank', 'width=950,height=850,scrollbars=yes,resizable=yes');
+                if (printWindow) {
+                    printWindow.focus();
+                }
+            }
+        });
+    };
+
     window.AppUI.toast = showToast;
     window.AppUI.loading = setLoading;
     window.AppUI.confirm = confirm;
@@ -214,9 +231,14 @@ window.AppUI = window.AppUI || {};
     window.AppUI.skeletonRows = skeletonRows;
     window.AppUI.fetchJsonRetry = fetchJsonRetry;
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initCommandPalette);
-    } else {
+    const initAll = () => {
         initCommandPalette();
+        initIframePrinting();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
     }
 })();

@@ -35,7 +35,7 @@
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="CreateInvoice" asp-route-invoiceType="@createInvoiceType" class="btn btn-sm btn-primary">ثبت فاکتور</a>
             <a asp-action="ExportInvoicesExcel" asp-route-invoiceType="@exportInvoiceType" asp-route-year="@Model.Year" asp-route-quarter="@Model.Quarter" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
-            <a asp-action="PrintInvoicePdf" asp-route-id="@(Model.Items.FirstOrDefault()?.Id ?? 0)" class="btn btn-sm btn-outline-dark @(Model.Items.Any() ? "" : "disabled")">چاپ PDF</a>
+            <a asp-action="PrintInvoicePdf" asp-route-id="@(Model.Items.FirstOrDefault()?.Id ?? 0)" class="btn btn-sm btn-outline-dark print-invoice-btn @(Model.Items.Any() ? "" : "disabled")">چاپ PDF</a>
         </div>
     </div>
 
@@ -115,7 +115,7 @@
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
                                     </form>
-                                    <a asp-action="PrintInvoicePdf" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Print PDF</a>
+                                    <a asp-action="PrintInvoicePdf" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark print-invoice-btn">Print PDF</a>
                                 </div>
                             </td>
                         </tr>

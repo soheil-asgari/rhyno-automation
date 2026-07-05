@@ -79,7 +79,29 @@ namespace OfficeAutomation.Data
             }
 
             dbContext.ChangeTracker.DetectChanges();
-            dbContext.SetPendingAuditEntries(dbContext.PrepareAuditEntries(_auditContextProvider.GetCurrent()));
+            var allEntries = dbContext.PrepareAuditEntries(_auditContextProvider.GetCurrent());
+
+            var immediateEntries = new List<PendingAuditLogEntry>();
+            var deferredEntries = new List<PendingAuditLogEntry>();
+
+            foreach (var entry in allEntries)
+            {
+                if (entry.HasTemporaryProperties)
+                {
+                    deferredEntries.Add(entry);
+                }
+                else
+                {
+                    immediateEntries.Add(entry);
+                }
+            }
+
+            foreach (var auditEntry in immediateEntries)
+            {
+                dbContext.AuditLogs.Add(_auditLogger.Create(auditEntry));
+            }
+
+            dbContext.SetPendingAuditEntries(deferredEntries);
         }
     }
 }

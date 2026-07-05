@@ -50,13 +50,16 @@ public sealed class DecisionEngine : IDecisionEngine
             Trace = trace
         };
 
-        _logger.LogInformation(
-            "Decision table {TableKey} version {VersionTag} evaluated. Matched={Matched} Rule={MatchedRuleId} Facts={Facts}",
-            result.TableKey,
-            result.VersionTag,
-            result.Matched,
-            result.MatchedRuleId,
-            JsonSerializer.Serialize(facts));
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Decision table {TableKey} version {VersionTag} evaluated. Matched={Matched} Rule={MatchedRuleId} Facts={Facts}",
+                result.TableKey,
+                result.VersionTag,
+                result.Matched,
+                result.MatchedRuleId,
+                JsonSerializer.Serialize(facts));
+        }
 
         return result;
     }

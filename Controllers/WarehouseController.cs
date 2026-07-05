@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -544,7 +544,7 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(ReceiptDetails), new { id });
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             var itemVMs = receipt.Items.Select(item => new WarehouseReceiptItemVM
             {
@@ -659,7 +659,7 @@ namespace OfficeAutomation.Controllers
 
             var validItems = model.Items.Where(item => item.ProductId > 0 && item.Quantity > 0).ToList();
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             var entity = new WarehouseReceipt
             {
@@ -815,7 +815,7 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(IssuanceDetails), new { id });
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             var itemVMs = issuance.Items.Select(item => new WarehouseIssuanceItemVM
             {
@@ -928,7 +928,7 @@ namespace OfficeAutomation.Controllers
                 return View(model);
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             var entity = new WarehouseIssuance
             {
@@ -1369,7 +1369,7 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             var previousStatus = request.Status;
 
             var issueResult = await ApplyIssuanceToStockWithRetryAsync(
@@ -1615,7 +1615,7 @@ namespace OfficeAutomation.Controllers
                 item.DiscrepancyQuantity = item.PhysicalQuantity - item.SystemQuantity;
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             var entity = new InventoryCounting
             {
@@ -1708,7 +1708,7 @@ namespace OfficeAutomation.Controllers
                 return RedirectToAction(nameof(Countings));
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             var itemVMs = counting.Items.Select(item => new InventoryCountingItemVM
             {

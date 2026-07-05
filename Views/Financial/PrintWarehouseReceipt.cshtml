@@ -7,8 +7,16 @@
 <head>
     <meta charset="utf-8" />
     <title>Warehouse Receipt Print</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; margin: 24px; color: #111827; direction: rtl; }
+        .print-title-sm { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .meta { font-size: 13px; color: #4b5563; margin-bottom: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+        th, td { border: 1px solid #d1d5db; padding: 8px 10px; text-align: right; }
+        th { background: #f3f4f6; font-weight: bold; }
+    </style>
 </head>
-<body onload="window.print()">
+<body>
     <h3 class="print-title-sm">رسید انبار</h3>
     <div class="meta">شماره: @Model.ReceiptNumber | تاریخ: @Model.DateShamsi</div>
     <div class="meta">انبار: @Model.Warehouse.Name | منبع: @Model.SupplierOrSource</div>
@@ -29,9 +37,13 @@
         }
         </tbody>
     </table>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                window.print();
+                window.close();
+            }, 250);
+        });
+    </script>
 </body>
 </html>
-
-@section Styles {
-    <link rel="stylesheet" href="~/css/financial-print.css" asp-append-version="true" />
-}

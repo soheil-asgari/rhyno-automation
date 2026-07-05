@@ -1,0 +1,184 @@
+بررسی بی‌رحمانه کد - Frontend + Backend
+تاریخ: 2026-07-04
+محدوده: بررسی نمونه‌برداری عمیق از نقاط پرریسک با تکیه بر گراف کد، bootstrap برنامه، سرویس‌های workflow/tenant، کنترلر مالی، و ویوهای تعاملی
+
+========================================
+CRITICAL
+========================================
+
+1) XSS سمت کلاینت در چند View به‌خاطر تزریق مستقیم داده‌های داینامیک در innerHTML/template string
+   فایل‌ها:
+   - Views/WorkInbox/Index.cshtml:459, 474-480
+   - Views/ProcessAnalysis/Index.cshtml:340-367
+   مشکل:
+   - در WorkInbox مقادیر `groupName`, `item.title`, `item.icon`, `item.priorityCssClass` و بقیه‌ی فیلدهای آبجکت بدون escape داخل `innerHTML` و template literal رندر می‌شوند.
+   - در ProcessAnalysis هم داده‌های API مثل `processName`, `stepName` و بقیه بدون escape مستقیم وارد DOM می‌شوند.
+   چرا بد است:
+   - اگر هر کدام از این فیلدها از دیتابیس/ورودی کاربر/سرویس دیگر آلوده شوند، اجرای اسکریپت دلخواه داخل مرورگر کاربر ممکن می‌شود.
+   - این دیگر «کد تمیز نیست» نیست؛ این یک باگ امنیتی واقعی است.
+   شدت:
+   - بحرانی. مخصوصاً WorkInbox چون داده‌های workflow معمولاً از مسیرهای متعدد می‌آیند و سطح حمله بزرگ است.
+
+2) آپلود فایل workflow بدون هیچ whitelist واقعی و مستقیماً زیر WebRoot
+   فایل:
+   - Services/WorkflowService.cs:515-536
+   مشکل:
+   - فایل کاربر با نام sanitize حداقلی ذخیره می‌شود، اما extension/type/size/policy معتبر بررسی نمی‌شود.
+   - مسیر پیش‌فرض هم داخل `_environment.WebRootPath/uploads/...` است؛ یعنی فایل آپلودی بالقوه از وب‌سرور قابل دسترسی مستقیم است.
+   چرا بد است:
+   - این طراحی برای آپلود سازمانی فاجعه است: فایل مخرب، فایل HTML/JS، payload فیشینگ، یا فایل حجیم بدون کنترل می‌تواند مستقیم منتشر شود.
+   - `ContentType` کلاینت‌فرست است و قابل اعتماد نیست.
+   شدت:
+   - بحرانی. آپلود باید خارج از web root، با allow-list سختگیرانه، اسکن و authorization دانلود جداگانه انجام شود.
+
+========================================
+HIGH
+========================================
+
+3) bootstrap برنامه با copy-paste پوسیده: ثبت سرویس‌ها تکراری و متناقض
+   فایل:
+   - Program.cs:47-55
+   - Program.cs:149-176
+   مشکل:
+   - چند سرویس tenant دوبار ثبت شده‌اند.
+   - مجموعه‌ای از سرویس‌های workflow/outbox/notification هم دوبار پشت‌سرهم ثبت شده‌اند.
+   چرا بد است:
+   - این فقط شلوغی نیست. در DI مایکروسافت، resolve تکی آخرین registration را می‌گیرد ولی `IEnumerable<T>` همه را. این یعنی رفتار runtime بسته به نحوه resolve می‌تواند غیرشفاف و متناقض شود.
+   - این سطح از duplication در نقطه‌ی bootstrap یعنی هیچ کس دیگر با اطمینان نمی‌داند startup واقعاً چه dependency graphی می‌سازد.
+   شدت:
+   - بالا. قبل از هر توسعه‌ی بیشتر باید cleanup شود.
+
+4) migration tenantها موقع startup کل وب‌اپ را hostage می‌گیرد
+   فایل:
+   - Services/Tenancy/TenantMigrationOrchestrator.cs:32-50
+   - Services/Tenancy/TenantMigrationOrchestrator.cs:74-98
+   - Services/Tenancy/TenantMigrationOrchestrator.cs:152-178
+   مشکل:
+   - هنگام start، اول platform migrate می‌شود، بعد همه tenantهای active یکی‌یکی migrate می‌شوند.
+   - failure یا کندی یک tenant می‌تواند startup کل برنامه را fail/timeout کند.
+   چرا بد است:
+   - availability سیستم را به سالم بودن تمام tenantها و SQLها گره زده‌اید.
+   - این design برای production خطرناک است؛ وب‌اپ نباید برای migration همه tenantها روی startup بلوکه شود.
+   شدت:
+   - بالا. migration باید job عملیاتی/کنترلی جدا باشد، نه پیش‌نیاز بالا آمدن app.
+
+5) race condition در تولید SequenceNumber رویدادهای workflow
+   فایل:
+   - Services/WorkflowService.cs:1421-1445
+   مشکل:
+   - با `MaxAsync(...SequenceNumber) + 1` شماره رویداد بعدی محاسبه می‌شود.
+   چرا بد است:
+   - دو درخواست همزمان روی یک workflow instance خیلی راحت یک `nextSequence` یکسان می‌گیرند و collision یا reorder می‌سازند.
+   - اگر unique index داشته باشید، exception می‌خورید؛ اگر نداشته باشید، تاریخچه‌تان از نظر ordering فاسد می‌شود.
+   شدت:
+   - بالا. این کد برای محیط concurrent قابل اتکا نیست.
+
+6) WorkflowService عملاً یک god service غیرقابل‌نگه‌داری شده
+   فایل:
+   - Services/WorkflowService.cs:21-1779
+   - Services/WorkflowService.cs:38-57
+   مشکل:
+   - یک کلاس تقریباً 1800 خطی که routing، persistence، attachment I/O، incident logging، decision table، signature، timeline، sub-case و SLA را یکجا بلعیده.
+   - constructor هم dependencyهای optional دارد و برای بعضی dependencyها fallback concrete می‌سازد.
+   چرا بد است:
+   - این یعنی مرزهای domain/application/infrastructure فروپاشیده‌اند.
+   - تست‌پذیری، reasoning و تغییر امن را نابود کرده‌اید.
+   - `new DecisionEngine()` و `new WorkflowDefinitionSelector()` داخل سرویس یعنی DI را دور زده‌اید و composition root را بی‌اثر کرده‌اید.
+   شدت:
+   - بالا. این کلاس الان نه سرویس است نه aggregate coordinator؛ یک سطل آشغال بزرگ است.
+
+7) WorkflowService با `documentType` به هر entity مدل دست می‌زند؛ coupling خطرناک و سطح حمله‌ی بی‌دلیل
+   فایل:
+   - Services/WorkflowService.cs:1461-1468
+   - Services/WorkflowService.cs:1471-1527
+   مشکل:
+   - `documentType` به اسم CLR type map می‌شود و بعد همان entity از EF model پیدا/Load می‌شود.
+   - سپس همه propertyهای primitive آن entity به facts routing تزریق می‌شوند.
+   چرا بد است:
+   - این یعنی workflow engine به‌جای قرارداد صریح، روی reflection و نام کلاس واقعی سوار شده.
+   - هر اضافه/تغییر entity می‌تواند ناخواسته روی routing اثر بگذارد.
+   - از نظر امنیتی و طراحی، «هر موجودیتی که اسمش match شود» نباید خوراک rule engine شود.
+   شدت:
+   - بالا.
+
+========================================
+MEDIUM
+========================================
+
+8) FinancialController عملاً یک monolith درون controller است
+   فایل:
+   - Controllers/FinancialController.cs:23-70
+   - Controllers/FinancialController.cs:21-1948
+   مشکل:
+   - کنترلر تقریباً 2000 خطی است و 14 dependency می‌گیرد.
+   - این دیگر controller نیست؛ application layer را به زور در MVC actionها دفن کرده‌اید.
+   چرا بد است:
+   - تغییر کوچک در فایننس احتمال regression در چند سناریو را بالا می‌برد.
+   - review و ownership را نابود می‌کند.
+   شدت:
+   - متوسط رو به بالا. از همین الان decomposition لازم است.
+
+9) متن‌های فارسی در چند بخش عملاً خراب و mojibake شده‌اند
+   فایل‌ها:
+   - Controllers/FinancialController.cs:89-106
+   - Views/WorkInbox/Index.cshtml:308, 368, 403, 447, 470-472
+   - Views/AuditDashboard/Index.cshtml:308, 340, 346, 359, 406, 409, 417, 462
+   - Views/ProcessAnalysis/Index.cshtml:280-420 (identifier/text corruption گسترده)
+   مشکل:
+   - بخشی از متن‌ها و حتی identifierهای JS به‌هم‌ریخته‌اند.
+   چرا بد است:
+   - UX فارسی را نابود می‌کند.
+   - maintainability فرانت را به شوخی تبدیل می‌کند؛ توسعه‌دهنده بعدی حتی اسم متغیر را نمی‌فهمد.
+   شدت:
+   - متوسط، ولی روی محصول فارسی عملاً embarrassing است.
+
+10) WorkInbox برای saved views هنوز client-only است و از الگوی ضعیف‌تری نسبت به Leaves/Letters استفاده می‌کند
+   فایل‌ها:
+   - Views/WorkInbox/Index.cshtml:289-303
+   - Views/Leaves/Index.cshtml:248-269
+   - Views/Letters/Index.cshtml:537-558
+   مشکل:
+   - WorkInbox فقط روی `localStorage` تکیه دارد.
+   - در همان repo، Leaves و Letters لااقل sync با endpoint سمت سرور دارند.
+   چرا بد است:
+   - رفتار ماژول‌ها ناهماهنگ است.
+   - saved view بین مرورگر/دستگاه جابه‌جا نمی‌شود.
+   - برای محیط چندکاربره و permission-aware قابل دفاع نیست.
+   شدت:
+   - متوسط.
+
+11) لاگ‌گذاری noisy و middlewareهای inline زیاد در Program.cs
+   فایل:
+   - Program.cs:266-357
+   مشکل:
+   - چند middleware anonymous پشت‌سرهم با منطق tenant/quota/slow-request/current-user/logging چیده شده‌اند.
+   - logging احراز هویت و current-user در هر request بسیار پرحرف است.
+   چرا بد است:
+   - startup و request pipeline خوانایی خود را از دست داده.
+   - operational noise بالا می‌رود و trace واقعی در لاگ گم می‌شود.
+   شدت:
+   - متوسط.
+
+12) BuildLedgerOperationsModelAsync هنوز query-orchestrator سنگین در controller است
+   فایل:
+   - Controllers/FinancialController.cs:1354-1494
+   مشکل:
+   - این متد هم‌زمان چند query، defaulting، lookup construction و view model assembly انجام می‌دهد.
+   - `Take(50)` و `Take(20)` hard-coded است و context-aware نیست.
+   چرا بد است:
+   - صفحه‌ی مالی ظاهراً بزرگ شده ولی assembling logic هنوز در controller مانده.
+   - این همان مسیری است که بعداً performance tuning و caching را دردناک می‌کند.
+   شدت:
+   - متوسط.
+
+========================================
+جمع‌بندی رک
+========================================
+
+- بزرگ‌ترین ضعف فعلی شما «نبود مرز معماری» است: bootstrap شلخته، controller چاق، service غول‌پیکر، و frontendهایی که هم encoding مشکل دارند هم XSS.
+- اگر همین امروز فقط سه چیز را درست کنید، به‌ترتیب این‌ها هستند:
+  1. حذف XSSهای `innerHTML` و امن‌سازی upload
+  2. cleanup کامل `Program.cs`
+  3. شکستن `WorkflowService` و `FinancialController` به application services / query handlers / UI models واقعی
+
+این گزارش روی یافته‌های واقعی و قابل استناد نوشته شده، نه روی سلیقه‌ی کدنویسی.

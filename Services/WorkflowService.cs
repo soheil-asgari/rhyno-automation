@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -24,6 +25,26 @@ public sealed class WorkflowService
     {
         WriteIndented = false
     };
+    private static readonly ConcurrentDictionary<int, SemaphoreSlim> TransitionEventLocks = new();
+    private static readonly HashSet<string> AllowedWorkflowAttachmentExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".csv", ".zip"
+    };
+    private static readonly HashSet<string> AllowedWorkflowAttachmentContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+        "text/csv",
+        "application/zip",
+        "application/x-zip-compressed"
+    };
+    private const long MaxWorkflowAttachmentBytes = 10 * 1024 * 1024;
 
     private readonly IWorkflowDbContext? _context;
     private readonly IWebHostEnvironment? _environment;
@@ -512,11 +533,15 @@ public sealed class WorkflowService
             return null;
         }
 
+        ValidateWorkflowAttachment(file);
+
         var uploadsRoot = _tenantPathResolver?.GetWorkflowUploadRoot(_environment.WebRootPath, documentType, documentId)
             ?? Path.Combine(_environment.WebRootPath, "uploads", "workflow", documentType.ToLowerInvariant(), documentId.ToString(CultureInfo.InvariantCulture));
         Directory.CreateDirectory(uploadsRoot);
 
-        var safeFileName = $"{Guid.NewGuid():N}-{Path.GetFileName(file.FileName)}";
+        var extension = Path.GetExtension(file.FileName);
+        var originalName = Path.GetFileName(file.FileName);
+        var safeFileName = $"{Guid.NewGuid():N}{extension}";
         var physicalPath = Path.Combine(uploadsRoot, safeFileName);
 
         await using (var stream = File.Create(physicalPath))
@@ -531,9 +556,9 @@ public sealed class WorkflowService
             WorkflowInstanceId = instance.Id,
             WorkflowStepId = workflowStepId,
             WorkflowDecisionId = workflowDecisionId,
-            FileName = Path.GetFileName(file.FileName),
+            FileName = originalName,
             FilePath = relativePath,
-            ContentType = file.ContentType ?? "application/octet-stream",
+            ContentType = NormalizeWorkflowAttachmentContentType(file.ContentType, extension),
             FileSize = file.Length,
             UploadedByUserId = userId
         };
@@ -1433,27 +1458,36 @@ public sealed class WorkflowService
         CancellationToken cancellationToken)
     {
         EnsureContext();
-        var nextSequence = await _context!.WorkflowTransitionEvents
-            .Where(item => item.WorkflowInstanceId == instance.Id)
-            .Select(item => (long?)item.SequenceNumber)
-            .MaxAsync(cancellationToken) ?? 0;
-
-        _context.WorkflowTransitionEvents.Add(new WorkflowTransitionEvent
+        var transitionLock = TransitionEventLocks.GetOrAdd(instance.Id, _ => new SemaphoreSlim(1, 1));
+        await transitionLock.WaitAsync(cancellationToken);
+        try
         {
-            WorkflowInstanceId = instance.Id,
-            WorkflowStepId = step?.Id,
-            SequenceNumber = nextSequence + 1,
-            EventName = eventName,
-            FromStatus = string.IsNullOrWhiteSpace(fromStatus) ? null : WorkflowStatus.Normalize(fromStatus),
-            ToStatus = string.IsNullOrWhiteSpace(toStatus) ? null : WorkflowStatus.Normalize(toStatus),
-            FromStepNumber = fromStepNumber,
-            ToStepNumber = toStepNumber,
-            ActorUserId = string.IsNullOrWhiteSpace(actorUserId) ? null : actorUserId,
-            StationKey = stationKey,
-            StationName = stationName,
-            CorrelationKey = Activity.Current?.Id,
-            PayloadJson = payloadJson
-        });
+            var nextSequence = await _context!.WorkflowTransitionEvents
+                .Where(item => item.WorkflowInstanceId == instance.Id)
+                .Select(item => (long?)item.SequenceNumber)
+                .MaxAsync(cancellationToken) ?? 0;
+
+            _context.WorkflowTransitionEvents.Add(new WorkflowTransitionEvent
+            {
+                WorkflowInstanceId = instance.Id,
+                WorkflowStepId = step?.Id,
+                SequenceNumber = nextSequence + 1,
+                EventName = eventName,
+                FromStatus = string.IsNullOrWhiteSpace(fromStatus) ? null : WorkflowStatus.Normalize(fromStatus),
+                ToStatus = string.IsNullOrWhiteSpace(toStatus) ? null : WorkflowStatus.Normalize(toStatus),
+                FromStepNumber = fromStepNumber,
+                ToStepNumber = toStepNumber,
+                ActorUserId = string.IsNullOrWhiteSpace(actorUserId) ? null : actorUserId,
+                StationKey = stationKey,
+                StationName = stationName,
+                CorrelationKey = Activity.Current?.Id,
+                PayloadJson = payloadJson
+            });
+        }
+        finally
+        {
+            transitionLock.Release();
+        }
     }
 
     private async Task<object?> LoadBusinessDataAsync(string documentType, int documentId, CancellationToken cancellationToken)
@@ -1537,6 +1571,54 @@ public sealed class WorkflowService
                candidate == typeof(DateTime) ||
                candidate == typeof(DateTimeOffset) ||
                candidate == typeof(Guid);
+    }
+
+    private static void ValidateWorkflowAttachment(IFormFile file)
+    {
+        if (file.Length <= 0)
+        {
+            throw new InvalidOperationException("Workflow attachment is empty.");
+        }
+
+        if (file.Length > MaxWorkflowAttachmentBytes)
+        {
+            throw new InvalidOperationException("Workflow attachment exceeds the maximum allowed size.");
+        }
+
+        var extension = Path.GetExtension(file.FileName);
+        if (string.IsNullOrWhiteSpace(extension) || !AllowedWorkflowAttachmentExtensions.Contains(extension))
+        {
+            throw new InvalidOperationException("Workflow attachment file type is not allowed.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(file.ContentType) &&
+            !AllowedWorkflowAttachmentContentTypes.Contains(file.ContentType))
+        {
+            throw new InvalidOperationException("Workflow attachment content type is not allowed.");
+        }
+    }
+
+    private static string NormalizeWorkflowAttachmentContentType(string? contentType, string extension)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType) && AllowedWorkflowAttachmentContentTypes.Contains(contentType))
+        {
+            return contentType;
+        }
+
+        return extension.ToLowerInvariant() switch
+        {
+            ".pdf" => "application/pdf",
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".txt" => "text/plain",
+            ".csv" => "text/csv",
+            ".zip" => "application/zip",
+            _ => "application/octet-stream"
+        };
     }
 
     private DecisionEvaluationResult EvaluateDecisionTable(

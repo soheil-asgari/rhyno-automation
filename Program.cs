@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
@@ -58,6 +58,7 @@ builder.Services.AddScoped<ITenantBackgroundJobCoordinator, TenantBackgroundJobC
 builder.Services.AddScoped<ICurrentDataAccessScope, CurrentDataAccessScope>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RowLevelSecuritySaveChangesInterceptor>();
+builder.Services.AddScoped<TenantSchemaCommandInterceptor>();
 static void ConfigureTenantDbContext(IServiceProvider serviceProvider, DbContextOptionsBuilder options)
 {
     options
@@ -66,7 +67,8 @@ static void ConfigureTenantDbContext(IServiceProvider serviceProvider, DbContext
         .ReplaceService<IModelCacheKeyFactory, TenantDbContextModelCacheKeyFactory>()
         .AddInterceptors(
             serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(),
-            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>());
+            serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>(),
+            serviceProvider.GetRequiredService<TenantSchemaCommandInterceptor>());
 }
 
 static string GetPlatformConnectionString(IConfiguration configuration)
@@ -132,6 +134,8 @@ builder.Services.AddScoped<IDataIsolationService, DataIsolationService>();
 builder.Services.AddScoped<WarehouseDashboardService>();
 builder.Services.AddScoped<FinancialInvoiceService>();
 builder.Services.AddScoped<FinanceLedgerService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<IOfficeService, OfficeService>();
 builder.Services.AddScoped<PeriodClosingService>();
 builder.Services.AddScoped<TrialBalanceService>();
 builder.Services.AddScoped<VoucherRenumberingService>();
@@ -162,6 +166,7 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<NormalizeInputFilter>();
     options.Filters.Add<PermissionAccessFilter>();
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
 });
 builder.Services.AddRazorPages(options =>
 {

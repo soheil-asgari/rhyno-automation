@@ -85,6 +85,27 @@ public sealed class SavedViewsController : ControllerBase
         return Ok(new { view.Id, view.Name });
     }
 
+    [HttpDelete("{targetGridId}/{name}")]
+    public async Task<IActionResult> Delete(string targetGridId, string name, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var view = await _context.SavedViewDefinitions
+            .FirstOrDefaultAsync(item =>
+                item.TargetGridId == targetGridId &&
+                item.UserId == userId &&
+                item.Name == name,
+                cancellationToken);
+
+        if (view == null)
+        {
+            return NotFound();
+        }
+
+        _context.SavedViewDefinitions.Remove(view);
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     private async Task<IReadOnlyCollection<string>> GetAccessTokensAsync(CancellationToken cancellationToken)
     {
         var profile = await _currentUserContextAccessor.GetAccessProfileAsync(cancellationToken);

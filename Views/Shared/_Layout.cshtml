@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Antiforgery
 @using OfficeAutomation.Models
@@ -125,11 +125,11 @@
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/main-foundation.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/main-legacy.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/main-legacy.css" asp-append-version="true" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="~/css/app-shell.css" asp-append-version="true">
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/visual-refresh-core.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/visual-refresh-legacy.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/visual-refresh-legacy.css" asp-append-version="true" media="print" onload="this.media='all'">
 </head>
 
 <body data-theme="@themePreference.ToLowerInvariant()">
@@ -165,21 +165,23 @@
                     </div>
 
                     <section class="sidebar-section sidebar-section-pinned">
-                        <div class="sidebar-section-head">
+                        <button class="sidebar-section-toggle accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePinnedPages" aria-expanded="true" aria-controls="collapsePinnedPages">
                             <span>صفحات منتخب</span>
                             <small>دسترسی سریع</small>
+                        </button>
+                        <div id="collapsePinnedPages" class="sidebar-section-collapse collapse show">
+                            <nav class="nav flex-column sidebar-shortcuts sidebar-section-body">
+                                <a class="nav-link sidebar-link @(currentController == "Home" ? "sidebar-active" : "")" data-nav-id="home-index" asp-controller="Home" asp-action="Index">
+                                    <i class="bi bi-grid text-primary"></i> <span class="link-text">میز کار مرکزی</span>
+                                </a>
+                                <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index">
+                                    <i class="bi bi-inboxes text-warning"></i> <span class="link-text">کارتابل مرکزی</span>
+                                </a>
+                                <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance">
+                                    <i class="bi bi-layout-text-window-reverse text-primary"></i> <span class="link-text">تراز آزمایشی انترپرایز</span>
+                                </a>
+                            </nav>
                         </div>
-                        <nav class="nav flex-column sidebar-shortcuts">
-                            <a class="nav-link sidebar-link @(currentController == "Home" ? "sidebar-active" : "")" data-nav-id="home-index" asp-controller="Home" asp-action="Index">
-                                <i class="bi bi-grid text-primary"></i> <span class="link-text">میز کار مرکزی</span>
-                            </a>
-                            <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index">
-                                <i class="bi bi-inboxes text-warning"></i> <span class="link-text">کارتابل مرکزی</span>
-                            </a>
-                            <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance">
-                                <i class="bi bi-layout-text-window-reverse text-primary"></i> <span class="link-text">تراز آزمایشی انترپرایز</span>
-                            </a>
-                        </nav>
                     </section>
                 </div>
 
@@ -189,15 +191,16 @@
                     </div>
 
                     <section class="sidebar-section sidebar-section-scroll">
-                        <div class="sidebar-section-head">
-                            <span>همه صفحات</span>
+                        <button class="sidebar-section-toggle accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAllPages" aria-expanded="true" aria-controls="collapseAllPages">
+                            <span>همه بخش‌ها</span>
                             <small>دسته‌بندی ماژولار</small>
-                        </div>
-                        <div class="sidebar-pages-scroll">
-                            <div class="accordion sidebar-accordion" id="sidebarAccordion">
+                        </button>
+                        <div id="collapseAllPages" class="sidebar-section-collapse collapse show">
+                            <div class="sidebar-section-body sidebar-pages-scroll" id="sidebarPagesScroll">
+                                <div class="accordion sidebar-accordion" id="sidebarAccordion">
                     @if (userCanAccessHumanCapital)
                     {
-                        <div class="accordion-item">
+                        <div class="accordion-item sidebar-module sidebar-module-human-capital">
                             <h2 class="accordion-header" id="headingHumanCapital">
                                 <button class="accordion-button @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHumanCapital" aria-expanded="true" aria-controls="collapseHumanCapital">
                                     سرمایه انسانی
@@ -206,9 +209,9 @@
                             <div id="collapseHumanCapital" class="accordion-collapse collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "show" : "")" aria-labelledby="headingHumanCapital" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "HumanCapital" ? "sidebar-active" : "")" data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-people text-warning"></i> <span class="link-text">سرمایه انسانی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Leaves" ? "sidebar-active" : "")" data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar-check text-success"></i> <span class="link-text">درخواست مرخصی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Letters" ? "sidebar-active" : "")" data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope-paper text-danger"></i> <span class="link-text">مدیریت نامه‌ها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "HumanCapital" ? "sidebar-active" : "")" data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge"></i> <span class="link-text">سرمایه انسانی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Leaves" ? "sidebar-active" : "")" data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week"></i> <span class="link-text">درخواست مرخصی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Letters" ? "sidebar-active" : "")" data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope"></i> <span class="link-text">مدیریت نامه‌ها</span></a>
                                     </nav>
                                 </div>
                             </div>
@@ -217,7 +220,7 @@
 
                     @if (userCanAccessFinance)
                     {
-                        <div class="accordion-item">
+                        <div class="accordion-item sidebar-module sidebar-module-finance">
                             <h2 class="accordion-header" id="headingFinancial">
                                 <button class="accordion-button @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFinancial" aria-expanded="false" aria-controls="collapseFinancial">
                                     مالی و حقوق و بیمه
@@ -226,17 +229,17 @@
                             <div id="collapseFinancial" class="accordion-collapse collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "show" : "")" aria-labelledby="headingFinancial" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Sales" ? "sidebar-active" : "")" data-nav-id="financial-sales" asp-controller="Financial" asp-action="Sales"><i class="bi bi-graph-up text-success"></i> <span class="link-text">مدیریت فاکتورهای فروش (درآمد)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Purchases" ? "sidebar-active" : "")" data-nav-id="financial-purchases" asp-controller="Financial" asp-action="Purchases"><i class="bi bi-cart text-primary"></i> <span class="link-text">مدیریت فاکتورهای خرید (هزینه)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-table text-dark"></i> <span class="link-text">دفتر کل و عملیات مالی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-period-closing" asp-controller="Financial" asp-action="LedgerOperations" asp-fragment="period-closing-panel"><i class="bi bi-hourglass-split text-danger"></i> <span class="link-text">عملیات پایان دوره</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-layout-text-window-reverse text-primary"></i> <span class="link-text">تراز آزمایشی انترپرایز</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "Dashboard" || currentAction == "ReportingHub") ? "sidebar-active" : "")" data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-speedometer2 text-info"></i> <span class="link-text">داشبورد مالی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "VatDashboard" || currentAction == "Dashboard") ? "sidebar-active" : "")" data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent text-warning"></i> <span class="link-text">مالیات بر ارزش افزوده</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "SeasonalTax" || currentAction == "SeasonalTaxReport") ? "sidebar-active" : "")" data-nav-id="financial-seasonal" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-journal-text text-info"></i> <span class="link-text">معاملات فصلی (ماده ۱۶۹)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "ReportingHub" ? "sidebar-active" : "")" data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart text-secondary"></i> <span class="link-text">گزارشات و داشبورد مدیریتی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Payroll" ? "sidebar-active" : "")" data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-cash-stack text-warning"></i> <span class="link-text">لیست حقوق</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Bimeh" ? "sidebar-active" : "")" data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-lock text-info"></i> <span class="link-text">لیست بیمه</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Sales" ? "sidebar-active" : "")" data-nav-id="financial-sales" asp-controller="Financial" asp-action="Sales"><i class="bi bi-receipt"></i> <span class="link-text">مدیریت فاکتورهای فروش (درآمد)</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Purchases" ? "sidebar-active" : "")" data-nav-id="financial-purchases" asp-controller="Financial" asp-action="Purchases"><i class="bi bi-bag"></i> <span class="link-text">مدیریت فاکتورهای خرید (هزینه)</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext"></i> <span class="link-text">دفتر کل و عملیات مالی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-period-closing" asp-controller="Financial" asp-action="LedgerOperations" asp-fragment="period-closing-panel"><i class="bi bi-hourglass"></i> <span class="link-text">عملیات پایان دوره</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table"></i> <span class="link-text">تراز آزمایشی انترپرایز</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "Dashboard" || currentAction == "ReportingHub") ? "sidebar-active" : "")" data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap"></i> <span class="link-text">داشبورد مالی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "VatDashboard" || currentAction == "Dashboard") ? "sidebar-active" : "")" data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent"></i> <span class="link-text">مالیات بر ارزش افزوده</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "SeasonalTax" || currentAction == "SeasonalTaxReport") ? "sidebar-active" : "")" data-nav-id="financial-seasonal" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-text"></i> <span class="link-text">معاملات فصلی (ماده ۱۶۹)</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "ReportingHub" ? "sidebar-active" : "")" data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line"></i> <span class="link-text">گزارشات و داشبورد مدیریتی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Payroll" ? "sidebar-active" : "")" data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2"></i> <span class="link-text">لیست حقوق</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Bimeh" ? "sidebar-active" : "")" data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check"></i> <span class="link-text">لیست بیمه</span></a>
                                     </nav>
                                 </div>
                             </div>
@@ -245,7 +248,7 @@
 
                     @if (userCanAccessWarehouse)
                     {
-                        <div class="accordion-item">
+                        <div class="accordion-item sidebar-module sidebar-module-logistics">
                             <h2 class="accordion-header" id="headingWarehouse">
                                 <button class="accordion-button @((currentController == "Warehouse" || currentController == "Vendors" || currentController == "Employers") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWarehouse" aria-expanded="false" aria-controls="collapseWarehouse">
                                     انبارداری
@@ -254,17 +257,17 @@
                             <div id="collapseWarehouse" class="accordion-collapse collapse @((currentController == "Warehouse" || currentController == "Vendors" || currentController == "Employers") ? "show" : "")" aria-labelledby="headingWarehouse" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Index" ? "sidebar-active" : "")" data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam text-primary"></i> <span class="link-text">داشبورد انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Products" || currentAction == "CreateProduct" || currentAction == "EditProduct") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box-seam text-info"></i> <span class="link-text">کالاها</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Warehouses" || currentAction == "CreateWarehouse" || currentAction == "EditWarehouse") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Warehouses"><i class="bi bi-building text-secondary"></i> <span class="link-text">انبارها</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Vendors" ? "sidebar-active" : "")" asp-controller="Vendors" asp-action="Index"><i class="bi bi-truck text-success"></i> <span class="link-text">تامین‌کنندگان</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Employers" ? "sidebar-active" : "")" asp-controller="Employers" asp-action="Index"><i class="bi bi-briefcase text-warning"></i> <span class="link-text">کارفرمایان</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Receipts" || currentAction == "CreateReceipt") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Receipts"><i class="bi bi-box-arrow-in-down text-success"></i> <span class="link-text">رسید انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Issuances" || currentAction == "CreateIssuance") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Issuances"><i class="bi bi-box-arrow-up text-danger"></i> <span class="link-text">خروج انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Stock" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Stock"><i class="bi bi-clipboard-data text-info"></i> <span class="link-text">موجودی انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "TransferRequests" || currentAction == "CreateTransferRequest") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="TransferRequests"><i class="bi bi-arrow-left-right text-primary"></i> <span class="link-text">انتقال بین انبارها</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Countings" || currentAction == "CreateCounting") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Countings"><i class="bi bi-check2-square text-secondary"></i> <span class="link-text">انبارگردانی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Closing" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Closing"><i class="bi bi-lock text-danger"></i> <span class="link-text">بستن پایان سال</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Index" ? "sidebar-active" : "")" data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-grid"></i> <span class="link-text">داشبورد انبار</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Products" || currentAction == "CreateProduct" || currentAction == "EditProduct") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box"></i> <span class="link-text">کالاها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Warehouses" || currentAction == "CreateWarehouse" || currentAction == "EditWarehouse") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Warehouses"><i class="bi bi-building"></i> <span class="link-text">انبارها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Vendors" ? "sidebar-active" : "")" asp-controller="Vendors" asp-action="Index"><i class="bi bi-truck"></i> <span class="link-text">تامین‌کنندگان</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Employers" ? "sidebar-active" : "")" asp-controller="Employers" asp-action="Index"><i class="bi bi-briefcase"></i> <span class="link-text">کارفرمایان</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Receipts" || currentAction == "CreateReceipt") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Receipts"><i class="bi bi-box-arrow-in-down"></i> <span class="link-text">رسید انبار</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Issuances" || currentAction == "CreateIssuance") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Issuances"><i class="bi bi-box-arrow-up"></i> <span class="link-text">خروج انبار</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Stock" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Stock"><i class="bi bi-stack"></i> <span class="link-text">موجودی انبار</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "TransferRequests" || currentAction == "CreateTransferRequest") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="TransferRequests"><i class="bi bi-arrow-left-right"></i> <span class="link-text">انتقال بین انبارها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Countings" || currentAction == "CreateCounting") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Countings"><i class="bi bi-check2-square"></i> <span class="link-text">انبارگردانی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Closing" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Closing"><i class="bi bi-lock"></i> <span class="link-text">بستن پایان سال</span></a>
                                     </nav>
                                 </div>
                             </div>
@@ -273,44 +276,45 @@
 
                     @if (userCanAccessSystemSettings)
                     {
-                        <div class="accordion-item">
+                        <div class="accordion-item sidebar-module sidebar-module-settings">
                             <h2 class="accordion-header" id="headingSettings">
-                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "تحلیلفرآیند") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
+                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "ProcessAnalysis") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
                                     تنظیمات
                                 </button>
                             </h2>
-                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "تحلیلفرآیند") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
+                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "ProcessAnalysis") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
                                 <div class="accordion-body py-1 px-0">
                                     <nav class="nav flex-column sidebar-group-nav">
                                         @if (userHasSecurityAccess)
                                         {
                                             <a class="nav-link sidebar-link @((currentController == "AuditLogView" || currentController == "AuditLogs") ? "sidebar-active" : "")" href="/admin/audit-dashboard">
-                                                <i class="bi bi-shield-check text-danger"></i> <span class="link-text">نظارت بر فعالیت‌ها</span>
+                                                <i class="bi bi-activity"></i> <span class="link-text">نظارت بر فعالیت‌ها</span>
                                             </a>
                                         }
 
-                                        <a class="nav-link sidebar-link @(currentController == "ManagementDashboard" ? "sidebar-active" : "")" data-nav-id="managementdashboard-index" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-grid-1x2 text-primary"></i> <span class="link-text">داشبورد مدیریتی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes text-warning"></i> <span class="link-text">کارتابل مرکزی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Search" ? "sidebar-active" : "")" data-nav-id="search-index" asp-controller="Search" asp-action="Index"><i class="bi bi-search text-primary"></i> <span class="link-text">جستجوی سراسری</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Reports" ? "sidebar-active" : "")" data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph text-success"></i> <span class="link-text">گزارش‌ساز و خروجی‌ها</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "ManagementDashboard" ? "sidebar-active" : "")" data-nav-id="managementdashboard-index" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-grid-1x2"></i> <span class="link-text">داشبورد مدیریتی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes"></i> <span class="link-text">کارتابل مرکزی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Search" ? "sidebar-active" : "")" data-nav-id="search-index" asp-controller="Search" asp-action="Index"><i class="bi bi-search"></i> <span class="link-text">جستجوی سراسری</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Reports" ? "sidebar-active" : "")" data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph"></i> <span class="link-text">گزارش‌ساز و خروجی‌ها</span></a>
                                         @if (userCanAccessProcessAnalytics)
                                         {
-                                            <a class="nav-link sidebar-link @(currentController == "تحلیلفرآیند" ? "sidebar-active" : "")" asp-controller="تحلیلفرآیند" asp-action="شاخص"><i class="bi bi-bar-chart-line text-danger"></i> <span class="link-text">تحلیل فرآیند</span></a>
+                                            <a class="nav-link sidebar-link @(currentController == "ProcessAnalysis" ? "sidebar-active" : "")" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-bar-chart-line"></i> <span class="link-text">تحلیل فرآیند</span></a>
                                         }
-                                        <a class="nav-link sidebar-link @(currentController == "OrganizationCalendar" ? "sidebar-active" : "")" asp-controller="OrganizationCalendar" asp-action="Index"><i class="bi bi-calendar3 text-primary"></i> <span class="link-text">تقویم سازمانی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "DocumentArchive" ? "sidebar-active" : "")" asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive text-warning"></i> <span class="link-text">بایگانی اسناد</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "OrganizationCalendar" ? "sidebar-active" : "")" asp-controller="OrganizationCalendar" asp-action="Index"><i class="bi bi-calendar3"></i> <span class="link-text">تقویم سازمانی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "DocumentArchive" ? "sidebar-active" : "")" asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive"></i> <span class="link-text">بایگانی اسناد</span></a>
 
                     @if (userHasSecurityAccess)
                                         {
-                                            <a class="nav-link sidebar-link @(currentController == "Security" ? "sidebar-active" : "")" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-check text-danger"></i> <span class="link-text">مرکز امنیت</span></a>
+                                            <a class="nav-link sidebar-link @(currentController == "Security" ? "sidebar-active" : "")" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-check"></i> <span class="link-text">مرکز امنیت</span></a>
                                         }
-                                        <a class="nav-link sidebar-link @(currentController == "AiAssistant" ? "sidebar-active" : "")" asp-controller="AiAssistant" asp-action="Index"><i class="bi bi-cpu text-info"></i> <span class="link-text">دستیار هوش مصنوعی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Waybill" ? "sidebar-active" : "")" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck text-warning"></i> <span class="link-text">ثبت بارنامه</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "AiAssistant" ? "sidebar-active" : "")" asp-controller="AiAssistant" asp-action="Index"><i class="bi bi-cpu"></i> <span class="link-text">دستیار هوش مصنوعی</span></a>
+                                        <a class="nav-link sidebar-link @(currentController == "Waybill" ? "sidebar-active" : "")" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck"></i> <span class="link-text">ثبت بارنامه</span></a>
                                     </nav>
                                 </div>
                             </div>
                         </div>
                     }
+                        </div>
                             </div>
                         </div>
                     </section>
@@ -318,23 +322,27 @@
 
                 <div class="sidebar-fixed-bottom">
                     <section class="sidebar-section">
-                        <div class="sidebar-section-head">
+                        <button class="sidebar-section-toggle accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFrequentPages" aria-expanded="false" aria-controls="collapseFrequentPages">
                             <span>صفحات پرکاربرد</span>
                             <small>پرمراجعه</small>
+                        </button>
+                        <div id="collapseFrequentPages" class="sidebar-section-collapse collapse">
+                            <nav class="nav flex-column sidebar-dynamic-nav sidebar-section-body" id="frequentPagesNav">
+                                <span class="sidebar-empty-state">هنوز داده‌ای ثبت نشده است.</span>
+                            </nav>
                         </div>
-                        <nav class="nav flex-column sidebar-dynamic-nav" id="frequentPagesNav">
-                            <span class="sidebar-empty-state">هنوز داده‌ای ثبت نشده است.</span>
-                        </nav>
                     </section>
 
                     <section class="sidebar-section">
-                        <div class="sidebar-section-head">
+                        <button class="sidebar-section-toggle accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecentPages" aria-expanded="false" aria-controls="collapseRecentPages">
                             <span>آخرین بازدیدها</span>
                             <small>دسترسی اخیر</small>
+                        </button>
+                        <div id="collapseRecentPages" class="sidebar-section-collapse collapse">
+                            <nav class="nav flex-column sidebar-dynamic-nav sidebar-section-body" id="recentPagesNav">
+                                <span class="sidebar-empty-state">هنوز صفحه‌ای ثبت نشده است.</span>
+                            </nav>
                         </div>
-                        <nav class="nav flex-column sidebar-dynamic-nav" id="recentPagesNav">
-                            <span class="sidebar-empty-state">هنوز صفحه‌ای ثبت نشده است.</span>
-                        </nav>
                     </section>
                 </div>
             </div>
@@ -464,7 +472,7 @@
     </script>
     <script>
         (() => {
-            const sidebarContainer = document.getElementById('sidebarScrollContainer');
+            const sidebarContainer = document.getElementById('sidebarPagesScroll');
             if (!sidebarContainer) {
                 return;
             }

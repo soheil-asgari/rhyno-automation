@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,8 +23,8 @@ namespace OfficeAutomation.Controllers
     public class FinancialController : Controller
     {
         private readonly FinanceDbContext _context;
-        private readonly InventoryDbContext _inventoryContext;
-        private readonly OfficeDbContext _officeContext;
+        private readonly IInventoryService _inventoryService;
+        private readonly IOfficeService _officeService;
         private readonly FinancialInvoiceService _invoiceService;
         private readonly FinanceLedgerService _ledgerService;
         private readonly PeriodClosingService _periodClosingService;
@@ -39,8 +39,8 @@ namespace OfficeAutomation.Controllers
 
         public FinancialController(
             FinanceDbContext context,
-            InventoryDbContext inventoryContext,
-            OfficeDbContext officeContext,
+            IInventoryService inventoryService,
+            IOfficeService officeService,
             FinancialInvoiceService invoiceService,
             FinanceLedgerService ledgerService,
             PeriodClosingService periodClosingService,
@@ -54,8 +54,8 @@ namespace OfficeAutomation.Controllers
             ITableSchemaRegistry tableSchemaRegistry)
         {
             _context = context;
-            _inventoryContext = inventoryContext;
-            _officeContext = officeContext;
+            _inventoryService = inventoryService;
+            _officeService = officeService;
             _invoiceService = invoiceService;
             _ledgerService = ledgerService;
             _periodClosingService = periodClosingService;
@@ -155,11 +155,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetReceiptItemsJson(int receiptId, CancellationToken cancellationToken)
         {
-            var receipt = await _inventoryContext.WarehouseReceipts
-                .AsNoTracking()
-                .Include(item => item.Items)
-                .ThenInclude(item => item.Product)
-                .FirstOrDefaultAsync(item => item.Id == receiptId, cancellationToken);
+            var receipt = await _inventoryService.GetReceiptDetailsAsync(receiptId, cancellationToken);
 
             if (receipt == null)
             {
@@ -167,11 +163,10 @@ namespace OfficeAutomation.Controllers
             }
 
             var items = receipt.Items
-                .Where(item => item.ProductId > 0 && item.Quantity > 0)
                 .Select(item => new
                 {
                     productId = item.ProductId,
-                    itemName = item.Product?.Name ?? $"کالا {item.ProductId}",
+                    itemName = item.ItemName,
                     quantity = item.Quantity,
                     unitPrice = item.UnitPrice,
                     lineSubTotal = Math.Round(item.Quantity * item.UnitPrice, 2),
@@ -1193,18 +1188,7 @@ namespace OfficeAutomation.Controllers
         [PermissionAuthorize("Finance.Export")]
         public async Task<IActionResult> ExportStockExcel(int? warehouseId, CancellationToken cancellationToken)
         {
-            var query = _inventoryContext.InventoryStocks
-                .AsNoTracking()
-                .Include(item => item.Product)
-                .Include(item => item.Warehouse)
-                .AsQueryable();
-
-            if (warehouseId.HasValue)
-            {
-                query = query.Where(item => item.WarehouseId == warehouseId.Value);
-            }
-
-            var items = await query.OrderBy(item => item.Product.Name).ToListAsync(cancellationToken);
+            var items = await _inventoryService.GetInventoryStocksAsync(warehouseId, cancellationToken);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Stock");
@@ -1219,10 +1203,10 @@ namespace OfficeAutomation.Controllers
             for (var index = 0; index < items.Count; index++)
             {
                 var row = index + 2;
-                worksheet.Cell(row, 1).Value = items[index].Product.Code;
-                worksheet.Cell(row, 2).Value = items[index].Product.Name;
-                worksheet.Cell(row, 3).Value = items[index].Warehouse.Name;
-                worksheet.Cell(row, 4).Value = items[index].Product.Unit;
+                worksheet.Cell(row, 1).Value = items[index].ProductCode;
+                worksheet.Cell(row, 2).Value = items[index].ProductName;
+                worksheet.Cell(row, 3).Value = items[index].WarehouseName;
+                worksheet.Cell(row, 4).Value = items[index].Unit;
                 worksheet.Cell(row, 5).Value = items[index].CurrentQuantity;
             }
 
@@ -1312,12 +1296,7 @@ namespace OfficeAutomation.Controllers
         [HttpGet]
         public async Task<IActionResult> PrintWarehouseReceiptPdf(int id, CancellationToken cancellationToken)
         {
-            var receipt = await _inventoryContext.WarehouseReceipts
-                .AsNoTracking()
-                .Include(item => item.Warehouse)
-                .Include(item => item.Items)
-                .ThenInclude(item => item.Product)
-                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+            var receipt = await _inventoryService.GetWarehouseReceiptForPrintAsync(id, cancellationToken);
 
             if (receipt == null)
             {
@@ -1677,11 +1656,7 @@ namespace OfficeAutomation.Controllers
             var productIds = validItems.Where(item => item.ProductId.HasValue).Select(item => item.ProductId!.Value).Distinct().ToList();
             if (productIds.Count > 0)
             {
-                var validProductIds = await _inventoryContext.Products
-                    .AsNoTracking()
-                    .Where(item => item.IsActive && !item.IsDeleted && productIds.Contains(item.Id))
-                    .Select(item => item.Id)
-                    .ToListAsync(cancellationToken);
+                var validProductIds = await _inventoryService.GetActiveProductIdsAsync(productIds, cancellationToken);
 
                 if (validProductIds.Count != productIds.Count)
                 {
@@ -1700,9 +1675,7 @@ namespace OfficeAutomation.Controllers
                 if (model.WarehouseReceiptId.HasValue)
                 {
                     var warehouseReceiptId = model.WarehouseReceiptId.Value;
-                    var receiptExists = await _inventoryContext.WarehouseReceipts
-                        .AsNoTracking()
-                        .AnyAsync(item => item.Id == warehouseReceiptId, cancellationToken);
+                    var receiptExists = await _inventoryService.WarehouseReceiptExistsAsync(warehouseReceiptId, cancellationToken);
 
                     if (!receiptExists)
                     {
@@ -1727,9 +1700,7 @@ namespace OfficeAutomation.Controllers
 
                 if (model.FollowUpEmployeeId.HasValue)
                 {
-                    var employeeExists = await _officeContext.HumanCapitalEmployees
-                        .AsNoTracking()
-                        .AnyAsync(item => item.Id == model.FollowUpEmployeeId.Value && item.CurrentStatus == "فعال", cancellationToken);
+                    var employeeExists = await _officeService.IsEmployeeActiveAsync(model.FollowUpEmployeeId.Value, cancellationToken);
 
                     if (!employeeExists)
                     {
@@ -1757,18 +1728,13 @@ namespace OfficeAutomation.Controllers
         private async Task PopulateProductOptionsAsync(List<SelectListItem> options, CancellationToken cancellationToken)
         {
             options.Clear();
-            var items = await _inventoryContext.Products
-                .AsNoTracking()
-                .Where(item => item.IsActive && !item.IsDeleted)
-                .OrderBy(item => item.Name)
-                .Select(item => new SelectListItem
-                {
-                    Value = item.Id.ToString(),
-                    Text = $"{item.Name} ({item.Code})"
-                })
-                .ToListAsync(cancellationToken);
+            var items = await _inventoryService.GetActiveProductOptionsAsync(cancellationToken);
 
-            options.AddRange(items);
+            options.AddRange(items.Select(item => new SelectListItem
+            {
+                Value = item.Id.ToString(),
+                Text = $"{item.Name} ({item.Code})"
+            }));
         }
 
         private async Task PopulatePurchaseOptionsAsync(FinancialInvoiceUpsertVM model, CancellationToken cancellationToken)
@@ -1785,21 +1751,7 @@ namespace OfficeAutomation.Controllers
                 .Select(item => item.WarehouseReceiptId!.Value)
                 .ToListAsync(cancellationToken);
 
-            var receiptItems = await _inventoryContext.WarehouseReceipts
-                .AsNoTracking()
-                .Where(item =>
-                    !mappedReceiptIds.Contains(item.Id) ||
-                    (model.WarehouseReceiptId.HasValue && item.Id == model.WarehouseReceiptId.Value))
-                .OrderByDescending(item => item.CreatedAt)
-                .Select(item => new
-                {
-                    item.Id,
-                    item.ReceiptNumber,
-                    item.SupplierOrSource,
-                    item.DateShamsi
-                })
-                .Take(300)
-                .ToListAsync(cancellationToken);
+            var receiptItems = await _inventoryService.GetAvailableWarehouseReceiptOptionsAsync(mappedReceiptIds, model.WarehouseReceiptId, cancellationToken);
 
             model.WarehouseReceiptOptions.AddRange(receiptItems.Select(item => new SelectListItem
             {
@@ -1807,18 +1759,13 @@ namespace OfficeAutomation.Controllers
                 Text = $"{item.ReceiptNumber} - {item.SupplierOrSource} ({item.DateShamsi})"
             }));
 
-            var employeeItems = await _officeContext.HumanCapitalEmployees
-                .AsNoTracking()
-                .Where(item => item.CurrentStatus == "فعال")
-                .OrderBy(item => item.FullName)
-                .Select(item => new SelectListItem
-                {
-                    Value = item.Id.ToString(),
-                    Text = $"{item.FullName} ({item.PersonnelCode})"
-                })
-                .ToListAsync(cancellationToken);
+            var employeeItems = await _officeService.GetActiveEmployeeOptionsAsync(cancellationToken);
 
-            model.FollowUpEmployeeOptions.AddRange(employeeItems);
+            model.FollowUpEmployeeOptions.AddRange(employeeItems.Select(item => new SelectListItem
+            {
+                Value = item.Id.ToString(),
+                Text = $"{item.FullName} ({item.PersonnelCode})"
+            }));
         }
 
         private async Task PopulateEmployerOptionsAsync(List<SelectListItem> options, CancellationToken cancellationToken)

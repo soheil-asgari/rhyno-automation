@@ -1,150 +1,145 @@
 @model TrialBalancePageVM
-@using System.Globalization
+@using System.Text.Json
 @{
     ViewData["Title"] = "تراز آزمایشی انترپرایز";
-    var report = Model.Report;
-    var persianCalendar = new PersianCalendar();
-
-    string FormatDate(DateTime value)
-    {
-        if (value == default)
-        {
-            return "-";
-        }
-
-        var date = value.Date;
-        try
-        {
-            return $"{persianCalendar.GetYear(date):0000}/{persianCalendar.GetMonth(date):00}/{persianCalendar.GetDayOfMonth(date):00}";
-        }
-        catch
-        {
-            return date.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-        }
-    }
-
-    string FormatAmount(decimal value) => value == 0m ? string.Empty : value.ToString("N0", CultureInfo.InvariantCulture);
+    var reportIssuer = User?.Identity?.Name ?? "کاربر سیستم";
 }
 
-<div class="container-fluid trial-balance-page" dir="rtl">
-    <header class="trial-balance-head">
-        <div>
-            <h1>تراز آزمایشی انترپرایز</h1>
-            <span>@report.FiscalPeriodName · @FormatDate(report.StartDate) تا @FormatDate(report.EndDate)</span>
+<div class="trial-balance-page" dir="rtl">
+    <section class="print-header-block" aria-hidden="true">
+        <div class="print-header-col print-header-company">
+            <strong>اتوماسیون اداری و مالی راینو</strong>
+            <span>گزارش تراز آزمایشی اسناد دفتر کل</span>
         </div>
-        <div class="trial-balance-totals" aria-label="Trial balance totals">
-            <strong>مانده پایان</strong>
-            <span>بدهکار @report.ClosingDebitTotal.ToString("N0")</span>
-            <span>بستانکار @report.ClosingCreditTotal.ToString("N0")</span>
+        <div class="print-header-col print-header-period">
+            <strong>بازه گزارش</strong>
+            <span id="printPeriodLabel"></span>
+        </div>
+        <div class="print-header-col print-header-meta">
+            <strong id="printGeneratedAt"></strong>
+            <span id="printReportCode"></span>
+            <span>صادرکننده: @reportIssuer</span>
+            <span class="print-page-number"></span>
+        </div>
+    </section>
+
+    <header class="trial-balance-head">
+        <div class="trial-balance-heading">
+            <h1>تراز آزمایشی انترپرایز</h1>
+            <div class="trial-balance-meta">
+                <span id="trialBalancePeriodName">@Model.Report.FiscalPeriodName</span>
+                <span class="trial-balance-meta-separator">|</span>
+                <span id="trialBalancePeriodRange"></span>
+            </div>
+        </div>
+        <div class="trial-balance-status" id="trialBalanceStatus" aria-live="polite">
+            آماده نمایش
         </div>
     </header>
 
-    <form method="get" asp-action="GetTrialBalance" class="trial-balance-toolbar">
-        <div class="field-stack">
-            <label for="fiscalPeriodId">دوره مالی</label>
-            <select id="fiscalPeriodId" name="fiscalPeriodId" class="form-select form-select-sm tb-control" asp-items="Model.FiscalPeriodOptions"></select>
+    <form id="trialBalanceForm"
+          class="trial-balance-toolbar"
+          method="get"
+          asp-controller="Financial"
+          asp-action="GetTrialBalance"
+          data-json-url="@Url.Action("GetTrialBalance", "Financial")">
+        <div class="tb-toolbar-section tb-toolbar-filters">
+            <div class="tb-toolbar-group tb-period-group">
+                <label for="fiscalPeriodId">دوره مالی</label>
+                <select id="fiscalPeriodId"
+                        name="fiscalPeriodId"
+                        class="form-select form-select-sm tb-control"
+                        asp-items="Model.FiscalPeriodOptions"></select>
+            </div>
+
+            <label class="tb-toggle" for="includeMoatagh">
+                <input id="includeMoatagh" name="includeMoatagh" type="checkbox" value="true" checked="@Model.IncludeMoatagh" />
+                <span class="tb-toggle-track"></span>
+                <span class="tb-toggle-label">شامل اسناد موقت</span>
+            </label>
+
+            <label class="tb-toggle" for="groupByFloatingDetail">
+                <input id="groupByFloatingDetail" name="groupByFloatingDetail" type="checkbox" value="true" checked="@Model.GroupByFloatingDetail" />
+                <span class="tb-toggle-track"></span>
+                <span class="tb-toggle-label">تفکیک تفصیلی شناور</span>
+            </label>
+
+            <label class="tb-check-filter" for="nonZeroOnly">
+                <input id="nonZeroOnly" type="checkbox" />
+                <span>فقط حساب‌های دارای مانده</span>
+            </label>
         </div>
 
-        <label class="tb-check">
-            <input type="checkbox" name="includeMoatagh" value="true" checked="@Model.IncludeMoatagh" />
-            <span>شامل معلق</span>
-        </label>
+        <input type="hidden" id="sixColumnField" name="sixColumn" value="@Model.SixColumn.ToString().ToLowerInvariant()" />
 
-        <label class="tb-check">
-            <input type="checkbox" name="groupByFloatingDetail" value="true" checked="@Model.GroupByFloatingDetail" />
-            <span>گروه‌بندی تفصیلی شناور</span>
-        </label>
+        <div class="tb-toolbar-section tb-toolbar-actions">
+            <button type="submit" class="tb-toolbar-link tb-toolbar-button tb-refresh-button" title="به‌روزرسانی سیستم">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>به‌روزرسانی سیستم</span>
+            </button>
 
-        <input type="hidden" name="sixColumn" id="sixColumnField" value="@Model.SixColumn.ToString().ToLowerInvariant()" />
-        <div class="tb-segment" role="group" aria-label="قالب نمایش">
-            <button type="button" class="tb-segment-button @(!Model.SixColumn ? "is-active" : "")" data-six-column="false">۴ ستونی</button>
-            <button type="button" class="tb-segment-button @(Model.SixColumn ? "is-active" : "")" data-six-column="true">۶ ستونی</button>
+            <div class="tb-mode-toggle" role="group" aria-label="نوع نمایش">
+                <button type="button" class="tb-mode-button @(!Model.SixColumn ? "is-active" : "")" data-six-column="false">۴ ستونی</button>
+                <button type="button" class="tb-mode-button @(Model.SixColumn ? "is-active" : "")" data-six-column="true">۶ ستونی</button>
+            </div>
+
+            <button id="trialBalancePrintButton" type="button" class="tb-toolbar-link tb-toolbar-button" title="چاپ">
+                <i class="bi bi-printer"></i>
+                <span>چاپ</span>
+            </button>
+
+            <a id="trialBalanceJsonLink"
+               class="tb-toolbar-link"
+               asp-controller="Financial"
+               asp-action="GetTrialBalance"
+               asp-route-fiscalPeriodId="@Model.FiscalPeriodId"
+               asp-route-includeMoatagh="@Model.IncludeMoatagh"
+               asp-route-groupByFloatingDetail="@Model.GroupByFloatingDetail"
+               asp-route-sixColumn="@Model.SixColumn"
+               asp-route-format="json">JSON</a>
         </div>
-
-        <button type="submit" class="btn btn-sm btn-dark tb-submit">اعمال</button>
-        <a class="btn btn-sm btn-outline-dark tb-json" asp-action="GetTrialBalance" asp-route-fiscalPeriodId="@Model.FiscalPeriodId" asp-route-includeMoatagh="@Model.IncludeMoatagh" asp-route-groupByFloatingDetail="@Model.GroupByFloatingDetail" asp-route-format="json">JSON</a>
     </form>
 
-    <section class="trial-balance-grid-wrap @(Model.SixColumn ? "is-six-column" : "is-four-column")">
-        <table class="trial-balance-grid">
-            <thead>
-                <tr>
-                    <th rowspan="2" class="tb-code-col">کد معین</th>
-                    <th rowspan="2" class="tb-name-col">نام معین</th>
-                    @if (Model.GroupByFloatingDetail)
-                    {
-                        <th rowspan="2" class="tb-code-col">کد تفصیلی</th>
-                        <th rowspan="2" class="tb-name-col">نام تفصیلی</th>
-                    }
-                    @if (Model.SixColumn)
-                    {
-                        <th colspan="2">مانده اول دوره</th>
-                    }
-                    <th colspan="2">گردش دوره</th>
-                    <th colspan="2">مانده پایان دوره</th>
-                </tr>
-                <tr>
-                    @if (Model.SixColumn)
-                    {
-                        <th>بدهکار</th>
-                        <th>بستانکار</th>
-                    }
-                    <th>بدهکار</th>
-                    <th>بستانکار</th>
-                    <th>بدهکار</th>
-                    <th>بستانکار</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (report.Rows.Count == 0)
-                {
-                    var colspan = (Model.GroupByFloatingDetail ? 4 : 2) + (Model.SixColumn ? 6 : 4);
-                    <tr>
-                        <td colspan="@colspan" class="tb-empty">ردیفی برای دوره انتخاب‌شده وجود ندارد.</td>
-                    </tr>
-                }
-                else
-                {
-                    foreach (var row in report.Rows)
-                    {
-                        <tr>
-                            <td class="tb-code">@row.AccountCode</td>
-                            <td class="tb-title">@row.AccountName</td>
-                            @if (Model.GroupByFloatingDetail)
-                            {
-                                <td class="tb-code">@(row.FloatingDetailCode ?? "-")</td>
-                                <td class="tb-title">@(row.FloatingDetailName ?? "-")</td>
-                            }
-                            @if (Model.SixColumn)
-                            {
-                                <td class="tb-amount">@FormatAmount(row.OpeningDebit)</td>
-                                <td class="tb-amount">@FormatAmount(row.OpeningCredit)</td>
-                            }
-                            <td class="tb-amount">@FormatAmount(row.PeriodDebit)</td>
-                            <td class="tb-amount">@FormatAmount(row.PeriodCredit)</td>
-                            <td class="tb-amount tb-closing">@FormatAmount(row.ClosingDebit)</td>
-                            <td class="tb-amount tb-closing">@FormatAmount(row.ClosingCredit)</td>
-                        </tr>
-                    }
-                }
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="@(Model.GroupByFloatingDetail ? 4 : 2)">جمع کل</td>
-                    @if (Model.SixColumn)
-                    {
-                        <td class="tb-amount">@report.OpeningDebitTotal.ToString("N0")</td>
-                        <td class="tb-amount">@report.OpeningCreditTotal.ToString("N0")</td>
-                    }
-                    <td class="tb-amount">@report.PeriodDebitTotal.ToString("N0")</td>
-                    <td class="tb-amount">@report.PeriodCreditTotal.ToString("N0")</td>
-                    <td class="tb-amount">@report.ClosingDebitTotal.ToString("N0")</td>
-                    <td class="tb-amount">@report.ClosingCreditTotal.ToString("N0")</td>
-                </tr>
-            </tfoot>
-        </table>
+    <section class="trial-balance-matrix">
+        <div class="trial-balance-grid-wrap" id="trialBalanceGridWrap">
+            <table class="trial-balance-grid" id="trialBalanceGrid">
+                <thead id="trialBalanceHead"></thead>
+                <tbody id="trialBalanceBody"></tbody>
+                <tfoot id="trialBalanceFoot"></tfoot>
+            </table>
+        </div>
+    </section>
+
+    <section class="print-signatures-block" aria-hidden="true">
+        <div class="print-signature-cell">
+            <strong>تنظیم کننده</strong>
+            <span>نام و امضا</span>
+        </div>
+        <div class="print-signature-cell">
+            <strong>رئیس حسابداری</strong>
+            <span>نام و امضا</span>
+        </div>
+        <div class="print-signature-cell">
+            <strong>مدیر مالی</strong>
+            <span>نام و امضا</span>
+        </div>
+        <div class="print-signature-cell">
+            <strong>مدیر عامل</strong>
+            <span>نام و امضا</span>
+        </div>
     </section>
 </div>
+
+<script id="trialBalanceInitialState" type="application/json">
+@Html.Raw(JsonSerializer.Serialize(new
+{
+    fiscalPeriodId = Model.FiscalPeriodId,
+    includeMoatagh = Model.IncludeMoatagh,
+    groupByFloatingDetail = Model.GroupByFloatingDetail,
+    sixColumn = Model.SixColumn,
+    report = Model.Report
+}))
+</script>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/trial-balance.css" asp-append-version="true" />

@@ -46,7 +46,14 @@ public sealed class TenantMigrationOrchestrator
 
         foreach (var tenant in tenants)
         {
-            await MigrateTenantAsync(tenant, cancellationToken);
+            try
+            {
+                await MigrateTenantAsync(tenant, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Tenant migration failed for tenant {TenantId}. Startup will continue.", tenant.TenantId);
+            }
         }
     }
 
@@ -182,7 +189,10 @@ public sealed class TenantMigrationHostedService : IHostedService
             _logger.LogError(
                 "Tenant migration did not finish within {Timeout}. Check SQL Server availability and connection strings.",
                 timeout);
-            throw;
+        }
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(ex, "Tenant migration failed during startup. Application startup will continue.");
         }
     }
 

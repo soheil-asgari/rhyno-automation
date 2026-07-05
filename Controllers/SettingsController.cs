@@ -257,7 +257,7 @@ public class SettingsController : Controller
         preference.ThemePreference = model.ThemePreference;
         preference.UpdatedAtUtc = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _identityContext.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "UI preferences updated by {UserId}. Theme={Theme}, SidebarCollapsed={SidebarCollapsed}",

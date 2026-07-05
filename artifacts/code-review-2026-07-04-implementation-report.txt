@@ -1,0 +1,64 @@
+Code Review Implementation Report
+Date: 2026-07-04
+Workspace: F:\rhyno-automation-1\rhyno-automation
+
+Reviewed input
+- Source file: artifacts\code-review-2026-07-04.txt
+- Focus areas implemented first: security, startup safety, DI cleanup, workflow concurrency, saved views behavior
+
+Implemented changes
+
+1. WorkInbox client-side XSS hardening
+- File: Views\WorkInbox\Index.cshtml
+- Added `escapeHtml`, `sanitizeIcon`, `sanitizeBadgeClass`, `sanitizePriorityClass`, and `sanitizeUrl`.
+- Stopped trusting dynamic values before rendering into `innerHTML`.
+- Hardened detail link assignment with URL sanitization.
+- Replaced `detailChips.innerHTML` and saved-view remove button HTML injection with DOM-safe construction.
+
+2. WorkInbox saved views server sync
+- Files: Views\WorkInbox\Index.cshtml, Controllers\SavedViewsController.cs
+- Added API-backed load for saved views from `/api/saved-views/WorkInbox`.
+- Added API-backed save for WorkInbox views.
+- Added DELETE endpoint for removing saved views server-side.
+- Kept localStorage as a fallback/cache instead of the only persistence layer.
+
+3. Workflow attachment upload hardening
+- File: Services\WorkflowService.cs
+- Added allow-list validation for extension and content type.
+- Added 10 MB max size check.
+- Changed stored file naming to random GUID plus validated extension.
+- Normalized stored content type instead of trusting arbitrary client input.
+
+4. Workflow transition sequence race reduction
+- File: Services\WorkflowService.cs
+- Added per-workflow-instance semaphore locking around `SequenceNumber` allocation in `RecordTransitionEventAsync`.
+- This removes the simple in-process race caused by `Max + 1`.
+
+5. Tenant migration startup resilience
+- File: Services\Tenancy\TenantMigrationOrchestrator.cs
+- Tenant migration errors are now logged per tenant and startup continues.
+- Startup timeout/failure no longer aborts application startup; failures are logged explicitly.
+
+6. Bootstrap / DI cleanup
+- File: Program.cs
+- Removed duplicated tenant/workflow/outbox/notification registrations already present in `Program.cs`.
+- Result: cleaner service graph and less ambiguity in DI resolution behavior.
+
+Verification
+- Command: `dotnet build OfficeAutomation.csproj -c Debug`
+- Result: Build succeeded with 0 errors and 0 warnings.
+- Output assembly: `F:\rhyno-build\bin\OfficeAutomation\Debug\OfficeAutomation.dll`
+
+Notes and remaining gaps
+- The review file contained several large architectural items such as full decomposition of `WorkflowService` and `FinancialController`. Those were not fully completed in this pass because they require broader extraction, routing changes, and regression coverage.
+- `Views\ProcessAnalysis\Index.cshtml` still needs a deeper cleanup pass if the goal is to eliminate every `innerHTML`-based rendering path there and fully repair text/encoding issues.
+- `FinancialController` monolith reduction and `BuildLedgerOperationsModelAsync` extraction remain good next steps.
+- `WorkflowService` document-type/entity reflection coupling remains a design risk and was not removed in this pass.
+
+Files changed
+- Controllers\SavedViewsController.cs
+- Program.cs
+- Services\Tenancy\TenantMigrationOrchestrator.cs
+- Services\WorkflowService.cs
+- Views\WorkInbox\Index.cshtml
+- Views\ProcessAnalysis\Index.cshtml
