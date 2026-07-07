@@ -3,166 +3,166 @@
     ViewData["Title"] = "ثبت لیست بیمه";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/persian-datepicker.min.css" asp-append-version="true" />
-    <style>
-        .employee-autocomplete { position: relative; }
-        .bimeh-page .table-responsive,
-        .bimeh-page table,
-        .bimeh-page tbody,
-        .bimeh-page tr,
-        .bimeh-page td {
-            overflow: visible !important;
-        }
-        .bimeh-page td { position: relative; }
-        .employee-suggestions {
-            position: absolute;
-            top: calc(100% + 4px);
-            right: 0;
-            left: 0;
-            z-index: 10001 !important;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
-            max-height: 240px;
-            overflow-y: auto;
-            display: none;
-        }
-        .employee-suggestion-item {
-            width: 100%;
-            border: 0;
-            background: transparent;
-            text-align: right;
-            padding: .6rem .8rem;
-        }
-        .employee-suggestion-item:hover { background: #f8fafc; }
-        .insurance-amount {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: .5rem;
-            padding: .38rem .6rem;
-            min-height: calc(1.5em + .75rem + 2px);
-            display: flex;
-            align-items: center;
-            color: #475569;
-            font-size: .86rem;
-            font-weight: 600;
-        }
-        .employee-lock-note {
-            margin-top: .25rem;
-            font-size: .72rem;
-            color: #64748b;
-        }
-    </style>
-}
-
-<div class="container-fluid py-4 bimeh-page">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+    <!-- Header Section -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
-            <h5 class="fw-bold mb-1 text-dark">ثبت لیست بیمه</h5>
-            <p class="text-muted small mb-0">اتصال مستقیم به سرمایه انسانی و ثبت بدون ورود تکراری</p>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">ثبت لیست بیمه</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">اتصال مستقیم به سرمایه انسانی و ثبت بدون ورود تکراری اطلاعات</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
-            <button type="button" id="copyPreviousMonth" class="btn btn-outline-primary">کپی از ماه قبل</button>
+        <div class="flex flex-wrap items-center gap-2">
+            <a asp-action="Index" class="flex items-center justify-center px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <span>بازگشت</span>
+            </a>
+            <button type="button" id="copyPreviousMonth" class="flex items-center gap-1.5 px-4 h-9 border border-teal-200 dark:border-teal-900/50 hover:bg-teal-50 dark:hover:bg-teal-955/20 text-teal-700 dark:text-teal-400 rounded-lg text-xs font-bold transition shadow-sm bg-transparent">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>کپی از ماه قبل</span>
+            </button>
         </div>
+    </header>
+
+    <!-- Info/Statuses row -->
+    <div class="flex flex-wrap gap-2 items-center text-xs text-slate-500 dark:text-slate-400 p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl leading-relaxed">
+        <span class="font-bold text-slate-700 dark:text-slate-300">وضعیت‌های لیست:</span>
+        <span>پیش‌نویس</span>
+        <span class="text-slate-300 dark:text-slate-700">|</span>
+        <span>ارسال‌شده</span>
+        <span class="text-slate-300 dark:text-slate-700">|</span>
+        <span>در حال بررسی</span>
+        <span class="text-slate-300 dark:text-slate-700">|</span>
+        <span>تاییدشده</span>
+        <span class="text-slate-300 dark:text-slate-700">|</span>
+        <span>بسته‌شده</span>
     </div>
 
-    <div class="mb-4 px-1">
-        <div class="d-flex flex-wrap gap-2 align-items-center small text-muted">
-            <span>وضعیت‌های لیست:</span>
-            <span>پیش‌نویس</span>
-            <span>/</span>
-            <span>ارسال‌شده</span>
-            <span>/</span>
-            <span>در حال بررسی</span>
-            <span>/</span>
-            <span>تاییدشده</span>
-            <span>/</span>
-            <span>بسته‌شده</span>
-        </div>
+    <!-- Main Form Card -->
+    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <form asp-action="Create" method="post" id="bimehCreateForm" class="flex flex-col gap-6">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="ModelOnly" class="p-3 bg-rose-50 dark:bg-rose-955/10 text-rose-800 dark:text-rose-450 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-semibold leading-relaxed"></div>
+            }
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Project Name -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="ProjectName" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
+                    <input asp-for="ProjectName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" maxlength="150" id="projectNameField" />
+                    <span asp-validation-for="ProjectName" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
+
+                <!-- Manager Name -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="ManagerName" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
+                    <input asp-for="ManagerName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" maxlength="100" id="managerNameField" />
+                    <span asp-validation-for="ManagerName" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
+
+                <!-- Month -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Month" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
+                    <input asp-for="Month" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono" type="number" min="1" max="12" id="monthField" />
+                    <span asp-validation-for="Month" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
+
+                <!-- Year -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Year" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
+                    <input asp-for="Year" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono" type="number" min="1300" max="1600" id="yearField" />
+                    <span asp-validation-for="Year" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
+            </div>
+
+            <!-- Table Header Toolbar -->
+            <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">کارکنان لیست بیمه</h3>
+                <button type="button" id="addRow" class="flex items-center gap-1 px-3 h-8 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold transition shadow-sm">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>افزودن ردیف</span>
+                </button>
+            </div>
+
+            <!-- Table Employees list -->
+            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                <div class="overflow-x-auto w-full">
+                    <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
+                        <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="px-3 py-2.5 font-bold">نام کارمند</th>
+                                <th class="px-3 py-2.5 font-bold">سمت</th>
+                                <th class="px-3 py-2.5 font-bold text-center">شروع کار (شمسی)</th>
+                                <th class="px-3 py-2.5 font-bold text-center">ترک کار (شمسی)</th>
+                                <th class="px-3 py-2.5 font-bold text-left">روز کارکرد</th>
+                                <th class="px-3 py-2.5 font-bold text-left">حقوق مشمول</th>
+                                <th class="px-3 py-2.5 font-bold text-left">حق بیمه ۷٪</th>
+                                <th class="px-3 py-2.5 font-bold text-center w-1">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeRows" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer Details/Submit -->
+            <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                <span id="employeeCountLabel" class="text-xs font-bold text-slate-500 dark:text-slate-400">تعداد کارکنان: 0</span>
+                <button type="submit" class="flex items-center gap-1.5 px-5 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                    <i class="bi bi-save"></i>
+                    <span>ذخیره لیست بیمه</span>
+                </button>
+            </div>
+        </form>
     </div>
-
-    <form asp-action="Create" method="post" id="bimehCreateForm">
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
-        <div class="row g-3 mb-4">
-            <div class="col-md-6 col-lg-4">
-                <label asp-for="ProjectName" class="form-label"></label>
-                <input asp-for="ProjectName" class="form-control" maxlength="150" id="projectNameField" />
-                <span asp-validation-for="ProjectName" class="text-danger small"></span>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <label asp-for="ManagerName" class="form-label"></label>
-                <input asp-for="ManagerName" class="form-control" maxlength="100" id="managerNameField" />
-                <span asp-validation-for="ManagerName" class="text-danger small"></span>
-            </div>
-            <div class="col-6 col-lg-2">
-                <label asp-for="Month" class="form-label"></label>
-                <input asp-for="Month" class="form-control" type="number" min="1" max="12" id="monthField" />
-                <span asp-validation-for="Month" class="text-danger small"></span>
-            </div>
-            <div class="col-6 col-lg-2">
-                <label asp-for="Year" class="form-label"></label>
-                <input asp-for="Year" class="form-control" type="number" min="1300" max="1600" id="yearField" />
-                <span asp-validation-for="Year" class="text-danger small"></span>
-            </div>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <h6 class="mb-0 fw-bold">کارکنان</h6>
-            <button type="button" id="addRow" class="btn btn-secondary btn-sm">افزودن ردیف</button>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle bimeh-table">
-                <thead>
-                    <tr>
-                        <th>نام کارمند</th>
-                        <th>سمت</th>
-                        <th>شروع کار (شمسی)</th>
-                        <th>ترک کار (شمسی)</th>
-                        <th>روز کارکرد</th>
-                        <th>حقوق مشمول</th>
-                        <th>حق بیمه ۷٪</th>
-                        <th class="text-center">حذف</th>
-                    </tr>
-                </thead>
-                <tbody id="employeeRows"></tbody>
-            </table>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-            <small id="employeeCountLabel" class="text-muted">تعداد کارکنان: 0</small>
-            <button type="submit" class="btn btn-success px-4">ذخیره لیست بیمه</button>
-        </div>
-    </form>
 </div>
 
+<!-- Template for cloning rows -->
 <template id="employeeRowTemplate">
     <tr>
-        <td>
-            <div class="employee-autocomplete">
-                <input data-field="FullName" class="form-control employee-search" maxlength="120" autocomplete="off" placeholder="جستجو نام/کد پرسنلی" required />
+        <!-- Employee search box -->
+        <td class="px-3 py-2 min-w-[200px]">
+            <div class="relative w-full employee-autocomplete">
+                <input data-field="FullName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 employee-search" maxlength="120" autocomplete="off" placeholder="جستجو نام/کد پرسنلی..." required />
                 <input type="hidden" data-field="HumanCapitalEmployeeId" />
-                <div class="employee-suggestions"></div>
+                <div class="employee-suggestions absolute top-full right-0 left-0 z-50 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg hidden"></div>
             </div>
         </td>
-        <td>
-            <input data-field="JobTitle" class="form-control" maxlength="100" required readonly />
-            <small class="employee-lock-note">از پرونده سرمایه انسانی</small>
+        
+        <!-- Job Title -->
+        <td class="px-3 py-2 min-w-[150px]">
+            <input data-field="JobTitle" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-900 px-3 text-xs text-slate-600 dark:text-slate-400 outline-none dark:border-slate-800" maxlength="100" required readonly />
+            <small class="text-[9px] text-slate-400 mt-0.5 block">از پرونده پرسنلی</small>
         </td>
-        <td>
-            <input type="text" data-field="StartWorkSolar" class="form-control solar-date-field" placeholder="1405/03/01" required readonly />
-            <small class="employee-lock-note">قفل‌شده از تاریخ استخدام</small>
+        
+        <!-- Hire date / Start Date -->
+        <td class="px-3 py-2 min-w-[140px]">
+            <input type="text" data-field="StartWorkSolar" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-900 px-3 text-xs text-slate-650 dark:text-slate-400 outline-none text-center font-mono tabular-nums dark:border-slate-800 solar-date-field" placeholder="1405/03/01" required readonly />
+            <small class="text-[9px] text-slate-400 mt-0.5 block">قفل‌شده از تاریخ استخدام</small>
         </td>
-        <td><input type="text" data-field="EndWorkSolar" class="form-control solar-date-field" placeholder="1405/03/31" /></td>
-        <td><input type="number" data-field="WorkDays" class="form-control" min="0" max="31" required /></td>
-        <td><input type="number" data-field="Salary" class="form-control salary-input" min="0" step="0.01" required /></td>
-        <td><div class="insurance-amount" data-insurance-cell>0 ریال</div></td>
-        <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm removeRow">حذف</button></td>
+        
+        <!-- End Work date -->
+        <td class="px-3 py-2 min-w-[140px]">
+            <input type="text" data-field="EndWorkSolar" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-center font-mono tabular-nums solar-date-field" placeholder="1405/03/31" />
+        </td>
+        
+        <!-- Work Days count -->
+        <td class="px-3 py-2 w-20">
+            <input type="number" data-field="WorkDays" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums" min="0" max="31" required />
+        </td>
+        
+        <!-- Salary -->
+        <td class="px-3 py-2 min-w-[130px]">
+            <input type="number" data-field="Salary" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums salary-input" min="0" step="0.01" required />
+        </td>
+        
+        <!-- Calculated Insurance -->
+        <td class="px-3 py-2 min-w-[110px]">
+            <div class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-900 px-3 text-xs text-slate-650 dark:text-slate-350 outline-none flex items-center justify-start font-bold font-mono tabular-nums dark:border-slate-800" data-insurance-cell>0 ریال</div>
+        </td>
+        
+        <!-- Delete Row Action -->
+        <td class="px-3 py-2 text-center">
+            <button type="button" class="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-700 dark:text-rose-450 text-[10px] font-bold transition removeRow cursor-pointer">حذف</button>
+        </td>
     </tr>
 </template>
 

@@ -2,89 +2,129 @@
 @{
     var roleOptions = ViewBag.RoleOptions as IEnumerable<string> ?? Array.Empty<string>();
     var rolePermissionMap = ViewBag.RolePermissionMap as Dictionary<string, string[]> ?? new();
+    ViewData["Title"] = "تعریف همکار جدید";
 }
 
-<div class="page-shell">
-    <div class="section-header">
-        <div>
-            <h2 class="section-title">تعریف همکار جدید</h2>
-            <p class="section-subtitle">کاربر جدید را به کارمند، مدیر و نقش سازمانی وصل کنید.</p>
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+    <!-- Header Section -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400 text-lg border border-teal-200/30">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <div>
+                <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">تعریف همکار جدید</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">کاربر جدید را به کارمند، مدیر مستقیم و نقش سازمانی متصل کنید.</p>
+            </div>
         </div>
-        <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
-    </div>
+        <a asp-action="Index" class="flex items-center justify-center px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+            <span>بازگشت</span>
+        </a>
+    </header>
 
-    <div class="form-card">
-        <form asp-action="Create" method="post" class="row g-3">
+    <!-- Main Card Form -->
+    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <form asp-action="Create" method="post" class="flex flex-col gap-6">
             @Html.AntiForgeryToken()
-            <div asp-validation-summary="All" class="text-danger small"></div>
+            
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="All" class="p-3 bg-rose-50 dark:bg-rose-955/10 text-rose-800 dark:text-rose-450 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-semibold leading-relaxed"></div>
+            }
 
-            <div class="col-md-6">
-                <label asp-for="FullName" class="form-label">نام و نام خانوادگی</label>
-                <input asp-for="FullName" class="form-control" required />
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- FullName -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="FullName" class="text-xs font-bold text-slate-700 dark:text-slate-300">نام و نام خانوادگی</label>
+                    <input asp-for="FullName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" required />
+                    <span asp-validation-for="FullName" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="Email" class="form-label">نام کاربری / ایمیل</label>
-                <input asp-for="Email" class="form-control" required />
-            </div>
+                <!-- Username/Email -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Email" class="text-xs font-bold text-slate-700 dark:text-slate-300">نام کاربری / ایمیل</label>
+                    <input asp-for="Email" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono" required />
+                    <span asp-validation-for="Email" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="EmployeeId" class="form-label">اتصال به کارمند</label>
-                <select asp-for="EmployeeId" class="form-select" required id="EmployeeId">
-                    <option value="">انتخاب کارمند</option>
-                    @foreach (var employee in (IEnumerable<dynamic>)(ViewBag.EmployeeOptions ?? Array.Empty<dynamic>()))
-                    {
-                        <option value="@employee.Id">@employee.FullName (@employee.PersonnelCode)</option>
-                    }
-                </select>
-            </div>
+                <!-- Employee connection -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="EmployeeId" class="text-xs font-bold text-slate-700 dark:text-slate-300">اتصال به کارمند</label>
+                    <select asp-for="EmployeeId" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" required id="EmployeeId">
+                        <option value="">— انتخاب کارمند —</option>
+                        @foreach (var employee in (IEnumerable<dynamic>)(ViewBag.EmployeeOptions ?? Array.Empty<dynamic>()))
+                        {
+                            <option value="@employee.Id">@employee.FullName (@employee.PersonnelCode)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="EmployeeId" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="ParentManagerUserId" class="form-label">مدیر مستقیم</label>
-                <select asp-for="ParentManagerUserId" class="form-select">
-                    <option value="">بدون مدیر</option>
-                    @foreach (var manager in (IEnumerable<dynamic>)(ViewBag.ManagerOptions ?? Array.Empty<dynamic>()))
-                    {
-                        <option value="@manager.Id">@manager.FullName</option>
-                    }
-                </select>
-            </div>
+                <!-- Direct Manager -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="ParentManagerUserId" class="text-xs font-bold text-slate-700 dark:text-slate-300">مدیر مستقیم</label>
+                    <select asp-for="ParentManagerUserId" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800">
+                        <option value="">بدون مدیر</option>
+                        @foreach (var manager in (IEnumerable<dynamic>)(ViewBag.ManagerOptions ?? Array.Empty<dynamic>()))
+                        {
+                            <option value="@manager.Id">@manager.FullName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="ParentManagerUserId" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="Role" class="form-label">نقش</label>
-                <select asp-for="Role" class="form-select" required>
-                    <option value="">انتخاب نقش</option>
-                    @foreach (var role in roleOptions)
-                    {
-                        <option value="@role">@role</option>
-                    }
-                </select>
-            </div>
+                <!-- Password -->
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Password" class="text-xs font-bold text-slate-700 dark:text-slate-300">رمز عبور پیش‌فرض</label>
+                    <input asp-for="Password" type="password" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" required />
+                    <span asp-validation-for="Password" class="text-xs text-rose-500 mt-1 block"></span>
+                    <span class="text-[10px] text-slate-400">رمز باید با سیاست فعلی رمز عبور سیستم هم‌خوان باشد.</span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="Password" class="form-label">رمز عبور پیش‌فرض</label>
-                <input asp-for="Password" type="password" class="form-control" required />
-                <div class="form-text">رمز باید با سیاست فعلی Identity هم‌خوان باشد.</div>
-            </div>
-
-            <div class="col-12">
-                <div class="app-state">
-                    <div>
-                        <i class="bi bi-shield-lock"></i>
-                        <h5 class="mb-1 mt-2">نقش انتخابی، permissionها را تعیین می‌کند</h5>
-                        <p class="mb-0 text-muted">در این نسخه، دسترسی واقعی از policy و permission table خوانده می‌شود.</p>
+                <!-- Roles Custom Clickable Cards -->
+                <div class="flex flex-col gap-2.5 md:col-span-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">نقش سازمانی</label>
+                    <input type="hidden" asp-for="Role" id="RoleField" required />
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        @foreach (var role in roleOptions)
+                        {
+                            <button type="button" data-role-value="@role" class="role-card-btn p-3 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition flex flex-col gap-1 cursor-pointer">
+                                <span class="text-xs font-black text-slate-900 dark:text-white">@role</span>
+                                <span class="text-[9px] text-slate-450">انتخاب نقش @role</span>
+                            </button>
+                        }
                     </div>
+                    <span asp-validation-for="Role" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
             </div>
 
-            <div class="col-12">
-                <label class="form-label">Permissionهای نقش انتخابی</label>
-                <div id="rolePermissionPreview" class="d-flex flex-wrap gap-2"></div>
+            <!-- Security info box -->
+            <div class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-955/10 border border-slate-200 dark:border-slate-850 rounded-2xl">
+                <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/20 text-teal-650 dark:text-teal-400 text-base border border-teal-200/30">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
+                <div class="flex-1 flex flex-col gap-0.5">
+                    <h5 class="text-xs font-black text-slate-850 dark:text-white">نقش انتخابی، دسترسی‌ها را تعیین می‌کند</h5>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-450 leading-relaxed">در این نسخه، دسترسی واقعی از فایل‌های پیکربندی و کدهای امنیتی سمت سرور استخراج می‌شود.</p>
+                </div>
             </div>
 
-            <div class="col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-success">ذخیره و ایجاد اکانت</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">انصراف</a>
+            <!-- Selected Role Permissions Preview -->
+            <div class="flex flex-col gap-2.5">
+                <label class="text-xs font-bold text-slate-700 dark:text-slate-300 font-black">دسترسی‌های (Permissions) نقش انتخابی</label>
+                <div id="rolePermissionPreview" class="flex flex-wrap gap-1.5 p-3 min-h-[44px] bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-850 rounded-xl"></div>
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div class="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                <a asp-action="Index" class="flex items-center justify-center px-4 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm no-underline bg-transparent">
+                    <span>انصراف</span>
+                </a>
+                <button type="submit" class="flex items-center gap-1.5 px-5 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                    <i class="bi bi-check-circle"></i>
+                    <span>ذخیره و ایجاد اکانت</span>
+                </button>
             </div>
         </form>
     </div>
@@ -93,19 +133,37 @@
 @section Scripts {
     <script>
         (() => {
-            const roleSelect = document.querySelector('select[name="Role"]');
+            const roleField = document.getElementById('RoleField');
+            const roleButtons = document.querySelectorAll('.role-card-btn');
             const preview = document.getElementById('rolePermissionPreview');
             const map = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rolePermissionMap));
 
             const render = () => {
-                if (!preview || !roleSelect) return;
-                const permissions = map[roleSelect.value] || [];
+                if (!preview || !roleField) return;
+                const permissions = map[roleField.value] || [];
                 preview.innerHTML = permissions.length
-                    ? permissions.map(p => `<span class="badge text-bg-primary">${p}</span>`).join('')
-                    : '<span class="text-muted small">نقشی انتخاب نشده است.</span>';
+                    ? permissions.map(p => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-teal-50 text-teal-750 dark:bg-teal-950/30 dark:text-teal-400 border border-teal-200/30">${p}</span>`).join('')
+                    : '<span class="text-slate-400 dark:text-slate-550 text-xs">نقشی انتخاب نشده است.</span>';
             };
 
-            roleSelect?.addEventListener('change', render);
+            roleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    roleField.value = btn.dataset.roleValue;
+                    
+                    // Reset styling on all buttons
+                    roleButtons.forEach(b => {
+                        b.classList.remove('bg-teal-50/70', 'border-teal-500', 'dark:bg-teal-950/40', 'dark:border-teal-500', 'ring-2', 'ring-teal-500/10');
+                        b.classList.add('bg-white', 'dark:bg-slate-955', 'border-slate-200', 'dark:border-slate-800');
+                    });
+                    
+                    // Add active styling
+                    btn.classList.remove('bg-white', 'dark:bg-slate-955', 'border-slate-200', 'dark:border-slate-800');
+                    btn.classList.add('bg-teal-50/70', 'border-teal-500', 'dark:bg-teal-955/40', 'dark:border-teal-500', 'ring-2', 'ring-teal-500/10');
+                    
+                    render();
+                });
+            });
+
             render();
         })();
     </script>

@@ -1,75 +1,131 @@
 @model List<OfficeAutomation.Models.ApplicationRole>
 @{
-    ViewData["Title"] = "مرکز امنیت";
+    ViewData["Title"] = "مدیریت نقش‌ها";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/security.css" asp-append-version="true" />
-}
+<div class="flex flex-col gap-4 w-full">
 
-<div class="container-fluid py-4 security-page">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0">مدیریت نقش‌ها</h5>
-        <div class="d-flex gap-2">
-            <a asp-action="Matrix" class="btn btn-sm btn-outline-primary">ماتریس دسترسی</a>
-            <a asp-action="WorkflowRoutes" class="btn btn-sm btn-outline-secondary">مسیر گردش کار</a>
+    <!-- Page Header -->
+    <div class="flex items-center justify-between gap-3 px-1">
+        <div>
+            <h1 class="text-base font-black text-slate-900 dark:text-white tracking-tight">مدیریت نقش‌ها</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">تعریف نقش‌های کاربری و کنترل سطح دسترسی</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a asp-action="Matrix" class="flex items-center gap-1.5 px-3 py-1.5 border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-900/40 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-bold transition no-underline">
+                <i class="bi bi-table"></i>
+                <span>ماتریس دسترسی</span>
+            </a>
+            <a asp-action="WorkflowRoutes" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition no-underline">
+                <i class="bi bi-diagram-3"></i>
+                <span>مسیر گردش کار</span>
+            </a>
         </div>
     </div>
 
     @if (TempData["SecurityMessage"] is string message)
     {
-        <div class="alert alert-info py-2 small">@message</div>
+        <div class="flex items-center gap-2.5 px-3 py-2.5 border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/30 rounded-xl text-sky-700 dark:text-sky-300 text-xs font-bold">
+            <i class="bi bi-info-circle flex-shrink-0"></i>
+            <span>@message</span>
+        </div>
     }
 
-    <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body">
-            <form asp-action="CreateRole" method="post" class="row g-2 align-items-end">
-                @Html.AntiForgeryToken()
-                <div class="col-md-4">
-                    <label class="form-label small">نام نقش جدید</label>
-                    <input name="Name" class="form-control form-control-sm" />
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-sm btn-primary">افزودن نقش</button>
-                </div>
-            </form>
-        </div>
+    <!-- Add New Role Card -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4">
+        <h2 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+            <i class="bi bi-plus-circle text-teal-600 dark:text-teal-400"></i>
+            افزودن نقش جدید
+        </h2>
+        <form asp-action="CreateRole" method="post" class="flex items-end gap-3">
+            @Html.AntiForgeryToken()
+            <div class="flex-1 max-w-xs">
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">نام نقش</label>
+                <input name="Name"
+                       class="w-full text-xs px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition"
+                       placeholder="مثال: مدیر مالی، کارشناس انبار..." />
+            </div>
+            <button type="submit"
+                    class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg transition shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i>ایجاد نقش
+            </button>
+        </form>
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead>
+    <!-- Roles Table Card -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <i class="bi bi-shield-lock text-teal-600 dark:text-teal-400"></i>
+                لیست نقش‌های تعریف‌شده
+            </h2>
+            <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold">@Model.Count نقش</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-right text-slate-700 dark:text-slate-300">
+                <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th>نام نقش</th>
-                        <th class="text-center">ویرایش</th>
-                        <th class="text-center">حذف</th>
+                        <th class="px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400 text-right">#</th>
+                        <th class="px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400 text-right">نام نقش</th>
+                        <th class="px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400 text-right">تغییر نام</th>
+                        <th class="px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400 text-center w-20">حذف</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     @if (Model.Any())
                     {
+                        int idx = 1;
                         @foreach (var role in Model)
                         {
-                            <tr>
-                                <td>@role.Name</td>
-                                <td class="text-center">
-                                    @if (!string.Equals(role.Name, "Admin", StringComparison.OrdinalIgnoreCase))
+                            bool isAdmin = string.Equals(role.Name, "Admin", StringComparison.OrdinalIgnoreCase);
+                            <tr class="@(idx % 2 == 0 ? "bg-slate-50/50 dark:bg-slate-950/20" : "") hover:bg-teal-50/30 dark:hover:bg-teal-950/10 transition-colors">
+                                <td class="px-4 py-2 font-mono text-slate-400 dark:text-slate-500 select-none">@(idx++)</td>
+                                <td class="px-4 py-2">
+                                    <span class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 flex items-center justify-center text-[10px] font-black flex-shrink-0">
+                                            @(role.Name?.Length > 0 ? role.Name[0].ToString().ToUpper() : "?")
+                                        </span>
+                                        <strong class="font-bold text-slate-800 dark:text-white">@role.Name</strong>
+                                        @if (isAdmin)
+                                        {
+                                            <span class="px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[9px] font-bold">سیستمی</span>
+                                        }
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2">
+                                    @if (!isAdmin)
                                     {
-                                        <form asp-action="RenameRole" asp-route-id="@role.Id" method="post" class="d-inline-flex gap-1 align-items-center">
+                                        <form asp-action="RenameRole" asp-route-id="@role.Id" method="post" class="flex items-center gap-2">
                                             @Html.AntiForgeryToken()
-                                            <input type="text" name="newName" class="form-control form-control-sm security-role-name-input" value="@role.Name" />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">ثبت</button>
+                                            <input type="text" name="newName"
+                                                   class="text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-teal-500/20 w-44 transition"
+                                                   value="@role.Name" />
+                                            <button type="submit"
+                                                    class="px-2.5 py-1.5 border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-900/40 text-teal-700 dark:text-teal-300 rounded-lg text-[10px] font-bold transition">
+                                                ذخیره
+                                            </button>
                                         </form>
                                     }
-                                </td>
-                                <td class="text-center">
-                                    @if (!string.Equals(role.Name, "Admin", StringComparison.OrdinalIgnoreCase))
+                                    else
                                     {
-                                        <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post" class="d-inline" onsubmit="return confirm('حذف نقش انجام شود؟');">
+                                        <span class="text-slate-400 dark:text-slate-500 text-[10px] italic">قابل ویرایش نیست</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-2 text-center">
+                                    @if (!isAdmin)
+                                    {
+                                        <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post" class="inline" onsubmit="return confirm('آیا از حذف نقش «@role.Name» مطمئن هستید؟');">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                                            <button type="submit"
+                                                    class="px-2.5 py-1 border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-bold transition">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-300 dark:text-slate-600">—</span>
                                     }
                                 </td>
                             </tr>
@@ -77,7 +133,12 @@
                     }
                     else
                     {
-                        <tr><td colspan="3" class="text-center text-muted py-3">نقشی ثبت نشده است.</td></tr>
+                        <tr>
+                            <td colspan="4" class="px-4 py-12 text-center text-slate-400 dark:text-slate-500">
+                                <i class="bi bi-shield-x text-2xl block mb-2"></i>
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">نقشی ثبت نشده است</span>
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>

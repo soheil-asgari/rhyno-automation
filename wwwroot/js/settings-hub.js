@@ -4,20 +4,48 @@
     const GLOBAL_THEME_STORAGE_KEY = 'rhyno.theme.preference';
 
     const settingsPage = document.querySelector('.settings-page');
-    const tabButtons = document.querySelectorAll('#settings-tab [data-bs-toggle="pill"]');
-    const tabPanes = document.querySelectorAll('.settings-content .tab-pane');
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
     const themeSelect = document.querySelector('select[name="Ui.ThemePreference"]');
     const htmlRoot = document.documentElement;
-    const updateActiveTabState = (targetSelector) => {
-        tabButtons.forEach((button) => {
-            const isActive = button.getAttribute('data-bs-target') === targetSelector;
-            button.classList.toggle('is-current', isActive);
+
+    const activeClasses = ['active', 'border-teal-500', 'text-teal-700', 'dark:text-teal-300', 'font-black'];
+    const inactiveClasses = ['border-transparent', 'text-slate-500', 'dark:text-slate-400', 'font-bold'];
+
+    const activateTab = (targetSelector) => {
+        if (!targetSelector) return;
+        const targetBtn = document.querySelector(`.tab-btn[data-target="${targetSelector}"]`);
+        const targetPane = document.querySelector(targetSelector);
+        if (!targetBtn || !targetPane) return;
+
+        // Hide all panes
+        tabPanes.forEach((pane) => {
+            pane.classList.add('hidden');
+            pane.classList.remove('block');
         });
 
-        tabPanes.forEach((pane) => {
-            const isActive = `#${pane.id}` === targetSelector;
-            pane.classList.toggle('is-activated', isActive);
+        // Reset all buttons styling
+        tabButtons.forEach((btn) => {
+            activeClasses.forEach(cls => btn.classList.remove(cls));
+            inactiveClasses.forEach(cls => btn.classList.add(cls));
         });
+
+        // Set active styling on target button
+        activeClasses.forEach(cls => targetBtn.classList.add(cls));
+        inactiveClasses.forEach(cls => targetBtn.classList.remove(cls));
+
+        // Show target pane
+        targetPane.classList.remove('hidden');
+        targetPane.classList.add('block');
+
+        // Save selected tab in storage & history
+        localStorage.setItem(TAB_STORAGE_KEY, targetSelector);
+        if (history.replaceState) {
+            history.replaceState(null, '', targetSelector);
+        }
+
+        // Dispatch CustomEvent for signature resizing etc
+        document.dispatchEvent(new CustomEvent('rhyno:settings-tab-shown', { detail: { target: targetSelector } }));
     };
 
     if (!settingsPage) {
@@ -76,37 +104,21 @@
             : null;
         const preferredSelector = hashSelector || localStorage.getItem(TAB_STORAGE_KEY);
         if (!preferredSelector) {
-            const defaultTab = document.querySelector('#settings-tab .active[data-bs-toggle="pill"]');
+            const defaultTab = document.querySelector('.tab-btn.active');
             if (defaultTab) {
-                updateActiveTabState(defaultTab.getAttribute('data-bs-target'));
+                activateTab(defaultTab.getAttribute('data-target'));
             }
             return;
         }
 
-        const tabButton = document.querySelector(`#settings-tab [data-bs-target="${preferredSelector}"]`);
-        if (!tabButton || typeof bootstrap === 'undefined' || !bootstrap.Tab) {
-            return;
-        }
-
-        bootstrap.Tab.getOrCreateInstance(tabButton).show();
+        activateTab(preferredSelector);
     };
 
     tabButtons.forEach((button) => {
-        button.addEventListener('shown.bs.tab', (event) => {
-            const selected = event.target?.getAttribute('data-bs-target');
-            if (selected) {
-                localStorage.setItem(TAB_STORAGE_KEY, selected);
-                if (history.replaceState) {
-                    history.replaceState(null, '', selected);
-                }
-                updateActiveTabState(selected);
-            }
-        });
-
         button.addEventListener('click', () => {
-        const selected = button.getAttribute('data-bs-target');
+            const selected = button.getAttribute('data-target');
             if (selected) {
-                updateActiveTabState(selected);
+                activateTab(selected);
             }
         });
     });
@@ -152,9 +164,9 @@
     applyPreviewTheme(initialTheme);
     applyGlobalThemePreview(initialTheme);
 
-    const initialActiveTab = document.querySelector('#settings-tab .active[data-bs-toggle="pill"]');
+    const initialActiveTab = document.querySelector('.tab-btn.active');
     if (initialActiveTab) {
-        updateActiveTabState(initialActiveTab.getAttribute('data-bs-target'));
+        activateTab(initialActiveTab.getAttribute('data-target'));
     }
 
     const forms = settingsPage.querySelectorAll('form.settings-form');
@@ -170,7 +182,7 @@
         });
     });
 
-    const signatureTabButton = document.querySelector('#settings-tab [data-bs-target="#signature-admin-pane"]');
+    const signatureTabButton = document.querySelector('.tab-btn[data-target="#tab-signature"]');
     const signatureCanvas = document.getElementById('signature-canvas');
     const signatureSaveButton = document.getElementById('signature-save-btn');
     const signatureClearButton = document.getElementById('signature-clear-btn');
@@ -196,8 +208,14 @@
             }
         };
 
-        signatureTabButton.addEventListener('shown.bs.tab', () => {
+        signatureTabButton.addEventListener('click', () => {
             resizeSignatureCanvas();
+        });
+
+        document.addEventListener('rhyno:settings-tab-shown', (event) => {
+            if (event.detail?.target === '#tab-signature') {
+                resizeSignatureCanvas();
+            }
         });
 
         window.addEventListener('resize', resizeSignatureCanvas);

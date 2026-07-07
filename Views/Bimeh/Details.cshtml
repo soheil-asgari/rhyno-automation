@@ -1,4 +1,4 @@
-﻿@using System.Globalization
+@using System.Globalization
 @model InsuranceList
 @{
     ViewData["Title"] = "جزئیات لیست بیمه";
@@ -7,87 +7,110 @@
         var pc = new PersianCalendar();
         return $"{pc.GetYear(date):0000}/{pc.GetMonth(date):00}/{pc.GetDayOfMonth(date):00}";
     }
+    
+    var statusBadgeClass = Model.Status == "ارسال شده" || Model.Status == "تایید شده" || Model.Status == "ثبت شده"
+        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200/40"
+        : (Model.Status == "پیش‌نویس"
+        ? "bg-slate-100 text-slate-700 dark:bg-slate-800/40 dark:text-slate-400 border-slate-200/40"
+        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200/40");
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
-}
-
-<div class="container-fluid py-4 bimeh-page">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+    <!-- Header Section -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
-            <h5 class="fw-bold mb-1 text-dark">جزئیات لیست بیمه</h5>
-            <p class="text-muted small mb-0">نمای کلی اطلاعات لیست و کارکنان ثبت‌شده</p>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">جزئیات لیست بیمه</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">نمای کلی اطلاعات لیست و کارکنان ثبت‌شده در پروژه</p>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">ویرایش</a>
-            <a asp-action="Index" class="btn btn-outline-primary">بازگشت</a>
+        <div class="flex items-center gap-2">
+            <a asp-action="Index" class="flex items-center justify-center px-4 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <span>بازگشت به لیست</span>
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm no-underline">
+                <i class="bi bi-pencil-square"></i>
+                <span>ویرایش لیست</span>
+            </a>
         </div>
-    </div>
+    </header>
 
-    <div class="card border-0 shadow-sm bimeh-card mb-3">
-        <div class="card-body p-3 p-md-4">
-            <div class="row g-3">
-                <div class="col-12 col-md-6 col-lg-3">
-                    <small class="text-muted d-block">پروژه</small>
-                    <span class="fw-semibold">@Model.ProjectName</span>
-                </div>
-                <div class="col-12 col-md-6 col-lg-3">
-                    <small class="text-muted d-block">مدیر پروژه</small>
-                    <span class="fw-semibold">@Model.ManagerName</span>
-                </div>
-                <div class="col-6 col-lg-2">
-                    <small class="text-muted d-block">ماه / سال</small>
-                    <span class="fw-semibold">@Model.Month / @Model.Year</span>
-                </div>
-                <div class="col-6 col-lg-2">
-                    <small class="text-muted d-block">وضعیت</small>
-                    <span class="badge bimeh-status-badge">@Model.Status</span>
-                </div>
-                <div class="col-6 col-lg-2">
-                    <small class="text-muted d-block">تعداد پرسنل</small>
-                    <span class="badge bimeh-count-badge">@Model.EmployeeCount نفر</span>
-                </div>
+    <!-- Details Metadata Card -->
+    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <!-- Project Name -->
+            <div class="flex flex-col gap-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400">پروژه</span>
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-200">@Model.ProjectName</span>
+            </div>
+
+            <!-- Manager Name -->
+            <div class="flex flex-col gap-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400">مدیر پروژه</span>
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-200">@Model.ManagerName</span>
+            </div>
+
+            <!-- Month/Year -->
+            <div class="flex flex-col gap-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400">ماه / سال</span>
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">@Model.Month / @Model.Year</span>
+            </div>
+
+            <!-- Status -->
+            <div class="flex flex-col gap-1.5 items-start">
+                <span class="text-xs text-slate-500 dark:text-slate-400">وضعیت ارسال</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border @statusBadgeClass">
+                    @Model.Status
+                </span>
+            </div>
+
+            <!-- Employee count -->
+            <div class="flex flex-col gap-1.5 items-start">
+                <span class="text-xs text-slate-500 dark:text-slate-400">تعداد پرسنل</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-950/30 dark:text-teal-400 border border-teal-200/30">
+                    @Model.EmployeeCount نفر
+                </span>
             </div>
         </div>
     </div>
 
-    <div class="alert alert-info small mb-3">
-        این لیست از نظر وضعیت و ردیف‌ها قابل مقایسه با HR data است و duplicate detection در backend فعال شده است.
+    <!-- Info banner -->
+    <div class="flex items-center gap-2 p-3 bg-teal-50 dark:bg-teal-955/10 text-teal-800 dark:text-teal-400 border border-teal-200/40 dark:border-teal-900/50 rounded-xl text-xs font-semibold shadow-sm">
+        <i class="bi bi-info-circle-fill text-teal-650 dark:text-teal-400 text-sm"></i>
+        <span>این لیست از نظر وضعیت و ردیف‌ها قابل مقایسه با داده‌های سرمایه انسانی (HR) است و قابلیت کنترل همپوشانی (Duplicate Detection) در سیستم فعال می‌باشد.</span>
     </div>
 
-    <div class="card border-0 shadow-sm bimeh-card">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 bimeh-table">
-                <thead>
+    <!-- Employees List Table Card -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
+                <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th>نام</th>
-                        <th>شغل</th>
-                        <th>شروع کار</th>
-                        <th>ترک کار</th>
-                        <th>روز کارکرد</th>
-                        <th>حقوق</th>
+                        <th class="px-3 py-2.5 font-bold">نام و نام خانوادگی</th>
+                        <th class="px-3 py-2.5 font-bold">شغل / سمت</th>
+                        <th class="px-3 py-2.5 font-bold text-left">شروع کار</th>
+                        <th class="px-3 py-2.5 font-bold text-left">ترک کار</th>
+                        <th class="px-3 py-2.5 font-bold text-left">روز کارکرد</th>
+                        <th class="px-3 py-2.5 font-bold text-left">حقوق مشمول</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
                     @if (Model.Employees.Any())
                     {
                         @foreach (var employee in Model.Employees)
                         {
-                            <tr>
-                                <td class="fw-semibold">@employee.FullName</td>
-                                <td>@employee.JobTitle</td>
-                                <td>@ToSolar(employee.StartWork)</td>
-                                <td>@(employee.EndWork.HasValue ? ToSolar(employee.EndWork.Value) : "-")</td>
-                                <td>@employee.WorkDays</td>
-                                <td>@employee.Salary.ToString("N0")</td>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                <td class="px-3 py-3 font-bold text-slate-900 dark:text-white">@employee.FullName</td>
+                                <td class="px-3 py-3 font-medium text-slate-600 dark:text-slate-400">@employee.JobTitle</td>
+                                <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@ToSolar(employee.StartWork)</td>
+                                <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@(employee.EndWork.HasValue ? ToSolar(employee.EndWork.Value) : "-")</td>
+                                <td class="px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@employee.WorkDays روز</td>
+                                <td class="px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@employee.Salary.ToString("N0") ریال</td>
                             </tr>
                         }
                     }
                     else
                     {
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">برای این لیست، پرسنلی ثبت نشده است.</td>
+                            <td colspan="6" class="px-3 py-8 text-center text-slate-400 dark:text-slate-500">برای این لیست، پرسنلی ثبت نشده است.</td>
                         </tr>
                     }
                 </tbody>

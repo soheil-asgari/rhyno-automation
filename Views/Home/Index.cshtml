@@ -1,685 +1,756 @@
 @model OfficeAutomation.Models.DashboardIndexViewModel
 @using System.Globalization
+@using System.Security.Claims
 
 @{
-    ViewData["Title"] = "داشبورد اجرایی";
+    ViewData["Title"] = "میز کار راینو";
     var fa = CultureInfo.GetCultureInfo("fa-IR");
     string ToFa(int value) => value.ToString("N0", fa);
 
-    var shortcuts = new List<(string Id, string Title, string Description, string Url, string Icon)>
+    var displayName = User?.FindFirst("name")?.Value ?? User?.FindFirst(ClaimTypes.Name)?.Value ?? User?.Identity?.Name ?? "کاربر";
+    var userRole = User?.FindFirst(ClaimTypes.Role)?.Value ?? "کاربر سیستم";
+
+    var shortcuts = new List<(string Title, string Description, string Url, string Icon)>
     {
-        ("letters", "نامه‌ها", "گزارش‌ها و مکاتبات", "/Letters", "bi-envelope-paper"),
-        ("invoices", "فاکتورها", "ایجاد و پیگیری فاکتور", "/Financial/Invoices", "bi-receipt"),
-        ("leaves", "مرخصی‌ها", "درخواست‌ها و تاییدها", "/Leaves", "bi-calendar-check"),
-        ("warehouse", "انبار", "رسید و خروجی کالا", "/Warehouse", "bi-box-seam"),
-        ("inbox", "کارتابل", "اقدام‌ها و تاییدهای مهم", "/WorkInbox", "bi-inboxes"),
-        ("calendar", "تقویم", "رویدادهای مهم سازمان", "/OrganizationCalendar", "bi-calendar3"),
-        ("search", "جستجو", "جستجوی سریع", "/Search", "bi-search")
+        ("نامه‌ها", "مکاتبات و گردش نامه", "/Letters", "bi-envelope-paper"),
+        ("فاکتورها", "فروش، خرید و پیگیری", "/Financial/Invoices", "bi-receipt"),
+        ("کارتابل", "اقدام‌ها و تاییدها", "/WorkInbox", "bi-inboxes"),
+        ("انبار", "موجودی و رسید کالا", "/Warehouse", "bi-box-seam"),
+        ("گزارش‌ها", "نمای مدیریتی", "/Reports", "bi-file-bar-graph"),
+        ("جستجو", "دسترسی سریع", "/Search", "bi-search")
     };
 }
 
-<div class="executive-dashboard">
-    <section class="dashboard-header">
-        <div>
-            <h1>داشبورد اجرایی</h1>
-            <p>نمای زنده از کارهای امروز، تاییدها، فاکتورها، موجودی و هشدارهای سیستم - @Model.TodayText</p>
-        </div>
-        <div class="header-actions">
-            <button id="homeCustomizeToggle" class="btn btn-sm btn-outline-primary" type="button">
-                <i class="bi bi-sliders2"></i>
-                تنظیمات صفحه
-            </button>
-            <a class="btn btn-sm btn-outline-primary" href="/admin/audit-dashboard">
-                <i class="bi bi-shield-check"></i>
-                رخدادها
-            </a>
-        </div>
-    </section>
+@section Styles {
+    <style>
+        /* Drag & Drop layout and visual properties */
+        .executive-dashboard {
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
 
-    <section id="homeCustomizationPanel" class="home-customization-panel">
-        <h3>شخصی‌سازی داشبورد</h3>
-        <p>می‌تونید ترتیب کارت‌ها رو عوض کنید و شورتکات‌های نمایش داده‌شده را انتخاب کنید.</p>
+        .drag-mode .dashboard-panel {
+            border: 2px dashed #0d9488 !important;
+            opacity: 0.85;
+            position: relative;
+            cursor: move;
+        }
 
-        <div class="customization-toolbar">
-            <button id="toggleEditMode" class="btn btn-sm btn-outline-secondary" type="button">
-                <i class="bi bi-arrows-move"></i>
-                فعال‌سازی جابه‌جایی
-            </button>
-            <button id="resetDashboardConfig" class="btn btn-sm btn-outline-danger" type="button">
-                <i class="bi bi-arrow-counterclockwise"></i>
-                بازنشانی چیدمان
-            </button>
-        </div>
+        .drag-mode .dashboard-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(13, 148, 136, 0.03);
+            z-index: 10;
+        }
 
-        <div class="bg-controls">
-            <label>پس‌زمینه</label>
-            <div class="preset-backgrounds" role="list" aria-label="پیش‌تنظیم پس‌زمینه">
-                <button type="button" class="bg-swatch bg-swatch-light" data-bg="linear-gradient(135deg, #f8fafc, #eff6ff)" data-type="gradient" title="پس‌زمینه روشن" aria-label="پس‌زمینه روشن"></button>
-                <button type="button" class="bg-swatch bg-swatch-warm" data-bg="#fef3c7" data-type="color" title="سفید مایل" aria-label="پس‌زمینه سفید مایل"></button>
-                <button type="button" class="bg-swatch bg-swatch-green" data-bg="#dcfce7" data-type="color" title="سبز روشن" aria-label="پس‌زمینه سبز روشن"></button>
-                <button type="button" class="bg-swatch bg-swatch-blue" data-bg="#dbeafe" data-type="color" title="آبی روشن" aria-label="پس‌زمینه آبی روشن"></button>
-                <button type="button" class="bg-swatch bg-swatch-violet" data-bg="#ede9fe" data-type="color" title="بنفش روشن" aria-label="پس‌زمینه بنفش روشن"></button>
+        .drag-mode .dashboard-panel * {
+            pointer-events: none !important;
+        }
+
+        .drag-mode .dashboard-panel .drag-handle,
+        .drag-mode .dashboard-panel .drag-handle * {
+            pointer-events: auto !important;
+        }
+
+        .drag-handle {
+            display: none;
+        }
+        
+        .drag-mode .drag-handle {
+            display: inline-flex;
+        }
+
+        /* Preset swatches styling */
+        .bg-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            border: 1.5px solid rgba(156, 163, 175, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .bg-swatch:hover {
+            transform: scale(1.15);
+        }
+
+        .bg-swatch-gradient-1 { background: linear-gradient(135deg, #0f172a, #1e293b); }
+        .bg-swatch-gradient-2 { background: linear-gradient(135deg, #1e1b4b, #311042); }
+        .bg-swatch-gradient-3 { background: linear-gradient(135deg, #064e3b, #022c22); }
+        .bg-swatch-gradient-4 { background: linear-gradient(135deg, #1c1917, #0c0a09); }
+        .bg-swatch-gradient-5 { background: linear-gradient(135deg, #172554, #0f172a); }
+        .bg-swatch-default { background: transparent; }
+
+        /* Days Grid styling (calendar helper) */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+        }
+
+        .days-grid span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 1;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 9999px;
+            transition: all 0.15s ease;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .days-grid span:not(.off):not(.today):hover {
+            background-color: rgba(13, 148, 136, 0.12);
+            color: #0d9488;
+        }
+
+        .days-grid span.today {
+            background-color: #0d9488;
+            color: #ffffff;
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(13, 148, 136, 0.4);
+        }
+
+        .days-grid span.holiday {
+            color: #e11d48;
+        }
+
+        .days-grid span.off {
+            opacity: 0.25;
+            cursor: default;
+        }
+
+        /* Weekly activity custom bar chart */
+        .weekly-activity-chart-bar {
+            background-color: #0d9488;
+            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dark .weekly-activity-chart-bar,
+        .theme-dark .weekly-activity-chart-bar,
+        [data-theme="dark"] .weekly-activity-chart-bar {
+            background-color: #2dd4bf;
+        }
+    </style>
+}
+
+<div class="executive-dashboard w-full h-full min-h-full flex-1 flex flex-col gap-3 p-2.5 md:p-3 border border-slate-200 dark:border-slate-800/80 rounded-[2rem] transition-all duration-300 bg-transparent">
+    <!-- Header Card -->
+    <header class="flex items-center justify-between gap-3 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+        <div class="min-w-0 flex items-center gap-3">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                    <h1 class="m-0 text-sm font-black text-slate-900 dark:text-white tracking-tight">داشبورد راینو</h1>
+                    <span class="text-[10px] font-bold text-teal-600 dark:text-teal-400 hidden sm:block">@Model.TodayText</span>
+                </div>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">@displayName · @userRole</p>
             </div>
-            <div class="bg-actions">
-                <label for="customBackgroundColor">رنگ دلخواه</label>
-                <input id="customBackgroundColor" type="color" value="#f8fafc" />
-                <label for="customBackgroundImage">تصویر دلخواه</label>
-                <input id="customBackgroundImage" type="text" placeholder="آدرس تصویر" />
-                <button id="applyBgImage" type="button" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-image"></i>
-                    اعمال تصویر
-                </button>
-                <button id="clearBackground" type="button" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-x-circle"></i>
-                    حذف پس‌زمینه
-                </button>
-            </div>
         </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button id="btnToggleCustomization" type="button" class="flex items-center gap-1 px-2 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition">
+                <i class="bi bi-sliders text-teal-600 dark:text-teal-400 text-xs"></i>
+                <span class="hidden sm:inline">سفارشی‌سازی</span>
+            </button>
+            <button id="btnToggleDragMode" type="button" class="flex items-center gap-1 px-2 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition">
+                <i class="bi bi-grid text-teal-600 dark:text-teal-400 text-xs"></i>
+                <span class="hidden sm:inline">چیدمان</span>
+            </button>
+        </div>
+    </header>
 
-        <div class="shortcut-visibility">
-            <p>نمایش شورتکات‌ها</p>
-            <div class="shortcut-toggles" id="shortcutToggles">
-                @foreach (var shortcut in shortcuts)
-                {
-                    <label class="shortcut-toggle-item">
-                        <input type="checkbox" value="@shortcut.Id" checked />
-                        <i class="bi @shortcut.Icon"></i>
-                        <span>@shortcut.Title</span>
+    <!-- Customization Config Panel -->
+    <div id="customizationPanel" class="p-3 border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-md rounded-2xl hidden transition-all duration-300">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+            <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-palette text-teal-600 dark:text-teal-400"></i>
+                تنظیمات ظاهر و چیدمان داشبورد
+            </h3>
+            <button type="button" id="btnCloseCustomization" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 border-0 bg-transparent cursor-pointer"><i class="bi bi-x-lg text-xs"></i></button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Background Options -->
+            <div class="flex flex-col gap-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">پس‌زمینه داشبورد</span>
+                <div class="preset-backgrounds mt-1 flex flex-wrap gap-1.5">
+                    <button class="bg-swatch bg-swatch-default" data-bg="transparent" title="پیش‌فرض سیستم"></button>
+                    <button class="bg-swatch bg-swatch-gradient-1" data-bg="linear-gradient(135deg, #0f172a, #1e293b)" title="سرمه‌ای تیره"></button>
+                    <button class="bg-swatch bg-swatch-gradient-2" data-bg="linear-gradient(135deg, #1e1b4b, #311042)" title="بادمجانی"></button>
+                    <button class="bg-swatch bg-swatch-gradient-3" data-bg="linear-gradient(135deg, #064e3b, #022c22)" title="سبز یشمی"></button>
+                    <button class="bg-swatch bg-swatch-gradient-4" data-bg="linear-gradient(135deg, #1c1917, #0c0a09)" title="ذغالی"></button>
+                    <button class="bg-swatch bg-swatch-gradient-5" data-bg="linear-gradient(135deg, #172554, #0f172a)" title="آبی عمیق"></button>
+                </div>
+                <div class="flex gap-2 items-center mt-2 w-full">
+                    <input type="color" id="bgColorPicker" class="w-10 h-8 p-0.5 border border-slate-200 dark:border-slate-800 rounded cursor-pointer bg-white dark:bg-slate-900" title="انتخاب رنگ جامد" />
+                    <input type="text" id="bgImgInput" class="flex-1 text-xs p-1.5 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-teal-500/20" placeholder="آدرس تصویر پس‌زمینه (URL)..." />
+                </div>
+            </div>
+            
+            <!-- Metric switches -->
+            <div class="flex flex-col gap-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">نمایش کارت‌های آماری</span>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    @foreach (var metric in Model.ExecutiveMetrics)
+                    {
+                        <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                            <input type="checkbox" checked class="metric-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="@metric.Title" />
+                            <span>@metric.Title</span>
+                        </label>
+                    }
+                </div>
+            </div>
+            
+            <!-- Widget switches -->
+            <div class="flex flex-col gap-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">نمایش بخش‌ها (ویجت‌ها)</span>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="pending-work" />
+                        <span>کارهای در انتظار اقدام</span>
                     </label>
-                }
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="calendar" />
+                        <span>تقویم و مناسبت‌ها</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="system-alerts" />
+                        <span>هشدارهای عملیاتی</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="weekly-activity" />
+                        <span>نمودار فعالیت هفتگی</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="recent-activity" />
+                        <span>آخرین فعالیت‌ها</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="quick-shortcuts" />
+                        <span>دسترسی سریع</span>
+                    </label>
+                </div>
             </div>
         </div>
-    </section>
+        
+        <div class="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3 mt-4">
+            <button type="button" id="btnResetLayout" class="px-3 py-1.5 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-bold transition">حذف سفارشی‌سازی و بازنشانی چیدمان</button>
+        </div>
+    </div>
 
-    <section class="metric-grid" id="metricGrid" data-drag-container>
-        @for (int metricIndex = 0; metricIndex < Model.ExecutiveMetrics.Count; metricIndex++)
+    <!-- Summary Statistics Grid (KPI Widgets) -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 w-full">
+        @{
+            var kpiColors = new[]
+            {
+                ("bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-300"),
+                ("bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300"),
+                ("bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"),
+                ("bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300"),
+                ("bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"),
+                ("bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"),
+                ("bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300"),
+                ("bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300")
+            };
+            int kpiIndex = 0;
+        }
+        @foreach (var metric in Model.ExecutiveMetrics)
         {
-            var metric = Model.ExecutiveMetrics[metricIndex];
-            var cardId = $"metric-{metricIndex}";
-            <a class="metric-card metric-@metric.Tone customizable-card" href="@metric.Url" data-card-id="@cardId" data-card-type="metric" draggable="true">
-                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
-                <span class="metric-icon"><i class="bi @metric.Icon"></i></span>
-                <span class="metric-body">
-                    <strong>@metric.Value</strong>
-                    <span>@metric.Title</span>
-                    <small>@metric.Description</small>
-                </span>
+            var iconColor = kpiColors[kpiIndex % kpiColors.Length];
+            kpiIndex++;
+            <a href="@metric.Url" class="group flex items-center gap-2.5 p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.015] active:scale-[0.99] transition-all duration-150 no-underline" data-metric-id="@metric.Title">
+                <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg @iconColor text-sm transition group-hover:scale-110">
+                    <i class="bi @metric.Icon"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <strong class="block text-lg font-black text-slate-800 dark:text-slate-100 font-mono tabular-nums leading-tight">@metric.Value</strong>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium block truncate leading-tight">@metric.Title</span>
+                </div>
             </a>
         }
     </section>
 
-    <section class="dashboard-grid" id="mainPanels" data-drag-container>
-        <div class="dashboard-panel customizable-card" id="panel-pending-work" data-card-id="panel-pending-work" data-card-type="panel" draggable="true">
-            <div class="panel-head">
-                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
-                <h2>کارهای در انتظار اقدام</h2>
-                <span>@ToFa(Model.PendingWorkItems.Count) مورد</span>
-            </div>
-
-            @if (Model.PendingWorkItems.Count == 0)
-            {
-                <div class="empty-state">موردی برای اقدام فوری وجود ندارد.</div>
-            }
-            else
-            {
-                <div class="work-list">
-                    @foreach (var item in Model.PendingWorkItems)
-                    {
-                        <a class="work-item" href="@item.Url">
-                            <i class="bi @item.Icon"></i>
-                            <span>
-                                <strong>@item.Title</strong>
-                                <small>@item.Module - @item.DateText</small>
-                            </span>
-                            <em class="badge @item.StatusCssClass">@WorkflowStatus.Label(item.Status)</em>
-                        </a>
-                    }
+    <!-- Bento Grid (Widgets Layout) -->
+    <div id="widgetsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 w-full">
+        
+        <!-- Widget 1: Pending Work -->
+        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="pending-work">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">کارهای در انتظار اقدام</h2>
                 </div>
-            }
-        </div>
-
-        <div class="dashboard-panel customizable-card" id="panel-system-alerts" data-card-id="panel-system-alerts" data-card-type="panel" draggable="true">
-            <div class="panel-head">
-                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
-                <h2>هشدارهای سیستم</h2>
-                <span>@ToFa(Model.SystemWarnings)</span>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-[10px] font-bold">@ToFa(Model.PendingWorkItems.Count) مورد</span>
+                    <a href="/WorkInbox" class="px-2 py-0.5 border border-slate-200 dark:border-slate-800 rounded text-[10px] bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-decoration-none text-slate-700 dark:text-slate-300 transition">کارتابل</a>
+                </div>
             </div>
-
-            <div class="alert-list">
-                @foreach (var alert in Model.SystemAlerts)
+            
+            <div class="flex-1 flex flex-col justify-between">
+                @if (Model.PendingWorkItems.Count == 0)
                 {
-                    <a class="alert-item alert-@alert.Severity" href="@alert.Url">
-                        <i class="bi @alert.Icon"></i>
-                        <span>
-                            <strong>@alert.Title</strong>
-                            <small>@alert.Description</small>
-                        </span>
-                    </a>
+                    <div class="flex flex-col items-center justify-center py-12 text-center text-slate-400 dark:text-slate-500">
+                        <i class="bi bi-inbox text-3xl mb-2"></i>
+                        <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">موردی برای اقدام فوری وجود ندارد</strong>
+                        <p class="text-[10px] mt-1 leading-normal">کارهای ارجاع‌شده در صندوق ورودی نمایش داده می‌شوند.</p>
+                    </div>
                 }
-            </div>
-        </div>
-
-        <div class="dashboard-panel customizable-card" id="panel-weekly-activity" data-card-id="panel-weekly-activity" data-card-type="panel" draggable="true">
-            <div class="panel-head">
-                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
-                <h2>روند فعالیت ۷ روز اخیر</h2>
-                <span>@ToFa(Model.TotalAuditEvents) رخداد</span>
-            </div>
-            <div class="activity-bars">
-                @foreach (var point in Model.WeeklyActivity)
+                else
                 {
-                    <div class="activity-bar" title="@point.Label - @ToFa(point.Value)">
-                        <span data-bar-percent="@point.Percent"></span>
-                        <small>@(point.Label.Length >= 2 ? point.Label[^2..] : point.Label)</small>
+                    <div class="space-y-1 max-h-[280px] overflow-y-auto pr-1">
+                        @foreach (var item in Model.PendingWorkItems)
+                        {
+                            var wfBadge = item.Status?.ToLowerInvariant() switch
+                            {
+                                "draft" or "پیش‌نویس" => "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+                                "pending" or "در انتظار" or "waiting" => "bg-amber-500 text-white dark:bg-amber-600",
+                                "approved" or "تایید شد" => "bg-emerald-500 text-white dark:bg-emerald-600",
+                                "rejected" or "رد شد" => "bg-rose-500 text-white dark:bg-rose-600",
+                                _ => "bg-blue-500 text-white dark:bg-blue-600"
+                            };
+                            <a href="@item.Url" class="flex items-center gap-2.5 px-2 py-1.5 border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-950/20 rounded-lg text-slate-700 dark:text-slate-300 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-200">
+                                <div class="w-7 h-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 text-teal-600 dark:text-teal-400 text-xs flex-shrink-0">
+                                    <i class="bi @item.Icon"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <strong class="block text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">@item.Title</strong>
+                                    <small class="block text-[10px] text-slate-500 dark:text-slate-400 truncate font-mono">@item.Module · @item.DateText</small>
+                                </div>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold @wfBadge whitespace-nowrap">
+                                    @WorkflowStatus.Label(item.Status)
+                                </span>
+                            </a>
+                        }
                     </div>
                 }
             </div>
         </div>
 
-        <div class="dashboard-panel customizable-card" id="panel-recent-activities" data-card-id="panel-recent-activities" data-card-type="panel" draggable="true">
-            <div class="panel-head">
-                <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
-                <h2>آخرین فعالیت‌ها</h2>
-                <span>ممیزی</span>
+        <!-- Widget 2: Interactive Persian Calendar -->
+        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="calendar">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">تقویم و مناسبت‌ها</h2>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button id="prevMonth" type="button" class="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer border-0 bg-transparent" title="ماه گذشته"><i class="bi bi-chevron-right text-[10px]"></i></button>
+                    <span id="monthDisplay" class="text-xs font-bold text-slate-800 dark:text-white px-1">---</span>
+                    <button id="nextMonth" type="button" class="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer border-0 bg-transparent" title="ماه آینده"><i class="bi bi-chevron-left text-[10px]"></i></button>
+                    <button class="btn-today px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer border-0">امروز</button>
+                </div>
             </div>
-            <div class="recent-list">
-                @if (Model.RecentActivities.Count == 0)
+            
+            <div class="flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg px-1 py-1.5">
+                        <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span class="text-rose-500 dark:text-rose-400">ج</span>
+                    </div>
+                    <div id="daysContainer" class="days-grid mt-1">
+                        <!-- Rendered dynamically by JS -->
+                    </div>
+                </div>
+                <div id="eventLoader" class="flex justify-center py-2 hidden">
+                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-800 border-t-teal-650 dark:border-t-teal-400" role="status"></div>
+                </div>
+                <div id="eventContent" class="mt-3 rounded-xl bg-slate-50 dark:bg-slate-950 p-3 border border-slate-100 dark:border-slate-850">
+                    <div class="flex items-start gap-2.5">
+                        <i class="bi bi-info-circle text-teal-600 dark:text-teal-400 mt-0.5 text-sm"></i>
+                        <p id="eventDisplay" class="m-0 text-[11px] leading-5 text-slate-600 dark:text-slate-400">در حال دریافت رویدادهای این روز...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget 3: System Alerts -->
+        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="system-alerts">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">هشدارهای عملیاتی</h2>
+                </div>
+                <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">@ToFa(Model.SystemWarnings) هشدار</span>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between">
+                @if (Model.SystemAlerts.Count == 0)
                 {
-                    <div class="empty-state">هنوز رخدادی ثبت نشده است.</div>
+                    <div class="flex flex-col items-center justify-center py-12 text-center text-slate-400 dark:text-slate-500">
+                        <i class="bi bi-bell-slash text-3xl mb-2"></i>
+                        <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">هشدار فعالی وجود ندارد</strong>
+                        <p class="text-[10px] mt-1">سیستم در وضعیت عادی و پایدار است.</p>
+                    </div>
                 }
                 else
                 {
-                    @foreach (var item in Model.RecentActivities)
-                    {
-                        <div class="recent-item">
-                            <span>
-                                <strong>@item.DocumentType</strong>
-                                <small>@item.DateText</small>
-                            </span>
-                            <em class="status-@item.StatusCssClass">@item.StatusText</em>
-                        </div>
-                    }
+                    <div class="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                        @foreach (var alert in Model.SystemAlerts)
+                        {
+                            var severityClass = alert.Severity?.ToLowerInvariant() switch
+                            {
+                                "danger" => "border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100/70",
+                                "warning" => "border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100/70",
+                                "info" => "border-sky-200 dark:border-sky-800/60 bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-300 hover:bg-sky-100/70",
+                                "success" => "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/70",
+                                _ => "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100/70"
+                            };
+                            <a href="@alert.Url" class="flex gap-2.5 p-2.5 rounded-xl border text-decoration-none transition duration-200 @severityClass">
+                                <i class="bi @alert.Icon text-base flex-shrink-0 mt-0.5"></i>
+                                <span>
+                                    <strong class="text-xs font-bold block leading-tight">@alert.Title</strong>
+                                    <small class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5 block">@alert.Description</small>
+                                </span>
+                            </a>
+                        }
+                    </div>
                 }
             </div>
         </div>
-    </section>
 
-    <section class="dashboard-shortcuts" id="shortcutsPanel" data-card-type="shortcuts" data-card-id="shortcuts-panel">
-        <div class="panel-head">
-            <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
-            <h2>شورتکات‌ها</h2>
-            <span>فوریت‌ها</span>
+        <!-- Widget 4: Weekly Activity -->
+        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="weekly-activity">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">فعالیت هفت روز اخیر</h2>
+                </div>
+                <span class="px-2 py-0.5 rounded-full bg-teal-500 text-white text-[10px] font-bold">@ToFa(Model.TotalAuditEvents) رخداد</span>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between">
+                <div class="h-40 flex items-end gap-3 pt-4 justify-between">
+                    @foreach (var point in Model.WeeklyActivity)
+                    {
+                        <div class="flex flex-col items-center gap-2 flex-1 min-w-0">
+                            <div class="h-32 w-full flex items-end rounded-lg bg-slate-50 dark:bg-slate-955 p-1 border border-slate-200/50 dark:border-slate-800/50">
+                                <div class="weekly-activity-chart-bar w-full rounded-md hover:bg-teal-500/80 dark:hover:bg-teal-400/80 transition-all duration-300 cursor-pointer" style="height: @(point.Percent)%" title="@point.Value رخداد سیستمی"></div>
+                            </div>
+                            <small class="truncate text-[9px] text-slate-500 dark:text-slate-400 font-bold font-mono">
+                                @(point.Label.Length >= 2 ? point.Label[^2..] : point.Label)
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-        <div class="shortcut-grid" id="shortcutGrid" data-drag-container>
-            @foreach (var shortcut in shortcuts)
-            {
-                <a class="dashboard-shortcut customizable-card" href="@shortcut.Url" data-shortcut-id="@shortcut.Id" data-card-id="shortcut-@shortcut.Id" draggable="true">
-                    <span class="drag-handle d-none"><i class="bi bi-grip-vertical"></i></span>
-                    <i class="bi @shortcut.Icon"></i>
-                    <span>
-                        <strong>@shortcut.Title</strong>
-                        <small>@shortcut.Description</small>
-                    </span>
-                </a>
-            }
+
+        <!-- Widget 5: Recent Audit Activities -->
+        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="recent-activity">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">آخرین فعالیت‌های سیستم</h2>
+                </div>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold">تراکنش‌های اخیر</span>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between">
+                @if (Model.RecentActivities.Count == 0)
+                {
+                    <div class="flex flex-col items-center justify-center py-12 text-center text-slate-400 dark:text-slate-500">
+                        <i class="bi bi-activity text-3xl mb-2"></i>
+                        <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">هنوز رخدادی ثبت نشده است</strong>
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-1 max-h-[280px] overflow-y-auto pr-1">
+                        @foreach (var item in Model.RecentActivities)
+                        {
+                            var statusBadgeClass = item.StatusCssClass?.ToLowerInvariant() switch
+                            {
+                                "success" => "bg-emerald-500 text-white",
+                                "pending" => "bg-amber-500 text-white",
+                                "danger" => "bg-rose-500 text-white",
+                                _ => "bg-slate-400 text-white"
+                            };
+                            <div class="flex items-center justify-between gap-2 px-2 py-1.5 border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/20 rounded-lg">
+                                <span class="min-w-0">
+                                    <strong class="block text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">@item.DocumentType</strong>
+                                    <small class="block text-[10px] text-slate-500 dark:text-slate-400 font-mono">@item.DateText</small>
+                                </span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold min-w-max @statusBadgeClass">@item.StatusText</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         </div>
-    </section>
+
+        <!-- Widget 6: Quick Shortcuts -->
+        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="quick-shortcuts">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <h2 class="text-xs font-bold text-slate-700 dark:text-slate-300">دسترسی سریع</h2>
+                </div>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500">پرکاربرد</span>
+            </div>
+            
+            <div class="flex-1">
+                <div class="grid grid-cols-2 gap-1.5">
+                    @foreach (var shortcut in shortcuts)
+                    {
+                        <a href="@shortcut.Url" class="group flex items-center gap-2 px-2 py-1.5 border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 rounded-lg text-slate-800 dark:text-slate-200 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-150">
+                            <i class="bi @shortcut.Icon text-xs text-slate-500 dark:text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 flex-shrink-0"></i>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">@shortcut.Title</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/home-dashboard.css" asp-append-version="true" />
-}
-
 @section Scripts {
+    <script src="~/js/jalali-moment.browser.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+    
     <script>
-        (() => {
-            document.querySelectorAll('[data-bar-percent]').forEach((bar) => {
-                const value = Number(bar.getAttribute('data-bar-percent'));
-                if (Number.isFinite(value)) {
-                    bar.style.setProperty('--bar-height', `${Math.max(0, Math.min(100, value))}%`);
-                }
+        (function () {
+            // DOM Elements
+            const customizationPanel = document.getElementById('customizationPanel');
+            const btnToggleCustomization = document.getElementById('btnToggleCustomization');
+            const btnCloseCustomization = document.getElementById('btnCloseCustomization');
+            const btnToggleDragMode = document.getElementById('btnToggleDragMode');
+            const btnResetLayout = document.getElementById('btnResetLayout');
+            
+            const bgColorPicker = document.getElementById('bgColorPicker');
+            const bgImgInput = document.getElementById('bgImgInput');
+            const widgetsGrid = document.getElementById('widgetsGrid');
+            
+            // Toggle Customization Panel
+            btnToggleCustomization?.addEventListener('click', () => {
+                customizationPanel.classList.toggle('hidden');
+                customizationPanel.classList.toggle('block');
             });
-            const storagePrefix = 'home-dashboard';
-            const layoutStorageKey = `${storagePrefix}.layout.order.v1`;
-            const shortcutStorageKey = `${storagePrefix}.shortcuts.v1`;
-            const bgStorageKey = `${storagePrefix}.bg.v1`;
-            const isDarkTheme = () => document.documentElement.classList.contains('theme-dark') || document.documentElement.getAttribute('data-theme') === 'dark';
-            const getBaseSurface = () => isDarkTheme() ? '#111827' : '#f8fafc';
-
-            const toggleButton = document.getElementById('homeCustomizeToggle');
-            const customizationPanel = document.getElementById('homeCustomizationPanel');
-            const editButton = document.getElementById('toggleEditMode');
-            const resetButton = document.getElementById('resetDashboardConfig');
-            const mainPanels = document.getElementById('mainPanels');
-            const metricGrid = document.getElementById('metricGrid');
-            const shortcutGrid = document.getElementById('shortcutGrid');
-            const shortcutToggles = document.getElementById('shortcutToggles');
-            const mainContainer = document.getElementById('main-content-wrapper');
-
-            const presetSwatches = document.querySelectorAll('.bg-swatch');
-            const customColorInput = document.getElementById('customBackgroundColor');
-            const customImageInput = document.getElementById('customBackgroundImage');
-            const applyImageButton = document.getElementById('applyBgImage');
-            const clearBackgroundButton = document.getElementById('clearBackground');
-
-            const containerList = [metricGrid, mainPanels, shortcutGrid];
-            let draggingElement = null;
-            let isDragEnabled = false;
-
-            const getDashboardSettings = () => {
-                const defaultOrder = {};
-                containerList.forEach((container) => {
-                    if (!container) return;
-                    defaultOrder[container.id] = Array.from(container.children)
-                        .filter((node) => node instanceof HTMLElement)
-                        .map((node) => node.getAttribute('data-card-id'));
-                });
-                const defaultShortcuts = Array.from(shortcutToggles?.querySelectorAll('input[type="checkbox"]') || []).map((input) => input.value);
-                return { order: defaultOrder, shortcuts: defaultShortcuts };
-            };
-
-            const readSavedSettings = () => {
-                const fallback = getDashboardSettings();
-                let layout = { ...fallback };
-                let shortcuts = [...fallback.shortcuts];
-                let background = null;
-
-                try {
-                    const rawLayout = localStorage.getItem(layoutStorageKey);
-                    if (rawLayout) {
-                        const parsed = JSON.parse(rawLayout);
-                        if (parsed && typeof parsed === 'object' && parsed.order) {
-                            layout = { ...layout, ...parsed };
-                        }
-                    }
-
-                    const rawShortcuts = localStorage.getItem(shortcutStorageKey);
-                    if (rawShortcuts) {
-                        const parsedShortcuts = JSON.parse(rawShortcuts);
-                        if (Array.isArray(parsedShortcuts)) {
-                            shortcuts = parsedShortcuts;
-                        }
-                    }
-
-                    const rawBg = localStorage.getItem(bgStorageKey);
-                    if (rawBg) {
-                        background = JSON.parse(rawBg);
-                    }
-                }
-                catch {
-                    // ignore and continue with fallback
-                }
-
-                return { order: layout.order || fallback.order, shortcuts, background };
-            };
-
-            const saveSettings = (settings) => {
-                localStorage.setItem(layoutStorageKey, JSON.stringify({ order: settings.order }));
-                localStorage.setItem(shortcutStorageKey, JSON.stringify(settings.shortcuts));
-            };
-
-            const saveBackground = (value) => {
-                localStorage.setItem(bgStorageKey, JSON.stringify(value));
-            };
-
-            const applyOrder = (orderMap) => {
-                if (!containerList.every((container) => container)) {
-                    return;
-                }
-
-                containerList.forEach((container) => {
-                    const expectedOrder = orderMap[container.id];
-                    if (!Array.isArray(expectedOrder)) {
-                        return;
-                    }
-
-                    const childrenById = new Map();
-                    const existingCards = Array.from(container.children);
-                    existingCards.forEach((card) => {
-                        if (card instanceof HTMLElement && card.getAttribute('data-card-id')) {
-                            childrenById.set(card.getAttribute('data-card-id'), card);
-                        }
-                    });
-
-                    const fallbackCards = [];
-                    existingCards.forEach((card) => {
-                        if (card instanceof HTMLElement && card.getAttribute('data-card-id') && !childrenById.has(card.getAttribute('data-card-id'))) {
-                            fallbackCards.push(card);
-                        }
-                    });
-
-                    expectedOrder.forEach((cardId) => {
-                        const card = childrenById.get(cardId);
-                        if (card) {
-                            container.appendChild(card);
-                            childrenById.delete(cardId);
-                        }
-                    });
-
-                    fallbackCards.forEach((card) => container.appendChild(card));
-                    childrenById.forEach((card) => {
-                        container.appendChild(card);
-                    });
-                });
-            };
-
-            const applyShortcutVisibility = (visibleShortcutIds) => {
-                const activeIds = new Set(visibleShortcutIds);
-                const shortcuts = Array.from(shortcutGrid.querySelectorAll('.dashboard-shortcut'));
-                shortcuts.forEach((shortcut) => {
-                    const id = shortcut.getAttribute('data-shortcut-id');
-                    shortcut.classList.toggle('hidden', id ? !activeIds.has(id) : false);
-                });
-
-                const checkboxes = Array.from(shortcutToggles.querySelectorAll('input[type="checkbox"]'));
-                checkboxes.forEach((checkbox) => {
-                    checkbox.checked = activeIds.has(checkbox.value);
-                });
-            };
-
-            const applyBackground = (config) => {
-                if (!mainContainer) {
-                    return;
-                }
-
-                if (!config || (config.type !== 'color' && config.type !== 'image' && config.type !== 'gradient')) {
-                    mainContainer.style.background = '';
-                    mainContainer.style.backgroundImage = '';
-                    return;
-                }
-
-                if (config.type === 'image') {
-                    mainContainer.style.backgroundColor = getBaseSurface();
-                    mainContainer.style.backgroundImage = `url('${config.value}')`;
-                    mainContainer.style.backgroundSize = 'cover';
-                    mainContainer.style.backgroundPosition = 'center';
-                    mainContainer.style.backgroundAttachment = 'fixed';
-                    return;
-                }
-
-                mainContainer.style.backgroundImage = 'none';
-                mainContainer.style.backgroundColor = config.value;
-                if (config.type === 'gradient') {
-                    mainContainer.style.background = config.value;
-                }
-            };
-
-            const collectLayoutState = () => {
-                const order = {};
-                containerList.forEach((container) => {
-                    if (!container) {
-                        return;
-                    }
-
-                    order[container.id] = Array.from(container.children)
-                        .filter((node) => node instanceof HTMLElement && node.getAttribute('data-card-id'))
-                        .map((node) => node.getAttribute('data-card-id'));
-                });
-
-                const shortcuts = Array.from(shortcutToggles.querySelectorAll('input[type="checkbox"]'))
-                    .filter((checkbox) => checkbox.checked)
-                    .map((checkbox) => checkbox.value);
-
-                return { order, shortcuts };
-            };
-
-            const hydrate = () => {
-                const settings = readSavedSettings();
-                applyOrder(settings.order);
-                applyShortcutVisibility(settings.shortcuts);
-                applyBackground(settings.background);
-            };
-
-            const togglePanel = () => {
-                customizationPanel.classList.toggle('open');
-            };
-
-            const setDragMode = (enabled) => {
-                isDragEnabled = enabled;
-                document.body.classList.toggle('drag-mode', enabled);
-                editButton.textContent = enabled ? 'تایید و خروج از ویرایش' : 'فعال‌سازی جابه‌جایی';
-                document.querySelectorAll('.drag-handle').forEach((handle) => {
-                    handle.style.display = enabled ? 'inline-flex' : '';
-                });
-            };
-
-            const setDragStateForCards = (container, enabled) => {
-                if (!container) {
-                    return;
-                }
-
-                container.querySelectorAll('[draggable]').forEach((item) => {
-                    item.draggable = enabled;
-                });
-            };
-
-            const setAllDragState = (enabled) => {
-                setDragStateForCards(metricGrid, enabled);
-                setDragStateForCards(mainPanels, enabled);
-                setDragStateForCards(shortcutGrid, enabled);
-            };
-
-            const clearIndicators = () => {
-                document.querySelectorAll('.drag-indicator').forEach((node) => {
-                    node.classList.remove('drag-indicator');
-                });
-            };
-
-            const getCardContainer = (element) => {
-                if (!element) return null;
-                return element.closest('[data-drag-container]');
-            };
-
-            const updateOrderStorage = () => {
-                const settings = collectLayoutState();
-                saveSettings(settings);
-            };
-
-            const onDragStart = (event) => {
-                if (!isDragEnabled) {
-                    event.preventDefault();
-                    return;
-                }
-
-                draggingElement = event.currentTarget;
-                event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData('text/plain', draggingElement.getAttribute('data-card-id') || '');
-                draggingElement.classList.add('dragging');
-            };
-
-            const onDragOver = (event) => {
-                if (!isDragEnabled || !draggingElement) {
-                    return;
-                }
-
-                event.preventDefault();
-                const container = getCardContainer(event.currentTarget);
-                if (!container) {
-                    return;
-                }
-
-                const afterElement = getDragAfterElement(container, event.clientY);
-                clearIndicators();
-                if (afterElement) {
-                    afterElement.classList.add('drag-indicator');
-                }
-                return;
-            };
-
-            const getDragAfterElement = (container, y) => {
-                const draggableElements = Array.from(container.querySelectorAll('.customizable-card:not(.dragging):not(.hidden)'));
-                return draggableElements.reduce((closest, child) => {
-                    const box = child.getBoundingClientRect();
-                    const offset = y - (box.top + box.height / 2);
-                    if (offset < 0 && offset > closest.offset) {
-                        return { offset, element: child };
-                    }
-                    return closest;
-                }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
-            };
-
-            const onDragEnter = (event) => {
-                const container = getCardContainer(event.currentTarget);
-                if (!container) return;
-                container.classList.add('drag-indicator');
-            };
-
-            const onDragLeave = (event) => {
-                const container = getCardContainer(event.currentTarget);
-                if (!container) return;
-                container.classList.remove('drag-indicator');
-            };
-
-            const onDrop = (event) => {
-                event.preventDefault();
-                if (!isDragEnabled || !draggingElement) {
-                    return;
-                }
-
-                const container = getCardContainer(event.currentTarget);
-                if (!container || !container.contains(event.currentTarget)) {
-                    return;
-                }
-
-                const afterElement = getDragAfterElement(container, event.clientY);
-                if (!afterElement) {
-                    container.appendChild(draggingElement);
+            
+            btnCloseCustomization?.addEventListener('click', () => {
+                customizationPanel.classList.add('hidden');
+                customizationPanel.classList.remove('block');
+            });
+            
+            // Toggle Drag Mode (widget reordering)
+            let dragModeActive = false;
+            btnToggleDragMode?.addEventListener('click', () => {
+                dragModeActive = !dragModeActive;
+                widgetsGrid.classList.toggle('drag-mode', dragModeActive);
+                
+                // Toggle active style on the button
+                if (dragModeActive) {
+                    btnToggleDragMode.classList.add('bg-slate-100', 'dark:bg-slate-800', 'border-teal-500/30');
                 } else {
-                    container.insertBefore(draggingElement, afterElement);
+                    btnToggleDragMode.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'border-teal-500/30');
                 }
-
-                clearIndicators();
-                updateOrderStorage();
-            };
-
-            const onDragEnd = () => {
-                clearIndicators();
-                if (draggingElement) {
-                    draggingElement.classList.remove('dragging');
-                }
-                draggingElement = null;
-            };
-
-            const bindDragEvents = () => {
-                const cards = document.querySelectorAll('[draggable="true"]');
-                cards.forEach((card) => {
-                    card.addEventListener('dragstart', onDragStart);
-                    card.addEventListener('dragend', onDragEnd);
+                
+                // Enable/disable HTML5 Draggable property
+                const panels = widgetsGrid.querySelectorAll('.dashboard-panel');
+                panels.forEach(panel => {
+                    panel.setAttribute('draggable', dragModeActive ? 'true' : 'false');
                 });
-
-                containerList.forEach((container) => {
-                    if (!container) return;
-                    container.addEventListener('dragover', onDragOver);
-                    container.addEventListener('dragenter', onDragEnter);
-                    container.addEventListener('dragleave', onDragLeave);
-                    container.addEventListener('drop', onDrop);
-                });
-            };
-
-            const bindShortcutToggle = () => {
-                if (!shortcutToggles) {
-                    return;
+            });
+            
+            // Reset Layout & settings
+            btnResetLayout?.addEventListener('click', () => {
+                if (confirm('آیا مطمئن هستید که می‌خواهید ظاهر داشبورد را به حالت اولیه برگردانید؟')) {
+                    localStorage.removeItem('rhyno.dashboard.background');
+                    localStorage.removeItem('rhyno.dashboard.visibility');
+                    localStorage.removeItem('rhyno.dashboard.layout');
+                    window.location.reload();
                 }
-
-                shortcutToggles.addEventListener('change', (event) => {
-                    const checkbox = event.target;
-                    if (!(checkbox instanceof HTMLInputElement) || checkbox.type !== 'checkbox') {
-                        return;
+            });
+            
+            // Background Selection & Pickers
+            document.querySelectorAll('.preset-backgrounds .bg-swatch').forEach(swatch => {
+                swatch.addEventListener('click', () => {
+                    const bg = swatch.dataset.bg;
+                    applyBackground(bg);
+                });
+            });
+            
+            bgColorPicker?.addEventListener('input', (e) => {
+                applyBackground(e.target.value);
+            });
+            
+            bgImgInput?.addEventListener('input', (e) => {
+                const val = e.target.value.trim();
+                if (val) {
+                    applyBackground(`url('${val}') center/cover no-repeat`);
+                }
+            });
+            
+            // Visibility Toggles
+            document.querySelectorAll('.metric-toggle').forEach(chk => {
+                chk.addEventListener('change', () => {
+                    const id = chk.dataset.targetId;
+                    const card = document.querySelector(`[data-metric-id="${id}"]`);
+                    if (card) {
+                        card.classList.toggle('hidden', !chk.checked);
                     }
-
-                    const id = checkbox.value;
-                    const shortcut = shortcutGrid.querySelector(`[data-shortcut-id="${id}"]`);
-                    if (shortcut) {
-                        shortcut.classList.toggle('hidden', !checkbox.checked);
-                    }
-                    updateOrderStorage();
-                });
-            };
-
-            const bindBackgroundControls = () => {
-                presetSwatches.forEach((swatch) => {
-                    swatch.addEventListener('click', () => {
-                        const bgType = swatch.dataset.type || 'color';
-                        const value = swatch.dataset.bg;
-                        const config = { type: bgType, value };
-                        applyBackground(config);
-                        saveBackground(config);
-                    });
-                });
-
-                customColorInput?.addEventListener('change', () => {
-                    const config = { type: 'color', value: customColorInput.value };
-                    applyBackground(config);
-                    saveBackground(config);
-                });
-
-                applyImageButton?.addEventListener('click', () => {
-                    const value = customImageInput?.value?.trim();
-                    if (!value) {
-                        return;
-                    }
-                    const config = { type: 'image', value };
-                    applyBackground(config);
-                    saveBackground(config);
-                });
-
-                clearBackgroundButton?.addEventListener('click', () => {
-                    applyBackground(null);
-                    localStorage.removeItem(bgStorageKey);
-                });
-            };
-
-            const resetDashboard = () => {
-                const defaultSettings = getDashboardSettings();
-                applyOrder(defaultSettings.order);
-                applyShortcutVisibility(defaultSettings.shortcuts);
-                localStorage.removeItem(layoutStorageKey);
-                localStorage.removeItem(shortcutStorageKey);
-                localStorage.removeItem(bgStorageKey);
-                applyBackground(null);
-                mainContainer.style.background = '';
-                mainContainer.style.backgroundImage = '';
-                mainContainer.style.backgroundColor = '';
-            };
-
-            toggleButton?.addEventListener('click', togglePanel);
-            editButton?.addEventListener('click', () => {
-                const nextState = !isDragEnabled;
-                setDragMode(nextState);
-                setAllDragState(nextState);
-            });
-
-            resetButton?.addEventListener('click', resetDashboard);
-
-            hydrate();
-            bindDragEvents();
-            bindShortcutToggle();
-            bindBackgroundControls();
-            setAllDragState(false);
-
-            document.querySelectorAll('[draggable="true"]').forEach((card) => {
-                card.addEventListener('touchstart', () => {
-                    if (!isDragEnabled) return;
-                    card.setAttribute('data-touch-lock', '1');
+                    saveVisibility();
                 });
             });
-
-            window.addEventListener('storage', (event) => {
-                if (event.key === layoutStorageKey || event.key === shortcutStorageKey || event.key === bgStorageKey) {
-                    hydrate();
+            
+            document.querySelectorAll('.widget-toggle').forEach(chk => {
+                chk.addEventListener('change', () => {
+                    const id = chk.dataset.targetId;
+                    const panel = document.querySelector(`[data-widget-id="${id}"]`);
+                    if (panel) {
+                        panel.classList.toggle('hidden', !chk.checked);
+                    }
+                    saveVisibility();
+                });
+            });
+            
+            // Drag and Drop implementation
+            let dragSourceEl = null;
+            
+            function handleDragStart(e) {
+                if (!dragModeActive) return;
+                this.classList.add('opacity-40');
+                dragSourceEl = this;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', this.getAttribute('data-widget-id'));
+            }
+            
+            function handleDragOver(e) {
+                if (e.preventDefault) e.preventDefault();
+                return false;
+            }
+            
+            function handleDragEnter(e) {
+                if (!dragModeActive) return;
+                this.classList.add('border-teal-500', 'dark:border-teal-400');
+            }
+            
+            function handleDragLeave(e) {
+                this.classList.remove('border-teal-500', 'dark:border-teal-400');
+            }
+            
+            function handleDrop(e) {
+                e.stopPropagation();
+                if (dragSourceEl !== this && dragModeActive) {
+                    const children = Array.from(widgetsGrid.children);
+                    const sourceIndex = children.indexOf(dragSourceEl);
+                    const targetIndex = children.indexOf(this);
+                    
+                    if (sourceIndex < targetIndex) {
+                        widgetsGrid.insertBefore(dragSourceEl, this.nextSibling);
+                    } else {
+                        widgetsGrid.insertBefore(dragSourceEl, this);
+                    }
+                    saveLayout();
                 }
-            });
-
-            window.addEventListener('themechange', () => {
-                const settings = readSavedSettings();
-                applyBackground(settings.background);
-            });
-
-            if (mainContainer) {
-                if (mainContainer.style.backgroundImage || mainContainer.style.backgroundColor) {
-                    return;
+                return false;
+            }
+            
+            function handleDragEnd(e) {
+                this.classList.remove('opacity-40');
+                widgetsGrid.querySelectorAll('.dashboard-panel').forEach(p => {
+                    p.classList.remove('border-teal-500', 'dark:border-teal-400');
+                });
+            }
+            
+            function setupDragAndDrop() {
+                const panels = widgetsGrid.querySelectorAll('.dashboard-panel');
+                panels.forEach(panel => {
+                    panel.addEventListener('dragstart', handleDragStart, false);
+                    panel.addEventListener('dragenter', handleDragEnter, false);
+                    panel.addEventListener('dragover', handleDragOver, false);
+                    panel.addEventListener('dragleave', handleDragLeave, false);
+                    panel.addEventListener('drop', handleDrop, false);
+                    panel.addEventListener('dragend', handleDragEnd, false);
+                });
+            }
+            
+            // Background control
+            function applyBackground(bg) {
+                const dash = document.querySelector('.executive-dashboard');
+                if (!dash) return;
+                dash.style.background = bg;
+                if (bg !== 'transparent') {
+                     dash.classList.remove('bg-transparent');
+                     dash.classList.add('bg-opacity-95', 'backdrop-blur-md');
+                } else {
+                     dash.classList.add('bg-transparent');
+                     dash.classList.remove('bg-opacity-95', 'backdrop-blur-md');
+                }
+                localStorage.setItem('rhyno.dashboard.background', bg);
+            }
+            
+            function saveVisibility() {
+                const vis = {};
+                document.querySelectorAll('.metric-toggle').forEach(chk => {
+                    vis['m_' + chk.dataset.targetId] = chk.checked;
+                });
+                document.querySelectorAll('.widget-toggle').forEach(chk => {
+                    vis['w_' + chk.dataset.targetId] = chk.checked;
+                });
+                localStorage.setItem('rhyno.dashboard.visibility', JSON.stringify(vis));
+            }
+            
+            function saveLayout() {
+                const panels = Array.from(widgetsGrid.querySelectorAll('.dashboard-panel'));
+                const layout = panels.map(p => p.getAttribute('data-widget-id'));
+                localStorage.setItem('rhyno.dashboard.layout', JSON.stringify(layout));
+            }
+            
+            function restoreDashboardState() {
+                // Restore Background
+                const bg = localStorage.getItem('rhyno.dashboard.background');
+                if (bg) {
+                    applyBackground(bg);
+                    if (bgColorPicker && bg.startsWith('#')) bgColorPicker.value = bg;
+                    if (bgImgInput && bg.startsWith('url')) {
+                        const match = bg.match(/url\(['"]?([^'"]*)['"]?\)/);
+                        if (match) bgImgInput.value = match[1];
+                    }
+                }
+                
+                // Restore Visibility
+                const visStr = localStorage.getItem('rhyno.dashboard.visibility');
+                if (visStr) {
+                    try {
+                        const vis = JSON.parse(visStr);
+                        document.querySelectorAll('.metric-toggle').forEach(chk => {
+                            const id = chk.dataset.targetId;
+                            const state = vis['m_' + id];
+                            if (state !== undefined) {
+                                chk.checked = state;
+                                const card = document.querySelector(`[data-metric-id="${id}"]`);
+                                if (card) card.classList.toggle('hidden', !state);
+                            }
+                        });
+                        document.querySelectorAll('.widget-toggle').forEach(chk => {
+                            const id = chk.dataset.targetId;
+                            const state = vis['w_' + id];
+                            if (state !== undefined) {
+                                chk.checked = state;
+                                const panel = document.querySelector(`[data-widget-id="${id}"]`);
+                                if (panel) panel.classList.toggle('hidden', !state);
+                            }
+                        });
+                    } catch(e) {}
+                }
+                
+                // Restore Layout
+                const layoutStr = localStorage.getItem('rhyno.dashboard.layout');
+                if (layoutStr) {
+                    try {
+                        const layout = JSON.parse(layoutStr);
+                        layout.forEach(id => {
+                            const panel = widgetsGrid.querySelector(`[data-widget-id="${id}"]`);
+                            if (panel) {
+                                widgetsGrid.appendChild(panel);
+                            }
+                        });
+                    } catch(e) {}
                 }
             }
+            
+            // Initialization
+            restoreDashboardState();
+            setupDragAndDrop();
         })();
     </script>
 }

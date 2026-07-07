@@ -10,32 +10,13 @@
 @inject NotificationService NotificationService
 @{
     var antiforgeryTokens = Antiforgery.GetAndStoreTokens(Context);
-    var displayName = User?.FindFirst("name")?.Value
-                      ?? User?.FindFirst(ClaimTypes.Name)?.Value
-                      ?? User?.Identity?.Name;
-    if (string.IsNullOrWhiteSpace(displayName))
-    {
-        displayName = "کاربر";
-    }
-
+    var displayName = User?.FindFirst("name")?.Value ?? User?.FindFirst(ClaimTypes.Name)?.Value ?? User?.Identity?.Name ?? "کاربر";
     var userHasSecurityAccess = await AuthorizationFacade.IsSecurityAdminAsync();
-    var userRoleLabel = "کاربر سیستم";
-    if (User?.Identity?.IsAuthenticated == true)
+    var userRoleLabel = userHasSecurityAccess ? "مدیر سیستم" : "کاربر سیستم";
+    if (User?.Identity?.IsAuthenticated == true && !userHasSecurityAccess)
     {
-        if (userHasSecurityAccess)
-        {
-            userRoleLabel = "مدیر سیستم";
-        }
-        else
-        {
-            var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value
-                            ?? User.FindFirst("role")?.Value;
-
-            if (!string.IsNullOrWhiteSpace(roleClaim))
-            {
-                userRoleLabel = roleClaim;
-            }
-        }
+        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
+        if (!string.IsNullOrWhiteSpace(roleClaim)) userRoleLabel = roleClaim;
     }
 
     var themePreference = "System";
@@ -44,27 +25,13 @@
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrWhiteSpace(currentUserId))
         {
-            var savedTheme = await DbContext.UserPreferences
-                .AsNoTracking()
-                .Where(preference => preference.UserId == currentUserId)
-                .Select(preference => preference.ThemePreference)
-                .FirstOrDefaultAsync();
-
-            if (string.Equals(savedTheme, "Light", StringComparison.OrdinalIgnoreCase))
-            {
-                themePreference = "Light";
-            }
-            else if (string.Equals(savedTheme, "Dark", StringComparison.OrdinalIgnoreCase))
-            {
-                themePreference = "Dark";
-            }
+            var savedTheme = await DbContext.UserPreferences.AsNoTracking().Where(p => p.UserId == currentUserId).Select(p => p.ThemePreference).FirstOrDefaultAsync();
+            if (string.Equals(savedTheme, "Light", StringComparison.OrdinalIgnoreCase)) themePreference = "Light";
+            else if (string.Equals(savedTheme, "Dark", StringComparison.OrdinalIgnoreCase)) themePreference = "Dark";
         }
     }
 
-    var rootThemeClass = string.Equals(themePreference, "Dark", StringComparison.OrdinalIgnoreCase)
-        ? "theme-dark"
-        : "theme-light";
-
+    var rootThemeClass = string.Equals(themePreference, "Dark", StringComparison.OrdinalIgnoreCase) ? "theme-dark dark" : "theme-light";
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
     var userCanAccessFinance = userHasSecurityAccess;
@@ -72,23 +39,13 @@
     var userCanAccessHumanCapital = userHasSecurityAccess;
     var userCanAccessSystemSettings = userHasSecurityAccess;
     var userCanAccessProcessAnalytics = userHasSecurityAccess;
+
     if (User?.Identity?.IsAuthenticated == true && !userHasSecurityAccess)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrWhiteSpace(currentUserId))
         {
-            var permission = await DbContext.Users
-                .AsNoTracking()
-                .Where(item => item.Id == currentUserId)
-                .Select(item => new
-                {
-                    item.CanAccessFinance,
-                    item.CanAccessWarehouse,
-                    item.CanAccessHumanCapital,
-                    item.CanAccessSystemSettings
-                })
-                .FirstOrDefaultAsync();
-
+            var permission = await DbContext.Users.AsNoTracking().Where(u => u.Id == currentUserId).Select(u => new { u.CanAccessFinance, u.CanAccessWarehouse, u.CanAccessHumanCapital, u.CanAccessSystemSettings }).FirstOrDefaultAsync();
             if (permission != null)
             {
                 userCanAccessFinance = permission.CanAccessFinance;
@@ -97,7 +54,6 @@
                 userCanAccessSystemSettings = permission.CanAccessSystemSettings;
             }
         }
-
         userCanAccessProcessAnalytics = await AuthorizationFacade.HasPermissionAsync("تحلیل.مشاهده");
     }
 
@@ -105,14 +61,16 @@
     if (User?.Identity?.IsAuthenticated == true)
     {
         var notificationUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (!string.IsNullOrWhiteSpace(notificationUserId))
-        {
-            headerNotifications = (await NotificationService.GetHeaderNotificationsAsync(notificationUserId)).ToList();
-        }
+        if (!string.IsNullOrWhiteSpace(notificationUserId)) headerNotifications = (await NotificationService.GetHeaderNotificationsAsync(notificationUserId)).ToList();
     }
-
     var headerNotificationCount = headerNotifications.Count;
+
+    string NavClass(string controller, string? action = null)
+    {
+        var active = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(action) || string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase));
+        return active ? "sidebar-link z-50 flex items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-2 py-1.5 text-[12px] font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200" : "sidebar-link z-50 flex items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-[12px] font-medium text-slate-600 transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white";
+    }
+    var moduleButtonClass = "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100";
 }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl" data-theme="@themePreference.ToLowerInvariant()" class="@rootThemeClass">
@@ -127,316 +85,185 @@
     <link rel="stylesheet" href="~/css/main-foundation.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/main-legacy.css" asp-append-version="true" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="~/css/app-shell.css" asp-append-version="true">
-    @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/visual-refresh-core.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/visual-refresh-legacy.css" asp-append-version="true" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
+    @await RenderSectionAsync("Styles", required: false)
+    <style>
+        /* Force desktop static positioning & width to prevent overlapping in RTL */
+        @@media (min-width: 1024px) {
+            #appSidebar.sidebar-right {
+                position: static !important;
+                display: flex !important;
+                flex-direction: column !important;
+                width: 16rem !important;
+                min-width: 16rem !important;
+                max-width: 16rem !important;
+                transform: none !important;
+                box-shadow: none !important;
+                z-index: 40 !important;
+            }
+        }
+
+        /* Prevent accordion / submenu clipping */
+        #appSidebar .accordion-item,
+        #appSidebar .accordion-collapse,
+        #appSidebar .sidebar-module,
+        #sidebarAccordion {
+            overflow: visible !important;
+        }
+
+        /* Allow inner scrollable container to overflow correctly */
+        #sidebarScrollContainer {
+            overflow-y: auto !important;
+            overflow-x: visible !important;
+        }
+
+        /* Style for sub-menu links to avoid legacy color locks and clipping */
+        #appSidebar .accordion-collapse a.sidebar-link {
+            display: block !important;
+            width: 100% !important;
+            padding: 8px 24px !important; /* py-2 px-6 */
+            background: transparent !important;
+            color: #334155 !important; /* text-slate-700 */
+            border: 0 !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            min-height: auto !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transition: background-color 0.2s, color 0.2s !important;
+        }
+
+        #appSidebar .accordion-collapse a.sidebar-link:hover {
+            background-color: #f1f5f9 !important; /* hover:bg-slate-100 */
+            color: #0f172a !important; /* hover:text-slate-900 */
+        }
+
+        /* Dark mode overrides for sub-menu links */
+        html.theme-dark #appSidebar .accordion-collapse a.sidebar-link,
+        html[data-theme="dark"] #appSidebar .accordion-collapse a.sidebar-link,
+        body[data-theme="dark"] #appSidebar .accordion-collapse a.sidebar-link {
+            color: #cbd5e1 !important; /* dark:text-slate-300 */
+            background: transparent !important;
+        }
+
+        html.theme-dark #appSidebar .accordion-collapse a.sidebar-link:hover,
+        html[data-theme="dark"] #appSidebar .accordion-collapse a.sidebar-link:hover,
+        body[data-theme="dark"] #appSidebar .accordion-collapse a.sidebar-link:hover {
+            background-color: #1e293b !important; /* dark:hover:bg-slate-800 */
+            color: #ffffff !important;
+        }
+    </style>
 </head>
-
-<body data-theme="@themePreference.ToLowerInvariant()">
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+<body data-theme="@themePreference.ToLowerInvariant()" class="min-h-screen bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+    <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 z-40 hidden bg-slate-950/40 backdrop-blur-sm lg:hidden"></div>
     <form id="rhGlobalAntiForgery" class="d-none">@Html.AntiForgeryToken()</form>
-
-    <div class="app-shell">
-
-        <aside class="sidebar-right" id="appSidebar">
-            <div class="sidebar-header">
-                <div class="logo-wrapper">
-                    <div class="logo-icon">
-                        <i class="bi bi-box-seam"></i>
-                    </div>
-                    <div class="logo-text">
-                        <span class="brand-name">پنل راینو</span>
-                        <span class="brand-status">نسخه سازمانی 2026</span>
-                    </div>
-                </div>
+    <div class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 w-full">
+        <aside id="appSidebar" class="sidebar-right fixed inset-y-0 right-0 z-50 flex w-60 translate-x-full flex-col border-l border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 lg:static lg:flex lg:w-64 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-slate-950/95 flex flex-col z-40">
+            <div class="flex h-14 items-center gap-2 border-b border-slate-200 px-3 dark:border-slate-800">
+                <a asp-controller="Home" asp-action="Index" class="flex min-w-0 flex-1 items-center gap-2 text-decoration-none">
+                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
+                    <span class="min-w-0"><span class="block truncate text-sm font-black text-slate-900 dark:text-white">راینو ERP</span><span class="block truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">سیستم جامع سازمانی</span></span>
+                </a>
+                <button id="btnCloseSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800" aria-label="بستن منو"><i class="bi bi-x-lg"></i></button>
             </div>
-
-            <div class="sidebar-content" id="sidebarScrollContainer">
-                <div class="sidebar-fixed-top">
-                    <div class="sidebar-quick-search">
-                        <div class="search-box">
-                            <input id="sidebarMenuSearch" type="search" class="form-control" autocomplete="off" placeholder="جستجوی سریع منو..." aria-label="جستجوی سریع منو">
-                            <i class="bi bi-search"></i>
-                        </div>
-                        <div class="sidebar-search-meta">
-                            <span id="sidebarSearchCount">همه بخش‌ها</span>
-                            <button id="sidebarSearchClear" type="button" class="sidebar-search-clear d-none">پاک کردن</button>
-                        </div>
-                    </div>
-
-                    <section class="sidebar-section sidebar-section-pinned">
-                        <button class="sidebar-section-toggle accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePinnedPages" aria-expanded="true" aria-controls="collapsePinnedPages">
-                            <span>صفحات منتخب</span>
-                            <small>دسترسی سریع</small>
-                        </button>
-                        <div id="collapsePinnedPages" class="sidebar-section-collapse collapse show">
-                            <nav class="nav flex-column sidebar-shortcuts sidebar-section-body">
-                                <a class="nav-link sidebar-link @(currentController == "Home" ? "sidebar-active" : "")" data-nav-id="home-index" asp-controller="Home" asp-action="Index">
-                                    <i class="bi bi-grid text-primary"></i> <span class="link-text">میز کار مرکزی</span>
-                                </a>
-                                <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index">
-                                    <i class="bi bi-inboxes text-warning"></i> <span class="link-text">کارتابل مرکزی</span>
-                                </a>
-                                <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance">
-                                    <i class="bi bi-layout-text-window-reverse text-primary"></i> <span class="link-text">تراز آزمایشی انترپرایز</span>
-                                </a>
-                            </nav>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="sidebar-middle">
-                    <div id="sidebarSearchNoResults" class="sidebar-search-no-results">
-                        نتیجه‌ای در منو پیدا نشد.
-                    </div>
-
-                    <section class="sidebar-section sidebar-section-scroll">
-                        <button class="sidebar-section-toggle accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAllPages" aria-expanded="true" aria-controls="collapseAllPages">
-                            <span>همه بخش‌ها</span>
-                            <small>دسته‌بندی ماژولار</small>
-                        </button>
-                        <div id="collapseAllPages" class="sidebar-section-collapse collapse show">
-                            <div class="sidebar-section-body sidebar-pages-scroll" id="sidebarPagesScroll">
-                                <div class="accordion sidebar-accordion" id="sidebarAccordion">
+            <div class="border-b border-slate-200 p-2 dark:border-slate-800">
+                <label class="relative block"><i class="bi bi-search pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i><input id="sidebarMenuSearch" type="search" autocomplete="off" placeholder="جستجوی منو" aria-label="جستجوی منو" class="h-8 w-full rounded-md border border-slate-200 bg-slate-50 pr-7 pl-2 text-[12px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" /></label>
+                <div class="mt-1 flex items-center justify-between px-1 text-[10px] text-slate-500 dark:text-slate-400"><span id="sidebarSearchCount">همه بخش‌ها</span><button id="sidebarSearchClear" type="button" class="hidden font-bold text-teal-700 dark:text-teal-300">پاک کردن</button></div>
+            </div>
+            <nav id="sidebarScrollContainer" class="min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-3">
+                <div id="sidebarSearchNoResults" class="sidebar-search-no-results hidden rounded-md border border-amber-200 bg-amber-50 px-2 py-2 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">نتیجه‌ای در منو پیدا نشد.</div>
+                <section><div class="mb-1 px-2 text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">دسترسی سریع</div><div class="space-y-1">
+                    <a class='@NavClass("Home")' data-nav-id="home-index" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2 w-4"></i><span class="link-text truncate">میز کار</span></a>
+                    <a class='@NavClass("WorkInbox")' data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes w-4"></i><span class="link-text truncate">کارتابل</span></a>
+                    @if (userCanAccessFinance) { <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4"></i><span class="link-text truncate">تراز آزمایشی</span></a> }
+                </div></section>
+                <div id="sidebarAccordion" class="space-y-2">
                     @if (userCanAccessHumanCapital)
                     {
-                        <div class="accordion-item sidebar-module sidebar-module-human-capital">
-                            <h2 class="accordion-header" id="headingHumanCapital">
-                                <button class="accordion-button @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHumanCapital" aria-expanded="true" aria-controls="collapseHumanCapital">
-                                    سرمایه انسانی
-                                </button>
-                            </h2>
-                            <div id="collapseHumanCapital" class="accordion-collapse collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "show" : "")" aria-labelledby="headingHumanCapital" data-bs-parent="#sidebarAccordion">
-                                <div class="accordion-body py-1 px-0">
-                                    <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "HumanCapital" ? "sidebar-active" : "")" data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge"></i> <span class="link-text">سرمایه انسانی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Leaves" ? "sidebar-active" : "")" data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week"></i> <span class="link-text">درخواست مرخصی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Letters" ? "sidebar-active" : "")" data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope"></i> <span class="link-text">مدیریت نامه‌ها</span></a>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
+                        <section class="accordion-item sidebar-module">
+                            <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHumanCapital"><span>سرمایه انسانی</span><i class="bi bi-chevron-down text-[10px]"></i></button>
+                            <div id="collapseHumanCapital" class="accordion-collapse collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "show" : "")"><div class="mt-1 space-y-1">
+                                <a class='@NavClass("HumanCapital")' data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge w-4"></i><span class="link-text truncate">منابع انسانی</span></a>
+                                <a class='@NavClass("Leaves")' data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week w-4"></i><span class="link-text truncate">مرخصی‌ها</span></a>
+                                <a class='@NavClass("Letters")' data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope w-4"></i><span class="link-text truncate">نامه‌ها</span></a>
+                            </div></div>
+                        </section>
                     }
-
                     @if (userCanAccessFinance)
                     {
-                        <div class="accordion-item sidebar-module sidebar-module-finance">
-                            <h2 class="accordion-header" id="headingFinancial">
-                                <button class="accordion-button @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFinancial" aria-expanded="false" aria-controls="collapseFinancial">
-                                    مالی و حقوق و بیمه
-                                </button>
-                            </h2>
-                            <div id="collapseFinancial" class="accordion-collapse collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "show" : "")" aria-labelledby="headingFinancial" data-bs-parent="#sidebarAccordion">
-                                <div class="accordion-body py-1 px-0">
-                                    <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Sales" ? "sidebar-active" : "")" data-nav-id="financial-sales" asp-controller="Financial" asp-action="Sales"><i class="bi bi-receipt"></i> <span class="link-text">مدیریت فاکتورهای فروش (درآمد)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "Purchases" ? "sidebar-active" : "")" data-nav-id="financial-purchases" asp-controller="Financial" asp-action="Purchases"><i class="bi bi-bag"></i> <span class="link-text">مدیریت فاکتورهای خرید (هزینه)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext"></i> <span class="link-text">دفتر کل و عملیات مالی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "LedgerOperations" ? "sidebar-active" : "")" data-nav-id="financial-period-closing" asp-controller="Financial" asp-action="LedgerOperations" asp-fragment="period-closing-panel"><i class="bi bi-hourglass"></i> <span class="link-text">عملیات پایان دوره</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "sidebar-active" : "")" data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table"></i> <span class="link-text">تراز آزمایشی انترپرایز</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "Dashboard" || currentAction == "ReportingHub") ? "sidebar-active" : "")" data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap"></i> <span class="link-text">داشبورد مالی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "VatDashboard" || currentAction == "Dashboard") ? "sidebar-active" : "")" data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent"></i> <span class="link-text">مالیات بر ارزش افزوده</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && (currentAction == "SeasonalTax" || currentAction == "SeasonalTaxReport") ? "sidebar-active" : "")" data-nav-id="financial-seasonal" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-text"></i> <span class="link-text">معاملات فصلی (ماده ۱۶۹)</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Financial" && currentAction == "ReportingHub" ? "sidebar-active" : "")" data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line"></i> <span class="link-text">گزارشات و داشبورد مدیریتی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Payroll" ? "sidebar-active" : "")" data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2"></i> <span class="link-text">لیست حقوق</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Bimeh" ? "sidebar-active" : "")" data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check"></i> <span class="link-text">لیست بیمه</span></a>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
+                        <section class="accordion-item sidebar-module">
+                            <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFinancial"><span>مالی و حسابداری</span><i class="bi bi-chevron-down text-[10px]"></i></button>
+                            <div id="collapseFinancial" class="accordion-collapse collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "show" : "")"><div class="mt-1 space-y-1">
+                                <a class='@NavClass("Financial", "Dashboard")' data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap w-4"></i><span class="link-text truncate">داشبورد مالی</span></a>
+                                <a class='@NavClass("Financial", "Invoices")' data-nav-id="financial-invoices" asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt w-4"></i><span class="link-text truncate">فاکتورها</span></a>
+                                <a class='@NavClass("Financial", "LedgerOperations")' data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext w-4"></i><span class="link-text truncate">دفتر کل</span></a>
+                                <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4"></i><span class="link-text truncate">تراز آزمایشی</span></a>
+                                <a class='@NavClass("Financial", "VatDashboard")' data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent w-4"></i><span class="link-text truncate">ارزش افزوده</span></a>
+                                <a class='@NavClass("Financial", "ReportingHub")' data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line w-4"></i><span class="link-text truncate">گزارش‌ها</span></a>
+                                <a class='@NavClass("Payroll")' data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 w-4"></i><span class="link-text truncate">حقوق</span></a>
+                                <a class='@NavClass("Bimeh")' data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check w-4"></i><span class="link-text truncate">بیمه</span></a>
+                            </div></div>
+                        </section>
                     }
-
                     @if (userCanAccessWarehouse)
                     {
-                        <div class="accordion-item sidebar-module sidebar-module-logistics">
-                            <h2 class="accordion-header" id="headingWarehouse">
-                                <button class="accordion-button @((currentController == "Warehouse" || currentController == "Vendors" || currentController == "Employers") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWarehouse" aria-expanded="false" aria-controls="collapseWarehouse">
-                                    انبارداری
-                                </button>
-                            </h2>
-                            <div id="collapseWarehouse" class="accordion-collapse collapse @((currentController == "Warehouse" || currentController == "Vendors" || currentController == "Employers") ? "show" : "")" aria-labelledby="headingWarehouse" data-bs-parent="#sidebarAccordion">
-                                <div class="accordion-body py-1 px-0">
-                                    <nav class="nav flex-column sidebar-group-nav">
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Index" ? "sidebar-active" : "")" data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-grid"></i> <span class="link-text">داشبورد انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Products" || currentAction == "CreateProduct" || currentAction == "EditProduct") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box"></i> <span class="link-text">کالاها</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Warehouses" || currentAction == "CreateWarehouse" || currentAction == "EditWarehouse") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Warehouses"><i class="bi bi-building"></i> <span class="link-text">انبارها</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Vendors" ? "sidebar-active" : "")" asp-controller="Vendors" asp-action="Index"><i class="bi bi-truck"></i> <span class="link-text">تامین‌کنندگان</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Employers" ? "sidebar-active" : "")" asp-controller="Employers" asp-action="Index"><i class="bi bi-briefcase"></i> <span class="link-text">کارفرمایان</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Receipts" || currentAction == "CreateReceipt") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Receipts"><i class="bi bi-box-arrow-in-down"></i> <span class="link-text">رسید انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Issuances" || currentAction == "CreateIssuance") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Issuances"><i class="bi bi-box-arrow-up"></i> <span class="link-text">خروج انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Stock" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Stock"><i class="bi bi-stack"></i> <span class="link-text">موجودی انبار</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "TransferRequests" || currentAction == "CreateTransferRequest") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="TransferRequests"><i class="bi bi-arrow-left-right"></i> <span class="link-text">انتقال بین انبارها</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && (currentAction == "Countings" || currentAction == "CreateCounting") ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Countings"><i class="bi bi-check2-square"></i> <span class="link-text">انبارگردانی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Warehouse" && currentAction == "Closing" ? "sidebar-active" : "")" asp-controller="Warehouse" asp-action="Closing"><i class="bi bi-lock"></i> <span class="link-text">بستن پایان سال</span></a>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
+                        <section class="accordion-item sidebar-module">
+                            <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWarehouse"><span>انبار و عملیات</span><i class="bi bi-chevron-down text-[10px]"></i></button>
+                            <div id="collapseWarehouse" class="accordion-collapse collapse @((currentController == "Warehouse" || currentController == "Vendors" || currentController == "Waybill") ? "show" : "")"><div class="mt-1 space-y-1">
+                                <a class='@NavClass("Warehouse")' data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam w-4"></i><span class="link-text truncate">داشبورد انبار</span></a>
+                                <a class='@NavClass("Warehouse", "Products")' data-nav-id="warehouse-products" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box w-4"></i><span class="link-text truncate">کالاها</span></a>
+                                <a class='@NavClass("Warehouse", "Stock")' data-nav-id="warehouse-stock" asp-controller="Warehouse" asp-action="Stock"><i class="bi bi-layers w-4"></i><span class="link-text truncate">موجودی</span></a>
+                                <a class='@NavClass("Warehouse", "Receipts")' data-nav-id="warehouse-receipts" asp-controller="Warehouse" asp-action="Receipts"><i class="bi bi-box-arrow-in-down w-4"></i><span class="link-text truncate">رسیدها</span></a>
+                                <a class='@NavClass("Warehouse", "Issuances")' data-nav-id="warehouse-issuances" asp-controller="Warehouse" asp-action="Issuances"><i class="bi bi-box-arrow-up w-4"></i><span class="link-text truncate">حواله‌ها</span></a>
+                                <a class='@NavClass("Vendors")' data-nav-id="vendors-index" asp-controller="Vendors" asp-action="Index"><i class="bi bi-building w-4"></i><span class="link-text truncate">تامین‌کنندگان</span></a>
+                                <a class='@NavClass("Waybill")' data-nav-id="waybill-index" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck w-4"></i><span class="link-text truncate">بارنامه</span></a>
+                            </div></div>
+                        </section>
                     }
-
-                    @if (userCanAccessSystemSettings)
+                    @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
                     {
-                        <div class="accordion-item sidebar-module sidebar-module-settings">
-                            <h2 class="accordion-header" id="headingSettings">
-                                <button class="accordion-button @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "ProcessAnalysis") ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
-                                    تنظیمات
-                                </button>
-                            </h2>
-                            <div id="collapseSettings" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "ManagementDashboard" || currentController == "WorkInbox" || currentController == "AiAssistant" || currentController == "Waybill" || currentController == "Reports" || currentController == "Search" || currentController == "ProcessAnalysis") ? "show" : "")" aria-labelledby="headingSettings" data-bs-parent="#sidebarAccordion">
-                                <div class="accordion-body py-1 px-0">
-                                    <nav class="nav flex-column sidebar-group-nav">
-                                        @if (userHasSecurityAccess)
-                                        {
-                                            <a class="nav-link sidebar-link @((currentController == "AuditLogView" || currentController == "AuditLogs") ? "sidebar-active" : "")" href="/admin/audit-dashboard">
-                                                <i class="bi bi-activity"></i> <span class="link-text">نظارت بر فعالیت‌ها</span>
-                                            </a>
-                                        }
-
-                                        <a class="nav-link sidebar-link @(currentController == "ManagementDashboard" ? "sidebar-active" : "")" data-nav-id="managementdashboard-index" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-grid-1x2"></i> <span class="link-text">داشبورد مدیریتی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "WorkInbox" ? "sidebar-active" : "")" data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes"></i> <span class="link-text">کارتابل مرکزی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Search" ? "sidebar-active" : "")" data-nav-id="search-index" asp-controller="Search" asp-action="Index"><i class="bi bi-search"></i> <span class="link-text">جستجوی سراسری</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Reports" ? "sidebar-active" : "")" data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph"></i> <span class="link-text">گزارش‌ساز و خروجی‌ها</span></a>
-                                        @if (userCanAccessProcessAnalytics)
-                                        {
-                                            <a class="nav-link sidebar-link @(currentController == "ProcessAnalysis" ? "sidebar-active" : "")" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-bar-chart-line"></i> <span class="link-text">تحلیل فرآیند</span></a>
-                                        }
-                                        <a class="nav-link sidebar-link @(currentController == "OrganizationCalendar" ? "sidebar-active" : "")" asp-controller="OrganizationCalendar" asp-action="Index"><i class="bi bi-calendar3"></i> <span class="link-text">تقویم سازمانی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "DocumentArchive" ? "sidebar-active" : "")" asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive"></i> <span class="link-text">بایگانی اسناد</span></a>
-
-                    @if (userHasSecurityAccess)
-                                        {
-                                            <a class="nav-link sidebar-link @(currentController == "Security" ? "sidebar-active" : "")" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-check"></i> <span class="link-text">مرکز امنیت</span></a>
-                                        }
-                                        <a class="nav-link sidebar-link @(currentController == "AiAssistant" ? "sidebar-active" : "")" asp-controller="AiAssistant" asp-action="Index"><i class="bi bi-cpu"></i> <span class="link-text">دستیار هوش مصنوعی</span></a>
-                                        <a class="nav-link sidebar-link @(currentController == "Waybill" ? "sidebar-active" : "")" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck"></i> <span class="link-text">ثبت بارنامه</span></a>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                        </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="sidebar-fixed-bottom">
-                    <section class="sidebar-section">
-                        <button class="sidebar-section-toggle accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFrequentPages" aria-expanded="false" aria-controls="collapseFrequentPages">
-                            <span>صفحات پرکاربرد</span>
-                            <small>پرمراجعه</small>
-                        </button>
-                        <div id="collapseFrequentPages" class="sidebar-section-collapse collapse">
-                            <nav class="nav flex-column sidebar-dynamic-nav sidebar-section-body" id="frequentPagesNav">
-                                <span class="sidebar-empty-state">هنوز داده‌ای ثبت نشده است.</span>
-                            </nav>
-                        </div>
-                    </section>
-
-                    <section class="sidebar-section">
-                        <button class="sidebar-section-toggle accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecentPages" aria-expanded="false" aria-controls="collapseRecentPages">
-                            <span>آخرین بازدیدها</span>
-                            <small>دسترسی اخیر</small>
-                        </button>
-                        <div id="collapseRecentPages" class="sidebar-section-collapse collapse">
-                            <nav class="nav flex-column sidebar-dynamic-nav sidebar-section-body" id="recentPagesNav">
-                                <span class="sidebar-empty-state">هنوز صفحه‌ای ثبت نشده است.</span>
-                            </nav>
-                        </div>
-                    </section>
-                </div>
-            </div>
-
-            <div class="sidebar-footer">
-                <a asp-controller="Settings" asp-action="Index" class="user-profile-link">
-                    <div class="user-profile-pill">
-                            <div class="user-avatar" >
-                            <div class="user-avatar-box"><i class="bi bi-person-fill text-secondary"></i></div>
-                            <span class="online-status"></span>
-                            </div>
-                            <div class="user-info" >
-                                <span class="u-name" >تنظیمات سامانه</span>
-                                <span class="u-role" >@displayName - @userRoleLabel</span>
-                            </div>
-                        </div>
-                    </a>
-            </div>
-        </aside>
-
-        <div class="main-wrapper">
-
-            <header class="custom-topbar">
-                <div class="topbar-cluster">
-                    <div class="topbar-clock-box">
-                        <i class="bi bi-clock-history text-primary"></i>
-                        <span id="topbarTime">--:--:--</span>
-                        <span class="topbar-divider">|</span>
-                        <span id="topbarDate">۱۴۰۵/۰۲/۲۷</span>
-                    </div>
-
-                    @* <form asp-controller="Search" asp-action="Index" method="get" class="topbar-search d-none d-md-flex" role="search">
-                        <i class="bi bi-search"></i>
-                        <input name="q" class="form-control form-control-sm" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجوی کل سیستم..." />
-                    </form> *@
-                </div>
-
-                <div class="topbar-actions">
-                    <div class="dropdown notification-center">
-                        <button class="notification-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="اعلان‌ها">
-                            <i class="bi bi-bell"></i>
-                            @if (headerNotificationCount > 0)
-                            {
-                                <span class="notification-count">@headerNotificationCount.ToString("N0")</span>
-                            }
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-start notification-menu">
-                            <div class="notification-menu-head">
-                                <strong>مرکز اعلان‌ها</strong>
-                                <span>@headerNotificationCount.ToString("N0") اعلان</span>
-                            </div>
-                            @if (headerNotifications.Count == 0)
-                            {
-                                <div class="notification-empty">اعلان مهمی برای نمایش وجود ندارد.</div>
-                            }
-                            else
-                            {
-                                foreach (var notification in headerNotifications.Take(8))
+                        <section class="accordion-item sidebar-module">
+                            <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManagement"><span>مدیریت سیستم</span><i class="bi bi-chevron-down text-[10px]"></i></button>
+                            <div id="collapseManagement" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports") ? "show" : "")"><div class="mt-1 space-y-1">
+                                @if (userCanAccessSystemSettings)
                                 {
-                                    <a class="notification-item" href="@notification.Url">
-                                        <i class="bi @notification.Icon text-@notification.Tone"></i>
-                                        <span>
-                                            <strong>@notification.Title</strong>
-                                            <small>@notification.Message</small>
-                                        </span>
-                                    </a>
+                                    <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4"></i><span class="link-text truncate">تنظیمات</span></a>
+                                    <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4"></i><span class="link-text truncate">امنیت</span></a>
+                                    <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4"></i><span class="link-text truncate">ممیزی</span></a>
                                 }
-                            }
-                            <a class="notification-item" href="/Notifications">
-                                <i class="bi bi-list-check text-secondary"></i>
-                                <span>
-                                    <strong>مشاهده همه اعلان‌ها</strong>
-                                    <small>مرکز اعلان‌ها و وضعیت خوانده‌شدن</small>
-                                </span>
-                            </a>
-                        </div>
+                                @if (userCanAccessProcessAnalytics)
+                                {
+                                    <a class='@NavClass("ProcessAnalysis")' data-nav-id="process-index" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 w-4"></i><span class="link-text truncate">تحلیل فرایند</span></a>
+                                }
+                                <a class='@NavClass("Reports")' data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph w-4"></i><span class="link-text truncate">گزارشات</span></a>
+                            </div></div>
+                        </section>
+                    }
+                </div>
+            </nav>
+            <div class="border-t border-slate-200 p-2 dark:border-slate-800"><a class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-decoration-none dark:border-slate-800 dark:bg-slate-900" asp-controller="Settings" asp-action="Index"><span class="grid h-8 w-8 place-items-center rounded-md bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"><i class="bi bi-person"></i></span><span class="min-w-0 flex-1"><span class="block truncate text-[12px] font-bold text-slate-800 dark:text-slate-100">@displayName</span><span class="block truncate text-[10px] text-slate-500 dark:text-slate-400">@userRoleLabel</span></span></a></div>
+        </aside>
+        <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden z-10">
+            <header class="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200 bg-slate-100/85 px-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
+                <button id="btnOpenSidebar" type="button" class="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" aria-label="باز کردن منو"><i class="bi bi-list text-lg"></i></button>
+                <form asp-controller="Search" asp-action="Index" method="get" role="search" class="relative hidden min-w-0 flex-1 md:block"><i class="bi bi-search pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i><input name="q" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجو در سیستم..." class="h-9 w-full rounded-lg border border-slate-200 bg-white pr-9 pl-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" /></form>
+                <div class="mr-auto flex items-center gap-2">
+                    <div class="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-500 md:flex dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"><i class="bi bi-clock-history"></i><span id="topbarDate">--/--/--</span><span class="text-slate-300 dark:text-slate-700">|</span><span id="topbarTime">--:--</span></div>
+                    <div class="dropdown"><button class="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="اعلان‌ها"><i class="bi bi-bell"></i>@if (headerNotificationCount > 0){<span class="absolute -left-1 -top-1 min-w-5 rounded-full bg-rose-600 px-1 text-[10px] font-black leading-5 text-white">@headerNotificationCount.ToString("N0")</span>}</button>
+                        <div class="dropdown-menu dropdown-menu-start mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-xl dark:border-slate-800 dark:bg-slate-900"><div class="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800"><strong class="text-sm text-slate-900 dark:text-white">اعلان‌ها</strong><span class="text-[11px] text-slate-500 dark:text-slate-400">@headerNotificationCount.ToString("N0") مورد</span></div>
+                            @if (headerNotifications.Count == 0){<div class="px-3 py-4 text-center text-[12px] text-slate-500 dark:text-slate-400">اعلان مهمی برای نمایش وجود ندارد.</div>}else{foreach (var notification in headerNotifications.Take(8)){<a class="flex gap-2 border-b border-slate-100 px-3 py-2 text-decoration-none transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800" href="@notification.Url"><i class="bi @notification.Icon mt-0.5 text-slate-500 dark:text-slate-400"></i><span class="min-w-0"><strong class="block truncate text-[12px] text-slate-900 dark:text-white">@notification.Title</strong><small class="block truncate text-[11px] text-slate-500 dark:text-slate-400">@notification.Message</small></span></a>}}
+                            <a class="block px-3 py-2 text-center text-[12px] font-bold text-teal-700 text-decoration-none hover:bg-slate-50 dark:text-teal-300 dark:hover:bg-slate-800" href="/Notifications">مشاهده همه اعلان‌ها</a></div>
                     </div>
-                    <div class="topbar-right-info d-none d-lg-flex">
-                        <span><span class="status-dot status-dot-success"></span> سرور: <span class="fw-bold text-success">فعال</span></span>
-                        <span><span class="status-dot status-dot-info"></span> دیتابیس: <span class="fw-bold text-info">متصل</span></span>
-                    </div>
-                    <button class="btn btn-primary btn-sm topbar-new-request">
-                        <i class="bi bi-plus-lg me-1"></i> درخواست جدید
-                    </button>
+                    <partial name="_LoginPartial" />
                 </div>
             </header>
-
-            <main id="main-content-wrapper" class="px-3 py-3">
-                @RenderBody()
-            </main>
+            <main id="main-content-wrapper" class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-100 p-3 md:p-4 dark:bg-slate-950"><div class="mx-auto w-full max-w-none flex-1 flex flex-col">@RenderBody()</div></main>
         </div>
-
     </div>
-
+    <div class="modal fade" id="appConfirmDialog" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"><div class="modal-header border-slate-200 dark:border-slate-800"><h5 class="modal-title text-sm font-bold text-slate-900 dark:text-white">تایید عملیات</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p id="appConfirmMessage" class="mb-0 text-sm text-slate-700 dark:text-slate-300">آیا مطمئن هستید؟</p></div><div class="modal-footer border-slate-200 dark:border-slate-800"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">لغو</button><button type="button" class="btn btn-danger btn-sm" id="appConfirmOk">تایید</button></div></div></div></div>
+    <div class="modal fade" id="appCommandPalette" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content command-palette overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"><div class="command-palette-head flex items-center gap-2 border-b border-slate-200 p-3 dark:border-slate-800"><i class="bi bi-command text-slate-400"></i><input id="appCommandInput" type="search" autocomplete="off" placeholder="جستجوی فرمان، صفحه یا گزارش..." aria-label="جستجوی فرمان" class="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none dark:text-white"><kbd class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Ctrl K</kbd></div><div id="appCommandList" class="command-palette-list max-h-96 overflow-y-auto p-2"></div><div class="command-palette-foot border-t border-slate-200 px-3 py-2 text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">Enter برای اجرا، Esc برای بستن</div></div></div></div>
     <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/js/layout.js" asp-append-version="true"></script>
@@ -445,98 +272,33 @@
         (() => {
             const html = document.documentElement;
             const storedPreference = localStorage.getItem('rhyno.theme.preference');
-            const fallbackPreference = '@themePreference';
-            const activePreference = storedPreference || fallbackPreference;
+            const activePreference = storedPreference || '@themePreference';
             const normalized = (activePreference || 'System').toLowerCase();
-
-            html.classList.remove('theme-light', 'theme-dark');
+            html.classList.remove('theme-light', 'theme-dark', 'dark');
             html.setAttribute('data-theme', normalized);
             document.body?.setAttribute('data-theme', normalized);
-
-            if (normalized === 'light') {
-                html.classList.add('theme-light');
-                window.dispatchEvent(new Event('themechange'));
-                return;
-            }
-
-            if (normalized === 'dark') {
-                html.classList.add('theme-dark');
-                window.dispatchEvent(new Event('themechange'));
-                return;
-            }
-
+            if (normalized === 'dark') { html.classList.add('theme-dark', 'dark'); window.dispatchEvent(new Event('themechange')); return; }
+            if (normalized === 'light') { html.classList.add('theme-light'); window.dispatchEvent(new Event('themechange')); return; }
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             html.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
+            if (prefersDark) html.classList.add('dark');
             window.dispatchEvent(new Event('themechange'));
         })();
     </script>
     <script>
         (() => {
-            const sidebarContainer = document.getElementById('sidebarPagesScroll');
-            if (!sidebarContainer) {
-                return;
-            }
-
-            const storageKey = 'rhyno.sidebar.scrollTop';
-
-            const savedRaw = localStorage.getItem(storageKey);
-            const savedScrollTop = Number(savedRaw);
-            if (Number.isFinite(savedScrollTop) && savedScrollTop >= 0) {
-                sidebarContainer.scrollTop = savedScrollTop;
-            }
-
-            const persistScroll = () => {
-                localStorage.setItem(storageKey, String(sidebarContainer.scrollTop));
-            };
-
-            sidebarContainer.addEventListener('scroll', persistScroll, { passive: true });
-
-            sidebarContainer.addEventListener('click', () => {
-                setTimeout(persistScroll, 0);
-            });
-
-            window.addEventListener('beforeunload', persistScroll);
-        })();
-    </script>
-
-    <script>
-        (() => {
             const timeElem = document.getElementById('topbarTime');
             const dateElem = document.getElementById('topbarDate');
-            if (!timeElem || !dateElem) {
-                return;
-            }
-
-            const toPersianDigits = (value) => String(value).replace(/\d/g, (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]);
-
+            if (!timeElem || !dateElem) return;
             const updateClockAndDate = () => {
                 const now = new Date();
-
-                timeElem.textContent = now.toLocaleTimeString('fa-IR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
-
-                const dateParts = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                }).formatToParts(now);
-
-                const year = dateParts.find((item) => item.type === 'year')?.value ?? '';
-                const month = dateParts.find((item) => item.type === 'month')?.value ?? '';
-                const day = dateParts.find((item) => item.type === 'day')?.value ?? '';
-
-                dateElem.textContent = `${toPersianDigits(year)}/${toPersianDigits(month)}/${toPersianDigits(day)}`;
+                timeElem.textContent = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false });
+                dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
             };
-
             updateClockAndDate();
-            setInterval(updateClockAndDate, 1000);
+            setInterval(updateClockAndDate, 30000);
         })();
     </script>
-
     <script>
         (() => {
             const input = document.getElementById('sidebarMenuSearch');
@@ -544,224 +306,89 @@
             const countLabel = document.getElementById('sidebarSearchCount');
             const noResults = document.getElementById('sidebarSearchNoResults');
             const sidebarContainer = document.getElementById('sidebarScrollContainer');
-            const accordion = document.getElementById('sidebarAccordion');
-
-            if (!input || !clearButton || !countLabel || !noResults || !sidebarContainer) {
-                return;
-            }
-
-            const normalize = (value) => String(value || '')
-                .replace(/[ي]/g, 'ی')
-                .replace(/[ك]/g, 'ک')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .toLocaleLowerCase('fa-IR');
-
+            if (!input || !clearButton || !countLabel || !noResults || !sidebarContainer) return;
+            
+            const normalize = (value) => String(value || '').replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').replace(/\s+/g, ' ').trim().toLowerCase();
+            
             const links = Array.from(sidebarContainer.querySelectorAll('a.sidebar-link'));
-            const groups = Array.from(sidebarContainer.querySelectorAll('.sidebar-accordion .accordion-item'));
-
-            groups.forEach((group) => {
-                const collapse = group.querySelector('.accordion-collapse');
-                if (collapse) {
-                    collapse.dataset.initialShow = collapse.classList.contains('show') ? '1' : '0';
+            const groups = Array.from(sidebarContainer.querySelectorAll('.sidebar-module'));
+            
+            // Store initial collapse state of each module to restore when search is cleared
+            const initialCollapseStates = new Map();
+            groups.forEach(group => {
+                const collapseDiv = group.querySelector('.accordion-collapse');
+                if (collapseDiv) {
+                    initialCollapseStates.set(collapseDiv, collapseDiv.classList.contains('show'));
                 }
             });
-
-            const setCollapseVisible = (collapse, visible) => {
-                if (!collapse) {
-                    return;
-                }
-
-                collapse.classList.toggle('show', visible);
-                const button = document.querySelector(`[data-bs-target="#${collapse.id}"]`);
-                if (button) {
-                    button.classList.toggle('collapsed', !visible);
-                    button.setAttribute('aria-expanded', String(visible));
-                }
-            };
-
+            
             const resetSearch = () => {
-                links.forEach((link) => link.classList.remove('sidebar-search-hidden'));
+                links.forEach((link) => link.classList.remove('hidden'));
                 groups.forEach((group) => {
-                    group.classList.remove('sidebar-search-hidden');
-                    const collapse = group.querySelector('.accordion-collapse');
-                    if (collapse) {
-                        setCollapseVisible(collapse, collapse.dataset.initialShow === '1');
+                    group.classList.remove('hidden');
+                    const collapseDiv = group.querySelector('.accordion-collapse');
+                    if (collapseDiv) {
+                        const wasInitiallyShown = initialCollapseStates.get(collapseDiv);
+                        if (wasInitiallyShown) {
+                            collapseDiv.classList.add('show');
+                        } else {
+                            collapseDiv.classList.remove('show');
+                        }
                     }
                 });
+                noResults.classList.add('hidden');
                 noResults.classList.remove('is-visible');
-                clearButton.classList.add('d-none');
+                clearButton.classList.add('hidden');
                 countLabel.textContent = 'همه بخش‌ها';
             };
-
+            
             const applySearch = () => {
                 const query = normalize(input.value);
-                if (!query) {
-                    resetSearch();
-                    return;
-                }
-
+                if (!query) { resetSearch(); return; }
                 let matchCount = 0;
-
+                
+                // Filter sidebar links
                 links.forEach((link) => {
-                    const text = normalize(link.textContent);
-                    const matches = text.includes(query);
-                    link.classList.toggle('sidebar-search-hidden', !matches);
-                    if (matches) {
-                        matchCount += 1;
-                    }
+                    const matches = normalize(link.textContent).includes(query);
+                    link.classList.toggle('hidden', !matches);
+                    if (matches) matchCount += 1;
                 });
-
+                
+                // Show/hide modules and expand collapses if they contain matching links
                 groups.forEach((group) => {
-                    const headerText = normalize(group.querySelector('.accordion-button')?.textContent);
                     const groupLinks = Array.from(group.querySelectorAll('a.sidebar-link'));
-                    const headerMatches = headerText.includes(query);
-                    const hasVisibleLink = groupLinks.some((link) => !link.classList.contains('sidebar-search-hidden'));
-
-                    if (headerMatches) {
-                        groupLinks.forEach((link) => link.classList.remove('sidebar-search-hidden'));
-                        matchCount += groupLinks.filter((link) => !normalize(link.textContent).includes(query)).length;
+                    const hasVisibleLink = groupLinks.some((link) => !link.classList.contains('hidden'));
+                    const headerMatches = normalize(group.querySelector('button')?.textContent).includes(query);
+                    
+                    const isVisible = hasVisibleLink || headerMatches;
+                    group.classList.toggle('hidden', !isVisible);
+                    
+                    const collapseDiv = group.querySelector('.accordion-collapse');
+                    if (collapseDiv) {
+                        if (isVisible) {
+                            collapseDiv.classList.add('show');
+                            if (headerMatches) {
+                                // If group header matched, show all links within this group
+                                groupLinks.forEach((link) => link.classList.remove('hidden'));
+                            }
+                        } else {
+                            collapseDiv.classList.remove('show');
+                        }
                     }
-
-                    const showGroup = headerMatches || hasVisibleLink;
-                    group.classList.toggle('sidebar-search-hidden', !showGroup);
-                    setCollapseVisible(group.querySelector('.accordion-collapse'), showGroup);
                 });
-
+                
+                noResults.classList.toggle('hidden', matchCount !== 0);
                 noResults.classList.toggle('is-visible', matchCount === 0);
-                clearButton.classList.remove('d-none');
-                countLabel.textContent = matchCount === 0
-                    ? 'بدون نتیجه'
-                    : `${matchCount.toLocaleString('fa-IR')} نتیجه`;
+                clearButton.classList.remove('hidden');
+                countLabel.textContent = matchCount === 0 ? 'بدون نتیجه' : `${matchCount.toLocaleString('fa-IR')} نتیجه`;
             };
-
+            
             input.addEventListener('input', applySearch);
-
-            clearButton.addEventListener('click', () => {
-                input.value = '';
-                input.focus();
-                resetSearch();
-            });
-
-            document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && document.activeElement === input) {
-                    input.value = '';
-                    resetSearch();
-                }
-            });
+            clearButton.addEventListener('click', () => { input.value = ''; input.focus(); resetSearch(); });
         })();
     </script>
-
-    <div class="modal fade" id="appConfirmDialog" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content app-confirm-dialog">
-                <div class="modal-header">
-                    <h5 class="modal-title">تایید عملیات</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="appConfirmMessage" class="mb-0">آیا مطمئن هستید؟</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">لغو</button>
-                    <button type="button" class="btn btn-danger" id="appConfirmOk">تایید</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="appCommandPalette" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content command-palette">
-                <div class="command-palette-head">
-                    <i class="bi bi-command"></i>
-                    <input id="appCommandInput" type="search" autocomplete="off" placeholder="جستجوی فرمان، صفحه یا گزارش..." aria-label="جستجوی فرمان">
-                    <kbd>Ctrl K</kbd>
-                </div>
-                <div id="appCommandList" class="command-palette-list"></div>
-                <div class="command-palette-foot">Enter برای اجرا، Esc برای بستن</div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        (() => {
-            const frequentNav = document.getElementById('frequentPagesNav');
-            const recentNav = document.getElementById('recentPagesNav');
-            const trackedLinks = Array.from(document.querySelectorAll('a.sidebar-link[data-nav-id]'));
-            if (!frequentNav || !recentNav || trackedLinks.length === 0) {
-                return;
-            }
-
-            const recentKey = 'rhyno.sidebar.recent';
-            const usageKey = 'rhyno.sidebar.usage';
-            const maxItems = 6;
-
-            const catalog = new Map(trackedLinks.map((link) => [link.dataset.navId, {
-                id: link.dataset.navId,
-                href: link.getAttribute('href') || '#',
-                iconClass: link.querySelector('i')?.className || 'bi bi-file-earmark',
-                text: (link.querySelector('.link-text')?.textContent || link.textContent || '').trim(),
-                active: link.classList.contains('sidebar-active')
-            }]));
-
-            const readState = (key, fallback) => {
-                try {
-                    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
-                } catch {
-                    return fallback;
-                }
-            };
-
-            const writeList = (container, ids, emptyText) => {
-                container.innerHTML = '';
-                const items = ids
-                    .map((id) => catalog.get(id))
-                    .filter((item, index, array) => item && array.findIndex((entry) => entry.id === item.id) === index);
-
-                if (items.length === 0) {
-                    const empty = document.createElement('span');
-                    empty.className = 'sidebar-empty-state';
-                    empty.textContent = emptyText;
-                    container.appendChild(empty);
-                    return;
-                }
-
-                items.forEach((item) => {
-                    const anchor = document.createElement('a');
-                    anchor.className = `nav-link sidebar-link sidebar-link-compact${item.active ? ' sidebar-active' : ''}`;
-                    anchor.href = item.href;
-                    anchor.innerHTML = `<i class="${item.iconClass}"></i><span class="link-text">${item.text}</span>`;
-                    container.appendChild(anchor);
-                });
-            };
-
-            const activeId = trackedLinks.find((link) => link.classList.contains('sidebar-active'))?.dataset.navId;
-            const recent = readState(recentKey, []);
-            const usage = readState(usageKey, {});
-            if (activeId) {
-                localStorage.setItem(recentKey, JSON.stringify([activeId, ...recent.filter((id) => id !== activeId)].slice(0, maxItems)));
-                localStorage.setItem(usageKey, JSON.stringify({ ...usage, [activeId]: Number(usage[activeId] || 0) + 1 }));
-            }
-
-            const nextRecent = readState(recentKey, []);
-            const nextUsage = readState(usageKey, {});
-            const frequent = Object.entries(nextUsage)
-                .sort((left, right) => Number(right[1]) - Number(left[1]))
-                .map((entry) => entry[0])
-                .slice(0, maxItems);
-
-            writeList(frequentNav, frequent, 'هنوز صفحه پرکاربردی ثبت نشده است.');
-            writeList(recentNav, nextRecent, 'هنوز صفحه‌ای باز نشده است.');
-        })();
-    </script>
-
     @await RenderSectionAsync("Scripts", required: false)
     <script src="~/js/app-ui.js" asp-append-version="true"></script>
 </body>
 </html>
-
-
-
-
 

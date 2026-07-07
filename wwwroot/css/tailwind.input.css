@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    direction: rtl;
+  }
+
+  body {
+    @apply bg-rhyno-bg text-rhyno-ink font-sans antialiased;
+  }
+
+  .dark body,
+  html.theme-dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+}
+
+@layer components {
+  .tw-app-surface {
+    @apply rounded-rhyno border border-rhyno-line bg-white shadow-rhyno-sm dark:border-slate-700 dark:bg-slate-900;
+  }
+
+  .tw-app-button {
+    @apply inline-flex min-h-8 items-center justify-center gap-2 rounded-md border border-rhyno-line bg-white px-3 py-1.5 text-sm font-bold text-rhyno-ink transition hover:border-rhyno-primary hover:bg-teal-50 hover:text-rhyno-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800;
+  }
+
+  .tw-app-button-primary {
+    @apply inline-flex min-h-8 items-center justify-center gap-2 rounded-md border border-transparent bg-rhyno-primary px-3 py-1.5 text-sm font-bold text-white transition hover:bg-teal-800;
+  }
+}

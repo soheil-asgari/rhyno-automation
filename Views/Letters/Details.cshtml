@@ -3,9 +3,7 @@
 @{
     var workflowDecisions = ViewBag.WorkflowDecisions as List<OfficeAutomation.Models.WorkflowDecision> ?? new List<OfficeAutomation.Models.WorkflowDecision>();
     var workflowDetail = ViewBag.WorkflowDetail as OfficeAutomation.Models.WorkflowDetailPanelVM;
-}
 
-@{
     Layout = null;
     string receiverPrefix = ViewBag.Prefix ?? "جناب آقای / سرکار خانم";
     string senderName = Model.Sender?.FullName ?? "نامشخص";
@@ -42,158 +40,160 @@
             html.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
         })();
     </script>
-    <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap/5.3.0-alpha1/css/bootstrap.rtl.min.css">
     <link rel="stylesheet" href="https://lib.arvancloud.ir/bootstrap-icons/1.9.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/letter-print.css" />
-    <style>
-        .letter-detail-shell {
-            max-width: 1240px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-        .workflow-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
-            gap: 18px;
-        }
-        .timeline-card, .meta-card, .letter-ai-panel {
-            border-radius: 18px;
-            border: 1px solid #e2e8f0;
-            background: #fff;
-            padding: 16px;
-            box-shadow: 0 12px 30px rgba(15,23,42,.06);
-        }
-        .timeline-step { display: flex; gap: 12px; margin-bottom: 12px; }
-        .timeline-dot { width: 12px; height: 12px; border-radius: 999px; margin-top: 6px; background: #cbd5e1; }
-        .timeline-step.active .timeline-dot { background: linear-gradient(135deg, #8b5cf6, #38bdf8); box-shadow: 0 0 0 4px rgba(139,92,246,.12); }
-        .timeline-step p { margin: 0; color: #64748b; }
-        .timeline-step strong { color: #0f172a; }
-        .letter-body .letter-content { overflow-wrap: anywhere; }
-        .letter-content img { max-width: 100%; height: auto; }
-        .letter-content table { width: 100%; }
-        .detail-toolbar { display:flex; flex-wrap:wrap; gap: 10px; justify-content: center; padding: 14px; background: rgba(15,23,42,.94); }
-        html.theme-dark .timeline-card, html.theme-dark .meta-card, html.theme-dark .letter-ai-panel,
-        html[data-theme="dark"] .timeline-card, html[data-theme="dark"] .meta-card, html[data-theme="dark"] .letter-ai-panel { background: rgba(15,23,42,.92); border-color: rgba(148,163,184,.18); color: #edf4ff; }
-        html.theme-dark .timeline-step strong, html.theme-dark .timeline-step p { color: #edf4ff; }
-        html.theme-dark .letter-container,
-        html[data-theme="dark"] .letter-container,
-        body[data-theme="dark"] .letter-container { background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%) !important; color: #0f172a !important; box-shadow: 0 24px 60px rgba(2, 6, 23, 0.34) !important; }
-        @@media (max-width: 992px) { .workflow-grid { grid-template-columns: 1fr; } }
-        @@media print { .no-print { display: none !important; } }
-    </style>
 </head>
-<body>
-    <div class="no-print detail-toolbar">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col font-sans transition-colors duration-200">
+    <!-- Top Fixed Toolbar -->
+    <div class="no-print w-full flex items-center justify-center flex-wrap gap-3 p-4 bg-slate-900 text-white border-b border-slate-800">
         @Html.AntiForgeryToken()
-        <button onclick="window.print()" class="btn btn-success btn-sm">چاپ یا ذخیره PDF</button>
-        <a href="/Letters/Index" class="btn btn-outline-light btn-sm">بازگشت به لیست</a>
-        <a href="@Url.Action("Create", new { replyToId = Model.Id })" class="btn btn-outline-primary btn-sm"><i class="bi bi-reply-fill"></i> پاسخ به نامه</a>
+        <button onclick="window.print()" class="flex items-center gap-1.5 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+            <i class="bi bi-printer"></i>
+            <span>چاپ یا ذخیره PDF</span>
+        </button>
+        <a href="/Letters/Index" class="flex items-center justify-center px-4 h-9 border border-slate-700 hover:bg-slate-800 text-slate-200 rounded-lg text-xs font-bold transition shadow-sm no-underline">
+            <span>بازگشت به کارتابل</span>
+        </a>
+        <a href="@Url.Action("Create", new { replyToId = Model.Id })" class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition shadow-sm no-underline">
+            <i class="bi bi-reply-fill"></i>
+            <span>پاسخ به نامه</span>
+        </a>
     </div>
 
-    <div class="letter-detail-shell">
-        <div class="workflow-grid">
-            <main class="letter-container">
-                <header class="letter-header">
-                    <div class="header-info">
-                        <p><strong>شماره:</strong> @Model.Id.ToString("0000")</p>
-                        <p><strong>تاریخ:</strong> @shamsiDate</p>
-                        <p><strong>وضعیت:</strong> @WorkflowStatus.Label(Model.WorkflowStatus)</p>
-                    </div>
-                    <div class="text-center">
-                        <h5 class="fw-bold mb-1">بسمه تعالی</h5>
-                        <h4 class="fw-bold">پورتال سازمانی راینو</h4>
-                    </div>
-                    <div><img src="/images/logo.png" width="80" alt="لوگو سازمان"></div>
-                </header>
-                <article class="letter-body">
-                    <h5 class="fw-bold mb-4">@receiverPrefix @(Model.Receiver?.FullName ?? "....................")</h5>
-                    <h6 class="fw-bold mb-3">موضوع: @Model.Title</h6>
-                    <div class="letter-content">@Html.Raw(HtmlSanitizer.Sanitize(Model.Body))</div>
-                </article>
-                <footer class="letter-footer">
-                    <div class="signature-area">
-                        <p class="mb-1">با احترام</p>
-                        <p class="fw-bold mb-0">@senderName</p>
-                        <p class="small text-muted mb-2">@senderJob</p>
-                        @if (!string.IsNullOrEmpty(Model.Sender?.SignaturePath))
-                        {
-                            <img src="@Model.Sender.SignaturePath" class="signature-img" alt="امضای @senderName" />
-                        }
-                    </div>
-                </footer>
-            </main>
+    <!-- Main Content Container -->
+    <div class="w-full max-w-[1240px] mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-6">
+        <!-- Physical Paper sheet (Col span 1) -->
+        <main class="flex-1 min-h-[900px] p-12 bg-white text-slate-900 shadow-md border border-slate-200/60 rounded-2xl relative flex flex-col gap-6" style="font-family: IRANSans, Tahoma, sans-serif;">
+            <!-- Header metadata -->
+            <header class="flex justify-between items-center border-b border-slate-200 pb-4">
+                <div class="text-[11px] text-slate-500 font-mono flex flex-col gap-1 text-right leading-relaxed">
+                    <div><strong>شماره:</strong> <span class="tabular-nums">@Model.Id.ToString("0000")</span></div>
+                    <div><strong>تاریخ:</strong> <span class="tabular-nums">@shamsiDate</span></div>
+                    <div><strong>وضعیت:</strong> <span>@WorkflowStatus.Label(Model.WorkflowStatus)</span></div>
+                </div>
+                <div class="text-center">
+                    <h5 class="m-0 text-sm font-black text-slate-800">بسمه تعالی</h5>
+                    <h4 class="text-xs font-bold text-slate-750 mt-2">پورتال سازمانی راینو</h4>
+                </div>
+                <img src="/images/logo.png" class="w-16 h-16 object-contain" alt="لوگو سازمان" onerror="this.style.display='none'">
+            </header>
 
-            <aside class="d-grid gap-3">
-                <section class="meta-card">
-                    <h5 class="fw-bold mb-3">خلاصه وضعیت</h5>
-                    <div class="d-grid gap-2">
-                        <div><strong>خوانده شده:</strong> @(Model.IsRead ? "بله" : "خیر")</div>
-                        <div><strong>مرحله گردش:</strong> @(Model.IsWorkflowCompleted ? "تکمیل شده" : Model.CurrentWorkflowStep.ToString())</div>
-                        <div><strong>گیرنده فعلی:</strong> @(Model.Receiver?.FullName ?? "نامشخص")</div>
-                        <div><strong>گیرنده نهایی:</strong> @(Model.FinalReceiver?.FullName ?? "نامشخص")</div>
-                    </div>
-                </section>
+            <!-- Letter Body -->
+            <article class="flex-1 flex flex-col gap-4 text-right">
+                <h5 class="text-xs font-black text-slate-800">@receiverPrefix @(Model.Receiver?.FullName ?? "....................")</h5>
+                <h6 class="text-xs font-bold text-slate-750">موضوع: @Model.Title</h6>
+                <div class="text-sm leading-8 text-slate-800 overflow-wrap-anywhere mt-2">
+                    @Html.Raw(HtmlSanitizer.Sanitize(Model.Body))
+                </div>
+            </article>
 
-                <section class="timeline-card">
-                    <h5 class="fw-bold mb-3">Timeline گردش نامه</h5>
+            <!-- Signature block -->
+            <footer class="flex justify-end border-t border-slate-100 pt-4 mt-8">
+                <div class="w-48 flex flex-col gap-1 text-center">
+                    <p class="text-xs text-slate-600 m-0">با احترام</p>
+                    <p class="text-xs font-black text-slate-900 m-0">@senderName</p>
+                    <p class="text-[10px] text-slate-400 m-0">@senderJob</p>
+                    @if (!string.IsNullOrEmpty(Model.Sender?.SignaturePath))
+                    {
+                        <img src="@Model.Sender.SignaturePath" class="w-32 h-16 object-contain mx-auto mt-2" alt="امضای @senderName" />
+                    }
+                </div>
+            </footer>
+        </main>
+
+        <!-- Sidebar / Meta Details Panel -->
+        <aside class="w-full lg:w-[360px] flex flex-col gap-6 no-print">
+            <!-- Summary card -->
+            <section class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+                <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">خلاصه وضعیت</h3>
+                <div class="flex flex-col gap-2.5 text-xs text-slate-700 dark:text-slate-355 leading-relaxed">
+                    <div class="flex justify-between"><strong>خوانده شده:</strong> <span>@(Model.IsRead ? "بله" : "خیر")</span></div>
+                    <div class="flex justify-between"><strong>مرحله گردش:</strong> <span>@(Model.IsWorkflowCompleted ? "تکمیل شده" : Model.CurrentWorkflowStep.ToString())</span></div>
+                    <div class="flex justify-between"><strong>گیرنده فعلی:</strong> <span>@(Model.Receiver?.FullName ?? "نامشخص")</span></div>
+                    <div class="flex justify-between"><strong>گیرنده نهایی:</strong> <span>@(Model.FinalReceiver?.FullName ?? "نامشخص")</span></div>
+                </div>
+            </section>
+
+            <!-- Timeline card -->
+            <section class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+                <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">Timeline گردش نامه</h3>
+                <div class="flex flex-col gap-4">
                     @foreach (var step in timeline)
                     {
-                        <div class="timeline-step @(step.Active ? "active" : "")">
-                            <div class="timeline-dot"></div>
-                            <div>
-                                <strong>@step.Title</strong>
-                                <p>@step.Description</p>
+                        <div class="flex gap-3 items-start">
+                            <div class="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 @(step.Active ? "bg-teal-500 dark:bg-teal-400 ring-4 ring-teal-500/20" : "bg-slate-200 dark:bg-slate-800")"></div>
+                            <div class="flex-1 flex flex-col gap-1 text-xs">
+                                <strong class="font-bold text-slate-850 dark:text-white">@step.Title</strong>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">@step.Description</p>
                             </div>
                         </div>
                     }
-                </section>
+                </div>
+            </section>
 
-                @if (workflowDecisions.Count > 0)
-                {
-                    <section class="timeline-card">
-                        <h5 class="fw-bold mb-3">تاریخچه تصمیم‌ها</h5>
+            <!-- Decision History -->
+            @if (workflowDecisions.Count > 0)
+            {
+                <section class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+                    <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">تاریخچه تصمیم‌ها</h3>
+                    <div class="flex flex-col gap-4">
                         @foreach (var decision in workflowDecisions)
                         {
-                            <div class="timeline-step active">
-                                <div class="timeline-dot"></div>
-                                <div>
-                                    <strong>@WorkflowStatus.Label(decision.Decision)</strong>
-                                    <p>@((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId) - @decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</p>
+                            <div class="flex gap-3 items-start">
+                                <div class="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 bg-teal-500 dark:bg-teal-400 ring-4 ring-teal-500/20"></div>
+                                <div class="flex-1 flex flex-col gap-1 text-xs">
+                                    <strong class="font-bold text-slate-800 dark:text-white">@WorkflowStatus.Label(decision.Decision)</strong>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">@((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId) - @decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</p>
                                     @if (!string.IsNullOrWhiteSpace(decision.Comment))
                                     {
-                                        <p>@decision.Comment</p>
+                                        <p class="p-2 border border-slate-100 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 rounded-lg text-[10px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">توضیح: @decision.Comment</p>
                                     }
                                 </div>
                             </div>
                         }
-                    </section>
-                }
-
-                @if (workflowDetail != null)
-                {
-                    <partial name="_WorkflowDetailPanel" model="workflowDetail" />
-                }
-
-                <section class="letter-ai-panel no-print">
-                    <div class="letter-ai-title"><i class="bi bi-stars"></i><span>پاسخ و تأییدیه با دستیار هوش مصنوعی</span></div>
-                    <div class="letter-ai-controls">
-                        <input id="aiReplyIntent" class="form-control" value="این نامه از نظر من تایید است" placeholder="نظر خود را بنویسید...">
-                        <button id="btnGenerateLetterReply" type="button" class="btn btn-primary" data-letter-id="@Model.Id"><i class="bi bi-magic"></i> تولید پاسخ</button>
-                    </div>
-                    <textarea id="aiLetterReplyResult" class="form-control" placeholder="متن پیشنهادی هوش مصنوعی اینجا نمایش داده می‌شود."></textarea>
-                    <div class="letter-ai-actions">
-                        <small class="text-muted">ارسال نهایی باید بعد از بازبینی کاربر انجام شود.</small>
-                        @if (canApprove)
-                        {
-                            <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="m-0">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> تایید و ارجاع نامه</button>
-                            </form>
-                        }
                     </div>
                 </section>
-            </aside>
-        </div>
+            }
+
+            <!-- Workflow Detail Panel -->
+            @if (workflowDetail != null)
+            {
+                <div class="border-t border-slate-100 dark:border-slate-800/80 pt-6">
+                    <partial name="_WorkflowDetailPanel" model="workflowDetail" />
+                </div>
+            }
+
+            <!-- AI Reply panel -->
+            <section class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+                <div class="flex items-center gap-2 text-teal-600 dark:text-teal-400">
+                    <i class="bi bi-stars"></i>
+                    <span class="text-xs font-bold">پاسخ و تأییدیه با دستیار هوش مصنوعی</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <input id="aiReplyIntent" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" value="این نامه از نظر من تایید است" placeholder="نظر خود را بنویسید..." />
+                    <button id="btnGenerateLetterReply" type="button" class="h-9 w-full flex items-center justify-center gap-1.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-sm" data-letter-id="@Model.Id">
+                        <i class="bi bi-magic"></i>
+                        <span>تولید پاسخ</span>
+                    </button>
+                    <textarea id="aiLetterReplyResult" class="w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 p-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" rows="3" placeholder="متن پیشنهادی هوش مصنوعی اینجا نمایش داده می‌شود."></textarea>
+                </div>
+                
+                <div class="flex flex-col gap-3 mt-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <small class="text-[10px] text-slate-500 leading-normal">ارسال نهایی باید بعد از بازبینی کاربر انجام شود.</small>
+                    @if (canApprove)
+                    {
+                        <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="w-full flex items-center justify-center gap-1.5 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                                <i class="bi bi-check2-circle"></i>
+                                <span>تایید و ارجاع نامه</span>
+                            </button>
+                        </form>
+                    }
+                </div>
+            </section>
+        </aside>
     </div>
 
     <script>window.allUsers = @Html.Raw(ViewBag.UsersData ?? "[]");</script>

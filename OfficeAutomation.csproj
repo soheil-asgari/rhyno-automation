@@ -42,4 +42,9 @@
     <EmbeddedResource Remove="OfficeAutomation.Worker\**" />
   </ItemGroup>
 
+  <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild">
+    <Message Importance="high" Text="Building Tailwind CSS assets..." />
+    <Exec Command="npm run build:css" />
+  </Target>
+
 </Project>

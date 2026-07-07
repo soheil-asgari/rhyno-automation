@@ -1,4 +1,4 @@
-﻿@model IEnumerable<OfficeAutomation.Models.Letter>
+@model IEnumerable<OfficeAutomation.Models.Letter>
 @{
     ViewData["Title"] = "کارتابل نامه‌ها";
     var pc = new System.Globalization.PersianCalendar();
@@ -9,497 +9,296 @@
     var inboxCount = list.Count(item => (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId));
 }
 
-<div class="container-fluid py-4 letters-page">
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
     @Html.AntiForgeryToken()
 
-    <div class="header-section mb-5">
-        <div class="d-flex align-items-center gap-3">
-            <div class="brand-icon-box">
+    <!-- Header Section -->
+    <header class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400 text-lg border border-teal-200/30">
                 <i class="bi bi-stack"></i>
             </div>
             <div>
-                <h2 class="page-title">کارتابل نامه‌ها</h2>
-                <p class="page-subtitle">مدیریت و پیگیری هوشمند مکاتبات اداری</p>
+                <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">کارتابل نامه‌ها</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">مدیریت و پیگیری هوشمند مکاتبات اداری</p>
             </div>
         </div>
 
-        <div class="header-actions">
-            <div class="search-box-modern">
-                <i class="bi bi-search"></i>
-                <input id="lettersSearch" type="text" placeholder="جستجوی شماره، عنوان یا فرستنده...">
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Modern Search Box -->
+            <div class="relative min-w-[240px]">
+                <i class="bi bi-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input id="lettersSearch" type="text" placeholder="جستجوی شماره، عنوان یا فرستنده..." class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-950 pr-8 pl-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:bg-white dark:focus:bg-slate-950 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
             </div>
-            <a asp-action="Create" class="btn-new-letter">
+            <!-- Create Letter Button -->
+            <a asp-action="Create" class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm no-underline">
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>ایجاد نامه جدید</span>
             </a>
         </div>
-    </div>
+    </header>
 
-    <div class="letter-filter-bar mb-4">
-        <button type="button" class="letter-filter-btn active" data-letter-filter="all">
+    <!-- Quick Filters Row -->
+    <div class="flex flex-wrap gap-2 items-center">
+        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition active" data-letter-filter="all">
             <i class="bi bi-folder2-open"></i> همه (@list.Count)
         </button>
-        <button type="button" class="letter-filter-btn" data-letter-filter="unread">
+        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition" data-letter-filter="unread">
             <i class="bi bi-envelope-open"></i> خوانده‌نشده (@unreadCount)
         </button>
-        <button type="button" class="letter-filter-btn" data-letter-filter="sent">
+        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition" data-letter-filter="sent">
             <i class="bi bi-send"></i> ارسالی (@sentCount)
         </button>
-        <button type="button" class="letter-filter-btn" data-letter-filter="received">
+        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition" data-letter-filter="received">
             <i class="bi bi-inbox"></i> دریافتی (@inboxCount)
         </button>
-        <button type="button" id="clearLetterFilters" class="letter-filter-btn ms-auto">
+        <button type="button" id="clearLetterFilters" class="mr-auto flex items-center gap-1.5 px-3 py-1.5 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-bold transition">
             <i class="bi bi-x-circle"></i> پاک کردن فیلترها
         </button>
     </div>
 
-    <div class="letters-stats-grid mb-4">
-        <button type="button" class="letters-stat-card active" data-letter-filter="all">
-            <span class="letters-stat-label">کل نامه‌ها</span>
-            <span class="letters-stat-value">@list.Count</span>
-            <span class="letters-stat-hint">نمایش همه</span>
+    <!-- Numeric Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button type="button" class="letters-stat-card active flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5" data-letter-filter="all">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">کل نامه‌ها</span>
+            <span class="text-2xl font-black text-slate-800 dark:text-white mt-1">@list.Count</span>
+            <span class="text-[9px] text-slate-400 mt-0.5">نمایش همه مکاتبات</span>
         </button>
-        <button type="button" class="letters-stat-card" data-letter-filter="unread">
-            <span class="letters-stat-label">خوانده‌نشده</span>
-            <span class="letters-stat-value text-warning">@unreadCount</span>
-            <span class="letters-stat-hint">فقط موارد جدید</span>
+        <button type="button" class="letters-stat-card flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5" data-letter-filter="unread">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">خوانده‌نشده</span>
+            <span class="text-2xl font-black text-amber-600 mt-1">@unreadCount</span>
+            <span class="text-[9px] text-slate-400 mt-0.5">اقدام فوری مورد نیاز</span>
         </button>
-        <button type="button" class="letters-stat-card" data-letter-filter="sent">
-            <span class="letters-stat-label">نامه‌های ارسالی</span>
-            <span class="letters-stat-value text-success">@sentCount</span>
-            <span class="letters-stat-hint">ارسال‌شده توسط من</span>
+        <button type="button" class="letters-stat-card flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5" data-letter-filter="sent">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">نامه‌های ارسالی</span>
+            <span class="text-2xl font-black text-emerald-600 mt-1">@sentCount</span>
+            <span class="text-[9px] text-slate-400 mt-0.5">مکاتبات صادر شده توسط من</span>
         </button>
-        <button type="button" class="letters-stat-card" data-letter-filter="received">
-            <span class="letters-stat-label">نامه‌های دریافتی</span>
-            <span class="letters-stat-value text-info">@inboxCount</span>
-            <span class="letters-stat-hint">دریافت‌شده برای من</span>
+        <button type="button" class="letters-stat-card flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5" data-letter-filter="received">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">نامه‌های دریافتی</span>
+            <span class="text-2xl font-black text-sky-600 mt-1">@inboxCount</span>
+            <span class="text-[9px] text-slate-400 mt-0.5">ارجاعات و نامه‌های وارده</span>
         </button>
     </div>
 
-    <div class="letters-shortcuts mb-3">
-        <button type="button" class="btn btn-outline-primary btn-sm" data-open-palette>
+    <!-- Shortcut Controls -->
+    <div class="flex flex-wrap gap-2 items-center">
+        <button type="button" class="flex items-center gap-1.5 px-3 py-1 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition shadow-sm" data-open-palette>
             <i class="bi bi-command"></i> جستجوی سریع
         </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.AppUI?.toast('میانبرها', 'Ctrl+K برای فرمان‌ها و دکمه نشانک برای ذخیره نامه.', 'primary')">
+        <button type="button" class="flex items-center gap-1.5 px-3 py-1 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition shadow-sm" onclick="window.AppUI?.toast('میانبرها', 'Ctrl+K برای فرمان‌ها و دکمه نشانک برای ذخیره نامه.', 'primary')">
             <i class="bi bi-lightning"></i> راهنمای میانبر
         </button>
     </div>
 
-    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترها را ذخیره کن تا بعداً سریع برگردی."; ViewData["SavedFiltersSaveButtonId"] = "lettersSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "lettersClearSaved"; ViewData["SavedFiltersContainerId"] = "lettersSavedFilters"; }
+    <!-- Saved Filters Panel -->
+    @{ 
+        ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; 
+        ViewData["SavedFiltersSubtitle"] = "فیلترها را ذخیره کن تا بعداً سریع برگردی."; 
+        ViewData["SavedFiltersSaveButtonId"] = "lettersSaveFilter"; 
+        ViewData["SavedFiltersClearButtonId"] = "lettersClearSaved"; 
+        ViewData["SavedFiltersContainerId"] = "lettersSavedFilters"; 
+    }
     <partial name="_SavedFiltersPanel" />
 
-    <div class="letters-advanced-filters mb-4">
-        <select id="letterSenderFilter" class="form-select">
+    <!-- Advanced Filters Panel -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <select id="letterSenderFilter" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800">
             <option value="">همه فرستنده‌ها</option>
             @foreach (var sender in list.Where(item => item.Sender != null).Select(item => item.Sender!.FullName).Distinct().OrderBy(item => item))
             {
                 <option value="@sender">@sender</option>
             }
         </select>
-        <select id="letterReceiverFilter" class="form-select">
+        <select id="letterReceiverFilter" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800">
             <option value="">همه گیرنده‌ها</option>
             @foreach (var receiver in list.Where(item => item.Receiver != null).Select(item => item.Receiver!.FullName).Distinct().OrderBy(item => item))
             {
                 <option value="@receiver">@receiver</option>
             }
         </select>
-        <select id="letterStatusFilter" class="form-select">
+        <select id="letterStatusFilter" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800">
             <option value="">همه وضعیت‌ها</option>
             @foreach (var status in list.Select(item => item.WorkflowStatus).Distinct().OrderBy(item => item))
             {
                 <option value="@status">@OfficeAutomation.Models.WorkflowStatus.Label(status)</option>
             }
         </select>
-        <input id="letterDateFrom" type="date" class="form-control" />
-        <input id="letterDateTo" type="date" class="form-control" />
+        <input id="letterDateFrom" type="date" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+        <input id="letterDateTo" type="date" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
     </div>
 
-    <div class="letters-ai-summary mb-4">
-        <div class="letters-ai-summary-head">
+    <!-- AI Smart Summary Block -->
+    <div class="flex flex-col gap-4 p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-2">
+            <i class="bi bi-stars text-teal-600 dark:text-teal-400"></i>
             <div>
-                <h5><i class="bi bi-stars"></i> خلاصه هوشمند نامه‌ها</h5>
-                <p>خلاصه نامه‌های دریافتی، خوانده‌نشده، ارسالی یا گردش یک نامه مشخص را با هوش مصنوعی ببینید.</p>
+                <h5 class="m-0 text-sm font-bold text-slate-900 dark:text-white">خلاصه هوشمند نامه‌ها</h5>
+                <p class="m-0 text-[11px] text-slate-500 dark:text-slate-400">خلاصه نامه‌های دریافتی، خوانده‌نشده، ارسالی یا گردش یک نامه مشخص را با هوش مصنوعی ببینید.</p>
             </div>
         </div>
-        <div class="letters-ai-summary-controls">
-            <select id="letterSummaryMode" class="form-select">
+        <div class="flex flex-col md:flex-row gap-3">
+            <select id="letterSummaryMode" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 md:w-64">
                 <option value="week">خلاصه نامه‌های دریافتی هفته اخیر</option>
                 <option value="unread">خلاصه نامه‌های خوانده‌نشده</option>
                 <option value="sent">خلاصه نامه‌های ارسالی من</option>
                 <option value="selected">خلاصه و گردش نامه انتخاب‌شده</option>
             </select>
-            <select id="letterSummaryId" class="form-select">
+            <select id="letterSummaryId" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 flex-1">
                 <option value="">انتخاب موضوع نامه...</option>
                 @foreach (var item in list.OrderByDescending(item => item.SentDate))
                 {
                     <option value="@item.Id">@item.Title</option>
                 }
             </select>
-            <button id="btnSummarizeLetters" type="button" class="btn btn-primary">
+            <button id="btnSummarizeLetters" type="button" class="h-9 flex items-center justify-center gap-1.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white text-xs font-bold transition shadow-sm">
                 <i class="bi bi-card-text"></i>
-                نمایش خلاصه
+                <span>نمایش خلاصه</span>
             </button>
         </div>
-        <div id="letterSummaryResult" class="letters-ai-summary-result">
+        <div id="letterSummaryResult" class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 leading-7 min-h-[50px] whitespace-pre-wrap">
             یک گزینه را انتخاب کنید و دکمه نمایش خلاصه را بزنید.
         </div>
     </div>
 
-    <div class="letters-container">
-        @foreach (var item in list)
-        {
-            var shamsiDate = $"{pc.GetYear(item.SentDate)}/{pc.GetMonth(item.SentDate):D2}/{pc.GetDayOfMonth(item.SentDate):D2}";
-            var isUnread = !item.IsRead && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId);
-            var isSentByCurrentUser = item.SenderId == currentUserId;
-            var isReceivedByCurrentUser = item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId;
+    <!-- Data Table Container -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300" id="lettersTable">
+                <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                        <th class="px-3 py-2.5 font-bold">موضوع نامه</th>
+                        <th class="px-3 py-2.5 font-bold">فرستنده</th>
+                        <th class="px-3 py-2.5 font-bold">گیرنده</th>
+                        <th class="px-3 py-2.5 font-bold text-center">تاریخ ارسال</th>
+                        <th class="px-3 py-2.5 font-bold text-center">وضعیت گردش</th>
+                        <th class="px-3 py-2.5 font-bold text-center">وضعیت</th>
+                        <th class="px-3 py-2.5 font-bold text-center w-1">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60" id="lettersBody">
+                    @foreach (var item in list)
+                    {
+                        var shamsiDate = $"{pc.GetYear(item.SentDate)}/{pc.GetMonth(item.SentDate):D2}/{pc.GetDayOfMonth(item.SentDate):D2}";
+                        var isUnread = !item.IsRead && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId);
+                        var isSentByCurrentUser = item.SenderId == currentUserId;
+                        var isReceivedByCurrentUser = item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId;
 
-            <div class="letter-row-card" data-letter-id="@item.Id" data-unread="@(isUnread ? "1" : "0")" data-sent="@(isSentByCurrentUser ? "1" : "0")" data-received="@(isReceivedByCurrentUser ? "1" : "0")" data-sent-at="@item.SentDate.ToString("o")" data-sender="@item.Sender?.FullName" data-receiver="@item.Receiver?.FullName" data-status="@item.WorkflowStatus">
-                <div class="row align-items-center">
-                    <div class="col-lg-5 col-md-4 mb-3 mb-md-0">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="document-icon">
-                                <i class="bi bi-file-earmark-text-fill"></i>
-                            </div>
-                            <div class="content-info">
-                                <a href="@Url.Action("Details", new { id = item.Id })" class="letter-title">@item.Title</a>
-                                <div class="flow-info">
-                                    <span class="badge-person sender">@item.Sender?.FullName</span>
-                                    <i class="bi bi-chevron-left"></i>
-                                    <span class="badge-person receiver">@item.Receiver?.FullName</span>
-                                    @if (isUnread)
-                                    {
-                                        <span class="badge-person unread-pill ms-2">خوانده‌نشده</span>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-3 text-center mb-3 mb-md-0">
-                        <div class="date-wrapper">
-                            <i class="bi bi-calendar-event"></i>
-                            <span>@shamsiDate</span>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-2 col-md-2 text-center mb-3 mb-md-0">
-                        <div class="status-indicator @(item.IsWorkflowCompleted ? "approved" : "pending")">
-                            <span class="dot"></span>
-                            @(item.IsWorkflowCompleted ? "تایید نهایی" : $"در گردش - مرحله {item.CurrentWorkflowStep}")
-                        </div>
-                    </div>
-
-                    <div class="col-lg-2 col-md-3 text-start">
-                        <div class="action-flex">
-                            <a href="@Url.Action("Details", new { id = item.Id })" class="btn-action-minimal view" title="مشاهده">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <button type="button" class="btn-action-minimal pin-letter" data-letter-id="@item.Id" title="ذخیره در علاقه‌مندی">
-                                <i class="bi bi-bookmark-plus"></i>
-                            </button>
-                            @if (!item.IsWorkflowCompleted && item.ReceiverId == currentUserId)
-                            {
-                                <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action-minimal view" title="تایید و ارجاع مرحله بعد">
-                                        <i class="bi bi-check2-circle"></i>
+                        <tr class="letter-row-card hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" 
+                            data-letter-id="@item.Id" 
+                            data-unread="@(isUnread ? "1" : "0")" 
+                            data-sent="@(isSentByCurrentUser ? "1" : "0")" 
+                            data-received="@(isReceivedByCurrentUser ? "1" : "0")" 
+                            data-sent-at="@item.SentDate.ToString("o")" 
+                            data-sender="@item.Sender?.FullName" 
+                            data-receiver="@item.Receiver?.FullName" 
+                            data-status="@item.WorkflowStatus">
+                            
+                            <!-- Title / Subject -->
+                            <td class="px-3 py-3 font-medium text-slate-900 dark:text-white min-w-[220px]">
+                                <a href="@Url.Action("Details", new { id = item.Id })" class="hover:text-teal-600 dark:hover:text-teal-400 font-bold transition no-underline">
+                                    @item.Title
+                                </a>
+                            </td>
+                            
+                            <!-- Sender -->
+                            <td class="px-3 py-3 font-medium text-slate-800 dark:text-slate-200">@item.Sender?.FullName</td>
+                            
+                            <!-- Receiver -->
+                            <td class="px-3 py-3 text-slate-600 dark:text-slate-400">@item.Receiver?.FullName</td>
+                            
+                            <!-- Sent Date -->
+                            <td class="px-3 py-3 text-center font-mono text-slate-500">@shamsiDate</td>
+                            
+                            <!-- Workflow Step -->
+                            <td class="px-3 py-3 text-center">
+                                @if (item.IsWorkflowCompleted)
+                                {
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">تایید نهایی</span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200/40 dark:border-amber-800/30">در گردش - مرحله @item.CurrentWorkflowStep</span>
+                                }
+                            </td>
+                            
+                            <!-- Read Status -->
+                            <td class="px-3 py-3 text-center">
+                                @if (isUnread)
+                                {
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200/40 dark:border-rose-800/30">خوانده‌نشده</span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800/40 dark:text-slate-400 border border-slate-200/40 dark:border-slate-700/30">خوانده‌شده</span>
+                                }
+                            </td>
+                            
+                            <!-- Minimal Actions -->
+                            <td class="px-3 py-3 text-center w-1">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <a href="@Url.Action("Details", new { id = item.Id })" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="مشاهده">
+                                        <i class="bi bi-eye text-sm"></i>
+                                    </a>
+                                    <button type="button" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition pin-letter" data-letter-id="@item.Id" title="ذخیره در علاقه‌مندی">
+                                        <i class="bi bi-bookmark-plus text-sm"></i>
                                     </button>
-                                </form>
-                            }
-                            <button type="button" class="btn-action-minimal print" title="چاپ">
-                                <i class="bi bi-printer"></i>
-                            </button>
-                            <a href="@Url.Action("Create", new { replyToId = item.Id })" class="btn-action-minimal reply" title="پاسخ">
-                                <i class="bi bi-reply-fill"></i>
-                            </a>
-                            <button type="button" class="btn-action-minimal more" title="بیشتر">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
+                                    @if (!item.IsWorkflowCompleted && item.ReceiverId == currentUserId)
+                                    {
+                                        <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="p-1 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition" title="تایید و ارجاع مرحله بعد">
+                                                <i class="bi bi-check2-circle text-sm"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <button type="button" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition print" title="چاپ">
+                                        <i class="bi bi-printer text-sm"></i>
+                                    </button>
+                                    <a href="@Url.Action("Create", new { replyToId = item.Id })" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="پاسخ">
+                                        <i class="bi bi-reply-fill text-sm"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/letters-index.css" />
+    <!-- Overriding active filters and stats styles to match Tailwind design -->
     <style>
-        .letters-page {
-            --letters-surface: var(--surface-highlight);
-            --letters-border: var(--app-border);
-            --letters-shadow: var(--app-shadow);
+        .letter-filter-btn.active {
+            background-color: #0d9488 !important; /* teal-600 */
+            color: #ffffff !important;
+            border-color: #0d9488 !important;
+        }
+        .dark .letter-filter-btn.active {
+            background-color: #14b8a6 !important; /* teal-500 */
+            color: #0f172a !important;
+            border-color: #14b8a6 !important;
         }
 
-        .letters-page .header-section,
-        .letters-page .letter-row-card,
-        .letters-page .letters-ai-summary,
-        .letters-page .letters-stat-card,
-        .letters-page .letter-filter-btn,
-        .letters-page .search-box-modern input,
-        .letters-page .letters-advanced-filters .form-select,
-        .letters-page .letters-advanced-filters .form-control {
-            border-radius: 20px !important;
-        }
-
-        .letters-page .header-section,
-        .letters-page .letter-row-card,
-        .letters-page .letters-ai-summary {
-            background: var(--letters-surface);
-            border: 1px solid var(--letters-border);
-            box-shadow: var(--letters-shadow);
-        }
-
-        .letters-page .brand-icon-box,
-        .letters-page .document-icon {
-            background: var(--icon-tint);
-            box-shadow: var(--icon-shadow);
-        }
-
-        .letters-page .letters-stat-card {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.88));
-            border: 1px solid var(--letters-border);
-            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
-        }
-
-        .letters-page .letters-stat-card.active {
-            border-color: var(--app-border-strong);
-            box-shadow: var(--app-shadow-strong);
-        }
-
-        .letters-page .letter-filter-btn {
-            background: rgba(255, 255, 255, 0.78);
-            border: 1px solid var(--letters-border);
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
-        }
-
-        .letters-page .letter-filter-btn.active,
-        .letters-page .letter-filter-btn:hover {
-            background: linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(79, 70, 229, 0.14));
-            border-color: var(--app-border-strong);
-        }
-
-        .letters-page .letters-ai-summary {
-            background: var(--letters-surface);
-        }
-
-        html.theme-dark .letters-page .header-section,
-        html.theme-dark .letters-page .letter-row-card {
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.9)) !important;
-            border-color: rgba(139, 92, 246, 0.18) !important;
-            color: #e2e8f0 !important;
-        }
-        html.theme-dark .letters-page .page-title,
-        html.theme-dark .letters-page .letter-title,
-        html.theme-dark .letters-page .date-wrapper,
-        html.theme-dark .letters-page .flow-info,
-        html.theme-dark .letters-page .status-indicator {
-            color: #e2e8f0 !important;
-        }
-        html.theme-dark .letters-page .search-box-modern input {
-            background: rgba(15, 23, 42, 0.92) !important;
-            border-color: rgba(148, 163, 184, 0.2) !important;
-            color: #f8fafc !important;
-        }
-        html.theme-dark .letters-page .btn-action-minimal {
-            background: rgba(15, 23, 42, 0.92) !important;
-            border-color: rgba(148, 163, 184, 0.18) !important;
-            color: #edf4ff !important;
-        }
-        html.theme-dark .letters-page .btn-action-minimal i {
-            color: #93c5fd !important;
-        }
-        .letters-ai-summary {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 14px;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-        }
-        .letters-ai-summary h5 {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0 0 4px;
-            font-weight: 800;
-            color: #1e293b;
-        }
-        .letters-ai-summary p {
-            margin: 0 0 12px;
-            color: #64748b;
-            font-size: 0.84rem;
-        }
-        .letters-ai-summary-controls {
-            display: grid;
-            grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
-            gap: 10px;
-        }
-        .letters-ai-summary select,
-        .letters-ai-summary button,
-        .letters-ai-summary-result {
-            border-radius: 6px !important;
-        }
-        .letters-ai-summary-result {
-            margin-top: 12px;
-            min-height: 70px;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-            color: #334155;
-            line-height: 1.9;
-            white-space: pre-wrap;
-        }
-        .letter-filter-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .letter-filter-btn {
-            border: 1px solid #e2e8f0;
-            background: white;
-            color: #334155;
-            border-radius: 10px;
-            padding: 8px 14px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-        .letter-filter-btn.active,
-        .letter-filter-btn:hover {
-            background: #4361ee;
-            border-color: #4361ee;
-            color: white;
-        }
-        .unread-pill {
-            color: #f97316;
-            font-size: 0.75rem;
-            background: #fff7ed;
-            border: 1px solid #fed7aa;
-            border-radius: 999px;
-            padding: 2px 10px;
-        }
-        .letters-advanced-filters {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 10px;
-        }
-        .letters-shortcuts {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .saved-filters-panel {
-            border: 1px solid rgba(148, 163, 184, 0.16);
-            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
-        }
-        html.theme-dark .saved-filters-panel,
-        html[data-theme="dark"] .saved-filters-panel,
-        body[data-theme="dark"] .saved-filters-panel {
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
-            border-color: rgba(148, 163, 184, 0.18);
-        }
-        .saved-filters-panel .btn-outline-secondary {
-            border-color: rgba(148, 163, 184, 0.34);
-        }
-        .letters-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 14px;
-        }
-        .letters-stat-card {
-            text-align: right;
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            border-radius: 18px;
-            padding: 16px 18px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
-            width: 100%;
-        }
-        .letters-stat-card:hover,
-        .letters-stat-card:focus-visible {
-            transform: translateY(-3px);
-            border-color: rgba(59, 130, 246, 0.45);
-            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
-        }
         .letters-stat-card.active {
-            border-color: rgba(59, 130, 246, 0.65);
-            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15), 0 16px 30px rgba(15, 23, 42, 0.12);
+            border-color: #0d9488 !important;
+            box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
         }
-        .letters-stat-label,
-        .letters-stat-hint {
-            display: block;
-            font-size: 0.78rem;
-            color: #64748b;
+        .dark .letters-stat-card.active {
+            border-color: #14b8a6 !important;
+            box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
         }
-        .letters-stat-value {
-            display: block;
-            font-size: 1.85rem;
-            font-weight: 900;
-            line-height: 1.1;
-            margin: 6px 0 4px;
+
+        #lettersTable th, #lettersTable td {
+            border-bottom: 1px solid var(--letters-tbl-border, #f1f5f9) !important;
         }
-        html.theme-dark .letters-ai-summary {
-            background: rgba(15, 23, 42, 0.92) !important;
-            border-color: rgba(148, 163, 184, 0.18) !important;
+        #lettersTable {
+            --letters-tbl-border: #f1f5f9;
         }
-        html.theme-dark .letters-ai-summary h5,
-        html.theme-dark .letters-ai-summary p,
-        html.theme-dark .letters-ai-summary-result {
-            color: #f1f5f9 !important;
-        }
-        html.theme-dark .letters-ai-summary-result {
-            background: rgba(26, 36, 61, 0.9) !important;
-            border-color: rgba(148, 163, 184, 0.18) !important;
-        }
-        html.theme-dark .letter-filter-btn {
-            background: rgba(15, 23, 42, 0.92) !important;
-            border-color: rgba(148, 163, 184, 0.18) !important;
-            color: #f8fafc !important;
-        }
-        html.theme-dark .letter-filter-btn.active,
-        html.theme-dark .letter-filter-btn:hover {
-            background: linear-gradient(135deg, #8b5cf6, #38bdf8) !important;
-            border-color: transparent !important;
-            color: #fff !important;
-        }
-        html.theme-dark .unread-pill {
-            color: #fdba74 !important;
-            background: rgba(69, 26, 3, 0.8) !important;
-            border-color: rgba(124, 45, 18, 0.9) !important;
-        }
-        html.theme-dark .letters-stat-card,
-        html[data-theme="dark"] .letters-stat-card,
-        body[data-theme="dark"] .letters-stat-card {
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
-            border-color: rgba(148, 163, 184, 0.18);
-        }
-        html.theme-dark .letters-stat-label,
-        html.theme-dark .letters-stat-hint,
-        html[data-theme="dark"] .letters-stat-label,
-        html[data-theme="dark"] .letters-stat-hint,
-        body[data-theme="dark"] .letters-stat-label,
-        body[data-theme="dark"] .letters-stat-hint {
-            color: #97a8c6;
-        }
-        @@media (max-width: 768px) {
-            .letters-ai-summary-controls {
-                grid-template-columns: 1fr;
-            }
-            .letters-advanced-filters {
-                grid-template-columns: 1fr;
-            }
-            .letters-stats-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-        @@media (max-width: 576px) {
-            .letters-stats-grid {
-                grid-template-columns: 1fr;
-            }
+        .dark #lettersTable {
+            --letters-tbl-border: #334155;
         }
     </style>
 }

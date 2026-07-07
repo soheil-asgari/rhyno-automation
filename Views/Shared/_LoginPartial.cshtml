@@ -3,30 +3,42 @@
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
-<ul class="navbar-nav align-items-center">
-    @if (SignInManager.IsSignedIn(User))
-    {
-        var user = await UserManager.GetUserAsync(User);
-        var displayName = !string.IsNullOrEmpty(user?.FullName) ? user.FullName : User.Identity?.Name;
+@if (SignInManager.IsSignedIn(User))
+{
+    var user = await UserManager.GetUserAsync(User);
+    var displayName = !string.IsNullOrWhiteSpace(user?.FullName) ? user.FullName : User.Identity?.Name;
 
-        <li class="nav-item me-3">
-            <span class="nav-link text-white shadow-sm border border-secondary rounded-pill px-3 py-1 bg-dark">
-                <i class="bi bi-person-circle me-1 text-info"></i> خوش آمدید، @displayName
+    <div class="dropdown">
+        <button class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="grid h-6 w-6 place-items-center rounded-md bg-slate-100 text-[12px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <i class="bi bi-person"></i>
             </span>
-        </li>
-        <li class="nav-item">
-            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-4">خروج</button>
+            <span class="hidden max-w-32 truncate text-[12px] font-bold sm:block">@displayName</span>
+            <i class="bi bi-chevron-down text-[10px] text-slate-400"></i>
+        </button>
+        <div class="dropdown-menu dropdown-menu-start mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <div class="px-3 py-2">
+                <strong class="block truncate text-[12px] text-slate-900 dark:text-white">@displayName</strong>
+                <span class="block truncate text-[11px] text-slate-500 dark:text-slate-400">@User.Identity?.Name</span>
+            </div>
+            <div class="my-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+            <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-700 text-decoration-none hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" asp-controller="Settings" asp-action="Index">
+                <i class="bi bi-person-gear"></i>
+                <span>پروفایل و تنظیمات</span>
+            </a>
+            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-right text-[12px] font-semibold text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>خروج</span>
+                </button>
             </form>
-        </li>
-    }
-    else
-    {
-        <li class="nav-item">
-            <a class="btn btn-info text-dark fw-bold rounded-pill px-4" asp-area="Identity" asp-page="/Account/Login">ورود به سامانه</a>
-        </li>
-        @* <li class="nav-item">
-            <a class="btn btn-outline-light rounded-pill px-4" asp-area="Identity" asp-page="/Account/Register">ثبت‌نام</a>
-        </li> *@
-    }
-</ul>
+        </div>
+    </div>
+}
+else
+{
+    <a class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-bold text-slate-700 text-decoration-none transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" asp-area="Identity" asp-page="/Account/Login">
+        <i class="bi bi-box-arrow-in-left"></i>
+        <span>ورود</span>
+    </a>
+}

@@ -3,93 +3,119 @@
     ViewData["Title"] = "جزئیات لیست حقوق";
 }
 
-<div class="container-fluid py-4 bimeh-page">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+    <!-- Header Card -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
-            <h5 class="fw-bold mb-1">جزئیات لیست حقوق</h5>
-            <p class="text-muted small mb-0">مشاهده خواندنی لیست ذخیره‌شده بدون امکان ویرایش</p>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">جزئیات لیست حقوق</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">مشاهده خواندنی لیست ذخیره‌شده بدون امکان ویرایش</p>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">بازگشت</a>
-            <a asp-controller="Financial" asp-action="ExportPayrollExcel" asp-route-year="@Model.Year" asp-route-month="@Model.Month" class="btn btn-outline-success btn-sm">خروجی اکسل</a>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a asp-action="Index" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <span>بازگشت</span>
+            </a>
+            <a asp-controller="Financial" asp-action="ExportPayrollExcel" asp-route-year="@Model.Year" asp-route-month="@Model.Month" class="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-955/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <i class="bi bi-file-earmark-excel"></i>
+                <span>خروجی اکسل</span>
+            </a>
             @if (Model.Items.Any())
             {
-                <a asp-controller="Financial" asp-action="PrintPayslipPdf" asp-route-payrollListId="@Model.Id" asp-route-payrollItemId="@Model.Items.First().Id" class="btn btn-outline-dark btn-sm">چاپ PDF</a>
+                <a asp-controller="Financial" asp-action="PrintPayslipPdf" asp-route-payrollListId="@Model.Id" asp-route-payrollItemId="@Model.Items.First().Id" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                    <i class="bi bi-printer text-teal-600 dark:text-teal-400"></i>
+                    <span>چاپ فیش</span>
+                </a>
             }
             else
             {
-                <button type="button" class="btn btn-outline-dark btn-sm" disabled>چاپ PDF</button>
+                <button type="button" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 rounded-lg text-xs font-bold transition bg-transparent" disabled>
+                    <i class="bi bi-printer"></i>
+                    <span>چاپ فیش</span>
+                </button>
             }
         </div>
+    </header>
+
+    <!-- Info/Read-only Data Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">سال/ماه دوره مالی</span>
+            <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums">@Model.Year / @Model.Month</span>
+        </div>
+        <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع حقوق پایه</span>
+            <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@Model.TotalBaseSalary.ToString("N0") ریال</span>
+        </div>
+        <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع بیمه سهم کارفرما/کارمند</span>
+            <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@Model.TotalInsurance.ToString("N0") ریال</span>
+        </div>
+        <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع خالص پرداختی نهایی</span>
+            <span class="text-sm font-bold text-teal-600 dark:text-teal-400 font-mono tabular-nums text-left">@Model.TotalNetPayable.ToString("N0") ریال</span>
+        </div>
     </div>
 
-    <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body p-3"><small class="text-muted d-block">سال/ماه</small><strong>@Model.Year / @Model.Month</strong></div></div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body p-3"><small class="text-muted d-block">جمع حقوق پایه</small><strong>@Model.TotalBaseSalary.ToString("N0")</strong></div></div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body p-3"><small class="text-muted d-block">جمع بیمه</small><strong>@Model.TotalInsurance.ToString("N0")</strong></div></div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body p-3"><small class="text-muted d-block">جمع خالص پرداختی</small><strong>@Model.TotalNetPayable.ToString("N0")</strong></div></div>
-        </div>
-    </div>
-
-    <div class="row g-2 mb-3">
-        @foreach (var summary in Model.ChangeSummary)
-        {
-            <div class="col-12 col-md-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-3">
-                        <small class="text-muted d-block">@summary.Label</small>
-                        <strong class="d-block text-@summary.Tone">@summary.Value</strong>
-                    </div>
+    <!-- Dynamic Change Summary Grid -->
+    @if (Model.ChangeSummary.Any())
+    {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @foreach (var summary in Model.ChangeSummary)
+            {
+                var toneClass = summary.Tone == "success"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : (summary.Tone == "danger" ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400");
+                <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-1.5">
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">@summary.Label</span>
+                    <span class="text-sm font-bold @toneClass">@summary.Value</span>
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small text-muted">وضعیت لیست</span>
-                <span class="badge @(Model.IsFinalized ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning")">@(Model.IsFinalized ? "Finalized" : "Draft")</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle mb-0 bimeh-table">
-                    <thead>
+    <!-- Employee Payslip Table Card -->
+    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">وضعیت نهایی‌سازی فیش‌ها</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border @(Model.IsFinalized ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200/40" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200/40")">
+                @(Model.IsFinalized ? "نهایی‌شده" : "پیش‌نویس")
+            </span>
+        </div>
+        
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
+                    <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                            <th>کارمند</th>
-                            <th>حقوق پایه</th>
-                            <th>مزایا</th>
-                            <th>اضافه‌کار</th>
-                            <th>بیمه</th>
-                            <th>مالیات</th>
-                            <th>خالص دریافتی</th>
+                            <th class="px-3 py-2.5 font-bold">نام و نام خانوادگی کارمند</th>
+                            <th class="px-3 py-2.5 font-bold text-left">حقوق پایه</th>
+                            <th class="px-3 py-2.5 font-bold text-left">حق مسکن/مزایا</th>
+                            <th class="px-3 py-2.5 font-bold text-left">اضافه‌کار</th>
+                            <th class="px-3 py-2.5 font-bold text-left">حق بیمه</th>
+                            <th class="px-3 py-2.5 font-bold text-left">مالیات حقوق</th>
+                            <th class="px-3 py-2.5 font-bold text-left">خالص دریافتی</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
                         @if (Model.Items.Any())
                         {
                             @foreach (var item in Model.Items)
                             {
-                                <tr>
-                                    <td>@item.EmployeeName</td>
-                                    <td>@item.BaseSalary.ToString("N0")</td>
-                                    <td>@item.Allowance.ToString("N0")</td>
-                                    <td>@item.Overtime.ToString("N0")</td>
-                                    <td>@item.InsuranceDeduction.ToString("N0")</td>
-                                    <td>@item.Tax.ToString("N0")</td>
-                                    <td>@item.NetPayable.ToString("N0")</td>
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                    <td class="px-3 py-3 font-bold text-slate-800 dark:text-slate-200">@item.EmployeeName</td>
+                                    <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-600 dark:text-slate-400">@item.BaseSalary.ToString("N0")</td>
+                                    <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@item.Allowance.ToString("N0")</td>
+                                    <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@item.Overtime.ToString("N0")</td>
+                                    <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@item.InsuranceDeduction.ToString("N0")</td>
+                                    <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@item.Tax.ToString("N0")</td>
+                                    <td class="px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@item.NetPayable.ToString("N0")</td>
                                 </tr>
                             }
                         }
                         else
                         {
-                            <tr><td colspan="7" class="text-center text-muted py-3">ردیفی ثبت نشده است.</td></tr>
+                            <tr>
+                                <td colspan="7" class="px-3 py-8 text-center text-slate-400 dark:text-slate-500">ردیفی ثبت نشده است.</td>
+                            </tr>
                         }
                     </tbody>
                 </table>

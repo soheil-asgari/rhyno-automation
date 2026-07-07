@@ -3,209 +3,151 @@
     ViewData["Title"] = "ایجاد لیست حقوق";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
-    <style>
-        .payroll-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.25rem;
-        }
-        .payroll-status {
-            border-radius: 999px;
-            padding: .4rem .75rem;
-            font-size: .82rem;
-            font-weight: 700;
-            background: #eef2ff;
-            color: #3730a3;
-            border: 1px solid #c7d2fe;
-        }
-        .payroll-shell {
-            border-radius: 1rem;
-            border: 1px solid #e2e8f0;
-            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        }
-        .payroll-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: .75rem;
-            margin-bottom: 1rem;
-        }
-        .payroll-summary-item {
-            border: 1px solid #e2e8f0;
-            border-radius: .85rem;
-            padding: .85rem;
-            background: #fff;
-        }
-        .payroll-summary-item .label {
-            font-size: .8rem;
-            color: #64748b;
-            margin-bottom: .2rem;
-        }
-        .payroll-summary-item .value {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .employee-autocomplete { position: relative; }
-        .employee-suggestions {
-            position: absolute;
-            top: calc(100% + 4px);
-            right: 0;
-            left: 0;
-            z-index: 9999 !important;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
-            max-height: 260px;
-            overflow-y: auto;
-            display: none;
-        }
-        .employee-suggestion-item {
-            width: 100%;
-            border: 0;
-            background: transparent;
-            text-align: right;
-            padding: .6rem .8rem;
-        }
-        .employee-suggestion-item:hover { background: #f8fafc; }
-        .payroll-shell,
-        .payroll-shell .table-responsive,
-        .payroll-shell table,
-        .payroll-shell tbody,
-        .payroll-shell tr,
-        .payroll-shell td {
-            overflow: visible !important;
-        }
-        .payroll-shell td { position: relative; }
-        .calculated-field {
-            background: #f8fafc;
-            color: #0f172a;
-            font-weight: 600;
-        }
-        @@media (max-width: 992px) {
-            .payroll-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        }
-        @@media (max-width: 576px) {
-            .payroll-summary-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-}
-
-<div class="container-fluid py-4 bimeh-page">
-    <div class="payroll-header">
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+    <!-- Header Section -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
-            <h5 class="fw-bold mb-1">ایجاد لیست حقوق</h5>
-            <p class="text-muted small mb-0">دریافت اطلاعات از سرمایه انسانی و محاسبه ماهانه حقوق</p>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">ایجاد لیست حقوق</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">دریافت اطلاعات از سرمایه انسانی و محاسبه ماهانه حقوق</p>
         </div>
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-            <a asp-controller="Financial" asp-action="Dashboard" class="btn btn-sm btn-outline-secondary">هاب مالی</a>
-            <span class="payroll-status">وضعیت: @(Model.IsFinalized ? "نهایی‌شده" : "پیش‌نویس")</span>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a asp-controller="Financial" asp-action="Dashboard" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <span>هاب مالی</span>
+            </a>
+            <span class="px-3 py-1.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-900/50">
+                وضعیت: @(Model.IsFinalized ? "نهایی‌شده" : "پیش‌نویس")
+            </span>
         </div>
-    </div>
+    </header>
 
-    <div class="payroll-shell p-3 p-md-4 shadow-sm">
-        <div class="payroll-summary-grid mb-3" id="payrollSummary">
-            <div class="payroll-summary-item">
-                <div class="label">جمع حقوق پایه</div>
-                <div class="value" id="totalBaseSalary">0 ریال</div>
+    <!-- Form Cards Wrapper -->
+    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <!-- Summary Stats Indicators Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="payrollSummary">
+            <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-start gap-1">
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع حقوق پایه</span>
+                <span class="text-base font-black text-slate-800 dark:text-white mt-1 font-mono tabular-nums" id="totalBaseSalary">0 ریال</span>
             </div>
-            <div class="payroll-summary-item">
-                <div class="label">جمع حق بیمه</div>
-                <div class="value" id="totalInsurance">0 ریال</div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-start gap-1">
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع حق بیمه</span>
+                <span class="text-base font-black text-slate-800 dark:text-white mt-1 font-mono tabular-nums" id="totalInsurance">0 ریال</span>
             </div>
-            <div class="payroll-summary-item">
-                <div class="label">جمع مالیات</div>
-                <div class="value" id="totalTax">0 ریال</div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-start gap-1">
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع مالیات</span>
+                <span class="text-base font-black text-slate-800 dark:text-white mt-1 font-mono tabular-nums" id="totalTax">0 ریال</span>
             </div>
-            <div class="payroll-summary-item">
-                <div class="label">جمع خالص پرداختی</div>
-                <div class="value" id="totalNetPayable">0 ریال</div>
-            </div>
-        </div>
-
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 px-1 mb-3 border-top border-bottom">
-            <div>
-                <div class="small text-muted">مقایسه با ماه قبل</div>
-                <div class="fw-bold @(Model.NetPayableDelta >= 0 ? "text-warning" : "text-success")">@Model.NetPayableDelta.ToString("N0") ریال</div>
-            </div>
-            <div>
-                <div class="small text-muted">ردیف‌های بدون قفل سرمایه انسانی</div>
-                <div class="fw-bold @(Model.MissingHrLockCount > 0 ? "text-danger" : "text-success")">@Model.MissingHrLockCount</div>
-            </div>
-            <div>
-                <div class="small text-muted">وضعیت کیفیت داده</div>
-                <div class="fw-bold @(Model.DataQualityWarnings > 0 ? "text-warning" : "text-success")">@(Model.DataQualityWarnings > 0 ? "نیاز به بررسی" : "تایید شده")</div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-start gap-1">
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع خالص پرداختی</span>
+                <span class="text-base font-black text-teal-600 dark:text-teal-400 mt-1 font-mono tabular-nums" id="totalNetPayable">0 ریال</span>
             </div>
         </div>
 
+        <!-- Data Quality / Comparison section -->
+        <div class="flex flex-col sm:flex-row justify-between gap-4 p-4 mb-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs leading-relaxed">
+            <div>
+                <span class="block text-slate-500 dark:text-slate-400">مقایسه با ماه قبل</span>
+                <span class="block mt-1 font-bold font-mono @(Model.NetPayableDelta >= 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400")">@Model.NetPayableDelta.ToString("N0") ریال</span>
+            </div>
+            <div>
+                <span class="block text-slate-500 dark:text-slate-400">ردیف‌های بدون قفل سرمایه انسانی</span>
+                <span class="block mt-1 font-bold font-mono @(Model.MissingHrLockCount > 0 ? "text-rose-600 dark:text-rose-450" : "text-emerald-600 dark:text-emerald-400")">@Model.MissingHrLockCount</span>
+            </div>
+            <div>
+                <span class="block text-slate-500 dark:text-slate-400">وضعیت کیفیت داده</span>
+                <span class="block mt-1 font-bold @(Model.DataQualityWarnings > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400")">@(Model.DataQualityWarnings > 0 ? "نیاز به بررسی" : "تایید شده")</span>
+            </div>
+        </div>
+
+        <!-- Warnings Alert List -->
         @if (Model.Warnings.Any())
         {
-            <div class="mb-3">
+            <div class="flex flex-col gap-2 mb-6">
                 @foreach (var warning in Model.Warnings)
                 {
-                    <div class="alert alert-@warning.Tone small mb-2">
-                        <strong>@warning.Title:</strong> @warning.Description
+                    var warningToneClass = warning.Tone == "danger"
+                        ? "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50"
+                        : "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-955/10 dark:text-amber-400 dark:border-amber-900/50";
+                    <div class="flex items-start gap-2 p-3 border rounded-xl text-xs leading-relaxed @warningToneClass">
+                        <i class="bi bi-exclamation-triangle-fill mt-0.5 text-sm"></i>
+                        <div>
+                            <strong class="font-bold">@warning.Title:</strong>
+                            <span>@warning.Description</span>
+                        </div>
                     </div>
                 }
             </div>
         }
 
-        <form id="payrollForm">
+        <!-- Main Form -->
+        <form id="payrollForm" class="flex flex-col gap-6">
             @Html.AntiForgeryToken()
 
-            <div class="row g-3 align-items-end mb-3">
-                <div class="col-6 col-md-2">
-                    <label class="form-label">ماه</label>
-                    <select id="payrollMonth" class="form-select">
+            <!-- Grid Input Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Month Field -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-slate-700 dark:text-slate-300">ماه</label>
+                    <select id="payrollMonth" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800">
                         @for (var m = 1; m <= 12; m++)
                         {
                             <option value="@m" selected="@(m == Model.Month ? "selected" : null)">@m</option>
                         }
                     </select>
                 </div>
-                <div class="col-6 col-md-2">
-                    <label class="form-label">سال</label>
-                    <input id="payrollYear" type="number" min="1300" max="1600" class="form-control" value="@Model.Year" />
-                </div>
-                <div class="col-12 col-md-8 text-md-end">
-                    <button type="submit" class="btn btn-primary">ذخیره لیست</button>
+                
+                <!-- Year Field -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-slate-700 dark:text-slate-300">سال</label>
+                    <input id="payrollYear" type="number" min="1300" max="1600" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" value="@Model.Year" />
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-hover align-middle bimeh-table" id="payrollTable">
-                    <thead>
-                        <tr>
-                            <th>کارمند</th>
-                            <th>حقوق پایه</th>
-                            <th>بیمه</th>
-                            <th>مالیات</th>
-                            <th>خالص پرداختی</th>
-                        </tr>
-                    </thead>
-                    <tbody id="payrollRows"></tbody>
-                </table>
+            <!-- Table Container Grid -->
+            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mt-2">
+                <div class="overflow-x-auto w-full">
+                    <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300" id="payrollTable">
+                        <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="px-3 py-2.5 font-bold">کارمند</th>
+                                <th class="px-3 py-2.5 font-bold">حقوق پایه</th>
+                                <th class="px-3 py-2.5 font-bold">بیمه</th>
+                                <th class="px-3 py-2.5 font-bold">مالیات</th>
+                                <th class="px-3 py-2.5 font-bold">خالص پرداختی</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payrollRows" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Actions Toolbar -->
+            <div class="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                <a asp-action="Index" class="flex items-center justify-center px-4 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm no-underline">
+                    <span>انصراف و بازگشت</span>
+                </a>
+                <button type="submit" class="flex items-center gap-1.5 px-5 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                    <i class="bi bi-save"></i>
+                    <span>ذخیره لیست حقوق</span>
+                </button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Template for Row Cloning -->
 <template id="payrollRowTemplate">
     <tr>
-        <td>
-            <input data-field="FullName" class="form-control" placeholder="جستجو نام/کد پرسنلی" autocomplete="off" />
-            <input type="hidden" data-field="HumanCapitalEmployeeId" />
-            <div class="employee-suggestions"></div>
+        <td class="px-3 py-2">
+            <div class="relative w-full">
+                <input data-field="FullName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" placeholder="جستجو نام/کد پرسنلی..." autocomplete="off" />
+                <input type="hidden" data-field="HumanCapitalEmployeeId" />
+                <div class="employee-suggestions absolute top-full right-0 left-0 z-50 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg hidden"></div>
+            </div>
         </td>
-        <td><input data-field="BaseSalary" class="form-control calculated-field" /></td>
-        <td><input data-field="Insurance" class="form-control calculated-field" /></td>
-        <td><input data-field="Tax" class="form-control calculated-field" /></td>
-        <td><input data-field="NetPayable" class="form-control calculated-field" /></td>
+        <td class="px-3 py-2"><input data-field="BaseSalary" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
+        <td class="px-3 py-2"><input data-field="Insurance" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
+        <td class="px-3 py-2"><input data-field="Tax" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
+        <td class="px-3 py-2"><input data-field="NetPayable" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
     </tr>
 </template>
 

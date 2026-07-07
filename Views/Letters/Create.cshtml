@@ -1,5 +1,4 @@
 @model OfficeAutomation.Models.Letter
-
 @{
     Layout = "_Layout";
     ViewData["Title"] = "ارسال نامه جدید";
@@ -12,107 +11,126 @@
     string replyReceiverId = (ViewBag.ReplyToReceiverId as string) ?? string.Empty;
 }
 
-<link rel="stylesheet" href="/css/letter.css">
 <script src="https://lib.arvancloud.ir/ckeditor5/36.0.1/ckeditor.js"></script>
 
-<div class="word-processor-container">
-    <div class="top-toolbar">
-        <div class="toolbar-row">
-            <div class="left-tools">
-                <div class="input-group receiver-box">
-                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                    <select id="receiverSelect" class="form-select" asp-items="ViewBag.ReceiverId">
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+    <!-- Header/Toolbar Card -->
+    <header class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex-1 flex flex-col sm:flex-row items-center gap-3">
+                <!-- Receiver Select -->
+                <div class="relative min-w-[240px] w-full sm:w-auto">
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"><i class="bi bi-person"></i></span>
+                    <select id="receiverSelect" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 pr-9 pl-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" asp-items="ViewBag.ReceiverId">
                         <option value="">انتخاب گیرنده یا واحد...</option>
                     </select>
                 </div>
-                <input type="text" id="subjectInput" class="form-control subject-input" value="@replySubject" placeholder="موضوع نامه...">
+                <!-- Subject Input -->
+                <input type="text" id="subjectInput" class="h-9 flex-1 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 font-bold" value="@replySubject" placeholder="موضوع نامه..." />
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <span id="draftStatus" class="draft-status">پیش‌نویس ذخیره نشده</span>
-                <button class="btn btn-outline-secondary fw-bold" id="btnPreviewLetter" type="button">
-                    <i class="bi bi-eye"></i> پیش‌نمایش
+
+            <!-- Actions Toolbar -->
+            <div class="flex items-center justify-end gap-2.5">
+                <span id="draftStatus" class="text-[10px] font-bold text-slate-400">پیش‌نویس ذخیره نشده</span>
+                <button class="flex items-center gap-1.5 px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent" id="btnPreviewLetter" type="button">
+                    <i class="bi bi-eye"></i>
+                    <span>پیش‌نمایش</span>
                 </button>
-                <button class="btn btn-primary fw-bold send-btn" id="btnSendLetter" type="button">
-                    <i class="bi bi-send"></i> ارسال نهایی
+                <button class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm" id="btnSendLetter" type="button">
+                    <i class="bi bi-send"></i>
+                    <span>ارسال نهایی</span>
                 </button>
             </div>
         </div>
 
-        <div class="reply-mode-title @(isReplyMode ? "" : "d-none")">
-            <i class="bi bi-reply-fill"></i> حالت پاسخ نامه
-        </div>
+        <!-- Reply alert info -->
+        @if (isReplyMode)
+        {
+            <div class="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-955/10 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs font-semibold shadow-sm">
+                <i class="bi bi-reply-fill text-sm"></i>
+                <span>حالت پاسخ به نامه فعال است.</span>
+            </div>
+        }
 
-        <div class="ai-letter-panel">
-            <div class="ai-letter-title">
+        <!-- AI Assistant Panel -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-teal-600 dark:text-teal-400">
                 <i class="bi bi-stars"></i>
-                <span>نگارش نامه با دستیار هوش مصنوعی</span>
+                <span class="text-xs font-bold">نگارش نامه با دستیار هوش مصنوعی</span>
             </div>
-            <div class="ai-letter-controls">
-                <input id="aiLetterInstruction" type="text" class="form-control" placeholder="مثلاً: یک نامه رسمی برای درخواست تأیید خرید تجهیزات بنویس...">
-                <button id="btnDraftWithAi" type="button" class="btn btn-outline-primary">
-                    <i class="bi bi-magic"></i>
-                    تولید متن
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input id="aiLetterInstruction" type="text" class="h-9 flex-1 rounded-lg border border-slate-200 bg-white dark:bg-slate-900 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" placeholder="مثلاً: یک نامه رسمی برای درخواست تأیید خرید تجهیزات بنویس..." />
+                <button id="btnDraftWithAi" type="button" class="h-9 flex items-center justify-center gap-1.5 px-4 rounded-lg border border-slate-200 dark:border-slate-850 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold transition bg-transparent">
+                    <i class="bi bi-magic text-teal-600 dark:text-teal-400"></i>
+                    <span>تولید متن</span>
                 </button>
             </div>
-            <div id="aiLetterStatus" class="ai-letter-status"></div>
+            <div id="aiLetterStatus" class="text-[10px] text-slate-400"></div>
         </div>
-    </div>
+    </header>
 
-    <div class="paper-wrapper">
-        <div id="paper" class="paper">
-            <div class="header-row">
-                <div class="header-info">
-                    <div>تاریخ: @persianDate</div>
-                    <div>شماره: RH-@now.Ticks.ToString().Substring(12)</div>
+    <!-- Physical Paper Replica Wrapper -->
+    <div class="flex items-center justify-center py-6 bg-slate-100 dark:bg-slate-950/40 rounded-2xl border border-slate-200 dark:border-slate-800/80">
+        <div id="paper" class="w-full max-w-[800px] min-h-[1100px] p-12 bg-white text-slate-900 shadow-lg rounded-md relative flex flex-col gap-8" style="font-family: IRANSans, Tahoma, sans-serif;">
+            
+            <!-- Letter Header block -->
+            <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+                <div class="text-[11px] text-slate-500 font-mono flex flex-col gap-1 text-right">
+                    <div>تاریخ: <span class="tabular-nums">@persianDate</span></div>
+                    <div>شماره: <span class="tabular-nums">RH-@now.Ticks.ToString().Substring(12)</span></div>
                     <div>پیوست: ندارد</div>
                 </div>
-                <div class="header-center">
-                    <h5 class="fw-bold">بسمه تعالی</h5>
-                    <div class="fw-bold mt-2">شرکت فنی مهندسی راینو</div>
+                <div class="text-center">
+                    <h5 class="m-0 text-sm font-black text-slate-800">بسمه تعالی</h5>
+                    <div class="text-xs font-bold text-slate-700 mt-2">شرکت فنی مهندسی راینو</div>
                 </div>
-                <img src="/images/logo.png" class="letter-logo" alt="لوگو" onerror="this.style.display='none'">
+                <img src="/images/logo.png" class="w-16 h-16 object-contain" alt="لوگو" onerror="this.style.display='none'">
             </div>
 
-            <div class="letter-summary-grid">
-                <div class="summary-chip">
-                    <span class="summary-label">گیرنده</span>
-                    <strong id="previewReceiver">انتخاب نشده</strong>
+            <!-- Letter Live Summary widgets -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1">
+                    <span class="text-[10px] text-slate-500">گیرنده</span>
+                    <strong id="previewReceiver" class="text-xs text-slate-800">انتخاب نشده</strong>
                 </div>
-                <div class="summary-chip">
-                    <span class="summary-label">موضوع</span>
-                    <strong id="previewSubject">-</strong>
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1">
+                    <span class="text-[10px] text-slate-500">موضوع</span>
+                    <strong id="previewSubject" class="text-xs text-slate-800">-</strong>
                 </div>
-                <div class="summary-chip">
-                    <span class="summary-label">وضعیت</span>
-                    <strong id="previewStatus">پیش‌نویس</strong>
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1">
+                    <span class="text-[10px] text-slate-500">وضعیت</span>
+                    <strong id="previewStatus" class="text-xs text-slate-800">پیش‌نویس</strong>
                 </div>
             </div>
 
-            <div class="receiver-block">
-                <div class="fw-bold receiver-line">
+            <!-- Receiver Salutation -->
+            <div class="flex flex-col gap-2 mt-2">
+                <div class="text-xs font-black text-slate-800">
                     <span id="gender-prefix">جناب آقای / سرکار خانم</span>
-                    <span id="display-receiver" class="receiver-name">....................</span>
+                    <span id="display-receiver" class="border-b border-dashed border-slate-300 pb-0.5 px-2">....................</span>
                 </div>
-                <div class="fw-bold">
-                    موضوع: <span id="display-subject" class="subject-display">....................</span>
+                <div class="text-xs font-black text-slate-800">
+                    موضوع: <span id="display-subject" class="border-b border-dashed border-slate-300 pb-0.5 px-2">....................</span>
                 </div>
             </div>
 
-            <div id="editor-container">
+            <!-- CKEditor text processor area -->
+            <div id="editor-container" class="flex-1 mt-4 text-sm text-slate-800 leading-8 text-right min-h-[400px]">
                 <div id="editor">
                     <p>با سلام و احترام،</p>
                     <p>به استحضار می‌رساند...</p>
                 </div>
             </div>
 
-            <div class="signature-wrapper">
-                <div class="signature-box">
-                    <p class="fw-bold mb-1">با تقدیم احترام</p>
-                    <p class="fw-bold">@ViewBag.SenderFullName</p>
-                    <p class="small text-muted">@ViewBag.SenderRole</p>
+            <!-- Signature block -->
+            <div class="flex justify-end mt-8 border-t border-slate-100 pt-4">
+                <div class="w-48 flex flex-col gap-1 text-center">
+                    <p class="text-xs font-bold text-slate-700 m-0">با تقدیم احترام</p>
+                    <p class="text-xs font-black text-slate-900 m-0">@ViewBag.SenderFullName</p>
+                    <p class="text-[10px] text-slate-400 m-0">@ViewBag.SenderRole</p>
                     @if (ViewBag.UserSignature != null)
                     {
-                        <img src="@ViewBag.UserSignature" class="signature-img" alt="امضا">
+                        <img src="@ViewBag.UserSignature" class="w-32 h-16 object-contain mx-auto mt-2" alt="امضا">
                     }
                 </div>
             </div>
@@ -120,20 +138,22 @@
     </div>
 </div>
 
-<div id="letterPreviewModal" class="letter-preview-modal d-none" aria-hidden="true">
-    <div class="letter-preview-dialog">
-        <div class="letter-preview-head">
+<!-- Preview Modal -->
+<div id="letterPreviewModal" class="fixed inset-0 bg-slate-950/80 z-[2000] p-6 overflow-auto flex items-center justify-center hidden" aria-hidden="true">
+    <div class="w-full max-w-[900px] bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div>
-                <h5>پیش‌نمایش قبل از ارسال</h5>
-                <p>این نسخه همان چیزی است که کاربر قبل از ارسال می‌بیند.</p>
+                <h5 class="text-sm font-black text-slate-900 dark:text-white">پیش‌نمایش قبل از ارسال</h5>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">این نسخه همان چیزی است که گیرنده دریافت می‌کند.</p>
             </div>
-            <button type="button" id="btnClosePreview" class="btn btn-sm btn-outline-secondary">بستن</button>
+            <button type="button" id="btnClosePreview" class="flex items-center justify-center px-2.5 py-1 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md text-[10px] font-bold transition">بستن</button>
         </div>
-        <div id="letterPreviewBody" class="letter-preview-body"></div>
+        <div id="letterPreviewBody" class="max-h-[60vh] overflow-y-auto border border-slate-150 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-950/40"></div>
     </div>
 </div>
 
-<form id="finalForm" asp-action="Create" method="post" class="d-none">
+<!-- Hidden action form -->
+<form id="finalForm" asp-action="Create" method="post" class="hidden">
     <input type="hidden" id="hTitle" name="Title">
     <input type="hidden" id="hContent" name="Body">
     <input type="hidden" id="hReceiver" name="ReceiverId">
@@ -152,77 +172,3 @@
 </script>
 <script src="/js/letter.js"></script>
 <script src="/js/letters-ai.js"></script>
-
-@section Styles {
-    <style>
-        .draft-status {
-            color: #64748b;
-            font-size: 0.78rem;
-            font-weight: 700;
-        }
-        .letter-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-        .summary-chip {
-            border: 1px solid #dbe4f0;
-            border-radius: 14px;
-            padding: 12px 14px;
-            background: rgba(255,255,255,.72);
-        }
-        .summary-label {
-            display: block;
-            color: #64748b;
-            font-size: .75rem;
-            margin-bottom: 4px;
-        }
-        .letter-preview-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(2, 6, 23, .72);
-            z-index: 2000;
-            padding: 24px;
-            overflow: auto;
-        }
-        .letter-preview-dialog {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 20px;
-            padding: 18px;
-        }
-        .letter-preview-head {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 14px;
-        }
-        .letter-preview-head p { margin: 0; color: #64748b; }
-        .letter-preview-body {
-            max-height: calc(100vh - 140px);
-            overflow: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            padding: 16px;
-            background: #f8fafc;
-        }
-        html.theme-dark .summary-chip,
-        html[data-theme="dark"] .summary-chip,
-        body[data-theme="dark"] .summary-chip { background: rgba(15,23,42,.92); border-color: rgba(148,163,184,.18); color: #edf4ff; }
-        html.theme-dark .letter-preview-dialog,
-        html[data-theme="dark"] .letter-preview-dialog,
-        body[data-theme="dark"] .letter-preview-dialog { background: #0f172a; color: #edf4ff; }
-        html.theme-dark .letter-preview-body,
-        html[data-theme="dark"] .letter-preview-body,
-        body[data-theme="dark"] .letter-preview-body { background: rgba(15,23,42,.9); border-color: rgba(148,163,184,.18); }
-        @@media (max-width: 992px) {
-            .letter-summary-grid { grid-template-columns: 1fr; }
-            .toolbar-row { flex-direction: column; align-items: stretch; gap: 12px; }
-            .left-tools { flex-direction: column; }
-            .receiver-box, .subject-input { width: 100%; }
-        }
-    </style>
-}

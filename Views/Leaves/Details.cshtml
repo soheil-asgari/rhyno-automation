@@ -2,87 +2,109 @@
 @{
     var workflowDecisions = ViewBag.WorkflowDecisions as List<OfficeAutomation.Models.WorkflowDecision> ?? new List<OfficeAutomation.Models.WorkflowDecision>();
     var workflowDetail = ViewBag.WorkflowDetail as OfficeAutomation.Models.WorkflowDetailPanelVM;
-}
-@{
     ViewData["Title"] = "جزئیات مرخصی";
     var fullName = Model.User?.FullName ?? Model.User?.UserName ?? "کاربر";
+    var initial = !string.IsNullOrWhiteSpace(fullName) ? fullName.Substring(0, 1) : "؟";
+    
+    var badgeClass = WorkflowStatus.IsApproved(Model.Status)
+        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200/40"
+        : (WorkflowStatus.IsRejected(Model.Status)
+        ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200/40"
+        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200/40");
 }
 
-<div class="page-shell leaves-page">
-    <div class="section-header">
+<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+    <!-- Header Section -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
-            <h1 class="section-title">جزئیات مرخصی</h1>
-            <p class="section-subtitle">نمایش اطلاعات درخواست با ساختار خوانا و سازگار با dark mode.</p>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">جزئیات مرخصی</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">نمایش اطلاعات درخواست با ساختار خوانا و سازگار با تم تیره.</p>
         </div>
-        <a asp-action="Index" class="btn btn-outline-secondary">بازگشت</a>
-    </div>
+        <a asp-action="Index" class="flex items-center justify-center px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+            <span>بازگشت</span>
+        </a>
+    </header>
 
-    <div class="form-card">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-            <div class="d-flex align-items-center gap-3">
-                <div class="avatar-circle">@(!string.IsNullOrWhiteSpace(fullName) ? fullName.Substring(0, 1) : "؟")</div>
+    <!-- Details Card -->
+    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-6">
+        <!-- Requester Info -->
+        <div class="flex items-center justify-between flex-wrap gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-950/40 border border-teal-200/40 dark:border-teal-800/30 text-teal-700 dark:text-teal-400 flex items-center justify-center font-black text-base shadow-sm">
+                    @initial
+                </div>
                 <div>
-                    <div class="fw-semibold fs-5">@fullName</div>
-                    <div class="text-muted small">@WorkflowStatus.Label(Model.Status)</div>
+                    <h2 class="text-sm font-black text-slate-900 dark:text-white">@fullName</h2>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">وضعیت درخواست: @WorkflowStatus.Label(Model.Status)</p>
                 </div>
             </div>
-            <span class="badge @WorkflowStatus.BadgeCss(Model.Status)">@WorkflowStatus.Label(Model.Status)</span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold border @badgeClass">
+                @WorkflowStatus.Label(Model.Status)
+            </span>
         </div>
 
-        <div class="row g-3">
-            <div class="col-md-6">
-                <div class="info-card">
-                    <div class="info-label">شروع</div>
-                    <div class="info-value">@Model.StartDate.ToString("yyyy/MM/dd")</div>
-                </div>
+        <!-- Start/End/Reason Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="flex flex-col gap-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400">تاریخ شروع</span>
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left self-start">@Model.StartDate.ToString("yyyy/MM/dd")</span>
             </div>
-            <div class="col-md-6">
-                <div class="info-card">
-                    <div class="info-label">پایان</div>
-                    <div class="info-value">@Model.EndDate.ToString("yyyy/MM/dd")</div>
-                </div>
+            <div class="flex flex-col gap-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400">تاریخ پایان</span>
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left self-start">@Model.EndDate.ToString("yyyy/MM/dd")</span>
             </div>
-            <div class="col-12">
-                <div class="info-card">
-                    <div class="info-label">علت</div>
-                    <div class="info-value">@Model.Reason</div>
-                </div>
+            <div class="flex flex-col gap-1 md:col-span-2 lg:col-span-1">
+                <span class="text-xs text-slate-500 dark:text-slate-400">علت مرخصی / توضیحات</span>
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-200">@Model.Reason</span>
             </div>
         </div>
 
+        <!-- Decision History timeline -->
         @if (workflowDecisions.Count > 0)
         {
-            <div class="mt-4">
-                <h2 class="h6 fw-bold mb-3">تاریخچه تصمیم‌ها</h2>
-                <div class="d-grid gap-2">
+            <div class="flex flex-col gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+                <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">تاریخچه تصمیم‌ها</h3>
+                <div class="flex flex-col gap-4">
                     @foreach (var decision in workflowDecisions)
                     {
-                        <div class="info-card">
-                            <div class="d-flex justify-content-between gap-2 flex-wrap">
-                                <strong>@WorkflowStatus.Label(decision.Decision)</strong>
-                                <span class="text-muted small">@decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</span>
+                        <div class="flex gap-4 items-start">
+                            <div class="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 bg-teal-500 dark:bg-teal-400"></div>
+                            <div class="flex-1 p-3 border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 rounded-xl flex flex-col gap-1 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <strong class="font-bold text-slate-800 dark:text-white">@WorkflowStatus.Label(decision.Decision)</strong>
+                                    <span class="text-[10px] text-slate-500 font-mono">@decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</span>
+                                </div>
+                                <div class="text-[10px] text-slate-450 mt-0.5">ثبت شده توسط: @((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId)</div>
+                                @if (!string.IsNullOrWhiteSpace(decision.Comment))
+                                {
+                                    <p class="text-slate-650 dark:text-slate-400 mt-1 leading-relaxed">توضیح: @decision.Comment</p>
+                                }
                             </div>
-                            <div class="small text-muted mt-1">@((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId)</div>
-                            @if (!string.IsNullOrWhiteSpace(decision.Comment))
-                            {
-                                <div class="mt-2">@decision.Comment</div>
-                            }
                         </div>
                     }
                 </div>
             </div>
         }
 
+        <!-- Workflow Details Panel partial -->
         @if (workflowDetail != null)
         {
-            <div class="mt-4">
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-6">
                 <partial name="_WorkflowDetailPanel" model="workflowDetail" />
             </div>
         }
 
-        <div class="action-bar mt-4">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">ویرایش</a>
-            <a asp-action="Index" class="btn btn-outline-secondary">بازگشت به لیست</a>
+        <!-- Actions Footer -->
+        <div class="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+            <a asp-action="Index" class="flex items-center justify-center px-4 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm no-underline">
+                <span>بازگشت به لیست</span>
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="flex items-center gap-1.5 px-5 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm no-underline">
+                <i class="bi bi-pencil-square"></i>
+                <span>ویرایش درخواست</span>
+            </a>
         </div>
     </div>
 </div>
+
+<partial name="_ValidationScriptsPartial" />

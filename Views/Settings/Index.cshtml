@@ -1,227 +1,152 @@
 @model OfficeAutomation.Models.SettingsIndexViewModel
 @{
     ViewData["Title"] = "تنظیمات";
-
     var databaseStatusLabel = Model.System.IsDatabaseConnected ? "پایدار" : "نیازمند بررسی";
-    var databaseStatusClass = Model.System.IsDatabaseConnected ? "ok" : "fail";
-    var environmentLabel = string.IsNullOrWhiteSpace(Model.System.ActiveEnvironment) ? "Unknown" : Model.System.ActiveEnvironment;
-    var themeLabel = Model.Ui.ThemePreference switch
-    {
-        "Dark" => "تیره",
-        "Light" => "روشن",
-        _ => "سیستمی"
-    };
-    var sidebarLabel = Model.Ui.SidebarCollapsedByDefault ? "جمع‌شده" : "باز";
-    var settingsSectionCount = Model.CanManageSecurity ? 6 : 4;
+    var themeLabel = Model.Ui.ThemePreference switch { "Dark" => "تیره", "Light" => "روشن", _ => "سیستمی" };
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/Settings.css" asp-append-version="true" />
-}
-
-<div class="settings-page" dir="rtl">
+<div class="settings-page w-full space-y-5" dir="rtl">
     @if (TempData["SettingsSuccess"] is string message)
     {
-        <div class="alert alert-success settings-alert" role="alert">
-            <i class="bi bi-check2-circle"></i>
-            <span>@message</span>
-        </div>
+        <div class="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"><i class="bi bi-check2-circle text-sm"></i><span>@message</span></div>
     }
+    <div asp-validation-summary="ModelOnly" class="empty:hidden flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"></div>
 
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger settings-alert"></div>
-
-    <header class="settings-header-card">
-        <div class="settings-header-copy">
-            <h1 class="settings-title">تنظیمات سامانه</h1>
-            <p class="settings-subtitle">مدیریت هویت سامانه، امنیت کاربر، وضعیت زیرساخت و تجربه کاربری در یک هاب متمرکز</p>
-            <div class="settings-header-meta">
-                <span><i class="bi bi-grid-1x2"></i> <strong>@settingsSectionCount</strong> بخش تنظیماتی</span>
-                <span><i class="bi bi-palette2"></i> تم فعال: <strong>@themeLabel</strong></span>
-                <span><i class="bi bi-layout-sidebar"></i> سایدبار: <strong>@sidebarLabel</strong></span>
-            </div>
-            <div class="settings-header-status-row" aria-label="Settings status">
-                <span class="settings-compact-badge">
-                    <i class="bi bi-shield-check"></i>
-                    <strong>SECURITY</strong>
-                    <span>@(Model.CanManageSecurity ? "Admin" : "User")</span>
-                </span>
-                <span class="settings-compact-badge @databaseStatusClass">
-                    <i class="bi bi-database-check"></i>
-                    <strong>DB</strong>
-                    <span>@databaseStatusLabel</span>
-                </span>
-                <span class="settings-compact-badge">
-                    <i class="bi bi-circle-half"></i>
-                    <strong>MODE</strong>
-                    <span>@themeLabel</span>
-                </span>
-            </div>
-        </div>
-        <div class="settings-header-side">
-            <span class="settings-badge">Settings Hub</span>
-        </div>
-    </header>
-
-    <div id="settings-concrete-workspace">
-        <div class="settings-info-strip" aria-label="خلاصه وضعیت">
-            <div class="settings-info-cell">
-                <span class="settings-info-caption">پروفایل</span>
-                <strong>@(string.IsNullOrWhiteSpace(Model.Profile.FullName) ? "تکمیل نشده" : Model.Profile.FullName)</strong>
-            </div>
-            <div class="settings-info-cell">
-                <span class="settings-info-caption">زیرساخت</span>
-                <strong>@environmentLabel</strong>
-            </div>
-            <div class="settings-info-cell">
-                <span class="settings-info-caption">دسترسی</span>
-                <strong>@(Model.CanManageSecurity ? "مدیریت کامل" : "کاربر عادی")</strong>
-            </div>
-        </div>
-
-        <div class="settings-shell">
-            <aside class="concrete-settings-nav" id="settings-tab" role="tablist" aria-orientation="vertical">
-                <div class="concrete-settings-nav-head">
-                    <div class="settings-side-nav-title">دسترسی سریع</div>
-                    <div class="settings-side-nav-text">بخش موردنظر را انتخاب کنید</div>
-                </div>
-                <button class="concrete-settings-link active" id="general-tab" data-settings-tone="general" data-bs-toggle="pill" data-bs-target="#general-pane" type="button" role="tab" aria-controls="general-pane" aria-selected="true">
-                    <i class="bi bi-gear"></i>
-                    <span class="settings-nav-copy">
-                        <strong>تنظیمات عمومی</strong>
-                        <small>هویت سامانه و منطقه زمانی</small>
-                    </span>
-                </button>
-                <button class="concrete-settings-link" id="security-tab" data-settings-tone="security" data-bs-toggle="pill" data-bs-target="#security-pane" type="button" role="tab" aria-controls="security-pane" aria-selected="false">
-                    <i class="bi bi-shield-check"></i>
-                    <span class="settings-nav-copy">
-                        <strong>پروفایل و امنیت</strong>
-                        <small>اطلاعات حساب و رمز عبور</small>
-                    </span>
-                </button>
-                <button class="concrete-settings-link" id="system-tab" data-settings-tone="system" data-bs-toggle="pill" data-bs-target="#system-pane" type="button" role="tab" aria-controls="system-pane" aria-selected="false">
-                    <i class="bi bi-server"></i>
-                    <span class="settings-nav-copy">
-                        <strong>اتصال دیتابیس و شبکه</strong>
-                        <small>وضعیت زیرساخت و نگهداری</small>
-                    </span>
-                </button>
-                <button class="concrete-settings-link" id="ui-tab" data-settings-tone="ui" data-bs-toggle="pill" data-bs-target="#ui-pane" type="button" role="tab" aria-controls="ui-pane" aria-selected="false">
-                    <i class="bi bi-window-stack"></i>
-                    <span class="settings-nav-copy">
-                        <strong>تنظیمات ظاهری</strong>
-                        <small>تم و رفتار رابط کاربری</small>
-                    </span>
-                </button>
-                @if (Model.CanManageSecurity)
-                {
-                    <button class="concrete-settings-link" id="signature-admin-tab" data-settings-tone="signature" data-bs-toggle="pill" data-bs-target="#signature-admin-pane" type="button" role="tab" aria-controls="signature-admin-pane" aria-selected="false">
-                        <i class="bi bi-pen-fill"></i>
-                        <span class="settings-nav-copy">
-                            <strong>مدیریت امضای کاربر</strong>
-                            <small>ثبت و پیش‌نمایش امضای دیجیتال</small>
-                        </span>
-                    </button>
-                    <button class="concrete-settings-link" id="add-user-admin-tab" data-settings-tone="users" data-bs-toggle="pill" data-bs-target="#add-user-admin-pane" type="button" role="tab" aria-controls="add-user-admin-pane" aria-selected="false">
-                        <i class="bi bi-people"></i>
-                        <span class="settings-nav-copy">
-                            <strong>افزودن کاربر</strong>
-                            <small>مدیریت حساب‌های جدید</small>
-                        </span>
-                    </button>
-                }
-            </aside>
-
-            <section class="settings-content tab-content">
-                <div class="tab-pane fade show active" id="general-pane" role="tabpanel" aria-labelledby="general-tab" tabindex="0">
-                    @await Html.PartialAsync("_GeneralSettings", Model)
-                </div>
-                <div class="tab-pane fade" id="security-pane" role="tabpanel" aria-labelledby="security-tab" tabindex="0">
-                    @await Html.PartialAsync("_ProfileSecuritySettings", Model)
-                </div>
-                <div class="tab-pane fade" id="system-pane" role="tabpanel" aria-labelledby="system-tab" tabindex="0">
-                    @await Html.PartialAsync("_SystemConnectivitySettings", Model)
-                </div>
-                <div class="tab-pane fade" id="ui-pane" role="tabpanel" aria-labelledby="ui-tab" tabindex="0">
-                    @await Html.PartialAsync("_UiPreferencesSettings", Model)
-                </div>
-                @if (Model.CanManageSecurity)
-                {
-                    <div class="tab-pane fade" id="signature-admin-pane" role="tabpanel" aria-labelledby="signature-admin-tab" tabindex="0">
-                        <div class="settings-panel">
-                            <div class="section-head">
-                                <h2>مدیریت امضای کاربر</h2>
-                                <p>بارگذاری یا رسم امضای دیجیتال برای استفاده در اسناد سامانه</p>
-                            </div>
-
-                            <div class="signature-admin-grid">
-                                <div class="signature-draw-card">
-                                    <div class="signature-canvas-wrap">
-                                        <canvas id="signature-canvas" class="signature-canvas" aria-label="Signature Canvas"></canvas>
-                                    </div>
-                                    <div class="signature-actions">
-                                        <button type="button" class="btn settings-btn-primary" id="signature-save-btn">
-                                            <i class="bi bi-check2-circle"></i>
-                                            <span>ذخیره امضا</span>
-                                        </button>
-                                        <button type="button" class="btn settings-btn-danger" id="signature-clear-btn">
-                                            <i class="bi bi-eraser"></i>
-                                            <span>پاک‌سازی</span>
-                                        </button>
-                                        <label class="btn btn-outline-primary signature-upload-btn mb-0">
-                                            <i class="bi bi-upload"></i>
-                                            <span>آپلود فایل</span>
-                                            <input type="file" id="signature-upload-input" accept="image/*" hidden />
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="signature-preview-card">
-                                    <h3 class="signature-preview-title">پیش‌نمایش امضای فعلی</h3>
-                                    @if (!string.IsNullOrWhiteSpace(Model.CurrentUserSignaturePath))
-                                    {
-                                        <img src="@Model.CurrentUserSignaturePath" alt="Current Signature" class="signature-preview-image" id="signature-current-preview" />
-                                    }
-                                    else
-                                    {
-                                        <div class="signature-preview-empty" id="signature-current-preview-empty">
-                                            <i class="bi bi-pen"></i>
-                                            <span>هنوز امضایی ثبت نشده است.</span>
-                                        </div>
-                                    }
-                                    <div class="role-hint mb-0">
-                                        <i class="bi bi-shield-check"></i>
-                                        <span>این ابزار مخصوص مدیر سیستم است.</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade" id="add-user-admin-pane" role="tabpanel" aria-labelledby="add-user-admin-tab" tabindex="0">
-                        <div class="settings-panel">
-                            <div class="section-head">
-                                <h2>افزودن کاربر جدید</h2>
-                                <p>ایجاد حساب کاربری جدید با دسترسی مدیریتی یا کاربری</p>
-                            </div>
-                            <div class="role-hint mb-3">
-                                <i class="bi bi-shield-check"></i>
-                                <span>برای ثبت کاربر جدید از فرم مدیریتی کاربران استفاده کنید.</span>
-                            </div>
-                            <div class="actions-row justify-content-start">
-                                <a asp-controller="Settings" asp-action="AddNewUser" class="btn settings-btn-primary">
-                                    <i class="bi bi-person-plus-fill"></i>
-                                    <span>انتقال به فرم افزودن کاربر</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </section>
+    <div class="flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
+        <div><h1 class="text-lg font-black tracking-tight text-slate-950 dark:text-white">تنظیمات سیستم</h1><p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">پیکربندی هویت سامانه، امنیت، زیرساخت و تجربه کاربری</p></div>
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black @(Model.System.IsDatabaseConnected ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300" : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300")"><i class="bi @(Model.System.IsDatabaseConnected ? "bi-database-check" : "bi-database-x")"></i>پایگاه داده: @databaseStatusLabel</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-black text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"><i class="bi bi-circle-half"></i>تم: @themeLabel</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-black text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"><i class="bi bi-shield-check"></i>@(Model.CanManageSecurity ? "مدیر سیستم" : "کاربر")</span>
         </div>
     </div>
+
+    <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8">
+        <nav id="settings-tab" class="flex gap-4 overflow-x-auto border-b border-slate-200 pb-2 mb-6 dark:border-slate-800" aria-label="بخش‌های تنظیمات">
+            <button type="button" data-target="#tab-general" class="tab-btn active inline-flex shrink-0 items-center gap-2 border-b-2 border-teal-500 px-1 pb-2 text-xs font-black text-teal-700 dark:text-teal-300"><i class="bi bi-gear pointer-events-none"></i>عمومی</button>
+            <button type="button" data-target="#tab-security" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-shield-check pointer-events-none"></i>پروفایل و امنیت</button>
+            <button type="button" data-target="#tab-system" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-server pointer-events-none"></i>زیرساخت</button>
+            <button type="button" data-target="#tab-ui" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-window-stack pointer-events-none"></i>ظاهر</button>
+            @if (Model.CanManageSecurity)
+            {
+                <button type="button" data-target="#tab-signature" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-pen-fill pointer-events-none"></i>امضا</button>
+                <button type="button" data-target="#tab-adduser" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-person-plus pointer-events-none"></i>کاربران</button>
+            }
+        </nav>
+
+        <!-- اضافه شدن تگ فرم برای ذخیره تنظیمات -->
+        <form asp-action="SaveSettings" method="post" class="settings-content">
+
+            <div id="tab-general" class="tab-pane block">
+                <!-- نکته: اگر پارشیال عمومی مدل خاص خودش را دارد، به جای Model بنویس Model.General یا مشابه آن -->
+                <partial name="_GeneralSettings" model="Model" />
+            </div>
+
+            <div id="tab-security" class="tab-pane hidden">
+                <partial name="_ProfileSecuritySettings" model="Model" />
+            </div>
+
+            <div id="tab-system" class="tab-pane hidden">
+                <partial name="_SystemConnectivitySettings" model="Model" />
+            </div>
+
+            <div id="tab-ui" class="tab-pane hidden">
+                <partial name="_UiPreferencesSettings" model="Model" />
+            </div>
+
+            @if (Model.CanManageSecurity)
+            {
+                <div id="tab-signature" class="tab-pane hidden">
+                    <!-- کدهای امضا همانطور که بود -->
+                    <div class="space-y-6">
+                        <div><h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white"><i class="bi bi-pen-fill text-teal-600 dark:text-teal-400"></i>مدیریت امضای کاربر</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">ثبت، بارگذاری یا به‌روزرسانی امضای دیجیتال برای اسناد سامانه</p></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="space-y-3 lg:col-span-2"><div class="overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950"><canvas id="signature-canvas" class="h-44 w-full" aria-label="Signature Canvas"></canvas></div><div class="border-t border-slate-100 dark:border-slate-800 pt-5 mt-5 flex flex-wrap items-center gap-2"><button type="button" id="signature-save-btn" class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700"><i class="bi bi-check2-circle"></i>ذخیره تغییرات</button><button type="button" id="signature-clear-btn" class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"><i class="bi bi-eraser"></i>پاک‌سازی</button><label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"><i class="bi bi-upload"></i>آپلود<input type="file" id="signature-upload-input" accept="image/*" class="hidden" /></label></div></div><div class="space-y-3"><h3 class="text-xs font-black text-slate-700 dark:text-slate-300">پیش‌نمایش امضای فعلی</h3>@if (!string.IsNullOrWhiteSpace(Model.CurrentUserSignaturePath)){
+                        <div class="flex min-h-36 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950"><img src="@Model.CurrentUserSignaturePath" alt="Current Signature" id="signature-current-preview" class="max-h-28 object-contain" /></div>
+                    }
+                    else
+                    {
+
+                        <div id="signature-current-preview-empty" class="flex min-h-36 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-600"><i class="bi bi-pen text-3xl"></i><span class="text-xs font-bold">هنوز امضایی ثبت نشده است</span></div>
+                    }
+</div></div>
+                </div>
+            </div>
+            <div id="tab-adduser" class="tab-pane hidden"><div class="space-y-5"><div><h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white"><i class="bi bi-people text-teal-600 dark:text-teal-400"></i>افزودن کاربر جدید</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">ایجاد حساب کاربری از مسیر مدیریت کاربران انجام می‌شود.</p></div><div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-bold text-sky-700 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300"><i class="bi bi-shield-check ml-1"></i>برای ثبت کاربر جدید به فرم اختصاصی مدیریت کاربران منتقل شوید.</div><div class="border-t border-slate-100 pt-5 mt-5 dark:border-slate-800"><a asp-controller="Settings" asp-action="AddNewUser" class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-xs font-black text-white no-underline shadow-sm transition hover:bg-teal-700"><i class="bi bi-person-plus-fill"></i>افزودن کاربر</a></div></div></div>
+                        }
+
+            <!-- دکمه ذخیره نهایی کل تنظیمات -->
+            <div class="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded-xl transition-colors shadow-sm">
+                    <i class="bi bi-save ml-2"></i> ذخیره کل تغییرات
+                </button>
+            </div>
+
+        </form>
+    </section>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="~/js/settings-hub.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const buttons = document.querySelectorAll('.tab-btn');
+            const panes = document.querySelectorAll('.tab-pane');
+
+            const activeClasses = ['active', 'border-teal-500', 'text-teal-700', 'dark:text-teal-300', 'font-black'];
+            const inactiveClasses = ['border-transparent', 'text-slate-500', 'dark:text-slate-400', 'font-bold'];
+
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetSelector = button.getAttribute('data-target');
+                    const targetPane = document.querySelector(targetSelector);
+
+                    if (targetPane) {
+                        // Hide all panes
+                        panes.forEach(pane => {
+                            pane.classList.add('hidden');
+                            pane.classList.remove('block');
+                        });
+
+                        // Reset all buttons styling
+                        buttons.forEach(btn => {
+                            activeClasses.forEach(c => btn.classList.remove(c));
+                            inactiveClasses.forEach(c => btn.classList.add(c));
+                        });
+
+                        // Activate clicked button styling
+                        activeClasses.forEach(c => button.classList.add(c));
+                        inactiveClasses.forEach(c => button.classList.remove(c));
+
+                        // Show target pane
+                        targetPane.classList.remove('hidden');
+                        targetPane.classList.add('block');
+
+                        // Save selected tab in storage & history
+                        localStorage.setItem('rhyno.settings.activeTab', targetSelector);
+                        if (history.replaceState) {
+                            history.replaceState(null, '', targetSelector);
+                        }
+
+                        // Dispatch CustomEvent for signature resizing etc
+                        document.dispatchEvent(new CustomEvent('rhyno:settings-tab-shown', { detail: { target: targetSelector } }));
+                    }
+                });
+            });
+
+            // Auto-click the stored tab or the first active tab on load
+            const storedTarget = window.location.hash || localStorage.getItem('rhyno.settings.activeTab');
+            let tabToClick = null;
+            if (storedTarget) {
+                tabToClick = document.querySelector(`.tab-btn[data-target="${storedTarget}"]`);
+            }
+            if (!tabToClick) {
+                tabToClick = document.querySelector('.tab-btn.active') || document.querySelector('.tab-btn');
+            }
+            if (tabToClick) {
+                tabToClick.click();
+            }
+        });
+    </script>
 }

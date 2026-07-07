@@ -1,49 +1,12 @@
-@model OfficeAutomation.Models.SettingsIndexViewModel
-
-<div class="settings-panel">
-    <div class="section-head">
-        <h2>تنظیمات عمومی</h2>
-        <p>تعریف هویت سامانه، زبان پیش‌فرض و منطقه زمانی</p>
-    </div>
-
-    <form asp-action="UpdateGeneral" asp-controller="Settings" method="post" class="settings-form">
-        @Html.AntiForgeryToken()
-
-        <div class="field-grid">
-            <div class="field-group">
-                <label asp-for="General.ApplicationTitle" class="form-label"></label>
-                <input asp-for="General.ApplicationTitle" class="form-control" placeholder="Rhyno Enterprise" />
-                <span asp-validation-for="General.ApplicationTitle" class="text-danger"></span>
-            </div>
-
-            <div class="field-group">
-                <label asp-for="General.SystemLanguage" class="form-label"></label>
-                <select asp-for="General.SystemLanguage" asp-items="Model.Languages" class="form-select"></select>
-                <span asp-validation-for="General.SystemLanguage" class="text-danger"></span>
-            </div>
-
-            <div class="field-group field-full">
-                <label asp-for="General.TimeZoneId" class="form-label"></label>
-                <select asp-for="General.TimeZoneId" asp-items="Model.TimeZones" class="form-select"></select>
-                <span asp-validation-for="General.TimeZoneId" class="text-danger"></span>
-            </div>
+﻿@model OfficeAutomation.Models.SettingsIndexViewModel
+<div class="space-y-6">
+    <div><h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white"><i class="bi bi-gear text-teal-600 dark:text-teal-400"></i>تنظیمات عمومی</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">تعریف هویت سامانه، زبان پیش‌فرض و منطقه زمانی</p></div>
+    <form asp-action="UpdateGeneral" asp-controller="Settings" method="post" class="settings-form">@Html.AntiForgeryToken()
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="flex flex-col gap-1.5"><label asp-for="General.ApplicationTitle" class="text-xs font-black text-slate-700 dark:text-slate-300">عنوان سامانه</label><input asp-for="General.ApplicationTitle" placeholder="Rhyno Enterprise" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" /><span asp-validation-for="General.ApplicationTitle" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span></div>
+            <div class="flex flex-col gap-1.5"><label asp-for="General.SystemLanguage" class="text-xs font-black text-slate-700 dark:text-slate-300">زبان سامانه</label><select asp-for="General.SystemLanguage" asp-items="Model.Languages" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"></select><span asp-validation-for="General.SystemLanguage" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span></div>
+            <div class="flex flex-col gap-1.5 md:col-span-2 lg:col-span-1"><label asp-for="General.TimeZoneId" class="text-xs font-black text-slate-700 dark:text-slate-300">منطقه زمانی</label><select asp-for="General.TimeZoneId" asp-items="Model.TimeZones" dir="ltr" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left font-mono text-sm tabular-nums text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"></select><span asp-validation-for="General.TimeZoneId" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span></div>
         </div>
-
-        @if (User.HasClaim("permission", "Security.Manage"))
-        {
-            <div class="actions-row">
-                <button type="submit" class="btn settings-btn-primary">
-                    <i class="bi bi-save2"></i>
-                    <span>ذخیره تنظیمات عمومی</span>
-                </button>
-            </div>
-        }
-        else
-        {
-            <div class="role-hint">
-                <i class="bi bi-info-circle"></i>
-                <span>ویرایش تنظیمات عمومی فقط برای مدیر سیستم فعال است.</span>
-            </div>
-        }
+        <div class="border-t border-slate-100 dark:border-slate-800 pt-5 mt-5">@if (User.HasClaim("permission", "Security.Manage")){<button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700"><i class="bi bi-save2"></i>ذخیره تغییرات</button>}else{<div class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"><i class="bi bi-info-circle"></i>ویرایش تنظیمات عمومی فقط برای مدیر سیستم فعال است.</div>}</div>
     </form>
 </div>
