@@ -9,8 +9,8 @@
 @section Styles {
 }
 
-<div class="container-fluid py-4 space-y-4" dir="rtl">
-    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-sm">
+<div class="container-fluid py-2 space-y-2" dir="rtl">
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-lg shadow-sm">
         <div>
             <h1 class="text-[16px] font-black text-slate-900 dark:text-white">داشبورد مالیات بر ارزش افزوده</h1>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">تطبیق VAT سطح فاکتور، هشدار مغایرت و خروجی قابل حسابرسی</p>
@@ -29,25 +29,25 @@
 
     <div class="row g-2.5 mb-2.5">
         <div class="col-12 col-md-3">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
                 <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">VAT وصولی فروش</div>
                 <div class="text-[15px] font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tabular-nums">@Model.TotalVatCollected.ToString("N0")</div>
             </div>
         </div>
         <div class="col-12 col-md-3">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
                 <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">VAT پرداختی خرید</div>
                 <div class="text-[15px] font-black text-blue-600 dark:text-blue-400 mt-0.5 font-mono tabular-nums">@Model.TotalVatPaid.ToString("N0")</div>
             </div>
         </div>
         <div class="col-12 col-md-3">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
                 <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">VAT محاسبه‌شده از خطوط</div>
                 <div class="text-[15px] font-black text-slate-800 dark:text-slate-100 mt-0.5 font-mono tabular-nums">@Model.TotalVatLineCalculated.ToString("N0")</div>
             </div>
         </div>
         <div class="col-12 col-md-3">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card vat-kpi" >
                 <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">خالص پرداختنی / استردادی</div>
                 <div class="text-[15px] font-black @(Model.NetVatPayableOrRefundable >= 0 ? "text-rose-600 dark:text-rose-455" : "text-sky-600 dark:text-sky-455") mt-0.5 font-mono tabular-nums">@Model.NetVatPayableOrRefundable.ToString("N0")</div>
             </div>
@@ -56,19 +56,19 @@
 
     <div class="row g-2.5 mb-2.5">
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card" >
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card" >
                 <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">اختلاف reconcile</div>
                 <div class="text-[15px] font-black @(hasMismatch ? "text-rose-600" : "text-emerald-600") mt-0.5 font-mono tabular-nums">@Model.VatReconciliationDifference.ToString("N0")</div>
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card" >
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card" >
                 <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">فاکتورهای مشکوک</div>
                 <div class="text-[15px] font-black @(Model.VatMismatchInvoices > 0 ? "text-amber-600" : "text-emerald-600") mt-0.5 font-mono tabular-nums">@Model.VatMismatchInvoices.ToString("N0")</div>
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card" >
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center vat-card" >
                 <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">وضعیت کنترل</div>
                 <div class="text-[15px] font-black @(hasMismatch ? "text-amber-600" : "text-emerald-600") mt-0.5">@(hasMismatch ? "نیاز به بررسی" : "تأیید شده")</div>
             </div>
@@ -87,7 +87,7 @@
         </div>
     }
 
-    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 overflow-x-auto vat-card" >
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 overflow-x-auto vat-card" >
         <div class="table-responsive">
             <table class="w-full text-[11px] text-right border-collapse">
                 <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">

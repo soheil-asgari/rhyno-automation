@@ -4,7 +4,7 @@
     var year = ViewBag.Year as int? ?? DateTime.Now.Year;
 }
 
-<div class="container-fluid py-4 space-y-4" dir="rtl">
+<div class="container-fluid py-2 space-y-2" dir="rtl">
     <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
             <h1 class="text-[16px] font-black text-slate-900 dark:text-white">داشبورد مالی</h1>
@@ -12,44 +12,44 @@
         </div>
         <form method="get" class="flex items-center gap-2 flex-wrap">
             <span class="text-[11px] text-slate-500 dark:text-slate-400">سال</span>
-            <input name="year" value="@year" type="number" min="1300" max="1700" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+            <input name="year" value="@year" type="number" min="1300" max="1700" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
             <button class="h-7 rounded-lg bg-teal-600 px-3 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">اعمال</button>
         </form>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <!-- Monthly Sales -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
             <div>
                 <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">فروش ماه</span>
-                <h3 class="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tabular-nums">@Model.MonthlySalesTotal.ToString("N0")</h3>
+                <h3 class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tabular-nums">@Model.MonthlySalesTotal.ToString("N0")</h3>
             </div>
             <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">جمع فروش ثبت‌شده</p>
         </div>
 
         <!-- Monthly Purchase -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
             <div>
                 <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">خرید ماه</span>
-                <h3 class="text-lg font-black text-rose-600 dark:text-rose-400 mt-0.5 font-mono tabular-nums">@Model.MonthlyPurchaseTotal.ToString("N0")</h3>
+                <h3 class="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5 font-mono tabular-nums">@Model.MonthlyPurchaseTotal.ToString("N0")</h3>
             </div>
             <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">جمع خرید ثبت‌شده</p>
         </div>
 
         <!-- Tax Payable -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
             <div>
                 <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">مالیات پرداختنی</span>
-                <h3 class="text-lg font-black text-amber-600 dark:text-amber-400 mt-0.5 font-mono tabular-nums">@Model.MonthlyTaxPayable.ToString("N0")</h3>
+                <h3 class="text-sm font-black text-amber-600 dark:text-amber-400 mt-0.5 font-mono tabular-nums">@Model.MonthlyTaxPayable.ToString("N0")</h3>
             </div>
             <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">خروجی نهایی کنترل مالیات</p>
         </div>
 
         <!-- Overdue Invoices -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
             <div>
                 <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">فاکتور معوق</span>
-                <h3 class="text-lg font-black text-sky-600 dark:text-sky-400 mt-0.5 font-mono tabular-nums">@Model.OverdueInvoices.ToString("N0")</h3>
+                <h3 class="text-sm font-black text-sky-600 dark:text-sky-400 mt-0.5 font-mono tabular-nums">@Model.OverdueInvoices.ToString("N0")</h3>
             </div>
             <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">نیازمند پیگیری فوری</p>
         </div>
@@ -64,19 +64,19 @@
                 "info" => "text-sky-600 dark:text-sky-400",
                 _ => "text-slate-900 dark:text-white"
             };
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
                 <div>
                     <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">@kpi.Title</span>
-                    <h3 class="text-lg font-black @toneColor mt-0.5 font-mono tabular-nums">@kpi.Value</h3>
+                    <h3 class="text-sm font-black @toneColor mt-0.5 font-mono tabular-nums">@kpi.Value</h3>
                 </div>
                 <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">@kpi.Description</p>
             </div>
         }
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <!-- Chart Shell -->
-        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between">
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-2.5 flex flex-col justify-between">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                 <div>
                     <h2 class="text-xs font-black text-slate-900 dark:text-white">روند مالی</h2>
@@ -98,7 +98,7 @@
 
             @if (Model.ValidationWarnings > 0 || Model.OverdueInvoices > 0)
             {
-                <div class="flex flex-col gap-1.5 rounded-xl border border-amber-250 bg-amber-50 px-3.5 py-2.5 text-[11px] text-amber-700 dark:border-amber-800/40 dark:bg-amber-955/20 dark:text-amber-400 mb-3">
+                <div class="flex flex-col gap-1.5 rounded-lg border border-amber-250 bg-amber-50 px-3.5 py-2.5 text-[11px] text-amber-700 dark:border-amber-800/40 dark:bg-amber-955/20 dark:text-amber-400 mb-3">
                     @if (Model.ValidationWarnings > 0)
                     {
                         <div>@Model.ValidationWarnings مورد نیازمند بررسی ثبت شده است.</div>
@@ -116,7 +116,7 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-col">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-2.5 flex flex-col">
             <h2 class="text-xs font-black text-slate-900 dark:text-white mb-3">دسترسی سریع</h2>
             <div class="flex-1">
                 <partial name="_QuickActionsGrid" model="Model.QuickActions" />
@@ -124,9 +124,9 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-3">
         <!-- Recent Activities -->
-        <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+        <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-2.5">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-xs font-black text-slate-900 dark:text-white">آخرین عملیات</h2>
                 <a asp-action="Invoices" class="text-[11px] font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 no-underline">مشاهده همه</a>
@@ -153,26 +153,26 @@
         </div>
 
         <!-- Warnings and Alerting -->
-        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between">
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-2.5 flex flex-col justify-between">
             <div>
                 <h2 class="text-xs font-black text-slate-900 dark:text-white mb-3">هشدارهای عملیاتی</h2>
                 <div class="space-y-2">
-                    <div class="rounded-xl border border-amber-250 bg-amber-50 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-900/30 dark:bg-amber-955/20 dark:text-amber-400">
+                    <div class="rounded-lg border border-amber-250 bg-amber-50 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-900/30 dark:bg-amber-955/20 dark:text-amber-400">
                         <strong class="block font-black">فاکتورهای در انتظار</strong>
                         <span class="block mt-0.5 text-[10px]">@Model.PendingSalesInvoices فاکتور فروش و @Model.PendingPurchaseInvoices فاکتور خرید نیاز به پیگیری دارند.</span>
                     </div>
-                    <div class="rounded-xl border border-rose-250 bg-rose-50 px-3 py-2 text-[11px] text-rose-700 dark:border-rose-900/30 dark:bg-rose-955/20 dark:text-rose-400">
+                    <div class="rounded-lg border border-rose-250 bg-rose-50 px-3 py-2 text-[11px] text-rose-700 dark:border-rose-900/30 dark:bg-rose-955/20 dark:text-rose-400">
                         <strong class="block font-black">هشدار اعتبارسنجی</strong>
                         <span class="block mt-0.5 text-[10px]">@Model.ValidationWarnings رکورد ناقص یا مشکوک شناسایی شده است.</span>
                     </div>
-                    <div class="rounded-xl border border-sky-250 bg-sky-50 px-3 py-2 text-[11px] text-sky-700 dark:border-sky-900/30 dark:bg-sky-955/20 dark:text-sky-400">
+                    <div class="rounded-lg border border-sky-250 bg-sky-50 px-3 py-2 text-[11px] text-sky-700 dark:border-sky-900/30 dark:bg-sky-955/20 dark:text-sky-400">
                         <strong class="block font-black">سررسید نزدیک</strong>
                         <span class="block mt-0.5 text-[10px]">@Model.DuePurchaseDeadlines فاکتور خرید دارای موعد نزدیک است.</span>
                     </div>
                 </div>
             </div>
             <div class="mt-3">
-                <a asp-action="ReportingHub" class="flex items-center justify-center h-8 w-full rounded-xl bg-teal-600 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">رفتن به گزارش‌های پیشرفته</a>
+                <a asp-action="ReportingHub" class="flex items-center justify-center h-8 w-full rounded-lg bg-teal-600 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">رفتن به گزارش‌های پیشرفته</a>
             </div>
         </div>
     </div>

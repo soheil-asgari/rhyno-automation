@@ -7,7 +7,7 @@
     var returnTo = exportInvoiceType == "Purchase" ? "Purchase" : "Sale";
 }
 
-<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
     <!-- Messages / Alerts -->
     @if (TempData["SuccessMessage"] is string successMessage)
     {
@@ -25,13 +25,13 @@
     }
 
     <!-- Header Card -->
-    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
         <div>
-            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">@pageTitle</h1>
+            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white tracking-tight">@pageTitle</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">@pageDescription</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <a asp-action="CreateInvoice" asp-route-invoiceType="@createInvoiceType" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors no-underline">
+            <a asp-action="CreateInvoice" asp-route-invoiceType="@createInvoiceType" class="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors no-underline">
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>ثبت فاکتور</span>
             </a>
@@ -47,7 +47,7 @@
     </header>
 
     <!-- Filters Panel Form -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto">
         <form method="get" class="flex flex-col gap-4 md:flex-row md:items-end">
             <!-- Search Text -->
             <div class="flex-1 min-w-[200px] flex flex-col gap-1">
@@ -84,7 +84,7 @@
     </div>
 
     <!-- Data Grid Table -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto">
         <table class="w-full text-xs text-right border-collapse" data-pro-table="financial-invoices-@exportInvoiceType">
             <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                 <tr>

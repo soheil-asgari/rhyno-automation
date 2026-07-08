@@ -4,8 +4,8 @@
     var missingNationalIdCount = Model.Rows.Count(item => string.IsNullOrWhiteSpace(item.NationalId));
 }
 
-<div class="container-fluid py-4" dir="rtl">
-    <div class="section-header mb-3">
+<div class="container-fluid py-3" dir="rtl">
+    <div class="section-header mb-2.5">
         <div>
             <h1 class="section-title">گزارش معاملات فصلی</h1>
             <p class="section-subtitle">نمای حسابرسی و آماده برای تصمیم‌گیری</p>
@@ -19,26 +19,26 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
+    <div class="row g-2 mb-3">
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
-                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
+            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto -body" >
                     <div class="text-muted small">جمع مبلغ</div>
                     <div class="fs-5 fw-bold">@Model.TotalAmount.ToString("N0")</div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
-                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
+            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto -body" >
                     <div class="text-muted small">جمع مالیات</div>
                     <div class="fs-5 fw-bold">@Model.TotalVat.ToString("N0")</div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
-                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
+            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto -body" >
                     <div class="text-muted small">ردیفهای ناقص</div>
                     <div class="fs-5 fw-bold @(missingNationalIdCount > 0 ? "text-warning" : "text-success")">@missingNationalIdCount</div>
                 </div>
@@ -53,17 +53,17 @@
         </div>
     }
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
         <div class="table-responsive">
             <table class="w-full text-xs text-right border-collapse"  >
-                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >نام خریدار/فروشنده</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >شناسه</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >نوع معامله</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >مبلغ</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >VAT</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >تاریخ</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >نام خریدار/فروشنده</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >شناسه</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >نوع معامله</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >مبلغ</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >VAT</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >تاریخ</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,22 +72,21 @@
                     @foreach (var row in Model.Rows)
                     {
                         <tr class="@(string.IsNullOrWhiteSpace(row.NationalId) ? "table-warning" : "")">
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@row.PartyName</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@(row.NationalId ?? "-")</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  ><span class="badge @(row.TransactionType == "فروش" ? "text-bg-success" : "text-bg-primary")">@row.TransactionType</span></td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@row.Amount.ToString("N0")</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@row.Vat.ToString("N0")</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@row.DateShamsi</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@row.PartyName</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@(row.NationalId ?? "-")</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  ><span class="badge @(row.TransactionType == "فروش" ? "text-bg-success" : "text-bg-primary")">@row.TransactionType</span></td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@row.Amount.ToString("N0")</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@row.Vat.ToString("N0")</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@row.DateShamsi</td>
                         </tr>
                     }
                 }
                 else
                 {
-                    <tr><td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "   colspan="6" class="text-center text-muted py-4">برای فصل انتخاب‌شده ردیفی وجود ندارد.</td></tr>
+                    <tr><td class="p-2 border-b border-slate-100 dark:border-slate-800/50 text-center text-muted py-3" colspan="6">در حال حاضر داده‌ای برای نمایش وجود ندارد.</td></tr>
                 }
                 </tbody>
             </table>
         </div>
     </div>
-</div>
 

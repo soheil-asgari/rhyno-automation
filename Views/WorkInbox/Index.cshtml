@@ -7,7 +7,7 @@
     var assigneesJson = JsonSerializer.Serialize(Model.Assignees);
 }
 
-<div class="container-fluid py-4 space-y-4" dir="rtl">
+<div class="container-fluid py-2 space-y-2" dir="rtl">
     <!-- Header -->
     <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
@@ -38,7 +38,7 @@
         {
             var isActive = Model.ActiveFilter == f.Item1 || (f.Item1 == "All" && string.IsNullOrEmpty(Model.ActiveFilter));
             var activeBorderClass = isActive ? "border-teal-500 dark:border-teal-400 ring-2 ring-teal-500/10 bg-teal-50/10 dark:bg-teal-950/10" : "border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900";
-            <a class="flex flex-col items-center justify-center p-2 rounded-xl border @activeBorderClass @f.Item4 shadow-sm no-underline hover:border-teal-500/50 transition duration-150" asp-action="Index" asp-route-filter="@(f.Item1 == "All" ? "" : f.Item1)">
+            <a class="flex flex-col items-center justify-center p-2 rounded-lg border @activeBorderClass @f.Item4 shadow-sm no-underline hover:border-teal-500/50 transition duration-150" asp-action="Index" asp-route-filter="@(f.Item1 == "All" ? "" : f.Item1)">
                 <strong class="text-sm font-black font-mono tabular-nums">@f.Item3.ToString("N0")</strong>
                 <span class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">@f.Item2</span>
             </a>
@@ -101,14 +101,14 @@
                     </select>
                 </div>
                 <div>
-                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="readFilterSelect">
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="readFilterSelect">
                         <option value="">خواندن: همه</option>
                         <option value="unread">فقط خوانده‌نشده</option>
                         <option value="read">فقط خوانده‌شده</option>
                     </select>
                 </div>
                 <div>
-                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="actionFilterSelect">
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="actionFilterSelect">
                         <option value="">اقدام: همه</option>
                         <option value="required">نیازمند اقدام</option>
                         <option value="high">اولویت بالا</option>
@@ -126,14 +126,14 @@
             </div>
 
             <!-- Bulk Operation Toolbar -->
-            <div class="flex flex-col lg:flex-row items-center gap-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-xl border border-slate-200 dark:border-slate-800/60">
+            <div class="flex flex-col lg:flex-row items-center gap-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-lg border border-slate-200 dark:border-slate-800/60">
                 <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                     <input type="checkbox" id="inboxSelectAll" class="rounded border-slate-300 dark:border-slate-800 text-teal-600 focus:ring-teal-500/20" />
                     <span>انتخاب همه</span>
                 </label>
                 <div class="text-[10px] text-slate-500 dark:text-slate-400 font-bold border-l border-slate-200 dark:border-slate-800 pl-3 ml-1" id="selectionMeta">0 مورد انتخاب شده</div>
                 <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto lg:flex-1">
-                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="Action" id="bulkActionSelect" required>
+                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="Action" id="bulkActionSelect" required>
                         <option value="">انتخاب عملیات</option>
                         <option value="approve">تایید گروهی</option>
                         <option value="reject">رد گروهی</option>
@@ -141,15 +141,15 @@
                         <option value="mark-unread">خوانده نشده</option>
                         <option value="delegate">واگذاری</option>
                     </select>
-                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="ToUserId" id="bulkAssigneeSelect">
+                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="ToUserId" id="bulkAssigneeSelect">
                         <option value="">کاربر مقصد</option>
                         @foreach (var assignee in Model.Assignees)
                         {
                             <option value="@assignee.UserId">@assignee.DisplayName</option>
                         }
                     </select>
-                    <input class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-1 min-w-[150px]" name="Note" id="bulkNoteInput" placeholder="یادداشت مشترک برای اقدام گروهی..." />
-                    <button class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-colors" type="submit">
+                    <input class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-1 min-w-[150px]" name="Note" id="bulkNoteInput" placeholder="یادداشت مشترک برای اقدام گروهی..." />
+                    <button class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors" type="submit">
                         <i class="bi bi-check2-square"></i>
                         <span>اجرا</span>
                     </button>
@@ -157,32 +157,32 @@
             </div>
 
             <!-- Workspace Layout (List + Detail) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 align-start">
-                <div class="lg:col-span-2 space-y-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 align-start">
+                <div class="lg:col-span-2 space-y-2">
                     @if (Model.Items.Count == 0)
                     {
-                        <div class="p-8 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-xl">فعلاً موردی برای این فیلتر وجود ندارد.</div>
+                        <div class="p-4 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-xl">فعلاً موردی برای این فیلتر وجود ندارد.</div>
                     }
                     else
                     {
-                        <div id="inboxGroupsHost" class="space-y-4"></div>
+                        <div id="inboxGroupsHost" class="space-y-2"></div>
                     }
                 </div>
 
-                <aside class="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 min-h-[300px]" id="inboxDetailPane">
-                    <div class="flex flex-col items-center justify-center text-center p-8 text-slate-400 h-full" id="detailEmptyState">
-                        <i class="bi bi-layout-sidebar-inset text-2xl mb-2 text-slate-300 dark:text-slate-700"></i>
+                <aside class="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 min-h-[300px]" id="inboxDetailPane">
+                    <div class="flex flex-col items-center justify-center text-center p-4 text-slate-400 h-full" id="detailEmptyState">
+                        <i class="bi bi-layout-sidebar-inset text-lg mb-2 text-slate-300 dark:text-slate-700"></i>
                         <strong class="text-xs text-slate-700 dark:text-slate-350">یک آیتم را انتخاب کنید</strong>
                         <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">جزئیات، اقدام سریع و کامنت اینلاین اینجا نمایش داده می‌شود.</p>
                     </div>
 
-                    <div class="hidden flex flex-col h-full gap-4" id="detailCard">
+                    <div class="hidden flex flex-col h-full gap-3" id="detailCard">
                         <div class="flex-1 space-y-3">
                             <div class="text-[10px] font-bold text-teal-600 dark:text-teal-400" id="detailEyebrow"></div>
                             <h2 class="text-sm font-black text-slate-900 dark:text-white" id="detailTitle"></h2>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed" id="detailSummary"></p>
 
-                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-150 dark:border-slate-800">
+                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-150 dark:border-slate-800">
                                 <div class="flex flex-col"><span class="text-slate-400">ماژول</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailModule"></strong></div>
                                 <div class="flex flex-col"><span class="text-slate-400">وضعیت</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailStatus"></strong></div>
                                 <div class="flex flex-col"><span class="text-slate-400">موعد</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailSla"></strong></div>
@@ -192,14 +192,14 @@
                             <div class="flex flex-wrap gap-1" id="detailChips"></div>
 
                             <div class="pt-3">
-                                <a class="w-full h-9 rounded-xl border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center justify-center gap-1.5 no-underline" id="detailOpenLink" href="#" target="_self">
+                                <a class="w-full h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center justify-center gap-1.5 no-underline" id="detailOpenLink" href="#" target="_self">
                                     <i class="bi bi-box-arrow-up-left"></i>
                                     <span>باز کردن جزئیات</span>
                                 </a>
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-3" id="detailStickyBar">
+                        <div class="border-t border-slate-200 dark:border-slate-800 pt-2 space-y-3" id="detailStickyBar">
                             <form asp-action="Decide" method="post" class="hidden" id="quickApproveForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentType" id="quickApproveDocumentType" />
@@ -207,7 +207,7 @@
                                 <input type="hidden" name="stepNumber" id="quickApproveStepNumber" />
                                 <input type="hidden" name="decisionType" value="Approve" />
                                 <input type="hidden" name="note" value="تایید از کارتابل" />
-                                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
+                                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
                                     <i class="bi bi-check2-circle"></i>
                                     <span>تایید یک‌کلیکی</span>
                                 </button>
@@ -219,8 +219,8 @@
                                 <input type="hidden" name="documentId" id="quickRejectDocumentId" />
                                 <input type="hidden" name="stepNumber" id="quickRejectStepNumber" />
                                 <input type="hidden" name="decisionType" value="Reject" />
-                                <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="دلیل رد..." />
-                                <button type="submit" class="border border-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold transition">رد</button>
+                                <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="دلیل رد..." />
+                                <button type="submit" class="border border-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">رد</button>
                             </form>
 
                             <form asp-action="AddComment" method="post" class="hidden flex gap-2" id="quickCommentForm">
@@ -228,22 +228,22 @@
                                 <input type="hidden" name="documentType" id="quickCommentDocumentType" />
                                 <input type="hidden" name="documentId" id="quickCommentDocumentId" />
                                 <input type="hidden" name="workflowStepId" id="quickCommentWorkflowStepId" />
-                                <input type="text" name="body" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="ثبت کامنت اینلاین..." />
-                                <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">کامنت</button>
+                                <input type="text" name="body" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="ثبت کامنت اینلاین..." />
+                                <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">کامنت</button>
                             </form>
 
                             <form asp-action="Delegate" method="post" class="hidden flex flex-col gap-2" id="quickDelegateForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="workflowStepId" id="quickDelegateWorkflowStepId" />
                                 <div class="flex gap-2">
-                                    <select name="toUserId" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-1/3" id="quickDelegateToUserId">
+                                    <select name="toUserId" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-1/3" id="quickDelegateToUserId">
                                         @foreach (var assignee in Model.Assignees)
                                         {
                                             <option value="@assignee.UserId">@assignee.DisplayName</option>
                                         }
                                     </select>
-                                    <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="یادداشت واگذاری..." />
-                                    <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">واگذاری</button>
+                                    <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="یادداشت واگذاری..." />
+                                    <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">واگذاری</button>
                                 </div>
                             </form>
                         </div>

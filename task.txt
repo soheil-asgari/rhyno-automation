@@ -1,6 +1,21 @@
- فاصله های بین کارت ها زیاده کمشون کن
- فونت ها خیلی بزرگن کوچکتر کن
- فونت های ساید بار خوبن کاری بهشون نداشته باش
- کارت ها خیلی بزرگ هستن کوچکتر و فشرده تر کن
+An unhandled exception occurred while processing the request.
+InvalidOperationException: Finance account 'AR' is not configured.
+OfficeAutomation.Modules.Finance.Application.FinanceLedgerService.ResolveSubsidiaryAsync(string systemKey, CancellationToken cancellationToken) in FinanceLedgerService.cs, line 569
 
- تغییرات بالارو رو تمام پروژه اعمال کن
+Stack Query Cookies Headers Routing
+InvalidOperationException: Finance account 'AR' is not configured.
+OfficeAutomation.Modules.Finance.Application.FinanceLedgerService.ResolveSubsidiaryAsync(string systemKey, CancellationToken cancellationToken) in FinanceLedgerService.cs
++
+        return account ?? throw new InvalidOperationException($"Finance account '{systemKey}' is not configured.");
+OfficeAutomation.Modules.Finance.Application.FinanceLedgerService.BuildSalesLinesAsync(Invoice invoice, CancellationToken cancellationToken) in FinanceLedgerService.cs
++
+        var receivable = await ResolveSubsidiaryAsync(FinanceAccountKeys.AccountsReceivable, cancellationToken);
+OfficeAutomation.Modules.Finance.Application.FinanceLedgerService.BuildLinesAsync(Invoice invoice, CancellationToken cancellationToken) in FinanceLedgerService.cs
++
+        var lines = string.Equals(invoice.InvoiceType, "Purchase", StringComparison.OrdinalIgnoreCase)
+OfficeAutomation.Modules.Finance.Application.FinanceLedgerService.PostInvoiceAsync(Invoice invoice, CancellationToken cancellationToken) in FinanceLedgerService.cs
++
+        voucher.Lines = await BuildLinesAsync(invoice, cancellationToken);
+OfficeAutomation.Controllers.FinancialController.ApproveInvoice(int id, string returnTo, CancellationToken cancellationToken) in FinancialController.cs
++
+            await _ledgerService.PostInvoiceAsync(invoice, cancellationToken);

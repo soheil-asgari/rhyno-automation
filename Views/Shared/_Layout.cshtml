@@ -68,9 +68,9 @@
     string NavClass(string controller, string? action = null)
     {
         var active = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(action) || string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase));
-        return active ? "sidebar-link z-50 flex items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-2 py-1.5 text-[12px] font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200" : "sidebar-link z-50 flex items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-[12px] font-medium text-slate-600 transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white";
+        return active ? "sidebar-link z-50 flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-2 py-1 text-[12px] font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200" : "sidebar-link z-50 flex items-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-[12px] font-medium text-slate-600 transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white";
     }
-    var moduleButtonClass = "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100";
+    var moduleButtonClass = "flex w-full items-center justify-between rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100";
 }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl" data-theme="@themePreference.ToLowerInvariant()" class="@rootThemeClass">
@@ -90,9 +90,9 @@
                 position: static !important;
                 display: flex !important;
                 flex-direction: column !important;
-                width: 16rem !important;
-                min-width: 16rem !important;
-                max-width: 16rem !important;
+                width: 14rem !important;
+                min-width: 14rem !important;
+                max-width: 14rem !important;
                 transform: none !important;
                 box-shadow: none !important;
                 z-index: 40 !important;
@@ -117,13 +117,13 @@
         #appSidebar .accordion-collapse a.sidebar-link {
             display: flex !important;
             align-items: center !important;
-            gap: 8px !important;
+            gap: 6px !important;
             width: 100% !important;
-            padding: 8px 24px !important; /* py-2 px-6 */
+            padding: 5px 18px !important; /* py-1 px-4.5 */
             background: transparent !important;
             color: #334155 !important; /* text-slate-700 */
             border: 0 !important;
-            font-size: 12px !important;
+            font-size: 11px !important;
             font-weight: 500 !important;
             min-height: auto !important;
             opacity: 1 !important;
@@ -159,8 +159,8 @@
     <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 z-40 hidden bg-slate-950/40 backdrop-blur-sm lg:hidden"></div>
     <form id="rhGlobalAntiForgery" class="d-none">@Html.AntiForgeryToken()</form>
     <div class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 w-full">
-        <aside id="appSidebar" class="sidebar-right print:hidden fixed inset-y-0 right-0 z-50 flex w-60 translate-x-full flex-col border-l border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 lg:static lg:flex lg:w-64 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-slate-950/95 flex flex-col z-40">
-            <div class="flex h-14 items-center gap-2 border-b border-slate-200 px-3 dark:border-slate-800">
+        <aside id="appSidebar" class="sidebar-right print:hidden fixed inset-y-0 right-0 z-50 flex w-52 translate-x-full flex-col border-l border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 lg:static lg:flex lg:w-56 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-slate-955/95 flex flex-col z-40">
+            <div class="flex h-12 items-center gap-2 border-b border-slate-200 px-2.5 dark:border-slate-800">
                 <a asp-controller="Home" asp-action="Index" class="flex min-w-0 flex-1 items-center gap-2 text-decoration-none">
                     <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
                     <span class="min-w-0"><span class="block truncate text-sm font-black text-slate-900 dark:text-white">راینو ERP</span><span class="block truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">سیستم جامع سازمانی</span></span>
@@ -226,9 +226,10 @@
                     {
                         <section class="accordion-item sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManagement"><span>مدیریت سیستم</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseManagement" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports") ? "show" : "")"><div class="mt-1 space-y-1">
+                            <div id="collapseManagement" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports" || currentController == "ManagementDashboard") ? "show" : "")"><div class="mt-1 space-y-1">
                                 @if (userCanAccessSystemSettings)
                                 {
+                                    <a class='@NavClass("ManagementDashboard")' data-nav-id="management-dashboard" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500 me-2"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
                                     <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400 me-2"></i><span class="link-text truncate">تنظیمات</span></a>
                                     <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500 me-2"></i><span class="link-text truncate">امنیت</span></a>
                                     <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500 me-2"></i><span class="link-text truncate">ممیزی</span></a>
@@ -246,12 +247,12 @@
             <div class="border-t border-slate-200 p-2 dark:border-slate-800"><a class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-decoration-none dark:border-slate-800 dark:bg-slate-900" asp-controller="Settings" asp-action="Index"><span class="grid h-8 w-8 place-items-center rounded-md bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"><i class="bi bi-person"></i></span><span class="min-w-0 flex-1"><span class="block truncate text-[12px] font-bold text-slate-800 dark:text-slate-100">@displayName</span><span class="block truncate text-[10px] text-slate-500 dark:text-slate-400">@userRoleLabel</span></span></a></div>
         </aside>
         <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden z-10">
-            <header class="print:hidden sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200 bg-slate-100/85 px-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
-                <button id="btnOpenSidebar" type="button" class="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" aria-label="باز کردن منو"><i class="bi bi-list text-lg"></i></button>
-                <form asp-controller="Search" asp-action="Index" method="get" role="search" class="relative hidden min-w-0 flex-1 md:block"><i class="bi bi-search pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i><input name="q" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجو در سیستم..." class="h-9 w-full rounded-lg border border-slate-200 bg-white pr-9 pl-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" /></form>
+            <header class="print:hidden sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-slate-200 bg-slate-100/85 px-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-955/85">
+                <button id="btnOpenSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" aria-label="باز کردن منو"><i class="bi bi-list text-lg"></i></button>
+                <form asp-controller="Search" asp-action="Index" method="get" role="search" class="relative hidden min-w-0 flex-1 md:block"><i class="bi bi-search pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i><input name="q" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجو در سیستم..." class="h-8 w-full rounded-md border border-slate-200 bg-white pr-9 pl-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" /></form>
                 <div class="mr-auto flex items-center gap-2">
-                    <div class="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-500 md:flex dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"><i class="bi bi-clock-history"></i><span id="topbarDate">--/--/--</span><span class="text-slate-300 dark:text-slate-700">|</span><span id="topbarTime">--:--</span></div>
-                    <div class="dropdown"><button class="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="اعلان‌ها"><i class="bi bi-bell"></i>@if (headerNotificationCount > 0){<span class="absolute -left-1 -top-1 min-w-5 rounded-full bg-rose-600 px-1 text-[10px] font-black leading-5 text-white">@headerNotificationCount.ToString("N0")</span>}</button>
+                    <div class="hidden items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-500 md:flex dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"><i class="bi bi-clock-history"></i><span id="topbarDate">--/--/--</span><span class="text-slate-300 dark:text-slate-700">|</span><span id="topbarTime">--:--</span></div>
+                    <div class="dropdown"><button class="relative grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="اعلان‌ها"><i class="bi bi-bell"></i>@if (headerNotificationCount > 0){<span class="absolute -left-1 -top-1 min-w-5 rounded-full bg-rose-600 px-1 text-[10px] font-black leading-5 text-white">@headerNotificationCount.ToString("N0")</span>}</button>
                         <div class="dropdown-menu dropdown-menu-start mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-xl dark:border-slate-800 dark:bg-slate-900"><div class="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800"><strong class="text-sm text-slate-900 dark:text-white">اعلان‌ها</strong><span class="text-[11px] text-slate-500 dark:text-slate-400">@headerNotificationCount.ToString("N0") مورد</span></div>
                             @if (headerNotifications.Count == 0){<div class="px-3 py-4 text-center text-[12px] text-slate-500 dark:text-slate-400">اعلان مهمی برای نمایش وجود ندارد.</div>}else{foreach (var notification in headerNotifications.Take(8)){<a class="flex gap-2 border-b border-slate-100 px-3 py-2 text-decoration-none transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800" href="@notification.Url"><i class="bi @notification.Icon mt-0.5 text-slate-500 dark:text-slate-400"></i><span class="min-w-0"><strong class="block truncate text-[12px] text-slate-900 dark:text-white">@notification.Title</strong><small class="block truncate text-[11px] text-slate-500 dark:text-slate-400">@notification.Message</small></span></a>}}
                             <a class="block px-3 py-2 text-center text-[12px] font-bold text-teal-700 text-decoration-none hover:bg-slate-50 dark:text-teal-300 dark:hover:bg-slate-800" href="/Notifications">مشاهده همه اعلان‌ها</a></div>
@@ -260,7 +261,7 @@
                 </div>
             </header>
             <main id="main-content-wrapper" class="flex-1 flex flex-col w-full overflow-hidden">
-                <div class="p-4 md:p-6 lg:p-8 overflow-y-auto w-full flex-1 print:w-full print:m-0 print:p-0 print:block">
+                <div class="p-2.5 md:p-3.5 lg:p-4.5 overflow-y-auto w-full flex-1 print:w-full print:m-0 print:p-0 print:block">
                     @RenderBody()
                 </div>
             </main>

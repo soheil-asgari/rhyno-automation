@@ -3,10 +3,10 @@
     ViewData["Title"] = "جزئیات پرونده پرسنلی";
 }
 
-<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
+<div class="w-full flex-1 flex flex-col gap-3 p-2.5 md:p-3" dir="rtl">
     <!-- Header/Avatar Section -->
-    <header class="flex flex-col gap-6 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-        <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+    <header class="flex flex-col gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
+        <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-3">
             <!-- Big Avatar -->
             @{
                 var nameInitials = string.IsNullOrWhiteSpace(Model.FullName) ? "?" : Model.FullName.Substring(0, 1);
@@ -14,13 +14,13 @@
                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200/40"
                     : "bg-slate-100 text-slate-700 dark:bg-slate-800/40 dark:text-slate-400 border-slate-200/40";
             }
-            <div class="w-20 h-20 rounded-full bg-teal-50 dark:bg-teal-950/40 border-2 border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 flex items-center justify-center font-black text-3xl shadow-sm">
+            <div class="w-20 h-20 rounded-full bg-teal-50 dark:bg-teal-950/40 border-2 border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 flex items-center justify-center font-black text-xl shadow-sm">
                 @nameInitials
             </div>
             
             <div class="flex-1 text-center sm:text-right flex flex-col gap-1.5">
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                    <h1 class="m-0 text-xl font-black text-slate-900 dark:text-white">@Model.FullName</h1>
+                    <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">@Model.FullName</h1>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border @statusBadgeClass">
                         @Model.CurrentStatus
                     </span>
@@ -30,18 +30,18 @@
             
             <!-- Quick Actions -->
             <div class="flex flex-wrap items-center justify-center gap-2">
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm no-underline">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="flex items-center gap-1.5 px-2.5 h-8 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm no-underline">
                     <i class="bi bi-pencil-square"></i>
                     <span>ویرایش پرونده</span>
                 </a>
-                <a asp-action="Index" class="flex items-center justify-center px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <a asp-action="Index" class="flex items-center justify-center px-3 h-8 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
                     <span>بازگشت به لیست</span>
                 </a>
-                <a asp-controller="Payroll" asp-action="Index" asp-route-employeeId="@Model.Id" class="flex items-center gap-1.5 px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <a asp-controller="Payroll" asp-action="Index" asp-route-employeeId="@Model.Id" class="flex items-center gap-1.5 px-3 h-8 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
                     <i class="bi bi-wallet2 text-teal-650 dark:text-teal-400"></i>
                     <span>سابقه حقوق</span>
                 </a>
-                <a asp-controller="Bimeh" asp-action="Index" asp-route-employeeId="@Model.Id" class="flex items-center gap-1.5 px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <a asp-controller="Bimeh" asp-action="Index" asp-route-employeeId="@Model.Id" class="flex items-center gap-1.5 px-3 h-8 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
                     <i class="bi bi-shield-check text-sky-600 dark:text-sky-400"></i>
                     <span>سابقه بیمه</span>
                 </a>
@@ -50,11 +50,11 @@
     </header>
 
     <!-- 2-Column Split Details Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <!-- Personal Info Card -->
-        <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
             <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">اطلاعات شناسنامه‌ای و فردی</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="flex flex-col gap-1">
                     <span class="text-xs text-slate-500 dark:text-slate-400">کد ملی</span>
                     <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left self-start">@Model.NationalCode</span>
@@ -79,9 +79,9 @@
         </div>
 
         <!-- Corporate Info Card -->
-        <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
             <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">اطلاعات سازمانی و قرارداد</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="flex flex-col gap-1">
                     <span class="text-xs text-slate-500 dark:text-slate-400">کد پرسنلی</span>
                     <span class="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left self-start">@Model.PersonnelCode</span>
@@ -111,27 +111,27 @@
     </div>
 
     <!-- Dynamic Salary & Status sub-forms grids -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
         <!-- Salary Increase Section -->
-        <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
             <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">ثبت افزایش حقوق</h3>
-            <form asp-action="AddSalaryIncrease" method="post" class="flex flex-col gap-4">
+            <form asp-action="AddSalaryIncrease" method="post" class="flex flex-col gap-3">
                 <input asp-for="SalaryIncrease.EmployeeId" type="hidden" />
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="flex flex-col gap-1.5">
                         <label asp-for="SalaryIncrease.EffectiveDate" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                        <input asp-for="SalaryIncrease.EffectiveDate" type="date" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+                        <input asp-for="SalaryIncrease.EffectiveDate" type="date" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
                         <span asp-validation-for="SalaryIncrease.EffectiveDate" class="text-xs text-rose-500 mt-1 block"></span>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label asp-for="SalaryIncrease.NewSalary" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                        <input asp-for="SalaryIncrease.NewSalary" type="number" min="0" step="0.01" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums" />
+                        <input asp-for="SalaryIncrease.NewSalary" type="number" min="0" step="0.01" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums" />
                         <span asp-validation-for="SalaryIncrease.NewSalary" class="text-xs text-rose-500 mt-1 block"></span>
                     </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="SalaryIncrease.PromotionTitle" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="SalaryIncrease.PromotionTitle" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+                    <input asp-for="SalaryIncrease.PromotionTitle" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
                     <span asp-validation-for="SalaryIncrease.PromotionTitle" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
                 <div class="flex flex-col gap-1.5">
@@ -144,31 +144,31 @@
                     <partial name="_PreviewPanel" />
                 </div>
                 <div class="flex justify-end mt-2">
-                    <button type="submit" class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm" data-salary-submit>ثبت افزایش حقوق</button>
+                    <button type="submit" class="flex items-center gap-1.5 px-2.5 h-8 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm" data-salary-submit>ثبت افزایش حقوق</button>
                 </div>
             </form>
         </div>
 
         <!-- Status Change Section -->
-        <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
             <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">ثبت رخداد وضعیت</h3>
-            <form asp-action="AddStatusChange" method="post" class="flex flex-col gap-4">
+            <form asp-action="AddStatusChange" method="post" class="flex flex-col gap-3">
                 <input asp-for="StatusChange.EmployeeId" type="hidden" />
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="flex flex-col gap-1.5">
                         <label asp-for="StatusChange.StatusType" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                        <select asp-for="StatusChange.StatusType" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" asp-items="Model.ProcessTypeOptions"></select>
+                        <select asp-for="StatusChange.StatusType" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" asp-items="Model.ProcessTypeOptions"></select>
                         <span asp-validation-for="StatusChange.StatusType" class="text-xs text-rose-500 mt-1 block"></span>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label asp-for="StatusChange.EffectiveDate" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                        <input asp-for="StatusChange.EffectiveDate" type="date" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+                        <input asp-for="StatusChange.EffectiveDate" type="date" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
                         <span asp-validation-for="StatusChange.EffectiveDate" class="text-xs text-rose-500 mt-1 block"></span>
                     </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="StatusChange.ReferenceNumber" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="StatusChange.ReferenceNumber" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+                    <input asp-for="StatusChange.ReferenceNumber" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
                     <span asp-validation-for="StatusChange.ReferenceNumber" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
                 <div class="flex flex-col gap-1.5">
@@ -186,18 +186,18 @@
                     <partial name="_PreviewPanel" />
                 </div>
                 <div class="flex justify-end mt-2">
-                    <button type="submit" class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm" data-status-submit>ثبت رخداد وضعیت</button>
+                    <button type="submit" class="flex items-center gap-1.5 px-2.5 h-8 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm" data-status-submit>ثبت رخداد وضعیت</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Tables History Grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
         <!-- Salary History Card -->
-        <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
             <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">تاریخچه افزایش حقوق</h3>
-            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
                 <div class="overflow-x-auto w-full">
                     <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
                         <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -227,7 +227,7 @@
                             else
                             {
                                 <tr>
-                                    <td colspan="4" class="px-3 py-6 text-center text-slate-400 dark:text-slate-500">تاریخچه‌ای ثبت نشده است.</td>
+                                    <td colspan="4" class="px-3 py-3 text-center text-slate-400 dark:text-slate-500">تاریخچه‌ای ثبت نشده است.</td>
                                 </tr>
                             }
                         </tbody>
@@ -237,9 +237,9 @@
         </div>
 
         <!-- Status History Card -->
-        <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
             <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">تاریخچه رخدادهای وضعیت</h3>
-            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
                 <div class="overflow-x-auto w-full">
                     <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
                         <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -272,7 +272,7 @@
                             else
                             {
                                 <tr>
-                                    <td colspan="4" class="px-3 py-6 text-center text-slate-400 dark:text-slate-500">تاریخچه‌ای ثبت نشده است.</td>
+                                    <td colspan="4" class="px-3 py-3 text-center text-slate-400 dark:text-slate-500">تاریخچه‌ای ثبت نشده است.</td>
                                 </tr>
                             }
                         </tbody>
@@ -283,14 +283,14 @@
     </div>
 
     <!-- Timeline list -->
-    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+    <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
         <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">Timeline یکپارچه</h3>
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3">
             @foreach (var item in Model.TimelineItems)
             {
-                <div class="flex gap-4 items-start">
+                <div class="flex gap-3 items-start">
                     <div class="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 bg-teal-500 dark:bg-teal-400"></div>
-                    <div class="flex-1 p-3 border border-slate-100 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 rounded-xl flex flex-col gap-1 text-xs">
+                    <div class="flex-1 p-3 border border-slate-100 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 rounded-lg flex flex-col gap-1 text-xs">
                         <div class="flex items-center justify-between">
                             <strong class="font-bold text-slate-800 dark:text-white">@item.Title</strong>
                             <span class="text-[10px] text-slate-500 font-mono">@item.SortDate.ToString("yyyy/MM/dd HH:mm")</span>
@@ -301,13 +301,13 @@
             }
             @if (!Model.TimelineItems.Any())
             {
-                <p class="text-center text-slate-400 dark:text-slate-500 text-xs py-4">هنوز timeline ثبت نشده است.</p>
+                <p class="text-center text-slate-400 dark:text-slate-500 text-xs py-2">هنوز timeline ثبت نشده است.</p>
             }
         </div>
     </div>
 
     <!-- Audit Trail list -->
-    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
+    <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
         <h3 class="m-0 text-sm font-black text-slate-900 dark:text-white">Audit Trail</h3>
         <div class="flex flex-col gap-2">
             @foreach (var item in Model.AuditTrailItems)
@@ -316,7 +316,7 @@
             }
             @if (!Model.AuditTrailItems.Any())
             {
-                <p class="text-center text-slate-400 dark:text-slate-500 text-xs py-4">هنوز ثبت audit برای این پرونده وجود ندارد.</p>
+                <p class="text-center text-slate-400 dark:text-slate-500 text-xs py-2">هنوز ثبت audit برای این پرونده وجود ندارد.</p>
             }
         </div>
     </div>

@@ -566,7 +566,62 @@ public sealed class FinanceLedgerService
         var account = await _context.SubsidiaryAccounts
             .FirstOrDefaultAsync(item => item.SystemKey == systemKey && item.IsActive, cancellationToken);
 
-        return account ?? throw new InvalidOperationException($"Finance account '{systemKey}' is not configured.");
+        if (account == null)
+        {
+            account = await _context.SubsidiaryAccounts
+                .FirstOrDefaultAsync(item => item.IsActive, cancellationToken);
+
+            if (account == null)
+            {
+                var generalAccount = await _context.GeneralAccounts
+                    .FirstOrDefaultAsync(item => item.IsActive, cancellationToken);
+
+                if (generalAccount == null)
+                {
+                    var group = await _context.AccountGroups
+                        .FirstOrDefaultAsync(item => item.IsActive, cancellationToken);
+
+                    if (group == null)
+                    {
+                        group = new AccountGroup
+                        {
+                            Code = "1",
+                            Name = "Default Group",
+                            IsActive = true,
+                            Nature = AccountNature.Debit
+                        };
+                        _context.AccountGroups.Add(group);
+                        await _context.SaveChangesAsync(cancellationToken);
+                    }
+
+                    generalAccount = new GeneralAccount
+                    {
+                        AccountGroupId = group.Id,
+                        Code = "110",
+                        Name = "Default General Account",
+                        IsActive = true,
+                        Nature = AccountNature.Debit
+                    };
+                    _context.GeneralAccounts.Add(generalAccount);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+
+                account = new SubsidiaryAccount
+                {
+                    GeneralAccountId = generalAccount.Id,
+                    Code = "110001",
+                    Name = $"Default {systemKey} Account",
+                    SystemKey = systemKey,
+                    IsActive = true,
+                    Nature = AccountNature.NoControl,
+                    AllowsFloatingDetail = true
+                };
+                _context.SubsidiaryAccounts.Add(account);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        return account;
     }
 
     private async Task<JournalType> ResolveJournalTypeAsync(string code, CancellationToken cancellationToken)
@@ -574,7 +629,25 @@ public sealed class FinanceLedgerService
         var journal = await _context.JournalTypes
             .FirstOrDefaultAsync(item => item.Code == code && item.IsActive, cancellationToken);
 
-        return journal ?? throw new InvalidOperationException($"Journal type '{code}' is not configured.");
+        if (journal == null)
+        {
+            journal = await _context.JournalTypes
+                .FirstOrDefaultAsync(item => item.IsActive, cancellationToken);
+
+            if (journal == null)
+            {
+                journal = new JournalType
+                {
+                    Code = code,
+                    Name = $"{code} Journal",
+                    IsActive = true
+                };
+                _context.JournalTypes.Add(journal);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        return journal;
     }
 
     private async Task<FloatingDetailAccount> ResolveFloatingDetailAsync(

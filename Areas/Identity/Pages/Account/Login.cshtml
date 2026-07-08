@@ -5,7 +5,7 @@
 }
 
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" class="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,94 +13,207 @@
     <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
     <style>
         .auth-bg-pattern {
-            background-image: radial-gradient(circle at 1px 1px, rgba(148,163,184,0.12) 1px, transparent 0);
+            background-image: radial-gradient(circle at 1px 1px, rgba(15,23,42,0.015) 1px, transparent 0);
             background-size: 24px 24px;
+        }
+        /* Bulletproof validation summary hiding when valid */
+        .validation-summary-valid,
+        .validation-summary-valid * {
+            display: none !important;
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased auth-bg-pattern">
-    <main class="min-h-screen flex items-center justify-center px-4 py-10">
-        <section class="w-full max-w-md">
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased auth-bg-pattern flex flex-col justify-between relative overflow-hidden">
+    
+    <!-- HTML5 Canvas for Antigravity Mouse-Reactive Effect -->
+    <canvas id="antigravity-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
 
-            <!-- Logo & Brand -->
-            <div class="flex items-center justify-center gap-3 mb-8">
-                <span class="w-10 h-10 rounded-xl bg-slate-900 dark:bg-teal-500 text-white dark:text-slate-950 flex items-center justify-center text-base font-black shadow-md">R</span>
+    <main class="flex-1 flex items-center justify-center px-4 py-12 z-10 relative">
+        <section class="w-full max-w-sm">
+
+            <!-- Logo & Brand (Clean Light Tech Aesthetic) -->
+            <div class="flex flex-col items-center justify-center gap-2 mb-6 text-center select-none">
+                <span class="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm font-black shadow-sm">R</span>
                 <div>
-                    <span class="block text-sm font-black text-slate-900 dark:text-white tracking-tight">راینو ERP</span>
-                    <span class="block text-[10px] text-slate-400 dark:text-slate-500 font-medium">سامانه جامع اتوماسیون اداری</span>
+                    <span class="block text-sm font-extrabold text-slate-900 tracking-tight">راینو ERP</span>
+                    <span class="block text-[10px] text-slate-500 font-medium tracking-wide mt-0.5">WORK PORTAL SYSTEM</span>
                 </div>
             </div>
 
-            <!-- Login Card -->
-            <div class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl p-8 sm:p-10 space-y-6">
+            <!-- Login Card (Glassmorphic light container) -->
+            <div class="w-full bg-white/90 border border-slate-200/80 rounded-xl shadow-xl backdrop-blur-sm p-7 space-y-5">
 
                 <!-- Card Header -->
-                <div class="space-y-1">
-                    <h1 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">خوش آمدید</h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">برای ادامه، وارد حساب کاربری خود شوید.</p>
+                <div class="space-y-1 text-center">
+                    <h1 class="text-base font-extrabold text-slate-900 tracking-tight">خوش آمدید</h1>
+                    <p class="text-[11px] text-slate-500">برای اتصال امن به شبکه سازمانی وارد شوید.</p>
                 </div>
 
-                <!-- Validation Summary -->
+                <!-- Validation Summary (Fixed: Hidden when valid) -->
                 <div asp-validation-summary="All"
-                     class="flex items-start gap-2.5 px-3 py-2.5 border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/30 rounded-xl text-xs text-rose-700 dark:text-rose-300 empty:hidden">
+                     class="flex items-start gap-2.5 px-3 py-2.5 border border-rose-200 bg-rose-50 rounded-md text-[11px] text-rose-700 empty:hidden">
                 </div>
 
                 <!-- Form -->
-                <form method="post" class="space-y-5">
+                <form method="post" class="space-y-4">
 
-                    <!-- Email / Username -->
-                    <div class="space-y-1.5">
-                        <label asp-for="Input.Email" class="block text-xs font-bold text-slate-700 dark:text-slate-300">نام کاربری یا ایمیل</label>
+                    <!-- Email / Username (Fixed Label Highlight) -->
+                    <div class="space-y-1">
+                        <label asp-for="Input.Email" class="block text-[11px] font-bold text-slate-600 bg-transparent p-0 m-0">نام کاربری یا ایمیل</label>
                         <input asp-for="Input.Email"
                                autocomplete="username"
-                               placeholder="name@company.com"
+                               placeholder="username@company.com"
                                dir="ltr"
-                               class="w-full h-12 px-4 text-sm font-mono text-left bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 text-slate-900 dark:text-slate-100 focus:border-teal-400 dark:focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:bg-white dark:focus:bg-slate-800 transition" />
-                        <span asp-validation-for="Input.Email" class="block text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span>
+                               class="w-full h-9 px-3 text-[12px] font-mono text-left bg-white border border-slate-200 rounded-md outline-none placeholder:text-slate-400 text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition duration-150" />
+                        <span asp-validation-for="Input.Email" class="block text-[10px] font-semibold text-rose-600"></span>
                     </div>
 
                     <!-- Password -->
-                    <div class="space-y-1.5">
-                        <label asp-for="Input.Password" class="block text-xs font-bold text-slate-700 dark:text-slate-300">رمز عبور</label>
+                    <div class="space-y-1">
+                        <label asp-for="Input.Password" class="block text-[11px] font-bold text-slate-600 bg-transparent p-0 m-0">رمز عبور</label>
                         <input asp-for="Input.Password"
                                type="password"
                                autocomplete="current-password"
                                placeholder="••••••••"
-                               class="w-full h-12 px-4 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 text-slate-900 dark:text-slate-100 focus:border-teal-400 dark:focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:bg-white dark:focus:bg-slate-800 transition" />
-                        <span asp-validation-for="Input.Password" class="block text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span>
+                               class="w-full h-9 px-3 text-[12px] bg-white border border-slate-200 rounded-md outline-none placeholder:text-slate-400 text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition duration-150" />
+                        <span asp-validation-for="Input.Password" class="block text-[10px] font-semibold text-rose-600"></span>
                     </div>
 
                     <!-- Remember Me & Forgot -->
-                    <div class="flex items-center justify-between gap-3">
-                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <div class="flex items-center justify-between gap-3 pt-0.5">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
                             <input asp-for="Input.RememberMe"
                                    type="checkbox"
-                                   class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-teal-600 focus:ring-2 focus:ring-teal-500/20 accent-teal-600" />
-                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">مرا به خاطر بسپار</span>
+                                   class="w-3.5 h-3.5 rounded border-slate-300 bg-white text-teal-600 focus:ring-2 focus:ring-teal-500/10 accent-teal-600" />
+                            <span class="text-[11px] font-medium text-slate-500">مرا به خاطر بسپار</span>
                         </label>
                         <a asp-area="Identity" asp-page="/Account/ForgotPassword"
-                           class="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline no-underline transition">
+                           class="text-[11px] font-bold text-teal-600 hover:text-teal-500 hover:underline no-underline transition">
                             فراموشی رمز عبور؟
                         </a>
                     </div>
 
                     <!-- Submit Button -->
                     <button type="submit"
-                            class="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-sm font-black rounded-xl transition-colors duration-150 shadow-sm flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-teal-500/30">
-                        <i class="bi bi-box-arrow-in-right text-base"></i>
-                        <span>ورود به سیستم</span>
+                            class="w-full py-2 px-3 bg-teal-600 hover:bg-teal-500 active:scale-[0.985] text-white text-[12px] font-bold rounded-md transition-all duration-150 shadow-md shadow-teal-500/10 flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+                        <i class="bi bi-box-arrow-in-right text-xs"></i>
+                        <span>ورود به سامانه</span>
                     </button>
                 </form>
             </div>
 
             <!-- Footer note -->
-            <p class="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-600">
-                Rhyno Automation &mdash; Secure Workspace &copy; @DateTime.Now.Year
+            <p class="mt-5 text-center text-[10px] text-slate-400 select-none">
+                Rhyno Automation &mdash; Workspace &copy; @DateTime.Now.Year
             </p>
 
         </section>
     </main>
 
     <partial name="_ValidationScriptsPartial" />
+
+    <!-- Lightweight Interactive Antigravity Mouse Particle Effect Script -->
+    <script>
+        (() => {
+            const canvas = document.getElementById('antigravity-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let w, h;
+            const particles = [];
+            const mouse = { x: null, y: null, radius: 110 };
+
+            window.addEventListener('resize', resizeCanvas);
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+            window.addEventListener('mouseleave', () => {
+                mouse.x = null;
+                mouse.y = null;
+            });
+
+            function resizeCanvas() {
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+            }
+
+            const colors = [
+                'rgba(66, 133, 244, 0.35)',  // Google Blue
+                'rgba(234, 67, 53, 0.35)',   // Google Red / Coral
+                'rgba(251, 188, 5, 0.4)',    // Google Yellow / Gold
+                'rgba(52, 168, 83, 0.35)',   // Google Green
+                'rgba(168, 85, 247, 0.35)',  // Electric Purple
+                'rgba(236, 72, 153, 0.35)'   // Magenta / Pink
+            ];
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * w;
+                    this.y = Math.random() * h;
+                    this.size = Math.random() * 3 + 1.5;
+                    this.speedX = Math.random() * 0.3 - 0.15;
+                    this.speedY = -(Math.random() * 0.4 + 0.1); // Slowly float up
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                }
+                update() {
+                    this.y += this.speedY;
+                    this.x += this.speedX;
+                    
+                    if (this.y < -10) {
+                        this.y = h + 10;
+                        this.x = Math.random() * w;
+                    }
+                    if (this.x < -10 || this.x > w + 10) {
+                        this.x = Math.random() * w;
+                    }
+
+                    // Smooth parallax repulsion from cursor
+                    if (mouse.x !== null && mouse.y !== null) {
+                        const dx = mouse.x - this.x;
+                        const dy = mouse.y - this.y;
+                        const distance = Math.hypot(dx, dy);
+                        if (distance < mouse.radius) {
+                            const force = (mouse.radius - distance) / mouse.radius;
+                            const directionX = dx / distance;
+                            const directionY = dy / distance;
+                            // Smoothly drift opposite to mouse direction
+                            this.x -= directionX * force * 1.8;
+                            this.y -= directionY * force * 1.8;
+                        }
+                    }
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function init() {
+                resizeCanvas();
+                particles.length = 0;
+                const particleCount = Math.min(Math.floor(w * h / 18000), 75);
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, w, h);
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                }
+                requestAnimationFrame(animate);
+            }
+
+            init();
+            animate();
+        })();
+    </script>
 </body>
 </html>
+
+
+

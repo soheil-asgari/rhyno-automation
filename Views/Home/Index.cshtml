@@ -29,7 +29,7 @@
         }
 
         .drag-mode .dashboard-panel {
-            border: 2px dashed #0d9488 !important;
+            border: 2px dashed var(--primary) !important;
             opacity: 0.85;
             position: relative;
             cursor: move;
@@ -39,7 +39,7 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: rgba(13, 148, 136, 0.03);
+            background: color-mix(in srgb, var(--primary) 3%, transparent);
             z-index: 10;
         }
 
@@ -102,15 +102,15 @@
         }
 
         .days-grid span:not(.off):not(.today):hover {
-            background-color: rgba(13, 148, 136, 0.12);
-            color: #0d9488;
+            background-color: color-mix(in srgb, var(--primary) 12%, transparent);
+            color: var(--primary);
         }
 
         .days-grid span.today {
-            background-color: #0d9488;
+            background-color: var(--primary);
             color: #ffffff;
             font-weight: 800;
-            box-shadow: 0 2px 8px rgba(13, 148, 136, 0.4);
+            box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 40%, transparent);
         }
 
         .days-grid span.holiday {
@@ -124,20 +124,20 @@
 
         /* Weekly activity custom bar chart */
         .weekly-activity-chart-bar {
-            background-color: #0d9488;
+            background-color: var(--primary);
             transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .dark .weekly-activity-chart-bar,
         .theme-dark .weekly-activity-chart-bar,
         [data-theme="dark"] .weekly-activity-chart-bar {
-            background-color: #2dd4bf;
+            background-color: var(--primary);
         }
     </style>
 }
 
-<div class="executive-dashboard w-full h-full min-h-full flex-1 flex flex-col gap-3 p-2.5 md:p-3 border border-slate-200 dark:border-slate-800/80 rounded-[2rem] transition-all duration-300 bg-transparent">
+<div class="executive-dashboard w-full h-full min-h-full flex-1 flex flex-col gap-2 p-2 border border-slate-200 dark:border-slate-800/80 rounded-lg transition-all duration-300 bg-transparent">
     <!-- Header Card -->
-    <header class="flex items-center justify-between gap-3 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+    <header class="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
         <div class="min-w-0 flex items-center gap-3">
             <div class="min-w-0">
                 <div class="flex items-center gap-2">
@@ -160,8 +160,8 @@
     </header>
 
     <!-- Customization Config Panel -->
-    <div id="customizationPanel" class="p-3 border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-md rounded-2xl hidden transition-all duration-300">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+    <div id="customizationPanel" class="p-2.5 border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-md rounded-lg hidden transition-all duration-300">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2.5">
             <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <i class="bi bi-palette text-teal-600 dark:text-teal-400"></i>
                 تنظیمات ظاهر و چیدمان داشبورد
@@ -169,7 +169,7 @@
             <button type="button" id="btnCloseCustomization" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 border-0 bg-transparent cursor-pointer"><i class="bi bi-x-lg text-xs"></i></button>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <!-- Background Options -->
             <div class="flex flex-col gap-2">
                 <span class="text-xs font-bold text-slate-700 dark:text-slate-300">پس‌زمینه داشبورد</span>
@@ -239,7 +239,7 @@
     </div>
 
     <!-- Summary Statistics Grid (KPI Widgets) -->
-    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 w-full">
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 w-full">
         @{
             var kpiColors = new[]
             {
@@ -258,12 +258,12 @@
         {
             var iconColor = kpiColors[kpiIndex % kpiColors.Length];
             kpiIndex++;
-            <a href="@metric.Url" class="group flex items-center gap-2.5 p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.015] active:scale-[0.99] transition-all duration-150 no-underline" data-metric-id="@metric.Title">
+            <a href="@metric.Url" class="group flex items-center gap-2 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm hover:shadow-md hover:scale-[1.015] active:scale-[0.99] transition-all duration-150 no-underline" data-metric-id="@metric.Title">
                 <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg @iconColor text-sm transition group-hover:scale-110">
                     <i class="bi @metric.Icon"></i>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <strong class="block text-lg font-black text-slate-800 dark:text-slate-100 font-mono tabular-nums leading-tight">@metric.Value</strong>
+                    <strong class="block text-sm font-black text-slate-800 dark:text-slate-100 font-mono tabular-nums leading-tight">@metric.Value</strong>
                     <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium block truncate leading-tight">@metric.Title</span>
                 </div>
             </a>
@@ -271,11 +271,11 @@
     </section>
 
     <!-- Bento Grid (Widgets Layout) -->
-    <div id="widgetsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 w-full">
+    <div id="widgetsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 w-full">
         
         <!-- Widget 1: Pending Work -->
-        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="pending-work">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="pending-work">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center gap-2">
                     <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">کارهای در انتظار اقدام</h2>
@@ -289,10 +289,10 @@
             <div class="flex-1 flex flex-col justify-between">
                 @if (Model.PendingWorkItems.Count == 0)
                 {
-                    <div class="flex flex-col items-center justify-center py-12 text-center text-slate-400 dark:text-slate-500">
-                        <i class="bi bi-inbox text-3xl mb-2"></i>
+                    <div class="flex flex-col items-center justify-center py-4 text-center text-slate-400 dark:text-slate-500">
+                        <i class="bi bi-inbox text-lg mb-1.5"></i>
                         <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">موردی برای اقدام فوری وجود ندارد</strong>
-                        <p class="text-[10px] mt-1 leading-normal">کارهای ارجاع‌شده در صندوق ورودی نمایش داده می‌شوند.</p>
+                        <p class="text-[10px] mt-0.5 leading-normal">کارهای ارجاع‌شده در صندوق ورودی نمایش داده می‌شوند.</p>
                     </div>
                 }
                 else
@@ -308,7 +308,7 @@
                                 "rejected" or "رد شد" => "bg-rose-500 text-white dark:bg-rose-600",
                                 _ => "bg-blue-500 text-white dark:bg-blue-600"
                             };
-                            <a href="@item.Url" class="flex items-center gap-2.5 px-2 py-1.5 border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-950/20 rounded-lg text-slate-700 dark:text-slate-300 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-200">
+                            <a href="@item.Url" class="flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-955/20 rounded-md text-slate-700 dark:text-slate-300 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-200">
                                 <div class="w-7 h-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 text-teal-600 dark:text-teal-400 text-xs flex-shrink-0">
                                     <i class="bi @item.Icon"></i>
                                 </div>
@@ -327,8 +327,8 @@
         </div>
 
         <!-- Widget 2: Interactive Persian Calendar -->
-        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="calendar">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="calendar">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center gap-2">
                     <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">تقویم و مناسبت‌ها</h2>
@@ -353,7 +353,7 @@
                 <div id="eventLoader" class="flex justify-center py-2 hidden">
                     <div class="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-800 border-t-teal-650 dark:border-t-teal-400" role="status"></div>
                 </div>
-                <div id="eventContent" class="mt-3 rounded-xl bg-slate-50 dark:bg-slate-950 p-3 border border-slate-100 dark:border-slate-850">
+                <div id="eventContent" class="mt-2 rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-850">
                     <div class="flex items-start gap-2.5">
                         <i class="bi bi-info-circle text-teal-600 dark:text-teal-400 mt-0.5 text-sm"></i>
                         <p id="eventDisplay" class="m-0 text-[11px] leading-5 text-slate-600 dark:text-slate-400">در حال دریافت رویدادهای این روز...</p>
@@ -363,8 +363,8 @@
         </div>
 
         <!-- Widget 3: System Alerts -->
-        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="system-alerts">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="system-alerts">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center gap-2">
                     <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">هشدارهای عملیاتی</h2>
@@ -375,8 +375,8 @@
             <div class="flex-1 flex flex-col justify-between">
                 @if (Model.SystemAlerts.Count == 0)
                 {
-                    <div class="flex flex-col items-center justify-center py-12 text-center text-slate-400 dark:text-slate-500">
-                        <i class="bi bi-bell-slash text-3xl mb-2"></i>
+                    <div class="flex flex-col items-center justify-center py-5 text-center text-slate-400 dark:text-slate-500">
+                        <i class="bi bi-bell-slash text-xl mb-2"></i>
                         <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">هشدار فعالی وجود ندارد</strong>
                         <p class="text-[10px] mt-1">سیستم در وضعیت عادی و پایدار است.</p>
                     </div>
@@ -394,8 +394,8 @@
                                 "success" => "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/70",
                                 _ => "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100/70"
                             };
-                            <a href="@alert.Url" class="flex gap-2.5 p-2.5 rounded-xl border text-decoration-none transition duration-200 @severityClass">
-                                <i class="bi @alert.Icon text-base flex-shrink-0 mt-0.5"></i>
+                            <a href="@alert.Url" class="flex gap-2 p-2 rounded-lg border text-decoration-none transition duration-200 @severityClass">
+                                <i class="bi @alert.Icon text-sm flex-shrink-0 mt-0.5"></i>
                                 <span>
                                     <strong class="text-xs font-bold block leading-tight">@alert.Title</strong>
                                     <small class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5 block">@alert.Description</small>
@@ -408,8 +408,8 @@
         </div>
 
         <!-- Widget 4: Weekly Activity -->
-        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="weekly-activity">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="weekly-activity">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center gap-2">
                     <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">فعالیت هفت روز اخیر</h2>
@@ -418,12 +418,12 @@
             </div>
             
             <div class="flex-1 flex flex-col justify-between">
-                <div class="h-40 flex items-end gap-3 pt-4 justify-between">
+                <div class="h-24 flex items-end gap-1.5 pt-2 justify-between">
                     @foreach (var point in Model.WeeklyActivity)
                     {
-                        <div class="flex flex-col items-center gap-2 flex-1 min-w-0">
-                            <div class="h-32 w-full flex items-end rounded-lg bg-slate-50 dark:bg-slate-955 p-1 border border-slate-200/50 dark:border-slate-800/50">
-                                <div class="weekly-activity-chart-bar w-full rounded-md hover:bg-teal-500/80 dark:hover:bg-teal-400/80 transition-all duration-300 cursor-pointer" style="height: @(point.Percent)%" title="@point.Value رخداد سیستمی"></div>
+                        <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
+                            <div class="h-16 w-full flex items-end rounded-md bg-slate-50 dark:bg-slate-955 p-0.5 border border-slate-200/50 dark:border-slate-800/50">
+                                <div class="weekly-activity-chart-bar w-full rounded-sm hover:bg-teal-500/80 dark:hover:bg-teal-400/80 transition-all duration-300 cursor-pointer" style="height: @(point.Percent)%" title="@point.Value رخداد سیستمی"></div>
                             </div>
                             <small class="truncate text-[9px] text-slate-500 dark:text-slate-400 font-bold font-mono">
                                 @(point.Label.Length >= 2 ? point.Label[^2..] : point.Label)
@@ -435,8 +435,8 @@
         </div>
 
         <!-- Widget 5: Recent Audit Activities -->
-        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="recent-activity">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="recent-activity">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center gap-2">
                     <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">آخرین فعالیت‌های سیستم</h2>
@@ -447,8 +447,8 @@
             <div class="flex-1 flex flex-col justify-between">
                 @if (Model.RecentActivities.Count == 0)
                 {
-                    <div class="flex flex-col items-center justify-center py-12 text-center text-slate-400 dark:text-slate-500">
-                        <i class="bi bi-activity text-3xl mb-2"></i>
+                    <div class="flex flex-col items-center justify-center py-5 text-center text-slate-400 dark:text-slate-500">
+                        <i class="bi bi-activity text-xl mb-2"></i>
                         <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">هنوز رخدادی ثبت نشده است</strong>
                     </div>
                 }
@@ -464,7 +464,7 @@
                                 "danger" => "bg-rose-500 text-white",
                                 _ => "bg-slate-400 text-white"
                             };
-                            <div class="flex items-center justify-between gap-2 px-2 py-1.5 border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/20 rounded-lg">
+                            <div class="flex items-center justify-between gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-955/20 rounded-md">
                                 <span class="min-w-0">
                                     <strong class="block text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">@item.DocumentType</strong>
                                     <small class="block text-[10px] text-slate-500 dark:text-slate-400 font-mono">@item.DateText</small>
@@ -478,8 +478,8 @@
         </div>
 
         <!-- Widget 6: Quick Shortcuts -->
-        <div class="dashboard-panel p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="quick-shortcuts">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
+        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="quick-shortcuts">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1 mb-1.5">
                 <div class="flex items-center gap-2">
                     <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-xs font-bold text-slate-700 dark:text-slate-300">دسترسی سریع</h2>
@@ -491,7 +491,7 @@
                 <div class="grid grid-cols-2 gap-1.5">
                     @foreach (var shortcut in shortcuts)
                     {
-                        <a href="@shortcut.Url" class="group flex items-center gap-2 px-2 py-1.5 border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 rounded-lg text-slate-800 dark:text-slate-200 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-150">
+                        <a href="@shortcut.Url" class="group flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-955/20 rounded-md text-slate-800 dark:text-slate-200 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-150">
                             <i class="bi @shortcut.Icon text-xs text-slate-500 dark:text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 flex-shrink-0"></i>
                             <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">@shortcut.Title</span>
                         </a>

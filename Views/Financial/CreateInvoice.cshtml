@@ -4,65 +4,65 @@
     var backAction = ViewBag.BackToListAction as string ?? "Sales";
 }
 
-<div class="container-fluid py-4" dir="rtl">
-    <h6 class="text-sm font-black text-slate-900 dark:text-white mb-3">ثبت فاکتور خرید/فروش</h6>
+<div class="container-fluid py-3" dir="rtl">
+    <h6 class="text-xs font-black text-slate-900 dark:text-white mb-2.5">ثبت فاکتور خرید/فروش</h6>
     
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto">
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-2.5 overflow-x-auto">
         <form asp-action="CreateInvoice" method="post" id="invoiceForm">
             <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
                 <div class="flex flex-col gap-1">
                     <label asp-for="InvoiceNumber" class="text-xs font-bold text-slate-500 dark:text-slate-400">شماره فاکتور</label>
-                    <input asp-for="InvoiceNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <input asp-for="InvoiceNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
                     <div id="invoiceNumberHint" class="small text-danger mt-1 d-none"></div>
                 </div>
                 <div class="flex flex-col gap-1">
                     <label asp-for="InvoiceType" class="text-xs font-bold text-slate-500 dark:text-slate-400">نوع فاکتور</label>
-                    <select asp-for="InvoiceType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                    <select asp-for="InvoiceType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                         <option value="Sale">فروش</option>
                         <option value="Purchase">خرید</option>
                     </select>
                 </div>
                 <div class="flex flex-col gap-1">
                     <label asp-for="DateShamsi" class="text-xs font-bold text-slate-500 dark:text-slate-400">تاریخ</label>
-                    <input asp-for="DateShamsi" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <input asp-for="DateShamsi" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
                 </div>
                 <div class="lg:col-span-2 flex flex-col gap-1">
                     <label asp-for="EmployerId" class="text-xs font-bold text-slate-500 dark:text-slate-400 sale-only d-none">کارفرما</label>
-                    <select asp-for="EmployerId" asp-items="Model.EmployerOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                    <select asp-for="EmployerId" asp-items="Model.EmployerOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                         <option value="">انتخاب کارفرما</option>
                     </select>
                     <label asp-for="PartyName" class="text-xs font-bold text-slate-500 dark:text-slate-400 purchase-only d-none">طرف معامله</label>
-                    <input asp-for="PartyName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <input asp-for="PartyName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
                 </div>
                 <div class="flex flex-col gap-1">
                     <label asp-for="NationalCodeOrEconomicId" class="text-xs font-bold text-slate-500 dark:text-slate-400">شناسه ملی/کد اقتصادی</label>
-                    <input asp-for="NationalCodeOrEconomicId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <input asp-for="NationalCodeOrEconomicId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
                 </div>
                 
                 <div class="purchase-only d-none flex flex-col gap-1 lg:col-span-2">
                     <label asp-for="WarehouseReceiptId" class="text-xs font-bold text-slate-500 dark:text-slate-400">رسید انبار</label>
-                    <select asp-for="WarehouseReceiptId" asp-items="Model.WarehouseReceiptOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                    <select asp-for="WarehouseReceiptId" asp-items="Model.WarehouseReceiptOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                         <option value="">انتخاب رسید انبار</option>
                     </select>
                 </div>
                 <div class="purchase-only d-none flex flex-col gap-1 lg:col-span-2">
                     <label asp-for="FollowUpEmployeeId" class="text-xs font-bold text-slate-500 dark:text-slate-400">مسئول پیگیری</label>
-                    <select asp-for="FollowUpEmployeeId" asp-items="Model.FollowUpEmployeeOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                    <select asp-for="FollowUpEmployeeId" asp-items="Model.FollowUpEmployeeOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                         <option value="">انتخاب مسئول پیگیری</option>
                     </select>
                 </div>
                 <div class="purchase-only d-none flex flex-col gap-1 lg:col-span-2">
                     <label asp-for="DeadlineDateShamsi" class="text-xs font-bold text-slate-500 dark:text-slate-400">مهلت پرداخت</label>
-                    <input asp-for="DeadlineDateShamsi" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="1405/12/29" />
+                    <input asp-for="DeadlineDateShamsi" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="1405/12/29" />
                 </div>
                 <div class="lg:col-span-6 flex flex-col gap-1">
                     <label asp-for="Notes" class="text-xs font-bold text-slate-500 dark:text-slate-400">یادداشت</label>
-                    <textarea asp-for="Notes" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" rows="2"></textarea>
+                    <textarea asp-for="Notes" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" rows="2"></textarea>
                 </div>
             </div>
 
-            <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
                 <h6 class="text-xs font-bold text-slate-900 dark:text-white">اقلام فاکتور</h6>
                 <button type="button" id="addInvoiceRow" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1">+ افزودن ردیف</button>
             </div>
@@ -85,29 +85,29 @@
                 </table>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                 <div class="flex flex-col gap-1">
                     <label asp-for="SubTotal" class="text-xs font-bold text-slate-500 dark:text-slate-400">جمع جزء</label>
-                    <input asp-for="SubTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly />
+                    <input asp-for="SubTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly />
                 </div>
                 <div class="flex flex-col gap-1">
                     <label asp-for="VatAmount" class="text-xs font-bold text-slate-500 dark:text-slate-400">مالیات بر ارزش افزوده (VAT)</label>
-                    <input asp-for="VatAmount" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly />
+                    <input asp-for="VatAmount" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly />
                 </div>
                 <div class="flex flex-col gap-1">
                     <label asp-for="GrandTotal" class="text-xs font-bold text-slate-500 dark:text-slate-400">جمع کل</label>
-                    <input asp-for="GrandTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left font-bold" readonly />
+                    <input asp-for="GrandTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left font-bold" readonly />
                 </div>
             </div>
 
-            <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-400 mt-4" id="invoicePreviewPanel">
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-600 dark:text-slate-400 mt-4" id="invoicePreviewPanel">
                 پیش‌نمایش فاکتور بعد از تکمیل فرم در همین‌جا نمایش داده می‌شود.
             </div>
 
-            <div class="flex items-center gap-2 mt-6">
-                <button type="button" id="previewInvoiceButton" class="h-9 rounded-xl border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-4 text-xs font-bold text-slate-700 dark:text-slate-350 transition">پیش‌نمایش</button>
-                <button type="submit" id="submitInvoiceButton" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">ذخیره فاکتور</button>
-                <a asp-action="@backAction" class="h-9 rounded-xl border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-4 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center justify-center no-underline">بازگشت</a>
+            <div class="flex items-center gap-2 mt-3">
+                <button type="button" id="previewInvoiceButton" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-4 text-xs font-bold text-slate-700 dark:text-slate-350 transition">پیش‌نمایش</button>
+                <button type="submit" id="submitInvoiceButton" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">ذخیره فاکتور</button>
+                <a asp-action="@backAction" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-4 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center justify-center no-underline">بازگشت</a>
             </div>
         </form>
     </div>
@@ -116,7 +116,7 @@
 <template id="invoiceRowTemplate">
     <tr>
         <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">
-            <select data-field="ProductId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+            <select data-field="ProductId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                 <option value="">-</option>
                 @foreach (var item in Model.ProductOptions)
                 {
@@ -124,12 +124,12 @@
                 }
             </select>
         </td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input data-field="ItemName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="Quantity" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left line-calc" min="0.001" step="0.001" /></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="UnitPrice" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left line-calc" min="0" step="0.01" /></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="LineSubTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly /></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="LineVatAmount" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly /></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="LineGrandTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input data-field="ItemName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="Quantity" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left line-calc" min="0.001" step="0.001" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="UnitPrice" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left line-calc" min="0" step="0.01" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="LineSubTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="LineVatAmount" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input type="number" data-field="LineGrandTotal" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono tabular-nums text-left" readonly /></td>
         <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center"><button type="button" class="h-7 rounded bg-rose-600 hover:bg-rose-700 text-white px-3.5 text-[10px] font-bold removeRow">حذف</button></td>
     </tr>
 </template>
