@@ -3,147 +3,149 @@
     ViewData["Title"] = "گزارش‌ها و خروجی‌ها";
 }
 
-<div class="page-shell reports-page" dir="rtl">
-    <section class="reports-hero">
-        <div class="reports-hero-copy">
-            <span class="reports-eyebrow">مرکز گزارش‌ها</span>
-            <h1 class="section-title">گزارش‌ها و خروجی‌ها</h1>
-            <p class="section-subtitle">
-                گزارش‌های عملیاتی، مدیریتی و انطباق را از یک صفحه واحد باز کنید؛
-                خروجی‌های اکسل سریع بگیرید و بین ماژول‌های تحلیلی جابه‌جا شوید.
-            </p>
+<div class="w-full flex-1 flex flex-col gap-6" dir="rtl">
+    <!-- Hero / Header Section -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+        <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">مرکز گزارش‌ها</span>
+            <h1 class="text-lg font-black text-slate-900 dark:text-white mt-1">گزارش‌ها و خروجی‌ها</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">گزارش‌های عملیاتی، مدیریتی و انطباق را از یک صفحه واحد باز کرده و خروجی‌های سریع بگیرید.</p>
         </div>
-        <div class="reports-hero-actions">
-            <a href="#report-sections" class="btn btn-primary">
-                <i class="bi bi-grid-1x2"></i>
-                مرور گزارش‌ها
-            </a>
-            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+        <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition shadow-sm">
                 <i class="bi bi-printer"></i>
-                چاپ صفحه
+                <span>چاپ صفحه</span>
             </button>
         </div>
-    </section>
+    </header>
 
-    <section class="reports-summary-grid">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         @foreach (var card in Model.SummaryCards)
         {
-            <article class="report-summary-card report-tone-@card.Tone">
-                <div class="report-summary-top">
-                    <span class="summary-label">@card.Title</span>
-                    <span class="report-tone-pill">@card.Tone</span>
-                </div>
-                <div class="summary-value">@card.Value</div>
-                <p class="summary-desc">@card.Description</p>
-            </article>
+            var toneColor = card.Tone switch {
+                "success" => "border-emerald-200 bg-emerald-50/10 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/10 dark:text-emerald-450",
+                "danger" => "border-rose-200 bg-rose-50/10 text-rose-800 dark:border-rose-900/30 dark:bg-rose-955/10 dark:text-rose-450",
+                "warning" => "border-amber-200 bg-amber-50/10 text-amber-800 dark:border-amber-900/30 dark:bg-amber-955/10 dark:text-amber-450",
+                "info" => "border-sky-200 bg-sky-50/10 text-sky-800 dark:border-sky-900/30 dark:bg-sky-955/10 dark:text-sky-450",
+                _ => "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+            };
+            <div class="rounded-2xl border p-4 shadow-sm @toneColor">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">@card.Title</span>
+                <h3 class="text-2xl font-black mt-2 font-mono tabular-nums">@card.Value</h3>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">@card.Description</p>
+            </div>
         }
-    </section>
+    </div>
 
-    <section class="report-filter-bar">
+    <!-- Quick Filters -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <div class="filter-title">فیلترهای سریع</div>
-            <p class="filter-subtitle">برای دسترسی سریع به بازه‌های پرکاربرد و نماهای مقایسه‌ای.</p>
+            <h3 class="text-xs font-black text-slate-900 dark:text-white">فیلترهای سریع</h3>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">برای دسترسی سریع به بازه‌های پرکاربرد و نماهای مقایسه‌ای.</p>
         </div>
-        <div class="filter-actions">
+        <div class="flex flex-wrap gap-2">
             @foreach (var preset in Model.FilterPresets)
             {
-                <a href="@preset.Url" class="report-chip">
-                    <i class="bi bi-funnel"></i>
-                    @preset.Label
+                <a href="@preset.Url" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350 dark:hover:bg-slate-800 text-xs font-bold transition no-underline">
+                    <i class="bi bi-funnel text-[10px]"></i>
+                    <span>@preset.Label</span>
                 </a>
             }
         </div>
-    </section>
+    </div>
 
-    <div id="report-sections" class="reports-section-stack">
+    <!-- Categories Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach (var reportSection in Model.Sections)
         {
-            <section class="report-section report-tone-@reportSection.Tone">
-                <div class="report-section-head">
-                    <div>
-                        <div class="report-section-kicker">دسته‌بندی</div>
-                        <h2 class="report-section-title">@reportSection.Title</h2>
-                        <p class="report-section-desc">@reportSection.Description</p>
+            var sectionBadgeClass = reportSection.Tone switch {
+                "success" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
+                "danger" => "bg-rose-100 text-rose-700 dark:bg-rose-955/40 dark:text-rose-400",
+                "warning" => "bg-amber-100 text-amber-700 dark:bg-amber-955/40 dark:text-amber-400",
+                "info" => "bg-sky-100 text-sky-700 dark:bg-sky-955/40 dark:text-sky-400",
+                _ => "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            };
+            <!-- Section Card -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">دسته‌بندی</span>
+                        <span class="rounded-md px-2 py-1 text-xs font-bold @sectionBadgeClass">@reportSection.Modules.Count ماژول</span>
                     </div>
-                    <span class="report-section-badge">@reportSection.Modules.Count ماژول</span>
-                </div>
-
-                <div class="reports-grid">
-                    @foreach (var module in reportSection.Modules)
-                    {
-                        <article class="report-module-card">
-                            <div class="report-module-head">
-                                <div class="report-icon report-tone-@module.Tone">
+                    <h2 class="text-sm font-black text-slate-900 dark:text-white mb-1">@reportSection.Title</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">@reportSection.Description</p>
+                    
+                    <div class="space-y-4">
+                        @foreach (var module in reportSection.Modules)
+                        {
+                            <div class="border-t border-slate-100 dark:border-slate-805/60 pt-4 flex items-start gap-3">
+                                <div class="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-850 flex-shrink-0">
                                     <i class="bi @module.Icon"></i>
                                 </div>
-                                <div>
-                                    <h3 class="report-title">@module.Title</h3>
-                                    <p class="report-description">@module.Description</p>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-xs font-black text-slate-800 dark:text-slate-200">@module.Title</h4>
+                                    <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">@module.Description</p>
+                                    
+                                    <div class="flex flex-wrap gap-1.5 mt-2">
+                                        @foreach (var action in module.Actions)
+                                        {
+                                            var icon = action.Kind == "Excel" ? "bi-file-earmark-excel" : action.Kind == "Search" ? "bi-search" : "bi-bar-chart";
+                                            var badgeClass = action.Kind == "Excel" ? "bg-emerald-100 text-emerald-750 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-sky-100 text-sky-750 dark:bg-sky-955/40 dark:text-sky-400";
+                                            <a href="@action.Url" class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold @badgeClass no-underline transition hover:opacity-85">
+                                                <i class="bi @icon"></i>
+                                                <span>@action.Label</span>
+                                            </a>
+                                        }
+                                    </div>
                                 </div>
                             </div>
-
-                            <div class="report-actions">
-                                @foreach (var action in module.Actions)
-                                {
-                                    var icon = action.Kind == "Excel" ? "bi-file-earmark-excel" : action.Kind == "Search" ? "bi-search" : "bi-bar-chart";
-                                    var cssClass = action.Kind == "Excel" ? "report-action report-action-excel" : "report-action";
-                                    <a href="@action.Url" class="@cssClass">
-                                        <i class="bi @icon"></i>
-                                        @action.Label
-                                    </a>
-                                }
-                            </div>
-                        </article>
-                    }
+                        }
+                    </div>
                 </div>
-            </section>
+            </div>
         }
 
-        <section class="report-section report-section-legacy">
-            <div class="report-section-head">
-                <div>
-                    <div class="report-section-kicker">دسترسی قدیمی</div>
-                    <h2 class="report-section-title">خروجی‌های قدیمی</h2>
-                    <p class="report-section-desc">
-                        این میانبرها برای سازگاری با مسیرهای قبلی نگه داشته شده‌اند تا در زمان دمو یا مهاجرت،
-                        دسترسی مستقیم به اکسل‌ها و جست‌وجوهای قدیمی از بین نرود.
-                    </p>
+        <!-- Legacy Section Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">دسترسی قدیمی</span>
+                    <span class="rounded-md px-2 py-1 text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">سازگاری</span>
                 </div>
-                <span class="report-section-badge report-section-badge-muted">سازگاری</span>
-            </div>
-
-            <div class="reports-grid">
-                @foreach (var module in Model.Modules)
-                {
-                    <article class="report-module-card report-module-card-legacy">
-                        <div class="report-module-head">
-                            <div class="report-icon report-tone-@module.Tone">
+                <h2 class="text-sm font-black text-slate-900 dark:text-white mb-1">خروجی‌های قدیمی</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">این میانبرها برای سازگاری با مسیرهای قبلی نگه داشته شده‌اند.</p>
+                
+                <div class="space-y-4">
+                    @foreach (var module in Model.Modules)
+                    {
+                        <div class="border-t border-slate-100 dark:border-slate-850 pt-4 flex items-start gap-3">
+                            <div class="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-850 flex-shrink-0">
                                 <i class="bi @module.Icon"></i>
                             </div>
-                            <div>
-                                <h3 class="report-title">@module.Title</h3>
-                                <p class="report-description">@module.Description</p>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-black text-slate-800 dark:text-slate-200">@module.Title</h4>
+                                <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">@module.Description</p>
+                                
+                                <div class="flex flex-wrap gap-1.5 mt-2">
+                                    @foreach (var action in module.Actions)
+                                    {
+                                        var icon = action.Kind == "Excel" ? "bi-file-earmark-excel" : action.Kind == "Search" ? "bi-search" : "bi-bar-chart";
+                                        var badgeClass = action.Kind == "Excel" ? "bg-emerald-100 text-emerald-750 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-sky-100 text-sky-750 dark:bg-sky-955/40 dark:text-sky-400";
+                                        <a href="@action.Url" class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold @badgeClass no-underline transition hover:opacity-85">
+                                            <i class="bi @icon"></i>
+                                            <span>@action.Label</span>
+                                        </a>
+                                    }
+                                </div>
                             </div>
                         </div>
-
-                        <div class="report-actions">
-                            @foreach (var action in module.Actions)
-                            {
-                                var icon = action.Kind == "Excel" ? "bi-file-earmark-excel" : action.Kind == "Search" ? "bi-search" : "bi-bar-chart";
-                                var cssClass = action.Kind == "Excel" ? "report-action report-action-excel" : "report-action";
-                                <a href="@action.Url" class="@cssClass">
-                                    <i class="bi @icon"></i>
-                                    @action.Label
-                                </a>
-                            }
-                        </div>
-                    </article>
-                }
+                    }
+                </div>
             </div>
-        </section>
+        </div>
     </div>
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/reports.css" asp-append-version="true" />
 }

@@ -3,79 +3,112 @@
 
 @{
     ViewData["Title"] = "کارتابل مرکزی";
-    string Active(string filter) => Model.ActiveFilter == filter ? "active" : "";
     var itemsJson = JsonSerializer.Serialize(Model.Items);
     var assigneesJson = JsonSerializer.Serialize(Model.Assignees);
 }
 
-<section class="work-inbox-page">
-    <div class="section-header">
+<div class="container-fluid py-4 space-y-4" dir="rtl">
+    <!-- Header -->
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
-            <h1>کارتابل پیشرفته</h1>
-            <p>کارتابل عملیاتی با گروه‌بندی، نماهای ذخیره‌شده، اقدام‌های گروهی و پنل جزئیات سریع.</p>
+            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">کارتابل پیشرفته</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">کارتابل عملیاتی با گروه‌بندی، نماهای ذخیره‌شده، اقدام‌های گروهی و پنل جزئیات سریع.</p>
         </div>
-        <a class="btn btn-sm btn-outline-secondary" href="/Notifications">
+        <a class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2.5 text-[11px] font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1.5 no-underline" href="/Notifications">
             <i class="bi bi-bell"></i>
-            مرکز اعلان‌ها
+            <span>مرکز اعلان‌ها</span>
         </a>
     </div>
 
-    <div class="inbox-summary">
-        <a class="@Active("All")" asp-action="Index"><strong>@Model.TotalCount.ToString("N0")</strong><span>همه</span></a>
-        <a class="@Active("Approvals")" asp-action="Index" asp-route-filter="Approvals"><strong>@Model.ApprovalCount.ToString("N0")</strong><span>تاییدها</span></a>
-        <a class="@Active("Letters")" asp-action="Index" asp-route-filter="Letters"><strong>@Model.LetterCount.ToString("N0")</strong><span>نامه‌ها</span></a>
-        <a class="@Active("Alerts")" asp-action="Index" asp-route-filter="Alerts"><strong>@Model.AlertCount.ToString("N0")</strong><span>هشدارها</span></a>
-        <a class="@Active("Overdue")" asp-action="Index" asp-route-filter="Overdue"><strong>@Model.OverdueCount.ToString("N0")</strong><span>تاخیردار</span></a>
-        <a class="@Active("DueSoon")" asp-action="Index" asp-route-filter="DueSoon"><strong>@Model.DueSoonCount.ToString("N0")</strong><span>نزدیک موعد</span></a>
-        <a class="@Active("Unread")" asp-action="Index" asp-route-filter="Unread"><strong>@Model.UnreadCount.ToString("N0")</strong><span>خوانده‌نشده</span></a>
+    <!-- Stats summary row -->
+    <div class="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+        @{
+            var filters = new[]
+            {
+                ("All", "همه", Model.TotalCount, "text-slate-900 dark:text-white"),
+                ("Approvals", "تاییدها", Model.ApprovalCount, "text-emerald-600 dark:text-emerald-400"),
+                ("Letters", "نامه‌ها", Model.LetterCount, "text-blue-600 dark:text-blue-400"),
+                ("Alerts", "هشدارها", Model.AlertCount, "text-amber-600 dark:text-amber-400"),
+                ("Overdue", "تاخیردار", Model.OverdueCount, "text-rose-600 dark:text-rose-400"),
+                ("DueSoon", "نزدیک موعد", Model.DueSoonCount, "text-sky-600 dark:text-sky-400"),
+                ("Unread", "خوانده‌نشده", Model.UnreadCount, "text-indigo-600 dark:text-indigo-400")
+            };
+        }
+        @foreach (var f in filters)
+        {
+            var isActive = Model.ActiveFilter == f.Item1 || (f.Item1 == "All" && string.IsNullOrEmpty(Model.ActiveFilter));
+            var activeBorderClass = isActive ? "border-teal-500 dark:border-teal-400 ring-2 ring-teal-500/10 bg-teal-50/10 dark:bg-teal-950/10" : "border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900";
+            <a class="flex flex-col items-center justify-center p-2 rounded-xl border @activeBorderClass @f.Item4 shadow-sm no-underline hover:border-teal-500/50 transition duration-150" asp-action="Index" asp-route-filter="@(f.Item1 == "All" ? "" : f.Item1)">
+                <strong class="text-sm font-black font-mono tabular-nums">@f.Item3.ToString("N0")</strong>
+                <span class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">@f.Item2</span>
+            </a>
+        }
     </div>
 
     @if (TempData["WorkInboxMessage"] is string inboxMessage && !string.IsNullOrWhiteSpace(inboxMessage))
     {
-        <div class="alert alert-success">@inboxMessage</div>
+        <div class="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-955/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+            <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-sm"></i>
+            <span class="flex-1">@inboxMessage</span>
+        </div>
     }
     @if (TempData["WorkInboxUnauthorized"] is string unauthorizedMessage && !string.IsNullOrWhiteSpace(unauthorizedMessage))
     {
-        <div class="alert alert-warning">@unauthorizedMessage</div>
+        <div class="flex items-center gap-2 p-2.5 bg-amber-50 dark:bg-amber-955/15 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill text-amber-600 dark:text-amber-450 text-sm"></i>
+            <span class="flex-1">@unauthorizedMessage</span>
+        </div>
     }
-    @if (TempData["WorkInboxError"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+    @if (TempData["WorkInboxError"] is string errorMsg && !string.IsNullOrWhiteSpace(errorMsg))
     {
-        <div class="alert alert-danger">@errorMessage</div>
+        <div class="flex items-center gap-2 p-2.5 bg-rose-50 dark:bg-rose-955/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+            <i class="bi bi-x-circle-fill text-rose-600 dark:text-rose-400 text-sm"></i>
+            <span class="flex-1">@errorMsg</span>
+        </div>
     }
 
-    <div class="inbox-workspace"
+    <!-- Main Workspace Container -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 overflow-x-auto inbox-workspace"
          data-items='@Html.Raw(itemsJson)'
          data-assignees='@Html.Raw(assigneesJson)'>
-        <form asp-action="BulkAction" method="post" class="inbox-bulk-form" id="bulkActionForm">
+        <form asp-action="BulkAction" method="post" class="space-y-3" id="bulkActionForm">
             @Html.AntiForgeryToken()
             <input type="hidden" name="Filter" value="@Model.ActiveFilter" />
 
-            <div class="inbox-control-bar">
-                <div class="inbox-search-shell">
-                    <i class="bi bi-search"></i>
-                    <input type="search" id="inboxSearchInput" class="form-control" placeholder="جستجو در عنوان، ماژول، فرستنده یا وضعیت" />
+            <!-- Filters Controls Header -->
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-2.5 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200 dark:border-slate-850">
+                <div class="lg:col-span-2 relative">
+                    <input type="search" id="inboxSearchInput" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg pr-9 pl-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="جستجو در عنوان، ماژول، فرستنده یا وضعیت..." />
+                    <i class="bi bi-search absolute right-3 top-2 text-slate-400 text-xs"></i>
                 </div>
-
-                <div class="inbox-filter-grid">
-                    <select class="form-select form-select-sm" id="groupBySelect">
+                <div>
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="groupBySelect">
                         <option value="none">بدون گروه‌بندی</option>
                         <option value="module">گروه بر اساس ماژول</option>
                         <option value="status">گروه بر اساس وضعیت</option>
                         <option value="sla">گروه بر اساس سطح خدمت</option>
                         <option value="priority">گروه بر اساس اولویت</option>
                     </select>
-                    <select class="form-select form-select-sm" id="moduleFilterSelect">
+                </div>
+                <div>
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="moduleFilterSelect">
                         <option value="">همه ماژول‌ها</option>
                     </select>
-                    <select class="form-select form-select-sm" id="statusFilterSelect">
+                </div>
+                <div>
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="statusFilterSelect">
                         <option value="">همه وضعیت‌ها</option>
                     </select>
-                    <select class="form-select form-select-sm" id="readFilterSelect">
+                </div>
+                <div>
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="readFilterSelect">
                         <option value="">خواندن: همه</option>
                         <option value="unread">فقط خوانده‌نشده</option>
                         <option value="read">فقط خوانده‌شده</option>
                     </select>
-                    <select class="form-select form-select-sm" id="actionFilterSelect">
+                </div>
+                <div>
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="actionFilterSelect">
                         <option value="">اقدام: همه</option>
                         <option value="required">نیازمند اقدام</option>
                         <option value="high">اولویت بالا</option>
@@ -83,128 +116,135 @@
                 </div>
             </div>
 
-            <div class="saved-views-bar">
-                <div class="saved-views-header">
-                    <strong>نماهای ذخیره‌شده</strong>
-                    <button class="btn btn-sm btn-outline-secondary" type="button" id="saveCurrentViewBtn">ذخیره نمای فعلی</button>
+            <!-- Saved Views Section -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                <div class="flex items-center gap-2">
+                    <strong class="text-xs font-black text-slate-800 dark:text-slate-200">نماهای ذخیره‌شده</strong>
+                    <button class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-350 transition" type="button" id="saveCurrentViewBtn">ذخیره نمای فعلی</button>
                 </div>
-                <div class="saved-views-list" id="savedViewsList"></div>
+                <div class="flex flex-wrap gap-1.5" id="savedViewsList"></div>
             </div>
 
-            <div class="inbox-bulk-toolbar">
-                <label class="inbox-check-all">
-                    <input class="form-check-input" type="checkbox" id="inboxSelectAll" />
-                    انتخاب همه موارد فیلترشده
+            <!-- Bulk Operation Toolbar -->
+            <div class="flex flex-col lg:flex-row items-center gap-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-xl border border-slate-200 dark:border-slate-800/60">
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input type="checkbox" id="inboxSelectAll" class="rounded border-slate-300 dark:border-slate-800 text-teal-600 focus:ring-teal-500/20" />
+                    <span>انتخاب همه</span>
                 </label>
-                <div class="inbox-selection-meta" id="selectionMeta">0 مورد انتخاب شده</div>
-                <select class="form-select form-select-sm" name="Action" id="bulkActionSelect" required>
-                    <option value="">انتخاب عملیات</option>
-                    <option value="approve">تایید گروهی</option>
-                    <option value="reject">رد گروهی</option>
-                    <option value="mark-read">خوانده شد</option>
-                    <option value="mark-unread">خوانده نشده</option>
-                    <option value="delegate">واگذاری</option>
-                </select>
-                <select class="form-select form-select-sm" name="ToUserId" id="bulkAssigneeSelect">
-                    <option value="">کاربر مقصد</option>
-                    @foreach (var assignee in Model.Assignees)
-                    {
-                        <option value="@assignee.UserId">@assignee.DisplayName</option>
-                    }
-                </select>
-                <input class="form-control form-control-sm" name="Note" id="bulkNoteInput" placeholder="یادداشت مشترک برای اقدام گروهی" />
-                <button class="btn btn-sm btn-primary" type="submit">
-                    <i class="bi bi-check2-square"></i>
-                    اجرا
-                </button>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-bold border-l border-slate-200 dark:border-slate-800 pl-3 ml-1" id="selectionMeta">0 مورد انتخاب شده</div>
+                <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto lg:flex-1">
+                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="Action" id="bulkActionSelect" required>
+                        <option value="">انتخاب عملیات</option>
+                        <option value="approve">تایید گروهی</option>
+                        <option value="reject">رد گروهی</option>
+                        <option value="mark-read">خوانده شد</option>
+                        <option value="mark-unread">خوانده نشده</option>
+                        <option value="delegate">واگذاری</option>
+                    </select>
+                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="ToUserId" id="bulkAssigneeSelect">
+                        <option value="">کاربر مقصد</option>
+                        @foreach (var assignee in Model.Assignees)
+                        {
+                            <option value="@assignee.UserId">@assignee.DisplayName</option>
+                        }
+                    </select>
+                    <input class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-1 min-w-[150px]" name="Note" id="bulkNoteInput" placeholder="یادداشت مشترک برای اقدام گروهی..." />
+                    <button class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-colors" type="submit">
+                        <i class="bi bi-check2-square"></i>
+                        <span>اجرا</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="inbox-layout">
-                <div class="inbox-list-pane">
+            <!-- Workspace Layout (List + Detail) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 align-start">
+                <div class="lg:col-span-2 space-y-4">
                     @if (Model.Items.Count == 0)
                     {
-                        <div class="empty-state">فعلاً موردی برای این فیلتر وجود ندارد.</div>
+                        <div class="p-8 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-xl">فعلاً موردی برای این فیلتر وجود ندارد.</div>
                     }
                     else
                     {
-                        <div id="inboxGroupsHost" class="inbox-groups-host"></div>
+                        <div id="inboxGroupsHost" class="space-y-4"></div>
                     }
                 </div>
 
-                <aside class="inbox-detail-pane" id="inboxDetailPane">
-                    <div class="inbox-detail-empty" id="detailEmptyState">
-                        <i class="bi bi-layout-sidebar-inset"></i>
-                        <strong>یک آیتم را انتخاب کنید</strong>
-                        <p>جزئیات، اقدام سریع و کامنت اینلاین اینجا نمایش داده می‌شود.</p>
+                <aside class="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 min-h-[300px]" id="inboxDetailPane">
+                    <div class="flex flex-col items-center justify-center text-center p-8 text-slate-400 h-full" id="detailEmptyState">
+                        <i class="bi bi-layout-sidebar-inset text-2xl mb-2 text-slate-300 dark:text-slate-700"></i>
+                        <strong class="text-xs text-slate-700 dark:text-slate-350">یک آیتم را انتخاب کنید</strong>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">جزئیات، اقدام سریع و کامنت اینلاین اینجا نمایش داده می‌شود.</p>
                     </div>
 
-                    <div class="inbox-detail-card d-none" id="detailCard">
-                        <div class="inbox-detail-scroll">
-                            <div class="detail-eyebrow" id="detailEyebrow"></div>
-                            <h2 id="detailTitle"></h2>
-                            <p id="detailSummary"></p>
+                    <div class="hidden flex flex-col h-full gap-4" id="detailCard">
+                        <div class="flex-1 space-y-3">
+                            <div class="text-[10px] font-bold text-teal-600 dark:text-teal-400" id="detailEyebrow"></div>
+                            <h2 class="text-sm font-black text-slate-900 dark:text-white" id="detailTitle"></h2>
+                            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed" id="detailSummary"></p>
 
-                            <div class="detail-meta-grid">
-                                <div><span>ماژول</span><strong id="detailModule"></strong></div>
-                                <div><span>وضعیت</span><strong id="detailStatus"></strong></div>
-                                <div><span>موعد</span><strong id="detailSla"></strong></div>
-                                <div><span>زمان</span><strong id="detailCreatedAt"></strong></div>
+                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-150 dark:border-slate-800">
+                                <div class="flex flex-col"><span class="text-slate-400">ماژول</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailModule"></strong></div>
+                                <div class="flex flex-col"><span class="text-slate-400">وضعیت</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailStatus"></strong></div>
+                                <div class="flex flex-col"><span class="text-slate-400">موعد</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailSla"></strong></div>
+                                <div class="flex flex-col"><span class="text-slate-400">زمان ایجاد</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5 font-mono" id="detailCreatedAt"></strong></div>
                             </div>
 
-                            <div class="detail-chips" id="detailChips"></div>
+                            <div class="flex flex-wrap gap-1" id="detailChips"></div>
 
-                            <div class="detail-actions-stack">
-                                <a class="btn btn-outline-secondary" id="detailOpenLink" href="#" target="_self">
+                            <div class="pt-3">
+                                <a class="w-full h-9 rounded-xl border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center justify-center gap-1.5 no-underline" id="detailOpenLink" href="#" target="_self">
                                     <i class="bi bi-box-arrow-up-left"></i>
-                                    باز کردن جزئیات
+                                    <span>باز کردن جزئیات</span>
                                 </a>
                             </div>
                         </div>
 
-                        <div class="detail-sticky-bar" id="detailStickyBar">
-                            <form asp-action="Decide" method="post" class="detail-quick-form d-none" id="quickApproveForm">
+                        <div class="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-3" id="detailStickyBar">
+                            <form asp-action="Decide" method="post" class="hidden" id="quickApproveForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentType" id="quickApproveDocumentType" />
                                 <input type="hidden" name="documentId" id="quickApproveDocumentId" />
                                 <input type="hidden" name="stepNumber" id="quickApproveStepNumber" />
                                 <input type="hidden" name="decisionType" value="Approve" />
                                 <input type="hidden" name="note" value="تایید از کارتابل" />
-                                <button type="submit" class="btn btn-success">
+                                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
                                     <i class="bi bi-check2-circle"></i>
-                                    تایید یک‌کلیکی
+                                    <span>تایید یک‌کلیکی</span>
                                 </button>
                             </form>
 
-                            <form asp-action="Decide" method="post" class="detail-inline-form d-none" id="quickRejectForm">
+                            <form asp-action="Decide" method="post" class="hidden flex gap-2" id="quickRejectForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentType" id="quickRejectDocumentType" />
                                 <input type="hidden" name="documentId" id="quickRejectDocumentId" />
                                 <input type="hidden" name="stepNumber" id="quickRejectStepNumber" />
                                 <input type="hidden" name="decisionType" value="Reject" />
-                                <input type="text" name="note" class="form-control form-control-sm" placeholder="دلیل رد" />
-                                <button type="submit" class="btn btn-outline-danger">رد</button>
+                                <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="دلیل رد..." />
+                                <button type="submit" class="border border-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold transition">رد</button>
                             </form>
 
-                            <form asp-action="AddComment" method="post" class="detail-inline-form d-none" id="quickCommentForm">
+                            <form asp-action="AddComment" method="post" class="hidden flex gap-2" id="quickCommentForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentType" id="quickCommentDocumentType" />
                                 <input type="hidden" name="documentId" id="quickCommentDocumentId" />
                                 <input type="hidden" name="workflowStepId" id="quickCommentWorkflowStepId" />
-                                <input type="text" name="body" class="form-control form-control-sm" placeholder="ثبت کامنت اینلاین" />
-                                <button type="submit" class="btn btn-dark">ثبت کامنت</button>
+                                <input type="text" name="body" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="ثبت کامنت اینلاین..." />
+                                <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">کامنت</button>
                             </form>
 
-                            <form asp-action="Delegate" method="post" class="detail-inline-form d-none" id="quickDelegateForm">
+                            <form asp-action="Delegate" method="post" class="hidden flex flex-col gap-2" id="quickDelegateForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="workflowStepId" id="quickDelegateWorkflowStepId" />
-                                <select name="toUserId" class="form-select form-select-sm" id="quickDelegateToUserId">
-                                    @foreach (var assignee in Model.Assignees)
-                                    {
-                                        <option value="@assignee.UserId">@assignee.DisplayName</option>
-                                    }
-                                </select>
-                                <input type="text" name="note" class="form-control form-control-sm" placeholder="یادداشت واگذاری" />
-                                <button type="submit" class="btn btn-outline-primary">واگذاری</button>
+                                <div class="flex gap-2">
+                                    <select name="toUserId" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-1/3" id="quickDelegateToUserId">
+                                        @foreach (var assignee in Model.Assignees)
+                                        {
+                                            <option value="@assignee.UserId">@assignee.DisplayName</option>
+                                        }
+                                    </select>
+                                    <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="یادداشت واگذاری..." />
+                                    <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">واگذاری</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -212,10 +252,9 @@
             </div>
         </form>
     </div>
-</section>
+</div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/work-inbox.css" asp-append-version="true" />
 }
 
 @section Scripts {
@@ -541,44 +580,46 @@
                     section.className = 'inbox-group';
 
                     const header = document.createElement('div');
-                    header.className = 'inbox-group-header';
-                    header.innerHTML = `<strong>${escapeHtml(groupName)}</strong><span>${groupItems.length} items</span>`;
+                    header.className = 'flex items-center justify-between px-3 py-2 bg-slate-100/60 dark:bg-slate-950/40 rounded-lg text-xs font-black text-slate-700 dark:text-slate-300 mb-2';
+                    header.innerHTML = `<span>${escapeHtml(groupName)}</span><span class="font-mono text-[10px] bg-slate-200/60 dark:bg-slate-800 px-2 py-0.5 rounded-full">${groupItems.length} مورد</span>`;
 
                     const body = document.createElement('div');
-                    body.className = 'inbox-list';
+                    body.className = 'inbox-list flex flex-col divide-y divide-slate-100 dark:divide-slate-850';
 
                     groupItems.forEach(item => {
                         const row = document.createElement('article');
-                        row.className = `inbox-item ${sanitizePriorityClass(item.priorityCssClass)}${state.activeItemId === item.id ? ' is-active' : ''}`;
+                        row.className = `flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${sanitizePriorityClass(item.priorityCssClass)}${state.activeItemId === item.id ? ' bg-teal-50/30 dark:bg-teal-950/20' : ''}`;
                         row.dataset.itemId = item.id;
 
                         const checked = state.selectedIds.has(item.id) ? 'checked' : '';
-                        const unread = !item.isRead ? '<span class="badge text-bg-dark">خوانده‌نشده</span>' : '';
-                        const overdue = item.isOverdue ? '<span class="badge text-bg-danger">نقض سطح خدمت</span>' : '';
-                        const actionFlag = item.requiresAction ? '<span class="inbox-action-flag">نیازمند اقدام</span>' : '';
+                        const unread = !item.isRead ? '<span class="inline-flex items-center rounded bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 dark:bg-rose-950/30 dark:text-rose-350 border border-rose-200 dark:border-rose-900/30">خوانده‌نشده</span>' : '<span class="inline-flex items-center rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-550 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">خوانده‌شده</span>';
+                        const overdue = item.isOverdue ? '<span class="inline-flex items-center rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">نقض سطح خدمت</span>' : '';
+                        const actionFlag = item.requiresAction ? '<span class="inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:bg-amber-950/20 dark:text-amber-450 border border-amber-250/30">نیازمند اقدام</span>' : '';
 
                         row.innerHTML = `
-                            <input class="form-check-input inbox-item-check" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
-                            <button type="button" class="inbox-item-surface">
-                                <span class="inbox-item-icon"><i class="bi ${sanitizeIcon(item.icon)}"></i></span>
-                                <span class="inbox-item-body">
-                                    <span class="inbox-title-row">
-                                        <strong>${escapeHtml(item.title)}</strong>
-                                        <small>${escapeHtml(item.createdAtText)}</small>
-                                    </span>
-                                    <span class="inbox-description">${escapeHtml(item.description)}</span>
-                                    <span class="inbox-meta">
-                                        <em>${escapeHtml(item.module)}</em>
-                                        <span class="badge ${sanitizeBadgeClass(item.statusCssClass)}">${escapeHtml(item.status)}</span>
-                                        <span class="badge text-bg-light">${escapeHtml(item.slaText)}</span>
-                                        ${unread}
-                                        ${overdue}
-                                        ${actionFlag}
-                                    </span>
-                                </span>
+                            <input class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none form-check-input inbox-item-check ml-3" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
+                            <button type="button" class="inbox-item-surface flex-1 flex items-center justify-between text-right border-0 bg-transparent p-0 outline-none w-full">
+                                <div class="flex items-center gap-3 w-full">
+                                    <span class="inbox-item-icon grid h-9 w-9 place-items-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-550 dark:text-slate-400"><i class="bi ${sanitizeIcon(item.icon)}"></i></span>
+                                    <div class="inbox-item-body min-w-0 flex-1">
+                                        <div class="inbox-title-row flex items-baseline justify-between">
+                                            <strong class="text-xs font-black text-slate-900 dark:text-white">${escapeHtml(item.title)}</strong>
+                                            <small class="text-[10px] text-slate-400 dark:text-slate-500 mr-2">${escapeHtml(item.createdAtText)}</small>
+                                        </div>
+                                        <div class="inbox-description text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${escapeHtml(item.description)}</div>
+                                        <div class="inbox-meta flex items-center gap-1.5 flex-wrap mt-1 text-[10px] text-slate-450">
+                                            <em class="font-bold not-italic bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300">${escapeHtml(item.module)}</em>
+                                            <span class="badge ${sanitizeBadgeClass(item.statusCssClass)}">${escapeHtml(item.status)}</span>
+                                            <span class="badge text-bg-light">${escapeHtml(item.slaText)}</span>
+                                            ${unread}
+                                            ${overdue}
+                                            ${actionFlag}
+                                        </div>
+                                    </div>
+                                </div>
                             </button>
-                            <a class="inbox-open-icon" href="${sanitizeUrl(item.url)}" aria-label="Open ${escapeHtml(item.title)}">
-                                <i class="bi bi-arrow-left-short"></i>
+                            <a class="inbox-open-icon text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mr-3" href="${sanitizeUrl(item.url)}" aria-label="Open ${escapeHtml(item.title)}">
+                                <i class="bi bi-arrow-left-short text-lg"></i>
                             </a>`;
 
                         const checkbox = row.querySelector('.inbox-item-check');

@@ -1,15 +1,14 @@
-﻿@model InsuranceList
+@model InsuranceList
 @{
     ViewData["Title"] = "حذف لیست بیمه";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Bimeh.css" asp-append-version="true" />
 }
 
 <div class="container-fluid py-4 bimeh-page">
-    <div class="card border-0 shadow-sm bimeh-card">
-        <div class="card-body p-4 p-md-5">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  bimeh-card" >
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-4 p-md-5" >
             <div class="d-flex align-items-start gap-3 mb-4">
                 <div class="bimeh-danger-icon">
                     <i class="bi bi-exclamation-triangle-fill"></i>
@@ -46,7 +45,7 @@
             </div>
 
             <form asp-action="Delete" method="post">
-                <input type="hidden" asp-for="Id" />
+                <input class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" type="hidden" asp-for="Id" />
                 <div class="d-flex justify-content-end gap-2">
                     <a asp-action="Index" class="btn btn-outline-secondary px-4">انصراف</a>
                     <button type="submit" class="btn btn-danger px-4">

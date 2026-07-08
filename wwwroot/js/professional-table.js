@@ -40,25 +40,27 @@
         return {};
     };
 
-    const buildToolbar = table => {
+        const buildToolbar = table => {
         const key = table.dataset.proTable;
         const wrapper = document.createElement('div');
-        wrapper.className = 'pro-table-toolbar';
+        wrapper.className = 'flex flex-col gap-4 mb-5 bg-slate-50/50 dark:bg-slate-800/20 p-4 rounded-2xl border border-slate-200 dark:border-slate-800';
         wrapper.innerHTML = `
-            <div class="pro-table-tools">
-                <input class="form-control form-control-sm pro-table-search" type="search" placeholder="فیلتر سریع همین جدول">
-                <select class="form-select form-select-sm pro-table-page-size">
-                    <option value="10">10 ردیف</option>
-                    <option value="25">25 ردیف</option>
-                    <option value="50">50 ردیف</option>
-                    <option value="100">100 ردیف</option>
-                </select>
-                <button type="button" class="btn btn-sm btn-outline-secondary pro-table-columns"><i class="bi bi-layout-three-columns"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-success pro-table-export"><i class="bi bi-file-earmark-excel"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-dark pro-table-print"><i class="bi bi-printer"></i></button>
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <input class="w-full md:w-1/2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none pro-table-search" type="search" placeholder="فیلتر سریع همین جدول...">
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <select class="w-full md:w-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-teal-500/20 outline-none pro-table-page-size">
+                        <option value="10">10 ردیف</option>
+                        <option value="25">25 ردیف</option>
+                        <option value="50">50 ردیف</option>
+                        <option value="100">100 ردیف</option>
+                    </select>
+                    <button type="button" class="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300 pro-table-columns" title="نمایش/مخفی‌سازی ستون‌ها"><i class="bi bi-layout-three-columns"></i></button>
+                    <button type="button" class="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300 pro-table-export" title="خروجی CSV"><i class="bi bi-file-earmark-excel"></i></button>
+                    <button type="button" class="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300 pro-table-print" title="چاپ"><i class="bi bi-printer"></i></button>
+                </div>
             </div>
-            <div class="pro-table-columns-panel"></div>
-            <div class="pro-table-status"></div>
+            <div class="pro-table-columns-panel hidden flex-wrap items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300 border-t border-slate-150 dark:border-slate-800/80 pt-3"></div>
+            <div class="pro-table-status flex justify-between items-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-150 dark:border-slate-800/80 pt-3 mt-1"></div>
         `;
 
         table.parentElement?.before(wrapper);
@@ -104,8 +106,8 @@
             cell.classList.add('pro-table-sortable');
             const id = `${key}-col-${index}`;
             const label = document.createElement('label');
-            label.className = 'form-check form-check-inline pro-table-column-toggle';
-            label.innerHTML = `<input class="form-check-input" type="checkbox" id="${id}" data-column="${index}" ${state.hidden.includes(index) ? '' : 'checked'}><span class="form-check-label">${cell.innerText}</span>`;
+            label.className = 'flex items-center gap-1.5 cursor-pointer';
+            label.innerHTML = `<input class="w-4 h-4 text-teal-600 bg-slate-100 border-slate-300 rounded focus:ring-teal-500 dark:bg-slate-700 dark:border-slate-600 accent-teal-600 cursor-pointer" type="checkbox" id="${id}" data-column="${index}" ${state.hidden.includes(index) ? '' : 'checked'}><span class="text-xs text-slate-650 dark:text-slate-300 select-none">${cell.innerText}</span>`;
             columnsPanel.appendChild(label);
         });
 
@@ -129,10 +131,12 @@
             rows.forEach(row => row.style.display = 'none');
             filtered.slice(start, end).forEach(row => row.style.display = '');
             status.innerHTML = `
-                <span>${filtered.length} نتیجه</span>
-                <button type="button" class="btn btn-sm btn-outline-secondary pro-prev" ${state.page <= 1 ? 'disabled' : ''}>قبلی</button>
-                <span>${state.page} / ${pageCount}</span>
-                <button type="button" class="btn btn-sm btn-outline-secondary pro-next" ${state.page >= pageCount ? 'disabled' : ''}>بعدی</button>
+                <span class="font-medium">${filtered.length} نتیجه</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-350 disabled:opacity-50 disabled:pointer-events-none hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors pro-prev" ${state.page <= 1 ? 'disabled' : ''}>قبلی</button>
+                    <span class="font-mono tabular-nums text-slate-600 dark:text-slate-400">${state.page} / ${pageCount}</span>
+                    <button type="button" class="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-350 disabled:opacity-50 disabled:pointer-events-none hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors pro-next" ${state.page >= pageCount ? 'disabled' : ''}>بعدی</button>
+                </div>
             `;
         };
 
@@ -144,7 +148,10 @@
         });
 
         toolbar.addEventListener('click', event => {
-            if (event.target.closest('.pro-table-columns')) columnsPanel.classList.toggle('show');
+            if (event.target.closest('.pro-table-columns')) {
+                columnsPanel.classList.toggle('hidden');
+                columnsPanel.classList.toggle('flex');
+            }
             if (event.target.closest('.pro-table-export')) downloadCsv(table, key);
             if (event.target.closest('.pro-table-print')) window.print();
             if (event.target.closest('.pro-prev')) {

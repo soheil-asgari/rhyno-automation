@@ -4,174 +4,181 @@
     var year = ViewBag.Year as int? ?? DateTime.Now.Year;
 }
 
-<div class="container-fluid py-4 fin-hub">
-    <div class="fin-topline mb-4">
+<div class="container-fluid py-4 space-y-4" dir="rtl">
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
-            <h5 class="fw-bold mb-1">داشبورد مالی</h5>
-            <p class="text-muted small mb-0">نمای عملیاتی فروش، خرید، مالیات، معاملات فصلی، حقوق و بیمه</p>
+            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">داشبورد مالی</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">نمای عملیاتی فروش، خرید، مالیات، معاملات فصلی، حقوق و بیمه</p>
         </div>
-        <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
-            <label class="small text-muted mb-0">سال</label>
-            <input name="year" value="@year" type="number" min="1300" max="1700" class="form-control form-control-sm compact-year-input" />
-            <button class="btn btn-sm btn-outline-primary">اعمال</button>
+        <form method="get" class="flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">سال</span>
+            <input name="year" value="@year" type="number" min="1300" max="1700" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+            <button class="h-7 rounded-lg bg-teal-600 px-3 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">اعمال</button>
         </form>
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="hub-kpi hub-tone-success">
-                <div class="hub-kpi-label">فروش ماه</div>
-                <div class="hub-kpi-value">@Model.MonthlySalesTotal.ToString("N0")</div>
-                <div class="hub-kpi-desc">جمع فروش ثبت‌شده</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <!-- Monthly Sales -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div>
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">فروش ماه</span>
+                <h3 class="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tabular-nums">@Model.MonthlySalesTotal.ToString("N0")</h3>
             </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">جمع فروش ثبت‌شده</p>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="hub-kpi hub-tone-danger">
-                <div class="hub-kpi-label">خرید ماه</div>
-                <div class="hub-kpi-value">@Model.MonthlyPurchaseTotal.ToString("N0")</div>
-                <div class="hub-kpi-desc">جمع خرید ثبت‌شده</div>
+
+        <!-- Monthly Purchase -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div>
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">خرید ماه</span>
+                <h3 class="text-lg font-black text-rose-600 dark:text-rose-400 mt-0.5 font-mono tabular-nums">@Model.MonthlyPurchaseTotal.ToString("N0")</h3>
             </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">جمع خرید ثبت‌شده</p>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="hub-kpi hub-tone-warning">
-                <div class="hub-kpi-label">مالیات پرداختنی</div>
-                <div class="hub-kpi-value">@Model.MonthlyTaxPayable.ToString("N0")</div>
-                <div class="hub-kpi-desc">خروجی نهایی کنترل مالیات</div>
+
+        <!-- Tax Payable -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div>
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">مالیات پرداختنی</span>
+                <h3 class="text-lg font-black text-amber-600 dark:text-amber-400 mt-0.5 font-mono tabular-nums">@Model.MonthlyTaxPayable.ToString("N0")</h3>
             </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">خروجی نهایی کنترل مالیات</p>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="hub-kpi hub-tone-info">
-                <div class="hub-kpi-label">فاکتور معوق</div>
-                <div class="hub-kpi-value">@Model.OverdueInvoices.ToString("N0")</div>
-                <div class="hub-kpi-desc">نیازمند پیگیری فوری</div>
+
+        <!-- Overdue Invoices -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div>
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">فاکتور معوق</span>
+                <h3 class="text-lg font-black text-sky-600 dark:text-sky-400 mt-0.5 font-mono tabular-nums">@Model.OverdueInvoices.ToString("N0")</h3>
             </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">نیازمند پیگیری فوری</p>
         </div>
+
+        <!-- Dynamic KPIs -->
         @foreach (var kpi in Model.HubKpis)
         {
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="hub-kpi hub-tone-@kpi.Tone">
-                    <div class="hub-kpi-label">@kpi.Title</div>
-                    <div class="hub-kpi-value">@kpi.Value</div>
-                    <div class="hub-kpi-desc">@kpi.Description</div>
+            var toneColor = kpi.Tone switch {
+                "success" => "text-emerald-600 dark:text-emerald-400",
+                "danger" => "text-rose-600 dark:text-rose-400",
+                "warning" => "text-amber-600 dark:text-amber-400",
+                "info" => "text-sky-600 dark:text-sky-400",
+                _ => "text-slate-900 dark:text-white"
+            };
+            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">@kpi.Title</span>
+                    <h3 class="text-lg font-black @toneColor mt-0.5 font-mono tabular-nums">@kpi.Value</h3>
                 </div>
+                <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">@kpi.Description</p>
             </div>
         }
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-12 col-xl-8">
-            <section class="card border-0 shadow-sm fin-card">
-                <div class="card-body p-3 p-md-4">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                        <div>
-                            <h6 class="fw-bold mb-1">روند مالی</h6>
-                            <div class="text-muted small">درآمد، هزینه و سود یا زیان در دوازده ماه</div>
-                        </div>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a asp-action="Sales" class="btn btn-sm btn-outline-success">فروش</a>
-                            <a asp-action="Purchases" class="btn btn-sm btn-outline-primary">خرید</a>
-                            <a asp-action="VatDashboard" class="btn btn-sm btn-outline-warning">ارزش افزوده</a>
-                            <a asp-action="SeasonalTax" class="btn btn-sm btn-outline-info">معاملات فصلی</a>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mb-3 flex-wrap">
-                        <button type="button" class="btn btn-sm btn-outline-primary chart-mode is-active" data-mode="bar">نمودار ستونی</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary chart-mode" data-mode="line">نمودار خطی</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary chart-mode" data-mode="area">نمودار ناحیه‌ای</button>
-                    </div>
-
-                    @if (Model.ValidationWarnings > 0 || Model.OverdueInvoices > 0)
-                    {
-                        <div class="alert alert-warning small mb-3">
-                            @if (Model.ValidationWarnings > 0)
-                            {
-                                <div>@Model.ValidationWarnings مورد نیازمند بررسی ثبت شده است.</div>
-                            }
-                            @if (Model.OverdueInvoices > 0)
-                            {
-                                <div>@Model.OverdueInvoices فاکتور معوق شناسایی شد.</div>
-                            }
-                        </div>
-                    }
-
-                    <div class="chart-shell">
-                        <canvas id="finHubChart"></canvas>
-                    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Chart Shell -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                <div>
+                    <h2 class="text-xs font-black text-slate-900 dark:text-white">روند مالی</h2>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">درآمد، هزینه و سود یا زیان در دوازده ماه</p>
                 </div>
-            </section>
+                <div class="flex flex-wrap gap-1">
+                    <a asp-action="Sales" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">فروش</a>
+                    <a asp-action="Purchases" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-955 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">خرید</a>
+                    <a asp-action="VatDashboard" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-955 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">ارزش افزوده</a>
+                    <a asp-action="SeasonalTax" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-955 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">معاملات فصلی</a>
+                </div>
+            </div>
+
+            <div class="flex gap-1.5 mb-3 flex-wrap">
+                <button type="button" class="rounded-lg bg-teal-600 px-2.5 py-1 text-[10px] font-black text-white hover:bg-teal-700 chart-mode is-active" data-mode="bar">نمودار ستونی</button>
+                <button type="button" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 chart-mode" data-mode="line">نمودار خطی</button>
+                <button type="button" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 chart-mode" data-mode="area">نمودار ناحیه‌ای</button>
+            </div>
+
+            @if (Model.ValidationWarnings > 0 || Model.OverdueInvoices > 0)
+            {
+                <div class="flex flex-col gap-1.5 rounded-xl border border-amber-250 bg-amber-50 px-3.5 py-2.5 text-[11px] text-amber-700 dark:border-amber-800/40 dark:bg-amber-955/20 dark:text-amber-400 mb-3">
+                    @if (Model.ValidationWarnings > 0)
+                    {
+                        <div>@Model.ValidationWarnings مورد نیازمند بررسی ثبت شده است.</div>
+                    }
+                    @if (Model.OverdueInvoices > 0)
+                    {
+                        <div>@Model.OverdueInvoices فاکتور معوق شناسایی شد.</div>
+                    }
+                </div>
+            }
+
+            <div class="h-64 w-full relative">
+                <canvas id="finHubChart"></canvas>
+            </div>
         </div>
 
-        <div class="col-12 col-xl-4">
-            <section class="card border-0 shadow-sm fin-card h-100">
-                <div class="card-body p-3 p-md-4">
-                    <h6 class="fw-bold mb-3">دسترسی سریع</h6>
-                    <partial name="_QuickActionsGrid" model="Model.QuickActions" />
-                </div>
-            </section>
+        <!-- Quick Actions -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-col">
+            <h2 class="text-xs font-black text-slate-900 dark:text-white mb-3">دسترسی سریع</h2>
+            <div class="flex-1">
+                <partial name="_QuickActionsGrid" model="Model.QuickActions" />
+            </div>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-xl-7">
-            <section class="card border-0 shadow-sm fin-card h-100">
-                <div class="card-body p-3 p-md-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold mb-0">آخرین عملیات</h6>
-                        <a asp-action="Invoices" class="btn btn-sm btn-outline-secondary">مشاهده همه</a>
-                    </div>
-                    <div class="activity-list">
-                        @if (Model.RecentActivities.Any())
-                        {
-                            @foreach (var item in Model.RecentActivities)
-                            {
-                                <a href="@item.Url" class="activity-item">
-                                    <div>
-                                        <strong>@item.Title</strong>
-                                        <span>@item.Subtitle</span>
-                                    </div>
-                                    <span class="badge text-bg-@item.BadgeTone">@item.Badge</span>
-                                </a>
-                            }
-                        }
-                        else
-                        {
-                            <div class="text-muted small">عملیات اخیر وجود ندارد.</div>
-                        }
-                    </div>
-                </div>
-            </section>
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <!-- Recent Activities -->
+        <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">آخرین عملیات</h2>
+                <a asp-action="Invoices" class="text-[11px] font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 no-underline">مشاهده همه</a>
+            </div>
+            <div class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                @if (Model.RecentActivities.Any())
+                {
+                    @foreach (var item in Model.RecentActivities)
+                    {
+                        <a href="@item.Url" class="flex items-center justify-between py-2 text-decoration-none group">
+                            <div class="min-w-0">
+                                <strong class="block truncate text-[11px] text-slate-800 group-hover:text-teal-600 dark:text-slate-200 dark:group-hover:text-teal-400">@item.Title</strong>
+                                <span class="block text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">@item.Subtitle</span>
+                            </div>
+                            <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:bg-slate-955 dark:text-slate-400 border border-slate-200/50 dark:border-slate-850">@item.Badge</span>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <div class="text-slate-400 text-[11px] py-3 text-center">عملیات اخیر وجود ندارد.</div>
+                }
+            </div>
         </div>
 
-        <div class="col-12 col-xl-5">
-            <section class="card border-0 shadow-sm fin-card h-100">
-                <div class="card-body p-3 p-md-4">
-                    <h6 class="fw-bold mb-3">هشدارهای عملیاتی</h6>
-                    <div class="hub-alert-list">
-                        <div class="hub-alert tone-warning">
-                            <strong>فاکتورهای در انتظار</strong>
-                            <span>@Model.PendingSalesInvoices فاکتور فروش و @Model.PendingPurchaseInvoices فاکتور خرید نیاز به پیگیری دارند.</span>
-                        </div>
-                        <div class="hub-alert tone-danger">
-                            <strong>هشدار اعتبارسنجی</strong>
-                            <span>@Model.ValidationWarnings رکورد ناقص یا مشکوک شناسایی شده است.</span>
-                        </div>
-                        <div class="hub-alert tone-info">
-                            <strong>سررسید نزدیک</strong>
-                            <span>@Model.DuePurchaseDeadlines فاکتور خرید دارای موعد نزدیک است.</span>
-                        </div>
+        <!-- Warnings and Alerting -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between">
+            <div>
+                <h2 class="text-xs font-black text-slate-900 dark:text-white mb-3">هشدارهای عملیاتی</h2>
+                <div class="space-y-2">
+                    <div class="rounded-xl border border-amber-250 bg-amber-50 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-900/30 dark:bg-amber-955/20 dark:text-amber-400">
+                        <strong class="block font-black">فاکتورهای در انتظار</strong>
+                        <span class="block mt-0.5 text-[10px]">@Model.PendingSalesInvoices فاکتور فروش و @Model.PendingPurchaseInvoices فاکتور خرید نیاز به پیگیری دارند.</span>
                     </div>
-                    <div class="mt-3">
-                        <a asp-action="ReportingHub" class="btn btn-sm btn-outline-primary w-100">رفتن به گزارش‌های پیشرفته</a>
+                    <div class="rounded-xl border border-rose-250 bg-rose-50 px-3 py-2 text-[11px] text-rose-700 dark:border-rose-900/30 dark:bg-rose-955/20 dark:text-rose-400">
+                        <strong class="block font-black">هشدار اعتبارسنجی</strong>
+                        <span class="block mt-0.5 text-[10px]">@Model.ValidationWarnings رکورد ناقص یا مشکوک شناسایی شده است.</span>
+                    </div>
+                    <div class="rounded-xl border border-sky-250 bg-sky-50 px-3 py-2 text-[11px] text-sky-700 dark:border-sky-900/30 dark:bg-sky-955/20 dark:text-sky-400">
+                        <strong class="block font-black">سررسید نزدیک</strong>
+                        <span class="block mt-0.5 text-[10px]">@Model.DuePurchaseDeadlines فاکتور خرید دارای موعد نزدیک است.</span>
                     </div>
                 </div>
-            </section>
+            </div>
+            <div class="mt-3">
+                <a asp-action="ReportingHub" class="flex items-center justify-center h-8 w-full rounded-xl bg-teal-600 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">رفتن به گزارش‌های پیشرفته</a>
+            </div>
         </div>
     </div>
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/financial-dashboard.css" asp-append-version="true" />
 }
 
 @section Scripts {

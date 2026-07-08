@@ -81,15 +81,15 @@
     <!-- Employees List Table Card -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto w-full">
-            <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
-                <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+            <table class="w-full text-xs text-right border-collapse" >
+                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " ead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th class="px-3 py-2.5 font-bold">نام و نام خانوادگی</th>
-                        <th class="px-3 py-2.5 font-bold">شغل / سمت</th>
-                        <th class="px-3 py-2.5 font-bold text-left">شروع کار</th>
-                        <th class="px-3 py-2.5 font-bold text-left">ترک کار</th>
-                        <th class="px-3 py-2.5 font-bold text-left">روز کارکرد</th>
-                        <th class="px-3 py-2.5 font-bold text-left">حقوق مشمول</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >نام و نام خانوادگی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >شغل / سمت</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-left" >شروع کار</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-left" >ترک کار</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-left" >روز کارکرد</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-left" >حقوق مشمول</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -98,19 +98,19 @@
                         @foreach (var employee in Model.Employees)
                         {
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                                <td class="px-3 py-3 font-bold text-slate-900 dark:text-white">@employee.FullName</td>
-                                <td class="px-3 py-3 font-medium text-slate-600 dark:text-slate-400">@employee.JobTitle</td>
-                                <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@ToSolar(employee.StartWork)</td>
-                                <td class="px-3 py-3 text-left font-mono tabular-nums text-slate-500">@(employee.EndWork.HasValue ? ToSolar(employee.EndWork.Value) : "-")</td>
-                                <td class="px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@employee.WorkDays روز</td>
-                                <td class="px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@employee.Salary.ToString("N0") ریال</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-3 font-bold text-slate-900 dark:text-white" >@employee.FullName</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-3 font-medium text-slate-600 dark:text-slate-400" >@employee.JobTitle</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-3 text-left font-mono tabular-nums text-slate-500" >@ToSolar(employee.StartWork)</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-3 text-left font-mono tabular-nums text-slate-500" >@(employee.EndWork.HasValue ? ToSolar(employee.EndWork.Value) : "-")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white" >@employee.WorkDays روز</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white" >@employee.Salary.ToString("N0") ریال</td>
                             </tr>
                         }
                     }
                     else
                     {
                         <tr>
-                            <td colspan="6" class="px-3 py-8 text-center text-slate-400 dark:text-slate-500">برای این لیست، پرسنلی ثبت نشده است.</td>
+                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 "  colspan="6" class="px-3 py-8 text-center text-slate-400 dark:text-slate-500">برای این لیست، پرسنلی ثبت نشده است.</td>
                         </tr>
                     }
                 </tbody>

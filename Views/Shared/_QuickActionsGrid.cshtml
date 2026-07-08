@@ -1,15 +1,23 @@
 @model IEnumerable<OfficeAutomation.Models.FinancialQuickActionVM>
 
-<div class="quick-grid">
+<div class="grid grid-cols-1 gap-3">
     @foreach (var action in Model)
     {
-        <a href="@action.Url" class="quick-card tone-@action.Tone" data-tone="@action.Tone">
-            <span class="quick-card-icon-wrap">
-                <i class="bi @action.Icon"></i>
+        var toneClass = action.Tone switch
+        {
+            "success" => "bg-emerald-50 hover:bg-emerald-100/50 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50",
+            "danger" => "bg-rose-50 hover:bg-rose-100/50 dark:bg-rose-955/10 dark:hover:bg-rose-900/30 text-rose-800 dark:text-rose-400 border-rose-200 dark:border-rose-900/50",
+            "warning" => "bg-amber-50 hover:bg-amber-100/50 dark:bg-amber-955/10 dark:hover:bg-amber-900/30 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-900/50",
+            "info" => "bg-sky-50 hover:bg-sky-100/50 dark:bg-sky-955/10 dark:hover:bg-sky-900/30 text-sky-800 dark:text-sky-400 border-sky-200 dark:border-sky-900/50",
+            _ => "bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800"
+        };
+        <a href="@action.Url" class="flex items-center gap-2.5 p-2 rounded-lg border transition duration-150 no-underline @toneClass">
+            <span class="grid h-7 w-7 place-items-center rounded-md bg-white/80 dark:bg-slate-950/60 shadow-sm flex-shrink-0">
+                <i class="bi @action.Icon text-xs"></i>
             </span>
-            <div>
-                <strong>@action.Title</strong>
-                <span>@action.Description</span>
+            <div class="min-w-0">
+                <strong class="block text-[11px] font-bold text-slate-850 dark:text-slate-250 truncate">@action.Title</strong>
+                <span class="block text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">@action.Description</span>
             </div>
         </a>
     }

@@ -81,12 +81,6 @@
     <title>@ViewData["Title"] - پنل مدیریت راینو</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" asp-append-version="true">
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/main-foundation.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/main-legacy.css" asp-append-version="true" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="~/css/app-shell.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/visual-refresh-core.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/css/visual-refresh-legacy.css" asp-append-version="true" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
     @await RenderSectionAsync("Styles", required: false)
     <style>
@@ -121,7 +115,9 @@
 
         /* Style for sub-menu links to avoid legacy color locks and clipping */
         #appSidebar .accordion-collapse a.sidebar-link {
-            display: block !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
             width: 100% !important;
             padding: 8px 24px !important; /* py-2 px-6 */
             background: transparent !important;
@@ -133,6 +129,9 @@
             opacity: 1 !important;
             visibility: visible !important;
             transition: background-color 0.2s, color 0.2s !important;
+        }
+        #appSidebar .accordion-collapse a.sidebar-link i {
+            margin-left: 4px !important;
         }
 
         #appSidebar .accordion-collapse a.sidebar-link:hover {
@@ -156,11 +155,11 @@
         }
     </style>
 </head>
-<body data-theme="@themePreference.ToLowerInvariant()" class="min-h-screen bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+<body data-theme="@themePreference.ToLowerInvariant()" class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans antialiased min-h-screen flex flex-col md:flex-row">
     <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 z-40 hidden bg-slate-950/40 backdrop-blur-sm lg:hidden"></div>
     <form id="rhGlobalAntiForgery" class="d-none">@Html.AntiForgeryToken()</form>
     <div class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 w-full">
-        <aside id="appSidebar" class="sidebar-right fixed inset-y-0 right-0 z-50 flex w-60 translate-x-full flex-col border-l border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 lg:static lg:flex lg:w-64 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-slate-950/95 flex flex-col z-40">
+        <aside id="appSidebar" class="sidebar-right print:hidden fixed inset-y-0 right-0 z-50 flex w-60 translate-x-full flex-col border-l border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 lg:static lg:flex lg:w-64 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-slate-950/95 flex flex-col z-40">
             <div class="flex h-14 items-center gap-2 border-b border-slate-200 px-3 dark:border-slate-800">
                 <a asp-controller="Home" asp-action="Index" class="flex min-w-0 flex-1 items-center gap-2 text-decoration-none">
                     <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
@@ -175,9 +174,9 @@
             <nav id="sidebarScrollContainer" class="min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-3">
                 <div id="sidebarSearchNoResults" class="sidebar-search-no-results hidden rounded-md border border-amber-200 bg-amber-50 px-2 py-2 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">نتیجه‌ای در منو پیدا نشد.</div>
                 <section><div class="mb-1 px-2 text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">دسترسی سریع</div><div class="space-y-1">
-                    <a class='@NavClass("Home")' data-nav-id="home-index" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2 w-4"></i><span class="link-text truncate">میز کار</span></a>
-                    <a class='@NavClass("WorkInbox")' data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes w-4"></i><span class="link-text truncate">کارتابل</span></a>
-                    @if (userCanAccessFinance) { <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4"></i><span class="link-text truncate">تراز آزمایشی</span></a> }
+                    <a class='@NavClass("Home")' data-nav-id="home-index" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2 w-4 text-sky-500 me-2"></i><span class="link-text truncate">میز کار</span></a>
+                    <a class='@NavClass("WorkInbox")' data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes w-4 text-indigo-500 me-2"></i><span class="link-text truncate">کارتابل</span></a>
+                    @if (userCanAccessFinance) { <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-teal-500 me-2"></i><span class="link-text truncate">تراز آزمایشی</span></a> }
                 </div></section>
                 <div id="sidebarAccordion" class="space-y-2">
                     @if (userCanAccessHumanCapital)
@@ -185,9 +184,9 @@
                         <section class="accordion-item sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHumanCapital"><span>سرمایه انسانی</span><i class="bi bi-chevron-down text-[10px]"></i></button>
                             <div id="collapseHumanCapital" class="accordion-collapse collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "show" : "")"><div class="mt-1 space-y-1">
-                                <a class='@NavClass("HumanCapital")' data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge w-4"></i><span class="link-text truncate">منابع انسانی</span></a>
-                                <a class='@NavClass("Leaves")' data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week w-4"></i><span class="link-text truncate">مرخصی‌ها</span></a>
-                                <a class='@NavClass("Letters")' data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope w-4"></i><span class="link-text truncate">نامه‌ها</span></a>
+                                <a class='@NavClass("HumanCapital")' data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge w-4 text-amber-500 me-2"></i><span class="link-text truncate">منابع انسانی</span></a>
+                                <a class='@NavClass("Leaves")' data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week w-4 text-sky-500 me-2"></i><span class="link-text truncate">مرخصی‌ها</span></a>
+                                <a class='@NavClass("Letters")' data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope w-4 text-purple-500 me-2"></i><span class="link-text truncate">نامه‌ها</span></a>
                             </div></div>
                         </section>
                     }
@@ -196,14 +195,15 @@
                         <section class="accordion-item sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFinancial"><span>مالی و حسابداری</span><i class="bi bi-chevron-down text-[10px]"></i></button>
                             <div id="collapseFinancial" class="accordion-collapse collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "show" : "")"><div class="mt-1 space-y-1">
-                                <a class='@NavClass("Financial", "Dashboard")' data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap w-4"></i><span class="link-text truncate">داشبورد مالی</span></a>
-                                <a class='@NavClass("Financial", "Invoices")' data-nav-id="financial-invoices" asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt w-4"></i><span class="link-text truncate">فاکتورها</span></a>
-                                <a class='@NavClass("Financial", "LedgerOperations")' data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext w-4"></i><span class="link-text truncate">دفتر کل</span></a>
-                                <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4"></i><span class="link-text truncate">تراز آزمایشی</span></a>
-                                <a class='@NavClass("Financial", "VatDashboard")' data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent w-4"></i><span class="link-text truncate">ارزش افزوده</span></a>
-                                <a class='@NavClass("Financial", "ReportingHub")' data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line w-4"></i><span class="link-text truncate">گزارش‌ها</span></a>
-                                <a class='@NavClass("Payroll")' data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 w-4"></i><span class="link-text truncate">حقوق</span></a>
-                                <a class='@NavClass("Bimeh")' data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check w-4"></i><span class="link-text truncate">بیمه</span></a>
+                                <a class='@NavClass("Financial", "Dashboard")' data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap w-4 text-emerald-500 me-2"></i><span class="link-text truncate">داشبورد مالی</span></a>
+                                <a class='@NavClass("Financial", "Invoices")' data-nav-id="financial-invoices" asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt w-4 text-teal-500 me-2"></i><span class="link-text truncate">فاکتورها</span></a>
+                                <a class='@NavClass("Financial", "LedgerOperations")' data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext w-4 text-cyan-500 me-2"></i><span class="link-text truncate">دفتر کل</span></a>
+                                <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-indigo-500 me-2"></i><span class="link-text truncate">تراز آزمایشی</span></a>
+                                <a class='@NavClass("Financial", "VatDashboard")' data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent w-4 text-pink-500 me-2"></i><span class="link-text truncate">ارزش افزوده</span></a>
+                                <a class='@NavClass("Financial", "SeasonalTax")' data-nav-id="financial-seasonaltax" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-bar-graph w-4 text-indigo-600 me-2"></i><span class="link-text truncate">گزارشات فصلی ۱۶۹</span></a>
+                                <a class='@NavClass("Financial", "ReportingHub")' data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line w-4 text-rose-500 me-2"></i><span class="link-text truncate">گزارش‌ها</span></a>
+                                <a class='@NavClass("Payroll")' data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 w-4 text-violet-500 me-2"></i><span class="link-text truncate">حقوق</span></a>
+                                <a class='@NavClass("Bimeh")' data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check w-4 text-blue-500 me-2"></i><span class="link-text truncate">بیمه</span></a>
                             </div></div>
                         </section>
                     }
@@ -212,13 +212,13 @@
                         <section class="accordion-item sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWarehouse"><span>انبار و عملیات</span><i class="bi bi-chevron-down text-[10px]"></i></button>
                             <div id="collapseWarehouse" class="accordion-collapse collapse @((currentController == "Warehouse" || currentController == "Vendors" || currentController == "Waybill") ? "show" : "")"><div class="mt-1 space-y-1">
-                                <a class='@NavClass("Warehouse")' data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam w-4"></i><span class="link-text truncate">داشبورد انبار</span></a>
-                                <a class='@NavClass("Warehouse", "Products")' data-nav-id="warehouse-products" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box w-4"></i><span class="link-text truncate">کالاها</span></a>
-                                <a class='@NavClass("Warehouse", "Stock")' data-nav-id="warehouse-stock" asp-controller="Warehouse" asp-action="Stock"><i class="bi bi-layers w-4"></i><span class="link-text truncate">موجودی</span></a>
-                                <a class='@NavClass("Warehouse", "Receipts")' data-nav-id="warehouse-receipts" asp-controller="Warehouse" asp-action="Receipts"><i class="bi bi-box-arrow-in-down w-4"></i><span class="link-text truncate">رسیدها</span></a>
-                                <a class='@NavClass("Warehouse", "Issuances")' data-nav-id="warehouse-issuances" asp-controller="Warehouse" asp-action="Issuances"><i class="bi bi-box-arrow-up w-4"></i><span class="link-text truncate">حواله‌ها</span></a>
-                                <a class='@NavClass("Vendors")' data-nav-id="vendors-index" asp-controller="Vendors" asp-action="Index"><i class="bi bi-building w-4"></i><span class="link-text truncate">تامین‌کنندگان</span></a>
-                                <a class='@NavClass("Waybill")' data-nav-id="waybill-index" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck w-4"></i><span class="link-text truncate">بارنامه</span></a>
+                                <a class='@NavClass("Warehouse")' data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam w-4 text-orange-500 me-2"></i><span class="link-text truncate">داشبورد انبار</span></a>
+                                <a class='@NavClass("Warehouse", "Products")' data-nav-id="warehouse-products" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box w-4 text-yellow-500 me-2"></i><span class="link-text truncate">کالاها</span></a>
+                                <a class='@NavClass("Warehouse", "Stock")' data-nav-id="warehouse-stock" asp-controller="Warehouse" asp-action="Stock"><i class="bi bi-layers w-4 text-lime-500 me-2"></i><span class="link-text truncate">موجودی</span></a>
+                                <a class='@NavClass("Warehouse", "Receipts")' data-nav-id="warehouse-receipts" asp-controller="Warehouse" asp-action="Receipts"><i class="bi bi-box-arrow-in-down w-4 text-emerald-500 me-2"></i><span class="link-text truncate">رسیدها</span></a>
+                                <a class='@NavClass("Warehouse", "Issuances")' data-nav-id="warehouse-issuances" asp-controller="Warehouse" asp-action="Issuances"><i class="bi bi-box-arrow-up w-4 text-red-500 me-2"></i><span class="link-text truncate">حواله‌ها</span></a>
+                                <a class='@NavClass("Vendors")' data-nav-id="vendors-index" asp-controller="Vendors" asp-action="Index"><i class="bi bi-building w-4 text-blue-500 me-2"></i><span class="link-text truncate">تامین‌کنندگان</span></a>
+                                <a class='@NavClass("Waybill")' data-nav-id="waybill-index" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck w-4 text-indigo-500 me-2"></i><span class="link-text truncate">بارنامه</span></a>
                             </div></div>
                         </section>
                     }
@@ -229,15 +229,15 @@
                             <div id="collapseManagement" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports") ? "show" : "")"><div class="mt-1 space-y-1">
                                 @if (userCanAccessSystemSettings)
                                 {
-                                    <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4"></i><span class="link-text truncate">تنظیمات</span></a>
-                                    <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4"></i><span class="link-text truncate">امنیت</span></a>
-                                    <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4"></i><span class="link-text truncate">ممیزی</span></a>
+                                    <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400 me-2"></i><span class="link-text truncate">تنظیمات</span></a>
+                                    <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500 me-2"></i><span class="link-text truncate">امنیت</span></a>
+                                    <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500 me-2"></i><span class="link-text truncate">ممیزی</span></a>
                                 }
                                 @if (userCanAccessProcessAnalytics)
                                 {
-                                    <a class='@NavClass("ProcessAnalysis")' data-nav-id="process-index" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 w-4"></i><span class="link-text truncate">تحلیل فرایند</span></a>
+                                    <a class='@NavClass("ProcessAnalysis")' data-nav-id="process-index" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 w-4 text-purple-500 me-2"></i><span class="link-text truncate">تحلیل فرایند</span></a>
                                 }
-                                <a class='@NavClass("Reports")' data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph w-4"></i><span class="link-text truncate">گزارشات</span></a>
+                                <a class='@NavClass("Reports")' data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph w-4 text-indigo-500 me-2"></i><span class="link-text truncate">گزارشات</span></a>
                             </div></div>
                         </section>
                     }
@@ -246,7 +246,7 @@
             <div class="border-t border-slate-200 p-2 dark:border-slate-800"><a class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-decoration-none dark:border-slate-800 dark:bg-slate-900" asp-controller="Settings" asp-action="Index"><span class="grid h-8 w-8 place-items-center rounded-md bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"><i class="bi bi-person"></i></span><span class="min-w-0 flex-1"><span class="block truncate text-[12px] font-bold text-slate-800 dark:text-slate-100">@displayName</span><span class="block truncate text-[10px] text-slate-500 dark:text-slate-400">@userRoleLabel</span></span></a></div>
         </aside>
         <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden z-10">
-            <header class="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200 bg-slate-100/85 px-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
+            <header class="print:hidden sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200 bg-slate-100/85 px-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
                 <button id="btnOpenSidebar" type="button" class="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" aria-label="باز کردن منو"><i class="bi bi-list text-lg"></i></button>
                 <form asp-controller="Search" asp-action="Index" method="get" role="search" class="relative hidden min-w-0 flex-1 md:block"><i class="bi bi-search pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i><input name="q" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجو در سیستم..." class="h-9 w-full rounded-lg border border-slate-200 bg-white pr-9 pl-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" /></form>
                 <div class="mr-auto flex items-center gap-2">
@@ -259,7 +259,11 @@
                     <partial name="_LoginPartial" />
                 </div>
             </header>
-            <main id="main-content-wrapper" class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-100 p-3 md:p-4 dark:bg-slate-950"><div class="mx-auto w-full max-w-none flex-1 flex flex-col">@RenderBody()</div></main>
+            <main id="main-content-wrapper" class="flex-1 flex flex-col w-full overflow-hidden">
+                <div class="p-4 md:p-6 lg:p-8 overflow-y-auto w-full flex-1 print:w-full print:m-0 print:p-0 print:block">
+                    @RenderBody()
+                </div>
+            </main>
         </div>
     </div>
     <div class="modal fade" id="appConfirmDialog" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"><div class="modal-header border-slate-200 dark:border-slate-800"><h5 class="modal-title text-sm font-bold text-slate-900 dark:text-white">تایید عملیات</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p id="appConfirmMessage" class="mb-0 text-sm text-slate-700 dark:text-slate-300">آیا مطمئن هستید؟</p></div><div class="modal-footer border-slate-200 dark:border-slate-800"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">لغو</button><button type="button" class="btn btn-danger btn-sm" id="appConfirmOk">تایید</button></div></div></div></div>

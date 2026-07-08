@@ -4,69 +4,78 @@
     ViewData["Title"] = "مرکز اعلان‌ها";
 }
 
-<section class="notifications-page">
-    <div class="section-header">
+<section class="max-w-4xl mx-auto py-6 px-4" dir="rtl">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-            <h1>مرکز اعلان‌ها</h1>
-            <p>پیگیری اعلان‌های خوانده‌نشده، هشدارهای عملیاتی و ارجاع‌های سیستم.</p>
+            <h1 class="text-lg font-black text-slate-900 dark:text-white">مرکز اعلان‌ها</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">پیگیری اعلان‌های خوانده‌نشده، هشدارهای عملیاتی و ارجاع‌های سیستم.</p>
         </div>
         <form asp-action="MarkAllRead" method="post">
-            <button class="btn btn-sm btn-outline-primary" type="submit" disabled="@(Model.UnreadCount == 0)">
+            <button class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 bg-transparent px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1.5" type="submit" disabled="@(Model.UnreadCount == 0)">
                 <i class="bi bi-check2-all"></i>
-                خواندن همه
+                <span>خواندن همه</span>
             </button>
         </form>
     </div>
 
-    <div class="notification-stats">
-        <div>
-            <span>@Model.TotalCount.ToString("N0")</span>
-            <small>کل اعلان‌ها</small>
+    <div class="flex gap-4 mb-6">
+        <div class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-center">
+            <span class="block text-2xl font-black text-slate-900 dark:text-white font-mono">@Model.TotalCount.ToString("N0")</span>
+            <small class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">کل اعلان‌ها</small>
         </div>
-        <div>
-            <span>@Model.UnreadCount.ToString("N0")</span>
-            <small>خوانده‌نشده</small>
+        <div class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-center">
+            <span class="block text-2xl font-black text-rose-650 dark:text-rose-400 font-mono">@Model.UnreadCount.ToString("N0")</span>
+            <small class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">خوانده‌نشده</small>
         </div>
     </div>
 
     @if (Model.Items.Count == 0)
     {
-        <div class="empty-state">اعلانی برای نمایش وجود ندارد.</div>
+        <div class="text-center text-xs text-slate-400 dark:text-slate-650 py-12">اعلانی برای نمایش وجود ندارد.</div>
     }
     else
     {
-        <div class="notification-list-page">
+        <div class="space-y-2">
             @foreach (var item in Model.Items)
             {
-                <article class="notification-row @(item.IsRead ? "is-read" : "is-unread") notification-row-@item.CssTone">
-                    <i class="bi @item.Icon"></i>
-                    <div class="notification-row-body">
-                        <div class="notification-row-title">
-                            <strong>@item.Title</strong>
-                            <span>@item.CreatedAtText</span>
+                var bgClass = item.IsRead ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-800/30";
+                <article class="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-2xl @bgClass gap-4 transition hover:shadow-sm">
+                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mt-0.5">
+                            @if (!item.IsRead)
+                            {
+                                <div class="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" title="خوانده‌نشده"></div>
+                            }
+                            <i class="bi @item.Icon text-slate-400 dark:text-slate-500 text-lg"></i>
                         </div>
-                        <p>@item.Message</p>
-                        @if (!string.IsNullOrWhiteSpace(item.SourceModule))
-                        {
-                            <small>@item.SourceModule</small>
-                        }
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-baseline justify-between gap-2 flex-wrap">
+                                <strong class="text-xs font-black text-slate-900 dark:text-white">@item.Title</strong>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">@item.CreatedAtText</span>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">@item.Message</p>
+                            @if (!string.IsNullOrWhiteSpace(item.SourceModule))
+                            {
+                                <span class="inline-block mt-2 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded font-bold">@item.SourceModule</span>
+                            }
+                        </div>
                     </div>
-                    <div class="notification-row-actions">
+                    <div class="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
                         @if (!string.IsNullOrWhiteSpace(item.LinkUrl))
                         {
-                            <a class="btn btn-sm btn-outline-secondary" href="@item.LinkUrl">
+                            <a class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1" href="@item.LinkUrl">
                                 <i class="bi bi-arrow-left"></i>
-                                مشاهده
+                                <span>مشاهده</span>
                             </a>
                         }
                         @if (!item.IsRead)
                         {
-                            <form asp-action="MarkRead" method="post">
+                            <form asp-action="MarkRead" method="post" class="m-0">
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                                <button class="btn btn-sm btn-primary" type="submit">
+                                <button class="h-8 rounded-lg bg-teal-600 hover:bg-teal-700 text-white px-3 text-xs font-bold transition flex items-center gap-1" type="submit">
                                     <i class="bi bi-check2"></i>
-                                    خواندم
+                                    <span>خواندم</span>
                                 </button>
                             </form>
                         }
@@ -78,5 +87,4 @@
 </section>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
 }

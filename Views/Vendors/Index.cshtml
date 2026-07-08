@@ -14,12 +14,12 @@
         <a asp-action="Create" class="btn btn-sm btn-primary">تامین‌کننده جدید</a>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-3 border-bottom">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3 border-bottom" >
             <form method="get" class="row g-2 align-items-end">
                 <div class="col-12 col-md-4">
                     <label class="form-label small text-muted mb-1">جستجو</label>
-                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="form-control form-control-sm" placeholder="نام / کد اقتصادی / شناسه ملی" />
+                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="نام / کد اقتصادی / شناسه ملی" />
                 </div>
                 <div class="col-auto">
                     <button class="btn btn-sm btn-primary">اعمال</button>
@@ -27,15 +27,15 @@
             </form>
         </div>
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead>
+            <table class="w-full text-xs text-right border-collapse" >
+                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " ead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th>نام</th>
-                        <th>کد اقتصادی</th>
-                        <th>شناسه ملی</th>
-                        <th>تلفن</th>
-                        <th>وضعیت</th>
-                        <th class="text-center">عملیات</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >نام</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >کد اقتصادی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >شناسه ملی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >تلفن</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >وضعیت</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center" >عملیات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,12 +44,12 @@
                         @foreach (var item in Model)
                         {
                             <tr>
-                                <td>@item.Name</td>
-                                <td>@(string.IsNullOrWhiteSpace(item.EconomicCode) ? "-" : item.EconomicCode)</td>
-                                <td>@(string.IsNullOrWhiteSpace(item.NationalId) ? "-" : item.NationalId)</td>
-                                <td>@(string.IsNullOrWhiteSpace(item.Phone) ? "-" : item.Phone)</td>
-                                <td><span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "فعال" : "غیرفعال")</span></td>
-                                <td class="text-center">
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@item.Name</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@(string.IsNullOrWhiteSpace(item.EconomicCode) ? "-" : item.EconomicCode)</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@(string.IsNullOrWhiteSpace(item.NationalId) ? "-" : item.NationalId)</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@(string.IsNullOrWhiteSpace(item.Phone) ? "-" : item.Phone)</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " ><span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "فعال" : "غیرفعال")</span></td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center" >
                                     <div class="d-inline-flex gap-1">
                                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">ویرایش</a>
                                         <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('آیتم حذف/غیرفعال شود؟');">
@@ -63,7 +63,7 @@
                     }
                     else
                     {
-                        <tr><td colspan="6" class="text-center text-muted py-3">رکوردی یافت نشد.</td></tr>
+                        <tr><td class="p-3 border-b border-slate-100 dark:border-slate-800/50 "  colspan="6" class="text-center text-muted py-3">رکوردی یافت نشد.</td></tr>
                     }
                 </tbody>
             </table>

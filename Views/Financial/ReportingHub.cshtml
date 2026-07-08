@@ -9,94 +9,97 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/financial-pages.css" asp-append-version="true" />
 }
 
-<div class="container-fluid py-4 hub-page">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+<div class="container-fluid py-4 space-y-4" dir="rtl">
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
-            <h5 class="fw-bold mb-1">مرکز گزارشات و داشبورد مدیریتی</h5>
-            <p class="text-muted small mb-0">تحلیل نموداری پیشرفته و مرکز یکپارچه خروجی‌ها</p>
+            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">مرکز گزارشات و داشبورد مدیریتی</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">تحلیل نموداری پیشرفته و مرکز یکپارچه خروجی‌ها</p>
         </div>
-        <form method="get" class="d-flex gap-2 align-items-center">
-            <label class="small text-muted mb-0">سال:</label>
-            <input name="year" value="@year" type="number" min="1300" max="1700" class="form-control form-control-sm compact-year-input" />
-            <button class="btn btn-sm btn-outline-primary">اعمال</button>
+        <form method="get" class="flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">سال</span>
+            <input name="year" value="@year" type="number" min="1300" max="1700" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+            <button class="h-7 rounded-lg bg-teal-600 px-3 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">اعمال</button>
         </form>
     </div>
 
-    <div class="card border-0 shadow-sm hub-card">
-        <div class="card-body p-3">
-            <ul class="nav nav-tabs hub-tabs mb-3" id="reportingHubTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics-panel" type="button" role="tab">داشبورد تحلیلی پیشرفته</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="exports-tab" data-bs-toggle="tab" data-bs-target="#exports-panel" type="button" role="tab">مرکز یکپارچه خروجی‌ها</button>
-                </li>
-            </ul>
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+        <ul class="flex border-b border-slate-200 dark:border-slate-800 mb-3 list-none p-0 gap-3" id="reportingHubTabs" role="tablist">
+            <li role="presentation">
+                <button class="pb-2 text-[11px] font-black border-b-2 border-teal-600 text-teal-600 dark:text-teal-400 focus:outline-none active-tab-btn" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics-panel" type="button" role="tab">داشبورد تحلیلی پیشرفته</button>
+            </li>
+            <li role="presentation">
+                <button class="pb-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border-b-2 border-transparent focus:outline-none" id="exports-tab" data-bs-toggle="tab" data-bs-target="#exports-panel" type="button" role="tab">مرکز یکپارچه خروجی‌ها</button>
+            </li>
+        </ul>
 
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="analytics-panel" role="tabpanel" aria-labelledby="analytics-tab">
-                    <div class="d-flex gap-2 mb-2 flex-wrap">
-                        <button type="button" class="btn btn-sm btn-outline-primary chart-type-btn" data-chart-type="bar">Bar</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary chart-type-btn" data-chart-type="line">Line</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary chart-type-btn" data-chart-type="area">Area</button>
-                    </div>
-                    <div class="hub-chart-wrap"><canvas id="reportingHubChart"></canvas></div>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="analytics-panel" role="tabpanel" aria-labelledby="analytics-tab">
+                <div class="flex gap-1.5 mb-3 flex-wrap">
+                    <button type="button" class="rounded-lg bg-teal-600 px-2.5 py-1 text-[10px] font-black text-white hover:bg-teal-700 chart-type-btn" data-chart-type="bar">نمودار ستونی</button>
+                    <button type="button" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 chart-type-btn" data-chart-type="line">نمودار خطی</button>
+                    <button type="button" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 chart-type-btn" data-chart-type="area">نمودار ناحیه‌ای</button>
                 </div>
+                <div class="h-80 w-full relative"><canvas id="reportingHubChart"></canvas></div>
+            </div>
 
-                <div class="tab-pane fade" id="exports-panel" role="tabpanel" aria-labelledby="exports-tab">
-                    <div class="hub-grid">
-                        <div class="hub-action-card">
-                            <h6>حقوق (Payroll)</h6>
-                            <p>خروجی اکسل و چاپ فیش/گزارش حقوق</p>
-                            <div class="d-flex gap-1 flex-wrap">
-                                <a asp-controller="Financial" asp-action="ExportPayrollExcel" asp-route-year="@year" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
-                                <a asp-controller="Payroll" asp-action="Index" class="btn btn-sm btn-outline-dark">چاپ PDF</a>
-                            </div>
+            <div class="tab-pane fade" id="exports-panel" role="tabpanel" aria-labelledby="exports-tab">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 p-3 rounded-lg flex flex-col justify-between gap-2.5">
+                        <div>
+                            <h6 class="text-[11px] font-black text-slate-900 dark:text-white mb-0.5">حقوق (Payroll)</h6>
+                            <p class="text-[9px] text-slate-500 dark:text-slate-400">خروجی اکسل و چاپ فیش/گزارش حقوق</p>
                         </div>
-                        <div class="hub-action-card">
-                            <h6>بیمه (Bimeh)</h6>
-                            <p>دسترسی سریع به چاپ و پیگیری لیست بیمه</p>
-                            <div class="d-flex gap-1 flex-wrap">
-                                <a asp-controller="Bimeh" asp-action="Index" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
-                                <a asp-controller="Bimeh" asp-action="Index" class="btn btn-sm btn-outline-dark">چاپ PDF</a>
-                            </div>
-                        </div>
-                        <div class="hub-action-card">
-                            <h6>موجودی انبار</h6>
-                            <p>خروجی اکسل از موجودی جاری و گردش کالا</p>
-                            <div class="d-flex gap-1 flex-wrap">
-                                <a asp-controller="Financial" asp-action="ExportStockExcel" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
-                                <a asp-controller="Warehouse" asp-action="Stock" class="btn btn-sm btn-outline-dark">چاپ گزارش</a>
-                            </div>
-                        </div>
-                        <div class="hub-action-card">
-                            <h6>فروش</h6>
-                            <p>خروجی اکسل و چاپ فاکتورهای فروش</p>
-                            <div class="d-flex gap-1 flex-wrap">
-                                <a asp-controller="Financial" asp-action="ExportInvoicesExcel" asp-route-invoiceType="Sale" asp-route-year="@year" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
-                                <a asp-controller="Financial" asp-action="Sales" class="btn btn-sm btn-outline-dark">چاپ PDF</a>
-                            </div>
-                        </div>
-                        <div class="hub-action-card">
-                            <h6>خرید</h6>
-                            <p>خروجی اکسل و چاپ فاکتورهای خرید</p>
-                            <div class="d-flex gap-1 flex-wrap">
-                                <a asp-controller="Financial" asp-action="ExportInvoicesExcel" asp-route-invoiceType="Purchase" asp-route-year="@year" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
-                                <a asp-controller="Financial" asp-action="Purchases" class="btn btn-sm btn-outline-dark">چاپ PDF</a>
-                            </div>
-                        </div>
-                        <div class="hub-action-card">
-                            <h6>ماده ۱۶۹</h6>
-                            <p>گزارش معاملات فصلی و خروجی حسابرسی</p>
-                            <div class="d-flex gap-1 flex-wrap">
-                                <a asp-controller="Financial" asp-action="ExportInvoicesExcel" asp-route-year="@year" class="btn btn-sm btn-outline-success">خروجی اکسل</a>
-                                <a asp-controller="Financial" asp-action="SeasonalTax" asp-route-year="@year" class="btn btn-sm btn-outline-dark">چاپ گزارش</a>
-                            </div>
+                        <div class="flex gap-1.5 flex-wrap">
+                            <a asp-controller="Financial" asp-action="ExportPayrollExcel" asp-route-year="@year" class="px-2 py-1 rounded-md border border-emerald-250 hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-950/20 text-[9px] font-bold text-emerald-700 dark:text-emerald-400 no-underline transition">خروجی اکسل</a>
+                            <a asp-controller="Payroll" asp-action="Index" class="px-2 py-1 rounded-md border border-slate-250 hover:bg-slate-50 dark:border-slate-850 dark:hover:bg-slate-800 text-[9px] font-bold text-slate-700 dark:text-slate-300 no-underline transition">چاپ PDF</a>
                         </div>
                     </div>
+                    <div class="bg-white dark:bg-slate-955/40 border border-slate-200 dark:border-slate-800/80 p-3 rounded-lg flex flex-col justify-between gap-2.5">
+                        <div>
+                            <h6 class="text-[11px] font-black text-slate-900 dark:text-white mb-0.5">بیمه (Bimeh)</h6>
+                            <p class="text-[9px] text-slate-500 dark:text-slate-400">دسترسی سریع به چاپ و پیگیری لیست بیمه</p>
+                        </div>
+                        <div class="flex gap-1.5 flex-wrap">
+                            <a asp-controller="Bimeh" asp-action="Index" class="px-2 py-1 rounded-md border border-emerald-250 hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-950/20 text-[9px] font-bold text-emerald-700 dark:text-emerald-400 no-underline transition">خروجی اکسل</a>
+                            <a asp-controller="Bimeh" asp-action="Index" class="px-2 py-1 rounded-md border border-slate-250 hover:bg-slate-50 dark:border-slate-850 dark:hover:bg-slate-800 text-[9px] font-bold text-slate-700 dark:text-slate-300 no-underline transition">چاپ PDF</a>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-955/40 border border-slate-200 dark:border-slate-800/80 p-3 rounded-lg flex flex-col justify-between gap-2.5">
+                        <div>
+                            <h6 class="text-[11px] font-black text-slate-900 dark:text-white mb-0.5">موجودی انبار</h6>
+                            <p class="text-[9px] text-slate-500 dark:text-slate-400">خروجی اکسل از موجودی جاری و گردش کالا</p>
+                        </div>
+                        <div class="flex gap-1.5 flex-wrap">
+                            <a asp-controller="Financial" asp-action="ExportStockExcel" class="px-2 py-1 rounded-md border border-emerald-250 hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-955/20 text-[9px] font-bold text-emerald-700 dark:text-emerald-400 no-underline transition">خروجی اکسل</a>
+                            <a asp-controller="Warehouse" asp-action="Stock" class="px-2 py-1 rounded-md border border-slate-250 hover:bg-slate-50 dark:border-slate-850 dark:hover:bg-slate-800 text-[9px] font-bold text-slate-700 dark:text-slate-300 no-underline transition">چاپ گزارش</a>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-955/40 border border-slate-200 dark:border-slate-800/80 p-3 rounded-lg flex flex-col justify-between gap-2.5">
+                        <div>
+                            <h6 class="text-[11px] font-black text-slate-900 dark:text-white mb-0.5">فروش</h6>
+                            <p class="text-[9px] text-slate-500 dark:text-slate-400">خروجی اکسل و چاپ فاکتورهای فروش</p>
+                        </div>
+                        <div class="flex gap-1.5 flex-wrap">
+                            <a asp-controller="Financial" asp-action="ExportInvoicesExcel" asp-route-invoiceType="Sale" asp-route-year="@year" class="px-2 py-1 rounded-md border border-emerald-250 hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-950/20 text-[9px] font-bold text-emerald-700 dark:text-emerald-400 no-underline transition">خروجی اکسل</a>
+                            <a asp-controller="Financial" asp-action="Sales" class="px-2 py-1 rounded-md border border-slate-250 hover:bg-slate-50 dark:border-slate-850 dark:hover:bg-slate-800 text-[9px] font-bold text-slate-700 dark:text-slate-300 no-underline transition">چاپ PDF</a>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-955/40 border border-slate-200 dark:border-slate-800/80 p-3 rounded-lg flex flex-col justify-between gap-2.5">
+                        <div>
+                            <h6 class="text-[11px] font-black text-slate-900 dark:text-white mb-0.5">خرید</h6>
+                            <p class="text-[9px] text-slate-500 dark:text-slate-400">خروجی اکسل و چاپ فاکتورهای خرید</p>
+                        </div>
+                        <div class="flex gap-1.5 flex-wrap">
+                            <a asp-controller="Financial" asp-action="ExportInvoicesExcel" asp-route-invoiceType="Purchase" asp-route-year="@year" class="px-2 py-1 rounded-md border border-emerald-250 hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-950/20 text-[9px] font-bold text-emerald-700 dark:text-emerald-400 no-underline transition">خروجی اکسل</a>
+                            <a asp-controller="Financial" asp-action="Purchases" class="px-2 py-1 rounded-md border border-slate-250 hover:bg-slate-50 dark:border-slate-850 dark:hover:bg-slate-800 text-[9px] font-bold text-slate-700 dark:text-slate-300 no-underline transition">چاپ PDF</a>
+                        </div>
+                    </div>
+                    <a asp-controller="Financial" asp-action="SeasonalTax" asp-route-year="@year" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 hover:border-indigo-500 transition-colors flex flex-col items-center justify-center gap-2 text-slate-800 dark:text-slate-200 font-bold shadow-sm no-underline">
+                        <i class="bi bi-file-earmark-bar-graph text-2xl text-indigo-500"></i>
+                        <span class="text-[11px]">گزارشات فصلی (ماده ۱۶۹)</span>
+                    </a>
                 </div>
             </div>
         </div>

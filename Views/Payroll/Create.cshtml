@@ -87,7 +87,7 @@
                 <!-- Month Field -->
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-slate-700 dark:text-slate-300">ماه</label>
-                    <select id="payrollMonth" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800">
+                    <select id="payrollMonth" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                         @for (var m = 1; m <= 12; m++)
                         {
                             <option value="@m" selected="@(m == Model.Month ? "selected" : null)">@m</option>
@@ -98,21 +98,21 @@
                 <!-- Year Field -->
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-slate-700 dark:text-slate-300">سال</label>
-                    <input id="payrollYear" type="number" min="1300" max="1600" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" value="@Model.Year" />
+                    <input id="payrollYear" type="number" min="1300" max="1600" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" value="@Model.Year" />
                 </div>
             </div>
 
             <!-- Table Container Grid -->
             <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mt-2">
                 <div class="overflow-x-auto w-full">
-                    <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300" id="payrollTable">
-                        <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    <table class="w-full text-xs text-right border-collapse"  id="payrollTable">
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " ead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th class="px-3 py-2.5 font-bold">کارمند</th>
-                                <th class="px-3 py-2.5 font-bold">حقوق پایه</th>
-                                <th class="px-3 py-2.5 font-bold">بیمه</th>
-                                <th class="px-3 py-2.5 font-bold">مالیات</th>
-                                <th class="px-3 py-2.5 font-bold">خالص پرداختی</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >کارمند</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >حقوق پایه</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >بیمه</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >مالیات</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >خالص پرداختی</th>
                             </tr>
                         </thead>
                         <tbody id="payrollRows" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
@@ -137,17 +137,17 @@
 <!-- Template for Row Cloning -->
 <template id="payrollRowTemplate">
     <tr>
-        <td class="px-3 py-2">
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2" >
             <div class="relative w-full">
-                <input data-field="FullName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" placeholder="جستجو نام/کد پرسنلی..." autocomplete="off" />
-                <input type="hidden" data-field="HumanCapitalEmployeeId" />
+                <input data-field="FullName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="جستجو نام/کد پرسنلی..." autocomplete="off" />
+                <input class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" type="hidden" data-field="HumanCapitalEmployeeId" />
                 <div class="employee-suggestions absolute top-full right-0 left-0 z-50 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg hidden"></div>
             </div>
         </td>
-        <td class="px-3 py-2"><input data-field="BaseSalary" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
-        <td class="px-3 py-2"><input data-field="Insurance" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
-        <td class="px-3 py-2"><input data-field="Tax" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
-        <td class="px-3 py-2"><input data-field="NetPayable" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-955 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none font-semibold tabular-nums dark:border-slate-800" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2" ><input data-field="BaseSalary" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2" ><input data-field="Insurance" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2" ><input data-field="Tax" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2" ><input data-field="NetPayable" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></td>
     </tr>
 </template>
 

@@ -5,24 +5,24 @@
 
 <div class="container-fluid py-4">
     <h6 class="fw-bold mb-3">ثبت انبار جدید</h6>
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-3">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3" >
             <form asp-action="CreateWarehouse" method="post" class="row g-2">
                 <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
-                <div class="col-md-4"><label asp-for="Code" class="form-label small"></label><input asp-for="Code" class="form-control form-control-sm" /><span asp-validation-for="Code" class="text-danger small"></span></div>
-                <div class="col-md-4"><label asp-for="Name" class="form-label small"></label><input asp-for="Name" class="form-control form-control-sm" /><span asp-validation-for="Name" class="text-danger small"></span></div>
-                <div class="col-md-4"><label asp-for="Location" class="form-label small"></label><input asp-for="Location" class="form-control form-control-sm" /><span asp-validation-for="Location" class="text-danger small"></span></div>
-                <div class="col-md-4"><label asp-for="WarehouseType" class="form-label small"></label><input asp-for="WarehouseType" class="form-control form-control-sm" /><span asp-validation-for="WarehouseType" class="text-danger small"></span></div>
-                <div class="col-md-4"><label asp-for="Capacity" class="form-label small"></label><input asp-for="Capacity" class="form-control form-control-sm" /><span asp-validation-for="Capacity" class="text-danger small"></span></div>
+                <div class="col-md-4"><label asp-for="Code" class="form-label small"></label><input asp-for="Code" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Code" class="text-danger small"></span></div>
+                <div class="col-md-4"><label asp-for="Name" class="form-label small"></label><input asp-for="Name" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+                <div class="col-md-4"><label asp-for="Location" class="form-label small"></label><input asp-for="Location" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Location" class="text-danger small"></span></div>
+                <div class="col-md-4"><label asp-for="WarehouseType" class="form-label small"></label><input asp-for="WarehouseType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="WarehouseType" class="text-danger small"></span></div>
+                <div class="col-md-4"><label asp-for="Capacity" class="form-label small"></label><input asp-for="Capacity" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Capacity" class="text-danger small"></span></div>
                 <div class="col-md-4">
                     <label asp-for="ManagerUserId" class="form-label small"></label>
-                    <select asp-for="ManagerUserId" asp-items="Model.ManagerOptions" class="form-select form-select-sm">
+                    <select asp-for="ManagerUserId" asp-items="Model.ManagerOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                         <option value="">انتخاب مدیر</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label small"></label></div></div>
-                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsClosed" class="form-check-input" /><label asp-for="IsClosed" class="form-check-label small"></label></div></div>
-                <div class="col-12"><label asp-for="ClosingRules" class="form-label small"></label><textarea asp-for="ClosingRules" rows="2" class="form-control form-control-sm"></textarea></div>
+                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsActive" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><label asp-for="IsActive" class="form-check-label small"></label></div></div>
+                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsClosed" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><label asp-for="IsClosed" class="form-check-label small"></label></div></div>
+                <div class="col-12"><label asp-for="ClosingRules" class="form-label small"></label><textarea asp-for="ClosingRules" rows="2" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></textarea></div>
                 <div class="col-12 d-flex gap-2"><button class="btn btn-sm btn-success">ذخیره</button><a asp-action="Warehouses" class="btn btn-sm btn-outline-secondary">بازگشت</a></div>
             </form>
         </div>

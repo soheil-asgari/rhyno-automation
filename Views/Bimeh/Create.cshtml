@@ -47,28 +47,28 @@
                 <!-- Project Name -->
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="ProjectName" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="ProjectName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" maxlength="150" id="projectNameField" />
+                    <input asp-for="ProjectName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" maxlength="150" id="projectNameField" />
                     <span asp-validation-for="ProjectName" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
                 <!-- Manager Name -->
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="ManagerName" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="ManagerName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" maxlength="100" id="managerNameField" />
+                    <input asp-for="ManagerName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" maxlength="100" id="managerNameField" />
                     <span asp-validation-for="ManagerName" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
                 <!-- Month -->
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="Month" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="Month" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono" type="number" min="1" max="12" id="monthField" />
+                    <input asp-for="Month" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" type="number" min="1" max="12" id="monthField" />
                     <span asp-validation-for="Month" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
                 <!-- Year -->
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="Year" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="Year" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono" type="number" min="1300" max="1600" id="yearField" />
+                    <input asp-for="Year" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" type="number" min="1300" max="1600" id="yearField" />
                     <span asp-validation-for="Year" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
             </div>
@@ -85,17 +85,17 @@
             <!-- Table Employees list -->
             <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                 <div class="overflow-x-auto w-full">
-                    <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
-                        <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    <table class="w-full text-xs text-right border-collapse" >
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " ead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th class="px-3 py-2.5 font-bold">نام کارمند</th>
-                                <th class="px-3 py-2.5 font-bold">سمت</th>
-                                <th class="px-3 py-2.5 font-bold text-center">شروع کار (شمسی)</th>
-                                <th class="px-3 py-2.5 font-bold text-center">ترک کار (شمسی)</th>
-                                <th class="px-3 py-2.5 font-bold text-left">روز کارکرد</th>
-                                <th class="px-3 py-2.5 font-bold text-left">حقوق مشمول</th>
-                                <th class="px-3 py-2.5 font-bold text-left">حق بیمه ۷٪</th>
-                                <th class="px-3 py-2.5 font-bold text-center w-1">حذف</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >نام کارمند</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold" >سمت</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-center" >شروع کار (شمسی)</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-center" >ترک کار (شمسی)</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-left" >روز کارکرد</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-left" >حقوق مشمول</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-left" >حق بیمه ۷٪</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-center w-1" >حذف</th>
                             </tr>
                         </thead>
                         <tbody id="employeeRows" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
@@ -119,48 +119,48 @@
 <template id="employeeRowTemplate">
     <tr>
         <!-- Employee search box -->
-        <td class="px-3 py-2 min-w-[200px]">
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 min-w-[200px]" >
             <div class="relative w-full employee-autocomplete">
-                <input data-field="FullName" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 employee-search" maxlength="120" autocomplete="off" placeholder="جستجو نام/کد پرسنلی..." required />
-                <input type="hidden" data-field="HumanCapitalEmployeeId" />
+                <input data-field="FullName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" maxlength="120" autocomplete="off" placeholder="جستجو نام/کد پرسنلی..." required />
+                <input class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" type="hidden" data-field="HumanCapitalEmployeeId" />
                 <div class="employee-suggestions absolute top-full right-0 left-0 z-50 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg hidden"></div>
             </div>
         </td>
         
         <!-- Job Title -->
-        <td class="px-3 py-2 min-w-[150px]">
-            <input data-field="JobTitle" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-900 px-3 text-xs text-slate-600 dark:text-slate-400 outline-none dark:border-slate-800" maxlength="100" required readonly />
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 min-w-[150px]" >
+            <input data-field="JobTitle" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" maxlength="100" required readonly />
             <small class="text-[9px] text-slate-400 mt-0.5 block">از پرونده پرسنلی</small>
         </td>
         
         <!-- Hire date / Start Date -->
-        <td class="px-3 py-2 min-w-[140px]">
-            <input type="text" data-field="StartWorkSolar" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-900 px-3 text-xs text-slate-650 dark:text-slate-400 outline-none text-center font-mono tabular-nums dark:border-slate-800 solar-date-field" placeholder="1405/03/01" required readonly />
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 min-w-[140px]" >
+            <input type="text" data-field="StartWorkSolar" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="1405/03/01" required readonly />
             <small class="text-[9px] text-slate-400 mt-0.5 block">قفل‌شده از تاریخ استخدام</small>
         </td>
         
         <!-- End Work date -->
-        <td class="px-3 py-2 min-w-[140px]">
-            <input type="text" data-field="EndWorkSolar" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-center font-mono tabular-nums solar-date-field" placeholder="1405/03/31" />
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 min-w-[140px]" >
+            <input type="text" data-field="EndWorkSolar" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="1405/03/31" />
         </td>
         
         <!-- Work Days count -->
-        <td class="px-3 py-2 w-20">
-            <input type="number" data-field="WorkDays" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums" min="0" max="31" required />
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 w-20" >
+            <input type="number" data-field="WorkDays" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" min="0" max="31" required />
         </td>
         
         <!-- Salary -->
-        <td class="px-3 py-2 min-w-[130px]">
-            <input type="number" data-field="Salary" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-850 dark:text-slate-250 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums salary-input" min="0" step="0.01" required />
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 min-w-[130px]" >
+            <input type="number" data-field="Salary" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" min="0" step="0.01" required />
         </td>
         
         <!-- Calculated Insurance -->
-        <td class="px-3 py-2 min-w-[110px]">
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 min-w-[110px]" >
             <div class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-900 px-3 text-xs text-slate-650 dark:text-slate-350 outline-none flex items-center justify-start font-bold font-mono tabular-nums dark:border-slate-800" data-insurance-cell>0 ریال</div>
         </td>
         
         <!-- Delete Row Action -->
-        <td class="px-3 py-2 text-center">
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-center" >
             <button type="button" class="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-700 dark:text-rose-450 text-[10px] font-bold transition removeRow cursor-pointer">حذف</button>
         </td>
     </tr>

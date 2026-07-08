@@ -11,7 +11,7 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="Receipts" class="btn btn-outline-secondary btn-sm">بازگشت</a>
-            <a asp-action="CreateReceipt" class="btn btn-primary btn-sm">ثبت رسید جدید</a>
+            <a asp-action="CreateReceipt" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm  btn-sm">ثبت رسید جدید</a>
             @if (Model.Receipt.WorkflowStatus != WorkflowStatus.Approved)
             {
                 <form asp-action="ApproveReceipt" asp-route-id="@Model.Receipt.Id" method="post" class="d-inline">
@@ -38,38 +38,38 @@
     </div>
 
     <div class="row g-3 mb-3">
-        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">شماره رسید</div><div class="fw-bold">@Model.Receipt.ReceiptNumber</div></div></div></div>
-        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">تاریخ</div><div class="fw-bold">@Model.Receipt.DateShamsi</div></div></div></div>
-        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">انبار</div><div class="fw-bold">@Model.Receipt.Warehouse.Name</div></div></div></div>
-        <div class="col-12 col-md-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">وضعیت</div><div class="fw-bold"><span class="badge @WorkflowStatus.BadgeCss(Model.Receipt.WorkflowStatus)">@WorkflowStatus.Label(Model.Receipt.WorkflowStatus)</span></div></div></div></div>
+        <div class="col-12 col-md-3"><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" ><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" ><div class="text-muted small">شماره رسید</div><div class="fw-bold">@Model.Receipt.ReceiptNumber</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" ><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" ><div class="text-muted small">تاریخ</div><div class="fw-bold">@Model.Receipt.DateShamsi</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" ><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" ><div class="text-muted small">انبار</div><div class="fw-bold">@Model.Receipt.Warehouse.Name</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" ><div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" ><div class="text-muted small">وضعیت</div><div class="fw-bold"><span class="badge @WorkflowStatus.BadgeCss(Model.Receipt.WorkflowStatus)">@WorkflowStatus.Label(Model.Receipt.WorkflowStatus)</span></div></div></div></div>
     </div>
 
     <div class="row g-3 mb-3">
         <div class="col-12 col-lg-8">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="fw-bold mb-0">ردیف‌ها</h6>
                         <div class="small text-muted">تعداد کل: @Model.TotalQuantity.ToString("N3") | مبلغ کل: @Model.TotalAmount.ToString("N0")</div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
+                        <table class="w-full text-xs text-right border-collapse"  >
+                            <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
                                 <tr>
-                                    <th>کالا</th>
-                                    <th>تعداد</th>
-                                    <th>فی</th>
-                                    <th>جمع</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کالا</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >تعداد</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >فی</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >جمع</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var item in Model.Receipt.Items)
                                 {
                                     <tr>
-                                        <td>@item.Product.Name <div class="text-muted small">@item.Product.Code</div></td>
-                                        <td>@item.Quantity.ToString("N3")</td>
-                                        <td>@item.UnitPrice.ToString("N0")</td>
-                                        <td>@(item.Quantity * item.UnitPrice).ToString("N0")</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.Product.Name <div class="text-muted small">@item.Product.Code</div></td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.Quantity.ToString("N3")</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.UnitPrice.ToString("N0")</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@(item.Quantity * item.UnitPrice).ToString("N0")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -79,8 +79,8 @@
             </div>
         </div>
         <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <h6 class="fw-bold mb-3">اطلاعات تکمیلی</h6>
                     <div class="small text-muted">تامین‌کننده</div>
                     <div class="mb-2">@((Model.Receipt.Vendor?.Name) ?? Model.Receipt.SupplierOrSource)</div>
@@ -95,8 +95,8 @@
 
     <div class="row g-3 mb-3">
         <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <h6 class="fw-bold mb-3">timeline رویدادها</h6>
                     <div class="d-grid gap-2">
                         @foreach (var item in Model.AuditEntries)
@@ -118,34 +118,34 @@
             </div>
         </div>
         <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <h6 class="fw-bold mb-3">ledger موجودی</h6>
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
+                        <table class="w-full text-xs text-right border-collapse"  >
+                            <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
                                 <tr>
-                                    <th>کالا</th>
-                                    <th>ورود</th>
-                                    <th>خروج</th>
-                                    <th>مانده</th>
-                                    <th>کاربر</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کالا</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >ورود</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >خروج</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >مانده</th>
+                                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کاربر</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var item in Model.MovementEntries)
                                 {
                                     <tr>
-                                        <td>@item.ProductName <div class="text-muted small">@item.ProductCode</div></td>
-                                        <td>@item.QuantityIn.ToString("N3")</td>
-                                        <td>@item.QuantityOut.ToString("N3")</td>
-                                        <td>@item.BalanceAfter.ToString("N3")</td>
-                                        <td>@(!string.IsNullOrWhiteSpace(item.ActorName) ? item.ActorName : "-")</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.ProductName <div class="text-muted small">@item.ProductCode</div></td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.QuantityIn.ToString("N3")</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.QuantityOut.ToString("N3")</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.BalanceAfter.ToString("N3")</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@(!string.IsNullOrWhiteSpace(item.ActorName) ? item.ActorName : "-")</td>
                                     </tr>
                                 }
                                 @if (!Model.MovementEntries.Any())
                                 {
-                                    <tr><td colspan="5" class="text-center text-muted py-3">ledger برای این سند ثبت نشده است.</td></tr>
+                                    <tr><td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "   colspan="5" class="text-center text-muted py-3">ledger برای این سند ثبت نشده است.</td></tr>
                                 }
                             </tbody>
                         </table>

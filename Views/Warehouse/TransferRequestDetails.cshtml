@@ -14,22 +14,22 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="TransferRequests" class="btn btn-outline-secondary btn-sm">بازگشت به فهرست</a>
-            <a asp-action="CreateTransferRequest" class="btn btn-primary btn-sm">درخواست جدید</a>
+            <a asp-action="CreateTransferRequest" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm  btn-sm">درخواست جدید</a>
         </div>
     </div>
 
     <div class="row g-3 mb-3">
         <div class="col-12 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <div class="text-muted small">وضعیت</div>
                     <div class="fw-bold"><span class="badge @WorkflowStatus.BadgeCss(Model.Request.Status)">@WorkflowStatus.Label(Model.Request.Status)</span></div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <div class="text-muted small">انبار مبدأ</div>
                     <div class="fw-bold">@Model.Request.SourceWarehouse?.Name</div>
                     <div class="small text-muted">@Model.Request.SourceWarehouse?.Code</div>
@@ -37,8 +37,8 @@
             </div>
         </div>
         <div class="col-12 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <div class="text-muted small">انبار مقصد</div>
                     <div class="fw-bold">@Model.Request.DestinationWarehouse?.Name</div>
                     <div class="small text-muted">@Model.Request.DestinationWarehouse?.Code</div>
@@ -46,8 +46,8 @@
             </div>
         </div>
         <div class="col-12 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <div class="text-muted small">کالا</div>
                     <div class="fw-bold">@Model.Request.Product?.Name</div>
                     <div class="small text-muted">@Model.Request.Product?.Code</div>
@@ -58,8 +58,8 @@
 
     <div class="row g-3 mb-3">
         <div class="col-12 col-lg-8">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="fw-bold mb-0">اطلاعات درخواست</h6>
                         <span class="text-muted small">شماره: #@Model.Request.Id</span>
@@ -125,8 +125,8 @@
         </div>
 
         <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <h6 class="fw-bold mb-3">اقدام‌ها</h6>
                     @if ((Model.Request.Status is WorkflowStatus.PendingApproval or WorkflowStatus.PendingManager) && canManageTransfer)
                     {
@@ -138,7 +138,7 @@
                         <form asp-action="RejectTransferRequest" asp-route-id="@Model.Request.Id" method="post" class="mb-3">
                             @Html.AntiForgeryToken()
                             <label class="form-label small mb-1">دلیل رد</label>
-                            <textarea name="rejectReason" rows="3" class="form-control mb-2" placeholder="دلیل رد را بنویس"></textarea>
+                            <textarea name="rejectReason" rows="3" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="دلیل رد را بنویس"></textarea>
                             <button type="submit" class="btn btn-outline-danger w-100">رد درخواست</button>
                         </form>
                     }
@@ -148,7 +148,7 @@
                         <form asp-action="CancelTransferRequest" asp-route-id="@Model.Request.Id" method="post">
                             @Html.AntiForgeryToken()
                             <label class="form-label small mb-1">دلیل لغو</label>
-                            <textarea name="cancelReason" rows="3" class="form-control mb-2" placeholder="دلیل لغو را بنویس"></textarea>
+                            <textarea name="cancelReason" rows="3" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="دلیل لغو را بنویس"></textarea>
                             <button type="submit" class="btn btn-outline-secondary w-100">لغو درخواست</button>
                         </form>
                     }
@@ -166,8 +166,8 @@
 
     <div class="row g-3 mb-3">
         <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <h6 class="fw-bold mb-3">تاریخچه تصمیم‌ها</h6>
                     <div class="d-grid gap-2">
                         <div class="border rounded-3 p-3">
@@ -224,8 +224,8 @@
         </div>
 
         <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                     <h6 class="fw-bold mb-3">گزارش رویدادها</h6>
                     <div class="d-grid gap-2">
                         @foreach (var item in Model.AuditEntries)
@@ -248,34 +248,34 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
             <h6 class="fw-bold mb-3">اثر موجودی</h6>
             <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead>
+                <table class="w-full text-xs text-right border-collapse"  >
+                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                            <th>کالا</th>
-                            <th>انبار</th>
-                            <th>ورود</th>
-                            <th>خروج</th>
-                            <th>مانده</th>
+                            <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کالا</th>
+                            <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >انبار</th>
+                            <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >ورود</th>
+                            <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >خروج</th>
+                            <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >مانده</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model.MovementEntries)
                         {
                             <tr>
-                                <td>@item.ProductName <div class="text-muted small">@item.ProductCode</div></td>
-                                <td>@item.WarehouseName</td>
-                                <td>@item.QuantityIn.ToString("N3")</td>
-                                <td>@item.QuantityOut.ToString("N3")</td>
-                                <td>@item.BalanceAfter.ToString("N3")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.ProductName <div class="text-muted small">@item.ProductCode</div></td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.WarehouseName</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.QuantityIn.ToString("N3")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.QuantityOut.ToString("N3")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.BalanceAfter.ToString("N3")</td>
                             </tr>
                         }
                         @if (!Model.MovementEntries.Any())
                         {
-                            <tr><td colspan="5" class="text-center text-muted py-3">برای این درخواست هنوز حرکتی ثبت نشده است.</td></tr>
+                            <tr><td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "   colspan="5" class="text-center text-muted py-3">برای این درخواست هنوز حرکتی ثبت نشده است.</td></tr>
                         }
                     </tbody>
                 </table>

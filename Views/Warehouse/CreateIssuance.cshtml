@@ -13,17 +13,17 @@
         <a asp-action="Issuances" class="btn btn-sm btn-outline-secondary">بازگشت</a>
     </div>
 
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body p-3">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  mb-3" >
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3" >
             <form asp-action="CreateIssuance" method="post" id="issuanceForm">
                 <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
                 <div class="row g-2 mb-3">
-                    <div class="col-md-3"><label asp-for="IssuanceNumber" class="form-label small"></label><input asp-for="IssuanceNumber" class="form-control form-control-sm" /></div>
-                    <div class="col-md-2"><label asp-for="DateShamsi" class="form-label small"></label><input asp-for="DateShamsi" class="form-control form-control-sm" /></div>
-                    <div class="col-md-3"><label asp-for="WarehouseId" class="form-label small"></label><select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select form-select-sm"></select></div>
+                    <div class="col-md-3"><label asp-for="IssuanceNumber" class="form-label small"></label><input asp-for="IssuanceNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></div>
+                    <div class="col-md-2"><label asp-for="DateShamsi" class="form-label small"></label><input asp-for="DateShamsi" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></div>
+                    <div class="col-md-3"><label asp-for="WarehouseId" class="form-label small"></label><select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select></div>
                     <div class="col-md-2">
                         <label asp-for="EmployerId" class="form-label small"></label>
-                        <select asp-for="EmployerId" asp-items="Model.EmployerOptions" class="form-select form-select-sm">
+                        <select asp-for="EmployerId" asp-items="Model.EmployerOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                             <option value="">انتخاب کارفرما</option>
                         </select>
                     </div>
@@ -31,8 +31,8 @@
                         <label class="form-label small">عملیات</label>
                         <button type="button" id="addIssuanceRow" class="btn btn-sm btn-outline-secondary d-block w-100">+ ردیف</button>
                     </div>
-                    <div class="col-md-4 d-none"><label asp-for="DestinationOrDepartment" class="form-label small"></label><input asp-for="DestinationOrDepartment" class="form-control form-control-sm" /></div>
-                    <div class="col-12"><label asp-for="Notes" class="form-label small"></label><textarea asp-for="Notes" rows="2" class="form-control form-control-sm"></textarea></div>
+                    <div class="col-md-4 d-none"><label asp-for="DestinationOrDepartment" class="form-label small"></label><input asp-for="DestinationOrDepartment" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></div>
+                    <div class="col-12"><label asp-for="Notes" class="form-label small"></label><textarea asp-for="Notes" rows="2" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></textarea></div>
                 </div>
 
                 <div class="summary-bar mb-3" id="issuanceSummaryBar">
@@ -44,15 +44,15 @@
                 <div class="row g-3">
                     <div class="col-12 col-xl-8">
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered align-middle" id="issuanceItemsTable">
-                                <thead><tr><th>کالا</th><th>تعداد</th><th>وضعیت موجودی</th><th></th></tr></thead>
+                            <table class="w-full text-xs text-right border-collapse"   id="issuanceItemsTable">
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800"><tr><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کالا</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >تعداد</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >وضعیت موجودی</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ></th></tr></thead>
                                 <tbody id="issuanceItemsBody"></tbody>
                             </table>
                         </div>
                     </div>
                     <div class="col-12 col-xl-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
+                        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
+                            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
                                 <h6 class="fw-bold mb-3">پیش‌نمایش نهایی</h6>
                                 <div class="preview-line"><span>شماره خروج</span><strong id="previewIssuanceNumber">-</strong></div>
                                 <div class="preview-line"><span>تاریخ</span><strong id="previewDateShamsi">-</strong></div>
@@ -77,8 +77,8 @@
 
 <template id="issuanceRowTemplate">
     <tr>
-        <td>
-            <select data-field="ProductId" class="form-select form-select-sm product-select">
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >
+            <select data-field="ProductId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                 <option value="">انتخاب کالا</option>
                 @foreach (var product in Model.ProductOptions)
                 {
@@ -86,15 +86,14 @@
                 }
             </select>
         </td>
-        <td><input type="number" data-field="Quantity" class="form-control form-control-sm quantity-input" min="0.001" step="0.001" /></td>
-        <td><div class="small text-muted row-feedback">در انتظار انتخاب کالا</div></td>
-        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger removeRow">حذف</button></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  ><input type="number" data-field="Quantity" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" min="0.001" step="0.001" /></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  ><div class="small text-muted row-feedback">در انتظار انتخاب کالا</div></td>
+        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 text-center"  ><button type="button" class="btn btn-sm btn-outline-danger removeRow">حذف</button></td>
     </tr>
 </template>
 
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/warehouse-forms.css" asp-append-version="true" />
 }
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

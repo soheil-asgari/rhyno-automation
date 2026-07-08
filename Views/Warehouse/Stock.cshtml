@@ -39,13 +39,13 @@
             <!-- Search Control -->
             <div class="flex-1 min-w-[200px] flex flex-col gap-1">
                 <label asp-for="SearchTerm" class="text-xs font-bold text-slate-500 dark:text-slate-400">جستجو</label>
-                <input asp-for="SearchTerm" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" data-filter-key="searchTerm" placeholder="نام کالا یا کد کالا" />
+                <input asp-for="SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="searchTerm" placeholder="نام کالا یا کد کالا" />
             </div>
             
             <!-- Warehouse Select -->
             <div class="min-w-[180px] flex flex-col gap-1">
                 <label asp-for="WarehouseId" class="text-xs font-bold text-slate-500 dark:text-slate-400">انبار</label>
-                <select asp-for="WarehouseId" class="h-9 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" data-filter-key="warehouseId">
+                <select asp-for="WarehouseId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="warehouseId">
                     <option value="">همه انبارها</option>
                     @foreach (var option in warehouseOptions)
                     {
@@ -57,7 +57,7 @@
             <!-- Critical Filter Checkbox -->
             <div class="flex items-center h-9">
                 <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 dark:text-slate-300">
-                    <input asp-for="CriticalOnly" class="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/20 accent-teal-600 dark:accent-teal-400" data-filter-key="criticalOnly" />
+                    <input asp-for="CriticalOnly" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="criticalOnly" />
                     <span>فقط کالاهای بحرانی</span>
                 </label>
             </div>
@@ -75,23 +75,23 @@
     <!-- Data Table Container -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto w-full">
-            <table class="w-full text-[11px] text-right border-collapse text-slate-700 dark:text-slate-300">
-                <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+            <table class="w-full text-xs text-right border-collapse"  >
+                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th class="px-3 py-2.5 font-bold">کد</th>
-                        <th class="px-3 py-2.5 font-bold">کالا</th>
-                        <th class="px-3 py-2.5 font-bold">واحد</th>
-                        <th class="px-3 py-2.5 font-bold">انبار</th>
-                        <th class="px-3 py-2.5 font-bold text-center">حداقل</th>
-                        <th class="px-3 py-2.5 font-bold">آخرین قیمت</th>
-                        <th class="px-3 py-2.5 font-bold">میانگین موزون</th>
-                        <th class="px-3 py-2.5 font-bold">ارزش موجودی</th>
-                        <th class="px-3 py-2.5 font-bold text-emerald-600 dark:text-emerald-400">ورودی</th>
-                        <th class="px-3 py-2.5 font-bold text-rose-600 dark:text-rose-400">خروجی</th>
-                        <th class="px-3 py-2.5 font-bold text-center">موجودی فعلی</th>
-                        <th class="px-3 py-2.5 font-bold text-center">وضعیت</th>
-                        <th class="px-3 py-2.5 font-bold">آخرین بروزرسانی</th>
-                        <th class="px-3 py-2.5 font-bold text-center">عملیات</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >کد</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >کالا</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >واحد</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >انبار</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-center"  >حداقل</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >آخرین قیمت</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >میانگین موزون</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >ارزش موجودی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-emerald-600 dark:text-emerald-400"  >ورودی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-rose-600 dark:text-rose-400"  >خروجی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-center"  >موجودی فعلی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-center"  >وضعیت</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold"  >آخرین بروزرسانی</th>
+                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold px-3 py-2.5 font-bold text-center"  >عملیات</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -101,18 +101,18 @@
                         {
                             var isLowStock = item.CurrentQuantity <= item.MinimumStock;
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors @(isLowStock ? "bg-amber-50/40 dark:bg-amber-950/10" : "")">
-                                <td class="px-3 py-2 text-slate-900 dark:text-white font-mono font-semibold">@item.ProductCode</td>
-                                <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@item.ProductName</td>
-                                <td class="px-3 py-2 text-slate-500">@item.Unit</td>
-                                <td class="px-3 py-2 text-slate-600 dark:text-slate-400">@item.WarehouseName</td>
-                                <td class="px-3 py-2 text-center font-mono">@item.MinimumStock</td>
-                                <td class="px-3 py-2 font-mono">@item.LastPurchasePrice.ToString("N2")</td>
-                                <td class="px-3 py-2 font-mono">@item.AverageCost.ToString("N2")</td>
-                                <td class="px-3 py-2 font-mono font-semibold text-slate-900 dark:text-white">@item.InventoryValue.ToString("N2")</td>
-                                <td class="px-3 py-2 text-emerald-600 dark:text-emerald-400 font-mono">@item.TotalInput.ToString("N3")</td>
-                                <td class="px-3 py-2 text-rose-600 dark:text-rose-400 font-mono">@item.TotalOutput.ToString("N3")</td>
-                                <td class="px-3 py-2 text-center font-mono font-bold @(isLowStock ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white")">@item.CurrentQuantity.ToString("N3")</td>
-                                <td class="px-3 py-2 text-center">
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-slate-900 dark:text-white font-mono font-semibold"  >@item.ProductCode</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 font-bold text-slate-800 dark:text-slate-200"  >@item.ProductName</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-slate-500"  >@item.Unit</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-slate-600 dark:text-slate-400"  >@item.WarehouseName</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-center font-mono"  >@item.MinimumStock</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 font-mono"  >@item.LastPurchasePrice.ToString("N2")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 font-mono"  >@item.AverageCost.ToString("N2")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 font-mono font-semibold text-slate-900 dark:text-white"  >@item.InventoryValue.ToString("N2")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-emerald-600 dark:text-emerald-400 font-mono"  >@item.TotalInput.ToString("N3")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-rose-600 dark:text-rose-400 font-mono"  >@item.TotalOutput.ToString("N3")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-center font-mono font-bold @(isLowStock ? "  text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white")">@item.CurrentQuantity.ToString("N3")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-center"  >
                                     @if (isLowStock)
                                     {
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200/40 dark:border-rose-800/30">بحرانی</span>
@@ -122,8 +122,8 @@
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">عادی</span>
                                     }
                                 </td>
-                                <td class="px-3 py-2 text-slate-500 font-mono text-[10px]">@item.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
-                                <td class="px-3 py-2 text-center">
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-slate-500 font-mono text-[10px]"  >@item.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-center"  >
                                     <div class="flex items-center justify-center gap-1.5">
                                         <a asp-controller="Warehouse" asp-action="Kardex" asp-route-productId="@item.ProductId" asp-route-warehouseId="@item.WarehouseId" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="کاردکس کالا">
                                             <i class="bi bi-file-earmark-spreadsheet text-sm"></i>
@@ -139,7 +139,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="14" class="text-center text-slate-400 dark:text-slate-500 py-8 text-xs">موجودی‌ای با این فیلترها پیدا نشد.</td>
+                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "   colspan="14" class="text-center text-slate-400 dark:text-slate-500 py-8 text-xs">موجودی‌ای با این فیلترها پیدا نشد.</td>
                         </tr>
                     }
                 </tbody>

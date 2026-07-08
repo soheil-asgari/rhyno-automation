@@ -4,12 +4,11 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Waybill.css" asp-append-version="true" />
 }
 
 <div class="container-fluid py-4 waybill-page">
-    <div class="card border-0 shadow-sm waybill-card">
-        <div class="card-body p-4 p-md-5">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  waybill-card" >
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-4 p-md-5" >
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                 <div>
                     <h5 class="fw-bold mb-1 text-dark">جزئیات بارنامه</h5>
@@ -17,7 +16,7 @@
                 </div>
                 <div class="d-flex gap-2">
                     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">ویرایش</a>
-                    <a asp-action="Index" class="btn btn-outline-primary">بازگشت</a>
+                    <a asp-action="Index" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1 ">بازگشت</a>
                 </div>
             </div>
 
