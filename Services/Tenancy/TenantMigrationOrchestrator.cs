@@ -44,7 +44,7 @@ public sealed class TenantMigrationOrchestrator
             .OrderBy(item => item.TenantId)
             .ToListAsync(cancellationToken);
 
-        foreach (var tenant in tenants)
+        var migrationTasks = tenants.Select(async tenant =>
         {
             try
             {
@@ -52,9 +52,11 @@ public sealed class TenantMigrationOrchestrator
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogError(ex, "Tenant migration failed for tenant {TenantId}. Startup will continue.", tenant.TenantId);
+                _logger.LogError(ex, "Tenant migration failed for tenant {TenantId}.", tenant.TenantId);
             }
-        }
+        });
+
+        await Task.WhenAll(migrationTasks);
     }
 
     private async Task SeedConfiguredTenantsAsync(PlatformDbContext context, CancellationToken cancellationToken)
@@ -156,44 +158,47 @@ public sealed class TenantMigrationHostedService : IHostedService
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
         if (!_configuration.GetValue("Database:ApplyMigrationsOnStartup", _environment.IsDevelopment()))
         {
             _logger.LogInformation("Tenant migration hosted service skipped because Database:ApplyMigrationsOnStartup is disabled.");
-            return;
+            return Task.CompletedTask;
         }
 
         if (!_environment.IsDevelopment() &&
             !_configuration.GetValue("Database:ApplyMigrationsOnStartup", false))
         {
             _logger.LogInformation("Tenant migration hosted service skipped outside Development.");
-            return;
+            return Task.CompletedTask;
         }
 
-        var timeout = _configuration.GetValue<TimeSpan?>("Database:StartupMigrationTimeout")
-            ?? DefaultStartupMigrationTimeout;
+        _ = Task.Run(async () =>
+        {
+            var timeout = _configuration.GetValue<TimeSpan?>("Database:StartupMigrationTimeout")
+                ?? DefaultStartupMigrationTimeout;
 
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(timeout);
+            using var timeoutCts = new CancellationTokenSource(timeout);
+            try
+            {
+                await using var scope = _serviceProvider.CreateAsyncScope();
+                await scope.ServiceProvider
+                    .GetRequiredService<TenantMigrationOrchestrator>()
+                    .MigrateActiveTenantsAsync(timeoutCts.Token);
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            {
+                _logger.LogError(
+                    "Tenant migration did not finish within {Timeout}. Check SQL Server availability and connection strings.",
+                    timeout);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Tenant migration failed during background execution.");
+            }
+        }, cancellationToken);
 
-        try
-        {
-            await using var scope = _serviceProvider.CreateAsyncScope();
-            await scope.ServiceProvider
-                .GetRequiredService<TenantMigrationOrchestrator>()
-                .MigrateActiveTenantsAsync(timeoutCts.Token);
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && timeoutCts.IsCancellationRequested)
-        {
-            _logger.LogError(
-                "Tenant migration did not finish within {Timeout}. Check SQL Server availability and connection strings.",
-                timeout);
-        }
-        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            _logger.LogError(ex, "Tenant migration failed during startup. Application startup will continue.");
-        }
+        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

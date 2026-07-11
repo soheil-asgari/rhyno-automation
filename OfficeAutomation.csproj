@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild">
+    <Exec Command="npm install" Condition="!Exists('$(MSBuildProjectDirectory)\node_modules') And Exists('$(MSBuildProjectDirectory)\package.json')" />
     <Message Importance="high" Text="Building Tailwind CSS assets..." />
     <Exec Command="npm run build:css" />
   </Target>

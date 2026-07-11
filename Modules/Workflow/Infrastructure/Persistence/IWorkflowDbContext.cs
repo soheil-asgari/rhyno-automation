@@ -36,6 +36,7 @@ public interface IWorkflowDbContext
     DbSet<Leave> Leaves { get; }
     DbSet<Notification> Notifications { get; }
 
+    Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
     ValueTask<object?> FindAsync(Type entityType, object?[]? keyValues, CancellationToken cancellationToken);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

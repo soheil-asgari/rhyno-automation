@@ -13,7 +13,17 @@ obj/
 *.dll
 *.exe
 *.pdb
+rhyno-build/
+rhyno-build-obj/
 
 # Logs
 *.log
+*.out
+*.err
 node_modules/
+
+# IDE Settings
+.idea/
+
+# Verification build outputs
+artifacts/verify-sidebar-build/

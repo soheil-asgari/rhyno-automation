@@ -9,6 +9,8 @@ using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 using OfficeAutomation.Services;
 using OfficeAutomation.Services.Security;
+using Microsoft.AspNetCore.Hosting;
+using OfficeAutomation.Services.Tenancy;
 
 namespace OfficeAutomation.Controllers;
 
@@ -20,19 +22,25 @@ public sealed class WorkInboxController : Controller
     private readonly WorkflowService _workflowService;
     private readonly IWorkflowDbContext _context;
     private readonly IdentityDbContext _identityContext;
+    private readonly IWebHostEnvironment _environment;
+    private readonly ITenantPathResolver _tenantPathResolver;
 
     public WorkInboxController(
         WorkInboxService workInboxService,
         IAuthorizationFacade authorizationFacade,
         WorkflowService workflowService,
         IWorkflowDbContext context,
-        IdentityDbContext identityContext)
+        IdentityDbContext identityContext,
+        IWebHostEnvironment environment,
+        ITenantPathResolver tenantPathResolver)
     {
         _workInboxService = workInboxService;
         _authorizationFacade = authorizationFacade;
         _workflowService = workflowService;
         _context = context;
         _identityContext = identityContext;
+        _environment = environment;
+        _tenantPathResolver = tenantPathResolver;
     }
 
     public async Task<IActionResult> Index(string? filter, CancellationToken cancellationToken)
@@ -374,6 +382,53 @@ public sealed class WorkInboxController : Controller
                await _identityContext.UserRoles
                    .AsNoTracking()
                    .AnyAsync(item => item.UserId == userId && item.RoleId == step.AssignedRoleId, cancellationToken);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DownloadAttachment(int id, CancellationToken cancellationToken)
+    {
+        var attachment = await _context.WorkflowAttachments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (attachment == null)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var instance = await _context.WorkflowInstances
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == attachment.WorkflowInstanceId, cancellationToken);
+        if (instance == null)
+        {
+            return NotFound();
+        }
+
+        var physicalPath = _tenantPathResolver != null
+            ? _tenantPathResolver.MapRelativeToPhysical(Path.Combine(_environment.ContentRootPath, "App_Data"), attachment.FilePath)
+            : Path.Combine(_environment.ContentRootPath, "App_Data", attachment.FilePath.TrimStart('/'));
+
+        if (!System.IO.File.Exists(physicalPath))
+        {
+            // Fallback for legacy uploads in wwwroot
+            physicalPath = _tenantPathResolver != null
+                ? _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, attachment.FilePath)
+                : Path.Combine(_environment.WebRootPath, attachment.FilePath.TrimStart('/'));
+
+            if (!System.IO.File.Exists(physicalPath))
+            {
+                return NotFound();
+            }
+        }
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(physicalPath, cancellationToken);
+        return File(bytes, attachment.ContentType ?? "application/octet-stream", attachment.FileName);
     }
 
     private IActionResult RedirectToIndex(string? filter)

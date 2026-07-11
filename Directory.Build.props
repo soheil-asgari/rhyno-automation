@@ -1,13 +1,14 @@
 <Project>
 	<PropertyGroup>
 		<!-- ۱. پوشه خروجی نهایی -->
-		<BaseOutputPath>F:\rhyno-build\bin\$(MSBuildProjectName)\</BaseOutputPath>
+		<BaseOutputPath>$(MSBuildThisFileDirectory)rhyno-build\bin\$(MSBuildProjectName)\</BaseOutputPath>
 
 		<!-- ۲. انتقال پوشه obj به یک پله بالاتر از پوشه جاری پروژه تا کامپایلر دچار تداخل نشود -->
-		<BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)..\rhyno-build-obj\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+		<BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)rhyno-build-obj\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
 
 		<!-- ۳. تنظیمات تکمیلی -->
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<DefaultItemExcludes>$(DefaultItemExcludes);rhyno-build\**;rhyno-build-obj\**</DefaultItemExcludes>
 	</PropertyGroup>
 </Project>

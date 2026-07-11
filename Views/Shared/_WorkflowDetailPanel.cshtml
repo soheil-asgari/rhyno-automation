@@ -97,7 +97,7 @@
                 <div class="d-grid gap-2 mb-3">
                     @foreach (var item in Model.Attachments)
                     {
-                        <a class="border rounded-3 p-3 text-decoration-none text-reset" href="@item.FilePath" target="_blank">
+                        <a class="border rounded-3 p-3 text-decoration-none text-reset" href="@Url.Action("DownloadAttachment", "WorkInbox", new { id = item.Id })" target="_blank">
                             <div class="d-flex justify-content-between gap-2">
                                 <strong>@item.FileName</strong>
                                 <small class="text-muted">@ToPersian(item.UploadedAt)</small>

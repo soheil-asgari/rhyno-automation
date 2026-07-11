@@ -5,7 +5,7 @@ namespace OfficeAutomation.Services;
 public sealed class AiSqlSafetyService
 {
     private static readonly Regex UnsafeTokenPattern = new(
-        @"\b(INSERT|UPDATE|DELETE|MERGE|DROP|ALTER|TRUNCATE|CREATE|EXEC|EXECUTE|GRANT|REVOKE|BACKUP|RESTORE|INTO|OPENROWSET|OPENDATASOURCE)\b|@@|\bSP_|\bXP_|;|--|/\*|\*/",
+        @"\b(INSERT|UPDATE|DELETE|MERGE|DROP|ALTER|TRUNCATE|CREATE|EXEC|EXECUTE|GRANT|REVOKE|BACKUP|RESTORE|INTO|OPENROWSET|OPENDATASOURCE|UNION|COLLATE)\b|@@|\bSP_|\bXP_|;|--|/\*|\*/|\b(sys\.|information_schema\b)",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public bool IsReadOnlySelect(string? sql)

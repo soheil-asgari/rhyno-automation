@@ -597,7 +597,7 @@
                         const actionFlag = item.requiresAction ? '<span class="inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:bg-amber-950/20 dark:text-amber-450 border border-amber-250/30">نیازمند اقدام</span>' : '';
 
                         row.innerHTML = `
-                            <input class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none form-check-input inbox-item-check ml-3" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
+                            <input class="form-check-input inbox-item-check ml-3 rounded border-slate-300 dark:border-slate-800 text-teal-600 focus:ring-teal-500/20" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
                             <button type="button" class="inbox-item-surface flex-1 flex items-center justify-between text-right border-0 bg-transparent p-0 outline-none w-full">
                                 <div class="flex items-center gap-3 w-full">
                                     <span class="inbox-item-icon grid h-9 w-9 place-items-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-550 dark:text-slate-400"><i class="bi ${sanitizeIcon(item.icon)}"></i></span>

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -535,8 +535,8 @@ public sealed class WorkflowService
 
         ValidateWorkflowAttachment(file);
 
-        var uploadsRoot = _tenantPathResolver?.GetWorkflowUploadRoot(_environment.WebRootPath, documentType, documentId)
-            ?? Path.Combine(_environment.WebRootPath, "uploads", "workflow", documentType.ToLowerInvariant(), documentId.ToString(CultureInfo.InvariantCulture));
+        var uploadsRoot = _tenantPathResolver?.GetWorkflowUploadRoot(Path.Combine(_environment.ContentRootPath, "App_Data"), documentType, documentId)
+            ?? Path.Combine(_environment.ContentRootPath, "App_Data", "uploads", "workflow", documentType.ToLowerInvariant(), documentId.ToString(CultureInfo.InvariantCulture));
         Directory.CreateDirectory(uploadsRoot);
 
         var extension = Path.GetExtension(file.FileName);
@@ -1458,10 +1458,23 @@ public sealed class WorkflowService
         CancellationToken cancellationToken)
     {
         EnsureContext();
-        var transitionLock = TransitionEventLocks.GetOrAdd(instance.Id, _ => new SemaphoreSlim(1, 1));
-        await transitionLock.WaitAsync(cancellationToken);
+
+        var hasActiveTransaction = _context!.Database.CurrentTransaction != null;
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? localTx = null;
+        if (!hasActiveTransaction)
+        {
+            localTx = await _context!.Database.BeginTransactionAsync(cancellationToken);
+        }
+
         try
         {
+            if (_context.Database.IsSqlServer())
+            {
+                await _context.Database.ExecuteSqlRawAsync(
+                    "SELECT 1 FROM WorkflowInstances WITH (UPDLOCK, HOLDLOCK) WHERE Id = @id",
+                    new Microsoft.Data.SqlClient.SqlParameter("@id", instance.Id));
+            }
+
             var nextSequence = await _context!.WorkflowTransitionEvents
                 .Where(item => item.WorkflowInstanceId == instance.Id)
                 .Select(item => (long?)item.SequenceNumber)
@@ -1480,13 +1493,30 @@ public sealed class WorkflowService
                 ActorUserId = string.IsNullOrWhiteSpace(actorUserId) ? null : actorUserId,
                 StationKey = stationKey,
                 StationName = stationName,
-                CorrelationKey = Activity.Current?.Id,
+                CorrelationKey = System.Diagnostics.Activity.Current?.Id,
                 PayloadJson = payloadJson
             });
+
+            if (localTx != null)
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+                await localTx.CommitAsync(cancellationToken);
+            }
+        }
+        catch
+        {
+            if (localTx != null)
+            {
+                await localTx.RollbackAsync(cancellationToken);
+            }
+            throw;
         }
         finally
         {
-            transitionLock.Release();
+            if (localTx != null)
+            {
+                await localTx.DisposeAsync();
+            }
         }
     }
 

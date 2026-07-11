@@ -12,11 +12,12 @@ using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
-    [RequireAccessArea("SystemSettings")]
+    [PermissionAuthorize("SystemSettings.Manage")]
     public class ManagementDashboardController : Controller
     {
         private readonly AiService _aiService;
@@ -80,6 +81,11 @@ namespace OfficeAutomation.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(new { success = false, message = "اطلاعات اتصال کامل نیست." });
+            }
+
+            if (!IsSafeHost(request.Host))
+            {
+                return BadRequest(new { success = false, message = "اتصال به این آدرس مجاز نیست." });
             }
 
             var provider = NormalizeProvider(request.Provider);
@@ -214,6 +220,11 @@ namespace OfficeAutomation.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(new { success = false, message = "اطلاعات اتصال کامل نیست." });
+            }
+
+            if (!IsSafeHost(request.Host))
+            {
+                return BadRequest(new { success = false, message = "اتصال به این آدرس مجاز نیست." });
             }
 
             try
@@ -527,7 +538,7 @@ namespace OfficeAutomation.Controllers
 
             await using var command = new SqlCommand(sql, connection)
             {
-                CommandTimeout = 20
+                CommandTimeout = 5
             };
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -817,6 +828,35 @@ namespace OfficeAutomation.Controllers
             }
 
             return "گزارش مدیریتی هوشمند";
+        }
+
+        private static bool IsSafeHost(string host)
+        {
+            if (string.IsNullOrWhiteSpace(host)) return false;
+            var trimmed = host.Trim().ToLowerInvariant();
+            if (trimmed == "localhost" || trimmed == "127.0.0.1" || trimmed == "[::1]" || trimmed == "::1")
+            {
+                return false;
+            }
+            try
+            {
+                if (System.Net.IPAddress.TryParse(trimmed, out var ip))
+                {
+                    if (System.Net.IPAddress.IsLoopback(ip)) return false;
+                }
+                else
+                {
+                    var ipAddresses = System.Net.Dns.GetHostAddresses(trimmed);
+                    foreach (var addr in ipAddresses)
+                    {
+                        if (System.Net.IPAddress.IsLoopback(addr)) return false;
+                    }
+                }
+            }
+            catch
+            {
+            }
+            return true;
         }
     }
 }

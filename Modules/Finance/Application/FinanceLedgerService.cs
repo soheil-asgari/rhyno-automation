@@ -568,57 +568,52 @@ public sealed class FinanceLedgerService
 
         if (account == null)
         {
-            account = await _context.SubsidiaryAccounts
+            var generalAccount = await _context.GeneralAccounts
                 .FirstOrDefaultAsync(item => item.IsActive, cancellationToken);
 
-            if (account == null)
+            if (generalAccount == null)
             {
-                var generalAccount = await _context.GeneralAccounts
+                var group = await _context.AccountGroups
                     .FirstOrDefaultAsync(item => item.IsActive, cancellationToken);
 
-                if (generalAccount == null)
+                if (group == null)
                 {
-                    var group = await _context.AccountGroups
-                        .FirstOrDefaultAsync(item => item.IsActive, cancellationToken);
-
-                    if (group == null)
+                    group = new AccountGroup
                     {
-                        group = new AccountGroup
-                        {
-                            Code = "1",
-                            Name = "Default Group",
-                            IsActive = true,
-                            Nature = AccountNature.Debit
-                        };
-                        _context.AccountGroups.Add(group);
-                        await _context.SaveChangesAsync(cancellationToken);
-                    }
-
-                    generalAccount = new GeneralAccount
-                    {
-                        AccountGroupId = group.Id,
-                        Code = "110",
-                        Name = "Default General Account",
+                        Code = "1",
+                        Name = "Default Group",
                         IsActive = true,
                         Nature = AccountNature.Debit
                     };
-                    _context.GeneralAccounts.Add(generalAccount);
+                    _context.AccountGroups.Add(group);
                     await _context.SaveChangesAsync(cancellationToken);
                 }
 
-                account = new SubsidiaryAccount
+                generalAccount = new GeneralAccount
                 {
-                    GeneralAccountId = generalAccount.Id,
-                    Code = "110001",
-                    Name = $"Default {systemKey} Account",
-                    SystemKey = systemKey,
+                    AccountGroupId = group.Id,
+                    Code = "110",
+                    Name = "Default General Account",
                     IsActive = true,
-                    Nature = AccountNature.NoControl,
-                    AllowsFloatingDetail = true
+                    Nature = AccountNature.Debit
                 };
-                _context.SubsidiaryAccounts.Add(account);
+                _context.GeneralAccounts.Add(generalAccount);
                 await _context.SaveChangesAsync(cancellationToken);
             }
+
+            var randomSuffix = Random.Shared.Next(1000, 9999);
+            account = new SubsidiaryAccount
+            {
+                GeneralAccountId = generalAccount.Id,
+                Code = $"110{randomSuffix}",
+                Name = $"Default {systemKey} Account",
+                SystemKey = systemKey,
+                IsActive = true,
+                Nature = AccountNature.NoControl,
+                AllowsFloatingDetail = true
+            };
+            _context.SubsidiaryAccounts.Add(account);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         return account;
