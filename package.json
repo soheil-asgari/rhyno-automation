@@ -4,6 +4,7 @@
     "watch:css": "tailwindcss -c ./tailwind.config.js -i ./wwwroot/css/tailwind.input.css -o ./wwwroot/css/tailwind.css --watch"
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
     "bootstrap-icons": "1.11.3"
   },
   "devDependencies": {

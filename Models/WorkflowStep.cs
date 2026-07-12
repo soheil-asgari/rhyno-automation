@@ -46,6 +46,7 @@ public class WorkflowStep
     public int? ReturnedFromStepNumber { get; set; }
 
     public DateTimeOffset? CompletedAt { get; set; }
+    public string? UiMetadata { get; set; }
     public List<WorkflowSlaJob> SlaJobs { get; set; } = new();
     public List<WorkflowCaseTask> CaseTasks { get; set; } = new();
     public List<WorkflowTransitionEvent> TransitionEvents { get; set; } = new();

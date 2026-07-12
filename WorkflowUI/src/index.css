@@ -1,0 +1,97 @@
+/* Reset index.css default sizes and styling so it integrates smoothly into ASP.NET layout */
+:root {
+  --xy-edge-stroke-default: #94a3b8;
+  --xy-edge-stroke-active-default: #0d9488;
+}
+
+#workflow-root {
+  width: 100%;
+  height: 100%;
+}
+
+.workflow-canvas-container {
+  font-family: inherit;
+}
+
+/* Custom Node Styles */
+.custom-node {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: white;
+  border: 1.5px solid #cbd5e1;
+  font-size: 11px;
+  min-width: 150px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: right;
+  color: #1e293b;
+}
+
+html[data-theme="dark"] .custom-node {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.custom-node:hover {
+  border-color: #0d9488;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.custom-node.selected {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
+}
+
+.custom-node .node-header {
+  font-weight: 800;
+  border-bottom: 1.5px solid #f1f5f9;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+html[data-theme="dark"] .custom-node .node-header {
+  border-bottom-color: #334155;
+}
+
+.custom-node .node-body {
+  color: #64748b;
+  font-size: 10px;
+}
+
+html[data-theme="dark"] .custom-node .node-body {
+  color: #94a3b8;
+}
+
+.custom-node.start-node {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  color: #166534;
+  min-width: 100px;
+  text-align: center;
+}
+
+html[data-theme="dark"] .custom-node.start-node {
+  background: #022c22;
+  border-color: #10b981;
+  color: #a7f3d0;
+}
+
+.custom-node.end-node {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #991b1b;
+  min-width: 100px;
+  text-align: center;
+}
+
+html[data-theme="dark"] .custom-node.end-node {
+  background: #450a0a;
+  border-color: #f43f5e;
+  color: #fecdd3;
+}

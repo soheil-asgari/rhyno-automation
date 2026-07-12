@@ -1,7 +1,17 @@
 @page
 @model LoginModel
+@using OfficeAutomation.Services.Tenancy
+@inject ITenantSettingsService TenantSettingsService
 @{
     Layout = null;
+    // Load branding for white-labeling on the login page
+    OfficeAutomation.Models.SystemSetting? loginBranding = null;
+    try { loginBranding = await TenantSettingsService.GetSystemSettingsAsync(); } catch { }
+    var loginAppTitle    = loginBranding?.ApplicationTitle ?? "راینو ERP";
+    var loginBgUrl       = loginBranding?.LoginBackgroundUrl;
+    var loginLogoUrl     = loginBranding?.LogoUrl;
+    var loginFaviconUrl  = loginBranding?.FaviconUrl;
+    var loginPrimaryColor = loginBranding?.PrimaryColor;
 }
 
 <!DOCTYPE html>
@@ -9,8 +19,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ورود - راینو ERP</title>
+    <title>ورود - @loginAppTitle</title>
     <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
+    @if (!string.IsNullOrWhiteSpace(loginFaviconUrl))
+    {
+        <link rel="icon" href="@loginFaviconUrl" />
+    }
     <style>
         .auth-bg-pattern {
             background-image: radial-gradient(circle at 1px 1px, rgba(15,23,42,0.015) 1px, transparent 0);
@@ -21,9 +35,33 @@
         .validation-summary-valid * {
             display: none !important;
         }
+        @if (!string.IsNullOrWhiteSpace(loginBgUrl))
+        {
+            <text>
+        .login-custom-bg {
+            background-image: url('@loginBgUrl');
+            background-size: cover;
+            background-position: center;
+        }
+        .login-custom-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(248, 250, 252, 0.88);
+            backdrop-filter: blur(2px);
+        }
+            </text>
+        }
+        @if (!string.IsNullOrWhiteSpace(loginPrimaryColor))
+        {
+            <text>
+        .btn-primary-brand { background-color: @loginPrimaryColor !important; }
+        .btn-primary-brand:hover { filter: brightness(0.9); }
+            </text>
+        }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased auth-bg-pattern flex flex-col justify-between relative overflow-hidden">
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased auth-bg-pattern @(!string.IsNullOrWhiteSpace(loginBgUrl) ? "login-custom-bg" : "") flex flex-col justify-between relative overflow-hidden">
     
     <!-- HTML5 Canvas for Antigravity Mouse-Reactive Effect -->
     <canvas id="antigravity-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
@@ -31,11 +69,18 @@
     <main class="flex-1 flex items-center justify-center px-4 py-12 z-10 relative">
         <section class="w-full max-w-sm">
 
-            <!-- Logo & Brand (Clean Light Tech Aesthetic) -->
+            <!-- Logo & Brand (White-labeled or default) -->
             <div class="flex flex-col items-center justify-center gap-2 mb-6 text-center select-none">
-                <span class="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm font-black shadow-sm">R</span>
+                @if (!string.IsNullOrWhiteSpace(loginLogoUrl))
+                {
+                    <img src="@loginLogoUrl" alt="@loginAppTitle" class="h-10 max-w-[120px] object-contain rounded-lg" onerror="this.style.display='none'" />
+                }
+                else
+                {
+                    <span class="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm font-black shadow-sm">R</span>
+                }
                 <div>
-                    <span class="block text-sm font-extrabold text-slate-900 tracking-tight">راینو ERP</span>
+                    <span class="block text-sm font-extrabold text-slate-900 tracking-tight">@loginAppTitle</span>
                     <span class="block text-[10px] text-slate-500 font-medium tracking-wide mt-0.5">WORK PORTAL SYSTEM</span>
                 </div>
             </div>

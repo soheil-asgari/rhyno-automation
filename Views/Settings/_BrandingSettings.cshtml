@@ -1,0 +1,129 @@
+@model OfficeAutomation.Models.SettingsIndexViewModel
+<div class="space-y-4">
+    <div>
+        <h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+            <i class="bi bi-palette2 text-purple-600 dark:text-purple-400"></i>
+            شخصی‌سازی بصری (White-labeling)
+        </h2>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            تغییر لوگو، فاوآیکون، رنگ‌های اصلی و تصویر پس‌زمینه صفحه ورود مختص سازمان شما
+        </p>
+    </div>
+
+    @if (!User.HasClaim("permission", "Security.Manage"))
+    {
+        <div class="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+            <i class="bi bi-info-circle"></i>ویرایش تنظیمات شخصی‌سازی فقط برای مدیر سیستم فعال است.
+        </div>
+    }
+    else
+    {
+        <form asp-action="UpdateBranding" asp-controller="Settings" method="post" class="settings-form space-y-4">
+            @Html.AntiForgeryToken()
+
+            {{!-- Colour Pickers --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Branding.PrimaryColor" class="text-xs font-black text-slate-700 dark:text-slate-300">
+                        رنگ اصلی (Primary Color)
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="Branding.PrimaryColor"
+                               type="color"
+                               class="h-10 w-10 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0.5 dark:border-slate-700"
+                               value="@(Model.Branding.PrimaryColor ?? "#0d9488")" />
+                        <input asp-for="Branding.PrimaryColor"
+                               type="text"
+                               placeholder="#0d9488"
+                               class="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-xs text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    </div>
+                    <span asp-validation-for="Branding.PrimaryColor" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span>
+                    <p class="text-[11px] text-slate-400">رنگ اصلی دکمه‌ها، لینک‌ها و المان‌های فعال</p>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Branding.AccentColor" class="text-xs font-black text-slate-700 dark:text-slate-300">
+                        رنگ ثانویه (Accent Color)
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="Branding.AccentColor"
+                               type="color"
+                               class="h-10 w-10 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0.5 dark:border-slate-700"
+                               value="@(Model.Branding.AccentColor ?? "#8b5cf6")" />
+                        <input asp-for="Branding.AccentColor"
+                               type="text"
+                               placeholder="#8b5cf6"
+                               class="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-xs text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    </div>
+                    <span asp-validation-for="Branding.AccentColor" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span>
+                    <p class="text-[11px] text-slate-400">رنگ تاکید و هایلایت‌های ثانویه</p>
+                </div>
+            </div>
+
+            {{!-- URL Inputs --}}
+            <div class="grid grid-cols-1 gap-3">
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Branding.LogoUrl" class="text-xs font-black text-slate-700 dark:text-slate-300">
+                        آدرس لوگو (URL یا Data URI)
+                    </label>
+                    <input asp-for="Branding.LogoUrl"
+                           type="url"
+                           placeholder="https://example.com/logo.png"
+                           class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Branding.LogoUrl" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span>
+                    @if (!string.IsNullOrWhiteSpace(Model.Branding.LogoUrl))
+                    {
+                        <img src="@Model.Branding.LogoUrl" alt="لوگو فعلی" class="mt-1 h-10 max-w-[120px] rounded object-contain border border-slate-200 dark:border-slate-700 p-1 bg-white" onerror="this.style.display='none'" />
+                    }
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Branding.FaviconUrl" class="text-xs font-black text-slate-700 dark:text-slate-300">
+                        آدرس فاوآیکون (URL یا Data URI)
+                    </label>
+                    <input asp-for="Branding.FaviconUrl"
+                           type="url"
+                           placeholder="https://example.com/favicon.ico"
+                           class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Branding.FaviconUrl" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label asp-for="Branding.LoginBackgroundUrl" class="text-xs font-black text-slate-700 dark:text-slate-300">
+                        تصویر پس‌زمینه صفحه ورود (URL)
+                    </label>
+                    <input asp-for="Branding.LoginBackgroundUrl"
+                           type="url"
+                           placeholder="https://example.com/bg.jpg"
+                           class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Branding.LoginBackgroundUrl" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400"></span>
+                    @if (!string.IsNullOrWhiteSpace(Model.Branding.LoginBackgroundUrl))
+                    {
+                        <img src="@Model.Branding.LoginBackgroundUrl" alt="تصویر ورود فعلی" class="mt-1 h-20 max-w-[200px] rounded object-cover border border-slate-200 dark:border-slate-700" onerror="this.style.display='none'" />
+                    }
+                </div>
+            </div>
+
+            {{!-- Preview Badge --}}
+            @if (!string.IsNullOrWhiteSpace(Model.Branding.PrimaryColor))
+            {
+                <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+                    <div class="h-6 w-6 rounded-full shadow-sm" style="background-color: @Model.Branding.PrimaryColor"></div>
+                    <span class="text-xs text-slate-600 dark:text-slate-400">رنگ اصلی فعلی: <code class="font-mono text-teal-700 dark:text-teal-300">@Model.Branding.PrimaryColor</code></span>
+                    @if (!string.IsNullOrWhiteSpace(Model.Branding.AccentColor))
+                    {
+                        <div class="h-6 w-6 rounded-full shadow-sm" style="background-color: @Model.Branding.AccentColor"></div>
+                        <span class="text-xs text-slate-600 dark:text-slate-400">رنگ ثانویه: <code class="font-mono text-purple-700 dark:text-purple-300">@Model.Branding.AccentColor</code></span>
+                    }
+                </div>
+            }
+
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-purple-700">
+                    <i class="bi bi-palette2"></i>ذخیره تنظیمات ظاهری
+                </button>
+            </div>
+        </form>
+    }
+</div>

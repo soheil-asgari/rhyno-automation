@@ -38,5 +38,7 @@ public sealed class WorkflowRouteConfiguration : IEntityTypeConfiguration<Workfl
                             .WithMany()
                             .HasForeignKey(item => item.ApproverUserId)
                             .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Ignore(item => item.UiMetadata);
     }
 }

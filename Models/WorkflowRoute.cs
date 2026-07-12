@@ -30,5 +30,6 @@ namespace OfficeAutomation.Models
         public bool AllowReturn { get; set; } = true;
 
         public bool IsActive { get; set; } = true;
+        public string? UiMetadata { get; set; }
     }
 }

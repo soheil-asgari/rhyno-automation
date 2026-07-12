@@ -8,6 +8,7 @@ public interface ITenantSettingsService
 {
     Task<SystemSetting> GetSystemSettingsAsync(CancellationToken cancellationToken = default);
     Task UpdateSystemSettingsAsync(Action<SystemSetting> apply, CancellationToken cancellationToken = default);
+    Task UpdateBrandingAsync(Action<SystemSetting> apply, CancellationToken cancellationToken = default);
 }
 
 public sealed class TenantSettingsService : ITenantSettingsService
@@ -47,6 +48,26 @@ public sealed class TenantSettingsService : ITenantSettingsService
         await UpsertAsync(descriptor.TenantId, "System.TimeZoneId", current.TimeZoneId, cancellationToken);
         await UpsertAsync(descriptor.TenantId, "System.ActiveEnvironment", current.ActiveEnvironment ?? string.Empty, cancellationToken);
         await UpsertAsync(descriptor.TenantId, "System.MaintenanceMode", current.MaintenanceMode.ToString(), cancellationToken);
+    }
+
+    /// <summary>
+    /// Persists the White-labeling / Branding settings for the current tenant.
+    /// These are stored as TenantSetting key-value pairs (prefixed "Branding.") so
+    /// they can be loaded and injected as CSS Variables in the Layout without a
+    /// separate database table or EF Core migration.
+    /// </summary>
+    public async Task UpdateBrandingAsync(Action<SystemSetting> apply, CancellationToken cancellationToken = default)
+    {
+        var descriptor = _tenantIsolationService.GetCurrent();
+        var current = await GetSystemSettingsAsync(cancellationToken);
+        apply(current);
+        current.UpdatedAtUtc = DateTime.UtcNow;
+
+        await UpsertAsync(descriptor.TenantId, "Branding.PrimaryColor", current.PrimaryColor ?? string.Empty, cancellationToken);
+        await UpsertAsync(descriptor.TenantId, "Branding.AccentColor", current.AccentColor ?? string.Empty, cancellationToken);
+        await UpsertAsync(descriptor.TenantId, "Branding.LogoUrl", current.LogoUrl ?? string.Empty, cancellationToken);
+        await UpsertAsync(descriptor.TenantId, "Branding.FaviconUrl", current.FaviconUrl ?? string.Empty, cancellationToken);
+        await UpsertAsync(descriptor.TenantId, "Branding.LoginBackgroundUrl", current.LoginBackgroundUrl ?? string.Empty, cancellationToken);
     }
 
     private async Task UpsertAsync(string tenantId, string key, string value, CancellationToken cancellationToken)
@@ -108,6 +129,32 @@ public sealed class TenantSettingsService : ITenantSettingsService
             bool.TryParse(maintenanceMode, out var parsedMaintenanceMode))
         {
             resolved.MaintenanceMode = parsedMaintenanceMode;
+        }
+
+        // ── White-labeling / Branding overrides ───────────────────────────────────
+        if (overrides.TryGetValue("Branding.PrimaryColor", out var primaryColor) && !string.IsNullOrWhiteSpace(primaryColor))
+        {
+            resolved.PrimaryColor = primaryColor;
+        }
+
+        if (overrides.TryGetValue("Branding.AccentColor", out var accentColor) && !string.IsNullOrWhiteSpace(accentColor))
+        {
+            resolved.AccentColor = accentColor;
+        }
+
+        if (overrides.TryGetValue("Branding.LogoUrl", out var logoUrl) && !string.IsNullOrWhiteSpace(logoUrl))
+        {
+            resolved.LogoUrl = logoUrl;
+        }
+
+        if (overrides.TryGetValue("Branding.FaviconUrl", out var faviconUrl) && !string.IsNullOrWhiteSpace(faviconUrl))
+        {
+            resolved.FaviconUrl = faviconUrl;
+        }
+
+        if (overrides.TryGetValue("Branding.LoginBackgroundUrl", out var loginBg) && !string.IsNullOrWhiteSpace(loginBg))
+        {
+            resolved.LoginBackgroundUrl = loginBg;
         }
 
         return resolved;

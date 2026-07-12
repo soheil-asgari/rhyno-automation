@@ -1,30 +1,26 @@
-🚨 باگ واقعی: لینک‌های ناوبری شکسته (Regression جدید)
-وقتی اکشن‌ها بین کنترلرها جابه‌جا شدن، اسم کنترلر عوض شده ولی View هایی که بهش لینک می‌دن آپدیت نشدن. این یعنی الان با کلیک روی این لینک‌ها 404 می‌خوری:
-html<!-- Views/Shared/_Layout.cshtml — منوی اصلی، رو هر صفحه هست -->
-<a asp-controller="Warehouse" asp-action="Stock">موجودی</a>       ← اکشن Stock رفته به WarehouseInventoryController
-<a asp-controller="Warehouse" asp-action="Receipts">رسیدها</a>    ← اکشن Receipts رفته به WarehouseReceiptsController
-<a asp-controller="Warehouse" asp-action="Issuances">حواله‌ها</a>  ← اکشن Issuances رفته به WarehouseIssuancesController
+Act as an expert React Flow and ASP.NET Core developer. The React Flow canvas is STILL invisible and collapsed (height 0). This is happening because the dynamic Tailwind classes (like h-[85vh] or h-full) are likely not being compiled/scanned by the Tailwind engine for these specific files, so the browser ignores them.
 
-<!-- Views/Financial/ReportingHub.cshtml -->
-<a asp-controller="Warehouse" asp-action="Stock">چاپ گزارش</a>    ← همین مشکل
-یعنی همین الان، از منوی اصلی سه‌تا از مهم‌ترین لینک‌های ماژول انبار (موجودی، رسیدها، حواله‌ها) که تقریباً هر کاربر روزانه ازشون استفاده می‌کنه، به صفحه‌ی خطا می‌خورن.
-راه‌حل ساده: asp-controller="Warehouse" تو این لینک‌ها باید به WarehouseInventory, WarehouseReceipts, WarehouseIssuances تغییر کنه.
-نکته‌ی انصاف: دو لینک دیگه از قبل خراب بودن (نه تقصیر این round)
-تو Views/Warehouse/Stock.cshtml دو لینک به asp-action="Kardex" و asp-action="TransferRequest" هست. چک کردم تو نسخه‌ی قبل از این refactor هم:
+We must implement a BULLETPROOF fix using explicit INLINE STYLES. Please perform the following tasks:
 
-اکشنی به اسم Kardex اصلاً هیچ‌وقت وجود نداشته (تو کل تاریخچه‌ی ریپو).
-اکشن واقعی همیشه CreateTransferRequest بوده، نه TransferRequest.
+**Task 1: Force Height on the Razor View Mounting DOM**
+1. Open `Views/Security/WorkflowBuilder.cshtml` (or the file where the React app is mounted).
+2. Locate the mounting div (e.g., `<div id="workflow-root"></div>` or `<div id="root"></div>`).
+3. Add a strict inline style to force its height, bypassing Tailwind entirely:
+   `<div id="workflow-root" style="width: 100%; height: 85vh; min-height: 700px; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>`
 
-یعنی این دوتا از قبل dead link بودن، این round خرابشون نکرده. ولی حالا که داری این ماژول رو دست می‌زنی، ارزش داره همین الان درستشون کنی چون یه‌جا داری.
-چیزی که این round دست نخورده
+**Task 2: Force Height on the React Flow Wrapper (App.jsx)**
+1. Open `WorkflowUI/src/App.jsx`.
+2. Wrap the Toolbox and React Flow in a flex container with inline styles:
+   `<div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>`
+   *(Note: Use flexDirection: 'row' if you want a side-by-side layout, but 'column' is usually safer for tight spaces).*
+3. Locate the `div` that directly wraps the `<ReactFlow>` component (the one with `ref={reactFlowWrapper}`).
+4. Add strict inline styles to this wrapper so it expands:
+   `<div style={{ flex: 1, width: '100%', height: '100%', minHeight: '500px', position: 'relative' }} ref={reactFlowWrapper}>`
 
-FinancialController (۱۸۹۷ خط) و WorkflowService (۱۸۷۶ خط) — بقیه‌ی BE-1 هنوز باقیه.
-تمام موارد فرانت (FE-1 تا FE-8) — هنوز شروع نشده.
-BE-4 تا BE-9 (health check migration، Swagger، Rate Limiting، 2FA، SignalR، Webhook).
+**Task 3: Force Height on ReactFlow Component**
+1. Ensure the `<ReactFlow>` component itself has inline styles applied:
+   `<ReactFlow style={{ width: '100%', height: '100%' }} ... >`
 
-پیشنهاد فوری
-قبل از اینکه بری سراغ فیچر بعدی، از کلود کد بخواه همین الان این‌ها رو فیکس کنه (اولویت بالا چون کاربر واقعی همین الان باهاش گیر می‌کنه):
-
-asp-controller="Warehouse" تو _Layout.cshtml (۳ مورد) و ReportingHub.cshtml (۱ مورد) رو به کنترلر جدید درست اصلاح کن.
-لینک‌های Kardex و TransferRequest تو Stock.cshtml رو یا حذف کن یا به اکشن واقعی (CreateTransferRequest) وصل کن.
-بعد از فیکس، یه تست ساده (حتی smoke test) بنویس که چک کنه همه‌ی لینک‌های asp-controller/asp-action تو Viewها به اکشن‌های واقعاً موجود اشاره می‌کنن — این نوع باگ در آینده، مخصوصاً وقتی FinancialController رو هم بشکنی، به احتمال زیاد دوباره تکرار می‌شه.
+**Task 4: Ensure Toolbox is Visible but Constrained**
+1. Add an inline style to the Toolbox/Sidebar container so it doesn't push the canvas off-screen:
+   `<aside style={{ width: '100%', maxHeight: '30%', overflowY: 'auto', padding: '16px', backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>`

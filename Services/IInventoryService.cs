@@ -54,5 +54,13 @@ namespace OfficeAutomation.Services
         Task<bool> WarehouseReceiptExistsAsync(int receiptId, CancellationToken cancellationToken);
         Task<List<ProductOptionDto>> GetActiveProductOptionsAsync(CancellationToken cancellationToken);
         Task<List<WarehouseReceiptOptionDto>> GetAvailableWarehouseReceiptOptionsAsync(List<int> excludedReceiptIds, int? currentReceiptId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Checks whether an employer has any warehouse issuances referencing them.
+        /// Used by EmployersController to decide whether to hard-delete or soft-delete.
+        /// Exposed here so the controller does not need to inject InventoryDbContext directly,
+        /// preserving module boundary isolation (Bمب سوم fix).
+        /// </summary>
+        Task<bool> EmployerHasIssuancesAsync(int employerId, CancellationToken cancellationToken);
     }
 }

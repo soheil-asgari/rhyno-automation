@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "طراحی بصری گردش کار";
+    var userOptions = (IEnumerable<dynamic>)(ViewBag.UserOptions ?? new List<dynamic>());
+    var roleOptions = (IEnumerable<dynamic>)(ViewBag.RoleOptions ?? new List<dynamic>());
+    var departmentOptions = (IEnumerable<dynamic>)(ViewBag.DepartmentOptions ?? new List<dynamic>());
+    var documentType = (string)(ViewBag.DocumentType ?? "Letter");
+}
+
+<div class="flex flex-col gap-4 w-full">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between gap-3 px-1">
+        <div>
+            <h1 class="text-base font-black text-slate-900 dark:text-white tracking-tight">طراح بصری گردش کار اسناد</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">طراحی و ویرایش مراحل تایید به صورت Drag & Drop</p>
+        </div>
+        <a asp-action="WorkflowRoutes" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition no-underline">
+            <i class="bi bi-arrow-right"></i>
+            <span>بازگشت به لیست مراحل</span>
+        </a>
+    </div>
+
+    <!-- Hidden anti-forgery form for React client -->
+    <form id="antiForgeryForm" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <!-- React Flow canvas mount point -->
+    <div id="workflow-root" style="width: 100%; height: 85vh; min-height: 700px; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px;">
+            <div style="text-align: center;">
+                <div class="spinner-border spinner-border-sm text-teal-600 mb-2" role="status"></div>
+                <div>در حال بارگذاری بوم طراحی گردش کار...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <!-- React Flow bundled CSS -->
+    <link rel="stylesheet" href="~/js/workflow/workflow-builder.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <!-- Inject master-data lookup options directly to React client window context -->
+    <script>
+        window.WorkflowBuilderData = {
+            documentType: '@documentType',
+            users: @Json.Serialize(userOptions),
+            roles: @Json.Serialize(roleOptions),
+            departments: @Json.Serialize(departmentOptions)
+        };
+    </script>
+    <!-- React Flow bundled script -->
+    <script src="~/js/workflow/workflow-builder.js" asp-append-version="true"></script>
+}

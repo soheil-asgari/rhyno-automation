@@ -8,6 +8,7 @@ using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
 using OfficeAutomation.Services;
+using System.Text.RegularExpressions;
 
 namespace OfficeAutomation.Controllers;
 
@@ -274,6 +275,48 @@ public class SettingsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>
+    /// Saves per-tenant White-labeling / Branding settings.
+    /// All values are stored as TenantSetting key-value pairs ("Branding.*") and
+    /// rendered as CSS Variables in the Layout — no extra round-trip per page.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Security.Manage")]
+    public async Task<IActionResult> UpdateBranding([Bind(Prefix = "Branding")] BrandingSettingsViewModel model, CancellationToken cancellationToken)
+    {
+        // Validate hex colour format if provided
+        bool IsValidHexColor(string? color) =>
+            string.IsNullOrWhiteSpace(color) ||
+            Regex.IsMatch(color.Trim(), @"^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$");
+
+        if (!IsValidHexColor(model.PrimaryColor))
+            ModelState.AddModelError("Branding.PrimaryColor", "رنگ اصلی باید به فرمت هگز (#rrggbb) باشد.");
+
+        if (!IsValidHexColor(model.AccentColor))
+            ModelState.AddModelError("Branding.AccentColor", "رنگ ثانویه باید به فرمت هگز (#rrggbb) باشد.");
+
+        if (!ModelState.IsValid)
+        {
+            var vmWithErrors = await BuildSettingsViewModelAsync(cancellationToken);
+            vmWithErrors.Branding = model;
+            return View("Index", vmWithErrors);
+        }
+
+        await _tenantSettingsService.UpdateBrandingAsync(s =>
+        {
+            s.PrimaryColor      = string.IsNullOrWhiteSpace(model.PrimaryColor)      ? null : model.PrimaryColor.Trim();
+            s.AccentColor       = string.IsNullOrWhiteSpace(model.AccentColor)       ? null : model.AccentColor.Trim();
+            s.LogoUrl           = string.IsNullOrWhiteSpace(model.LogoUrl)           ? null : model.LogoUrl.Trim();
+            s.FaviconUrl        = string.IsNullOrWhiteSpace(model.FaviconUrl)        ? null : model.FaviconUrl.Trim();
+            s.LoginBackgroundUrl= string.IsNullOrWhiteSpace(model.LoginBackgroundUrl)? null : model.LoginBackgroundUrl.Trim();
+        }, cancellationToken);
+
+        _logger.LogInformation("Branding settings updated by {UserId}.", _userManager.GetUserId(User));
+        TempData["SettingsSuccess"] = "تنظیمات شخصی‌سازی ظاهری با موفقیت ذخیره شد.";
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpGet]
     [PermissionAuthorize("Security.Manage")]
     public IActionResult UserSignatureManagement()
@@ -374,6 +417,14 @@ public class SettingsController : Controller
                 ThemePreference = SupportedThemes.Contains(userPreference?.ThemePreference ?? string.Empty)
                     ? userPreference!.ThemePreference
                     : "System"
+            },
+            Branding = new BrandingSettingsViewModel
+            {
+                PrimaryColor       = resolvedSystem.PrimaryColor,
+                AccentColor        = resolvedSystem.AccentColor,
+                LogoUrl            = resolvedSystem.LogoUrl,
+                FaviconUrl         = resolvedSystem.FaviconUrl,
+                LoginBackgroundUrl = resolvedSystem.LoginBackgroundUrl
             },
             CurrentUserSignaturePath = user.SignaturePath,
             CanManageSecurity = canManageSecurity,

@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
-using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
 using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services;
 
 namespace OfficeAutomation.Controllers
 {
@@ -13,12 +13,17 @@ namespace OfficeAutomation.Controllers
     public class EmployersController : Controller
     {
         private readonly FinanceDbContext _context;
-        private readonly InventoryDbContext _inventoryContext;
 
-        public EmployersController(FinanceDbContext context, InventoryDbContext inventoryContext)
+        // Inventory data is accessed through the IInventoryService application-service
+        // interface rather than injecting InventoryDbContext directly. This preserves
+        // the module boundary: the Finance/Warehouse controller no longer has a hard
+        // compile-time dependency on the Inventory persistence layer (Bمب سوم fix).
+        private readonly IInventoryService _inventoryService;
+
+        public EmployersController(FinanceDbContext context, IInventoryService inventoryService)
         {
             _context = context;
-            _inventoryContext = inventoryContext;
+            _inventoryService = inventoryService;
         }
 
         [HttpGet]
@@ -116,10 +121,12 @@ namespace OfficeAutomation.Controllers
                 return NotFound();
             }
 
-            var hasReferences =
-                await _inventoryContext.WarehouseIssuances.AnyAsync(item => item.EmployerId == id, cancellationToken) ||
-                await _context.Invoices.AnyAsync(item => item.EmployerId == id, cancellationToken);
-            if (hasReferences)
+            // Cross-module check goes through the IInventoryService contract — no direct
+            // InventoryDbContext injection needed here.
+            var hasIssuances = await _inventoryService.EmployerHasIssuancesAsync(id, cancellationToken);
+            var hasInvoices = await _context.Invoices.AnyAsync(item => item.EmployerId == id, cancellationToken);
+
+            if (hasIssuances || hasInvoices)
             {
                 entity.IsActive = false;
                 await _context.SaveChangesAsync(cancellationToken);
@@ -133,4 +140,3 @@ namespace OfficeAutomation.Controllers
         }
     }
 }
-

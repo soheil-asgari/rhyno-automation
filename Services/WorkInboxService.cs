@@ -30,6 +30,7 @@ public sealed class WorkInboxService
         items.AddRange(await GetWorkflowItemsAsync(userId, cancellationToken));
         items.AddRange(await GetUnreadLettersAsync(userId, cancellationToken));
         items.AddRange(await GetUnreadNotificationsAsync(userId, cancellationToken));
+        items.AddRange(await GetPendingCaseTasksAsync(userId, cancellationToken));
 
         if (canApproveGlobal)
         {
@@ -300,6 +301,58 @@ public sealed class WorkInboxService
             .ToList());
 
         return items;
+    }
+
+    private async Task<List<WorkInboxItemVM>> GetPendingCaseTasksAsync(string userId, CancellationToken cancellationToken)
+    {
+        var userRoleIds = await GetUserRoleIdsAsync(userId, cancellationToken);
+        var departmentId = await _context.Users
+            .AsNoTracking()
+            .Where(item => item.Id == userId)
+            .Select(item => item.DepartmentId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var tasks = await _context.WorkflowCaseTasks
+            .Include(t => t.WorkflowStep)
+            .Include(t => t.WorkflowInstance)
+            .Where(t => t.Status == WorkflowCaseTaskStatus.Pending &&
+                        (t.AssignedToUserId == userId ||
+                         (t.WorkflowStep != null && t.WorkflowStep.AssignedRoleId != null && userRoleIds.Contains(t.WorkflowStep.AssignedRoleId)) ||
+                         (t.WorkflowStep != null && departmentId != null && t.WorkflowStep.AssignedDepartmentId == departmentId)))
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return tasks.Select(item => {
+            var docType = item.WorkflowInstance?.DocumentType ?? "Workflow";
+            var docId = item.WorkflowInstance?.DocumentId ?? 0;
+            return new WorkInboxItemVM
+            {
+                Id = "case-task-" + item.Id,
+                Type = "Approval",
+                Module = docType,
+                Title = item.Title,
+                Description = item.Description ?? "درخواست اقدام در گردش کار",
+                Status = item.Status,
+                StatusCssClass = "text-bg-warning",
+                Priority = "High",
+                PriorityCssClass = "inbox-priority-high",
+                GroupLabel = "کارهای در انتظار اقدام",
+                CreatedAtText = ToPersianDate(item.CreatedAt),
+                SortDate = item.CreatedAt,
+                Url = ResolveWorkflowDocumentUrl(docType, docId),
+                Icon = "bi-check2-square",
+                RequiresAction = true,
+                IsRead = false,
+                SlaState = WorkflowSlaState.OnTrack,
+                SlaText = "فعال",
+                DocumentType = docType,
+                DocumentId = docId,
+                StepNumber = item.WorkflowStep?.StepNumber ?? 1,
+                WorkflowStepId = item.WorkflowStepId,
+                CanInlineApprove = true,
+                CanInlineReject = true
+            };
+        }).ToList();
     }
 
     private static string NormalizeFilter(string? filter)

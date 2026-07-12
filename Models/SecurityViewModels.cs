@@ -71,4 +71,34 @@ namespace OfficeAutomation.Models
 
         public List<SelectListItem> ProductOptions { get; set; } = new();
     }
+
+    public class ReactFlowNodeDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Type { get; set; } = "ApprovalNode"; // StartEndNode, ApprovalNode, ConditionNode, WebhookNode
+        public string Label { get; set; } = string.Empty;
+        public double X { get; set; }
+        public double Y { get; set; }
+        public string? AssignmentMode { get; set; }
+        public string? AssignedToUserId { get; set; }
+        public string? AssignedRoleId { get; set; }
+        public int? AssignedDepartmentId { get; set; }
+        public int SlaHours { get; set; } = 24;
+        public int EscalationHours { get; set; } = 48;
+    }
+
+    public class ReactFlowEdgeDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Source { get; set; } = string.Empty;
+        public string Target { get; set; } = string.Empty;
+        public string? Condition { get; set; }
+    }
+
+    public class ReactFlowGraphDto
+    {
+        public string DocumentType { get; set; } = string.Empty;
+        public List<ReactFlowNodeDto> Nodes { get; set; } = new();
+        public List<ReactFlowEdgeDto> Edges { get; set; } = new();
+    }
 }

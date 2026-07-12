@@ -65,5 +65,7 @@ public sealed class WorkflowStepConfiguration : IEntityTypeConfiguration<Workflo
                             .WithMany()
                             .HasForeignKey(item => item.AssignedToUserId)
                             .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Ignore(item => item.UiMetadata);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -263,7 +263,7 @@ namespace OfficeAutomation.Controllers
                 ApproverUserId = approverUserId,
                 IsActive = true
             });
-            await _context.SaveChangesAsync(cancellationToken);
+            await _workflowContext.SaveChangesAsync(cancellationToken);
 
             TempData["SecurityMessage"] = "گام گردش کار ثبت شد.";
             return RedirectToAction(nameof(WorkflowRoutes));
@@ -280,9 +280,209 @@ namespace OfficeAutomation.Controllers
             }
 
             _workflowContext.WorkflowRoutes.Remove(route);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _workflowContext.SaveChangesAsync(cancellationToken);
             TempData["SecurityMessage"] = "گام گردش کار حذف شد.";
             return RedirectToAction(nameof(WorkflowRoutes));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> WorkflowBuilder(string? documentType, CancellationToken cancellationToken)
+        {
+            var docType = documentType ?? "Letter";
+            ViewBag.DocumentType = docType;
+            ViewBag.UserOptions = await _context.Users
+                .AsNoTracking()
+                .OrderBy(item => item.FullName)
+                .Select(item => new { item.Id, item.FullName })
+                .ToListAsync(cancellationToken);
+
+            ViewBag.RoleOptions = await _roleManager.Roles
+                .AsNoTracking()
+                .OrderBy(item => item.Name)
+                .Select(item => new { item.Id, Name = item.Name ?? "Role" })
+                .ToListAsync(cancellationToken);
+
+            ViewBag.DepartmentOptions = await _context.Departments
+                .AsNoTracking()
+                .OrderBy(item => item.Name)
+                .Select(item => new { item.Id, item.Name })
+                .ToListAsync(cancellationToken);
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetWorkflowGraph(string documentType, CancellationToken cancellationToken)
+        {
+            var routes = await _workflowContext.WorkflowRoutes
+                .AsNoTracking()
+                .Where(item => item.DocumentType == documentType)
+                .OrderBy(item => item.StepNumber)
+                .ToListAsync(cancellationToken);
+
+            var nodes = new List<ReactFlowNodeDto>();
+            var edges = new List<ReactFlowEdgeDto>();
+
+            // Always add a Start Node
+            nodes.Add(new ReactFlowNodeDto
+            {
+                Id = "start",
+                Type = "StartEndNode",
+                Label = "شروع گردش",
+                X = 100,
+                Y = 200
+            });
+
+            var previousNodeId = "start";
+
+            for (int i = 0; i < routes.Count; i++)
+            {
+                var route = routes[i];
+                var nodeId = $"step-{route.Id}";
+
+                double x = 300 + (i * 200);
+                double y = 200;
+
+                // Attempt to deserialize coordinates if present in UiMetadata
+                if (!string.IsNullOrWhiteSpace(route.UiMetadata))
+                {
+                    try
+                    {
+                        var coords = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.Nodes.JsonObject>(route.UiMetadata);
+                        if (coords != null)
+                        {
+                            if (coords.TryGetPropertyValue("x", out var xVal) && xVal != null) x = xVal.GetValue<double>();
+                            if (coords.TryGetPropertyValue("y", out var yVal) && yVal != null) y = yVal.GetValue<double>();
+                        }
+                    }
+                    catch { }
+                }
+
+                nodes.Add(new ReactFlowNodeDto
+                {
+                    Id = nodeId,
+                    Type = "ApprovalNode",
+                    Label = route.StepName ?? $"مرحله {route.StepNumber}",
+                    X = x,
+                    Y = y,
+                    AssignmentMode = route.AssignmentMode,
+                    AssignedToUserId = route.ApproverUserId,
+                    AssignedRoleId = route.ApproverRoleId,
+                    AssignedDepartmentId = route.ApproverDepartmentId,
+                    SlaHours = route.SlaHours,
+                    EscalationHours = route.EscalationHours
+                });
+
+                edges.Add(new ReactFlowEdgeDto
+                {
+                    Id = $"edge-{previousNodeId}-{nodeId}",
+                    Source = previousNodeId,
+                    Target = nodeId
+                });
+
+                previousNodeId = nodeId;
+            }
+
+            // Add an End Node
+            var endNodeId = "end";
+            nodes.Add(new ReactFlowNodeDto
+            {
+                Id = endNodeId,
+                Type = "StartEndNode",
+                Label = "پایان گردش",
+                X = 300 + (routes.Count * 200) + 200,
+                Y = 200
+            });
+
+            edges.Add(new ReactFlowEdgeDto
+            {
+                Id = $"edge-{previousNodeId}-{endNodeId}",
+                Source = previousNodeId,
+                Target = endNodeId
+            });
+
+            return Json(new { documentType, nodes, edges });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveWorkflowGraph([FromBody] ReactFlowGraphDto graph, CancellationToken cancellationToken)
+        {
+            if (graph == null || string.IsNullOrWhiteSpace(graph.DocumentType))
+            {
+                return BadRequest(new { success = false, message = "مدل ورودی معتبر نیست." });
+            }
+
+            // Retrieve existing routes for this documentType
+            var existingRoutes = await _workflowContext.WorkflowRoutes
+                .Where(item => item.DocumentType == graph.DocumentType)
+                .ToListAsync(cancellationToken);
+
+            // Filter nodes to exclude start/end nodes
+            var approvalNodes = graph.Nodes
+                .Where(n => n.Type != "StartEndNode")
+                .ToList();
+
+            // Re-map routing steps based on sequence in graph or topological order of edges.
+            // For simplicity and robustness, we map them in order of x coordinate (left to right)
+            var sortedNodes = approvalNodes.OrderBy(n => n.X).ToList();
+
+            // Delete nodes that are no longer present
+            var activeIds = sortedNodes
+                .Where(n => n.Id.StartsWith("step-"))
+                .Select(n => int.Parse(n.Id.Replace("step-", "")))
+                .ToList();
+
+            var toRemove = existingRoutes.Where(r => !activeIds.Contains(r.Id)).ToList();
+            _workflowContext.WorkflowRoutes.RemoveRange(toRemove);
+
+            for (int i = 0; i < sortedNodes.Count; i++)
+            {
+                var node = sortedNodes[i];
+                var stepNum = i + 1;
+
+                var coordsJson = System.Text.Json.JsonSerializer.Serialize(new { x = node.X, y = node.Y });
+
+                if (node.Id.StartsWith("step-"))
+                {
+                    // Update existing
+                    var routeId = int.Parse(node.Id.Replace("step-", ""));
+                    var route = existingRoutes.FirstOrDefault(r => r.Id == routeId);
+                    if (route != null)
+                    {
+                        route.StepNumber = stepNum;
+                        route.StepName = node.Label;
+                        route.AssignmentMode = node.AssignmentMode ?? WorkflowAssignmentMode.User;
+                        route.ApproverUserId = node.AssignedToUserId;
+                        route.ApproverRoleId = node.AssignedRoleId;
+                        route.ApproverDepartmentId = node.AssignedDepartmentId;
+                        route.SlaHours = node.SlaHours;
+                        route.EscalationHours = node.EscalationHours;
+                        route.UiMetadata = coordsJson;
+                    }
+                }
+                else
+                {
+                    // Create new
+                    var route = new WorkflowRoute
+                    {
+                        DocumentType = graph.DocumentType,
+                        StepNumber = stepNum,
+                        StepName = node.Label,
+                        AssignmentMode = node.AssignmentMode ?? WorkflowAssignmentMode.User,
+                        ApproverUserId = node.AssignedToUserId,
+                        ApproverRoleId = node.AssignedRoleId,
+                        ApproverDepartmentId = node.AssignedDepartmentId,
+                        SlaHours = node.SlaHours,
+                        EscalationHours = node.EscalationHours,
+                        IsActive = true,
+                        UiMetadata = coordsJson
+                    };
+                    _workflowContext.WorkflowRoutes.Add(route);
+                }
+            }
+
+            await _workflowContext.SaveChangesAsync(cancellationToken);
+            return Json(new { success = true, message = "گردش کار با موفقیت ذخیره شد." });
         }
     }
 }

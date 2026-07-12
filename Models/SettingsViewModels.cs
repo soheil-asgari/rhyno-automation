@@ -12,6 +12,7 @@ namespace OfficeAutomation.Models
         public ChangePasswordViewModel Password { get; set; } = new();
         public SystemConnectivitySettingsViewModel System { get; set; } = new();
         public UiPreferencesViewModel Ui { get; set; } = new();
+        public BrandingSettingsViewModel Branding { get; set; } = new();
         public string? CurrentUserSignaturePath { get; set; }
         public bool CanManageSecurity { get; set; }
 
@@ -107,6 +108,33 @@ namespace OfficeAutomation.Models
         [RegularExpression("^(Light|Dark|System)$", ErrorMessage = "تم انتخاب شده معتبر نیست.")]
         [Display(Name = "انتخاب تم")]
         public string ThemePreference { get; set; } = "System";
+    }
+
+    /// <summary>
+    /// White-labeling / Branding settings for the current tenant.
+    /// Stored as TenantSetting key-value pairs and rendered as CSS Variables in Layout.
+    /// </summary>
+    public class BrandingSettingsViewModel
+    {
+        [Display(Name = "رنگ اصلی (Primary)")]
+        [MaxLength(32)]
+        public string? PrimaryColor { get; set; }
+
+        [Display(Name = "رنگ ثانویه (Accent)")]
+        [MaxLength(32)]
+        public string? AccentColor { get; set; }
+
+        [Display(Name = "آدرس لوگو")]
+        [MaxLength(512)]
+        public string? LogoUrl { get; set; }
+
+        [Display(Name = "آدرس فاوآیکون")]
+        [MaxLength(512)]
+        public string? FaviconUrl { get; set; }
+
+        [Display(Name = "تصویر پس‌زمینه صفحه ورود")]
+        [MaxLength(512)]
+        public string? LoginBackgroundUrl { get; set; }
     }
 
     public class InsuranceEmployeeRowViewModel

@@ -24,6 +24,7 @@ public sealed class WorkInboxController : Controller
     private readonly IdentityDbContext _identityContext;
     private readonly IWebHostEnvironment _environment;
     private readonly ITenantPathResolver _tenantPathResolver;
+    private readonly IWorkflowExecutionService _workflowExecutionService;
 
     public WorkInboxController(
         WorkInboxService workInboxService,
@@ -32,7 +33,8 @@ public sealed class WorkInboxController : Controller
         IWorkflowDbContext context,
         IdentityDbContext identityContext,
         IWebHostEnvironment environment,
-        ITenantPathResolver tenantPathResolver)
+        ITenantPathResolver tenantPathResolver,
+        IWorkflowExecutionService workflowExecutionService)
     {
         _workInboxService = workInboxService;
         _authorizationFacade = authorizationFacade;
@@ -41,6 +43,7 @@ public sealed class WorkInboxController : Controller
         _identityContext = identityContext;
         _environment = environment;
         _tenantPathResolver = tenantPathResolver;
+        _workflowExecutionService = workflowExecutionService;
     }
 
     public async Task<IActionResult> Index(string? filter, CancellationToken cancellationToken)
@@ -54,6 +57,66 @@ public sealed class WorkInboxController : Controller
         var canApproveGlobal = await _authorizationFacade.IsSecurityAdminAsync();
         var model = await _workInboxService.BuildAsync(userId, canApproveGlobal, filter, cancellationToken);
         return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ProcessTask(int taskId, string triggerAction, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(new { success = false, message = "کاربر وارد نشده است." });
+        }
+
+        var task = await _context.WorkflowCaseTasks
+            .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
+
+        if (task == null)
+        {
+            return NotFound(new { success = false, message = "کار مورد نظر یافت نشد." });
+        }
+
+        // Verify task is assigned to user or their role/department
+        var userRoleIds = await _identityContext.UserRoles
+            .AsNoTracking()
+            .Where(item => item.UserId == userId)
+            .Select(item => item.RoleId)
+            .ToListAsync(cancellationToken);
+
+        var departmentId = await _context.Users
+            .AsNoTracking()
+            .Where(item => item.Id == userId)
+            .Select(item => item.DepartmentId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var step = task.WorkflowStepId.HasValue
+            ? await _context.WorkflowSteps.FirstOrDefaultAsync(s => s.Id == task.WorkflowStepId.Value, cancellationToken)
+            : null;
+
+        var isAssigned = task.AssignedToUserId == userId ||
+                         (step != null && step.AssignedRoleId != null && userRoleIds.Contains(step.AssignedRoleId)) ||
+                         (step != null && departmentId != null && step.AssignedDepartmentId == departmentId);
+
+        if (!isAssigned)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _workflowExecutionService.ExecuteNextStepAsync(task.WorkflowInstanceId, triggerAction, cancellationToken);
+
+            task.Status = WorkflowCaseTaskStatus.Completed;
+            task.CompletedAt = DateTimeOffset.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return Json(new { success = true, message = "اقدام با موفقیت انجام شد." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
     }
 
     [HttpPost]

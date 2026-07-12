@@ -10,5 +10,13 @@ public sealed class SystemSettingConfiguration : IEntityTypeConfiguration<System
     {
             builder
                             .HasIndex(setting => setting.ApplicationTitle);
+
+            // These properties are stored dynamically in TenantSettings as key-value pairs,
+            // so we ignore them on the SystemSettings database table mapping.
+            builder.Ignore(setting => setting.PrimaryColor);
+            builder.Ignore(setting => setting.AccentColor);
+            builder.Ignore(setting => setting.LogoUrl);
+            builder.Ignore(setting => setting.FaviconUrl);
+            builder.Ignore(setting => setting.LoginBackgroundUrl);
     }
 }

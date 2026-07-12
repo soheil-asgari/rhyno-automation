@@ -200,6 +200,21 @@
                         </div>
 
                         <div class="border-t border-slate-200 dark:border-slate-800 pt-2 space-y-3" id="detailStickyBar">
+                            <!-- Case Task Inline Processing Actions -->
+                            <div id="caseTaskActionArea" class="hidden space-y-2">
+                                <div class="text-[10px] font-bold text-amber-500 mb-1">اقدامات مربوط به وظیفه جاری:</div>
+                                <div class="flex gap-2">
+                                    <button type="button" class="btn-process-task flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1" data-action="Approve">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>تایید</span>
+                                    </button>
+                                    <button type="button" class="btn-process-task flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1" data-action="Reject">
+                                        <i class="bi bi-x-circle"></i>
+                                        <span>رد</span>
+                                    </button>
+                                </div>
+                            </div>
+
                             <form asp-action="Decide" method="post" class="hidden" id="quickApproveForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentType" id="quickApproveDocumentType" />
@@ -534,10 +549,80 @@
                         detailChips.appendChild(chip);
                     });
 
-                quickApproveForm.classList.toggle('d-none', !item.canInlineApprove || !item.documentType || !item.documentId || !item.stepNumber);
-                quickRejectForm.classList.toggle('d-none', !item.canInlineReject || !item.documentType || !item.documentId || !item.stepNumber);
-                quickCommentForm.classList.toggle('d-none', !item.canInlineComment || !item.documentType || !item.documentId);
-                quickDelegateForm.classList.toggle('d-none', !item.canInlineDelegate || !item.workflowStepId);
+                const caseTaskActionArea = document.getElementById('caseTaskActionArea');
+                const isCaseTask = item.id.startsWith('case-task-');
+
+                if (isCaseTask && caseTaskActionArea) {
+                    caseTaskActionArea.classList.remove('d-none');
+                    // Set up click listeners for the process buttons
+                    const btnProcessList = caseTaskActionArea.querySelectorAll('.btn-process-task');
+                    btnProcessList.forEach(btn => {
+                        // Remove old click listeners to prevent duplicates
+                        const newBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(newBtn, btn);
+
+                        newBtn.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            const action = newBtn.dataset.action;
+                            const taskIdStr = item.id.replace('case-task-', '');
+                            const taskId = parseInt(taskIdStr);
+
+                            // Show spinner
+                            const originalText = newBtn.innerHTML;
+                            newBtn.disabled = true;
+                            newBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> در حال اقدام...';
+
+                            try {
+                                const response = await fetch('/WorkInbox/ProcessTask', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                        'RequestVerificationToken': antiForgeryToken
+                                    },
+                                    body: `taskId=${taskId}&triggerAction=${action}`
+                                });
+
+                                const result = await response.json();
+                                if (result.success) {
+                                    alert(result.message);
+                                    // Remove the item from list DOM dynamically
+                                    const rowToRemove = document.querySelector(`[data-item-id="${item.id}"]`);
+                                    if (rowToRemove) {
+                                        rowToRemove.remove();
+                                    }
+                                    // Remove from array state to update counters
+                                    const idx = items.findIndex(i => i.id === item.id);
+                                    if (idx > -1) {
+                                        items.splice(idx, 1);
+                                    }
+                                    // Re-render
+                                    renderInbox();
+                                } else {
+                                    alert('خطا: ' + result.message);
+                                }
+                            } catch (err) {
+                                alert('بروز خطا در برقراری ارتباط با سرور.');
+                            } finally {
+                                newBtn.disabled = false;
+                                newBtn.innerHTML = originalText;
+                            }
+                        });
+                    });
+
+                    // Hide regular forms
+                    quickApproveForm.classList.add('d-none');
+                    quickRejectForm.classList.add('d-none');
+                    quickCommentForm.classList.add('d-none');
+                    quickDelegateForm.classList.add('d-none');
+                } else {
+                    if (caseTaskActionArea) {
+                        caseTaskActionArea.classList.add('d-none');
+                    }
+                    quickApproveForm.classList.toggle('d-none', !item.canInlineApprove || !item.documentType || !item.documentId || !item.stepNumber);
+                    quickRejectForm.classList.toggle('d-none', !item.canInlineReject || !item.documentType || !item.documentId || !item.stepNumber);
+                    quickCommentForm.classList.toggle('d-none', !item.canInlineComment || !item.documentType || !item.documentId);
+                    quickDelegateForm.classList.toggle('d-none', !item.canInlineDelegate || !item.workflowStepId);
+                }
 
                 if (item.documentType) {
                     document.getElementById('quickApproveDocumentType').value = item.documentType;

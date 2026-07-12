@@ -4,8 +4,10 @@
 @using OfficeAutomation.Models
 @using OfficeAutomation.Services
 @using OfficeAutomation.Services.Security
+@using OfficeAutomation.Services.Tenancy
 @inject IUserContextService UserContextService
 @inject IAntiforgery Antiforgery
+@inject ITenantSettingsService TenantSettingsService
 @{
     var antiforgeryTokens = Antiforgery.GetAndStoreTokens(Context);
     
@@ -37,6 +39,19 @@
         return active ? "sidebar-link z-50 flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-2 py-1 text-[12px] font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200" : "sidebar-link z-50 flex items-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-[12px] font-medium text-slate-600 transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white";
     }
     var moduleButtonClass = "flex w-full items-center justify-between rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100";
+
+    // ── White-labeling / Branding ─────────────────────────────────────────────
+    // Load branding once per request from the already-cached TenantSettingsService.
+    // This does NOT cause an extra DB round-trip when the service is scoped and the
+    // settings are cached within the same HTTP request scope.
+    SystemSetting? brandingSettings = null;
+    try { brandingSettings = await TenantSettingsService.GetSystemSettingsAsync(); } catch { }
+    var brandPrimary = brandingSettings?.PrimaryColor;
+    var brandAccent  = brandingSettings?.AccentColor;
+    var brandLogo    = brandingSettings?.LogoUrl;
+    var brandFavicon = brandingSettings?.FaviconUrl;
+    var brandLoginBg = brandingSettings?.LoginBackgroundUrl;
+    var appTitle     = brandingSettings?.ApplicationTitle ?? "راینو ERP";
 }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl" data-theme="@themePreference.ToLowerInvariant()" class="@rootThemeClass">
@@ -44,10 +59,45 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="request-verification-token" content="@antiforgeryTokens.RequestToken" />
-    <title>@ViewData["Title"] - پنل مدیریت راینو</title>
+    <title>@ViewData["Title"] - @appTitle</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" asp-append-version="true">
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
+    @if (!string.IsNullOrWhiteSpace(brandFavicon))
+    {
+        <link rel="icon" href="@brandFavicon" />
+    }
+    @if (!string.IsNullOrWhiteSpace(brandPrimary) || !string.IsNullOrWhiteSpace(brandAccent))
+    {
+        <style>
+            /* ── Tenant White-labeling: CSS Variables override ── */
+            :root {
+                @if (!string.IsNullOrWhiteSpace(brandPrimary)) { <text>--brand-primary: @brandPrimary;</text> }
+                @if (!string.IsNullOrWhiteSpace(brandAccent))  { <text>--brand-accent: @brandAccent;</text> }
+            }
+            /* Override the teal-based primary colours used throughout the design system */
+            @if (!string.IsNullOrWhiteSpace(brandPrimary))
+            {
+                <text>
+                .bg-teal-600, .hover\:bg-teal-700:hover  { background-color: var(--brand-primary) !important; }
+                .text-teal-600, .text-teal-700            { color: var(--brand-primary) !important; }
+                .border-teal-500, .border-teal-200        { border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent) !important; }
+                .focus\:border-teal-500:focus             { border-color: var(--brand-primary) !important; }
+                .focus\:ring-teal-500\/10:focus           { --tw-ring-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important; }
+                .bg-teal-50                               { background-color: color-mix(in srgb, var(--brand-primary) 8%, white) !important; }
+                .dark .bg-teal-500\/10                    { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important; }
+                .dark .text-teal-200, .dark .text-teal-300 { color: color-mix(in srgb, var(--brand-primary) 80%, white) !important; }
+                </text>
+            }
+            @if (!string.IsNullOrWhiteSpace(brandAccent))
+            {
+                <text>
+                .text-purple-600, .text-purple-700       { color: var(--brand-accent) !important; }
+                .bg-purple-600, .hover\:bg-purple-700:hover { background-color: var(--brand-accent) !important; }
+                </text>
+            }
+        </style>
+    }
     @await RenderSectionAsync("Styles", required: false)
     <style>
         /* Force desktop static positioning & width to prevent overlapping in RTL */
@@ -128,8 +178,16 @@
         <aside id="appSidebar" class="sidebar-right print:hidden fixed inset-y-0 right-0 z-50 flex w-52 translate-x-full flex-col border-l border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 lg:static lg:flex lg:w-56 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-slate-955/95 flex flex-col z-40">
             <div class="flex h-12 items-center gap-2 border-b border-slate-200 px-2.5 dark:border-slate-800">
                 <a asp-controller="Home" asp-action="Index" class="flex min-w-0 flex-1 items-center gap-2 text-decoration-none">
-                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
-                    <span class="min-w-0"><span class="block truncate text-sm font-black text-slate-900 dark:text-white">راینو ERP</span><span class="block truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">سیستم جامع سازمانی</span></span>
+                    @if (!string.IsNullOrWhiteSpace(brandLogo))
+                    {
+                        <img src="@brandLogo" alt="@appTitle" class="h-8 w-8 rounded-lg object-contain border border-slate-200 dark:border-slate-700 bg-white p-0.5" onerror="this.parentElement.querySelector('.brand-fallback').style.display='flex'; this.style.display='none'" />
+                        <span class="brand-fallback hidden h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
+                    }
+                    else
+                    {
+                        <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
+                    }
+                    <span class="min-w-0"><span class="block truncate text-sm font-black text-slate-900 dark:text-white">@appTitle</span><span class="block truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">سیستم جامع سازمانی</span></span>
                 </a>
                 <button id="btnCloseSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800" aria-label="بستن منو"><i class="bi bi-x-lg"></i></button>
             </div>
@@ -199,6 +257,7 @@
                                     <a class='@NavClass("ManagementDashboard", "Index")' data-nav-id="management-dashboard" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500 me-2"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
                                     <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400 me-2"></i><span class="link-text truncate">تنظیمات</span></a>
                                     <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500 me-2"></i><span class="link-text truncate">امنیت</span></a>
+                                    <a class='@NavClass("Security", "WorkflowBuilder")' data-nav-id="security-workflowbuilder" asp-controller="Security" asp-action="WorkflowBuilder"><i class="bi bi-diagram-3 w-4 text-teal-500 me-2"></i><span class="link-text truncate">طراح گردش کار</span></a>
                                     <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500 me-2"></i><span class="link-text truncate">ممیزی</span></a>
                                 }
                                 @if (userCanAccessProcessAnalytics)
@@ -357,6 +416,37 @@
             
             input.addEventListener('input', applySearch);
             clearButton.addEventListener('click', () => { input.value = ''; input.focus(); resetSearch(); });
+        })();
+    </script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script>
+        (function() {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/automationHub")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveNewTaskNotification", function (data) {
+                // Show standard toast/alert
+                alert(`[کار جدید] \n${data.message}`);
+
+                // Dynamically update count badge on the WorkInbox sidebar menu
+                const sidebarItem = document.querySelector('[data-nav-id="workinbox-index"]');
+                if (sidebarItem) {
+                    let badge = sidebarItem.querySelector('.inbox-badge-count');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'inbox-badge-count inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-teal-600 text-white text-[9px] font-black mr-auto';
+                        sidebarItem.appendChild(badge);
+                    }
+                    const currentCount = parseInt(badge.textContent) || 0;
+                    badge.textContent = currentCount + 1;
+                }
+            });
+
+            connection.start()
+                .then(() => console.log("SignalR Connection established."))
+                .catch(err => console.error("SignalR Connection failed: ", err));
         })();
     </script>
     @await RenderSectionAsync("Scripts", required: false)

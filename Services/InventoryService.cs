@@ -137,5 +137,12 @@ namespace OfficeAutomation.Services
 
             return receiptItems;
         }
+
+        public async Task<bool> EmployerHasIssuancesAsync(int employerId, CancellationToken cancellationToken)
+        {
+            return await _context.WarehouseIssuances
+                .AsNoTracking()
+                .AnyAsync(item => item.EmployerId == employerId, cancellationToken);
+        }
     }
 }

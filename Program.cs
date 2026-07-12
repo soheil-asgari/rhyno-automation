@@ -148,6 +148,7 @@ builder.Services.AddScoped<WorkflowGovernanceService>();
 builder.Services.AddScoped<WorkflowService>();
 builder.Services.AddScoped<WorkflowSlaScheduler>();
 builder.Services.AddScoped<WorkflowSlaEscalationNotifier>();
+builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
 builder.Services.AddScoped<ConnectorExecutionService>();
 builder.Services.AddScoped<ProcessMiningService>();
 builder.Services.AddScoped<IOutboxService, OutboxService>();
@@ -162,6 +163,7 @@ builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler
 builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<PermissionAccessFilter>();
+builder.Services.AddSignalR();
 
 builder.Services.AddControllersWithViews(options =>
 {
@@ -353,6 +355,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 app.MapHealthChecks("/health");
+app.MapHub<OfficeAutomation.Hubs.AutomationHub>("/automationHub");
 
 if (builder.Configuration.GetValue("Bootstrap:RunOnStartup", false))
 {
