@@ -122,13 +122,10 @@
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">عادی</span>
                                     }
                                 </td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-slate-500 font-mono text-[10px]"  >@item.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-center"  >
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-slate-500 font-mono text-[10px]"  >@item.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 px-3 py-2 text-center"  >
                                     <div class="flex items-center justify-center gap-1.5">
-                                        <a asp-controller="Warehouse" asp-action="Kardex" asp-route-productId="@item.ProductId" asp-route-warehouseId="@item.WarehouseId" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="کاردکس کالا">
-                                            <i class="bi bi-file-earmark-spreadsheet text-sm"></i>
-                                        </a>
-                                        <a asp-controller="Warehouse" asp-action="TransferRequest" asp-route-productId="@item.ProductId" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="درخواست انتقال">
+                                        <a asp-controller="WarehouseTransfer" asp-action="CreateTransferRequest" asp-route-productId="@item.ProductId" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="درخواست انتقال">
                                             <i class="bi bi-arrow-left-right text-sm"></i>
                                         </a>
                                     </div>

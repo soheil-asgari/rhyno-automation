@@ -1,4 +1,30 @@
-❌ چیزهایی که این round اصلاً لمس نشده
-از دو لیست عمیقی که دادم، این‌ها هنوز باقی‌ان:
-فرانت: FE-1 (حذف کامل Bootstrap — هنوز رو هر صفحه لود می‌شه)، FE-2 (یکپارچه‌سازی ۴۲ فایل CSS)، FE-4 (اسکریپت/استایل اینلاین)، FE-5 (یکسان‌سازی Saved Views)، FE-7 (Accessibility)، FE-8 (PWA).
-بک‌اند: BE-1 (شکستن WarehouseController ۲۸۵۳ خط و بقیه — هنوز دست‌نخورده)، BE-2 (معماری دوگانه)، BE-4 تا BE-9 (health check migration، Swagger، Rate Limiting، 2FA اجباری، SignalR، Webhook)، BE-11 (Export گزارش حسابرسی).
+🚨 باگ واقعی: لینک‌های ناوبری شکسته (Regression جدید)
+وقتی اکشن‌ها بین کنترلرها جابه‌جا شدن، اسم کنترلر عوض شده ولی View هایی که بهش لینک می‌دن آپدیت نشدن. این یعنی الان با کلیک روی این لینک‌ها 404 می‌خوری:
+html<!-- Views/Shared/_Layout.cshtml — منوی اصلی، رو هر صفحه هست -->
+<a asp-controller="Warehouse" asp-action="Stock">موجودی</a>       ← اکشن Stock رفته به WarehouseInventoryController
+<a asp-controller="Warehouse" asp-action="Receipts">رسیدها</a>    ← اکشن Receipts رفته به WarehouseReceiptsController
+<a asp-controller="Warehouse" asp-action="Issuances">حواله‌ها</a>  ← اکشن Issuances رفته به WarehouseIssuancesController
+
+<!-- Views/Financial/ReportingHub.cshtml -->
+<a asp-controller="Warehouse" asp-action="Stock">چاپ گزارش</a>    ← همین مشکل
+یعنی همین الان، از منوی اصلی سه‌تا از مهم‌ترین لینک‌های ماژول انبار (موجودی، رسیدها، حواله‌ها) که تقریباً هر کاربر روزانه ازشون استفاده می‌کنه، به صفحه‌ی خطا می‌خورن.
+راه‌حل ساده: asp-controller="Warehouse" تو این لینک‌ها باید به WarehouseInventory, WarehouseReceipts, WarehouseIssuances تغییر کنه.
+نکته‌ی انصاف: دو لینک دیگه از قبل خراب بودن (نه تقصیر این round)
+تو Views/Warehouse/Stock.cshtml دو لینک به asp-action="Kardex" و asp-action="TransferRequest" هست. چک کردم تو نسخه‌ی قبل از این refactor هم:
+
+اکشنی به اسم Kardex اصلاً هیچ‌وقت وجود نداشته (تو کل تاریخچه‌ی ریپو).
+اکشن واقعی همیشه CreateTransferRequest بوده، نه TransferRequest.
+
+یعنی این دوتا از قبل dead link بودن، این round خرابشون نکرده. ولی حالا که داری این ماژول رو دست می‌زنی، ارزش داره همین الان درستشون کنی چون یه‌جا داری.
+چیزی که این round دست نخورده
+
+FinancialController (۱۸۹۷ خط) و WorkflowService (۱۸۷۶ خط) — بقیه‌ی BE-1 هنوز باقیه.
+تمام موارد فرانت (FE-1 تا FE-8) — هنوز شروع نشده.
+BE-4 تا BE-9 (health check migration، Swagger، Rate Limiting، 2FA، SignalR، Webhook).
+
+پیشنهاد فوری
+قبل از اینکه بری سراغ فیچر بعدی، از کلود کد بخواه همین الان این‌ها رو فیکس کنه (اولویت بالا چون کاربر واقعی همین الان باهاش گیر می‌کنه):
+
+asp-controller="Warehouse" تو _Layout.cshtml (۳ مورد) و ReportingHub.cshtml (۱ مورد) رو به کنترلر جدید درست اصلاح کن.
+لینک‌های Kardex و TransferRequest تو Stock.cshtml رو یا حذف کن یا به اکشن واقعی (CreateTransferRequest) وصل کن.
+بعد از فیکس، یه تست ساده (حتی smoke test) بنویس که چک کنه همه‌ی لینک‌های asp-controller/asp-action تو Viewها به اکشن‌های واقعاً موجود اشاره می‌کنن — این نوع باگ در آینده، مخصوصاً وقتی FinancialController رو هم بشکنی، به احتمال زیاد دوباره تکرار می‌شه.
