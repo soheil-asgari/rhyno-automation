@@ -100,9 +100,19 @@ namespace OfficeAutomation.Controllers
         [PermissionAuthorize("Archive.Create")]
         public async Task<IActionResult> Upload(DocumentArchiveUploadVM model, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid || model.File == null || model.File.Length == 0)
+            if (model.File == null || model.File.Length == 0)
             {
                 TempData["ArchiveMessage"] = "فایل انتخابی معتبر نیست.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                ValidateUploadedFile(model.File);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ArchiveMessage"] = ex.Message;
                 return RedirectToAction(nameof(Index));
             }
 
@@ -110,7 +120,7 @@ namespace OfficeAutomation.Controllers
             var safeTitle = model.Title.Trim();
             var extension = Path.GetExtension(model.File.FileName);
             var storedFileName = $"{Guid.NewGuid():N}{extension}";
-            var uploadRoot = _tenantPathResolver.GetArchiveRoot(_environment.WebRootPath);
+            var uploadRoot = _tenantPathResolver.GetArchiveRoot(Path.Combine(_environment.ContentRootPath, "App_Data"));
             Directory.CreateDirectory(uploadRoot);
             var fullPath = Path.Combine(uploadRoot, storedFileName);
 
@@ -168,7 +178,18 @@ namespace OfficeAutomation.Controllers
                 return BadRequest("این فایل قابل پیش‌نمایش نیست.");
             }
 
-            return Redirect(item.RelativePath);
+            var physicalPath = _tenantPathResolver.MapRelativeToPhysical(Path.Combine(_environment.ContentRootPath, "App_Data"), item.RelativePath);
+            if (!System.IO.File.Exists(physicalPath))
+            {
+                physicalPath = _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, item.RelativePath);
+                if (!System.IO.File.Exists(physicalPath))
+                {
+                    return NotFound();
+                }
+            }
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(physicalPath, cancellationToken);
+            return File(bytes, item.ContentType ?? "application/octet-stream");
         }
 
         [HttpGet]
@@ -188,10 +209,14 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            var physicalPath = _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, item.RelativePath);
+            var physicalPath = _tenantPathResolver.MapRelativeToPhysical(Path.Combine(_environment.ContentRootPath, "App_Data"), item.RelativePath);
             if (!System.IO.File.Exists(physicalPath))
             {
-                return NotFound();
+                physicalPath = _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, item.RelativePath);
+                if (!System.IO.File.Exists(physicalPath))
+                {
+                    return NotFound();
+                }
             }
 
             var bytes = await System.IO.File.ReadAllBytesAsync(physicalPath, cancellationToken);
@@ -226,7 +251,11 @@ namespace OfficeAutomation.Controllers
                 return BadRequest(error.Message);
             }
 
-            var physicalPath = _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, item.RelativePath);
+            var physicalPath = _tenantPathResolver.MapRelativeToPhysical(Path.Combine(_environment.ContentRootPath, "App_Data"), item.RelativePath);
+            if (!System.IO.File.Exists(physicalPath))
+            {
+                physicalPath = _tenantPathResolver.MapRelativeToPhysical(_environment.WebRootPath, item.RelativePath);
+            }
             _context.DocumentArchiveItems.Remove(item);
             await _context.SaveChangesAsync(cancellationToken);
 
@@ -268,6 +297,54 @@ namespace OfficeAutomation.Controllers
                 DocumentArchiveModules.Warehouse => await _permissionAccessService.UserHasPermissionAsync(userId, "Warehouse.View", cancellationToken),
                 _ => true
             };
+        }
+
+        private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".csv", ".zip", ".rar"
+        };
+
+        private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "application/pdf",
+            "image/png",
+            "image/jpeg",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/plain",
+            "text/csv",
+            "application/zip",
+            "application/x-zip-compressed",
+            "application/x-rar-compressed"
+        };
+
+        private const long MaxFileBytes = 20 * 1024 * 1024; // 20 MB
+
+        private static void ValidateUploadedFile(IFormFile file)
+        {
+            if (file.Length <= 0)
+            {
+                throw new InvalidOperationException("فایل خالی است.");
+            }
+
+            if (file.Length > MaxFileBytes)
+            {
+                throw new InvalidOperationException("حجم فایل بیشتر از حد مجاز (۲۰ مگابایت) است.");
+            }
+
+            var extension = Path.GetExtension(file.FileName);
+            if (string.IsNullOrWhiteSpace(extension) || !AllowedExtensions.Contains(extension))
+            {
+                throw new InvalidOperationException("پسوند فایل مجاز نیست.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(file.ContentType) &&
+                !AllowedContentTypes.Contains(file.ContentType))
+            {
+                throw new InvalidOperationException("نوع محتوای فایل مجاز نیست.");
+            }
         }
 
         public static void EnsureNotUnderLegalHold(DocumentArchiveItem item)

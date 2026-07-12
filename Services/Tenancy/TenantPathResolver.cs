@@ -37,7 +37,16 @@ public sealed class TenantPathResolver : ITenantPathResolver
 
     public string MapRelativeToPhysical(string webRootPath, string relativePath)
     {
-        return Path.Combine(webRootPath, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        var resolvedWebRoot = Path.GetFullPath(webRootPath);
+        var combinedPath = Path.Combine(resolvedWebRoot, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        var fullPath = Path.GetFullPath(combinedPath);
+
+        if (!fullPath.StartsWith(resolvedWebRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Path traversal detected.");
+        }
+
+        return fullPath;
     }
 
     private string GetTenantStorageRoot()

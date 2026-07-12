@@ -410,6 +410,49 @@ public sealed class WorkInboxController : Controller
             return NotFound();
         }
 
+        var isSecurityAdmin = await _authorizationFacade.IsSecurityAdminAsync();
+        var hasStepAccess = false;
+        if (!isSecurityAdmin)
+        {
+            if (string.Equals(instance.StartedByUserId, userId, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(instance.CurrentAssigneeUserId, userId, StringComparison.OrdinalIgnoreCase))
+            {
+                hasStepAccess = true;
+            }
+            else
+            {
+                var steps = await _context.WorkflowSteps
+                    .AsNoTracking()
+                    .Where(s => s.WorkflowInstanceId == instance.Id)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var step in steps)
+                {
+                    if (await CanAccessWorkflowStepAsync(step, userId, cancellationToken))
+                    {
+                        hasStepAccess = true;
+                        break;
+                    }
+                }
+
+                if (!hasStepAccess)
+                {
+                    hasStepAccess = await _context.WorkflowDecisions
+                        .AsNoTracking()
+                        .AnyAsync(d => d.WorkflowInstanceId == instance.Id && d.DecidedByUserId == userId, cancellationToken);
+                }
+            }
+        }
+        else
+        {
+            hasStepAccess = true;
+        }
+
+        if (!hasStepAccess)
+        {
+            return Forbid();
+        }
+
         var physicalPath = _tenantPathResolver != null
             ? _tenantPathResolver.MapRelativeToPhysical(Path.Combine(_environment.ContentRootPath, "App_Data"), attachment.FilePath)
             : Path.Combine(_environment.ContentRootPath, "App_Data", attachment.FilePath.TrimStart('/'));

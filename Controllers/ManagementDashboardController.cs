@@ -13,6 +13,8 @@ using OfficeAutomation.Filters;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services;
 using OfficeAutomation.Services.Security;
+using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
 
 namespace OfficeAutomation.Controllers
 {
@@ -26,6 +28,7 @@ namespace OfficeAutomation.Controllers
         private readonly ILogger<ManagementDashboardController> _logger;
         private readonly IWebHostEnvironment _environment;
         private readonly AiSqlSafetyService _sqlSafetyService;
+        private readonly IConfiguration _configuration;
 
         public ManagementDashboardController(
             AiService aiService,
@@ -33,7 +36,8 @@ namespace OfficeAutomation.Controllers
             IDataProtectionProvider dataProtectionProvider,
             ILogger<ManagementDashboardController> logger,
             IWebHostEnvironment environment,
-            AiSqlSafetyService sqlSafetyService)
+            AiSqlSafetyService sqlSafetyService,
+            IConfiguration configuration)
         {
             _aiService = aiService;
             _context = context;
@@ -41,6 +45,7 @@ namespace OfficeAutomation.Controllers
             _logger = logger;
             _environment = environment;
             _sqlSafetyService = sqlSafetyService;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -83,10 +88,12 @@ namespace OfficeAutomation.Controllers
                 return BadRequest(new { success = false, message = "اطلاعات اتصال کامل نیست." });
             }
 
-            if (!IsSafeHost(request.Host))
+            var host = request.Host;
+            if (!TryResolveAndValidateHost(ref host))
             {
-                return BadRequest(new { success = false, message = "اتصال به این آدرس مجاز نیست." });
+                return BadRequest(new { success = false, message = "اتصال به این آدرس مجاز نیست یا آدرس نامعتبر است." });
             }
+            request.Host = host;
 
             var provider = NormalizeProvider(request.Provider);
             var displayName = string.IsNullOrWhiteSpace(request.Name)
@@ -222,10 +229,12 @@ namespace OfficeAutomation.Controllers
                 return BadRequest(new { success = false, message = "اطلاعات اتصال کامل نیست." });
             }
 
-            if (!IsSafeHost(request.Host))
+            var host = request.Host;
+            if (!TryResolveAndValidateHost(ref host))
             {
-                return BadRequest(new { success = false, message = "اتصال به این آدرس مجاز نیست." });
+                return BadRequest(new { success = false, message = "اتصال به این آدرس مجاز نیست یا آدرس نامعتبر است." });
             }
+            request.Host = host;
 
             try
             {
@@ -343,14 +352,26 @@ namespace OfficeAutomation.Controllers
                     return null;
                 }
 
+                var host = connectionRequest.Host;
+                if (!TryResolveAndValidateHost(ref host))
+                {
+                    return null;
+                }
+                connectionRequest.Host = host;
+
                 var schema = await ReadSqlServerSchemaAsync(connectionRequest, cancellationToken);
                 if (string.IsNullOrWhiteSpace(schema))
                 {
                     return null;
                 }
 
+                var allowedTables = schema.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => line.Split(':')[0].Trim())
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList();
+
                 var sqlPlan = await CreateSqlPlanAsync(request.Prompt, schema, chartType, cancellationToken);
-                if (sqlPlan == null || !_sqlSafetyService.IsReadOnlySelect(sqlPlan.Sql))
+                if (sqlPlan == null || !_sqlSafetyService.IsSafeQuery(sqlPlan.Sql, allowedTables))
                 {
                     _logger.LogWarning("AI generated invalid or unsafe SQL for management dashboard.");
                     return null;
@@ -503,8 +524,10 @@ namespace OfficeAutomation.Controllers
                 - If dates are stored as integers like 14040115, filter BETWEEN 14040101 AND 14041230 and group by SUBSTRING(CONVERT(varchar(8), dateColumn), 5, 2).
                 - If dates are Gregorian datetime, map Persian year 1404 approximately to 2025-03-21 through 2026-03-20.
                 - Do not use INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, MERGE, TRUNCATE, EXEC, stored procedures, temp tables, variables, dynamic SQL, comments, or semicolons.
+                - Every SELECT query must use TOP (N) where N is at most 500. For example: SELECT TOP (500) ...
                 - Use bracketed identifiers.
-                - If a cost center, workshop, employer, project, department, party, vendor or location is requested, search relevant text columns with LIKE N'%...%'.
+                - Ensure the generated SQL is standard and does not rely on any proprietary database features other than SQL Server.
+                - Search relevant text columns for cost center, workshop, project, and department names.
 
                 User request:
                 {userPrompt}
@@ -533,6 +556,9 @@ namespace OfficeAutomation.Controllers
             string sql,
             CancellationToken cancellationToken)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous";
+            _logger.LogInformation("AI Query Audit Execution: User={UserId}, Time={Time}, SQL={Sql}", userId, DateTimeOffset.UtcNow, sql);
+
             await using var connection = new SqlConnection(BuildSqlServerConnectionString(request));
             await connection.OpenAsync(cancellationToken);
 
@@ -541,17 +567,26 @@ namespace OfficeAutomation.Controllers
                 CommandTimeout = 5
             };
 
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            var result = new List<ReportDataPoint>();
-
-            while (await reader.ReadAsync(cancellationToken) && result.Count < 100)
+            try
             {
-                var label = reader.IsDBNull(0) ? "نامشخص" : Convert.ToString(reader.GetValue(0)) ?? "نامشخص";
-                var value = reader.IsDBNull(1) ? 0 : Convert.ToDecimal(reader.GetValue(1));
-                result.Add(new ReportDataPoint(label, value));
-            }
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                var result = new List<ReportDataPoint>();
 
-            return result;
+                while (await reader.ReadAsync(cancellationToken) && result.Count < 100)
+                {
+                    var label = reader.IsDBNull(0) ? "نامشخص" : Convert.ToString(reader.GetValue(0)) ?? "نامشخص";
+                    var value = reader.IsDBNull(1) ? 0 : Convert.ToDecimal(reader.GetValue(1));
+                    result.Add(new ReportDataPoint(label, value));
+                }
+
+                _logger.LogInformation("AI Query Audit Execution Success: User={UserId}, RowsCount={Count}", userId, result.Count);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AI Query Audit Execution Failed: User={UserId}, SQL={Sql}", userId, sql);
+                throw;
+            }
         }
 
         private static async Task TestSqlServerAsync(DatabaseConnectionRequest request, CancellationToken cancellationToken)
@@ -830,33 +865,118 @@ namespace OfficeAutomation.Controllers
             return "گزارش مدیریتی هوشمند";
         }
 
-        private static bool IsSafeHost(string host)
+        private static bool IsPrivateOrLoopback(System.Net.IPAddress ip)
+        {
+            if (System.Net.IPAddress.IsLoopback(ip)) return true;
+
+            if (ip.IsIPv4MappedToIPv6)
+            {
+                ip = ip.MapToIPv4();
+            }
+
+            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                var bytes = ip.GetAddressBytes();
+                if (bytes[0] == 10) return true;
+                if (bytes[0] == 127) return true;
+                if (bytes[0] == 169 && bytes[1] == 254) return true;
+                if (bytes[0] == 172 && (bytes[1] >= 16 && bytes[1] <= 31)) return true;
+                if (bytes[0] == 192 && bytes[1] == 168) return true;
+            }
+            else if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+            {
+                var bytes = ip.GetAddressBytes();
+                // fe80::/10 link local
+                if ((bytes[0] & 0xC0) == 0x80 && bytes[0] == 0xFE) return true;
+                // fc00::/7 unique local
+                if ((bytes[0] & 0xFE) == 0xFC) return true;
+            }
+            return false;
+        }
+
+        private bool TryResolveAndValidateHost(ref string host)
         {
             if (string.IsNullOrWhiteSpace(host)) return false;
             var trimmed = host.Trim().ToLowerInvariant();
-            if (trimmed == "localhost" || trimmed == "127.0.0.1" || trimmed == "[::1]" || trimmed == "::1")
+
+            // Check configuration allow-list if configured
+            var allowedHostsConfig = _configuration?.GetValue<string>("ManagementDashboard:AllowedHosts");
+            if (!string.IsNullOrWhiteSpace(allowedHostsConfig))
             {
-                return false;
-            }
-            try
-            {
-                if (System.Net.IPAddress.TryParse(trimmed, out var ip))
+                var allowedHosts = allowedHostsConfig.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(h => h.Trim().ToLowerInvariant())
+                    .ToHashSet();
+
+                if (!allowedHosts.Contains(trimmed))
                 {
-                    if (System.Net.IPAddress.IsLoopback(ip)) return false;
-                }
-                else
-                {
-                    var ipAddresses = System.Net.Dns.GetHostAddresses(trimmed);
-                    foreach (var addr in ipAddresses)
+                    try
                     {
-                        if (System.Net.IPAddress.IsLoopback(addr)) return false;
+                        var ipAddresses = System.Net.Dns.GetHostAddresses(trimmed);
+                        var allowedIps = allowedHosts
+                            .Select(h => System.Net.IPAddress.TryParse(h, out var ip) ? ip : null)
+                            .Where(ip => ip != null)
+                            .ToHashSet();
+
+                        bool matched = false;
+                        foreach (var addr in ipAddresses)
+                        {
+                            if (allowedIps.Contains(addr))
+                            {
+                                matched = true;
+                                host = addr.ToString();
+                                break;
+                            }
+                        }
+                        if (!matched) return false;
+                    }
+                    catch
+                    {
+                        return false;
                     }
                 }
             }
+
+            // Check if it's a direct IP
+            if (System.Net.IPAddress.TryParse(trimmed, out var ip))
+            {
+                if (IsPrivateOrLoopback(ip)) return false;
+                host = ip.ToString();
+                return true;
+            }
+
+            // Block common loopback strings
+            if (trimmed == "localhost" || trimmed == "localhost.localdomain")
+            {
+                return false;
+            }
+
+            try
+            {
+                // Fail-closed: resolve hostname
+                var ipAddresses = System.Net.Dns.GetHostAddresses(trimmed);
+                if (ipAddresses == null || ipAddresses.Length == 0)
+                {
+                    return false;
+                }
+
+                // Check all resolved IPs
+                foreach (var addr in ipAddresses)
+                {
+                    if (IsPrivateOrLoopback(addr))
+                    {
+                        return false;
+                    }
+                }
+
+                // Use the first resolved IP to prevent DNS rebinding
+                host = ipAddresses[0].ToString();
+                return true;
+            }
             catch
             {
+                // Fail-closed
+                return false;
             }
-            return true;
         }
     }
 }
