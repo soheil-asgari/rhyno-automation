@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,6 +7,7 @@ using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Security;
+using OfficeAutomation.Services;
 
 namespace OfficeAutomation.Controllers;
 
@@ -38,6 +39,7 @@ public class SettingsController : Controller
     private readonly ILogger<SettingsController> _logger;
     private readonly IAuthorizationService _authorizationService;
     private readonly Services.Tenancy.ITenantSettingsService _tenantSettingsService;
+    private readonly IUserContextService _userContextService;
 
     public SettingsController(
         PlatformDbContext context,
@@ -46,7 +48,8 @@ public class SettingsController : Controller
         IWebHostEnvironment environment,
         ILogger<SettingsController> logger,
         IAuthorizationService authorizationService,
-        Services.Tenancy.ITenantSettingsService tenantSettingsService)
+        Services.Tenancy.ITenantSettingsService tenantSettingsService,
+        IUserContextService userContextService)
     {
         _context = context;
             _identityContext = identityContext;
@@ -55,6 +58,7 @@ public class SettingsController : Controller
         _logger = logger;
         _authorizationService = authorizationService;
         _tenantSettingsService = tenantSettingsService;
+        _userContextService = userContextService;
     }
 
     [HttpGet]
@@ -258,6 +262,7 @@ public class SettingsController : Controller
         preference.UpdatedAtUtc = DateTime.UtcNow;
 
         await _identityContext.SaveChangesAsync(cancellationToken);
+        _userContextService.InvalidateCache(user.Id);
 
         _logger.LogInformation(
             "UI preferences updated by {UserId}. Theme={Theme}, SidebarCollapsed={SidebarCollapsed}",

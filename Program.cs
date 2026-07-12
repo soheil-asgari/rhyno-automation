@@ -121,6 +121,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddSingleton<AiService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IAuditContextProvider, HttpAuditContextProvider>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddScoped<AuditRetentionService>();

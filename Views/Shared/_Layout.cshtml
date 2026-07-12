@@ -4,65 +4,31 @@
 @using OfficeAutomation.Models
 @using OfficeAutomation.Services
 @using OfficeAutomation.Services.Security
-@inject OfficeAutomation.Modules.Identity.Infrastructure.Persistence.IdentityDbContext DbContext
-@inject IAuthorizationFacade AuthorizationFacade
+@inject IUserContextService UserContextService
 @inject IAntiforgery Antiforgery
-@inject NotificationService NotificationService
 @{
     var antiforgeryTokens = Antiforgery.GetAndStoreTokens(Context);
-    var displayName = User?.FindFirst("name")?.Value ?? User?.FindFirst(ClaimTypes.Name)?.Value ?? User?.Identity?.Name ?? "کاربر";
-    var userHasSecurityAccess = await AuthorizationFacade.IsSecurityAdminAsync();
-    var userRoleLabel = userHasSecurityAccess ? "مدیر سیستم" : "کاربر سیستم";
-    if (User?.Identity?.IsAuthenticated == true && !userHasSecurityAccess)
-    {
-        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-        if (!string.IsNullOrWhiteSpace(roleClaim)) userRoleLabel = roleClaim;
-    }
+    
+    var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+    var userContext = !string.IsNullOrWhiteSpace(userId) && User != null
+        ? await UserContextService.GetUserContextAsync(userId, User)
+        : new UserContextModel();
 
-    var themePreference = "System";
-    if (User?.Identity?.IsAuthenticated == true)
-    {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!string.IsNullOrWhiteSpace(currentUserId))
-        {
-            var savedTheme = await DbContext.UserPreferences.AsNoTracking().Where(p => p.UserId == currentUserId).Select(p => p.ThemePreference).FirstOrDefaultAsync();
-            if (string.Equals(savedTheme, "Light", StringComparison.OrdinalIgnoreCase)) themePreference = "Light";
-            else if (string.Equals(savedTheme, "Dark", StringComparison.OrdinalIgnoreCase)) themePreference = "Dark";
-        }
-    }
-
+    var displayName = userContext.DisplayName;
+    var userRoleLabel = userContext.UserRoleLabel;
+    var themePreference = userContext.ThemePreference;
     var rootThemeClass = string.Equals(themePreference, "Dark", StringComparison.OrdinalIgnoreCase) ? "theme-dark dark" : "theme-light";
+    
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
-    var userCanAccessFinance = userHasSecurityAccess;
-    var userCanAccessWarehouse = userHasSecurityAccess;
-    var userCanAccessHumanCapital = userHasSecurityAccess;
-    var userCanAccessSystemSettings = userHasSecurityAccess;
-    var userCanAccessProcessAnalytics = userHasSecurityAccess;
+    
+    var userCanAccessFinance = userContext.CanAccessFinance;
+    var userCanAccessWarehouse = userContext.CanAccessWarehouse;
+    var userCanAccessHumanCapital = userContext.CanAccessHumanCapital;
+    var userCanAccessSystemSettings = userContext.CanAccessSystemSettings;
+    var userCanAccessProcessAnalytics = userContext.CanAccessProcessAnalytics;
 
-    if (User?.Identity?.IsAuthenticated == true && !userHasSecurityAccess)
-    {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!string.IsNullOrWhiteSpace(currentUserId))
-        {
-            var permission = await DbContext.Users.AsNoTracking().Where(u => u.Id == currentUserId).Select(u => new { u.CanAccessFinance, u.CanAccessWarehouse, u.CanAccessHumanCapital, u.CanAccessSystemSettings }).FirstOrDefaultAsync();
-            if (permission != null)
-            {
-                userCanAccessFinance = permission.CanAccessFinance;
-                userCanAccessWarehouse = permission.CanAccessWarehouse;
-                userCanAccessHumanCapital = permission.CanAccessHumanCapital;
-                userCanAccessSystemSettings = permission.CanAccessSystemSettings;
-            }
-        }
-        userCanAccessProcessAnalytics = await AuthorizationFacade.HasPermissionAsync("تحلیل.مشاهده");
-    }
-
-    var headerNotifications = new List<HeaderNotificationVM>();
-    if (User?.Identity?.IsAuthenticated == true)
-    {
-        var notificationUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!string.IsNullOrWhiteSpace(notificationUserId)) headerNotifications = (await NotificationService.GetHeaderNotificationsAsync(notificationUserId)).ToList();
-    }
+    var headerNotifications = userContext.Notifications;
     var headerNotificationCount = headerNotifications.Count;
 
     string NavClass(string controller, string? action = null)
@@ -229,7 +195,8 @@
                             <div id="collapseManagement" class="accordion-collapse collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports" || currentController == "ManagementDashboard") ? "show" : "")"><div class="mt-1 space-y-1">
                                 @if (userCanAccessSystemSettings)
                                 {
-                                    <a class='@NavClass("ManagementDashboard")' data-nav-id="management-dashboard" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500 me-2"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
+                                    <a class='@NavClass("ManagementDashboard", "Overview")' data-nav-id="management-overview" asp-controller="ManagementDashboard" asp-action="Overview"><i class="bi bi-grid-1x2 w-4 text-emerald-500 me-2"></i><span class="link-text truncate">داشبورد مدیریتی</span></a>
+                                    <a class='@NavClass("ManagementDashboard", "Index")' data-nav-id="management-dashboard" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500 me-2"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
                                     <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400 me-2"></i><span class="link-text truncate">تنظیمات</span></a>
                                     <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500 me-2"></i><span class="link-text truncate">امنیت</span></a>
                                     <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500 me-2"></i><span class="link-text truncate">ممیزی</span></a>

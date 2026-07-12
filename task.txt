@@ -1,207 +1,103 @@
-لیست کامل تسک‌ها — Rhyno Automation
+بخش ۲: بک‌اند
 
-این لیست بر اساس بررسی کامل کد (بک‌اند + فرانت‌اند + امنیت + بهداشت ریپو) نوشته شده. اولویت‌بندی شده: از P0 (بلاکر جدی، همین امروز) تا P4 (نظافت نهایی قبل از فروش).
+BE-1. شکستن God Classes (بالاترین اولویت بک‌اند)
 
-P0 — امنیتی، بلاکر واقعی (همین الان)
 
-1. رفع کامل SSRF در ManagementDashboardController
+ Controllers/WarehouseController.cs (۲۸۵۳ خط) → تجزیه به:
 
+WarehouseInventoryController (موجودی)
+WaybillController (اگه از قبل نیست، ادغام یا جدا)
+WarehouseReportsController
+منطق کسب‌وکار مشترک بره تو Modules/Inventory/Application/*Service.cs
 
- IsSafeHost باید علاوه بر loopback، رنج‌های private رو هم بلاک کنه: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 (شامل متادیتای کلود 169.254.169.254), و معادل‌های IPv6 (fc00::/7, fe80::/10).
- رفتار روی exception باید fail-closed بشه (اگر DNS resolve خطا داد یا IP نامعتبر بود، return false)، نه fail-open مثل الان.
- برای جلوگیری از DNS rebinding: IP resolve‌شده رو cache کن و مستقیم با همون IP به SQL Server وصل شو (نه با hostname خام)، یا حداقل موقع باز کردن connection دوباره IP رو resolve و چک کن.
- بهتره یه allow-list صریح از هاست‌های مجاز (تنظیم‌شده توسط ادمین) اضافه بشه، نه فقط blocklist.
 
 
-2. بازطراحی AiSqlSafetyService (نه فقط گسترش‌دادن blocklist)
+ Controllers/FinancialController.cs (۱۸۹۷ خط، ۱۴ dependency) → تجزیه به InvoiceController, LedgerController, TaxReportController + application services جدا برای هر domain.
+ Services/WorkflowService.cs (۱۸۷۶ خط) → جدا کردن به:
 
+WorkflowRoutingService
+WorkflowAttachmentService
+WorkflowDecisionService
+WorkflowSlaService
+همه با اینترفیس مشخص و DI واقعی (حذف new DecisionEngine() و امثالش).
 
- رویکرد فعلی (regex blocklist) رو با یه معماری امن‌تر جایگزین کن:
 
-یا از EF/Dapper با پارامترسازی واقعی و allow-list جدول/ستون استفاده کن (AI فقط اجازه داره از یه لیست از پیش‌تعریف‌شده‌ی جدول/ستون کوئری بسازه).
-یا کوئری‌های AI رو به یه sandbox/read-replica با پرمیشن read-only در سطح دیتابیس (نه فقط اپلیکیشن) محدود کن — یعنی یوزر SQL که این کانکشن باهاش باز می‌شه، فقط GRANT SELECT رو جدول‌های مجاز داشته باشه، نه db_owner.
 
+ هدف عددی: هیچ کنترلر/سرویسی بیشتر از ~۴۰۰-۵۰۰ خط نباشه.
 
 
- محدودیت TOP/row limit روی هر کوئری AI اعمال کن تا از استخراج bulk جلوگیری بشه.
- لاگ کامل هر کوئری AI-generated (کاربر، زمان، متن کوئری، نتیجه) برای audit.
+BE-2. یکسان‌سازی معماری Modules/ در برابر Controllers/Services قدیمی
 
 
-3. رفع IDOR در WorkInboxController.DownloadAttachment
+ یه سند کوتاه (docs/architecture-migration.md) بساز که مشخص کنه کدوم domain ها (Finance, Workflow, Inventory, Platform, Identity, Office) کامل به Modules/ مهاجرت کردن و کدوم نه.
+ برای هر domain که duplication منطق داره (مثل Finance که هم Controllers/FinancialController و هم Modules/Finance/Application/FinanceLedgerService منطق مشابه دارن)، یکی رو source of truth کن و اون یکی رو یا حذف کن یا صرفاً wrapper کن.
 
 
- قبل از return کردن فایل، چک کن کاربر جاری واقعاً participant/assignee همون workflow instance هست یا پرمیشن لازم رو داره (از همون _authorizationFacade که بقیه‌ی اکشن‌های این کنترلر استفاده می‌کنن).
- همین الگو رو روی همه‌ی endpointهای دیگه‌ی دانلود/نمایش فایل تو کل پروژه چک کن (DocumentArchiveController و هرجای دیگه که از MapRelativeToPhysical استفاده می‌کنه) — همین باگ ممکنه جای دیگه هم تکرار شده باشه.
+BE-3. رفع Duplicate DI Registrations
 
 
-4. رفع Path Traversal در TenantPathResolver.MapRelativeToPhysical
+ Program.cs رو کامل مرور کن و سرویس‌های دوبار-register-شده (tenant، workflow، outbox، notification) رو یکی کن.
+ یه تست بنویس که با reflection روی IServiceCollection قبل از Build() چک کنه هیچ سرویس کلیدی بیشتر از یه بار register نشده.
 
 
- بعد از Path.Combine، از Path.GetFullPath استفاده کن و مطمئن شو مسیر نهایی داخل root مجاز مونده (StartsWith روی مسیر normalize‌شده). اگه بیرون زد، exception بنداز یا null برگردون.
+BE-4. تقویت TenantMigrationHostedService
 
 
-5. Audit کامل روی همه‌ی آپلودهای فایل تو پروژه
+ به‌جای _ = Task.Run(...) خام، نتیجه‌ی Task رو نگه دار و در StopAsync منتظر تکمیل/cancel صحیح بمون.
+ یه health-check endpoint (/health/tenant-migrations) اضافه کن که وضعیت per-tenant (pending/running/failed/completed) رو نشون بده.
 
 
- یه گزارش بده از همه‌ی جاهایی که فایل آپلود می‌شه (Workflow، DocumentArchive، Letters، هر چیز دیگه) و مطمئن شو همه‌شون:
+BE-5. Swagger / OpenAPI برای API عمومی — قابلیت جدید
 
-خارج از wwwroot ذخیره می‌شن
-allow-list واقعی extension/MIME دارن (نه فقط چک client-side ContentType)
-سایز فایل محدود شده
-نام فایل sanitize شده (بدون path traversal)
 
+ Swashbuckle.AspNetCore اضافه کن، روی همه‌ی endpointهای API (AuthApi, WorkInboxApi, و هر کدوم دیگه) annotation بذار.
+ یه صفحه‌ی مستندسازی (/api-docs یا /swagger) که فقط برای نقش ادمین/دولوپر در دسترسه (پشت authorization، نه public).
 
 
+BE-6. Rate Limiting
 
 
+ از Microsoft.AspNetCore.RateLimiting (built-in .NET) استفاده کن:
 
-P1 — معماری بک‌اند
+Login endpoint: محدودیت سخت‌گیرانه (مثلاً ۵ تلاش در دقیقه به ازای IP) برای جلوگیری از brute-force.
+AI Assistant / ManagementDashboard AI endpoints: محدودیت per-user (مثلاً ۲۰ درخواست در ساعت) چون هزینه‌ی API داره.
+سایر endpointهای عمومی: یه محدودیت پایه‌ی معقول.
 
-6. شکستن God Classes
 
 
- Controllers/WarehouseController.cs (۲۸۵۳ خط) → به چند کنترلر کوچک‌تر بر اساس domain (مثلاً InventoryController, WaybillController اگر از قبل نیست, StockCountController...) + application service layer برای منطق کسب‌وکار.
- Controllers/FinancialController.cs (۱۸۹۷ خط، ۱۴ dependency) → تجزیه به application services جدا برای Invoice/Ledger/Reports/TaxSeasonal.
- Services/WorkflowService.cs (۱۸۷۶ خط) → جدا کردن routing، persistence، attachment I/O، incident logging، decision table، signature، timeline، sub-case، SLA به سرویس‌های مجزا با اینترفیس مشخص. حذف new DecisionEngine() / new WorkflowDefinitionSelector() داخل سرویس و جایگزینی با DI واقعی.
 
 
-7. یکسان‌سازی معماری Modules/ در برابر Controllers قدیمی
+BE-7. اجباری‌کردن 2FA برای نقش‌های حساس
 
 
- تصمیم بگیر: یا کامل به معماری Modules/{Domain,Application,Infrastructure} مهاجرت کن و کنترلرهای قدیمی رو روی همون لایه‌ها بازنویسی کن، یا اگه فعلاً وقت نداری، حداقل مستند کن کدوم ماژول‌ها migrate شدن و کدوم نه، تا duplication منطق (مثل چیزی که بین FinancialController و Modules/Finance/Application/FinanceLedgerService هست) بیشتر نشه.
+ بررسی کن RequiresTwoFactor تو Login.cshtml.cs فعلاً enforced هست یا فقط زیرساخت خالیه.
+ یه پالیسی اضافه کن: کاربرهایی با نقش SecurityAdmin, FinanceManager, یا هر نقش حساس دیگه، اگه 2FA فعال نکرده باشن، بعد از لاگین به یه صفحه‌ی "فعال‌سازی اجباری 2FA" هدایت بشن.
 
 
-8. رفع Duplicate DI Registrations در Program.cs
+BE-8. Real-time Notifications با SignalR — قابلیت جدید
 
 
- Program.cs رو کامل مرور کن، سرویس‌های tenant/workflow/outbox/notification که دوبار register شدن رو پیدا و یکی کن.
- بعد از cleanup، یه تست بنویس که چک کنه هر سرویس کلیدی دقیقاً یه بار register شده (می‌تونی با reflection روی IServiceCollection قبل از build چک کنی).
+ یه NotificationHub : Hub اضافه کن.
+ NotificationService موجود رو طوری تغییر بده که علاوه بر ذخیره تو دیتابیس، از طریق SignalR به کلاینت‌های متصل push کنه (بج اعلان بدون نیاز به رفرش صفحه).
+ اول روی WorkInbox (کارهای جدید) و Notifications پیاده‌سازی کن، بعد بقیه.
 
 
-9. تقویت TenantMigrationHostedService
+BE-9. Webhook / Integration Events — قابلیت جدید (اگه هدف یکپارچه‌سازیه)
 
 
- Task.Run خام رو با یه الگوی قابل ردیابی جایگزین کن: نتیجه‌ی Task رو نگه‌دار (نه _ =)، و StopAsync رو طوری پیاده‌سازی کن که منتظر تکمیل یا cancel صحیح migration در حال اجرا بمونه.
- وضعیت migration (in-progress/failed/completed per tenant) رو تو یه health-check یا endpoint قابل‌مشاهده expose کن تا ops بتونه ببینه.
+ یه جدول WebhookSubscriptions (URL، رویداد، tenant، secret برای HMAC signing) اضافه کن.
+ رویدادهای کلیدی (فاکتور approve شد، workflow تمام شد) رو از طریق outbox pattern موجود (که ظاهراً از قبل هست) به این webhookها هم publish کن.
 
 
-10. بازبینی کلی Authorization در همه‌ی کنترلرها
+BE-10. افزایش پوشش تست
 
 
- یه چک‌لیست بساز از همه‌ی اکشن‌هایی که دیتای مرتبط با یه entity خاص (invoice, workflow instance, attachment, letter, ...) رو برمی‌گردونن، و مطمئن شو همه‌شون علاوه بر [Authorize] سطح کنترلر، یه چک ownership/permission سطح object هم دارن (پترنی که تو IDOR بالا کشف شد ممکنه جای دیگه هم باشه).
+ تست‌های concurrency برای race condition fix شده‌ی WorkflowService (چند thread هم‌زمان درخواست SequenceNumber بدن، مطمئن شو duplicate نمی‌شه).
+ تست integration برای authorization checks جدید (DownloadAttachment IDOR fix، IsSafeHost SSRF fix، AiSqlSafetyService.IsSafeQuery) — این‌ها حیاتی‌ترین بخش‌های امنیتی پروژه‌ان و نباید بدون تست regression بمونن.
+ هدف: پوشش حداقل ۴۰٪ روی Services/ و Modules/*/Application/.
 
 
+BE-11. Audit Log قابل Export
 
-P2 — کیفیت کد و تست
 
-11. افزایش پوشش تست
-
-
- حداقل برای مسیرهای پول‌ساز/حساس این‌ها رو تست بنویس: Financial ledger posting، Workflow transition + race condition جدید (تست concurrency واقعی با چند thread هم‌زمان)، Authorization/IDOR روی DownloadAttachment، AiSqlSafetyService (تست‌های بیشتر برای bypassهای شناخته‌شده‌ی blocklist).
- یه هدف عددی بذار (مثلاً حداقل پوشش ۴۰-۵۰٪ روی Services/Controllers مالی و workflow) و در CI enforce کن.
-
-
-12. اضافه‌کردن CI Gate واقعی
-
-
- .github/workflows/ci.yml رو بررسی کن؛ اگه فقط build می‌کنه، تست‌ها و یه static analysis امنیتی (مثلاً Security Code Scan یا Roslyn analyzers برای .NET) رو هم اضافه کن تا این نوع باگ‌ها (SSRF، IDOR) قبل از merge پیدا بشن.
-
-
-13. حذف dependency و کد بی‌ربط
-
-
- یه پاس دیگه رو package.json/*.csproj بزن، هر dependency استفاده‌نشده رو حذف کن.
-
-
-
-P3 — فرانت‌اند و ظاهر (برای حرفه‌ای‌شدن قبل از دمو/فروش)
-
-14. یکسان‌سازی فریمورک CSS — این یکی برای دمو حیاتیه
-
-
- تصمیم قطعی بگیر: یا Tailwind یا Bootstrap، نه هر دو. با توجه به این‌که پروژه در حال مهاجرت به Tailwind هست (طبق کامیت‌های from mvc to tailwind)، پیشنهاد می‌کنم Bootstrap کامل حذف بشه.
- همه‌ی ویوهایی که کلاس‌های btn btn-* بوت‌استرپی و کلاس‌های Tailwind رو با هم دارن (مثل Views/Financial/EditInvoice.cshtml, SeasonalTax.cshtml, SeasonalTaxReport.cshtml) رو پیدا کن و کامل به Tailwind تبدیل کن.
- wwwroot/lib/bootstrap و wwwroot/lib/bootstrap-icons رو بعد از این کار حذف کن (اگه آیکون‌ها لازمه، از یه پکیج آیکون سبک‌تر سازگار با Tailwind استفاده کن).
-
-
-15. یکپارچه‌سازی فایل‌های CSS
-
-
- ۴۲ فایل CSS فعلی رو ادغام کن. مشخصاً:
-
-main.css, main-legacy.css, main-foundation.css → یکی کن، legacy رو حذف کن.
-visual-refresh.css, visual-refresh-core.css, visual-refresh-legacy.css → همین‌طور؛ فقط آخرین نسخه رو نگه دار.
-بقیه‌ی فایل‌های per-page (work-inbox.css, letters-index.css, ...) رو با Tailwind utility classes جایگزین کن جایی که ممکنه، یا حداقل zaman یه design token واحد (رنگ، فاصله، تایپوگرافی) از design-system.css استفاده کنن نه مقادیر hardcoded پراکنده.
-
-
-
- یه Design System document کوتاه بساز (رنگ‌ها، فونت‌ها، spacing scale، کامپوننت‌های پایه مثل دکمه/کارت/بج) تا فرانت از این به بعد یکدست بمونه.
-
-
-16. حذف کامل jQuery legacy جایی که امکانشه
-
-
- بررسی کن کدوم فیچرها هنوز به jQuery/DataTables وابسته‌ن (dataTables.bootstrap5.js، jquery-validation) و کجا می‌شه با vanilla JS یا یه کتابخونه‌ی سبک‌تر جایگزین کرد. اگه فعلاً حذف کامل ممکن نیست، حداقل مستند کن که این بخش‌ها "legacy، در حال migration" هستن تا دولوپر بعدی گیج نشه.
-
-
-17. یکدست‌سازی الگوی JS بین صفحات
-
-
- همه‌ی <script> اینلاین (۳۰ مورد) و style= اینلاین (۳۹ مورد) داخل .cshtmlها رو به فایل‌های خارجی منتقل کن (مثل الگوی درستی که برای letter.js, settings.js رعایت شده).
- یه الگوی واحد انتخاب کن: هر صفحه‌ی تعاملی یه فایل JS مخصوص خودش داشته باشه با namespace مشخص، نه اسکریپت‌های پراکنده‌ی این‌ورواون‌ور.
-
-
-18. یکسان‌سازی الگوی ذخیره‌سازی Saved Views
-
-
- WorkInbox رو مثل Leaves و Letters به sync سمت سرور تبدیل کن (نه فقط localStorage)، تا بین دستگاه/مرورگر قابل انتقال باشه.
-
-
-19. Accessibility و RTL Polish (برای ظاهر حرفه‌ای)
-
-
- چک کن همه‌ی فرم‌ها label مناسب دارن، کنتراست رنگ (مخصوصاً حالت dark mode که همه‌جا هست) استاندارد WCAG AA رو رعایت می‌کنه.
- چون محصول فارسی/RTL هست، مطمئن شو هیچ‌جا آیکون یا جهت‌نما (arrow, chevron) اشتباه از چپ‌به‌راست باقی نمونده (بعضی کامپوننت‌های Bootstrap/DataTables پیش‌فرض LTR هستن).
- یه پاس روی responsive/mobile بزن — با توجه به این‌که این یه ERP سازمانیه، حداقل روی تبلت باید قابل‌استفاده باشه.
-
-
-20. رفع باقی‌مانده‌ی احتمالی mojibake
-
-
- یه grep سراسری بزن برای الگوهای encoding خراب (کاراکترهای غیرمعمول فارسی، Ø, Ù که نشونه‌ی UTF-8 misencoding هستن) روی کل Views/ و Controllers/، نه فقط دو فایلی که تا الان فیکس شده.
-
-
-
-P4 — بهداشت ریپو (نظافت نهایی)
-
-21. حذف واقعی فایل‌های لاگ از تاریخچه‌ی گیت
-
-
- فقط اضافه‌کردن به .gitignore کافی نیست. این دستورها رو بزن (یا معادلش رو از Claude Code بخواه):
-
-
-  git rm --cached build.out build-phase5.out build-workflow-phase.out
-  git rm --cached login-test.out login-test.err startup.out startup.err
-  git rm --cached web-refactor.out web-refactor.err worker-refactor.out worker-refactor.err
-  git rm --cached task.txt
-
-
- اگه نگرانی این فایل‌ها دیتای حساس (connection string، نام کاربری داخلی) داشته باشن، تاریخچه‌ی گیت رو هم پاک کن (git filter-repo یا BFG)، نه فقط از HEAD حذف کنی.
-
-
-22. اضافه‌کردن LICENSE
-
-
- بسته به مدل فروش (SaaS بسته، on-prem با لایسنس تجاری، ...) یه فایل LICENSE مناسب انتخاب و اضافه کن. اگه محصول closed-source تجاریه، یه فایل کوتاه "All Rights Reserved" هم بهتر از هیچیه.
-
-
-23. تمیزکردن تاریخچه‌ی کامیت برای ارائه
-
-
- برای نسخه‌ای که به مشتری/سرمایه‌گذار نشون داده می‌شه، یه CHANGELOG.md بساز که روایت درست و حرفه‌ای از تکامل محصول بده (نسخه‌بندی semantic، خلاصه‌ی فیچرها)، چون تاریخچه‌ی خام کامیت‌ها (add some features) قابل ارائه نیست.
-
-
-24. یه README حرفه‌ای‌تر برای معرفی محصول
-
-
- README.md فعلی فقط setup instructions داره. برای اهداف بازاریابی/فروش، یه نسخه‌ی جدا (یا بخش اول همین فایل) بساز که فیچرهای اصلی، معماری کلی، و screenshotها رو نشون بده — این چیزیه که مشتری/سرمایه‌گذار اول می‌بینه.
+ بررسی کن AuditLogsController فعلاً امکان export به Excel/PDF داره یا نه؛ اگه نه، اضافه کن (با فیلتر بازه‌ی زمانی، کاربر، نوع عملیات) — برای حسابرسی خارجی enterprise لازمه.

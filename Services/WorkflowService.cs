@@ -1461,7 +1461,7 @@ public sealed class WorkflowService
 
         var hasActiveTransaction = _context!.Database.CurrentTransaction != null;
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? localTx = null;
-        if (!hasActiveTransaction)
+        if (!hasActiveTransaction && _context!.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
         {
             localTx = await _context!.Database.BeginTransactionAsync(cancellationToken);
         }

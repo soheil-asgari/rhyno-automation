@@ -15,6 +15,9 @@ using OfficeAutomation.Services;
 using OfficeAutomation.Services.Security;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
+using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 
 namespace OfficeAutomation.Controllers
 {
@@ -29,6 +32,9 @@ namespace OfficeAutomation.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly AiSqlSafetyService _sqlSafetyService;
         private readonly IConfiguration _configuration;
+        private readonly FinanceDbContext _financeContext;
+        private readonly InventoryDbContext _inventoryContext;
+        private readonly IWorkflowDbContext _workflowContext;
 
         public ManagementDashboardController(
             AiService aiService,
@@ -37,7 +43,10 @@ namespace OfficeAutomation.Controllers
             ILogger<ManagementDashboardController> logger,
             IWebHostEnvironment environment,
             AiSqlSafetyService sqlSafetyService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            FinanceDbContext financeContext,
+            InventoryDbContext inventoryContext,
+            IWorkflowDbContext workflowContext)
         {
             _aiService = aiService;
             _context = context;
@@ -46,12 +55,102 @@ namespace OfficeAutomation.Controllers
             _environment = environment;
             _sqlSafetyService = sqlSafetyService;
             _configuration = configuration;
+            _financeContext = financeContext;
+            _inventoryContext = inventoryContext;
+            _workflowContext = workflowContext;
         }
 
         [HttpGet]
         public IActionResult Index()
         {
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Overview(CancellationToken cancellationToken)
+        {
+            var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            var nextMonth = startOfMonth.AddMonths(1);
+
+            var totalSales = await _financeContext.Invoices
+                .AsNoTracking()
+                .Where(i => i.InvoiceType == "Sale" && i.InvoiceDate >= startOfMonth && i.InvoiceDate < nextMonth)
+                .SumAsync(i => (decimal?)i.Amount, cancellationToken) ?? 0m;
+
+            var totalPurchases = await _financeContext.Invoices
+                .AsNoTracking()
+                .Where(i => i.InvoiceType != "Sale" && i.InvoiceDate >= startOfMonth && i.InvoiceDate < nextMonth)
+                .SumAsync(i => (decimal?)i.Amount, cancellationToken) ?? 0m;
+
+            var arAccountIds = await _financeContext.SubsidiaryAccounts
+                .AsNoTracking()
+                .Where(sa => sa.SystemKey == "AR" && sa.IsActive)
+                .Select(sa => sa.Id)
+                .ToListAsync(cancellationToken);
+
+            var arBalance = await _financeContext.VoucherLines
+                .AsNoTracking()
+                .Where(vl => arAccountIds.Contains(vl.SubsidiaryAccountId))
+                .SumAsync(vl => (decimal?)(vl.DebitAmount - vl.CreditAmount), cancellationToken) ?? 0m;
+
+            var apAccountIds = await _financeContext.SubsidiaryAccounts
+                .AsNoTracking()
+                .Where(sa => sa.SystemKey == "AP" && sa.IsActive)
+                .Select(sa => sa.Id)
+                .ToListAsync(cancellationToken);
+
+            var apBalance = await _financeContext.VoucherLines
+                .AsNoTracking()
+                .Where(vl => apAccountIds.Contains(vl.SubsidiaryAccountId))
+                .SumAsync(vl => (decimal?)(vl.CreditAmount - vl.DebitAmount), cancellationToken) ?? 0m;
+
+            var belowReorderProducts = await _inventoryContext.Products
+                .AsNoTracking()
+                .Where(p => !p.IsDeleted && p.IsActive)
+                .Select(p => new
+                {
+                    p.Code,
+                    p.Name,
+                    p.Unit,
+                    p.ReorderPoint,
+                    CurrentStock = p.Stocks.Sum(s => s.CurrentQuantity)
+                })
+                .Where(p => p.CurrentStock < p.ReorderPoint)
+                .ToListAsync(cancellationToken);
+
+            var pendingWorkflowsByModule = await _workflowContext.WorkflowInstances
+                .AsNoTracking()
+                .Where(wi => wi.Status == WorkflowStatus.PendingApproval)
+                .GroupBy(wi => wi.DocumentType)
+                .Select(g => new
+                {
+                    Module = g.Key,
+                    Count = g.Count()
+                })
+                .ToListAsync(cancellationToken);
+
+            var model = new OverviewDashboardViewModel
+            {
+                TotalSales = totalSales,
+                TotalPurchases = totalPurchases,
+                AccountsReceivableBalance = arBalance,
+                AccountsPayableBalance = apBalance,
+                BelowReorderProducts = belowReorderProducts.Select(p => new BelowReorderProductDto
+                {
+                    Code = p.Code,
+                    Name = p.Name,
+                    Unit = p.Unit,
+                    ReorderPoint = p.ReorderPoint,
+                    CurrentStock = p.CurrentStock
+                }).ToList(),
+                PendingWorkflows = pendingWorkflowsByModule.Select(pw => new PendingWorkflowDto
+                {
+                    Module = pw.Module,
+                    Count = pw.Count
+                }).ToList()
+            };
+
+            return View(model);
         }
 
         [HttpGet]
