@@ -6,90 +6,82 @@
     var missingNationalIdCount = Model.Rows.Count(item => string.IsNullOrWhiteSpace(item.NationalId));
 }
 
-<div class="container-fluid py-3 seasonal-page" dir="rtl">
-    <div class="section-header mb-2.5">
+<div class="container-fluid py-3" dir="rtl">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2.5">
         <div>
-            <h1 class="section-title">گزارش معاملات فصلی</h1>
-            <p class="section-subtitle">کنترل مجموع، داده‌های ناقص و خروجی آماده برای ارسال</p>
+            <h1 class="text-base font-black text-slate-900 dark:text-white">گزارش معاملات فصلی</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">کنترل مجموع، داده‌های ناقص و خروجی آماده برای ارسال</p>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto mb-3" >
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto -body p-2" >
-            <form method="get" asp-action="SeasonalTax" class="row g-2 align-items-end">
-                <div class="col-6 col-md-2">
-                    <label class="form-label small mb-1">سال</label>
-                    <select name="year" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
-                        @foreach (var item in selectableYears)
-                        {
-                            <option value="@item" selected="@(item == Model.Year)">@item</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-6 col-md-2">
-                    <label class="form-label small mb-1">فصل</label>
-                    <select name="quarter" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
-                        <option value="1" selected="@(Model.Quarter == 1)">بهار</option>
-                        <option value="2" selected="@(Model.Quarter == 2)">تابستان</option>
-                        <option value="3" selected="@(Model.Quarter == 3)">پاییز</option>
-                        <option value="4" selected="@(Model.Quarter == 4)">زمستان</option>
-                    </select>
-                </div>
-                <div class="col-6 col-md-2">
-                    <button class="btn btn-sm btn-primary w-100">اعمال</button>
-                </div>
-                <div class="col-6 col-md-2">
-                    <a asp-action="ExportInvoicesExcel" asp-route-year="@Model.Year" asp-route-quarter="@Model.Quarter" class="btn btn-sm btn-outline-success w-100">خروجی اکسل</a>
-                </div>
-            </form>
-        </div>
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4 mb-3">
+        <form method="get" asp-action="SeasonalTax" class="row g-2 align-items-end">
+            <div class="col-6 col-md-2">
+                <label class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 block">سال</label>
+                <select name="year" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none text-slate-700 dark:text-slate-200">
+                    @foreach (var item in selectableYears)
+                    {
+                        <option value="@item" selected="@(item == Model.Year)">@item</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 block">فصل</label>
+                <select name="quarter" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none text-slate-700 dark:text-slate-200">
+                    <option value="1" selected="@(Model.Quarter == 1)">بهار</option>
+                    <option value="2" selected="@(Model.Quarter == 2)">تابستان</option>
+                    <option value="3" selected="@(Model.Quarter == 3)">پاییز</option>
+                    <option value="4" selected="@(Model.Quarter == 4)">زمستان</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <button type="submit" class="w-full px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-bold transition shadow-sm">اعمال</button>
+            </div>
+            <div class="col-6 col-md-2">
+                <a asp-action="ExportInvoicesExcel" asp-route-year="@Model.Year" asp-route-quarter="@Model.Quarter" class="inline-flex items-center justify-center w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-bold text-emerald-600 dark:text-emerald-400 no-underline transition shadow-sm">خروجی اکسل</a>
+            </div>
+        </form>
     </div>
 
-    <div class="row g-2 mb-3">
+    <div class="row g-3 mb-3">
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
-                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto -body" >
-                    <div class="text-muted small">جمع مبلغ</div>
-                    <div class="fs-5 fw-bold">@Model.TotalAmount.ToString("N0")</div>
-                </div>
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center">
+                <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع مبلغ</div>
+                <div class="text-sm font-black text-slate-800 dark:text-slate-100 mt-0.5 font-mono tabular-nums">@Model.TotalAmount.ToString("N0")</div>
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
-                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto -body" >
-                    <div class="text-muted small">جمع VAT</div>
-                    <div class="fs-5 fw-bold">@Model.TotalVat.ToString("N0")</div>
-                </div>
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center">
+                <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">جمع VAT</div>
+                <div class="text-sm font-black text-slate-800 dark:text-slate-100 mt-0.5 font-mono tabular-nums">@Model.TotalVat.ToString("N0")</div>
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
-                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto -body" >
-                    <div class="text-muted small">ردیفهای ناقص</div>
-                    <div class="fs-5 fw-bold @(missingNationalIdCount > 0 ? "text-warning" : "text-success")">@missingNationalIdCount</div>
-                </div>
+            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 text-center">
+                <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">ردیفهای ناقص</div>
+                <div class="text-sm font-black @(missingNationalIdCount > 0 ? "text-amber-600" : "text-emerald-600") mt-0.5 font-mono tabular-nums">@missingNationalIdCount</div>
             </div>
         </div>
     </div>
 
     @if (missingNationalIdCount > 0)
     {
-        <div class="alert alert-warning small mb-3">
+        <div class="alert alert-warning small mb-3 p-2.5 text-[11px] rounded-lg">
             تعدادی از ردیف‌ها شناسه ملی / اقتصادی ندارند. برای ارسال قابل‌دفاع، این داده‌ها باید تکمیل شوند.
         </div>
     }
 
-    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto " >
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 overflow-x-auto">
         <div class="table-responsive">
-            <table class="w-full text-xs text-right border-collapse"  >
-                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
+            <table class="w-full text-[11px] text-right border-collapse">
+                <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >نوع معامله</th>
-                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >نام طرف معامله</th>
-                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کد ملی / شناسه اقتصادی</th>
-                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >جمع جزء</th>
-                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >VAT</th>
-                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >جمع کل</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold">نوع معامله</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold">نام طرف معامله</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold">کد ملی / شناسه اقتصادی</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold text-left">جمع جزء</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold text-left">VAT</th>
+                        <th class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold text-left">جمع کل</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,23 +90,26 @@
                     @foreach (var row in Model.Rows)
                     {
                         var grandTotal = row.Amount + row.Vat;
-                        <tr class="@(string.IsNullOrWhiteSpace(row.NationalId) ? "table-warning" : "")">
-                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  ><span class="badge @(row.TransactionType == "فروش" ? "text-bg-success" : "text-bg-primary")">@row.TransactionType</span></td>
-                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@row.PartyName</td>
-                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@(row.NationalId ?? "-")</td>
-                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@row.Amount.ToString("N0")</td>
-                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@row.Vat.ToString("N0")</td>
-                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 "  >@grandTotal.ToString("N0")</td>
+                        <tr class="@(string.IsNullOrWhiteSpace(row.NationalId) ? "bg-amber-50 dark:bg-amber-900/10" : "") hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold @(row.TransactionType == "فروش" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/30" : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200/30")">
+                                    @row.TransactionType
+                                </span>
+                            </td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-bold text-slate-800 dark:text-slate-200">@row.PartyName</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 font-mono @(string.IsNullOrWhiteSpace(row.NationalId) ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500")">@(row.NationalId ?? "-")</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 text-left font-mono tabular-nums">@row.Amount.ToString("N0")</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 text-left font-mono tabular-nums">@row.Vat.ToString("N0")</td>
+                            <td class="p-2 border-b border-slate-100 dark:border-slate-800/50 text-left font-mono tabular-nums font-semibold">@grandTotal.ToString("N0")</td>
                         </tr>
                     }
                 }
                 else
                 {
-                    <tr><td class="p-2 border-b border-slate-100 dark:border-slate-800/50 text-center text-muted py-3" colspan="6">برای فصل انتخاب‌شده داده‌ای یافت نشد.</td></tr>
+                    <tr><td class="p-2 border-b border-slate-100 dark:border-slate-800/50 text-center text-slate-400 py-3 text-[11px]" colspan="6">برای فصل انتخاب‌شده داده‌ای یافت نشد.</td></tr>
                 }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-

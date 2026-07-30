@@ -21,9 +21,8 @@
     @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترها را ذخیره کن تا بعداً سریع‌تر برگردی."; ViewData["SavedFiltersSaveButtonId"] = "transferSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "transferClearFilter"; ViewData["SavedFiltersContainerId"] = "transferSavedFilters"; }
     <partial name="_SavedFiltersPanel" />
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  mb-3" >
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3" >
-            <form method="get" class="row g-3 align-items-end" data-warehouse-filter-form data-filters-key="warehouse-transfer-requests" data-save-button-id="transferSaveFilter" data-clear-button-id="transferClearFilter" data-presets-container-id="transferSavedFilters">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 mb-3">
+        <form method="get" class="row g-2 align-items-end" data-warehouse-filter-form data-filters-key="warehouse-transfer-requests" data-save-button-id="transferSaveFilter" data-clear-button-id="transferClearFilter" data-presets-container-id="transferSavedFilters">
                 <div class="col-12 col-md-4">
                     <label class="form-label small mb-1">جستجو</label>
                     <input name="searchTerm" value="@ViewBag.SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="searchTerm" placeholder="نام کالا، کد کالا یا توضیح" />
@@ -88,7 +87,6 @@
                     <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm  w-100">اعمال</button>
                 </div>
             </form>
-        </div>
     </div>
 
     <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >

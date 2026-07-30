@@ -107,7 +107,7 @@
                                 <td class="px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@days روز</td>
                                 
                                 <!-- Reason -->
-                                <td class="px-3 py-3 text-slate-650 dark:text-slate-400 max-w-[220px] truncate" title="@item.Reason">
+                                <td class="px-3 py-3 text-slate-600 dark:text-slate-400 max-w-[220px] truncate" title="@item.Reason">
                                     @item.Reason
                                 </td>
                                 
@@ -159,6 +159,7 @@
         const savedContainer = document.getElementById("leavesSavedFilters");
         const saveButton = document.getElementById("leavesSaveFilter");
         const clearButton = document.getElementById("leavesClearSaved");
+        const nameInput = document.getElementById("leavesSaveFilterNameInput");
         const status = new URLSearchParams(window.location.search).get("status") || "";
 
         const readJson = (key, fallback) => {
@@ -212,11 +213,29 @@
             });
         };
         saveButton?.addEventListener("click", () => {
-            const name = prompt("نام فیلتر را وارد کن:", "فیلتر ذخیره‌شده");
-            if (!name) return;
-            const items = readJson(storageKey, []);
-            items.unshift({ name, status });
-            saveSaved(items.slice(0, 10)).finally(renderSaved);
+            if (nameInput) {
+                nameInput.style.display = "inline-block";
+                nameInput.focus();
+                const handleSave = () => {
+                    const name = nameInput.value.trim();
+                    if (!name) return;
+                    const items = readJson(storageKey, []);
+                    items.unshift({ name, status });
+                    saveSaved(items.slice(0, 10)).finally(() => {
+                        renderSaved();
+                        nameInput.style.display = "none";
+                        nameInput.value = "";
+                    });
+                    nameInput.removeEventListener("blur", handleSave);
+                    nameInput.removeEventListener("keydown", handleKey);
+                };
+                const handleKey = (e) => {
+                    if (e.key === "Enter") { handleSave(); }
+                    if (e.key === "Escape") { nameInput.style.display = "none"; nameInput.value = ""; nameInput.removeEventListener("blur", handleSave); nameInput.removeEventListener("keydown", handleKey); }
+                };
+                nameInput.addEventListener("blur", handleSave);
+                nameInput.addEventListener("keydown", handleKey);
+            }
         });
         clearButton?.addEventListener("click", () => {
             localStorage.removeItem(storageKey);

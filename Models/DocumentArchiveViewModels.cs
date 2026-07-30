@@ -42,8 +42,31 @@ namespace OfficeAutomation.Models
         public bool IsPreviewable { get; init; }
         public bool IsUnderLegalHold { get; init; }
         public string? HoldReason { get; init; }
+        public string CurrentVersion { get; init; } = "1.0";
+        public DateTime? ExpirationDate { get; init; }
+        public bool IsArchived { get; init; }
         public DateTime CreatedAt { get; init; }
         public string CreatorName { get; init; } = string.Empty;
+        public IReadOnlyList<DocumentVersionVM> Versions { get; init; } = [];
+    }
+
+    public sealed class DocumentVersionVM
+    {
+        public int Id { get; init; }
+        public string VersionNumber { get; init; } = string.Empty;
+        public string? ChangeSummary { get; init; }
+        public string CreatorName { get; init; } = string.Empty;
+        public DateTime CreatedAt { get; init; }
+        public long FileSize { get; init; }
+    }
+
+    public sealed class DocumentVersionUploadVM
+    {
+        [Required]
+        public IFormFile? File { get; set; }
+
+        [StringLength(1000)]
+        public string? ChangeSummary { get; set; }
     }
 
     public sealed class DocumentArchiveIndexVM

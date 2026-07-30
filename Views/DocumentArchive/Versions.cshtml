@@ -1,0 +1,141 @@
+@model OfficeAutomation.Models.DocumentArchiveItemVM
+@{
+    ViewData["Title"] = "تاریخچه نسخه‌ها - " + Model.Title;
+}
+
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+        <a asp-action="Index" class="text-teal-600 hover:text-teal-700 transition-colors">
+            <i class="bi bi-arrow-right"></i> بازگشت به بایگانی
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-teal-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">@Model.Title</h1>
+                    <p class="text-sm text-gray-500 mt-1">
+                        نسخه فعلی: <span class="badge bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full text-xs font-semibold">@Model.CurrentVersion</span>
+                        @if (Model.IsArchived)
+                        {
+                            <span class="badge bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-semibold mr-2">آرشیو شده</span>
+                        }
+                    </p>
+                </div>
+                <div>
+                    <button onclick="document.getElementById('newVersionPanel').classList.toggle('hidden')"
+                            class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        <i class="bi bi-upload"></i> آپلود نسخه جدید
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="newVersionPanel" class="hidden px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <form asp-action="UploadNewVersion" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">انتخاب فایل جدید</label>
+                        <input type="file" name="File" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 p-2" required />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">خلاصه تغییرات</label>
+                        <textarea name="ChangeSummary" rows="2" maxlength="1000"
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                  placeholder="توضیح مختصری از تغییرات این نسخه..."></textarea>
+                    </div>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        <i class="bi bi-check-lg"></i> ثبت نسخه جدید
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        @if (TempData["ArchiveMessage"] != null)
+        {
+            <div class="px-6 py-3 bg-teal-50 border-b border-teal-200">
+                <p class="text-teal-700 text-sm"><i class="bi bi-info-circle"></i> @TempData["ArchiveMessage"]</p>
+            </div>
+        }
+
+        <div class="p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">تاریخچه نسخه‌ها</h2>
+
+            @if (Model.Versions.Count == 0)
+            {
+                <div class="text-center py-12 text-gray-400">
+                    <i class="bi bi-clock-history text-5xl"></i>
+                    <p class="mt-3 text-sm">هنوز نسخه قبلی برای این سند ثبت نشده است.</p>
+                </div>
+            }
+            else
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-right">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-gray-500 text-xs uppercase">
+                                <th class="px-4 py-3 font-medium">نسخه</th>
+                                <th class="px-4 py-3 font-medium">خلاصه تغییرات</th>
+                                <th class="px-4 py-3 font-medium">ایجاد کننده</th>
+                                <th class="px-4 py-3 font-medium">تاریخ</th>
+                                <th class="px-4 py-3 font-medium">حجم</th>
+                                <th class="px-4 py-3 font-medium">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach (var version in Model.Versions)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <span class="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">v@(version.VersionNumber)</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-600">
+                                        @(string.IsNullOrWhiteSpace(version.ChangeSummary) ? "—" : version.ChangeSummary)
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-700">@version.CreatorName</td>
+                                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap">@version.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                    <td class="px-4 py-3 text-gray-500">@FormatFileSize(version.FileSize)</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex gap-2">
+                                            <a asp-action="DownloadVersion" asp-route-versionId="@version.Id"
+                                               class="text-teal-600 hover:text-teal-800 transition-colors text-xs" title="دانلود">
+                                                <i class="bi bi-download"></i> دانلود
+                                            </a>
+                                            <form asp-action="Rollback" method="post" class="inline"
+                                                  onsubmit="return confirm('آیا از بازگشت به نسخه @version.VersionNumber اطمینان دارید؟ نسخه فعلی ذخیره خواهد شد.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="documentId" value="@Model.Id" />
+                                                <input type="hidden" name="versionId" value="@version.Id" />
+                                                <button type="submit" class="text-amber-600 hover:text-amber-800 transition-colors text-xs" title="بازگشت به این نسخه">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> بازگشت
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <div class="flex justify-between items-center text-sm text-gray-500">
+                <span>دسته: @Model.Category | سطح دسترسی: @Model.AccessLevel</span>
+                <span>ایجاد: @Model.CreatedAt.ToString("yyyy/MM/dd") توسط @Model.CreatorName</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+}

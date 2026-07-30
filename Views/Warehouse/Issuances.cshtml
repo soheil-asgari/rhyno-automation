@@ -11,115 +11,133 @@
             <h5 class="fw-bold mb-1">اسناد خروج از انبار</h5>
             <div class="text-muted small">با فیلترهای وضعیت، تاریخ، انبار و کارفرما سریع‌تر بررسی کن.</div>
         </div>
-        <a asp-action="CreateIssuance" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm  btn-sm">ثبت خروج جدید</a>
-    </div>
+        <a asp-action="CreateIssuance"
+           class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm btn-sm">ثبت
+            خروج جدید</a>
+        </div>
 
-    @if (TempData["WarehouseMessage"] is string message)
-    {
-        <div class="alert alert-info border-0 shadow-sm small">@message</div>
-    }
+        @if (TempData["WarehouseMessage"] is string message)
+        {
+            <div class="alert alert-info border-0 shadow-sm small">@message</div>
+        }
 
-    @{ ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترهای خروج را ذخیره کن."; ViewData["SavedFiltersSaveButtonId"] = "issuanceSaveFilter"; ViewData["SavedFiltersClearButtonId"] = "issuanceClearFilter"; ViewData["SavedFiltersContainerId"] = "issuanceSavedFilters"; }
-    <partial name="_SavedFiltersPanel" />
+        @{
+            ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; ViewData["SavedFiltersSubtitle"] = "فیلترهای خروج را ذخیره کن."; ViewData["SavedFiltersSaveButtonId"] = "issuanceSaveFilter"; ViewData["SavedFiltersClearButtonId"] =
+           "issuanceClearFilter"; ViewData["SavedFiltersContainerId"] = "issuanceSavedFilters";
+        }
+        <partial name="_SavedFiltersPanel" />
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  mb-3" >
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3" >
-            <form method="get" class="row g-3 align-items-end" data-warehouse-filter-form data-filters-key="warehouse-issuances" data-save-button-id="issuanceSaveFilter" data-clear-button-id="issuanceClearFilter" data-presets-container-id="issuanceSavedFilters">
-                <div class="col-12 col-md-3">
-                    <label class="form-label small mb-1">جستجو</label>
-                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="searchTerm" placeholder="شماره خروج یا مقصد" />
-                </div>
-                <div class="col-12 col-md-2">
-                    <label class="form-label small mb-1">وضعیت</label>
-                    <select name="status" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="status">
-                        <option value="">همه وضعیت‌ها</option>
-                        <option value="@WorkflowStatus.Draft" selected="@(ViewBag.Status as string == WorkflowStatus.Draft ? "selected" : null)">پیش‌نویس</option>
-                        <option value="@WorkflowStatus.PendingApproval" selected="@(ViewBag.Status as string == WorkflowStatus.PendingApproval ? "selected" : null)">در انتظار تایید</option>
-                        <option value="@WorkflowStatus.Approved" selected="@(ViewBag.Status as string == WorkflowStatus.Approved ? "selected" : null)">تایید شده</option>
-                        <option value="@WorkflowStatus.Rejected" selected="@(ViewBag.Status as string == WorkflowStatus.Rejected ? "selected" : null)">رد شده</option>
-                        <option value="@WorkflowStatus.Canceled" selected="@(ViewBag.Status as string == WorkflowStatus.Canceled ? "selected" : null)">ابطال شده</option>
-                        <option value="@WorkflowStatus.Completed" selected="@(ViewBag.Status as string == WorkflowStatus.Completed ? "selected" : null)">انجام شده</option>
+        <div
+            class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 px-3 py-2 mb-3 overflow-x-auto">
+            <form method="get" class="d-flex align-items-end gap-1.5 flex-nowrap" style="min-width:max-content"
+                  data-warehouse-filter-form data-filters-key="warehouse-issuances" data-save-button-id="issuanceSaveFilter"
+                  data-clear-button-id="issuanceClearFilter" data-presets-container-id="issuanceSavedFilters">
+                <input name="searchTerm" value="@ViewBag.SearchTerm"
+                       class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-shrink-0"
+                       style="width:130px;" data-filter-key="searchTerm" placeholder="جستجو..." />
+                <select name="status"
+                        class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-shrink-0"
+                        style="width:115px;" data-filter-key="status">
+                    <option value="">وضعیت</option>
+                    <option value="@WorkflowStatus.Draft"
+                            selected="@(ViewBag.Status as string == WorkflowStatus.Draft ? "selected" : null)">پیش‌نویس</option>
+                    <option value="@WorkflowStatus.PendingApproval"
+                            selected="@(ViewBag.Status as string == WorkflowStatus.PendingApproval ? "selected" : null)">در
+                        انتظار تایید</option>
+                        <option value="@WorkflowStatus.Approved"
+                                selected="@(ViewBag.Status as string == WorkflowStatus.Approved ? "selected" : null)">تایید شده
+                        </option>
+                        <option value="@WorkflowStatus.Rejected"
+                                selected="@(ViewBag.Status as string == WorkflowStatus.Rejected ? "selected" : null)">رد شده
+                        </option>
+                        <option value="@WorkflowStatus.Canceled"
+                                selected="@(ViewBag.Status as string == WorkflowStatus.Canceled ? "selected" : null)">ابطال شده
+                        </option>
+                        <option value="@WorkflowStatus.Completed"
+                                selected="@(ViewBag.Status as string == WorkflowStatus.Completed ? "selected" : null)">انجام شده
+                        </option>
                     </select>
-                </div>
-                <div class="col-12 col-md-2">
-                    <label class="form-label small mb-1">انبار</label>
-                    <select name="warehouseId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="warehouseId">
-                        <option value="">همه انبارها</option>
+                    <select name="warehouseId"
+                            class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-shrink-0"
+                            style="width:100px;" data-filter-key="warehouseId">
+                        <option value="">انبار</option>
                         @foreach (var option in warehouseOptions)
                         {
                             <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
                         }
                     </select>
-                </div>
-                <div class="col-12 col-md-2">
-                    <label class="form-label small mb-1">کارفرما</label>
-                    <select name="employerId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="employerId">
-                        <option value="">همه کارفرماها</option>
+                    <select name="employerId"
+                            class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-shrink-0"
+                            style="width:100px;" data-filter-key="employerId">
+                        <option value="">کارفرما</option>
                         @foreach (var option in employerOptions)
                         {
                             <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
                         }
                     </select>
-                </div>
-                <div class="col-6 col-md-1">
-                    <label class="form-label small mb-1">از</label>
-                    <input type="date" name="dateFrom" value="@ViewBag.DateFrom" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="dateFrom" />
-                </div>
-                <div class="col-6 col-md-1">
-                    <label class="form-label small mb-1">تا</label>
-                    <input type="date" name="dateTo" value="@ViewBag.DateTo" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-filter-key="dateTo" />
-                </div>
-                <div class="col-12 col-md-1">
-                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm  w-100">اعمال</button>
-                </div>
-            </form>
-        </div>
-    </div>
+                    <input type="date" name="dateFrom" value="@ViewBag.DateFrom"
+                           class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-shrink-0"
+                           style="width:105px;" data-filter-key="dateFrom" />
+                    <input type="date" name="dateTo" value="@ViewBag.DateTo"
+                           class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-shrink-0"
+                           style="width:105px;" data-filter-key="dateTo" />
+                    <button type="submit"
+                            class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition shadow-sm flex-shrink-0">اعمال</button>
+                </form>
+            </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
-        <div class="table-responsive">
-            <table class="w-full text-xs text-right border-collapse"  >
-                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
-                    <tr>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >شماره</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >تاریخ</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >انبار</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کارفرما / مقصد</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >مقدار</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >وضعیت</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center"  >عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Any())
-                    {
-                        @foreach (var item in Model)
-                        {
+            <div
+                class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto">
+                <div class="table-responsive">
+                    <table class="w-full text-xs text-right border-collapse">
+                        <thead
+                            class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.IssuanceNumber</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.DateShamsi</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.Warehouse.Name</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@(item.Employer?.Name ?? item.DestinationOrDepartment)</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.Items.Sum(row => row.Quantity).ToString("N3")</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  ><span class="badge @WorkflowStatus.BadgeCss(item.WorkflowStatus)">@WorkflowStatus.Label(item.WorkflowStatus)</span></td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 text-center"  >
-                                    <a asp-action="IssuanceDetails" asp-route-id="@item.Id" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1  btn-sm">جزئیات</a>
-                                </td>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">شماره</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">تاریخ</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">انبار</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">کارفرما / مقصد</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">مقدار</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">وضعیت</th>
+                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center">عملیات
+                                </th>
                             </tr>
-                        }
-                    }
+                        </thead>
+                        <tbody>
+                            @if (Model.Any())
+                            {
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">@item.IssuanceNumber</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">@item.DateShamsi</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">@item.Warehouse.Name</td>
+                                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">@(item.Employer?.Name ??
+                                                                        item.DestinationOrDepartment)</td>
+                                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">@item.Items.Sum(row =>
+                                                                            row.Quantity).ToString("N3")</td>
+                                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><span
+                                                    class="badge @WorkflowStatus.BadgeCss(item.WorkflowStatus)">@WorkflowStatus.Label(item.WorkflowStatus)</span>
+                                                </td>
+                                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center">
+                                                    <a asp-action="IssuanceDetails" asp-route-id="@item.Id"
+                                                       class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1 btn-sm">جزئیات</a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
                     else
-                    {
-                        <tr>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "   colspan="7" class="text-center text-muted py-4">خروجی‌ای با این فیلترها پیدا نشد.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                                    {
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">خروجی‌ای با این فیلترها پیدا نشد.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-@section Scripts {
-    <script src="~/js/warehouse-filters.js" asp-append-version="true"></script>
-}
+                @section Scripts {
+                    <script src="~/js/warehouse-filters.js" asp-append-version="true"></script>
+                }

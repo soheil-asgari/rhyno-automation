@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import '@xyflow/react/dist/style.css';
 import {
   ReactFlow,
   MiniMap,
@@ -109,17 +108,14 @@ function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   
-  // Selection/Properties Panel states
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
   
-  // Lookup data injected by Razor views
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
 
   useEffect(() => {
-    // Read from window properties injected in Razor
     if (window.WorkflowBuilderData) {
       setUsers(window.WorkflowBuilderData.users || []);
       setRoles(window.WorkflowBuilderData.roles || []);
@@ -130,7 +126,6 @@ function App() {
     }
   }, []);
 
-  // Fetch graph on documentType change
   useEffect(() => {
     fetch(`/Security/GetWorkflowGraph?documentType=${documentType}`)
       .then(res => res.json())
@@ -170,7 +165,6 @@ function App() {
     [setEdges]
   );
 
-  // Handle click on canvas items
   const onNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
     setSelectedEdge(null);
@@ -184,7 +178,6 @@ function App() {
   const reactFlowWrapper = useRef(null);
   const { screenToFlowPosition } = useReactFlow();
 
-  // Drag and drop helper
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -192,13 +185,9 @@ function App() {
 
   const onDrop = useCallback((event) => {
     event.preventDefault();
-
     const type = event.dataTransfer.getData('application/reactflow');
     if (typeof type === 'undefined' || !type) return;
-
-    // Resolve flow coordinates accurately using screenToFlowPosition
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-
     const id = `new-step-${Date.now()}`;
     const newNode = {
       id,
@@ -214,17 +203,14 @@ function App() {
         escalationHours: 48
       }
     };
-
     setNodes((nds) => nds.concat(newNode));
   }, [setNodes, screenToFlowPosition]);
 
-  // Update properties callback
   const updateNodeData = (nodeId, updatedFields) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
           const newData = { ...node.data, ...updatedFields };
-          // Real-time update selected node properties
           setSelectedNode(prev => prev && prev.id === nodeId ? { ...prev, data: newData } : prev);
           return { ...node, data: newData };
         }
@@ -233,9 +219,7 @@ function App() {
     );
   };
 
-  // Submission / Saving to Backend
   const saveWorkflow = () => {
-    // 1. Validation: Orphaned nodes
     const orphaned = nodes.filter(n => {
       if (n.id === 'start' || n.id === 'end') return false;
       const hasConnection = edges.some(e => e.source === n.id || e.target === n.id);
@@ -247,7 +231,6 @@ function App() {
       return;
     }
 
-    // 2. Validation: Start and End node presence
     const hasStart = nodes.some(n => n.id === 'start');
     const hasEnd = nodes.some(n => n.id === 'end');
     if (!hasStart || !hasEnd) {
@@ -290,7 +273,6 @@ function App() {
     .then(data => {
       if (data.success) {
         alert(data.message);
-        // Refresh graph to sync database-generated IDs
         window.location.reload();
       } else {
         alert('بروز خطا: ' + data.message);
@@ -310,7 +292,7 @@ function App() {
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }} className="select-none text-right">
       
       {/* Sidebar Tool Box (Drag & Drop panel) */}
-      <aside style={{ width: '100%', maxHeight: '30%', overflowY: 'auto', padding: '16px', backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+      <aside style={{ width: '100%', maxHeight: '30%', overflowY: 'auto', padding: '16px', backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
         <div>
           <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
             <FolderOpen size={14} className="text-teal-600" />
@@ -362,197 +344,197 @@ function App() {
         </div>
       </aside>
 
-      {/* Canvas */}
-      <div style={{ flex: 1, width: '100%', height: '100%', minHeight: '500px', position: 'relative' }} ref={reactFlowWrapper} onDragOver={onDragOver} onDrop={onDrop}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          onNodeClick={onNodeClick}
-          onEdgeClick={onEdgeClick}
-          fitView
-          style={{ width: '100%', height: '100%' }}
-        >
-          <Panel position="top-left" className="p-2 backdrop-blur flex gap-2">
-            <button 
-              onClick={saveWorkflow}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl shadow-lg font-semibold flex items-center gap-2 transition-all"
-            >
-              <Save size={14} />
-              <span>ذخیره گردش کار</span>
-            </button>
-          </Panel>
-          <Controls />
-          <MiniMap nodeStrokeWidth={3} />
-          <Background variant="dots" gap={12} size={1} />
-        </ReactFlow>
-      </div>
+      {/* Main area: Canvas + Properties Panels side by side */}
+      <div style={{ flex: 1, width: '100%', minHeight: 0, display: 'flex', flexDirection: 'row' }}>
+        
+        {/* Canvas */}
+        <div style={{ flex: 1, minWidth: 0, minHeight: '500px', position: 'relative' }} ref={reactFlowWrapper} onDragOver={onDragOver} onDrop={onDrop}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
+            fitView
+            style={{ width: '100%', height: '100%' }}
+          >
+            <Panel position="top-left" className="p-2 backdrop-blur flex gap-2">
+              <button 
+                onClick={saveWorkflow}
+                className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl shadow-lg font-semibold flex items-center gap-2 transition-all"
+              >
+                <Save size={14} />
+                <span>ذخیره گردش کار</span>
+              </button>
+            </Panel>
+            <Controls />
+            <MiniMap nodeStrokeWidth={3} />
+            <Background variant="dots" gap={12} size={1} />
+          </ReactFlow>
+        </div>
 
-      {/* Offcanvas Properties Editor Panel */}
-      {selectedNode && (
-        <aside className="w-full md:w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-4 overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-            <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
-              <Clock size={14} className="text-teal-600" />
-              تنظیمات نود انتخابی
-            </h3>
-            <button onClick={() => setSelectedNode(null)} className="text-slate-400 hover:text-slate-600">
-              <ChevronLeft size={16} />
-            </button>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            {/* Title / Label */}
-            <div className="flex flex-col gap-1">
-              <label className="font-bold text-slate-600 dark:text-slate-400">عنوان مرحله</label>
-              <input 
-                type="text" 
-                value={selectedNode.data.label}
-                onChange={(e) => updateNodeData(selectedNode.id, { label: e.target.value })}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
-              />
+        {/* Node Properties Panel - fixed width sidebar */}
+        {selectedNode && (
+          <aside style={{ width: '300px', minWidth: '300px', flexShrink: 0, overflowY: 'auto', backgroundColor: '#fff', borderLeft: '1px solid #e5e7eb', padding: '16px' }} className="dark:bg-slate-950 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                <Clock size={14} className="text-teal-600" />
+                تنظیمات نود انتخابی
+              </h3>
+              <button onClick={() => setSelectedNode(null)} className="text-slate-400 hover:text-slate-600">
+                <ChevronLeft size={16} />
+              </button>
             </div>
 
-            {selectedNode.type === 'ApprovalNode' && (
-              <>
-                {/* Assignment Mode */}
-                <div className="flex flex-col gap-1">
-                  <label className="font-bold text-slate-600 dark:text-slate-400">نوع انتساب کار</label>
-                  <select 
-                    value={selectedNode.data.assignmentMode}
-                    onChange={(e) => updateNodeData(selectedNode.id, { assignmentMode: e.target.value })}
-                    className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
-                  >
-                    <option value="User">کاربر مشخص (User)</option>
-                    <option value="Role">نقش کاربری (Role)</option>
-                    <option value="Department">دپارتمان (Department)</option>
-                  </select>
-                </div>
+            <div className="space-y-3 text-xs" style={{ marginTop: '12px' }}>
+              <div className="flex flex-col gap-1">
+                <label className="font-bold text-slate-600 dark:text-slate-400">عنوان مرحله</label>
+                <input 
+                  type="text" 
+                  value={selectedNode.data.label}
+                  onChange={(e) => updateNodeData(selectedNode.id, { label: e.target.value })}
+                  className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
+                />
+              </div>
 
-                {/* Conditional Assigner dropdowns */}
-                {selectedNode.data.assignmentMode === 'User' && (
+              {selectedNode.type === 'ApprovalNode' && (
+                <>
                   <div className="flex flex-col gap-1">
-                    <label className="font-bold text-slate-600 dark:text-slate-400">کاربر مسئول تایید</label>
+                    <label className="font-bold text-slate-600 dark:text-slate-400">نوع انتساب کار</label>
                     <select 
-                      value={selectedNode.data.assignedToUserId}
-                      onChange={(e) => updateNodeData(selectedNode.id, { assignedToUserId: e.target.value })}
+                      value={selectedNode.data.assignmentMode}
+                      onChange={(e) => updateNodeData(selectedNode.id, { assignmentMode: e.target.value })}
                       className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
                     >
-                      <option value="">-- انتخاب کاربر --</option>
-                      {users.map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}
+                      <option value="User">کاربر مشخص (User)</option>
+                      <option value="Role">نقش کاربری (Role)</option>
+                      <option value="Department">دپارتمان (Department)</option>
                     </select>
                   </div>
-                )}
 
-                {selectedNode.data.assignmentMode === 'Role' && (
+                  {selectedNode.data.assignmentMode === 'User' && (
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-slate-600 dark:text-slate-400">کاربر مسئول تایید</label>
+                      <select 
+                        value={selectedNode.data.assignedToUserId}
+                        onChange={(e) => updateNodeData(selectedNode.id, { assignedToUserId: e.target.value })}
+                        className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
+                      >
+                        <option value="">-- انتخاب کاربر --</option>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}
+                      </select>
+                    </div>
+                  )}
+
+                  {selectedNode.data.assignmentMode === 'Role' && (
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-slate-600 dark:text-slate-400">نقش کاربری مسئول تایید</label>
+                      <select 
+                        value={selectedNode.data.assignedRoleId}
+                        onChange={(e) => updateNodeData(selectedNode.id, { assignedRoleId: e.target.value })}
+                        className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
+                      >
+                        <option value="">-- انتخاب نقش --</option>
+                        {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                      </select>
+                    </div>
+                  )}
+
+                  {selectedNode.data.assignmentMode === 'Department' && (
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-slate-600 dark:text-slate-400">دپارتمان مسئول تایید</label>
+                      <select 
+                        value={selectedNode.data.assignedDepartmentId}
+                        onChange={(e) => updateNodeData(selectedNode.id, { assignedDepartmentId: e.target.value })}
+                        className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
+                      >
+                        <option value="">-- انتخاب دپارتمان --</option>
+                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                    </div>
+                  )}
+
                   <div className="flex flex-col gap-1">
-                    <label className="font-bold text-slate-600 dark:text-slate-400">نقش کاربری مسئول تایید</label>
-                    <select 
-                      value={selectedNode.data.assignedRoleId}
-                      onChange={(e) => updateNodeData(selectedNode.id, { assignedRoleId: e.target.value })}
+                    <label className="font-bold text-slate-600 dark:text-slate-400">حداکثر مهلت پاسخگویی (SLA - ساعت)</label>
+                    <input 
+                      type="number" 
+                      value={selectedNode.data.slaHours}
+                      onChange={(e) => updateNodeData(selectedNode.id, { slaHours: e.target.value })}
                       className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
-                    >
-                      <option value="">-- انتخاب نقش --</option>
-                      {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
+                    />
                   </div>
-                )}
 
-                {selectedNode.data.assignmentMode === 'Department' && (
                   <div className="flex flex-col gap-1">
-                    <label className="font-bold text-slate-600 dark:text-slate-400">دپارتمان مسئول تایید</label>
-                    <select 
-                      value={selectedNode.data.assignedDepartmentId}
-                      onChange={(e) => updateNodeData(selectedNode.id, { assignedDepartmentId: e.target.value })}
+                    <label className="font-bold text-slate-600 dark:text-slate-400">مهلت ارجاع خودکار (ساعت)</label>
+                    <input 
+                      type="number" 
+                      value={selectedNode.data.escalationHours}
+                      onChange={(e) => updateNodeData(selectedNode.id, { escalationHours: e.target.value })}
                       className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
-                    >
-                      <option value="">-- انتخاب دپارتمان --</option>
-                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
+                    />
                   </div>
-                )}
+                </>
+              )}
 
-                {/* SLA hours */}
-                <div className="flex flex-col gap-1">
-                  <label className="font-bold text-slate-600 dark:text-slate-400">حداکثر مهلت پاسخگویی (SLA - ساعت)</label>
-                  <input 
-                    type="number" 
-                    value={selectedNode.data.slaHours}
-                    onChange={(e) => updateNodeData(selectedNode.id, { slaHours: e.target.value })}
-                    className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
-                  />
-                </div>
+              {selectedNode.type !== 'StartEndNode' && (
+                <button 
+                  onClick={() => deleteNode(selectedNode.id)}
+                  className="w-full mt-4 py-2 border border-rose-200 hover:bg-rose-50 dark:border-rose-900/30 dark:hover:bg-rose-950/20 text-rose-600 rounded-lg transition flex items-center justify-center gap-1.5 font-bold"
+                >
+                  <Trash2 size={14} />
+                  <span>حذف این نود</span>
+                </button>
+              )}
+            </div>
+          </aside>
+        )}
 
-                {/* Escalation hours */}
-                <div className="flex flex-col gap-1">
-                  <label className="font-bold text-slate-600 dark:text-slate-400">مهلت ارجاع خودکار (ساعت)</label>
-                  <input 
-                    type="number" 
-                    value={selectedNode.data.escalationHours}
-                    onChange={(e) => updateNodeData(selectedNode.id, { escalationHours: e.target.value })}
-                    className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
-                  />
-                </div>
-              </>
-            )}
+        {/* Edge Properties Panel - fixed width sidebar */}
+        {selectedEdge && (
+          <aside style={{ width: '300px', minWidth: '300px', flexShrink: 0, overflowY: 'auto', backgroundColor: '#fff', borderLeft: '1px solid #e5e7eb', padding: '16px' }} className="dark:bg-slate-950 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                <AlertTriangle size={14} className="text-amber-500" />
+                تنظیمات یال (رابط)
+              </h3>
+              <button onClick={() => setSelectedEdge(null)} className="text-slate-400 hover:text-slate-600">
+                <ChevronLeft size={16} />
+              </button>
+            </div>
 
-            {selectedNode.type !== 'StartEndNode' && (
+            <div className="space-y-3 text-xs" style={{ marginTop: '12px' }}>
+              <div className="flex flex-col gap-1">
+                <label className="font-bold text-slate-600 dark:text-slate-400">شرط انتقال (مانند: مبلغ {'>'} ۱۰۰ میلیون)</label>
+                <input 
+                  type="text" 
+                  value={selectedEdge.label || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEdges(eds => eds.map(edge => edge.id === selectedEdge.id ? { ...edge, label: val } : edge));
+                    setSelectedEdge(prev => prev ? { ...prev, label: val } : null);
+                  }}
+                  className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
+                  placeholder="مثلاً: amount > 100000000"
+                />
+              </div>
+              
               <button 
-                onClick={() => deleteNode(selectedNode.id)}
+                onClick={() => {
+                  setEdges(eds => eds.filter(e => e.id !== selectedEdge.id));
+                  setSelectedEdge(null);
+                }}
                 className="w-full mt-4 py-2 border border-rose-200 hover:bg-rose-50 dark:border-rose-900/30 dark:hover:bg-rose-950/20 text-rose-600 rounded-lg transition flex items-center justify-center gap-1.5 font-bold"
               >
                 <Trash2 size={14} />
-                <span>حذف این نود</span>
+                <span>حذف این یال</span>
               </button>
-            )}
-          </div>
-        </aside>
-      )}
-
-      {selectedEdge && (
-        <aside className="w-full md:w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-4 overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-            <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
-              <AlertTriangle size={14} className="text-amber-500" />
-              تنظیمات یال (رابط)
-            </h3>
-            <button onClick={() => setSelectedEdge(null)} className="text-slate-400 hover:text-slate-600">
-              <ChevronLeft size={16} />
-            </button>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            <div className="flex flex-col gap-1">
-              <label className="font-bold text-slate-600 dark:text-slate-400">شرط انتقال (مانند: مبلغ &gt; ۱۰۰ میلیون)</label>
-              <input 
-                type="text" 
-                value={selectedEdge.label || ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setEdges(eds => eds.map(edge => edge.id === selectedEdge.id ? { ...edge, label: val } : edge));
-                  setSelectedEdge(prev => prev ? { ...prev, label: val } : null);
-                }}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 outline-none"
-                placeholder="مثلاً: amount > 100000000"
-              />
             </div>
-            
-            <button 
-              onClick={() => {
-                setEdges(eds => eds.filter(e => e.id !== selectedEdge.id));
-                setSelectedEdge(null);
-              }}
-              className="w-full mt-4 py-2 border border-rose-200 hover:bg-rose-50 dark:border-rose-900/30 dark:hover:bg-rose-950/20 text-rose-600 rounded-lg transition flex items-center justify-center gap-1.5 font-bold"
-            >
-              <Trash2 size={14} />
-              <span>حذف این یال</span>
-            </button>
-          </div>
-        </aside>
-      )}
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

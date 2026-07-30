@@ -41,6 +41,7 @@ public class SettingsController : Controller
     private readonly IAuthorizationService _authorizationService;
     private readonly Services.Tenancy.ITenantSettingsService _tenantSettingsService;
     private readonly IUserContextService _userContextService;
+    private readonly ITotpService _totpService;
 
     public SettingsController(
         PlatformDbContext context,
@@ -50,7 +51,8 @@ public class SettingsController : Controller
         ILogger<SettingsController> logger,
         IAuthorizationService authorizationService,
         Services.Tenancy.ITenantSettingsService tenantSettingsService,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        ITotpService totpService)
     {
         _context = context;
             _identityContext = identityContext;
@@ -60,6 +62,7 @@ public class SettingsController : Controller
         _authorizationService = authorizationService;
         _tenantSettingsService = tenantSettingsService;
         _userContextService = userContextService;
+        _totpService = totpService;
     }
 
     [HttpGet]
@@ -494,6 +497,99 @@ public class SettingsController : Controller
     private static bool IsValidTimeZone(string timeZoneId)
     {
         return TimeZoneInfo.GetSystemTimeZones().Any(zone => string.Equals(zone.Id, timeZoneId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // ── Two-Factor Authentication (2FA/MFA) ────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> SetupTwoFactor(CancellationToken cancellationToken)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        if (user.TwoFactorEnabled)
+        {
+            TempData["SettingsMessage"] = "احراز هویت دو مرحله‌ای از قبل فعال است.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Generate new secret key
+        var secretKey = _totpService.GenerateSecretKey();
+        var qrCodeUri = _totpService.GenerateQrCodeUri(secretKey, user.UserName ?? user.Email ?? "user");
+
+        // Store secret temporarily (will be confirmed on verification)
+        user.TwoFactorSecretKey = secretKey;
+        await _userManager.UpdateAsync(user);
+
+        var recoveryCodes = _totpService.GenerateRecoveryCodes();
+
+        var model = new TwoFactorSetupVM
+        {
+            SecretKey = secretKey,
+            QrCodeUri = qrCodeUri,
+            RecoveryCodes = recoveryCodes
+        };
+
+        return View("TwoFactorSetup", model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyAndEnableTwoFactor(string code, string recoveryCodes, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(code) || code.Length != 6)
+        {
+            TempData["SettingsError"] = "کد تایید باید ۶ رقمی باشد.";
+            return RedirectToAction(nameof(SetupTwoFactor));
+        }
+
+        if (string.IsNullOrWhiteSpace(user.TwoFactorSecretKey))
+        {
+            TempData["SettingsError"] = "کلید امنیتی یافت نشد. لطفاً دوباره تنظیم کنید.";
+            return RedirectToAction(nameof(SetupTwoFactor));
+        }
+
+        var isValid = _totpService.ValidateCode(user.TwoFactorSecretKey, code);
+        if (!isValid)
+        {
+            TempData["SettingsError"] = "کد وارد شده معتبر نیست. لطفاً دوباره تلاش کنید.";
+            return RedirectToAction(nameof(SetupTwoFactor));
+        }
+
+        user.TwoFactorEnabled = true;
+        user.RecoveryCodes = recoveryCodes;
+        await _userManager.UpdateAsync(user);
+
+        _logger.LogInformation("2FA enabled for user {UserId}", user.Id);
+        TempData["SettingsSuccess"] = "احراز هویت دو مرحله‌ای با موفقیت فعال شد. لطفاً کدهای ریکاوری را در جای امن نگهداری کنید.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DisableTwoFactor(string password, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        var passwordValid = await _userManager.CheckPasswordAsync(user, password);
+        if (!passwordValid)
+        {
+            TempData["SettingsError"] = "رمز عبور اشتباه است.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        user.TwoFactorEnabled = false;
+        user.TwoFactorSecretKey = null;
+        user.RecoveryCodes = null;
+        await _userManager.UpdateAsync(user);
+
+        _logger.LogWarning("2FA disabled for user {UserId}", user.Id);
+        TempData["SettingsSuccess"] = "احراز هویت دو مرحله‌ای غیرفعال شد.";
+        return RedirectToAction(nameof(Index));
     }
 
     public sealed class SignatureUploadModel

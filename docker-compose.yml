@@ -1,0 +1,171 @@
+version: '3.8'
+
+services:
+  # ── SQL Server ────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: rhyno-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD:-Rhyno@2024Secure!}
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./script.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - rhyno-network
+    restart: unless-stopped
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── RabbitMQ (Message Broker) ─────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rhyno-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-rhyno}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-Rhyno@2024Secure!}
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - rhyno-network
+    restart: unless-stopped
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (Cache + Session) ───────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: rhyno-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-Rhyno@2024Secure!}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - rhyno-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Seq (Logging/Dashboard) ───────────────────────────────
+  seq:
+    image: datalust/seq:latest
+    container_name: rhyno-seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_PASSWORD:-Rhyno@2024Secure!}
+    ports:
+      - "5341:80"     # Web UI
+      - "5341:5341"   # Ingestion
+    volumes:
+      - seq-data:/data
+    networks:
+      - rhyno-network
+    restart: unless-stopped
+
+  # ── Application (REST API + Web) ──────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rhyno-app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__PlatformConnection=Server=sqlserver,1433;Database=RhynoPlatformDb;User Id=sa;Password=${DB_PASSWORD:-Rhyno@2024Secure!};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=RhynoTenantDb;User Id=sa;Password=${DB_PASSWORD:-Rhyno@2024Secure!};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-rhyno}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-Rhyno@2024Secure!}
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-Rhyno@2024Secure!}
+      - Seq__ServerUrl=http://seq:5341
+      - ApiKeys__0=${API_KEY:-rhyno-api-key-change-me-in-production}
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rhyno-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── Background Worker ─────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: rhyno-worker
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__PlatformConnection=Server=sqlserver,1433;Database=RhynoPlatformDb;User Id=sa;Password=${DB_PASSWORD:-Rhyno@2024Secure!};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=RhynoTenantDb;User Id=sa;Password=${DB_PASSWORD:-Rhyno@2024Secure!};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-rhyno}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-Rhyno@2024Secure!}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rhyno-network
+    restart: unless-stopped
+
+  # ── Nginx Reverse Proxy ───────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: rhyno-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - rhyno-network
+    restart: unless-stopped
+
+networks:
+  rhyno-network:
+    driver: bridge
+    name: rhyno-network
+
+volumes:
+  sqlserver-data:
+    name: rhyno-sqlserver-data
+  rabbitmq-data:
+    name: rhyno-rabbitmq-data
+  redis-data:
+    name: rhyno-redis-data
+  seq-data:
+    name: rhyno-seq-data

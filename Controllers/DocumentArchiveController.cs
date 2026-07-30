@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
 using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
+using OfficeAutomation.Services;
 using OfficeAutomation.Services.Security;
+using System.Data;
 using System.Security.Claims;
 
 namespace OfficeAutomation.Controllers
@@ -16,17 +18,20 @@ namespace OfficeAutomation.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly IPermissionAccessService _permissionAccessService;
         private readonly Services.Tenancy.ITenantPathResolver _tenantPathResolver;
+        private readonly IDocumentVersioningService _versioningService;
 
         public DocumentArchiveController(
             IWorkflowDbContext context,
             IWebHostEnvironment environment,
             IPermissionAccessService permissionAccessService,
-            Services.Tenancy.ITenantPathResolver tenantPathResolver)
+            Services.Tenancy.ITenantPathResolver tenantPathResolver,
+            IDocumentVersioningService versioningService)
         {
             _context = context;
             _environment = environment;
             _permissionAccessService = permissionAccessService;
             _tenantPathResolver = tenantPathResolver;
+            _versioningService = versioningService;
         }
 
         [HttpGet]
@@ -266,6 +271,224 @@ namespace OfficeAutomation.Controllers
 
             TempData["ArchiveMessage"] = "سند با موفقیت از بایگانی حذف شد.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ── Versioning Actions ───────────────────────────────
+
+        [HttpGet]
+        [PermissionAuthorize("Archive.View")]
+        public async Task<IActionResult> Versions(int id, CancellationToken cancellationToken)
+        {
+            var item = await _context.DocumentArchiveItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(row => row.Id == id, cancellationToken);
+
+            if (item == null) return NotFound();
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            if (!await CanReadItemAsync(userId, item, cancellationToken))
+                return Forbid();
+
+            var versions = await _versioningService.GetVersionHistoryAsync(id, cancellationToken);
+
+            var vm = new DocumentArchiveItemVM
+            {
+                Id = item.Id,
+                Title = item.Title,
+                Category = item.Category,
+                AccessLevel = item.AccessLevel,
+                FileName = item.FileName,
+                RelativePath = item.RelativePath,
+                ContentType = item.ContentType,
+                FileSize = item.FileSize,
+                IsPreviewable = item.IsPreviewable,
+                IsUnderLegalHold = item.IsUnderLegalHold,
+                HoldReason = item.HoldReason,
+                CurrentVersion = item.CurrentVersion,
+                ExpirationDate = item.ExpirationDate,
+                IsArchived = item.IsArchived,
+                CreatedAt = item.CreatedAt,
+                CreatorName = item.CreatedByUser?.FullName ?? item.CreatedByUser?.UserName ?? "کاربر",
+                Versions = versions.Select(v => new DocumentVersionVM
+                {
+                    Id = v.Id,
+                    VersionNumber = v.VersionNumber,
+                    ChangeSummary = v.ChangeSummary,
+                    CreatorName = v.CreatedByUser?.FullName ?? v.CreatedByUser?.UserName ?? "کاربر",
+                    CreatedAt = v.CreatedAt,
+                    FileSize = v.FileSize
+                }).ToList()
+            };
+
+            return View("Versions", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Archive.Create")]
+        public async Task<IActionResult> UploadNewVersion(int id, DocumentVersionUploadVM model, CancellationToken cancellationToken)
+        {
+            var document = await _context.DocumentArchiveItems
+                .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+
+            if (document == null) return NotFound();
+
+            try
+            {
+                DocumentArchiveController.EnsureNotUnderLegalHold(document);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ArchiveMessage"] = ex.Message;
+                return RedirectToAction(nameof(Versions), new { id });
+            }
+
+            if (model.File != null)
+            {
+                try { ValidateUploadedFile(model.File); }
+                catch (InvalidOperationException ex)
+                {
+                    TempData["ArchiveMessage"] = ex.Message;
+                    return RedirectToAction(nameof(Versions), new { id });
+                }
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            await _versioningService.CreateVersionAsync(document, model.File, model.ChangeSummary, userId, cancellationToken);
+
+            TempData["ArchiveMessage"] = $"نسخه جدید ({document.CurrentVersion}) با موفقیت ثبت شد.";
+            return RedirectToAction(nameof(Versions), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Archive.Edit")]
+        public async Task<IActionResult> Rollback(int documentId, int versionId, CancellationToken cancellationToken)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            try
+            {
+                var document = await _versioningService.RollbackToVersionAsync(documentId, versionId, userId, cancellationToken);
+                TempData["ArchiveMessage"] = $"سند با موفقیت به نسخه {document.CurrentVersion} بازگشت داده شد.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ArchiveMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Versions), new { id = documentId });
+        }
+
+        [HttpGet]
+        [PermissionAuthorize("Archive.View")]
+        public async Task<IActionResult> DownloadVersion(int versionId, CancellationToken cancellationToken)
+        {
+            var fileBytes = await _versioningService.GetVersionFileAsync(versionId, cancellationToken);
+            if (fileBytes == null) return NotFound();
+
+            var version = await _context.DocumentVersions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == versionId, cancellationToken);
+
+            var fileName = version?.StoredFileName ?? "document";
+            var contentType = version?.ContentType ?? "application/octet-stream";
+            return File(fileBytes, contentType, fileName);
+        }
+
+        // ── Export Actions ───────────────────────────────
+
+        [HttpGet]
+        [PermissionAuthorize("Archive.View")]
+        public async Task<IActionResult> ExportExcel(string? searchTerm, string? category, string? accessLevel, CancellationToken cancellationToken)
+        {
+            var exportService = HttpContext.RequestServices.GetRequiredService<IExportService>();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+            var query = _context.DocumentArchiveItems.AsNoTracking().Include(item => item.CreatedByUser).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var term = searchTerm.Trim();
+                query = query.Where(item => item.Title.Contains(term) || item.FileName.Contains(term));
+            }
+            if (!string.IsNullOrWhiteSpace(category))
+                query = query.Where(item => item.Category == category);
+            if (!string.IsNullOrWhiteSpace(accessLevel))
+                query = query.Where(item => item.AccessLevel == accessLevel);
+
+            var rows = await query.OrderByDescending(item => item.CreatedAt).Take(5000).ToListAsync(cancellationToken);
+            var visibleRows = new List<DocumentArchiveItem>();
+            foreach (var row in rows)
+            {
+                if (await CanReadItemAsync(userId, row, cancellationToken))
+                    visibleRows.Add(row);
+            }
+
+            var data = new DataTable("ArchiveDocuments");
+            data.Columns.Add("شناسه");
+            data.Columns.Add("عنوان");
+            data.Columns.Add("دسته");
+            data.Columns.Add("نام فایل");
+            data.Columns.Add("حجم (KB)");
+            data.Columns.Add("ایجاد کننده");
+            data.Columns.Add("تاریخ");
+
+            foreach (var item in visibleRows)
+            {
+                data.Rows.Add(item.Id, item.Title, item.Category, item.FileName,
+                    Math.Round(item.FileSize / 1024.0, 1),
+                    item.CreatedByUser?.FullName ?? item.CreatedByUser?.UserName ?? "-",
+                    item.CreatedAt.ToString("yyyy/MM/dd"));
+            }
+
+            var bytes = exportService.ExportToExcel(data, "اسناد بایگانی");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ArchiveDocuments.xlsx");
+        }
+
+        [HttpGet]
+        [PermissionAuthorize("Archive.View")]
+        public async Task<IActionResult> ExportPdf(string? searchTerm, string? category, string? accessLevel, CancellationToken cancellationToken)
+        {
+            var exportService = HttpContext.RequestServices.GetRequiredService<IExportService>();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+            var query = _context.DocumentArchiveItems.AsNoTracking().Include(item => item.CreatedByUser).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var term = searchTerm.Trim();
+                query = query.Where(item => item.Title.Contains(term) || item.FileName.Contains(term));
+            }
+            if (!string.IsNullOrWhiteSpace(category))
+                query = query.Where(item => item.Category == category);
+            if (!string.IsNullOrWhiteSpace(accessLevel))
+                query = query.Where(item => item.AccessLevel == accessLevel);
+
+            var rows = await query.OrderByDescending(item => item.CreatedAt).Take(5000).ToListAsync(cancellationToken);
+            var visibleRows = new List<DocumentArchiveItem>();
+            foreach (var row in rows)
+            {
+                if (await CanReadItemAsync(userId, row, cancellationToken))
+                    visibleRows.Add(row);
+            }
+
+            var data = new DataTable("ArchiveDocuments");
+            data.Columns.Add("شناسه");
+            data.Columns.Add("عنوان");
+            data.Columns.Add("دسته");
+            data.Columns.Add("نام فایل");
+            data.Columns.Add("حجم (KB)");
+            data.Columns.Add("ایجاد کننده");
+            data.Columns.Add("تاریخ");
+
+            foreach (var item in visibleRows)
+            {
+                data.Rows.Add(item.Id, item.Title, item.Category, item.FileName,
+                    Math.Round(item.FileSize / 1024.0, 1),
+                    item.CreatedByUser?.FullName ?? item.CreatedByUser?.UserName ?? "-",
+                    item.CreatedAt.ToString("yyyy/MM/dd"));
+            }
+
+            var bytes = exportService.ExportToPdf(data, "اسناد بایگانی");
+            return File(bytes, "text/html; charset=utf-8", "ArchiveDocuments.html");
         }
 
         private static bool IsPreviewableContentType(string contentType)

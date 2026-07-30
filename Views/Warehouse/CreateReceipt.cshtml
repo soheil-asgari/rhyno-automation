@@ -3,82 +3,94 @@
     ViewData["Title"] = "ثبت رسید انبار";
 }
 
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-        <div>
-            <h5 class="fw-bold mb-1">ثبت رسید انبار</h5>
-            <p class="text-muted small mb-0">خلاصه زنده، پیش‌نمایش نهایی و ارسال برای بررسی</p>
+<div class="page-shell wh-page">
+    <div class="section-header section-header-toned section-tone-info mb-3">
+        <div class="section-header-copy">
+            <h1 class="section-title">ثبت رسید انبار</h1>
+            <p class="section-subtitle">خلاصه زنده، پیش‌نمایش نهایی و ارسال برای بررسی</p>
         </div>
-        <a asp-action="Receipts" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+        <a asp-action="Receipts" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 no-underline">بازگشت</a>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  mb-3" >
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3" >
-            <form asp-action="CreateReceipt" method="post" id="receiptForm">
-                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
-                <div class="row g-2 mb-3">
-                    <div class="col-md-3"><label asp-for="ReceiptNumber" class="form-label small"></label><input asp-for="ReceiptNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></div>
-                    <div class="col-md-2"><label asp-for="DateShamsi" class="form-label small"></label><input asp-for="DateShamsi" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></div>
-                    <div class="col-md-3"><label asp-for="WarehouseId" class="form-label small"></label><select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select></div>
-                    <div class="col-md-2">
-                        <label asp-for="VendorId" class="form-label small"></label>
-                        <select asp-for="VendorId" asp-items="Model.VendorOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
-                            <option value="">انتخاب تامین‌کننده</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small">عملیات</label>
-                        <button type="button" id="addReceiptRow" class="btn btn-sm btn-outline-secondary d-block w-100">+ ردیف</button>
-                    </div>
-                    <div class="col-md-4 d-none"><label asp-for="SupplierOrSource" class="form-label small"></label><input asp-for="SupplierOrSource" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /></div>
-                    <div class="col-12"><label asp-for="Notes" class="form-label small"></label><textarea asp-for="Notes" rows="2" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></textarea></div>
-                </div>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 mb-3">
+        <form asp-action="CreateReceipt" method="post" id="receiptForm">
+            <div asp-validation-summary="ModelOnly" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-[12px] text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 mb-3"></div>
 
-                <div class="summary-bar mb-3" id="receiptSummaryBar">
-                    <div><span class="text-muted small">تعداد ردیف</span><div class="fw-bold" id="receiptRowCount">0</div></div>
-                    <div><span class="text-muted small">جمع تعداد</span><div class="fw-bold" id="receiptTotalQty">0.000</div></div>
-                    <div><span class="text-muted small">جمع مبلغ</span><div class="fw-bold" id="receiptTotalAmount">0</div></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <div>
+                    <label asp-for="ReceiptNumber" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">شماره رسید</label>
+                    <input asp-for="ReceiptNumber" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
                 </div>
+                <div>
+                    <label asp-for="DateShamsi" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">تاریخ</label>
+                    <input asp-for="DateShamsi" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                </div>
+                <div>
+                    <label asp-for="WarehouseId" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">انبار</label>
+                    <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"></select>
+                </div>
+                <div>
+                    <label asp-for="VendorId" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">تامین‌کننده</label>
+                    <select asp-for="VendorId" asp-items="Model.VendorOptions" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                        <option value="">انتخاب تامین‌کننده</option>
+                    </select>
+                </div>
+            </div>
 
-                <div class="row g-3">
-                    <div class="col-12 col-xl-8">
-                        <div class="table-responsive">
-                            <table class="w-full text-xs text-right border-collapse"   id="receiptItemsTable">
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800"><tr><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کالا</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >تعداد</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >فی واحد</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >وضعیت</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ></th></tr></thead>
-                                <tbody id="receiptItemsBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="col-12 col-xl-4">
-                        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto  h-100" >
-                            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body" >
-                                <h6 class="fw-bold mb-3">پیش‌نمایش نهایی</h6>
-                                <div class="preview-line"><span>شماره رسید</span><strong id="previewReceiptNumber">-</strong></div>
-                                <div class="preview-line"><span>تاریخ</span><strong id="previewDateShamsi">-</strong></div>
-                                <div class="preview-line"><span>انبار</span><strong id="previewWarehouse">-</strong></div>
-                                <div class="preview-line"><span>تامین‌کننده</span><strong id="previewVendor">-</strong></div>
-                                <div class="preview-line"><span>ردیف‌ها</span><strong id="previewLines">0</strong></div>
-                                <div class="preview-line"><span>جمع مبلغ</span><strong id="previewAmount">0</strong></div>
-                                <div class="small text-muted mt-3">این پیش‌نمایش هنگام تایپ به‌روزرسانی می‌شود.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="mb-3">
+                <label asp-for="Notes" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">یادداشت</label>
+                <textarea asp-for="Notes" rows="2" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"></textarea>
+            </div>
 
-                <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <button type="submit" name="SaveAsDraft" value="true" class="btn btn-sm btn-outline-secondary">ذخیره پیش نویس</button>
-                    <button type="submit" name="SaveAsDraft" value="false" class="btn btn-sm btn-success">ارسال برای بررسی</button>
-                    <a asp-action="Receipts" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+            <div class="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 mb-4 dark:border-slate-700 dark:bg-slate-900" id="receiptSummaryBar">
+                <div class="text-center"><span class="block text-[10px] text-slate-400 dark:text-slate-500">تعداد ردیف</span><strong class="text-sm text-slate-800 dark:text-white" id="receiptRowCount">0</strong></div>
+                <div class="text-center"><span class="block text-[10px] text-slate-400 dark:text-slate-500">جمع تعداد</span><strong class="text-sm text-slate-800 dark:text-white" id="receiptTotalQty">0.000</strong></div>
+                <div class="text-center"><span class="block text-[10px] text-slate-400 dark:text-slate-500">جمع مبلغ</span><strong class="text-sm text-slate-800 dark:text-white" id="receiptTotalAmount">0</strong></div>
+                <button type="button" id="addReceiptRow" class="mr-auto rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-100 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">+ ردیف</button>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div class="xl:col-span-2 overflow-x-auto">
+                    <table class="w-full text-[12px] text-right border-collapse" id="receiptItemsTable">
+                        <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="px-3 py-2.5 font-bold text-slate-600 dark:text-slate-300">کالا</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-600 dark:text-slate-300">تعداد</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-600 dark:text-slate-300">فی واحد</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-600 dark:text-slate-300">وضعیت</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-600 dark:text-slate-300"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="receiptItemsBody"></tbody>
+                    </table>
                 </div>
-            </form>
-        </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+                    <h6 class="mb-3 text-[12px] font-black text-slate-800 dark:text-white">پیش‌نمایش نهایی</h6>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400 dark:text-slate-500">شماره رسید</span><strong class="text-slate-700 dark:text-slate-300" id="previewReceiptNumber">-</strong></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400 dark:text-slate-500">تاریخ</span><strong class="text-slate-700 dark:text-slate-300" id="previewDateShamsi">-</strong></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400 dark:text-slate-500">انبار</span><strong class="text-slate-700 dark:text-slate-300" id="previewWarehouse">-</strong></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400 dark:text-slate-500">تامین‌کننده</span><strong class="text-slate-700 dark:text-slate-300" id="previewVendor">-</strong></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400 dark:text-slate-500">ردیف‌ها</span><strong class="text-slate-700 dark:text-slate-300" id="previewLines">0</strong></div>
+                        <div class="flex justify-between text-[11px] border-t border-slate-200 pt-2 dark:border-slate-700"><span class="text-slate-400 dark:text-slate-500">جمع مبلغ</span><strong class="text-teal-700 dark:text-teal-400" id="previewAmount">0</strong></div>
+                    </div>
+                    <p class="mt-3 text-[10px] text-slate-400 dark:text-slate-500">این پیش‌نمایش هنگام تایپ به‌روزرسانی می‌شود.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="submit" name="SaveAsDraft" value="true" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">ذخیره پیش نویس</button>
+                <button type="submit" name="SaveAsDraft" value="false" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-700 transition">ارسال برای بررسی</button>
+                <a asp-action="Receipts" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 no-underline">بازگشت</a>
+            </div>
+        </form>
     </div>
 </div>
 
 <template id="receiptRowTemplate">
     <tr>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >
-            <select data-field="ProductId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+        <td class="px-2 py-2">
+            <select data-field="ProductId" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
                 <option value="">انتخاب کالا</option>
                 @foreach (var product in Model.ProductOptions)
                 {
@@ -86,13 +98,12 @@
                 }
             </select>
         </td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  ><input type="number" data-field="Quantity" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" min="0.001" step="0.001" /></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  ><input type="number" data-field="UnitPrice" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" min="0" step="0.01" /></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  ><div class="small text-muted row-feedback">در انتظار انتخاب کالا</div></td>
-        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 text-center"  ><button type="button" class="btn btn-sm btn-outline-danger removeRow">حذف</button></td>
+        <td class="px-2 py-2"><input type="number" data-field="Quantity" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" min="0.001" step="0.001" /></td>
+        <td class="px-2 py-2"><input type="number" data-field="UnitPrice" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" min="0" step="0.01" /></td>
+        <td class="px-2 py-2"><div class="text-[11px] text-slate-400 row-feedback">در انتظار انتخاب کالا</div></td>
+        <td class="px-2 py-2 text-center"><button type="button" class="inline-flex items-center rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-100 transition dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 removeRow">حذف</button></td>
     </tr>
 </template>
-
 
 @section Styles {
 }

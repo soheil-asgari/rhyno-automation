@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.OpenApi.Models;
 using System.Globalization;
 using System.Threading.RateLimiting;
 using OfficeAutomation.Data;
@@ -17,6 +18,8 @@ using OfficeAutomation.Services.Auditing;
 using OfficeAutomation.Services.Outbox;
 using OfficeAutomation.Services.Security;
 using OfficeAutomation.Services.Tenancy;
+using OfficeAutomation.Services.Middleware;
+using OfficeAutomation.Services.HealthChecks;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
@@ -41,6 +44,87 @@ builder.Services.Configure<OutboxOptions>(builder.Configuration.GetSection(Outbo
 builder.Services.Configure<ConnectorOptions>(builder.Configuration.GetSection(ConnectorOptions.SectionName));
 builder.Services.Configure<TenantOptions>(builder.Configuration.GetSection(TenantOptions.SectionName));
 builder.Services.Configure<AuditRetentionOptions>(builder.Configuration.GetSection(AuditRetentionOptions.SectionName));
+
+// ── Swagger / OpenAPI ──────────────────────────────────
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Rhyno ERP API",
+        Version = "v1",
+        Description = "رابط برنامه‌نویسی کاربردی (API) عمومی سیستم برنامه‌ریزی منابع سازمانی راینو",
+        Contact = new OpenApiContact
+        {
+            Name = "Rhyno Support",
+            Email = "support@rhyno.app",
+            Url = new Uri("https://rhyno.app")
+        }
+    });
+
+    // Add API Key authentication definition
+    options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "API Key را در هدر وارد کنید. مثال: X-Api-Key: your-api-key",
+        Name = "X-Api-Key",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "ApiKey"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Include XML comments
+    var xmlFiles = Directory.GetFiles(AppContext.BaseDirectory, "*.xml", SearchOption.TopDirectoryOnly);
+    foreach (var xmlFile in xmlFiles)
+    {
+        options.IncludeXmlComments(xmlFile);
+    }
+});
+
+// ── Redis Caching ──────────────────────────────────────
+var redisConnectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnectionString;
+        options.InstanceName = "rhyno:";
+    });
+}
+
+// ── API Key Authentication ─────────────────────────────
+builder.Services.AddAuthentication()
+    .AddApiKeyAuthentication(options =>
+    {
+        var apiKeys = builder.Configuration.GetSection("ApiKeys").Get<string[]>()
+                      ?? new[] { "rhyno-api-key-change-me-in-production" };
+        options.ValidApiKeys = apiKeys;
+    });
+
+// ── HTTP Client Factory ────────────────────────────────
+builder.Services.AddHttpClient("ExternalServices", client =>
+{
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Rhyno-ERP/1.0");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
+// ── Export & Import Services ───────────────────────────
+builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<IBulkImportService, BulkImportService>();
 builder.Services.AddSingleton<ITenantRegistry, TenantRegistry>();
 builder.Services.AddScoped<TenantMigrationOrchestrator>();
 builder.Services.AddHostedService<TenantMigrationHostedService>();
@@ -176,8 +260,20 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AddAreaPageRoute("Identity", "/Account/Login", "/Account/Login");
 });
 builder.Services.AddScoped<LeaveWorkflowService>();
+builder.Services.AddScoped<IDocumentVersioningService, DocumentVersioningService>();
+builder.Services.AddSingleton<ITotpService, TotpService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
+builder.Services.AddHostedService<DocumentRetentionBackgroundService>();
+builder.Services.AddHostedService<ScheduledReportBackgroundService>();
+
+// ── Health Checks (Advanced) ───────────────────────────
 builder.Services.AddHealthChecks()
-    .AddCheck<DatabaseHealthCheck>("database");
+    .AddCheck<DatabaseHealthCheck>("database", tags: new[] { "db", "sql" })
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: new[] { "messaging" })
+    .AddCheck<RedisHealthCheck>("redis", tags: new[] { "cache" })
+    .AddCheck<DiskSpaceHealthCheck>("disk", tags: new[] { "infrastructure" })
+    .AddCheck<MemoryHealthCheck>("memory", tags: new[] { "infrastructure" })
+    .AddCheck<ExternalServicesHealthCheck>("external", tags: new[] { "network" });
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -245,6 +341,28 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 app.UseStaticFiles();
+
+// ── Security Headers ───────────────────────────────────
+app.UseSecurityHeaders();
+
+// ── Swagger (only in Development or when enabled) ──────
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
+{
+    app.UseSwagger(options =>
+    {
+        options.RouteTemplate = "swagger/{documentName}/swagger.json";
+    });
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Rhyno ERP API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "Rhyno ERP - API Documentation";
+        options.DefaultModelsExpandDepth(-1); // Collapse schemas by default
+    });
+}
+
+// ── 404 Handling ───────────────────────────────────────
+app.UseStatusCodePagesWithReExecute("/Home/Error?code={0}");
 
 app.UseRouting();
 app.UseRequestLocalization();

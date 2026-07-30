@@ -11,7 +11,7 @@
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">پیگیری اعلان‌های خوانده‌نشده، هشدارهای عملیاتی و ارجاع‌های سیستم.</p>
         </div>
         <form asp-action="MarkAllRead" method="post">
-            <button class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 bg-transparent px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1.5" type="submit" disabled="@(Model.UnreadCount == 0)">
+            <button class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 bg-transparent px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5" type="submit" disabled="@(Model.UnreadCount == 0)">
                 <i class="bi bi-check2-all"></i>
                 <span>خواندن همه</span>
             </button>
@@ -31,7 +31,7 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="text-center text-xs text-slate-400 dark:text-slate-650 py-12">اعلانی برای نمایش وجود ندارد.</div>
+        <div class="text-center text-xs text-slate-400 dark:text-slate-600 py-12">اعلانی برای نمایش وجود ندارد.</div>
     }
     else
     {
@@ -63,7 +63,7 @@
                     <div class="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
                         @if (!string.IsNullOrWhiteSpace(item.LinkUrl))
                         {
-                            <a class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1" href="@item.LinkUrl">
+                            <a class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1" href="@item.LinkUrl">
                                 <i class="bi bi-arrow-left"></i>
                                 <span>مشاهده</span>
                             </a>

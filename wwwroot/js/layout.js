@@ -1,98 +1,103 @@
-﻿(function () {
-    // Sidebar toggle (mobile)
-    const sidebar = document.getElementById('appSidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const btnOpen = document.getElementById('btnOpenSidebar');
-    const btnClose = document.getElementById('btnCloseSidebar');
+﻿/**
+ * Rhyno Layout JS – Minimal bootstrap-free utilities
+ * Core functionality (dropdowns, modals, sidebar, confirm, toast) is
+ * initialized inline in _Layout.cshtml via window.Rhyno.
+ *
+ * This file provides legacy helpers that other scripts may depend on.
+ */
 
-    function openSidebar() {
-        if (!sidebar || !overlay) return;
-        sidebar.classList.add('is-open');
-        overlay.classList.remove('d-none');
+(function () {
+    // Expose Rhyno globally if not already defined (rare edge-case for pages
+    // that may load this script before inline scripts)
+    if (!window.Rhyno) {
+        window.Rhyno = {
+            toggleDropdown: function () { },
+            closeAllDropdowns: function () { },
+            showModal: function (id) {
+                var el = document.getElementById(id);
+                if (el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
+            },
+            hideModal: function (id) {
+                var el = document.getElementById(id);
+                if (el) { el.classList.remove('open'); document.body.style.overflow = ''; }
+            },
+            openSidebar: function () {
+                var s = document.getElementById('appSidebar');
+                var o = document.getElementById('sidebarOverlay');
+                if (s) s.classList.add('is-open');
+                if (o) o.classList.remove('hidden');
+            },
+            closeSidebar: function () {
+                var s = document.getElementById('appSidebar');
+                var o = document.getElementById('sidebarOverlay');
+                if (s) s.classList.remove('is-open');
+                if (o) o.classList.add('hidden');
+            },
+            confirm: function (msg, cb) {
+                var m = document.getElementById('appConfirmMessage');
+                if (m) m.textContent = msg || 'آیا مطمئن هستید؟';
+                window.Rhyno._confirmCallback = cb;
+                this.showModal('appConfirmDialog');
+            },
+            toast: function (msg, type) {
+                type = type || 'info';
+                var colors = { success: 'bg-emerald-600', error: 'bg-rose-600', warning: 'bg-amber-600', info: 'bg-teal-600' };
+                var icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
+                var t = document.createElement('div');
+                t.className = 'fixed bottom-4 left-4 z-[200] flex items-center gap-2 rounded-lg ' + (colors[type] || colors.info) + ' px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all duration-300 translate-y-4 opacity-0';
+                t.innerHTML = '<i class="bi ' + (icons[type] || icons.info) + '"></i> ' + msg;
+                document.body.appendChild(t);
+                requestAnimationFrame(function () { t.classList.remove('translate-y-4', 'opacity-0'); });
+                setTimeout(function () {
+                    t.classList.add('translate-y-4', 'opacity-0');
+                    setTimeout(function () { t.remove(); }, 300);
+                }, 3000);
+            }
+        };
     }
-    function closeSidebar() {
-        if (!sidebar || !overlay) return;
-        sidebar.classList.remove('is-open');
-        overlay.classList.add('d-none');
-    }
 
-    btnOpen?.addEventListener('click', openSidebar);
-    btnClose?.addEventListener('click', closeSidebar);
-    overlay?.addEventListener('click', closeSidebar);
-
-    // Active link auto (بدون نیاز به ifهای Razor)
-    const path = (window.location.pathname || '').toLowerCase();
-    document.querySelectorAll('a.sidebar-link').forEach(a => {
-        const href = (a.getAttribute('href') || '').toLowerCase();
+    // Active link highlighting based on current path
+    var path = (window.location.pathname || '').toLowerCase();
+    document.querySelectorAll('a.sidebar-link').forEach(function (a) {
+        var href = (a.getAttribute('href') || '').toLowerCase();
         if (!href || href === '#' || href.startsWith('javascript')) return;
-
         if (path === href || path.startsWith(href + '/') || (href !== '/' && path.startsWith(href))) {
             a.classList.add('sidebar-active');
         }
     });
 
-    // Coming soon UX
-    function toast(msg) {
-        if (window.Swal) {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: msg, showConfirmButton: false, timer: 2200, timerProgressBar: true });
-        } else {
-            alert(msg);
-        }
-    }
-
-    document.addEventListener('click', (e) => {
-        const el = e.target.closest('a.sidebar-link--comingsoon');
+    // Coming-soon UX (legacy – preserved for backward compatibility)
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest('a.sidebar-link--comingsoon');
         if (!el) return;
         e.preventDefault();
-        Swal.fire({
-            icon: 'info',
-            title: 'بخش مالی',
-            text: 'این بخش در حال توسعه است.',
-            confirmButtonText: 'تایید'
-        });
+        if (window.Rhyno && window.Rhyno.confirm) {
+            window.Rhyno.confirm('این بخش در حال توسعه است.', function () { });
+        } else {
+            alert('این بخش در حال توسعه است.');
+        }
     });
 
-    // Persian date/time
+    // Persian date/time for legacy elements (if .js-datatable based tables need it)
     function pad(n) { return String(n).padStart(2, '0'); }
     function updatePersianDateTime() {
-        const now = new Date();
-        const dateEl = document.getElementById('current-persian-date');
-        const timeEl = document.getElementById('current-time-persian');
-
+        var dateEl = document.getElementById('current-persian-date');
+        var timeEl = document.getElementById('current-time-persian');
+        var now = new Date();
         if (dateEl) {
             dateEl.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: 'long', day: 'numeric' }).format(now);
         }
         if (timeEl) {
-            timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            timeEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
         }
     }
     updatePersianDateTime();
     setInterval(updatePersianDateTime, 60000);
 
-    // Daily background (با احتیاط: اگر خوانایی مشکل داشت، overlay توی css/styles.css اضافه کن)
-    function setDailyBackground() {
-        const bgImages = [
-            '/images/backgrounds/bg-1.jpg',
-            '/images/backgrounds/bg-2.jpg',
-            '/images/backgrounds/bg-3.jpg',
-            '/images/backgrounds/bg-4.jpg',
-            '/images/backgrounds/bg-5.jpg',
-            '/images/backgrounds/bg-6.jpg',
-            '/images/backgrounds/bg-7.jpg',
-            '/images/backgrounds/bg-8.jpg'
-        ];
-        const now = new Date();
-        const start = new Date(now.getFullYear(), 0, 0);
-        const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-        document.body.style.backgroundImage = `url('${bgImages[dayOfYear % bgImages.length]}')`;
-    }
-    setDailyBackground();
-
-    // DataTables: فقط جدول‌هایی که خودت کلاس می‌دی
-    // به‌جای .table:not(.dt-skip) => فقط .js-datatable
+    // DataTables initialization (kept for backward compat – pages using DataTables
+    // include their own JS and will attach to .js-datatable class)
     function initDataTables() {
         if (!window.jQuery || !jQuery.fn || !jQuery.fn.DataTable) return;
-
         jQuery('table.js-datatable').each(function () {
             if (!jQuery.fn.DataTable.isDataTable(this)) {
                 jQuery(this).DataTable({
@@ -104,21 +109,5 @@
             }
         });
     }
-    // چون اسکریپت‌ها defer هستند، DOM آماده است
     initDataTables();
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const sidebar = document.querySelector('.sidebar-right');
-        const overlay = document.getElementById('sidebarOverlay');
-        const btnOpen = document.getElementById('btnOpenSidebar');
-
-        function open() { sidebar?.classList.add('is-open'); overlay?.classList.add('show'); }
-        function close() { sidebar?.classList.remove('is-open'); overlay?.classList.remove('show'); }
-
-        btnOpen?.addEventListener('click', open);
-        overlay?.addEventListener('click', close);
-    });
 })();
-
-
-

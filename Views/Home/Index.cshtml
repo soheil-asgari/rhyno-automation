@@ -209,23 +209,23 @@
                         <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="pending-work" />
                         <span>کارهای در انتظار اقدام</span>
                     </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
                         <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="calendar" />
                         <span>تقویم و مناسبت‌ها</span>
                     </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
                         <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="system-alerts" />
                         <span>هشدارهای عملیاتی</span>
                     </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
                         <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="weekly-activity" />
                         <span>نمودار فعالیت هفتگی</span>
                     </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
                         <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="recent-activity" />
                         <span>آخرین فعالیت‌ها</span>
                     </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
+                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
                         <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="quick-shortcuts" />
                         <span>دسترسی سریع</span>
                     </label>
@@ -234,7 +234,7 @@
         </div>
         
         <div class="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3 mt-4">
-            <button type="button" id="btnResetLayout" class="px-3 py-1.5 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-bold transition">حذف سفارشی‌سازی و بازنشانی چیدمان</button>
+            <button type="button" id="btnResetLayout" class="px-3 py-1.5 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-bold transition">حذف سفارشی‌سازی و بازنشانی چیدمان</button>
         </div>
     </div>
 
@@ -308,8 +308,8 @@
                                 "rejected" or "رد شد" => "bg-rose-500 text-white dark:bg-rose-600",
                                 _ => "bg-blue-500 text-white dark:bg-blue-600"
                             };
-                            <a href="@item.Url" class="flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-955/20 rounded-md text-slate-700 dark:text-slate-300 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-200">
-                                <div class="w-7 h-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 text-teal-600 dark:text-teal-400 text-xs flex-shrink-0">
+                            <a href="@item.Url" class="flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-950/20 rounded-md text-slate-700 dark:text-slate-300 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-200">
+                                <div class="w-7 h-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-teal-600 dark:text-teal-400 text-xs flex-shrink-0">
                                     <i class="bi @item.Icon"></i>
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -353,7 +353,7 @@
                 <div id="eventLoader" class="flex justify-center py-2 hidden">
                     <div class="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-800 border-t-teal-650 dark:border-t-teal-400" role="status"></div>
                 </div>
-                <div id="eventContent" class="mt-2 rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-850">
+                <div id="eventContent" class="mt-2 rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-800">
                     <div class="flex items-start gap-2.5">
                         <i class="bi bi-info-circle text-teal-600 dark:text-teal-400 mt-0.5 text-sm"></i>
                         <p id="eventDisplay" class="m-0 text-[11px] leading-5 text-slate-600 dark:text-slate-400">در حال دریافت رویدادهای این روز...</p>
@@ -411,7 +411,7 @@
         <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="weekly-activity">
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">فعالیت هفت روز اخیر</h2>
                 </div>
                 <span class="px-2 py-0.5 rounded-full bg-teal-500 text-white text-[10px] font-bold">@ToFa(Model.TotalAuditEvents) رخداد</span>
@@ -422,7 +422,7 @@
                     @foreach (var point in Model.WeeklyActivity)
                     {
                         <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
-                            <div class="h-16 w-full flex items-end rounded-md bg-slate-50 dark:bg-slate-955 p-0.5 border border-slate-200/50 dark:border-slate-800/50">
+                            <div class="h-16 w-full flex items-end rounded-md bg-slate-50 dark:bg-slate-950 p-0.5 border border-slate-200/50 dark:border-slate-800/50">
                                 <div class="weekly-activity-chart-bar w-full rounded-sm hover:bg-teal-500/80 dark:hover:bg-teal-400/80 transition-all duration-300 cursor-pointer" style="height: @(point.Percent)%" title="@point.Value رخداد سیستمی"></div>
                             </div>
                             <small class="truncate text-[9px] text-slate-500 dark:text-slate-400 font-bold font-mono">
@@ -438,7 +438,7 @@
         <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="recent-activity">
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">آخرین فعالیت‌های سیستم</h2>
                 </div>
                 <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold">تراکنش‌های اخیر</span>
@@ -464,7 +464,7 @@
                                 "danger" => "bg-rose-500 text-white",
                                 _ => "bg-slate-400 text-white"
                             };
-                            <div class="flex items-center justify-between gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-955/20 rounded-md">
+                            <div class="flex items-center justify-between gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/20 rounded-md">
                                 <span class="min-w-0">
                                     <strong class="block text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">@item.DocumentType</strong>
                                     <small class="block text-[10px] text-slate-500 dark:text-slate-400 font-mono">@item.DateText</small>
@@ -481,7 +481,7 @@
         <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="quick-shortcuts">
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1 mb-1.5">
                 <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-955 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
+                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
                     <h2 class="text-xs font-bold text-slate-700 dark:text-slate-300">دسترسی سریع</h2>
                 </div>
                 <span class="text-[10px] text-slate-400 dark:text-slate-500">پرکاربرد</span>
@@ -491,7 +491,7 @@
                 <div class="grid grid-cols-2 gap-1.5">
                     @foreach (var shortcut in shortcuts)
                     {
-                        <a href="@shortcut.Url" class="group flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-955/20 rounded-md text-slate-800 dark:text-slate-200 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-150">
+                        <a href="@shortcut.Url" class="group flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 rounded-md text-slate-800 dark:text-slate-200 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-150">
                             <i class="bi @shortcut.Icon text-xs text-slate-500 dark:text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 flex-shrink-0"></i>
                             <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">@shortcut.Title</span>
                         </a>

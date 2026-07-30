@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
@@ -25,6 +26,8 @@ public sealed class WorkInboxController : Controller
     private readonly IWebHostEnvironment _environment;
     private readonly ITenantPathResolver _tenantPathResolver;
     private readonly IWorkflowExecutionService _workflowExecutionService;
+    private readonly NotificationService _notificationService;
+    private readonly IEmailService _emailService;
 
     public WorkInboxController(
         WorkInboxService workInboxService,
@@ -34,7 +37,9 @@ public sealed class WorkInboxController : Controller
         IdentityDbContext identityContext,
         IWebHostEnvironment environment,
         ITenantPathResolver tenantPathResolver,
-        IWorkflowExecutionService workflowExecutionService)
+        IWorkflowExecutionService workflowExecutionService,
+        NotificationService notificationService,
+        IEmailService emailService)
     {
         _workInboxService = workInboxService;
         _authorizationFacade = authorizationFacade;
@@ -44,6 +49,8 @@ public sealed class WorkInboxController : Controller
         _environment = environment;
         _tenantPathResolver = tenantPathResolver;
         _workflowExecutionService = workflowExecutionService;
+        _notificationService = notificationService;
+        _emailService = emailService;
     }
 
     public async Task<IActionResult> Index(string? filter, CancellationToken cancellationToken)
@@ -550,6 +557,245 @@ public sealed class WorkInboxController : Controller
                int.TryParse(value[prefix.Length..], out var id)
             ? id
             : null;
+    }
+
+    // ── Kanban Board ───────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> Kanban(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        var tasks = await _context.WorkflowCaseTasks
+            .AsNoTracking()
+            .Include(t => t.AssignedToUser)
+            .Include(t => t.CreatedByUser)
+            .Where(t => t.AssignedToUserId == userId || t.CreatedByUserId == userId)
+            .OrderByDescending(t => t.CreatedAt)
+            .Take(200)
+            .ToListAsync(cancellationToken);
+
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var timeLogs = await _context.TaskTimeLogs
+            .AsNoTracking()
+            .Where(tl => taskIds.Contains(tl.WorkflowCaseTaskId))
+            .ToListAsync(cancellationToken);
+
+        var commentCounts = await _context.WorkflowComments
+            .AsNoTracking()
+            .Where(c => taskIds.Contains(c.WorkflowInstanceId))
+            .GroupBy(c => c.WorkflowInstanceId)
+            .Select(g => new { TaskId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var statuses = new[]
+        {
+            new { Status = "Pending", Title = "در انتظار", ColorClass = "bg-amber-50 border-amber-300" },
+            new { Status = "InProgress", Title = "در حال انجام", ColorClass = "bg-blue-50 border-blue-300" },
+            new { Status = "NeedsApproval", Title = "نیازمند تایید", ColorClass = "bg-purple-50 border-purple-300" },
+            new { Status = "Completed", Title = "تکمیل شده", ColorClass = "bg-emerald-50 border-emerald-300" }
+        };
+
+        var columns = new List<KanbanColumnVM>();
+        foreach (var statusDef in statuses)
+        {
+            var columnTasks = tasks.Where(t => NormalizeKanbanStatus(t.Status) == statusDef.Status).ToList();
+            var cards = columnTasks.Select(t => new KanbanCardVM
+            {
+                TaskId = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                AssignedToName = t.AssignedToUser?.FullName ?? t.AssignedToUser?.UserName,
+                Labels = string.IsNullOrWhiteSpace(t.TaskType) ? Array.Empty<string>() : new[] { t.TaskType },
+                CommentCount = commentCounts.FirstOrDefault(c => c.TaskId == t.Id)?.Count ?? 0,
+                TotalHoursSpent = timeLogs.Where(tl => tl.WorkflowCaseTaskId == t.Id).Sum(tl => tl.HoursSpent),
+                CreatedAt = t.CreatedAt
+            }).ToList();
+
+            columns.Add(new KanbanColumnVM
+            {
+                Status = statusDef.Status,
+                Title = statusDef.Title,
+                ColorClass = statusDef.ColorClass,
+                Cards = cards
+            });
+        }
+
+        var model = new KanbanBoardVM { Columns = columns };
+        return View("Kanban", model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateTaskStatus(int taskId, string status, CancellationToken cancellationToken)
+    {
+        var task = await _context.WorkflowCaseTasks.FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
+        if (task == null) return NotFound(new { success = false, message = "تسک یافت نشد." });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (task.AssignedToUserId != userId && task.CreatedByUserId != userId)
+            return Forbid();
+
+        task.Status = status switch
+        {
+            "InProgress" => "InProgress",
+            "NeedsApproval" => "NeedsApproval",
+            "Completed" => WorkflowCaseTaskStatus.Completed,
+            _ => "Pending"
+        };
+
+        if (task.Status == WorkflowCaseTaskStatus.Completed)
+            task.CompletedAt = DateTimeOffset.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return Json(new { success = true });
+    }
+
+    // ── Time Tracking ─────────────────────────────────────
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LogTime(int taskId, decimal hoursSpent, string description, CancellationToken cancellationToken)
+    {
+        if (hoursSpent <= 0 || hoursSpent > 24)
+            return BadRequest(new { success = false, message = "مقدار ساعت باید بین ۰.۰۱ تا ۲۴ باشد." });
+
+        if (string.IsNullOrWhiteSpace(description))
+            return BadRequest(new { success = false, message = "شرح کارکرد الزامی است." });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var task = await _context.WorkflowCaseTasks.FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
+        if (task == null) return NotFound(new { success = false, message = "تسک یافت نشد." });
+
+        _context.TaskTimeLogs.Add(new TaskTimeLog
+        {
+            WorkflowCaseTaskId = taskId,
+            UserId = userId,
+            HoursSpent = hoursSpent,
+            Description = description.Trim(),
+            LoggedAt = DateTime.Now
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return Json(new { success = true, message = "کارکرد با موفقیت ثبت شد." });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetTaskTimeLogs(int taskId, CancellationToken cancellationToken)
+    {
+        var logs = await _context.TaskTimeLogs
+            .AsNoTracking()
+            .Include(tl => tl.User)
+            .Where(tl => tl.WorkflowCaseTaskId == taskId)
+            .OrderByDescending(tl => tl.LoggedAt)
+            .Select(tl => new TaskTimeLogItemVM
+            {
+                Id = tl.Id,
+                UserName = tl.User != null ? (tl.User.FullName ?? tl.User.UserName ?? tl.User.Email ?? "کاربر") : "کاربر",
+                HoursSpent = tl.HoursSpent,
+                Description = tl.Description,
+                LoggedAt = tl.LoggedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var totalHours = logs.Sum(l => l.HoursSpent);
+        return Json(new { items = logs, totalHours });
+    }
+
+    // ── @mentions in Comments ──────────────────────────────
+
+    private static readonly Regex MentionRegex = new(@"@([a-zA-Z0-9آ-ی\u0600-\u06FF._@+\- ]{2,50})", RegexOptions.Compiled);
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddCommentWithMentions(AddCommentWithMentionsVM model, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        if (string.IsNullOrWhiteSpace(model.Body))
+            return BadRequest(new { success = false, message = "متن کامنت الزامی است." });
+
+        // Extract @mentions
+        var mentions = MentionRegex.Matches(model.Body)
+            .Select(m => m.Groups[1].Value.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Save comment
+        var comment = new WorkflowComment
+        {
+            WorkflowInstanceId = model.DocumentId ?? 0,
+            WorkflowStepId = model.WorkflowStepId,
+            AuthorUserId = userId,
+            Body = model.Body.Trim(),
+            Visibility = "Participants",
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        _context.WorkflowComments.Add(comment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Send notifications to mentioned users
+        if (mentions.Count > 0)
+        {
+            var currentUser = await _identityContext.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            var currentUserName = currentUser?.FullName ?? currentUser?.UserName ?? "کاربر";
+
+            var mentionedUsers = await _identityContext.Users
+                .AsNoTracking()
+                .Where(u => mentions.Any(m =>
+                    (u.FullName != null && u.FullName.Contains(m)) ||
+                    (u.UserName != null && u.UserName.Contains(m)) ||
+                    (u.Email != null && u.Email.Contains(m))))
+                .Take(20)
+                .ToListAsync(cancellationToken);
+
+            foreach (var mentioned in mentionedUsers)
+            {
+                if (mentioned.Id == userId) continue;
+
+                await _notificationService.CreateAsync(
+                    mentioned.Id,
+                    "منشن در کامنت",
+                    $"{currentUserName} شما را در یک کامنت منشن کرده است.",
+                    NotificationSeverity.Info,
+                    Url.Action(nameof(Index)) ?? "/WorkInbox",
+                    cancellationToken: cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(mentioned.Email))
+                {
+                    try
+                    {
+                        await _emailService.SendTaskAssignmentEmailAsync(
+                            mentioned.Email,
+                            mentioned.FullName ?? mentioned.UserName ?? "کاربر",
+                            "منشن در کامنت",
+                            currentUserName,
+                            Url.Action(nameof(Index), null, Request.Scheme) ?? "/WorkInbox",
+                            cancellationToken);
+                    }
+                    catch { /* email is non-critical */ }
+                }
+            }
+        }
+
+        return Json(new { success = true, mentionCount = mentions.Count });
+    }
+
+    private static string NormalizeKanbanStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status)) return "Pending";
+
+        return status switch
+        {
+            WorkflowCaseTaskStatus.Pending => "Pending",
+            WorkflowCaseTaskStatus.Completed => "Completed",
+            "InProgress" => "InProgress",
+            "NeedsApproval" => "NeedsApproval",
+            _ => "Pending"
+        };
     }
 
     private readonly record struct BulkItemResult(bool Succeeded, bool Unauthorized, string Label)

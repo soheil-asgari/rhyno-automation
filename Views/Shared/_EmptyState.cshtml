@@ -1,6 +1,110 @@
-@model dynamic
-<div class="empty-state text-center py-4">
-    <i class="bi @Model.Icon fs-2 d-block mb-2"></i>
-    <div class="fw-semibold">@Model.Title</div>
-    <div class="small text-muted">@Model.Description</div>
+@* 
+    Empty State Component - نسخه بهبودیافته
+
+    پارامترها (از طریق ViewData یا model):
+    Icon: string (Bootstrap Icons class, e.g., "bi-inbox")
+    Title: string (عنوان اصلی)
+    Description: string (توضیحات)
+    ActionUrl: string (اختیاری - لینک دکمه CTA)
+    ActionText: string (اختیاری - متن دکمه CTA)
+    ActionIcon: string (اختیاری - آیکون دکمه، پیش‌فرض "bi-plus-lg")
+    Size: string (اختیاری - "sm", "md", "lg" - پیش‌فرض "md")
+    Bordered: bool (اختیاری - نمایش border دور کامپوننت)
+*@
+
+@{
+    // Support both ViewData[] and anonymous-type model (passed via model='new { ... }')
+    var icon = (Model?.GetType()?.GetProperty("Icon")?.GetValue(Model) as string)
+                ?? (ViewData["Icon"] as string)
+                ?? "bi-inbox";
+    var title = (Model?.GetType()?.GetProperty("Title")?.GetValue(Model) as string)
+                ?? (ViewData["Title"] as string)
+                ?? "داده‌ای یافت نشد";
+    var description = (Model?.GetType()?.GetProperty("Description")?.GetValue(Model) as string)
+                ?? (ViewData["Description"] as string)
+                ?? "هنوز هیچ داده‌ای در این بخش ثبت نشده است.";
+    var actionUrl = (Model?.GetType()?.GetProperty("ActionUrl")?.GetValue(Model) as string)
+                ?? (ViewData["ActionUrl"] as string);
+    var actionText = (Model?.GetType()?.GetProperty("ActionText")?.GetValue(Model) as string)
+                ?? (ViewData["ActionText"] as string)
+                ?? "افزودن اولین مورد";
+    var actionIcon = (Model?.GetType()?.GetProperty("ActionIcon")?.GetValue(Model) as string)
+                ?? (ViewData["ActionIcon"] as string)
+                ?? "bi-plus-lg";
+    var size = (Model?.GetType()?.GetProperty("Size")?.GetValue(Model) as string)
+                ?? (ViewData["Size"] as string)
+                ?? "md";
+    var bordered = Model?.GetType()?.GetProperty("Bordered")?.GetValue(Model) is bool b ? b
+                : (ViewData["Bordered"] is bool vb ? vb : true);
+
+    var iconSizeClass = size switch
+    {
+        "sm" => "text-3xl",
+        "lg" => "text-6xl",
+        _ => "text-5xl"
+    };
+
+    var iconWrapperClass = size switch
+    {
+        "sm" => "h-14 w-14",
+        "lg" => "h-28 w-28",
+        _ => "h-20 w-20"
+    };
+
+    var titleClass = size switch
+    {
+        "sm" => "text-sm",
+        "lg" => "text-xl",
+        _ => "text-base"
+    };
+
+    var descClass = size switch
+    {
+        "sm" => "text-xs",
+        "lg" => "text-sm",
+        _ => "text-xs"
+    };
+
+    var paddingClass = size switch
+    {
+        "sm" => "py-4",
+        "lg" => "py-10",
+        _ => "py-6"
+    };
+
+    var borderClass = bordered ? "border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl" : "";
+}
+
+<div class="empty-state text-center @paddingClass @borderClass bg-white/50 dark:bg-slate-900/30">
+    <div class="mx-auto mb-4 grid @iconWrapperClass place-items-center rounded-full bg-slate-100 dark:bg-slate-800">
+        <i class="bi @icon @iconSizeClass text-slate-300 dark:text-slate-600"></i>
+    </div>
+
+    <h3 class="@titleClass font-bold text-slate-700 dark:text-slate-300 mb-1">
+        @title
+    </h3>
+
+    <p class="mx-auto max-w-xs @descClass leading-relaxed text-slate-500 dark:text-slate-400 mb-4">
+        @description
+    </p>
+
+    @if (!string.IsNullOrWhiteSpace(actionUrl))
+    {
+        <a href="@actionUrl"
+           class="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 no-underline">
+            <i class="bi @actionIcon"></i>
+            @actionText
+        </a>
+    }
+
+    @* نکات راهنما *@
+    @if (size != "sm" && string.IsNullOrWhiteSpace(actionUrl))
+    {
+        <div class="mx-auto mt-4 flex max-w-xs items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-right dark:border-amber-500/20 dark:bg-amber-500/10">
+            <i class="bi bi-lightbulb mt-0.5 text-amber-500 flex-shrink-0"></i>
+            <span class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
+                برای شروع، از بخش مربوطه اقدام به ثبت اطلاعات جدید کنید. در صورت نیاز به راهنمایی، با پشتیبانی تماس بگیرید.
+            </span>
+        </div>
+    }
 </div>

@@ -27,7 +27,7 @@
         <form asp-action="Create" id="leaveForm" class="flex flex-col gap-3">
             @if (!ViewData.ModelState.IsValid)
             {
-                <div asp-validation-summary="ModelOnly" class="p-3 bg-rose-50 dark:bg-rose-955/10 text-rose-800 dark:text-rose-450 border border-rose-200 dark:border-rose-900/50 rounded-lg text-xs font-semibold leading-relaxed"></div>
+                <div asp-validation-summary="ModelOnly" class="p-3 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-lg text-xs font-semibold leading-relaxed"></div>
             }
             <input type="hidden" asp-for="UserId" />
             <input type="hidden" asp-for="Status" value="در انتظار تایید" />
@@ -48,7 +48,7 @@
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-bold text-slate-700 dark:text-slate-300">تا تاریخ</label>
                     <div class="relative w-full">
-                        <input type="text" id="end_date_picker" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-955 pr-8 pl-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums pdate" placeholder="انتخاب کنید..." readonly />
+                        <input type="text" id="end_date_picker" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 pr-8 pl-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums pdate" placeholder="انتخاب کنید..." readonly />
                         <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"><i class="bi bi-calendar-check"></i></span>
                     </div>
                     <input type="hidden" asp-for="EndDate" id="EndDate" />

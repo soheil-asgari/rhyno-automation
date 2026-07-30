@@ -301,7 +301,7 @@ public sealed class WorkflowService
         string documentType,
         int documentId,
         string startedByUserId,
-        string assignedToUserId,
+        string? assignedToUserId,
         DateTimeOffset? dueAt = null,
         CancellationToken cancellationToken = default)
     {

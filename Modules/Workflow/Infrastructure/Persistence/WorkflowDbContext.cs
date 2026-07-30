@@ -43,6 +43,8 @@ public sealed class WorkflowDbContext : ModularDbContext, IWorkflowDbContext
     public DbSet<Letter> Letters => Set<Letter>();
     public DbSet<Leave> Leaves => Set<Leave>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
+    public DbSet<TaskTimeLog> TaskTimeLogs => Set<TaskTimeLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +76,22 @@ public sealed class WorkflowDbContext : ModularDbContext, IWorkflowDbContext
         {
             builder.Property(item => item.HoldReason).HasMaxLength(1000);
             builder.HasIndex(item => item.IsUnderLegalHold);
+            builder.Property(item => item.CurrentVersion).HasMaxLength(20);
+            builder.HasIndex(item => item.IsArchived);
+            builder.HasIndex(item => item.ExpirationDate);
+        });
+
+        modelBuilder.Entity<DocumentVersion>(builder =>
+        {
+            builder.HasIndex(v => v.DocumentArchiveItemId);
+            builder.HasOne(v => v.CreatedByUser).WithMany().OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<TaskTimeLog>(builder =>
+        {
+            builder.HasIndex(t => t.WorkflowCaseTaskId);
+            builder.HasIndex(t => t.UserId);
+            builder.HasIndex(t => t.LoggedAt);
         });
 
         modelBuilder.ApplyConfigurationsFromAssembly(

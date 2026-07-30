@@ -1,0 +1,143 @@
+@model OfficeAutomation.Models.KanbanBoardVM
+@{
+    ViewData["Title"] = "نمای کانبان تسک‌ها";
+}
+
+<div class="container mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">نمای کانبان</h1>
+            <p class="text-sm text-gray-500 mt-1">مدیریت تسک‌ها با قابلیت Drag & Drop</p>
+        </div>
+        <a asp-action="Index" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="bi bi-list"></i> نمای لیستی
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @foreach (var column in Model.Columns)
+        {
+            <div class="rounded-xl border-2 border-dashed p-3 @column.ColorClass min-h-[300px]"
+                 data-status="@column.Status"
+                 ondragover="handleDragOver(event)"
+                 ondrop="handleDrop(event, '@column.Status')">
+                <div class="flex items-center justify-between mb-3 px-2">
+                    <h3 class="font-bold text-sm text-gray-800">@column.Title</h3>
+                    <span class="text-xs bg-white bg-opacity-60 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                        @column.Cards.Count
+                    </span>
+                </div>
+
+                <div class="space-y-2">
+                    @foreach (var card in column.Cards)
+                    {
+                        <div class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                             draggable="true"
+                             data-task-id="@card.TaskId"
+                             ondragstart="handleDragStart(event, @card.TaskId)">
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                <h4 class="text-sm font-semibold text-gray-800 leading-tight">@card.Title</h4>
+                                <span class="text-xs text-gray-400 whitespace-nowrap">@card.CreatedAt.ToString("MM/dd")</span>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(card.Description))
+                            {
+                                <p class="text-xs text-gray-500 mb-2 line-clamp-2">@card.Description</p>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(card.AssignedToName))
+                            {
+                                <div class="flex items-center gap-1 text-xs text-gray-500 mb-2">
+                                    <i class="bi bi-person"></i>
+                                    <span>@card.AssignedToName</span>
+                                </div>
+                            }
+
+                            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                                <div class="flex items-center gap-2">
+                                    @if (card.Labels.Length > 0)
+                                    {
+                                        foreach (var label in card.Labels)
+                                        {
+                                            <span class="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">@label</span>
+                                        }
+                                    }
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-gray-400">
+                                    @if (card.CommentCount > 0)
+                                    {
+                                        <span title="کامنت"><i class="bi bi-chat"></i> @card.CommentCount</span>
+                                    }
+                                    @if (card.TotalHoursSpent > 0)
+                                    {
+                                        <span title="ساعت کارکرد"><i class="bi bi-clock"></i> @card.TotalHoursSpent.ToString("F1")h</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (column.Cards.Count == 0)
+                    {
+                        <div class="text-center py-8 text-gray-400 text-xs">
+                            <i class="bi bi-inbox text-2xl"></i>
+                            <p class="mt-1">بدون تسک</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let draggedTaskId = null;
+
+        function handleDragStart(event, taskId) {
+            draggedTaskId = taskId;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', taskId);
+            event.target.classList.add('opacity-50');
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(event, status) {
+            event.preventDefault();
+            const taskId = event.dataTransfer.getData('text/plain') || draggedTaskId;
+            if (!taskId) return;
+
+            const cardEl = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (cardEl) {
+                cardEl.classList.remove('opacity-50');
+            }
+
+            const formData = new FormData();
+            formData.append('taskId', taskId);
+            formData.append('status', status);
+
+            fetch('/WorkInbox/UpdateTaskStatus', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('خطا در به‌روزرسانی وضعیت');
+                }
+            })
+            .catch(() => alert('خطا در ارتباط با سرور'));
+
+            draggedTaskId = null;
+        }
+    </script>
+}

@@ -235,12 +235,12 @@
                             }
                         }
                         : {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(148, 163, 184, .18)' },
-                            ticks: { callback: (value) => formatNumber(value) }
-                        },
-                        x: { grid: { display: false } }
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(148, 163, 184, .18)' },
+                                ticks: { callback: (value) => formatNumber(value) }
+                            },
+                            x: { grid: { display: false } }
                         }
             }
         };
@@ -626,6 +626,25 @@
             addMessage('ai', error.message || 'ساخت گزارش ناموفق بود. دوباره تلاش کنید.');
         } finally {
             setBusy(els.generateBtn, false);
+        }
+    });
+
+    // ── Listen for parent window modal-open message (iframe context) ──
+    window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.type === 'rhyno:modal-opened') {
+            // Resize the main chart if it exists
+            if (chart && chart.resize) {
+                chart.resize();
+            }
+            // Also resize the zoom chart if it exists
+            if (zoomChart && zoomChart.resize) {
+                zoomChart.resize();
+            }
+            // If chart was just initialized, force a re-render
+            if (currentReport) {
+                applyReport(currentReport);
+            }
         }
     });
 

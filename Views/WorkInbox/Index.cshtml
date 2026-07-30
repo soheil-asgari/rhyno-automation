@@ -14,7 +14,7 @@
             <h1 class="text-[16px] font-black text-slate-900 dark:text-white">کارتابل پیشرفته</h1>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">کارتابل عملیاتی با گروه‌بندی، نماهای ذخیره‌شده، اقدام‌های گروهی و پنل جزئیات سریع.</p>
         </div>
-        <a class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2.5 text-[11px] font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1.5 no-underline" href="/Notifications">
+        <a class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5 no-underline" href="/Notifications">
             <i class="bi bi-bell"></i>
             <span>مرکز اعلان‌ها</span>
         </a>
@@ -37,7 +37,7 @@
         @foreach (var f in filters)
         {
             var isActive = Model.ActiveFilter == f.Item1 || (f.Item1 == "All" && string.IsNullOrEmpty(Model.ActiveFilter));
-            var activeBorderClass = isActive ? "border-teal-500 dark:border-teal-400 ring-2 ring-teal-500/10 bg-teal-50/10 dark:bg-teal-950/10" : "border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900";
+            var activeBorderClass = isActive ? "border-teal-500 dark:border-teal-400 ring-2 ring-teal-500/10 bg-teal-50/10 dark:bg-teal-950/10" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900";
             <a class="flex flex-col items-center justify-center p-2 rounded-lg border @activeBorderClass @f.Item4 shadow-sm no-underline hover:border-teal-500/50 transition duration-150" asp-action="Index" asp-route-filter="@(f.Item1 == "All" ? "" : f.Item1)">
                 <strong class="text-sm font-black font-mono tabular-nums">@f.Item3.ToString("N0")</strong>
                 <span class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">@f.Item2</span>
@@ -47,21 +47,21 @@
 
     @if (TempData["WorkInboxMessage"] is string inboxMessage && !string.IsNullOrWhiteSpace(inboxMessage))
     {
-        <div class="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-955/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+        <div class="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
             <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-sm"></i>
             <span class="flex-1">@inboxMessage</span>
         </div>
     }
     @if (TempData["WorkInboxUnauthorized"] is string unauthorizedMessage && !string.IsNullOrWhiteSpace(unauthorizedMessage))
     {
-        <div class="flex items-center gap-2 p-2.5 bg-amber-50 dark:bg-amber-955/15 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
-            <i class="bi bi-exclamation-triangle-fill text-amber-600 dark:text-amber-450 text-sm"></i>
+        <div class="flex items-center gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/15 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill text-amber-600 dark:text-amber-400 text-sm"></i>
             <span class="flex-1">@unauthorizedMessage</span>
         </div>
     }
     @if (TempData["WorkInboxError"] is string errorMsg && !string.IsNullOrWhiteSpace(errorMsg))
     {
-        <div class="flex items-center gap-2 p-2.5 bg-rose-50 dark:bg-rose-955/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+        <div class="flex items-center gap-2 p-2.5 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
             <i class="bi bi-x-circle-fill text-rose-600 dark:text-rose-400 text-sm"></i>
             <span class="flex-1">@errorMsg</span>
         </div>
@@ -76,7 +76,7 @@
             <input type="hidden" name="Filter" value="@Model.ActiveFilter" />
 
             <!-- Filters Controls Header -->
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-2.5 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200 dark:border-slate-850">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-2.5 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200 dark:border-slate-800">
                 <div class="lg:col-span-2 relative">
                     <input type="search" id="inboxSearchInput" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg pr-9 pl-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="جستجو در عنوان، ماژول، فرستنده یا وضعیت..." />
                     <i class="bi bi-search absolute right-3 top-2 text-slate-400 text-xs"></i>
@@ -120,7 +120,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3">
                 <div class="flex items-center gap-2">
                     <strong class="text-xs font-black text-slate-800 dark:text-slate-200">نماهای ذخیره‌شده</strong>
-                    <button class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-350 transition" type="button" id="saveCurrentViewBtn">ذخیره نمای فعلی</button>
+                    <button class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition" type="button" id="saveCurrentViewBtn">ذخیره نمای فعلی</button>
                 </div>
                 <div class="flex flex-wrap gap-1.5" id="savedViewsList"></div>
             </div>
@@ -172,7 +172,7 @@
                 <aside class="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 min-h-[300px]" id="inboxDetailPane">
                     <div class="flex flex-col items-center justify-center text-center p-4 text-slate-400 h-full" id="detailEmptyState">
                         <i class="bi bi-layout-sidebar-inset text-lg mb-2 text-slate-300 dark:text-slate-700"></i>
-                        <strong class="text-xs text-slate-700 dark:text-slate-350">یک آیتم را انتخاب کنید</strong>
+                        <strong class="text-xs text-slate-700 dark:text-slate-300">یک آیتم را انتخاب کنید</strong>
                         <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">جزئیات، اقدام سریع و کامنت اینلاین اینجا نمایش داده می‌شود.</p>
                     </div>
 
@@ -182,7 +182,7 @@
                             <h2 class="text-sm font-black text-slate-900 dark:text-white" id="detailTitle"></h2>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed" id="detailSummary"></p>
 
-                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-150 dark:border-slate-800">
+                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
                                 <div class="flex flex-col"><span class="text-slate-400">ماژول</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailModule"></strong></div>
                                 <div class="flex flex-col"><span class="text-slate-400">وضعیت</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailStatus"></strong></div>
                                 <div class="flex flex-col"><span class="text-slate-400">موعد</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailSla"></strong></div>
@@ -192,7 +192,7 @@
                             <div class="flex flex-wrap gap-1" id="detailChips"></div>
 
                             <div class="pt-3">
-                                <a class="w-full h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center justify-center gap-1.5 no-underline" id="detailOpenLink" href="#" target="_self">
+                                <a class="w-full h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center justify-center gap-1.5 no-underline" id="detailOpenLink" href="#" target="_self">
                                     <i class="bi bi-box-arrow-up-left"></i>
                                     <span>باز کردن جزئیات</span>
                                 </a>
@@ -235,7 +235,7 @@
                                 <input type="hidden" name="stepNumber" id="quickRejectStepNumber" />
                                 <input type="hidden" name="decisionType" value="Reject" />
                                 <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="دلیل رد..." />
-                                <button type="submit" class="border border-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">رد</button>
+                                <button type="submit" class="border border-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">رد</button>
                             </form>
 
                             <form asp-action="AddComment" method="post" class="hidden flex gap-2" id="quickCommentForm">
@@ -669,7 +669,7 @@
                     header.innerHTML = `<span>${escapeHtml(groupName)}</span><span class="font-mono text-[10px] bg-slate-200/60 dark:bg-slate-800 px-2 py-0.5 rounded-full">${groupItems.length} مورد</span>`;
 
                     const body = document.createElement('div');
-                    body.className = 'inbox-list flex flex-col divide-y divide-slate-100 dark:divide-slate-850';
+                    body.className = 'inbox-list flex flex-col divide-y divide-slate-100 dark:divide-slate-800';
 
                     groupItems.forEach(item => {
                         const row = document.createElement('article');
@@ -679,7 +679,7 @@
                         const checked = state.selectedIds.has(item.id) ? 'checked' : '';
                         const unread = !item.isRead ? '<span class="inline-flex items-center rounded bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 dark:bg-rose-950/30 dark:text-rose-350 border border-rose-200 dark:border-rose-900/30">خوانده‌نشده</span>' : '<span class="inline-flex items-center rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-550 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">خوانده‌شده</span>';
                         const overdue = item.isOverdue ? '<span class="inline-flex items-center rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">نقض سطح خدمت</span>' : '';
-                        const actionFlag = item.requiresAction ? '<span class="inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:bg-amber-950/20 dark:text-amber-450 border border-amber-250/30">نیازمند اقدام</span>' : '';
+                        const actionFlag = item.requiresAction ? '<span class="inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-200/30">نیازمند اقدام</span>' : '';
 
                         row.innerHTML = `
                             <input class="form-check-input inbox-item-check ml-3 rounded border-slate-300 dark:border-slate-800 text-teal-600 focus:ring-teal-500/20" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />

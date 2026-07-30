@@ -3,31 +3,103 @@
     ViewData["Title"] = "ویرایش کالا";
 }
 
-<div class="container-fluid py-4">
-    <h6 class="fw-bold mb-3">ویرایش کالا</h6>
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3" >
-            <form asp-action="EditProduct" asp-route-id="@Model.Id" method="post" class="row g-2">
-                <input class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" type="hidden" asp-for="Id" />
-                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
-                <div class="col-md-4"><label asp-for="Code" class="form-label small"></label><input asp-for="Code" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Code" class="text-danger small"></span></div>
-                <div class="col-md-4"><label asp-for="Name" class="form-label small"></label><input asp-for="Name" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Name" class="text-danger small"></span></div>
-                <div class="col-md-2"><label asp-for="Unit" class="form-label small"></label><input asp-for="Unit" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Unit" class="text-danger small"></span></div>
-                <div class="col-md-2"><label asp-for="MinimumStock" class="form-label small"></label><input asp-for="MinimumStock" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" min="0" /><span asp-validation-for="MinimumStock" class="text-danger small"></span></div>
-                <div class="col-md-3"><label asp-for="Category" class="form-label small"></label><input asp-for="Category" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Category" class="text-danger small"></span></div>
-                <div class="col-md-3"><label asp-for="Barcode" class="form-label small"></label><input asp-for="Barcode" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="Barcode" class="text-danger small"></span></div>
-                <div class="col-md-3"><label asp-for="SecondaryUnit" class="form-label small"></label><input asp-for="SecondaryUnit" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="SecondaryUnit" class="text-danger small"></span></div>
-                <div class="col-md-3"><label asp-for="LastPurchasePrice" class="form-label small"></label><input asp-for="LastPurchasePrice" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="LastPurchasePrice" class="text-danger small"></span></div>
-                <div class="col-md-3"><label asp-for="ReorderPoint" class="form-label small"></label><input asp-for="ReorderPoint" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="ReorderPoint" class="text-danger small"></span></div>
-                <div class="col-md-3"><label asp-for="MaximumStock" class="form-label small"></label><input asp-for="MaximumStock" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><span asp-validation-for="MaximumStock" class="text-danger small"></span></div>
-                <div class="col-md-6"><label asp-for="TechnicalDescription" class="form-label small"></label><textarea asp-for="TechnicalDescription" rows="2" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></textarea></div>
-                <div class="col-12"><label asp-for="Description" class="form-label small"></label><textarea asp-for="Description" rows="2" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></textarea></div>
-                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsPurchasable" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><label asp-for="IsPurchasable" class="form-check-label small"></label></div></div>
-                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsConsumable" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><label asp-for="IsConsumable" class="form-check-label small"></label></div></div>
-                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input asp-for="IsActive" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" /><label asp-for="IsActive" class="form-check-label small"></label></div></div>
-                <div class="col-12 d-flex gap-2"><button class="btn btn-sm btn-primary">ثبت تغییرات</button><a asp-action="Products" class="btn btn-sm btn-outline-secondary">بازگشت</a></div>
-            </form>
+<div class="page-shell wh-page">
+    <div class="section-header section-header-toned section-tone-info mb-3">
+        <div class="section-header-copy">
+            <h1 class="section-title">ویرایش کالا</h1>
+            <p class="section-subtitle">اطلاعات کالا را ویرایش کرده و تغییرات را ذخیره کنید</p>
         </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+        <form asp-action="EditProduct" asp-route-id="@Model.Id" method="post" class="space-y-4">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-[12px] text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label asp-for="Code" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">کد</label>
+                    <input asp-for="Code" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Code" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="Name" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">نام</label>
+                    <input asp-for="Name" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Name" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="Unit" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">واحد</label>
+                    <input asp-for="Unit" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Unit" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="MinimumStock" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">حداقل موجودی</label>
+                    <input asp-for="MinimumStock" type="number" min="0" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="MinimumStock" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="Category" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">دسته‌بندی</label>
+                    <input asp-for="Category" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Category" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="Barcode" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">بارکد</label>
+                    <input asp-for="Barcode" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="Barcode" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="SecondaryUnit" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">واحد ثانویه</label>
+                    <input asp-for="SecondaryUnit" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="SecondaryUnit" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="LastPurchasePrice" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">آخرین قیمت خرید</label>
+                    <input asp-for="LastPurchasePrice" type="number" step="0.01" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="LastPurchasePrice" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="ReorderPoint" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">نقطه سفارش مجدد</label>
+                    <input asp-for="ReorderPoint" type="number" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="ReorderPoint" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+                <div>
+                    <label asp-for="MaximumStock" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">حداکثر موجودی</label>
+                    <input asp-for="MaximumStock" type="number" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+                    <span asp-validation-for="MaximumStock" class="mt-0.5 block text-[11px] text-rose-600"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                    <label asp-for="TechnicalDescription" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">توضیحات فنی</label>
+                    <textarea asp-for="TechnicalDescription" rows="2" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"></textarea>
+                </div>
+                <div>
+                    <label asp-for="Description" class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">توضیحات</label>
+                    <textarea asp-for="Description" rows="2" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"></textarea>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                <label class="flex items-center gap-2 text-[12px] font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input asp-for="IsPurchasable" type="checkbox" class="form-check-input h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-800" />
+                    قابل خرید
+                </label>
+                <label class="flex items-center gap-2 text-[12px] font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input asp-for="IsConsumable" type="checkbox" class="form-check-input h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-800" />
+                    مصرفی
+                </label>
+                <label class="flex items-center gap-2 text-[12px] font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input asp-for="IsActive" type="checkbox" class="form-check-input h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-800" />
+                    فعال
+                </label>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+                <button type="submit" class="inline-flex items-center gap-1 rounded-xl bg-teal-600 px-4 py-2 text-[12px] font-bold text-white hover:bg-teal-700 transition">ثبت تغییرات</button>
+                <a asp-action="Products" class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[12px] font-bold text-slate-600 hover:bg-slate-50 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 no-underline">بازگشت</a>
+            </div>
+        </form>
     </div>
 </div>
 

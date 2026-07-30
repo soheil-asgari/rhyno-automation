@@ -279,6 +279,14 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("CurrentVersion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("ExpirationDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(260)
@@ -290,6 +298,9 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                     b.Property<string>("HoldReason")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsPreviewable")
                         .HasColumnType("bit");
@@ -326,6 +337,10 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("ExpirationDate");
+
+                    b.HasIndex("IsArchived");
 
                     b.HasIndex("IsUnderLegalHold");
 
@@ -416,6 +431,65 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                     b.HasIndex("DocumentType", "DocumentId", "SignedAt");
 
                     b.ToTable("DocumentSignatures");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.DocumentVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChangeSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("DocumentArchiveItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("VersionNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("DocumentArchiveItemId");
+
+                    b.ToTable("DocumentVersions");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.Leave", b =>
@@ -684,6 +758,10 @@ namespace OfficeAutomation.Migrations.WorkflowDb
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AccentColor")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
                     b.Property<string>("ActiveEnvironment")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
@@ -693,8 +771,24 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
 
+                    b.Property<string>("FaviconUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("LoginBackgroundUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<bool>("MaintenanceMode")
                         .HasColumnType("bit");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("SystemLanguage")
                         .IsRequired()
@@ -712,6 +806,44 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                     b.HasKey("Id");
 
                     b.ToTable("SystemSettings");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.TaskTimeLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("HoursSpent")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("LoggedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("WorkflowCaseTaskId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoggedAt");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WorkflowCaseTaskId");
+
+                    b.ToTable("TaskTimeLogs");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.User", b =>
@@ -789,6 +921,9 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("RecoveryCodes")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Role")
                         .HasColumnType("nvarchar(max)");
 
@@ -803,6 +938,9 @@ namespace OfficeAutomation.Migrations.WorkflowDb
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<string>("TwoFactorSecretKey")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
@@ -1799,6 +1937,25 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                     b.Navigation("WorkflowInstance");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.DocumentVersion", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.DocumentArchiveItem", "DocumentArchiveItem")
+                        .WithMany()
+                        .HasForeignKey("DocumentArchiveItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DocumentArchiveItem");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.Leave", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.User", "User")
@@ -1850,6 +2007,25 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                         .IsRequired();
 
                     b.Navigation("RecipientUser");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.TaskTimeLog", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.WorkflowCaseTask", "WorkflowCaseTask")
+                        .WithMany()
+                        .HasForeignKey("WorkflowCaseTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("WorkflowCaseTask");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.WorkflowActionLog", b =>

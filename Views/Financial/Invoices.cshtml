@@ -11,14 +11,14 @@
     <!-- Messages / Alerts -->
     @if (TempData["SuccessMessage"] is string successMessage)
     {
-        <div class="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-955/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-xs font-semibold shadow-sm">
+        <div class="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-xs font-semibold shadow-sm">
             <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-sm"></i>
             <span class="flex-1">@successMessage</span>
         </div>
     }
     @if (TempData["ErrorMessage"] is string errorMessage)
     {
-        <div class="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-955/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-semibold shadow-sm">
+        <div class="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-semibold shadow-sm">
             <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-sm"></i>
             <span class="flex-1">@errorMessage</span>
         </div>
@@ -35,7 +35,7 @@
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>ثبت فاکتور</span>
             </a>
-            <a asp-action="ExportInvoicesExcel" asp-route-invoiceType="@exportInvoiceType" asp-route-year="@Model.Year" asp-route-quarter="@Model.Quarter" class="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-250 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-955/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold transition shadow-sm bg-transparent">
+            <a asp-action="ExportInvoicesExcel" asp-route-invoiceType="@exportInvoiceType" asp-route-year="@Model.Year" asp-route-quarter="@Model.Quarter" class="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold transition shadow-sm bg-transparent">
                 <i class="bi bi-file-earmark-excel"></i>
                 <span>خروجی اکسل</span>
             </a>
@@ -116,10 +116,10 @@
                     var statusLabel = WorkflowStatus.Label(item.WorkflowStatus);
                     var statusBadgeClass = item.WorkflowStatus switch
                     {
-                        "Approved" or "Paid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-250/40",
-                        "Overdue" or "Rejected" => "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-250/40",
+                        "Approved" or "Paid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200/40",
+                        "Overdue" or "Rejected" => "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200/40",
                         "Draft" => "bg-slate-100 text-slate-700 dark:bg-slate-800/40 dark:text-slate-400 border-slate-200/40",
-                        _ => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-250/40"
+                        _ => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200/40"
                     };
 
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">

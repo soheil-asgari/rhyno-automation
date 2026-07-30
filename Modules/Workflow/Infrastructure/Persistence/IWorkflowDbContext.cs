@@ -35,6 +35,8 @@ public interface IWorkflowDbContext
     DbSet<Letter> Letters { get; }
     DbSet<Leave> Leaves { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<DocumentVersion> DocumentVersions { get; }
+    DbSet<TaskTimeLog> TaskTimeLogs { get; }
 
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
     ValueTask<object?> FindAsync(Type entityType, object?[]? keyValues, CancellationToken cancellationToken);

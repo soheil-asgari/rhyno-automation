@@ -83,10 +83,10 @@
                     <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">درآمد، هزینه و سود یا زیان در دوازده ماه</p>
                 </div>
                 <div class="flex flex-wrap gap-1">
-                    <a asp-action="Sales" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">فروش</a>
-                    <a asp-action="Purchases" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-955 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">خرید</a>
-                    <a asp-action="VatDashboard" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-955 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">ارزش افزوده</a>
-                    <a asp-action="SeasonalTax" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-750 dark:bg-slate-955 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">معاملات فصلی</a>
+                    <a asp-action="Sales" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">فروش</a>
+                    <a asp-action="Purchases" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">خرید</a>
+                    <a asp-action="VatDashboard" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">ارزش افزوده</a>
+                    <a asp-action="SeasonalTax" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">معاملات فصلی</a>
                 </div>
             </div>
 
@@ -98,7 +98,7 @@
 
             @if (Model.ValidationWarnings > 0 || Model.OverdueInvoices > 0)
             {
-                <div class="flex flex-col gap-1.5 rounded-lg border border-amber-250 bg-amber-50 px-3.5 py-2.5 text-[11px] text-amber-700 dark:border-amber-800/40 dark:bg-amber-955/20 dark:text-amber-400 mb-3">
+                <div class="flex flex-col gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[11px] text-amber-700 dark:border-amber-700/40 dark:bg-amber-950/20 dark:text-amber-400 mb-3">
                     @if (Model.ValidationWarnings > 0)
                     {
                         <div>@Model.ValidationWarnings مورد نیازمند بررسی ثبت شده است.</div>
@@ -141,7 +141,7 @@
                                 <strong class="block truncate text-[11px] text-slate-800 group-hover:text-teal-600 dark:text-slate-200 dark:group-hover:text-teal-400">@item.Title</strong>
                                 <span class="block text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">@item.Subtitle</span>
                             </div>
-                            <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:bg-slate-955 dark:text-slate-400 border border-slate-200/50 dark:border-slate-850">@item.Badge</span>
+                            <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:bg-slate-950 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800">@item.Badge</span>
                         </a>
                     }
                 }
@@ -157,15 +157,15 @@
             <div>
                 <h2 class="text-xs font-black text-slate-900 dark:text-white mb-3">هشدارهای عملیاتی</h2>
                 <div class="space-y-2">
-                    <div class="rounded-lg border border-amber-250 bg-amber-50 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-900/30 dark:bg-amber-955/20 dark:text-amber-400">
+                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-700/30 dark:bg-amber-950/20 dark:text-amber-400">
                         <strong class="block font-black">فاکتورهای در انتظار</strong>
                         <span class="block mt-0.5 text-[10px]">@Model.PendingSalesInvoices فاکتور فروش و @Model.PendingPurchaseInvoices فاکتور خرید نیاز به پیگیری دارند.</span>
                     </div>
-                    <div class="rounded-lg border border-rose-250 bg-rose-50 px-3 py-2 text-[11px] text-rose-700 dark:border-rose-900/30 dark:bg-rose-955/20 dark:text-rose-400">
+                    <div class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700 dark:border-rose-700/30 dark:bg-rose-950/20 dark:text-rose-400">
                         <strong class="block font-black">هشدار اعتبارسنجی</strong>
                         <span class="block mt-0.5 text-[10px]">@Model.ValidationWarnings رکورد ناقص یا مشکوک شناسایی شده است.</span>
                     </div>
-                    <div class="rounded-lg border border-sky-250 bg-sky-50 px-3 py-2 text-[11px] text-sky-700 dark:border-sky-900/30 dark:bg-sky-955/20 dark:text-sky-400">
+                    <div class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-[11px] text-sky-700 dark:border-sky-700/30 dark:bg-sky-950/20 dark:text-sky-400">
                         <strong class="block font-black">سررسید نزدیک</strong>
                         <span class="block mt-0.5 text-[10px]">@Model.DuePurchaseDeadlines فاکتور خرید دارای موعد نزدیک است.</span>
                     </div>

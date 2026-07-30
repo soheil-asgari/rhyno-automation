@@ -40,7 +40,11 @@ namespace OfficeAutomation.Models
 
         public bool IsManager { get; set; }
 
+        /// <summary>Secret Key برای TOTP</summary>
+        public string? TwoFactorSecretKey { get; set; }
 
+        /// <summary>کدهای ریکاوری هش شده (با | جدا می‌شوند)</summary>
+        public string? RecoveryCodes { get; set; }
 
     }
 }

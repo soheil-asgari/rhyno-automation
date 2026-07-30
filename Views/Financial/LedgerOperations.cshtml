@@ -54,11 +54,11 @@
 
     @if (TempData["SuccessMessage"] is string success)
     {
-        <div class="mb-4 p-3 bg-emerald-50 dark:bg-emerald-955/10 text-emerald-800 dark:text-emerald-400 border border-emerald-250 rounded-xl text-xs font-semibold">@success</div>
+        <div class="mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 rounded-xl text-xs font-semibold">@success</div>
     }
     @if (TempData["ErrorMessage"] is string error)
     {
-        <div class="mb-4 p-3 bg-rose-50 dark:bg-rose-955/10 text-rose-800 dark:text-rose-400 border border-rose-250 rounded-xl text-xs font-semibold">@error</div>
+        <div class="mb-4 p-3 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 rounded-xl text-xs font-semibold">@error</div>
     }
 
     <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 mb-4" id="period-closing-panel">
@@ -207,8 +207,8 @@
                 <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
                     <span class="text-xs font-bold text-slate-700 dark:text-slate-300" id="voucherEntryMode">حالت ورود: سند جدید</span>
                     <div class="flex items-center gap-2">
-                        <button type="button" class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-350" id="addVoucherRowButton">سطر جدید</button>
-                        <button type="button" class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-350" id="removeVoucherRowButton">حذف سطر</button>
+                        <button type="button" class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300" id="addVoucherRowButton">سطر جدید</button>
+                        <button type="button" class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300" id="removeVoucherRowButton">حذف سطر</button>
                     </div>
                 </div>
 
@@ -219,11 +219,11 @@
                     </div>
                     <div class="flex flex-col gap-1">
                         <label asp-for="Voucher.JournalTypeId" class="text-xs font-bold text-slate-500 dark:text-slate-400">ژورنال</label>
-                        <select asp-for="Voucher.JournalTypeId" asp-items="Model.JournalTypeOptions" class="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select>
+                        <select asp-for="Voucher.JournalTypeId" asp-items="Model.JournalTypeOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select>
                     </div>
                     <div class="lg:col-span-2 flex flex-col gap-1">
                         <label asp-for="Voucher.Description" class="text-xs font-bold text-slate-500 dark:text-slate-400">شرح سند</label>
-                        <input asp-for="Voucher.Description" class="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        <input asp-for="Voucher.Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
                     </div>
                     <div class="flex items-end">
                         <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors" id="saveVoucherButton">ذخیره سند</button>
@@ -296,21 +296,21 @@
                     <form asp-action="RenumberVouchers" method="post" class="m-0">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="fiscalPeriodId" value="@Model.CurrentFiscalPeriodId" />
-                        <button type="submit" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition flex items-center gap-1" disabled="@(!Model.CurrentFiscalPeriodId.HasValue)">شماره‌گذاری مجدد اسناد</button>
+                        <button type="submit" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1" disabled="@(!Model.CurrentFiscalPeriodId.HasValue)">شماره‌گذاری مجدد اسناد</button>
                     </form>
                     <select id="savedViewSelect" class="h-8 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 text-xs outline-none focus:ring-2 focus:ring-teal-500/10">
                         <option value="">نمای پیش‌فرض</option>
                     </select>
                     <input id="savedViewName" class="h-8 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 text-xs outline-none focus:ring-2 focus:ring-teal-500/10 w-28" placeholder="نام نما" />
-                    <button type="button" id="saveViewButton" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-355 transition">ذخیره نما</button>
+                    <button type="button" id="saveViewButton" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition">ذخیره نما</button>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4" id="voucherWorkflowToolbar" data-change-status-url="@Url.Action("ChangeVoucherStatus", "Financial")">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-305" id="workflowCurrentStatus">وضعیت جاری: بدون انتخاب</span>
-                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition workflow-action-button" data-target-status="Reviewed" disabled>تایید بررسی</button>
-                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition workflow-action-button" data-target-status="Approved" disabled>تصویب سند</button>
-                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-350 transition workflow-action-button" data-target-status="Permanent" disabled>قطعی کردن نهایی</button>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300" id="workflowCurrentStatus">وضعیت جاری: بدون انتخاب</span>
+                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Reviewed" disabled>تایید بررسی</button>
+                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Approved" disabled>تصویب سند</button>
+                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Permanent" disabled>قطعی کردن نهایی</button>
             </div>
 
             <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto">

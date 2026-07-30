@@ -24,8 +24,8 @@
         @foreach (var card in Model.SummaryCards)
         {
             var toneColor = card.Tone switch {
-                "success" => "border-emerald-200 bg-emerald-50/10 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/10 dark:text-emerald-450",
-                "danger" => "border-rose-200 bg-rose-50/10 text-rose-800 dark:border-rose-900/30 dark:bg-rose-955/10 dark:text-rose-450",
+                "success" => "border-emerald-200 bg-emerald-50/10 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/10 dark:text-emerald-400",
+                "danger" => "border-rose-200 bg-rose-50/10 text-rose-800 dark:border-rose-900/30 dark:bg-rose-950/10 dark:text-rose-400",
                 "warning" => "border-amber-200 bg-amber-50/10 text-amber-800 dark:border-amber-900/30 dark:bg-amber-955/10 dark:text-amber-450",
                 "info" => "border-sky-200 bg-sky-50/10 text-sky-800 dark:border-sky-900/30 dark:bg-sky-955/10 dark:text-sky-450",
                 _ => "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-slate-200"
@@ -47,7 +47,7 @@
         <div class="flex flex-wrap gap-2">
             @foreach (var preset in Model.FilterPresets)
             {
-                <a href="@preset.Url" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350 dark:hover:bg-slate-800 text-xs font-bold transition no-underline">
+                <a href="@preset.Url" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 text-xs font-bold transition no-underline">
                     <i class="bi bi-funnel text-[10px]"></i>
                     <span>@preset.Label</span>
                 </a>
@@ -61,7 +61,7 @@
         {
             var sectionBadgeClass = reportSection.Tone switch {
                 "success" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
-                "danger" => "bg-rose-100 text-rose-700 dark:bg-rose-955/40 dark:text-rose-400",
+                "danger" => "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400",
                 "warning" => "bg-amber-100 text-amber-700 dark:bg-amber-955/40 dark:text-amber-400",
                 "info" => "bg-sky-100 text-sky-700 dark:bg-sky-955/40 dark:text-sky-400",
                 _ => "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
@@ -80,7 +80,7 @@
                         @foreach (var module in reportSection.Modules)
                         {
                             <div class="border-t border-slate-100 dark:border-slate-805/60 pt-4 flex items-start gap-3">
-                                <div class="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-850 flex-shrink-0">
+                                <div class="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 flex-shrink-0">
                                     <i class="bi @module.Icon"></i>
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -119,8 +119,8 @@
                 <div class="space-y-4">
                     @foreach (var module in Model.Modules)
                     {
-                        <div class="border-t border-slate-100 dark:border-slate-850 pt-4 flex items-start gap-3">
-                            <div class="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-850 flex-shrink-0">
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-4 flex items-start gap-3">
+                            <div class="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 flex-shrink-0">
                                 <i class="bi @module.Icon"></i>
                             </div>
                             <div class="flex-1 min-w-0">

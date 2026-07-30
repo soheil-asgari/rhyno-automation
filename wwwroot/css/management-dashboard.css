@@ -110,7 +110,7 @@
     font-size: 1.12rem;
 }
 
-.md-panel-head > i {
+.md-panel-head>i {
     width: 42px;
     height: 42px;
     display: inline-flex;
@@ -720,6 +720,7 @@ html[data-theme="dark"] .md-chart-modal-head {
 }
 
 @media (max-width: 1199px) {
+
     .md-grid,
     .md-report-shell {
         grid-template-columns: 1fr;
@@ -806,4 +807,9 @@ html[data-theme="dark"] .md-chart-modal-head {
         height: 520px;
         break-inside: avoid;
     }
+}
+
+/* مطمئن شدن از مخفی ماندن مدال در صورت داشتن کلاس d-none */
+.md-chart-modal.d-none {
+    display: none !important;
 }

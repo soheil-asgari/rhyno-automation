@@ -3,66 +3,81 @@
     ViewData["Title"] = "کالاها";
 }
 
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">فهرست کالاها</h6>
-        <div class="d-flex gap-2">
-            <a asp-action="Warehouses" class="btn btn-sm btn-outline-secondary">انبارها</a>
-            <a asp-action="CreateProduct" class="btn btn-sm btn-primary">کالای جدید</a>
+<div class="page-shell wh-page">
+    <div class="section-header section-header-toned section-tone-info mb-3">
+        <div class="section-header-copy">
+            <h1 class="section-title">فهرست کالاها</h1>
+            <p class="section-subtitle">مدیریت کالاهای فعال، جستجو و ویرایش اطلاعات</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a asp-action="Warehouses" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 no-underline">انبارها</a>
+            <a asp-action="CreateProduct" class="inline-flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-teal-700 transition no-underline">کالای جدید</a>
         </div>
     </div>
 
     @if (TempData["WarehouseMessage"] is string message)
     {
-        <div class="alert alert-info py-2 small">@message</div>
+        <div class="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">@message</div>
     }
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3 border-bottom" >
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted mb-1">جستجو</label>
-                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="نام یا کد کالا" />
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="border-b border-slate-200 dark:border-slate-800 p-4">
+            <form method="get" class="flex flex-wrap items-end gap-2">
+                <div class="min-w-0 flex-1">
+                    <label class="mb-1 block text-[11px] font-bold text-slate-500 dark:text-slate-400">جستجو</label>
+                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="نام یا کد کالا" />
                 </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-sm btn-primary">اعمال</button>
-                </div>
+                <button type="submit" class="rounded-xl bg-teal-600 px-4 py-2 text-[12px] font-bold text-white hover:bg-teal-700 transition">اعمال</button>
             </form>
         </div>
-        <div class="table-responsive">
-            <table class="w-full text-xs text-right border-collapse"  >
-                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  ead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-xs font-bold border-b border-slate-200 dark:border-slate-700"><tr><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >کد</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >نام</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >واحد</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >حداقل موجودی</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold "  >وضعیت</th><th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center"  >عملیات</th></tr></thead>
-                <tbody>
-                @if (Model.Any())
-                {
-                    @foreach (var item in Model)
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-[12px] text-right border-collapse">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                        <th class="px-4 py-3 font-bold text-slate-600 dark:text-slate-300">کد</th>
+                        <th class="px-4 py-3 font-bold text-slate-600 dark:text-slate-300">نام</th>
+                        <th class="px-4 py-3 font-bold text-slate-600 dark:text-slate-300">واحد</th>
+                        <th class="px-4 py-3 font-bold text-slate-600 dark:text-slate-300">حداقل موجودی</th>
+                        <th class="px-4 py-3 font-bold text-slate-600 dark:text-slate-300">وضعیت</th>
+                        <th class="px-4 py-3 font-bold text-slate-600 dark:text-slate-300 text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                <td class="px-4 py-3 font-mono font-semibold text-slate-700 dark:text-slate-300">@item.Code</td>
+                                <td class="px-4 py-3 font-bold text-slate-800 dark:text-white">@item.Name</td>
+                                <td class="px-4 py-3 text-slate-600 dark:text-slate-400">@item.Unit</td>
+                                <td class="px-4 py-3 font-mono tabular-nums text-slate-600 dark:text-slate-400">@item.MinimumStock</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold @(item.IsActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")">@(item.IsActive ? "فعال" : "غیرفعال")</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <a asp-action="EditProduct" asp-route-id="@item.Id" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 no-underline">ویرایش</a>
+                                        <form asp-action="ToggleProductStatus" asp-route-id="@item.Id" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <button class="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 dark:hover:bg-amber-500/20">تغییر وضعیت</button>
+                                        </form>
+                                        <form asp-action="DeleteProduct" asp-route-id="@item.Id" method="post" class="inline" onsubmit="return confirm('حذف/غیرفعال‌سازی کالا انجام شود؟');">
+                                            @Html.AntiForgeryToken()
+                                            <button class="inline-flex items-center rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-100 transition dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20">حذف</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.Code</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.Name</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.Unit</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >@item.MinimumStock</td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "  >
-                                <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "فعال" : "غیرفعال")</span>
-                            </td>
-                            <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 text-center"  >
-                                <a asp-action="EditProduct" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">ویرایش</a>
-                                <form asp-action="ToggleProductStatus" asp-route-id="@item.Id" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button class="btn btn-sm btn-outline-warning">تغییر وضعیت</button>
-                                </form>
-                                <form asp-action="DeleteProduct" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('حذف/غیرفعال‌سازی کالا انجام شود؟');">
-                                    @Html.AntiForgeryToken()
-                                    <button class="btn btn-sm btn-outline-danger">حذف</button>
-                                </form>
-                            </td>
+                            <td colspan="6" class="px-4 py-8 text-center text-slate-400 dark:text-slate-500 text-[12px]">موردی یافت نشد.</td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr><td class="p-3 border-b border-slate-100 dark:border-slate-800/50 p-3 border-b border-slate-100 dark:border-slate-800/50 "   colspan="6" class="text-center text-muted py-3">موردی یافت نشد.</td></tr>
-                }
                 </tbody>
             </table>
         </div>

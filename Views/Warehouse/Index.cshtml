@@ -50,9 +50,9 @@
         </a>
         <a asp-action="Stock" class="no-underline">
             <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-rose-200 dark:border-rose-900/50 p-3 hover:shadow transition text-center">
-                <div class="text-[10px] font-bold text-rose-600 dark:text-rose-450">هشدار</div>
+                <div class="text-[10px] font-bold text-rose-600 dark:text-rose-400">هشدار</div>
                 <div class="text-lg font-black text-rose-600 dark:text-rose-400 mt-0.5">@Model.LowStockCount</div>
-                <div class="text-[9px] text-rose-450 mt-1">کالای زیر حداقل</div>
+                <div class="text-[9px] text-rose-400 mt-1">کالای زیر حداقل</div>
             </div>
         </a>
     </div>
@@ -120,7 +120,7 @@
                 <div class="grid grid-cols-1 gap-2">
                     @foreach (var item in Model.CountingIssues)
                     {
-                        <a asp-action="CountingDetails" asp-route-id="@item.Id" class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-lg transition no-underline">
+                        <a asp-action="CountingDetails" asp-route-id="@item.Id" class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-lg transition no-underline">
                             <div>
                                 <strong class="text-[11px] text-slate-800 dark:text-white">@item.DocumentNumber</strong>
                                 <div class="text-[9px] text-slate-400 mt-0.5">@item.WarehouseName</div>
@@ -176,7 +176,7 @@
                             var outputWidth = Math.Max(5m, (item.Outputs / maxTrend) * 100m);
                             <div class="trend-row flex flex-col gap-1">
                                 <div class="trend-label text-[11px] font-bold text-slate-700 dark:text-slate-300">@item.Label</div>
-                                <div class="trend-bars h-2 bg-slate-100 dark:bg-slate-850 rounded-full overflow-hidden flex">
+                                <div class="trend-bars h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                     <div class="trend-bar bg-emerald-500 h-full transition-all duration-500" style="width: @(inputWidth.ToString("0.##"))%"></div>
                                     <div class="trend-bar bg-blue-500 h-full transition-all duration-500" style="width: @(outputWidth.ToString("0.##"))%"></div>
                                 </div>
@@ -241,7 +241,7 @@
                 <div class="grid grid-cols-1 gap-2">
                     @foreach (var item in Model.RecentReceipts)
                     {
-                        <a asp-action="ReceiptDetails" asp-route-id="@item.Id" class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-lg transition no-underline">
+                        <a asp-action="ReceiptDetails" asp-route-id="@item.Id" class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-lg transition no-underline">
                             <div>
                                 <strong class="text-[11px] text-slate-800 dark:text-white">@item.Number</strong>
                                 <div class="text-[9px] text-slate-400 mt-0.5">@item.WarehouseName - @item.DateShamsi</div>
@@ -268,7 +268,7 @@
                 <div class="grid grid-cols-1 gap-2">
                     @foreach (var item in Model.RecentIssuances)
                     {
-                        <a asp-action="IssuanceDetails" asp-route-id="@item.Id" class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-955 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-lg transition no-underline">
+                        <a asp-action="IssuanceDetails" asp-route-id="@item.Id" class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-lg transition no-underline">
                             <div>
                                 <strong class="text-[11px] text-slate-800 dark:text-white">@item.Number</strong>
                                 <div class="text-[9px] text-slate-400 mt-0.5">@item.WarehouseName - @item.DateShamsi</div>
@@ -323,8 +323,6 @@
         </div>
     </div>
 </div>
-</div>
-
 
 @section Styles {
 }

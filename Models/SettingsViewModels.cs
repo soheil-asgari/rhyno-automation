@@ -317,4 +317,14 @@ namespace OfficeAutomation.Models
 
         public string Tone { get; set; } = "primary";
     }
+
+    /// <summary>
+    /// تنظیم احراز هویت دو مرحله‌ای (2FA / TOTP)
+    /// </summary>
+    public class TwoFactorSetupVM
+    {
+        public string SecretKey { get; set; } = string.Empty;
+        public string QrCodeUri { get; set; } = string.Empty;
+        public string[] RecoveryCodes { get; set; } = Array.Empty<string>();
+    }
 }
