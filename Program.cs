@@ -110,8 +110,8 @@ if (!string.IsNullOrWhiteSpace(redisConnectionString))
 builder.Services.AddAuthentication()
     .AddApiKeyAuthentication(options =>
     {
-        var apiKeys = builder.Configuration.GetSection("ApiKeys").Get<string[]>()
-                      ?? new[] { "rhyno-api-key-change-me-in-production" };
+        var apiKeys = builder.Configuration.GetSection("Authentication:ApiKey").Get<string[]>()
+                      ?? throw new InvalidOperationException("Critical Security Exception: API Key configuration 'Authentication:ApiKey' is missing in settings.");
         options.ValidApiKeys = apiKeys;
     });
 
@@ -175,7 +175,8 @@ builder.Services.AddDbContext<PlatformDbContext>((serviceProvider, options) =>
         .AddInterceptors(
             serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(),
             serviceProvider.GetRequiredService<RowLevelSecuritySaveChangesInterceptor>()));
-builder.Services.AddIdentity<User, ApplicationRole>(options => {
+builder.Services.AddIdentity<User, ApplicationRole>(options =>
+{
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
     options.Password.RequireNonAlphanumeric = true;
@@ -231,7 +232,10 @@ builder.Services.AddScoped<IWorkflowDefinitionSelector, WorkflowDefinitionSelect
 builder.Services.AddScoped<WorkflowGovernanceService>();
 builder.Services.AddScoped<WorkflowService>();
 builder.Services.AddScoped<WorkflowSlaScheduler>();
+builder.Services.AddScoped<IWorkflowAttachmentService, WorkflowAttachmentService>();
+builder.Services.AddScoped<IWorkflowSlaService, WorkflowSlaService>();
 builder.Services.AddScoped<WorkflowSlaEscalationNotifier>();
+builder.Services.AddScoped<FinancialAppService>();
 builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
 builder.Services.AddScoped<ConnectorExecutionService>();
 builder.Services.AddScoped<ProcessMiningService>();

@@ -294,7 +294,7 @@
     }
 
     /**
-     * Show shortcuts help modal
+     * Show shortcuts help drawer
      */
     function showHelp() {
         if (isHelpVisible) return;
@@ -302,78 +302,135 @@
 
         const darkMode = document.documentElement.classList.contains('dark');
 
+        // Backdrop
         const overlay = document.createElement('div');
-        overlay.className = 'shortcuts-help-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.id = 'shortcutsHelpBackdrop';
+        overlay.className = 'fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm transition-opacity duration-200 opacity-0';
+        overlay.setAttribute('aria-hidden', 'true');
+
+        // Drawer panel (RTL: opens from right)
+        const drawer = document.createElement('div');
+        drawer.id = 'shortcutsHelpDrawer';
+        drawer.className = 'fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl border-r border-slate-200/80 dark:border-slate-800/80 transform translate-x-full transition-transform duration-300 ease-out flex flex-col';
+        drawer.setAttribute('role', 'dialog');
+        drawer.setAttribute('aria-modal', 'true');
+        drawer.setAttribute('aria-label', 'کلیدهای میانبر');
 
         const grouped = new Map();
-        shortcuts.forEach((shortcut, combo) => {
-            const group = shortcut.label || 'عمومی';
-            if (!grouped.has(group)) grouped.set(group, []);
-            grouped.get(group).push(shortcut);
+        // Group shortcuts by a friendly category derived from their description/label
+        const categoryOrder = ['پیمایش', 'عملیات سریع', 'پیمایش Vim', 'فرم‌ها'];
+        const categoryMap = {
+            'Command Palette': 'پیمایش',
+            'داشبورد اصلی': 'پیمایش',
+            'کارتابل': 'پیمایش',
+            'جستجوی سراسری': 'پیمایش',
+            'تغییر تم': 'عملیات سریع',
+            'بستن': 'عملیات سریع',
+            'جستجوی سریع': 'عملیات سریع',
+            'راهنمای میانبرها': 'عملیات سریع',
+            'ایجاد جدید': 'عملیات سریع',
+            'Go...': 'پیمایش Vim',
+            'پایین': 'پیمایش Vim',
+            'بالا': 'پیمایش Vim',
+            'بعدی': 'فرم‌ها',
+            'قبلی': 'فرم‌ها'
+        };
+
+        shortcuts.forEach((shortcut) => {
+            const category = categoryMap[shortcut.label] || 'عمومی';
+            if (!grouped.has(category)) grouped.set(category, []);
+            grouped.get(category).push(shortcut);
         });
+
+        const sortedCategories = Array.from(grouped.keys()).sort((a, b) => {
+            const idxA = categoryOrder.indexOf(a);
+            const idxB = categoryOrder.indexOf(b);
+            if (idxA === -1 && idxB === -1) return a.localeCompare(b, 'fa');
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+        });
+
+        const keyMap = {
+            'ctrl': 'Ctrl',
+            'shift': '⇧',
+            'alt': 'Alt',
+            'escape': 'Esc',
+            'tab': 'Tab',
+            '/': '/',
+            '?': '?',
+            'j': 'J',
+            'k': 'K',
+            'g': 'G',
+            'n': 'N',
+            'd': 'D',
+            'i': 'I',
+            'f': 'F',
+            't': 'T'
+        };
 
         let shortcutsHtml = '';
-        grouped.forEach((items, group) => {
-            shortcutsHtml += `<div style="margin-bottom:12px;">
-                <h4 style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;color:${darkMode ? '#5eead4' : '#0d9488'};">${group}</h4>`;
-            items.forEach(s => {
-                const keysDisplay = s.keys.split('+').map(k => {
-                    const keyMap = {
-                        'ctrl': 'Ctrl',
-                        'shift': '⇧',
-                        'alt': 'Alt',
-                        'escape': 'Esc',
-                        'tab': 'Tab',
-                        '/': '/',
-                        '?': '?',
-                        'j': 'J',
-                        'k': 'K',
-                        'g': 'G',
-                        'n': 'N',
-                        'd': 'D',
-                        'i': 'I',
-                        'f': 'F',
-                        't': 'T',
-                        'k': 'K'
-                    };
-                    return keyMap[k] || k.toUpperCase();
-                }).join(' + ');
-
-                shortcutsHtml += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px;">
-                    <span style="color:${darkMode ? '#94a3b8' : '#64748b'};">${s.description}</span>
-                    <kbd style="background:${darkMode ? '#334155' : '#f1f5f9'};border:1px solid ${darkMode ? '#475569' : '#cbd5e1'};border-radius:6px;padding:2px 8px;font-family:monospace;font-size:11px;font-weight:600;color:${darkMode ? '#e2e8f0' : '#0f172a'};direction:ltr;display:inline-block;">${keysDisplay}</kbd>
+        sortedCategories.forEach((category) => {
+            const items = grouped.get(category);
+            shortcutsHtml += `
+                <div class="mb-5">
+                    <h4 class="text-[11px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 mb-2">${category}</h4>
+                    <div class="space-y-2">
+                        ${items.map(s => {
+                            const keysDisplay = s.keys.split('+').map(k => keyMap[k] || k.toUpperCase()).join(' + ');
+                            return `
+                                <div class="flex items-center justify-between gap-3 py-1.5 text-xs">
+                                    <span class="text-slate-600 dark:text-slate-300">${s.description}</span>
+                                    <kbd class="flex-shrink-0 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono font-semibold text-slate-800 dark:text-slate-200 ltr" dir="ltr">${keysDisplay}</kbd>
+                                </div>`;
+                        }).join('')}
+                    </div>
                 </div>`;
-            });
-            shortcutsHtml += '</div>';
         });
 
-        overlay.innerHTML = `
-            <div style="background:${darkMode ? '#1e293b' : 'white'};border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,0.4);max-width:480px;width:100%;max-height:80vh;overflow-y:auto;direction:rtl;">
-                <div style="padding:20px 24px;border-bottom:1px solid ${darkMode ? '#334155' : '#e2e8f0'};display:flex;align-items:center;justify-content:space-between;">
-                    <div>
-                        <h2 style="margin:0;font-size:18px;font-weight:800;color:${darkMode ? '#f1f5f9' : '#0f172a'};">کلیدهای میانبر</h2>
-                        <p style="margin:4px 0 0;font-size:12px;color:${darkMode ? '#64748b' : '#94a3b8'};">میانبرهای کیبورد برای پیمایش سریع‌تر</p>
-                    </div>
-                    <button class="shortcuts-help-close" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:${darkMode ? '#94a3b8' : '#64748b'};padding:4px 8px;">✕</button>
+        drawer.innerHTML = `
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-slate-800/80 flex-shrink-0">
+                <div>
+                    <h2 class="text-base font-black text-slate-900 dark:text-white">کلیدهای میانبر</h2>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">میانبرهای کیبورد برای پیمایش سریع‌تر</p>
                 </div>
-                <div style="padding:16px 24px;">${shortcutsHtml}</div>
-                <div style="padding:12px 24px;border-top:1px solid ${darkMode ? '#334155' : '#e2e8f0'};font-size:11px;color:${darkMode ? '#475569' : '#94a3b8'};text-align:center;">برای بستن، Esc یا ? را فشار دهید</div>
+                <button id="shortcutsHelpClose" type="button" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5">${shortcutsHtml}</div>
+            <div class="px-5 py-3 border-t border-slate-200/80 dark:border-slate-800/80 text-[11px] text-center text-slate-400 dark:text-slate-500 flex-shrink-0">
+                برای بستن، Esc یا ? را فشار دهید
             </div>
         `;
 
         document.body.appendChild(overlay);
+        document.body.appendChild(drawer);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            drawer.classList.remove('translate-x-full');
+        });
 
         // Close handlers
-        overlay.querySelector('.shortcuts-help-close').addEventListener('click', hideHelp);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) hideHelp();
-        });
+        const closeDrawer = () => {
+            overlay.classList.add('opacity-0');
+            drawer.classList.add('translate-x-full');
+            setTimeout(() => {
+                overlay.remove();
+                drawer.remove();
+                isHelpVisible = false;
+            }, 300);
+        };
+
+        drawer.querySelector('#shortcutsHelpClose').addEventListener('click', closeDrawer);
+        overlay.addEventListener('click', closeDrawer);
 
         // ESC to close
         const escHandler = (e) => {
             if (e.key === 'Escape') {
-                hideHelp();
+                closeDrawer();
                 document.removeEventListener('keydown', escHandler);
             }
         };
@@ -383,15 +440,21 @@
     }
 
     /**
-     * Hide help modal
+     * Hide help drawer
      */
     function hideHelp() {
-        isHelpVisible = false;
-        const overlay = document.querySelector('.shortcuts-help-overlay');
-        if (overlay) {
-            overlay.style.opacity = '0';
-            overlay.style.transition = 'opacity 0.2s';
-            setTimeout(() => overlay.remove(), 200);
+        const overlay = document.getElementById('shortcutsHelpBackdrop');
+        const drawer = document.getElementById('shortcutsHelpDrawer');
+        if (overlay && drawer) {
+            overlay.classList.add('opacity-0');
+            drawer.classList.add('translate-x-full');
+            setTimeout(() => {
+                overlay.remove();
+                drawer.remove();
+                isHelpVisible = false;
+            }, 300);
+        } else {
+            isHelpVisible = false;
         }
     }
 
@@ -456,6 +519,14 @@
     } else {
         init();
     }
+
+    // Bind button triggers (drawer buttons with data-open-shortcuts)
+    document.querySelectorAll('[data-open-shortcuts]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleHelp();
+        });
+    });
 
     // Expose API
     window.RhynoShortcuts = {

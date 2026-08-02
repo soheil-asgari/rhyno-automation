@@ -33,12 +33,14 @@
     var headerNotifications = userContext.Notifications;
     var headerNotificationCount = headerNotifications.Count;
 
-    string NavClass(string controller, string? action = null)
-    {
-        var active = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(action) || string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase));
-        return active ? "sidebar-link z-50 flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-2 py-1 text-[12px] font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200" : "sidebar-link z-50 flex items-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-[12px] font-medium text-slate-600 transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white";
-    }
-    var moduleButtonClass = "sidebar-module-btn flex w-full items-center justify-between rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100";
+        string NavClass(string controller, string? action = null)
+        {
+            var active = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(action) || string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase));
+            return active 
+                ? "sidebar-link group relative flex items-center gap-2.5 rounded-xl border border-indigo-200/40 bg-indigo-600/5 px-3 py-2.5 text-[13px] font-semibold text-indigo-700 shadow-glow-sm dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 transition-all duration-300"
+                : "sidebar-link group relative flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-[13px] font-medium text-slate-600 transition-all duration-300 hover:border-slate-200/70 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-700/50 dark:hover:bg-slate-800/50 dark:hover:text-white";
+        }
+        var moduleButtonClass = "sidebar-module-btn flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[12px] font-bold text-slate-500 transition-all duration-300 hover:bg-slate-100/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200";
 
     // ── White-labeling / Branding ─────────────────────────────────────────────
     SystemSetting? brandingSettings = null;
@@ -73,6 +75,15 @@
             @if (!string.IsNullOrWhiteSpace(brandPrimary))
             {
                 <text>
+                .bg-indigo-600, .hover\:bg-indigo-700:hover  { background-color: var(--brand-primary) !important; }
+                .text-indigo-600, .text-indigo-700            { color: var(--brand-primary) !important; }
+                .border-indigo-500, .border-indigo-200        { border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent) !important; }
+                .focus\:border-indigo-500:focus               { border-color: var(--brand-primary) !important; }
+                .focus\:ring-indigo-500\/20:focus             { --tw-ring-color: color-mix(in srgb, var(--brand-primary) 20%, transparent) !important; }
+                .bg-indigo-50                                 { background-color: color-mix(in srgb, var(--brand-primary) 8%, white) !important; }
+                .dark .bg-indigo-500\/10                      { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important; }
+                .dark .text-indigo-200, .dark .text-indigo-300 { color: color-mix(in srgb, var(--brand-primary) 80%, white) !important; }
+                /* Legacy teal compatibility */
                 .bg-teal-600, .hover\:bg-teal-700:hover  { background-color: var(--brand-primary) !important; }
                 .text-teal-600, .text-teal-700            { color: var(--brand-primary) !important; }
                 .border-teal-500, .border-teal-200        { border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent) !important; }
@@ -100,9 +111,9 @@
                 position: static !important;
                 display: flex !important;
                 flex-direction: column !important;
-                width: 14rem !important;
-                min-width: 14rem !important;
-                max-width: 14rem !important;
+                width: 15rem !important;
+                min-width: 15rem !important;
+                max-width: 15rem !important;
                 transform: none !important;
                 box-shadow: none !important;
                 z-index: 40 !important;
@@ -124,14 +135,38 @@
             transform: translateX(0) !important;
         }
 
-        #appSidebar .sidebar-collapse a.sidebar-link:not(.bg-teal-50):not(.dark\\:bg-teal-500\\/10) {
+        /* Active sidebar link left indicator bar */
+        .sidebar-link.bg-indigo-50\/80::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            border-radius: 0 3px 3px 0;
+            background-color: #4f46e5;
+        }
+        .dark .sidebar-link.dark\:bg-indigo-500\/10::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            border-radius: 0 3px 3px 0;
+            background-color: #818cf8;
+        }
+
+        #appSidebar .sidebar-collapse a.sidebar-link:not(.bg-indigo-50\/80):not(.dark\:bg-indigo-500\/10) {
             display: flex !important;
             align-items: center !important;
-            gap: 6px !important;
+            gap: 8px !important;
             width: 100% !important;
-            padding: 5px 18px !important;
+            padding: 6px 20px !important;
             background: transparent !important;
-            color: #334155 !important;
+            color: #475569 !important;
             border: 0 !important;
             font-size: 11px !important;
             font-weight: 500 !important;
@@ -142,47 +177,48 @@
         }
         #appSidebar .sidebar-collapse a.sidebar-link i {
             margin-left: 4px !important;
+            font-size: 14px !important;
         }
-        #appSidebar .sidebar-collapse a.sidebar-link:not(.bg-teal-50):not(.dark\\:bg-teal-500\\/10):hover {
+        #appSidebar .sidebar-collapse a.sidebar-link:not(.bg-indigo-50\/80):not(.dark\:bg-indigo-500\/10):hover {
             background-color: #f1f5f9 !important;
             color: #0f172a !important;
         }
 
-        html.theme-dark #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\\:bg-teal-500\\/10),
-        html[data-theme="dark"] #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\\:bg-teal-500\\/10) {
-            color: #cbd5e1 !important;
+        html.theme-dark #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10),
+        html[data-theme="dark"] #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10) {
+            color: #94a3b8 !important;
             background: transparent !important;
         }
-        html.theme-dark #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\\:bg-teal-500\\/10):hover,
-        html[data-theme="dark"] #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\\:bg-teal-500\\/10):hover {
+        html.theme-dark #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10):hover,
+        html[data-theme="dark"] #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10):hover {
             background-color: #1e293b !important;
-            color: #ffffff !important;
+            color: #f1f5f9 !important;
         }
 
         /* Dropdown animations */
         .rhyno-dropdown {
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-4px);
+            transform: translateY(-4px) scale(0.98);
             transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
         }
         .rhyno-dropdown.open {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
 
         /* Sidebar collapse */
         .sidebar-collapse {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar-collapse.open {
-            max-height: 600px;
+            max-height: 800px;
         }
         .sidebar-module-btn .bi-chevron-down {
-            transition: transform 0.2s ease;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar-module-btn.expanded .bi-chevron-down {
             transform: rotate(180deg);
@@ -199,55 +235,86 @@
             visibility: visible;
         }
         .rhyno-modal-content {
-            transform: scale(0.95) translateY(8px);
-            transition: transform 0.2s ease;
+            transform: scale(0.95) translateY(12px);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .rhyno-modal-overlay.open .rhyno-modal-content {
             transform: scale(1) translateY(0);
         }
+
+        /* Pulse dot animation for status badges */
+        @@keyframes status-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .status-dot-pulse {
+            animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Smooth scrollbar for sidebar */
+        #sidebarScrollContainer::-webkit-scrollbar {
+            width: 4px;
+        }
+        #sidebarScrollContainer::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #sidebarScrollContainer::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark #sidebarScrollContainer::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
     </style>
 </head>
 <body data-theme="@themePreference.ToLowerInvariant()" class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans antialiased min-h-screen flex flex-col md:flex-row">
-    <div id="sidebarOverlay" class="fixed inset-0 z-40 hidden bg-slate-950/40 backdrop-blur-sm lg:hidden"></div>
+    <div id="sidebarOverlay" class="fixed inset-0 z-40 hidden bg-slate-950/50 backdrop-blur-sm lg:hidden"></div>
     <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
-    <div class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 w-full">
-        <!-- Sidebar -->
-        <aside id="appSidebar" class="sidebar-right print:hidden fixed inset-y-0 right-0 z-50 flex w-52 translate-x-full flex-col border-l border-slate-200 bg-white/95 shadow-xl backdrop-blur transition-transform duration-200 lg:static lg:flex lg:w-56 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:bg-slate-950/95">
-            <div class="flex h-12 items-center gap-2 border-b border-slate-200 px-2.5 dark:border-slate-800">
+    <div class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 w-full">
+        <!-- Sidebar ── Floating Glassmorphism -->
+        <aside id="appSidebar" class="sidebar-right print:hidden fixed inset-y-0 right-0 z-50 flex w-60 -translate-x-full flex-col border-l border-slate-200/50 bg-white/80 backdrop-blur-xl shadow-2xl transition-transform duration-300 lg:static lg:flex lg:w-60 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800/40 dark:bg-slate-950/85">
+            <div class="flex h-12 items-center gap-2 border-b border-slate-200/60 px-3 dark:border-slate-800/60">
                 <a asp-controller="Home" asp-action="Index" class="flex min-w-0 flex-1 items-center gap-2 no-underline">
                     @if (!string.IsNullOrWhiteSpace(brandLogo))
                     {
-                        <img src="@brandLogo" alt="@appTitle" class="h-8 w-8 rounded-lg object-contain border border-slate-200 dark:border-slate-700 bg-white p-0.5" onerror="this.parentElement.querySelector('.brand-fallback').style.display='flex'; this.style.display='none'" />
+                        <img src="@brandLogo" alt="@appTitle" class="h-8 w-8 rounded-lg object-contain border border-slate-200/60 dark:border-slate-700 bg-white p-0.5" onerror="this.parentElement.querySelector('.brand-fallback').style.display='flex'; this.style.display='none'" />
                         <span class="brand-fallback hidden h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
                     }
                     else
                     {
-                        <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
+                        <span class="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
                     }
                     <span class="min-w-0"><span class="block truncate text-sm font-black text-slate-900 dark:text-white">@appTitle</span><span class="block truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">سیستم جامع سازمانی</span></span>
                 </a>
-                <button id="btnCloseSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800" aria-label="بستن منو"><i class="bi bi-x-lg"></i></button>
+                <button id="btnCloseSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100/80 hover:text-slate-600 lg:hidden dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300 transition-colors" aria-label="بستن منو"><i class="bi bi-x-lg"></i></button>
             </div>
-            <div class="border-b border-slate-200 p-2 dark:border-slate-800">
-                <label class="relative block"><i class="bi bi-search pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i><input id="sidebarMenuSearch" type="search" autocomplete="off" placeholder="جستجوی منو" aria-label="جستجوی منو" class="h-8 w-full rounded-md border border-slate-200 bg-slate-50 pr-7 pl-2 text-[12px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" /></label>
-                <div class="mt-1 flex items-center justify-between px-1 text-[10px] text-slate-500 dark:text-slate-400"><span id="sidebarSearchCount">همه بخش‌ها</span><button id="sidebarSearchClear" type="button" class="hidden font-bold text-teal-700 dark:text-teal-300">پاک کردن</button></div>
+            <div class="border-b border-slate-200/60 p-2.5 dark:border-slate-800/60">
+                <label class="relative block"><i class="bi bi-search pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i><input id="sidebarMenuSearch" type="search" autocomplete="off" placeholder="جستجوی منو" aria-label="جستجوی منو" class="h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/70 pr-10 pl-2 text-[12px] text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-900/70 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-900 dark:focus:ring-indigo-500/20" /></label>
+                <div class="mt-1.5 flex items-center justify-between px-1 text-[10px] text-slate-500 dark:text-slate-400"><span id="sidebarSearchCount">همه بخش‌ها</span><button id="sidebarSearchClear" type="button" class="hidden font-bold text-indigo-600 dark:text-indigo-400 hover:underline">پاک کردن</button></div>
             </div>
-            <nav id="sidebarScrollContainer" class="min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-3">
-                <div id="sidebarSearchNoResults" class="hidden rounded-md border border-amber-200 bg-amber-50 px-2 py-2 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">نتیجه‌ای در منو پیدا نشد.</div>
-                <section><div class="mb-1 px-2 text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">دسترسی سریع</div><div class="space-y-1">
-                    <a class='@NavClass("Home")' data-nav-id="home-index" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2 w-4 text-sky-500 me-2"></i><span class="link-text truncate">میز کار</span></a>
-                    <a class='@NavClass("WorkInbox")' data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes w-4 text-indigo-500 me-2"></i><span class="link-text truncate">کارتابل</span></a>
-                    @if (userCanAccessFinance) { <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-teal-500 me-2"></i><span class="link-text truncate">تراز آزمایشی</span></a> }
+            <nav id="sidebarScrollContainer" class="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-3">
+                <div id="sidebarSearchNoResults" class="hidden rounded-xl border border-amber-200/60 bg-amber-50/70 px-3 py-2.5 text-[11px] text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">نتیجه‌ای در منو پیدا نشد.</div>
+                <section><div class="mb-1.5 px-2 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">دسترسی سریع</div><div class="space-y-0.5">
+                    <a class='@NavClass("Home")' data-nav-id="home-index" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2 w-4 text-sky-500"></i><span class="link-text truncate">میز کار</span></a>
+                    <a class='@NavClass("WorkInbox")' data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes w-4 text-indigo-500"></i><span class="link-text truncate">کارتابل</span></a>
+                    @if (userCanAccessFinance) { <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-emerald-500"></i><span class="link-text truncate">تراز آزمایشی</span></a> }
                 </div></section>
                 <div id="sidebarAccordion" class="space-y-2">
                     @if (userCanAccessHumanCapital)
                     {
                         <section class="sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseHumanCapital"><span>سرمایه انسانی</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseHumanCapital" class="sidebar-collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "open" : "")"><div class="mt-1 space-y-1">
-                                <a class='@NavClass("HumanCapital")' data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge w-4 text-amber-500 me-2"></i><span class="link-text truncate">منابع انسانی</span></a>
-                                <a class='@NavClass("Leaves")' data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week w-4 text-sky-500 me-2"></i><span class="link-text truncate">مرخصی‌ها</span></a>
-                                <a class='@NavClass("Letters")' data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope w-4 text-purple-500 me-2"></i><span class="link-text truncate">نامه‌ها</span></a>
+                            <div id="collapseHumanCapital" class="sidebar-collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
+                                <a class='@NavClass("HumanCapital")' data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge w-4 text-amber-500"></i><span class="link-text truncate">منابع انسانی</span></a>
+                                <a class='@NavClass("Leaves")' data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week w-4 text-sky-500"></i><span class="link-text truncate">مرخصی‌ها</span></a>
+                                <a class='@NavClass("Letters")' data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope w-4 text-purple-500"></i><span class="link-text truncate">نامه‌ها</span></a>
                             </div></div>
                         </section>
                     }
@@ -255,16 +322,16 @@
                     {
                         <section class="sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseFinancial"><span>مالی و حسابداری</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseFinancial" class="sidebar-collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "open" : "")"><div class="mt-1 space-y-1">
-                                <a class='@NavClass("Financial", "Dashboard")' data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap w-4 text-emerald-500 me-2"></i><span class="link-text truncate">داشبورد مالی</span></a>
-                                <a class='@NavClass("Financial", "Invoices")' data-nav-id="financial-invoices" asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt w-4 text-teal-500 me-2"></i><span class="link-text truncate">فاکتورها</span></a>
-                                <a class='@NavClass("Financial", "LedgerOperations")' data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext w-4 text-cyan-500 me-2"></i><span class="link-text truncate">دفتر کل</span></a>
-                                <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-indigo-500 me-2"></i><span class="link-text truncate">تراز آزمایشی</span></a>
-                                <a class='@NavClass("Financial", "VatDashboard")' data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent w-4 text-pink-500 me-2"></i><span class="link-text truncate">ارزش افزوده</span></a>
-                                <a class='@NavClass("Financial", "SeasonalTax")' data-nav-id="financial-seasonaltax" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-bar-graph w-4 text-indigo-600 me-2"></i><span class="link-text truncate">گزارشات فصلی ۱۶۹</span></a>
-                                <a class='@NavClass("Financial", "ReportingHub")' data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line w-4 text-rose-500 me-2"></i><span class="link-text truncate">گزارش‌ها</span></a>
-                                <a class='@NavClass("Payroll")' data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 w-4 text-violet-500 me-2"></i><span class="link-text truncate">حقوق</span></a>
-                                <a class='@NavClass("Bimeh")' data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check w-4 text-blue-500 me-2"></i><span class="link-text truncate">بیمه</span></a>
+                            <div id="collapseFinancial" class="sidebar-collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
+                                <a class='@NavClass("Financial", "Dashboard")' data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap w-4 text-emerald-500"></i><span class="link-text truncate">داشبورد مالی</span></a>
+                                <a class='@NavClass("Financial", "Invoices")' data-nav-id="financial-invoices" asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt w-4 text-teal-500"></i><span class="link-text truncate">فاکتورها</span></a>
+                                <a class='@NavClass("Financial", "LedgerOperations")' data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext w-4 text-cyan-500"></i><span class="link-text truncate">دفتر کل</span></a>
+                                <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-indigo-500"></i><span class="link-text truncate">تراز آزمایشی</span></a>
+                                <a class='@NavClass("Financial", "VatDashboard")' data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent w-4 text-pink-500"></i><span class="link-text truncate">ارزش افزوده</span></a>
+                                <a class='@NavClass("Financial", "SeasonalTax")' data-nav-id="financial-seasonaltax" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-bar-graph w-4 text-indigo-500"></i><span class="link-text truncate">گزارشات فصلی ۱۶۹</span></a>
+                                <a class='@NavClass("Financial", "ReportingHub")' data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line w-4 text-rose-500"></i><span class="link-text truncate">گزارش‌ها</span></a>
+                                <a class='@NavClass("Payroll")' data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 w-4 text-violet-500"></i><span class="link-text truncate">حقوق</span></a>
+                                <a class='@NavClass("Bimeh")' data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check w-4 text-blue-500"></i><span class="link-text truncate">بیمه</span></a>
                             </div></div>
                         </section>
                     }
@@ -272,14 +339,14 @@
                     {
                         <section class="sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseWarehouse"><span>انبار و عملیات</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseWarehouse" class="sidebar-collapse @((currentController == "Warehouse" || currentController == "WarehouseInventory" || currentController == "WarehouseReceipts" || currentController == "WarehouseIssuances" || currentController == "WarehouseTransfer" || currentController == "Vendors" || currentController == "Waybill") ? "open" : "")"><div class="mt-1 space-y-1">
-                                <a class='@NavClass("Warehouse")' data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam w-4 text-orange-500 me-2"></i><span class="link-text truncate">داشبورد انبار</span></a>
-                                <a class='@NavClass("Warehouse", "Products")' data-nav-id="warehouse-products" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box w-4 text-yellow-500 me-2"></i><span class="link-text truncate">کالاها</span></a>
-                                <a class='@NavClass("WarehouseInventory", "Stock")' data-nav-id="warehouse-stock" asp-controller="WarehouseInventory" asp-action="Stock"><i class="bi bi-layers w-4 text-lime-500 me-2"></i><span class="link-text truncate">موجودی</span></a>
-                                <a class='@NavClass("WarehouseReceipts", "Receipts")' data-nav-id="warehouse-receipts" asp-controller="WarehouseReceipts" asp-action="Receipts"><i class="bi bi-box-arrow-in-down w-4 text-emerald-500 me-2"></i><span class="link-text truncate">رسیدها</span></a>
-                                <a class='@NavClass("WarehouseIssuances", "Issuances")' data-nav-id="warehouse-issuances" asp-controller="WarehouseIssuances" asp-action="Issuances"><i class="bi bi-box-arrow-up w-4 text-red-500 me-2"></i><span class="link-text truncate">حواله‌ها</span></a>
-                                <a class='@NavClass("Vendors")' data-nav-id="vendors-index" asp-controller="Vendors" asp-action="Index"><i class="bi bi-building w-4 text-blue-500 me-2"></i><span class="link-text truncate">تامین‌کنندگان</span></a>
-                                <a class='@NavClass("Waybill")' data-nav-id="waybill-index" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck w-4 text-indigo-500 me-2"></i><span class="link-text truncate">بارنامه</span></a>
+                            <div id="collapseWarehouse" class="sidebar-collapse @((currentController == "Warehouse" || currentController == "WarehouseInventory" || currentController == "WarehouseReceipts" || currentController == "WarehouseIssuances" || currentController == "WarehouseTransfer" || currentController == "Vendors" || currentController == "Waybill") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
+                                <a class='@NavClass("Warehouse")' data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam w-4 text-orange-500"></i><span class="link-text truncate">داشبورد انبار</span></a>
+                                <a class='@NavClass("Warehouse", "Products")' data-nav-id="warehouse-products" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box w-4 text-yellow-500"></i><span class="link-text truncate">کالاها</span></a>
+                                <a class='@NavClass("WarehouseInventory", "Stock")' data-nav-id="warehouse-stock" asp-controller="WarehouseInventory" asp-action="Stock"><i class="bi bi-layers w-4 text-lime-500"></i><span class="link-text truncate">موجودی</span></a>
+                                <a class='@NavClass("WarehouseReceipts", "Receipts")' data-nav-id="warehouse-receipts" asp-controller="WarehouseReceipts" asp-action="Receipts"><i class="bi bi-box-arrow-in-down w-4 text-emerald-500"></i><span class="link-text truncate">رسیدها</span></a>
+                                <a class='@NavClass("WarehouseIssuances", "Issuances")' data-nav-id="warehouse-issuances" asp-controller="WarehouseIssuances" asp-action="Issuances"><i class="bi bi-box-arrow-up w-4 text-red-500"></i><span class="link-text truncate">حواله‌ها</span></a>
+                                <a class='@NavClass("Vendors")' data-nav-id="vendors-index" asp-controller="Vendors" asp-action="Index"><i class="bi bi-building w-4 text-blue-500"></i><span class="link-text truncate">تامین‌کنندگان</span></a>
+                                <a class='@NavClass("Waybill")' data-nav-id="waybill-index" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck w-4 text-rose-500"></i><span class="link-text truncate">بارنامه</span></a>
                             </div></div>
                         </section>
                     }
@@ -287,50 +354,56 @@
                     {
                         <section class="sidebar-module">
                             <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseManagement"><span>مدیریت سیستم</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseManagement" class="sidebar-collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports" || currentController == "ManagementDashboard") ? "open" : "")"><div class="mt-1 space-y-1">
+                            <div id="collapseManagement" class="sidebar-collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports" || currentController == "ManagementDashboard") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
                                 @if (userCanAccessSystemSettings)
                                 {
-                                    <a class='@NavClass("ManagementDashboard", "Overview")' data-nav-id="management-overview" asp-controller="ManagementDashboard" asp-action="Overview"><i class="bi bi-grid-1x2 w-4 text-emerald-500 me-2"></i><span class="link-text truncate">داشبورد مدیریتی</span></a>
-                                    <a class='@NavClass("ManagementDashboard", "Index")' data-nav-id="management-dashboard" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500 me-2"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
-                                    <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400 me-2"></i><span class="link-text truncate">تنظیمات</span></a>
-                                    <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500 me-2"></i><span class="link-text truncate">امنیت</span></a>
-                                    <a class='@NavClass("Security", "WorkflowBuilder")' data-nav-id="security-workflowbuilder" asp-controller="Security" asp-action="WorkflowBuilder"><i class="bi bi-diagram-3 w-4 text-teal-500 me-2"></i><span class="link-text truncate">طراح گردش کار</span></a>
-                                    <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500 me-2"></i><span class="link-text truncate">ممیزی</span></a>
+                                    <a class='@NavClass("ManagementDashboard", "Overview")' data-nav-id="management-overview" asp-controller="ManagementDashboard" asp-action="Overview"><i class="bi bi-grid-1x2 w-4 text-emerald-500"></i><span class="link-text truncate">داشبورد مدیریتی</span></a>
+                                    <a class='@NavClass("ManagementDashboard", "Index")' data-nav-id="management-dashboard" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
+                                    <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400"></i><span class="link-text truncate">تنظیمات</span></a>
+                                    <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500"></i><span class="link-text truncate">امنیت</span></a>
+                                    <a class='@NavClass("Security", "WorkflowBuilder")' data-nav-id="security-workflowbuilder" asp-controller="Security" asp-action="WorkflowBuilder"><i class="bi bi-diagram-3 w-4 text-teal-500"></i><span class="link-text truncate">طراح گردش کار</span></a>
+                                    <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500"></i><span class="link-text truncate">ممیزی</span></a>
                                 }
                                 @if (userCanAccessProcessAnalytics)
                                 {
-                                    <a class='@NavClass("ProcessAnalysis")' data-nav-id="process-index" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 w-4 text-purple-500 me-2"></i><span class="link-text truncate">تحلیل فرایند</span></a>
+                                    <a class='@NavClass("ProcessAnalysis")' data-nav-id="process-index" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 w-4 text-purple-500"></i><span class="link-text truncate">تحلیل فرایند</span></a>
                                 }
-                                <a class='@NavClass("Reports")' data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph w-4 text-indigo-500 me-2"></i><span class="link-text truncate">گزارشات</span></a>
+                                <a class='@NavClass("Reports")' data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph w-4 text-indigo-500"></i><span class="link-text truncate">گزارشات</span></a>
                             </div></div>
                         </section>
                     }
                 </div>
             </nav>
-            <div class="border-t border-slate-200 p-2 dark:border-slate-800"><a class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 no-underline dark:border-slate-800 dark:bg-slate-900" asp-controller="Settings" asp-action="Index"><span class="grid h-8 w-8 place-items-center rounded-md bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"><i class="bi bi-person"></i></span><span class="min-w-0 flex-1"><span class="block truncate text-[12px] font-bold text-slate-800 dark:text-slate-100">@displayName</span><span class="block truncate text-[10px] text-slate-500 dark:text-slate-400">@userRoleLabel</span></span></a></div>
+            <div class="border-t border-slate-200/60 p-2.5 dark:border-slate-800/60">
+                <a class="flex items-center gap-2.5 rounded-xl border border-slate-200/60 bg-slate-50/70 px-2.5 py-2 no-underline transition-all hover:bg-white hover:shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:hover:bg-slate-800" asp-controller="Settings" asp-action="Index">
+                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-white text-slate-600 shadow-sm dark:bg-slate-700 dark:text-slate-300"><i class="bi bi-person"></i></span>
+                    <span class="min-w-0 flex-1"><span class="block truncate text-[12px] font-bold text-slate-800 dark:text-slate-200">@displayName</span><span class="block truncate text-[10px] text-slate-500 dark:text-slate-400">@userRoleLabel</span></span>
+                </a>
+            </div>
         </aside>
 
         <!-- Main Content -->
         <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden z-10">
-            <header class="print:hidden sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-slate-200 bg-slate-100/85 px-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
-                <button id="btnOpenSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" aria-label="باز کردن منو"><i class="bi bi-list text-lg"></i></button>
-                <form asp-controller="Search" asp-action="Index" method="get" role="search" class="relative hidden min-w-0 flex-1 md:block"><i class="bi bi-search pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i><input name="q" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجو در سیستم..." class="h-8 w-full rounded-md border border-slate-200 bg-white pr-9 pl-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" /></form>
+            <!-- Top Navbar ── Glassmorphism -->
+            <header class="print:hidden sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-slate-200/60 bg-white/80 backdrop-blur-md px-3 dark:border-slate-800/60 dark:bg-slate-900/80">
+                <button id="btnOpenSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-lg border border-slate-200/60 bg-white text-slate-500 lg:hidden dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-400" aria-label="باز کردن منو"><i class="bi bi-list text-lg"></i></button>
+                <form asp-controller="Search" asp-action="Index" method="get" role="search" class="relative hidden min-w-0 flex-1 md:block"><i class="bi bi-search pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i><input name="q" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجو در سیستم..." class="h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/60 pr-10 pl-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-900/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20" /></form>
                 <div class="mr-auto flex items-center gap-2">
-                    <div class="hidden items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-500 md:flex dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"><i class="bi bi-clock-history"></i><span id="topbarDate">--/--/--</span><span class="text-slate-300 dark:text-slate-700">|</span><span id="topbarTime">--:--</span></div>
+                    <div class="hidden items-center gap-2 rounded-lg border border-slate-200/60 bg-slate-50/60 px-2.5 py-1 text-[11px] text-slate-500 md:flex dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-400"><i class="bi bi-clock-history"></i><span id="topbarDate">--/--/--</span><span class="text-slate-300 dark:text-slate-600">|</span><span id="topbarTime">--:--</span></div>
                     <!-- Notifications Dropdown (Vanilla JS) -->
                     <div class="rhyno-dropdown-trigger relative">
-                        <button class="relative grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800" type="button" aria-expanded="false" aria-label="اعلان‌ها" onclick="Rhyno.toggleDropdown(this)"><i class="bi bi-bell"></i>@if (headerNotificationCount > 0){<span class="absolute -left-1 -top-1 min-w-5 rounded-full bg-rose-600 px-1 text-[10px] font-black leading-5 text-white">@headerNotificationCount.ToString("N0")</span>}</button>
-                        <div class="rhyno-dropdown absolute left-0 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-xl dark:border-slate-800 dark:bg-slate-900" style="z-index: 60;">
-                            <div class="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800"><strong class="text-sm text-slate-900 dark:text-white">اعلان‌ها</strong><span class="text-[11px] text-slate-500 dark:text-slate-400">@headerNotificationCount.ToString("N0") مورد</span></div>
-                            @if (headerNotifications.Count == 0){<div class="px-3 py-4 text-center text-[12px] text-slate-500 dark:text-slate-400">اعلان مهمی برای نمایش وجود ندارد.</div>}else{foreach (var notification in headerNotifications.Take(8)){<a class="flex gap-2 border-b border-slate-100 px-3 py-2 no-underline transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800" href="@notification.Url"><i class="bi @notification.Icon mt-0.5 text-slate-500 dark:text-slate-400"></i><span class="min-w-0"><strong class="block truncate text-[12px] text-slate-900 dark:text-white">@notification.Title</strong><small class="block truncate text-[11px] text-slate-500 dark:text-slate-400">@notification.Message</small></span></a>}}
-                            <a class="block px-3 py-2 text-center text-[12px] font-bold text-teal-700 no-underline hover:bg-slate-50 dark:text-teal-300 dark:hover:bg-slate-800" href="/Notifications">مشاهده همه اعلان‌ها</a>
+                        <button class="relative grid h-8 w-8 place-items-center rounded-lg border border-slate-200/60 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200" type="button" aria-expanded="false" aria-label="اعلان‌ها" onclick="Rhyno.toggleDropdown(this)"><i class="bi bi-bell"></i>@if (headerNotificationCount > 0){<span class="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-rose-500 px-1 text-[9px] font-black leading-[18px] text-white shadow-sm">@headerNotificationCount.ToString("N0")</span>}</button>
+                        <div class="rhyno-dropdown absolute left-0 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-0 shadow-2xl dark:border-slate-700/80 dark:bg-slate-900/95" style="z-index: 60;">
+                            <div class="flex items-center justify-between border-b border-slate-100/80 px-4 py-3 dark:border-slate-800/80"><strong class="text-sm text-slate-900 dark:text-white">اعلان‌ها</strong><span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">@headerNotificationCount.ToString("N0") مورد</span></div>
+                            @if (headerNotifications.Count == 0){<div class="px-4 py-6 text-center text-[12px] text-slate-500 dark:text-slate-400">اعلان مهمی برای نمایش وجود ندارد.</div>}else{foreach (var notification in headerNotifications.Take(8)){<a class="flex gap-3 border-b border-slate-100/60 px-4 py-3 no-underline transition-all hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-800/60" href="@notification.Url"><i class="bi @notification.Icon mt-0.5 text-slate-400 dark:text-slate-500"></i><span class="min-w-0"><strong class="block truncate text-[12px] text-slate-900 dark:text-white">@notification.Title</strong><small class="block truncate text-[11px] text-slate-500 dark:text-slate-400">@notification.Message</small></span></a>}}
+                            <a class="block px-4 py-3 text-center text-[12px] font-bold text-indigo-600 no-underline hover:bg-slate-50/80 dark:text-indigo-400 dark:hover:bg-slate-800/60 rounded-b-2xl" href="/Notifications">مشاهده همه اعلان‌ها</a>
                         </div>
                     </div>
                     <partial name="_LoginPartial" />
                 </div>
             </header>
             <main id="main-content-wrapper" class="flex-1 flex flex-col w-full overflow-hidden">
-                <div class="p-2.5 md:p-3.5 lg:p-4.5 overflow-y-auto w-full flex-1 print:w-full print:m-0 print:p-0 print:block">
+                <div class="p-3 md:p-4 lg:p-5 overflow-y-auto w-full flex-1 print:w-full print:m-0 print:p-0 print:block">
                     @RenderBody()
                 </div>
             </main>
@@ -339,25 +412,25 @@
 
     <!-- Confirm Dialog (Vanilla JS Modal) -->
     <div id="appConfirmDialog" class="rhyno-modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
-        <div class="rhyno-modal-content w-full max-w-md rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+        <div class="rhyno-modal-content w-full max-w-md rounded-2xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-900">
+            <div class="flex items-center justify-between border-b border-slate-100/80 px-5 py-3.5 dark:border-slate-800/80">
                 <h5 class="text-sm font-bold text-slate-900 dark:text-white">تایید عملیات</h5>
-                <button type="button" class="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300" onclick="Rhyno.hideModal('appConfirmDialog')"><i class="bi bi-x-lg"></i></button>
+                <button type="button" class="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors" onclick="Rhyno.hideModal('appConfirmDialog')"><i class="bi bi-x-lg"></i></button>
             </div>
-            <div class="px-4 py-4"><p id="appConfirmMessage" class="mb-0 text-sm text-slate-700 dark:text-slate-300">آیا مطمئن هستید؟</p></div>
-            <div class="flex items-center justify-end gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-                <button type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
-                <button type="button" class="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-700" id="appConfirmOk">تایید</button>
+            <div class="px-5 py-4"><p id="appConfirmMessage" class="mb-0 text-sm text-slate-700 dark:text-slate-300">آیا مطمئن هستید؟</p></div>
+            <div class="flex items-center justify-end gap-2 border-t border-slate-100/80 px-5 py-3.5 dark:border-slate-800/80">
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
+                <button type="button" class="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 transition-colors shadow-sm" id="appConfirmOk">تایید</button>
             </div>
         </div>
     </div>
 
     <!-- Smart Report Modal (Management Dashboard in Popup) -->
     <div id="appSmartReportModal" class="rhyno-modal-overlay fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-2">
-        <div class="rhyno-modal-content w-full max-w-screen-2xl h-[92vh] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 flex flex-col">
-            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-2.5 dark:border-slate-800 flex-shrink-0">
+        <div class="rhyno-modal-content w-full max-w-screen-2xl h-[92vh] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-900 flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-100/80 px-5 py-3 dark:border-slate-800/80 flex-shrink-0">
                 <h5 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2"><i class="bi bi-stars text-indigo-500"></i>گزارش‌ساز هوشمند</h5>
-                <button type="button" class="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300" onclick="Rhyno.hideModal('appSmartReportModal')"><i class="bi bi-x-lg text-lg"></i></button>
+                <button type="button" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors" onclick="Rhyno.hideModal('appSmartReportModal')"><i class="bi bi-x-lg text-lg"></i></button>
             </div>
             <div class="flex-1 overflow-hidden">
                 <iframe id="appSmartReportFrame" class="w-full h-full border-none" style="min-height: 85vh;" src="" loading="lazy" title="گزارش‌ساز هوشمند"></iframe>
@@ -365,12 +438,16 @@
         </div>
     </div>
 
-    <!-- Command Palette (Vanilla JS Modal) -->
-    <div id="appCommandPalette" class="rhyno-modal-overlay fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-slate-950/50 backdrop-blur-sm p-4">
-        <div class="rhyno-modal-content w-full max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div class="flex items-center gap-2 border-b border-slate-200 p-3 dark:border-slate-800"><i class="bi bi-command text-slate-400"></i><input id="appCommandInput" type="search" autocomplete="off" placeholder="جستجوی فرمان، صفحه یا گزارش..." aria-label="جستجوی فرمان" class="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none dark:text-white"><kbd class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Ctrl K</kbd></div>
-            <div id="appCommandList" class="max-h-96 overflow-y-auto p-2"></div>
-            <div class="border-t border-slate-200 px-3 py-2 text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">Enter برای اجرا، Esc برای بستن</div>
+    <!-- Command Palette (Vanilla JS Modal) ── Refined -->
+    <div id="appCommandPalette" class="rhyno-modal-overlay fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-slate-950/50 backdrop-blur-sm p-4">
+        <div class="rhyno-modal-content w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xl dark:border-slate-700/80 dark:bg-slate-900/95">
+            <div class="flex items-center gap-3 border-b border-slate-100/80 p-4 dark:border-slate-800/80">
+                <i class="bi bi-command text-slate-400 text-lg"></i>
+                <input id="appCommandInput" type="search" autocomplete="off" placeholder="جستجوی فرمان، صفحه یا گزارش..." aria-label="جستجوی فرمان" class="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-500">
+                <kbd class="rounded-lg border border-slate-200/80 bg-slate-50/80 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-300">Ctrl K</kbd>
+            </div>
+            <div id="appCommandList" class="max-h-80 overflow-y-auto p-2"></div>
+            <div class="border-t border-slate-100/80 px-4 py-2.5 text-[11px] text-slate-400 dark:border-slate-800/80 dark:text-slate-500">Enter برای اجرا، Esc برای بستن</div>
         </div>
     </div>
 
@@ -471,17 +548,17 @@
 
             // Toast notification
             const toast = (message, type = 'info') => {
-                const colors = { success: 'bg-emerald-600', error: 'bg-rose-600', warning: 'bg-amber-600', info: 'bg-teal-600' };
+                const colors = { success: 'bg-emerald-600', error: 'bg-rose-600', warning: 'bg-amber-600', info: 'bg-indigo-600' };
                 const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
                 const toast = document.createElement('div');
-                toast.className = `fixed bottom-4 left-4 z-[200] flex items-center gap-2 rounded-lg ${colors[type] || colors.info} px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all duration-300 translate-y-4 opacity-0`;
+                toast.className = `fixed bottom-4 left-4 z-[200] flex items-center gap-2 rounded-xl ${colors[type] || colors.info} px-4 py-3 text-sm font-bold text-white shadow-lg transition-all duration-300 translate-y-4 opacity-0`;
                 toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i> ${message}`;
                 document.body.appendChild(toast);
                 requestAnimationFrame(() => { toast.classList.remove('translate-y-4', 'opacity-0'); });
                 setTimeout(() => {
                     toast.classList.add('translate-y-4', 'opacity-0');
                     setTimeout(() => toast.remove(), 300);
-                }, 3000);
+                }, 3500);
             };
 
             return { toggleDropdown, closeAllDropdowns, showModal, hideModal, openSidebar, closeSidebar, toggleSidebarCollapse, confirm, toast };
@@ -617,17 +694,14 @@
             let loaded = false;
             const frame = document.getElementById('appSmartReportFrame');
 
-            // Notify iframe to resize charts after modal opens
             const notifyIframeResize = () => {
                 if (!frame || !frame.contentWindow) return;
                 frame.contentWindow.postMessage({ type: 'rhyno:modal-opened' }, window.location.origin);
             };
 
-            // Bind load event: once iframe finishes loading, wait briefly then notify
             const bindFrameLoad = () => {
                 frame.addEventListener('load', function onLoad() {
                     frame.removeEventListener('load', onLoad);
-                    // Multiple attempts with increasing delays for Chart.js init
                     setTimeout(notifyIframeResize, 200);
                     setTimeout(notifyIframeResize, 600);
                     setTimeout(notifyIframeResize, 1200);
@@ -642,7 +716,6 @@
                         loaded = true;
                         bindFrameLoad();
                     } else if (loaded) {
-                        // Already loaded, just notify resize
                         setTimeout(notifyIframeResize, 150);
                     }
                 }
@@ -650,7 +723,6 @@
             const modal = document.getElementById('appSmartReportModal');
             if (modal) observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
 
-            // Also handle ESC key to properly close
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     const m = document.getElementById('appSmartReportModal');
@@ -678,13 +750,13 @@
                 .withAutomaticReconnect()
                 .build();
             connection.on("ReceiveNewTaskNotification", function (data) {
-                alert(`[کار جدید] \n${data.message}`);
+                Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
                 const sidebarItem = document.querySelector('[data-nav-id="workinbox-index"]');
                 if (sidebarItem) {
                     let badge = sidebarItem.querySelector('.inbox-badge-count');
                     if (!badge) {
                         badge = document.createElement('span');
-                        badge.className = 'inbox-badge-count inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-teal-600 text-white text-[9px] font-black mr-auto';
+                        badge.className = 'inbox-badge-count inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-black mr-auto';
                         sidebarItem.appendChild(badge);
                     }
                     const currentCount = parseInt(badge.textContent) || 0;

@@ -7,39 +7,46 @@
     var returnTo = exportInvoiceType == "Purchase" ? "Purchase" : "Sale";
 }
 
-<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+<div class="w-full flex-1 flex flex-col gap-5 p-3 md:p-4" dir="rtl">
     <!-- Messages / Alerts -->
     @if (TempData["SuccessMessage"] is string successMessage)
     {
-        <div class="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-xs font-semibold shadow-sm">
+        <div
+            class="flex items-center gap-2 p-3.5 bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/40 rounded-2xl text-xs font-semibold shadow-sm">
             <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-sm"></i>
             <span class="flex-1">@successMessage</span>
         </div>
     }
     @if (TempData["ErrorMessage"] is string errorMessage)
     {
-        <div class="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-semibold shadow-sm">
+        <div
+            class="flex items-center gap-2 p-3.5 bg-rose-50/80 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40 rounded-2xl text-xs font-semibold shadow-sm">
             <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-sm"></i>
             <span class="flex-1">@errorMessage</span>
         </div>
     }
 
     <!-- Header Card -->
-    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+    <header
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
-            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white tracking-tight">@pageTitle</h1>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">@pageTitle</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">@pageDescription</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <a asp-action="CreateInvoice" asp-route-invoiceType="@createInvoiceType" class="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors no-underline">
+            <a asp-action="CreateInvoice" asp-route-invoiceType="@createInvoiceType"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm shadow-indigo-500/20 no-underline">
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>ثبت فاکتور</span>
             </a>
-            <a asp-action="ExportInvoicesExcel" asp-route-invoiceType="@exportInvoiceType" asp-route-year="@Model.Year" asp-route-quarter="@Model.Quarter" class="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold transition shadow-sm bg-transparent">
+            <a asp-action="ExportInvoicesExcel" asp-route-invoiceType="@exportInvoiceType" asp-route-year="@Model.Year"
+               asp-route-quarter="@Model.Quarter"
+               class="flex items-center gap-1.5 px-4 py-2 border border-emerald-200/60 dark:border-emerald-700/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-bold transition shadow-sm bg-transparent no-underline">
                 <i class="bi bi-file-earmark-excel"></i>
                 <span>خروجی اکسل</span>
             </a>
-            <a asp-action="PrintInvoicePdf" asp-route-id="@(Model.Items.FirstOrDefault()?.Id ?? 0)" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent print-invoice-btn @(Model.Items.Any() ? "" : "opacity-50 pointer-events-none")">
+            <a asp-action="PrintInvoicePdf" asp-route-id="@(Model.Items.FirstOrDefault()?.Id ?? 0)"
+               class="flex items-center gap-1.5 px-4 py-2 border border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition shadow-sm bg-transparent no-underline print-invoice-btn @(Model.Items.Any() ? "" : "opacity-50 pointer-events-none")">
                 <i class="bi bi-printer"></i>
                 <span>چاپ PDF فاکتور</span>
             </a>
@@ -47,24 +54,30 @@
     </header>
 
     <!-- Filters Panel Form -->
-    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto">
+    <div
+        class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-5 overflow-x-auto">
         <form method="get" class="flex flex-col gap-4 md:flex-row md:items-end">
             <!-- Search Text -->
-            <div class="flex-1 min-w-[200px] flex flex-col gap-1">
+            <div class="flex-1 min-w-[200px] flex flex-col gap-1.5">
                 <label asp-for="SearchTerm" class="text-xs font-bold text-slate-500 dark:text-slate-400">جستجو</label>
-                <input asp-for="SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="شماره/نام/شناسه فاکتور..." />
+                <input asp-for="SearchTerm"
+                       class="w-full h-9 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20"
+                       placeholder="شماره/نام/شناسه فاکتور..." />
             </div>
-            
+
             <!-- Year -->
-            <div class="w-32 flex flex-col gap-1">
+            <div class="w-32 flex flex-col gap-1.5">
                 <label asp-for="Year" class="text-xs font-bold text-slate-500 dark:text-slate-400">سال</label>
-                <input asp-for="Year" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" type="number" min="1300" max="1700" />
+                <input asp-for="Year"
+                       class="w-full h-9 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 text-sm text-slate-800 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20"
+                       type="number" min="1300" max="1700" />
             </div>
 
             <!-- Quarter (Season) -->
-            <div class="w-36 flex flex-col gap-1">
+            <div class="w-36 flex flex-col gap-1.5">
                 <label asp-for="Quarter" class="text-xs font-bold text-slate-500 dark:text-slate-400">فصل</label>
-                <select asp-for="Quarter" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                <select asp-for="Quarter"
+                        class="w-full h-9 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 text-sm text-slate-800 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20">
                     <option value="">همه</option>
                     <option value="1">بهار</option>
                     <option value="2">تابستان</option>
@@ -72,10 +85,11 @@
                     <option value="4">زمستان</option>
                 </select>
             </div>
-            
+
             <!-- Submit Button -->
             <div class="md:w-32">
-                <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors w-full">
+                <button type="submit"
+                        class="h-9 bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-xl text-xs font-bold transition shadow-sm shadow-indigo-500/20 w-full">
                     <i class="bi bi-filter"></i>
                     <span>اعمال فیلتر</span>
                 </button>
@@ -84,115 +98,159 @@
     </div>
 
     <!-- Data Grid Table -->
-    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto">
-        <table class="w-full text-xs text-right border-collapse" data-pro-table="financial-invoices-@exportInvoiceType">
-            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">شماره فاکتور</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center">نوع</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center">تاریخ</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">طرف معامله</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">شناسه</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-left">جمع جزء</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-left">VAT 10%</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center">وضعیت</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-left">جمع کل</th>
-                    <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center w-1">عملیات</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            @if (!Model.Items.Any())
-            {
-                <tr>
-                    <td colspan="10" class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center text-slate-400">
-                        فاکتوری ثبت نشده است. از دکمه ثبت فاکتور برای ایجاد اولین سند استفاده کنید.
-                    </td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var item in Model.Items)
-                {
-                    var statusLabel = WorkflowStatus.Label(item.WorkflowStatus);
-                    var statusBadgeClass = item.WorkflowStatus switch
-                    {
-                        "Approved" or "Paid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200/40",
-                        "Overdue" or "Rejected" => "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200/40",
-                        "Draft" => "bg-slate-100 text-slate-700 dark:bg-slate-800/40 dark:text-slate-400 border-slate-200/40",
-                        _ => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200/40"
-                    };
+    <div
+        class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse"
+                   data-pro-table="financial-invoices-@exportInvoiceType">
+                <thead
+                    class="sticky top-0 z-10 bg-slate-50/80 dark:bg-slate-800/60 backdrop-blur-sm border-b border-slate-100 dark:border-slate-800/60">
+                    <tr>
+                        <th
+                            class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            شماره فاکتور</th>
+                            <th
+                                class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center">
+                                نوع</th>
+                                <th
+                                    class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center">
+                                    تاریخ</th>
+                                    <th
+                                        class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        طرف معامله</th>
+                                        <th
+                                            class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                            شناسه</th>
+                                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-right"
+                                                dir="ltr">جمع جزء</th>
+                                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-right"
+                                                dir="ltr">VAT 10%</th>
+                                            <th
+                                                class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center">
+                                                وضعیت</th>
+                                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-right"
+                                                    dir="ltr">جمع کل</th>
+                                                <th
+                                                    class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center w-1">
+                                                    عملیات</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                                                @if (!Model.Items.Any())
+                                                {
+                                                    <tr>
+                                                        <td colspan="10" class="px-4 py-12 text-center">
+                                                            <partial name="_EmptyState"
+                                                                     model='new { Icon = "bi-receipt", Title = "فاکتوری ثبت نشده است", Description = "از دکمه ثبت فاکتور برای ایجاد اولین سند استفاده کنید.", ActionUrl = Url.Action("CreateInvoice", new { invoiceType = createInvoiceType }), ActionText = "ثبت فاکتور جدید" }' />
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                else
+                                                {
+                                                    @foreach (var item in Model.Items)
+                                                    {
+                                                        var statusLabel = WorkflowStatus.Label(item.WorkflowStatus);
+                                                        var (badgeClass, dotColor) = item.WorkflowStatus switch
+                                                        {
+                                                            "Approved" or "Paid" => ("bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40", "bg-emerald-500"),
+                                                            "Overdue" or "Rejected" => ("bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40", "bg-rose-500"),
+                                                            "Draft" => ("bg-slate-100 text-slate-600 border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700/40", "bg-slate-400"),
+                                                            _ => ("bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40", "bg-amber-500")
+                                                        };
 
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono font-semibold text-slate-900 dark:text-white">@item.InvoiceNumber</td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(item.InvoiceType == "Sale" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200/30" : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200/30")">
-                                @(item.InvoiceType == "Sale" ? "فروش" : "خرید")
-                            </span>
-                        </td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center font-mono text-slate-500">@item.DateShamsi</td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-slate-800 dark:text-slate-200">@item.PartyName</td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono text-slate-500">@(item.NationalCodeOrEconomicId ?? "-")</td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-left font-mono tabular-nums">@item.SubTotal.ToString("N0")</td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-left font-mono tabular-nums text-slate-500">@item.VatAmount.ToString("N0")</td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border @statusBadgeClass">
-                                @statusLabel
-                            </span>
-                        </td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@item.GrandTotal.ToString("N0")</td>
-                        <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center w-1">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <!-- Edit -->
-                                <a asp-action="EditInvoice" asp-route-id="@item.Id" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="ویرایش">
-                                    <i class="bi bi-pencil-square text-sm"></i>
-                                </a>
-                                
-                                <!-- Approve -->
-                                @if (!WorkflowStatus.IsApproved(item.WorkflowStatus))
-                                {
-                                    <form asp-action="ApproveInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo" method="post" class="inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="p-1 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition" title="تایید">
-                                            <i class="bi bi-check2-circle text-sm"></i>
-                                        </button>
-                                    </form>
-                                }
-                                
-                                <!-- Reject -->
-                                @if (!WorkflowStatus.IsRejected(item.WorkflowStatus))
-                                {
-                                    <form asp-action="RejectInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo" method="post" class="inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="p-1 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition" title="رد">
-                                            <i class="bi bi-x-circle text-sm"></i>
-                                        </button>
-                                    </form>
-                                }
-                                
-                                <!-- Delete -->
-                                <form asp-action="DeleteInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo" method="post" class="inline" onsubmit="return confirm('فاکتور حذف شود؟');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="p-1 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition" title="حذف">
-                                        <i class="bi bi-trash text-sm"></i>
-                                    </button>
-                                </form>
-                                
-                                <!-- Print PDF -->
-                                <a asp-action="PrintInvoicePdf" asp-route-id="@item.Id" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition print-invoice-btn" title="چاپ PDF">
-                                    <i class="bi bi-printer text-sm"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
-    </div>
-</div>
+                                                        <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                                                            <td class="px-4 py-3.5 font-mono font-semibold text-slate-900 dark:text-white">
+                                                                @item.InvoiceNumber</td>
+                                                                <td class="px-4 py-3.5 text-center">
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium @(item.InvoiceType == "Sale" ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40" : "bg-blue-50 text-blue-700 border border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40")">
+                                                                        <span
+                                                                        class="status-dot @(item.InvoiceType == "Sale" ? "bg-emerald-500" : "bg-blue-500")"></span>
+                                                                        @(item.InvoiceType == "Sale" ? "فروش" : "خرید")
+                                                                    </span>
+                                                                </td>
+                                                                <td class="px-4 py-3.5 text-center font-mono text-slate-500">@item.DateShamsi</td>
+                                                                <td class="px-4 py-3.5 font-bold text-slate-800 dark:text-slate-200">@item.PartyName</td>
+                                                                <td class="px-4 py-3.5 font-mono text-slate-500">@(item.NationalCodeOrEconomicId ?? "-")</td>
+                                                                <td class="px-4 py-3.5 text-right font-mono tabular-nums" dir="ltr">
+                                                                    @item.SubTotal.ToString("N0")</td>
+                                                                    <td class="px-4 py-3.5 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                                                                        @item.VatAmount.ToString("N0")</td>
+                                                                        <td class="px-4 py-3.5 text-center">
+                                                                            <span
+                                                                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium border @badgeClass">
+                                                                                <span class="status-dot status-dot-pulse @dotColor"></span>@statusLabel
+                                                                            </span>
+                                                                        </td>
+                                                                        <td class="px-4 py-3.5 text-right font-mono tabular-nums font-bold text-slate-900 dark:text-white"
+                                                                            dir="ltr">@item.GrandTotal.ToString("N0")</td>
+                                                                        <td class="px-4 py-3.5 text-center w-1">
+                                                                            <div class="flex items-center justify-center gap-1">
+                                                                                <!-- Edit -->
+                                                                                <a asp-action="EditInvoice" asp-route-id="@item.Id"
+                                                                                   class="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 transition"
+                                                                                   title="ویرایش">
+                                                                                    <i class="bi bi-pencil-square text-sm"></i>
+                                                                                </a>
 
-@section Scripts {
-    <script>
-        // Custom js to handle page interactions if needed
-    </script>
-}
+                                                                                <!-- Approve -->
+                                                                                @if (!WorkflowStatus.IsApproved(item.WorkflowStatus))
+                                                                                {
+                                                                                    <form asp-action="ApproveInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo"
+                                                                                          method="post" class="inline">
+                                                                                        @Html.AntiForgeryToken()
+                                                                                        <button type="submit"
+                                                                                                class="p-1.5 text-slate-400 hover:text-emerald-600 dark:text-slate-500 dark:hover:text-emerald-400 transition"
+                                                                                                title="تایید">
+                                                                                            <i class="bi bi-check2-circle text-sm"></i>
+                                                                                        </button>
+                                                                                    </form>
+                                                                                }
+
+                                                                                <!-- Reject -->
+                                                                                @if (!WorkflowStatus.IsRejected(item.WorkflowStatus))
+                                                                                {
+                                                                                    <form asp-action="RejectInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo"
+                                                                                          method="post" class="inline">
+                                                                                        @Html.AntiForgeryToken()
+                                                                                        <button type="submit"
+                                                                                                class="p-1.5 text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 transition"
+                                                                                                title="رد">
+                                                                                            <i class="bi bi-x-circle text-sm"></i>
+                                                                                        </button>
+                                                                                    </form>
+                                                                                }
+
+                                                                                <!-- Delete -->
+                                                                                <form asp-action="DeleteInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnTo"
+                                                                                      method="post" class="inline" onsubmit="return confirm('فاکتور حذف شود؟');">
+                                                                                    @Html.AntiForgeryToken()
+                                                                                    <button type="submit"
+                                                                                            class="p-1.5 text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 transition"
+                                                                                            title="حذف">
+                                                                                        <i class="bi bi-trash text-sm"></i>
+                                                                                    </button>
+                                                                                </form>
+
+                                                                                <!-- Print PDF -->
+                                                                                <a asp-action="PrintInvoicePdf" asp-route-id="@item.Id"
+                                                                                   class="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 transition print-invoice-btn"
+                                                                                   title="چاپ PDF">
+                                                                                    <i class="bi bi-printer text-sm"></i>
+                                                                                </a>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        @section Scripts {
+                                            <script>
+                                                // Page interactions if needed
+                                            </script>
+                                        }

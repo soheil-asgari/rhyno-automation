@@ -7,18 +7,18 @@
     var assigneesJson = JsonSerializer.Serialize(Model.Assignees);
 }
 
-<div class="container-fluid py-2 space-y-2" dir="rtl">
+<div class="w-full flex-1 flex flex-col gap-5 p-3 md:p-4" dir="rtl">
     <!-- Header -->
-    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
-            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">کارتابل پیشرفته</h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">کارتابل عملیاتی با گروه‌بندی، نماهای ذخیره‌شده، اقدام‌های گروهی و پنل جزئیات سریع.</p>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">کارتابل پیشرفته</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">کارتابل عملیاتی با گروه‌بندی، نماهای ذخیره‌شده، اقدام‌های گروهی و پنل جزئیات سریع.</p>
         </div>
-        <a class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5 no-underline" href="/Notifications">
+        <a class="flex items-center gap-1.5 px-4 h-9 rounded-xl border border-slate-200/80 hover:bg-slate-50 dark:border-slate-700/60 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 transition no-underline" href="/Notifications">
             <i class="bi bi-bell"></i>
             <span>مرکز اعلان‌ها</span>
         </a>
-    </div>
+    </header>
 
     <!-- Stats summary row -->
     <div class="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
@@ -37,8 +37,8 @@
         @foreach (var f in filters)
         {
             var isActive = Model.ActiveFilter == f.Item1 || (f.Item1 == "All" && string.IsNullOrEmpty(Model.ActiveFilter));
-            var activeBorderClass = isActive ? "border-teal-500 dark:border-teal-400 ring-2 ring-teal-500/10 bg-teal-50/10 dark:bg-teal-950/10" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900";
-            <a class="flex flex-col items-center justify-center p-2 rounded-lg border @activeBorderClass @f.Item4 shadow-sm no-underline hover:border-teal-500/50 transition duration-150" asp-action="Index" asp-route-filter="@(f.Item1 == "All" ? "" : f.Item1)">
+            var activeBorderClass = isActive ? "border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/10 bg-indigo-50/10 dark:bg-indigo-950/10" : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900";
+            <a class="flex flex-col items-center justify-center p-2.5 rounded-xl border @activeBorderClass @f.Item4 shadow-sm no-underline hover:border-indigo-500/50 transition duration-200" asp-action="Index" asp-route-filter="@(f.Item1 == "All" ? "" : f.Item1)">
                 <strong class="text-sm font-black font-mono tabular-nums">@f.Item3.ToString("N0")</strong>
                 <span class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">@f.Item2</span>
             </a>
@@ -47,42 +47,42 @@
 
     @if (TempData["WorkInboxMessage"] is string inboxMessage && !string.IsNullOrWhiteSpace(inboxMessage))
     {
-        <div class="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+        <div class="flex items-center gap-2 p-3.5 bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/40 rounded-2xl text-xs font-semibold shadow-sm">
             <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-sm"></i>
             <span class="flex-1">@inboxMessage</span>
         </div>
     }
     @if (TempData["WorkInboxUnauthorized"] is string unauthorizedMessage && !string.IsNullOrWhiteSpace(unauthorizedMessage))
     {
-        <div class="flex items-center gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/15 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+        <div class="flex items-center gap-2 p-3.5 bg-amber-50/80 dark:bg-amber-950/15 text-amber-800 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/40 rounded-2xl text-xs font-semibold shadow-sm">
             <i class="bi bi-exclamation-triangle-fill text-amber-600 dark:text-amber-400 text-sm"></i>
             <span class="flex-1">@unauthorizedMessage</span>
         </div>
     }
     @if (TempData["WorkInboxError"] is string errorMsg && !string.IsNullOrWhiteSpace(errorMsg))
     {
-        <div class="flex items-center gap-2 p-2.5 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-lg text-[11px] font-semibold shadow-sm">
+        <div class="flex items-center gap-2 p-3.5 bg-rose-50/80 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40 rounded-2xl text-xs font-semibold shadow-sm">
             <i class="bi bi-x-circle-fill text-rose-600 dark:text-rose-400 text-sm"></i>
             <span class="flex-1">@errorMsg</span>
         </div>
     }
 
     <!-- Main Workspace Container -->
-    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 overflow-x-auto inbox-workspace"
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-4 overflow-x-auto inbox-workspace"
          data-items='@Html.Raw(itemsJson)'
          data-assignees='@Html.Raw(assigneesJson)'>
-        <form asp-action="BulkAction" method="post" class="space-y-3" id="bulkActionForm">
+        <form asp-action="BulkAction" method="post" class="space-y-4" id="bulkActionForm">
             @Html.AntiForgeryToken()
             <input type="hidden" name="Filter" value="@Model.ActiveFilter" />
 
             <!-- Filters Controls Header -->
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-2.5 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200 dark:border-slate-800">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-3 p-4 bg-slate-50/80 dark:bg-slate-950/40 rounded-xl border border-slate-200/80 dark:border-slate-800">
                 <div class="lg:col-span-2 relative">
-                    <input type="search" id="inboxSearchInput" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg pr-9 pl-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="جستجو در عنوان، ماژول، فرستنده یا وضعیت..." />
-                    <i class="bi bi-search absolute right-3 top-2 text-slate-400 text-xs"></i>
+                    <input type="search" id="inboxSearchInput" class="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl pr-10 pl-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500" placeholder="جستجو در عنوان، ماژول، فرستنده یا وضعیت..." />
+                    <i class="bi bi-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 </div>
                 <div>
-                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="groupBySelect">
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" id="groupBySelect">
                         <option value="none">بدون گروه‌بندی</option>
                         <option value="module">گروه بر اساس ماژول</option>
                         <option value="status">گروه بر اساس وضعیت</option>
@@ -91,24 +91,24 @@
                     </select>
                 </div>
                 <div>
-                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="moduleFilterSelect">
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" id="moduleFilterSelect">
                         <option value="">همه ماژول‌ها</option>
                     </select>
                 </div>
                 <div>
-                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="statusFilterSelect">
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" id="statusFilterSelect">
                         <option value="">همه وضعیت‌ها</option>
                     </select>
                 </div>
                 <div>
-                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="readFilterSelect">
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" id="readFilterSelect">
                         <option value="">خواندن: همه</option>
                         <option value="unread">فقط خوانده‌نشده</option>
                         <option value="read">فقط خوانده‌شده</option>
                     </select>
                 </div>
                 <div>
-                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" id="actionFilterSelect">
+                    <select class="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" id="actionFilterSelect">
                         <option value="">اقدام: همه</option>
                         <option value="required">نیازمند اقدام</option>
                         <option value="high">اولویت بالا</option>
@@ -117,23 +117,23 @@
             </div>
 
             <!-- Saved Views Section -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100/80 dark:border-slate-800/60 pb-3">
                 <div class="flex items-center gap-2">
                     <strong class="text-xs font-black text-slate-800 dark:text-slate-200">نماهای ذخیره‌شده</strong>
-                    <button class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition" type="button" id="saveCurrentViewBtn">ذخیره نمای فعلی</button>
+                    <button class="h-8 rounded-xl border border-slate-200/80 hover:bg-slate-50 dark:border-slate-700/60 dark:hover:bg-slate-800 px-3 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition" type="button" id="saveCurrentViewBtn">ذخیره نمای فعلی</button>
                 </div>
                 <div class="flex flex-wrap gap-1.5" id="savedViewsList"></div>
             </div>
 
             <!-- Bulk Operation Toolbar -->
-            <div class="flex flex-col lg:flex-row items-center gap-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-lg border border-slate-200 dark:border-slate-800/60">
+            <div class="flex flex-col lg:flex-row items-center gap-3 p-4 bg-slate-50/80 dark:bg-slate-950/20 rounded-xl border border-slate-200/80 dark:border-slate-800/60">
                 <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                    <input type="checkbox" id="inboxSelectAll" class="rounded border-slate-300 dark:border-slate-800 text-teal-600 focus:ring-teal-500/20" />
+                    <input type="checkbox" id="inboxSelectAll" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500/20" />
                     <span>انتخاب همه</span>
                 </label>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-bold border-l border-slate-200 dark:border-slate-800 pl-3 ml-1" id="selectionMeta">0 مورد انتخاب شده</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-bold border-l border-slate-200/80 dark:border-slate-700 pl-3 ml-1" id="selectionMeta">0 مورد انتخاب شده</div>
                 <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto lg:flex-1">
-                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="Action" id="bulkActionSelect" required>
+                    <select class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none w-32" name="Action" id="bulkActionSelect" required>
                         <option value="">انتخاب عملیات</option>
                         <option value="approve">تایید گروهی</option>
                         <option value="reject">رد گروهی</option>
@@ -141,15 +141,15 @@
                         <option value="mark-unread">خوانده نشده</option>
                         <option value="delegate">واگذاری</option>
                     </select>
-                    <select class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-32" name="ToUserId" id="bulkAssigneeSelect">
+                    <select class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none w-32" name="ToUserId" id="bulkAssigneeSelect">
                         <option value="">کاربر مقصد</option>
                         @foreach (var assignee in Model.Assignees)
                         {
                             <option value="@assignee.UserId">@assignee.DisplayName</option>
                         }
                     </select>
-                    <input class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none flex-1 min-w-[150px]" name="Note" id="bulkNoteInput" placeholder="یادداشت مشترک برای اقدام گروهی..." />
-                    <button class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors" type="submit">
+                    <input class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none flex-1 min-w-[150px] transition-all" name="Note" id="bulkNoteInput" placeholder="یادداشت مشترک برای اقدام گروهی..." />
+                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow-sm shadow-indigo-500/20" type="submit">
                         <i class="bi bi-check2-square"></i>
                         <span>اجرا</span>
                     </button>
@@ -161,7 +161,7 @@
                 <div class="lg:col-span-2 space-y-2">
                     @if (Model.Items.Count == 0)
                     {
-                        <div class="p-4 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-xl">فعلاً موردی برای این فیلتر وجود ندارد.</div>
+                        <partial name="_EmptyState" model='new { Icon = "bi-inboxes", Title = "کارتابل خالی است", Description = "فعلاً موردی برای این فیلتر وجود ندارد.", Size = "sm" }' />
                     }
                     else
                     {
@@ -169,20 +169,22 @@
                     }
                 </div>
 
-                <aside class="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 min-h-[300px]" id="inboxDetailPane">
-                    <div class="flex flex-col items-center justify-center text-center p-4 text-slate-400 h-full" id="detailEmptyState">
-                        <i class="bi bi-layout-sidebar-inset text-lg mb-2 text-slate-300 dark:text-slate-700"></i>
+                <aside class="bg-slate-50/80 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 min-h-[300px]" id="inboxDetailPane">
+                    <div class="flex flex-col items-center justify-center text-center p-6 text-slate-400 h-full" id="detailEmptyState">
+                        <div class="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-slate-100/80 dark:bg-slate-800/60">
+                            <i class="bi bi-layout-sidebar-inset text-2xl text-slate-300 dark:text-slate-600"></i>
+                        </div>
                         <strong class="text-xs text-slate-700 dark:text-slate-300">یک آیتم را انتخاب کنید</strong>
                         <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">جزئیات، اقدام سریع و کامنت اینلاین اینجا نمایش داده می‌شود.</p>
                     </div>
 
                     <div class="hidden flex flex-col h-full gap-3" id="detailCard">
                         <div class="flex-1 space-y-3">
-                            <div class="text-[10px] font-bold text-teal-600 dark:text-teal-400" id="detailEyebrow"></div>
+                            <div class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400" id="detailEyebrow"></div>
                             <h2 class="text-sm font-black text-slate-900 dark:text-white" id="detailTitle"></h2>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed" id="detailSummary"></p>
 
-                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100/80 dark:border-slate-800">
                                 <div class="flex flex-col"><span class="text-slate-400">ماژول</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailModule"></strong></div>
                                 <div class="flex flex-col"><span class="text-slate-400">وضعیت</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailStatus"></strong></div>
                                 <div class="flex flex-col"><span class="text-slate-400">موعد</span><strong class="text-slate-700 dark:text-slate-300 mt-0.5" id="detailSla"></strong></div>
@@ -192,23 +194,23 @@
                             <div class="flex flex-wrap gap-1" id="detailChips"></div>
 
                             <div class="pt-3">
-                                <a class="w-full h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center justify-center gap-1.5 no-underline" id="detailOpenLink" href="#" target="_self">
+                                <a class="w-full h-9 rounded-xl border border-slate-200/80 hover:bg-slate-50 dark:border-slate-700/60 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center justify-center gap-1.5 no-underline" id="detailOpenLink" href="#" target="_self">
                                     <i class="bi bi-box-arrow-up-left"></i>
                                     <span>باز کردن جزئیات</span>
                                 </a>
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-200 dark:border-slate-800 pt-2 space-y-3" id="detailStickyBar">
+                        <div class="border-t border-slate-200/80 dark:border-slate-800 pt-3 space-y-3" id="detailStickyBar">
                             <!-- Case Task Inline Processing Actions -->
                             <div id="caseTaskActionArea" class="hidden space-y-2">
                                 <div class="text-[10px] font-bold text-amber-500 mb-1">اقدامات مربوط به وظیفه جاری:</div>
                                 <div class="flex gap-2">
-                                    <button type="button" class="btn-process-task flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1" data-action="Approve">
+                                    <button type="button" class="btn-process-task flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm" data-action="Approve">
                                         <i class="bi bi-check2-circle"></i>
                                         <span>تایید</span>
                                     </button>
-                                    <button type="button" class="btn-process-task flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1" data-action="Reject">
+                                    <button type="button" class="btn-process-task flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm" data-action="Reject">
                                         <i class="bi bi-x-circle"></i>
                                         <span>رد</span>
                                     </button>
@@ -222,7 +224,7 @@
                                 <input type="hidden" name="stepNumber" id="quickApproveStepNumber" />
                                 <input type="hidden" name="decisionType" value="Approve" />
                                 <input type="hidden" name="note" value="تایید از کارتابل" />
-                                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
                                     <i class="bi bi-check2-circle"></i>
                                     <span>تایید یک‌کلیکی</span>
                                 </button>
@@ -234,8 +236,8 @@
                                 <input type="hidden" name="documentId" id="quickRejectDocumentId" />
                                 <input type="hidden" name="stepNumber" id="quickRejectStepNumber" />
                                 <input type="hidden" name="decisionType" value="Reject" />
-                                <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="دلیل رد..." />
-                                <button type="submit" class="border border-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">رد</button>
+                                <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="دلیل رد..." />
+                                <button type="submit" class="border border-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 px-3 py-2 rounded-xl text-xs font-bold transition">رد</button>
                             </form>
 
                             <form asp-action="AddComment" method="post" class="hidden flex gap-2" id="quickCommentForm">
@@ -243,22 +245,22 @@
                                 <input type="hidden" name="documentType" id="quickCommentDocumentType" />
                                 <input type="hidden" name="documentId" id="quickCommentDocumentId" />
                                 <input type="hidden" name="workflowStepId" id="quickCommentWorkflowStepId" />
-                                <input type="text" name="body" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="ثبت کامنت اینلاین..." />
-                                <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">کامنت</button>
+                                <input type="text" name="body" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="ثبت کامنت اینلاین..." />
+                                <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition">کامنت</button>
                             </form>
 
                             <form asp-action="Delegate" method="post" class="hidden flex flex-col gap-2" id="quickDelegateForm">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="workflowStepId" id="quickDelegateWorkflowStepId" />
                                 <div class="flex gap-2">
-                                    <select name="toUserId" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none w-1/3" id="quickDelegateToUserId">
+                                    <select name="toUserId" class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none w-1/3 transition-all" id="quickDelegateToUserId">
                                         @foreach (var assignee in Model.Assignees)
                                         {
                                             <option value="@assignee.UserId">@assignee.DisplayName</option>
                                         }
                                     </select>
-                                    <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="یادداشت واگذاری..." />
-                                    <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">واگذاری</button>
+                                    <input type="text" name="note" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="یادداشت واگذاری..." />
+                                    <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition">واگذاری</button>
                                 </div>
                             </form>
                         </div>
@@ -421,10 +423,10 @@
 
             function escapeHtml(value) {
                 return `${value ?? ''}`
-                    .replaceAll('&', '&amp;')
-                    .replaceAll('<', '&lt;')
-                    .replaceAll('>', '&gt;')
-                    .replaceAll('"', '&quot;')
+                    .replaceAll('&', '&')
+                    .replaceAll('<', '<')
+                    .replaceAll('>', '>')
+                    .replaceAll('"', '"')
                     .replaceAll("'", '&#39;');
             }
 
@@ -433,7 +435,7 @@
 
                 if (views.length === 0) {
                     const empty = document.createElement('span');
-                    empty.className = 'saved-view-empty';
+                    empty.className = 'saved-view-empty text-[11px] text-slate-400 dark:text-slate-500';
                     empty.textContent = 'هیچ نمای ذخیره‌شده‌ای وجود ندارد.';
                     savedViewsList.appendChild(empty);
                     return;
@@ -441,11 +443,11 @@
 
                 views.forEach(view => {
                     const chip = document.createElement('div');
-                    chip.className = 'saved-view-chip';
+                    chip.className = 'saved-view-chip inline-flex items-center gap-1';
 
                     const apply = document.createElement('button');
                     apply.type = 'button';
-                    apply.className = 'btn btn-sm btn-light';
+                    apply.className = 'px-3 py-1.5 border border-slate-200/80 dark:border-slate-700/60 rounded-xl text-[10px] font-semibold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors';
                     apply.textContent = view.name;
                     apply.addEventListener('click', () => {
                         Object.assign(state, view.state);
@@ -455,9 +457,9 @@
 
                     const remove = document.createElement('button');
                     remove.type = 'button';
-                    remove.className = 'btn btn-sm btn-link text-danger';
+                    remove.className = 'text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 ml-1';
                     const removeIcon = document.createElement('i');
-                    removeIcon.className = 'bi bi-x-lg';
+                    removeIcon.className = 'bi bi-x-lg text-[10px]';
                     remove.appendChild(removeIcon);
                     remove.addEventListener('click', async () => {
                         const nextViews = getSavedViews().filter(item => item.name !== view.name);
@@ -522,13 +524,13 @@
 
             function renderDetail(item) {
                 if (!item) {
-                    detailEmptyState.classList.remove('d-none');
-                    detailCard.classList.add('d-none');
+                    detailEmptyState.classList.remove('hidden');
+                    detailCard.classList.add('hidden');
                     return;
                 }
 
-                detailEmptyState.classList.add('d-none');
-                detailCard.classList.remove('d-none');
+                detailEmptyState.classList.add('hidden');
+                detailCard.classList.remove('hidden');
 
                 detailEyebrow.textContent = item.detailCaption || item.type;
                 detailTitle.textContent = item.detailTitle || item.title;
@@ -544,7 +546,7 @@
                     .filter(Boolean)
                     .forEach(label => {
                         const chip = document.createElement('span');
-                        chip.className = 'detail-chip';
+                        chip.className = 'inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/40';
                         chip.textContent = label;
                         detailChips.appendChild(chip);
                     });
@@ -553,11 +555,9 @@
                 const isCaseTask = item.id.startsWith('case-task-');
 
                 if (isCaseTask && caseTaskActionArea) {
-                    caseTaskActionArea.classList.remove('d-none');
-                    // Set up click listeners for the process buttons
+                    caseTaskActionArea.classList.remove('hidden');
                     const btnProcessList = caseTaskActionArea.querySelectorAll('.btn-process-task');
                     btnProcessList.forEach(btn => {
-                        // Remove old click listeners to prevent duplicates
                         const newBtn = btn.cloneNode(true);
                         btn.parentNode.replaceChild(newBtn, btn);
 
@@ -567,7 +567,6 @@
                             const taskIdStr = item.id.replace('case-task-', '');
                             const taskId = parseInt(taskIdStr);
 
-                            // Show spinner
                             const originalText = newBtn.innerHTML;
                             newBtn.disabled = true;
                             newBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> در حال اقدام...';
@@ -584,24 +583,21 @@
 
                                 const result = await response.json();
                                 if (result.success) {
-                                    alert(result.message);
-                                    // Remove the item from list DOM dynamically
+                                    Rhyno.toast(result.message, 'success');
                                     const rowToRemove = document.querySelector(`[data-item-id="${item.id}"]`);
                                     if (rowToRemove) {
                                         rowToRemove.remove();
                                     }
-                                    // Remove from array state to update counters
                                     const idx = items.findIndex(i => i.id === item.id);
                                     if (idx > -1) {
                                         items.splice(idx, 1);
                                     }
-                                    // Re-render
                                     renderInbox();
                                 } else {
-                                    alert('خطا: ' + result.message);
+                                    Rhyno.toast('خطا: ' + result.message, 'error');
                                 }
                             } catch (err) {
-                                alert('بروز خطا در برقراری ارتباط با سرور.');
+                                Rhyno.toast('بروز خطا در برقراری ارتباط با سرور.', 'error');
                             } finally {
                                 newBtn.disabled = false;
                                 newBtn.innerHTML = originalText;
@@ -609,19 +605,18 @@
                         });
                     });
 
-                    // Hide regular forms
-                    quickApproveForm.classList.add('d-none');
-                    quickRejectForm.classList.add('d-none');
-                    quickCommentForm.classList.add('d-none');
-                    quickDelegateForm.classList.add('d-none');
+                    quickApproveForm.classList.add('hidden');
+                    quickRejectForm.classList.add('hidden');
+                    quickCommentForm.classList.add('hidden');
+                    quickDelegateForm.classList.add('hidden');
                 } else {
                     if (caseTaskActionArea) {
-                        caseTaskActionArea.classList.add('d-none');
+                        caseTaskActionArea.classList.add('hidden');
                     }
-                    quickApproveForm.classList.toggle('d-none', !item.canInlineApprove || !item.documentType || !item.documentId || !item.stepNumber);
-                    quickRejectForm.classList.toggle('d-none', !item.canInlineReject || !item.documentType || !item.documentId || !item.stepNumber);
-                    quickCommentForm.classList.toggle('d-none', !item.canInlineComment || !item.documentType || !item.documentId);
-                    quickDelegateForm.classList.toggle('d-none', !item.canInlineDelegate || !item.workflowStepId);
+                    quickApproveForm.classList.toggle('hidden', !item.canInlineApprove || !item.documentType || !item.documentId || !item.stepNumber);
+                    quickRejectForm.classList.toggle('hidden', !item.canInlineReject || !item.documentType || !item.documentId || !item.stepNumber);
+                    quickCommentForm.classList.toggle('hidden', !item.canInlineComment || !item.documentType || !item.documentId);
+                    quickDelegateForm.classList.toggle('hidden', !item.canInlineDelegate || !item.workflowStepId);
                 }
 
                 if (item.documentType) {
@@ -654,7 +649,7 @@
                 groupsHost.replaceChildren();
 
                 if (filteredItems.length === 0) {
-                    groupsHost.innerHTML = '<div class="empty-state">No matching items found.</div>';
+                    groupsHost.innerHTML = '<div class="p-8 text-center"><div class="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-slate-100/80 dark:bg-slate-800/60"><i class="bi bi-search text-xl text-slate-300 dark:text-slate-600"></i></div><p class="text-xs text-slate-500 dark:text-slate-400">نتیجه‌ای برای جستجوی شما پیدا نشد.</p></div>';
                     renderDetail(null);
                     updateSelectionMeta();
                     return;
@@ -665,7 +660,7 @@
                     section.className = 'inbox-group';
 
                     const header = document.createElement('div');
-                    header.className = 'flex items-center justify-between px-3 py-2 bg-slate-100/60 dark:bg-slate-950/40 rounded-lg text-xs font-black text-slate-700 dark:text-slate-300 mb-2';
+                    header.className = 'flex items-center justify-between px-3 py-2 bg-slate-100/60 dark:bg-slate-950/40 rounded-xl text-xs font-black text-slate-700 dark:text-slate-300 mb-2';
                     header.innerHTML = `<span>${escapeHtml(groupName)}</span><span class="font-mono text-[10px] bg-slate-200/60 dark:bg-slate-800 px-2 py-0.5 rounded-full">${groupItems.length} مورد</span>`;
 
                     const body = document.createElement('div');
@@ -673,29 +668,29 @@
 
                     groupItems.forEach(item => {
                         const row = document.createElement('article');
-                        row.className = `flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${sanitizePriorityClass(item.priorityCssClass)}${state.activeItemId === item.id ? ' bg-teal-50/30 dark:bg-teal-950/20' : ''}`;
+                        row.className = `flex items-center justify-between p-4 border-b border-slate-100/80 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${sanitizePriorityClass(item.priorityCssClass)}${state.activeItemId === item.id ? ' bg-indigo-50/50 dark:bg-indigo-950/20' : ''}`;
                         row.dataset.itemId = item.id;
 
                         const checked = state.selectedIds.has(item.id) ? 'checked' : '';
-                        const unread = !item.isRead ? '<span class="inline-flex items-center rounded bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 dark:bg-rose-950/30 dark:text-rose-350 border border-rose-200 dark:border-rose-900/30">خوانده‌نشده</span>' : '<span class="inline-flex items-center rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-550 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">خوانده‌شده</span>';
-                        const overdue = item.isOverdue ? '<span class="inline-flex items-center rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">نقض سطح خدمت</span>' : '';
-                        const actionFlag = item.requiresAction ? '<span class="inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-200/30">نیازمند اقدام</span>' : '';
+                        const unread = !item.isRead ? '<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60"><span class="status-dot status-dot-pulse bg-rose-500"></span>خوانده‌نشده</span>' : '<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800/40 dark:text-slate-400 border border-slate-200/60"><span class="status-dot bg-slate-400"></span>خوانده‌شده</span>';
+                        const overdue = item.isOverdue ? '<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60"><span class="status-dot status-dot-pulse bg-rose-500"></span>نقض سطح خدمت</span>' : '';
+                        const actionFlag = item.requiresAction ? '<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60"><span class="status-dot status-dot-pulse bg-amber-500"></span>نیازمند اقدام</span>' : '';
 
                         row.innerHTML = `
-                            <input class="form-check-input inbox-item-check ml-3 rounded border-slate-300 dark:border-slate-800 text-teal-600 focus:ring-teal-500/20" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
+                            <input class="form-check-input inbox-item-check ml-3 rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500/20" type="checkbox" name="SelectedIds" value="${item.id}" ${checked} />
                             <button type="button" class="inbox-item-surface flex-1 flex items-center justify-between text-right border-0 bg-transparent p-0 outline-none w-full">
                                 <div class="flex items-center gap-3 w-full">
-                                    <span class="inbox-item-icon grid h-9 w-9 place-items-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-550 dark:text-slate-400"><i class="bi ${sanitizeIcon(item.icon)}"></i></span>
+                                    <span class="inbox-item-icon grid h-9 w-9 place-items-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"><i class="bi ${sanitizeIcon(item.icon)}"></i></span>
                                     <div class="inbox-item-body min-w-0 flex-1">
                                         <div class="inbox-title-row flex items-baseline justify-between">
                                             <strong class="text-xs font-black text-slate-900 dark:text-white">${escapeHtml(item.title)}</strong>
                                             <small class="text-[10px] text-slate-400 dark:text-slate-500 mr-2">${escapeHtml(item.createdAtText)}</small>
                                         </div>
                                         <div class="inbox-description text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${escapeHtml(item.description)}</div>
-                                        <div class="inbox-meta flex items-center gap-1.5 flex-wrap mt-1 text-[10px] text-slate-450">
-                                            <em class="font-bold not-italic bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-300">${escapeHtml(item.module)}</em>
+                                        <div class="inbox-meta flex items-center gap-1.5 flex-wrap mt-1 text-[10px]">
+                                            <em class="font-bold not-italic bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-lg text-slate-600 dark:text-slate-300">${escapeHtml(item.module)}</em>
                                             <span class="badge ${sanitizeBadgeClass(item.statusCssClass)}">${escapeHtml(item.status)}</span>
-                                            <span class="badge text-bg-light">${escapeHtml(item.slaText)}</span>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800/40 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/40">${escapeHtml(item.slaText)}</span>
                                             ${unread}
                                             ${overdue}
                                             ${actionFlag}
@@ -703,7 +698,7 @@
                                     </div>
                                 </div>
                             </button>
-                            <a class="inbox-open-icon text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mr-3" href="${sanitizeUrl(item.url)}" aria-label="Open ${escapeHtml(item.title)}">
+                            <a class="inbox-open-icon text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 mr-3 transition-colors" href="${sanitizeUrl(item.url)}" aria-label="Open ${escapeHtml(item.title)}">
                                 <i class="bi bi-arrow-left-short text-lg"></i>
                             </a>`;
 
@@ -767,6 +762,3 @@
         })();
     </script>
 }
-
-
-

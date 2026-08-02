@@ -26,30 +26,12 @@ public sealed class WorkflowService
         WriteIndented = false
     };
     private static readonly ConcurrentDictionary<int, SemaphoreSlim> TransitionEventLocks = new();
-    private static readonly HashSet<string> AllowedWorkflowAttachmentExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".csv", ".zip"
-    };
-    private static readonly HashSet<string> AllowedWorkflowAttachmentContentTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "application/pdf",
-        "image/png",
-        "image/jpeg",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "text/plain",
-        "text/csv",
-        "application/zip",
-        "application/x-zip-compressed"
-    };
-    private const long MaxWorkflowAttachmentBytes = 10 * 1024 * 1024;
 
     private readonly IWorkflowDbContext? _context;
     private readonly IWebHostEnvironment? _environment;
     private readonly IOutboxService? _outboxService;
-    private readonly WorkflowSlaScheduler? _slaScheduler;
+    private readonly IWorkflowAttachmentService? _attachmentService;
+    private readonly IWorkflowSlaService? _slaService;
     private readonly Tenancy.ITenantPathResolver? _tenantPathResolver;
     private readonly IdentityDbContext? _identityContext;
     private readonly IDecisionEngine _decisionEngine;
@@ -60,7 +42,8 @@ public sealed class WorkflowService
         IWorkflowDbContext? context = null,
         IWebHostEnvironment? environment = null,
         IOutboxService? outboxService = null,
-        WorkflowSlaScheduler? slaScheduler = null,
+        IWorkflowAttachmentService? attachmentService = null,
+        IWorkflowSlaService? slaService = null,
         Tenancy.ITenantPathResolver? tenantPathResolver = null,
         IdentityDbContext? identityContext = null,
         IDecisionEngine? decisionEngine = null,
@@ -70,7 +53,8 @@ public sealed class WorkflowService
         _context = context;
         _environment = environment;
         _outboxService = outboxService;
-        _slaScheduler = slaScheduler;
+        _attachmentService = attachmentService;
+        _slaService = slaService;
         _tenantPathResolver = tenantPathResolver;
         _identityContext = identityContext;
         _decisionEngine = decisionEngine ?? new DecisionEngine();
@@ -305,6 +289,7 @@ public sealed class WorkflowService
         DateTimeOffset? dueAt = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(assignedToUserId);
         var routing = WorkflowRoutingResult.Pending(assignedToUserId, 1);
         await EnsureStartedInstanceAsync(documentType, documentId, startedByUserId, routing, dueAt, null, null, new AssignmentResolution(assignedToUserId, null, null), null, cancellationToken);
     }
@@ -522,7 +507,7 @@ public sealed class WorkflowService
         CancellationToken cancellationToken = default)
     {
         EnsureContext();
-        if (_environment == null || file == null || file.Length == 0)
+        if (_attachmentService == null || _environment == null || file == null || file.Length == 0)
         {
             return null;
         }
@@ -533,35 +518,13 @@ public sealed class WorkflowService
             return null;
         }
 
-        ValidateWorkflowAttachment(file);
+        _attachmentService.ValidateWorkflowAttachment(file);
 
-        var uploadsRoot = _tenantPathResolver?.GetWorkflowUploadRoot(Path.Combine(_environment.ContentRootPath, "App_Data"), documentType, documentId)
-            ?? Path.Combine(_environment.ContentRootPath, "App_Data", "uploads", "workflow", documentType.ToLowerInvariant(), documentId.ToString(CultureInfo.InvariantCulture));
-        Directory.CreateDirectory(uploadsRoot);
-
-        var extension = Path.GetExtension(file.FileName);
-        var originalName = Path.GetFileName(file.FileName);
-        var safeFileName = $"{Guid.NewGuid():N}{extension}";
-        var physicalPath = Path.Combine(uploadsRoot, safeFileName);
-
-        await using (var stream = File.Create(physicalPath))
+        var attachment = await _attachmentService.AddAttachmentAsync(instance, documentType, documentId, userId, file, workflowStepId, workflowDecisionId, cancellationToken);
+        if (attachment == null)
         {
-            await file.CopyToAsync(stream, cancellationToken);
+            return null;
         }
-
-        var relativePath = _tenantPathResolver?.GetTenantRelativePath("uploads", "workflow", documentType.ToLowerInvariant(), documentId.ToString(CultureInfo.InvariantCulture), safeFileName)
-            ?? $"/uploads/workflow/{documentType.ToLowerInvariant()}/{documentId.ToString(CultureInfo.InvariantCulture)}/{safeFileName}";
-        var attachment = new WorkflowAttachment
-        {
-            WorkflowInstanceId = instance.Id,
-            WorkflowStepId = workflowStepId,
-            WorkflowDecisionId = workflowDecisionId,
-            FileName = originalName,
-            FilePath = relativePath,
-            ContentType = NormalizeWorkflowAttachmentContentType(file.ContentType, extension),
-            FileSize = file.Length,
-            UploadedByUserId = userId
-        };
 
         _context!.WorkflowAttachments.Add(attachment);
         instance.LastActionAt = DateTimeOffset.UtcNow;
@@ -640,10 +603,10 @@ public sealed class WorkflowService
 
         await AddActionLogAsync(step.WorkflowInstance.Id, step.Id, fromUserId, WorkflowDecisionType.Delegate, note ?? $"ارجاع به {toUserId}", JsonSerializer.Serialize(new { toUserId }), cancellationToken);
         await RecordTransitionEventAsync(step.WorkflowInstance, step, fromUserId, "step.delegated", step.WorkflowInstance.Status, step.WorkflowInstance.Status, step.StepNumber, step.StepNumber, step.StepKey, step.StepName, JsonSerializer.Serialize(new { toUserId }), cancellationToken);
-        if (_slaScheduler != null)
+        if (_slaService != null)
         {
-            await _slaScheduler.CancelStepJobsAsync(step.Id, "Step delegated to another user.", cancellationToken);
-            await _slaScheduler.ScheduleStepAsync(step.WorkflowInstance, step, ResolveSlaHours(step), cancellationToken);
+            await _slaService.CancelStepJobsAsync(step.Id, "Step delegated to another user.", cancellationToken);
+            await _slaService.ScheduleStepAsync(step.WorkflowInstance, step, ResolveSlaHours(step), cancellationToken);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -680,112 +643,112 @@ public sealed class WorkflowService
 
         try
         {
-        var step = instance.Steps
-            .OrderByDescending(item => item.StepNumber)
-            .FirstOrDefault(item => item.StepNumber == stepNumber && item.CompletedAt == null);
+            var step = instance.Steps
+                .OrderByDescending(item => item.StepNumber)
+                .FirstOrDefault(item => item.StepNumber == stepNumber && item.CompletedAt == null);
 
-        if (step == null || !await IsAssignedToUserAsync(step, userId, cancellationToken))
-        {
-            return false;
-        }
-
-        var normalizedType = decisionType?.Trim() ?? WorkflowDecisionType.Comment;
-        var previousStepStatus = step.Status;
-        var decisionStatus = normalizedType switch
-        {
-            WorkflowDecisionType.Approve => WorkflowStatus.Approved,
-            WorkflowDecisionType.Reject => WorkflowStatus.Rejected,
-            WorkflowDecisionType.Return => WorkflowStatus.Returned,
-            WorkflowDecisionType.RequestChanges => WorkflowStatus.NeedsRevision,
-            WorkflowDecisionType.Forward => WorkflowStatus.PendingApproval,
-            WorkflowDecisionType.Delegate => WorkflowStatus.PendingApproval,
-            _ => step.Status
-        };
-
-        step.Status = decisionStatus;
-        step.CompletedAt = normalizedType == WorkflowDecisionType.Forward || normalizedType == WorkflowDecisionType.Delegate ? null : DateTimeOffset.UtcNow;
-        step.SlaState = WorkflowSlaState.OnTrack;
-        instance.LastActionAt = DateTimeOffset.UtcNow;
-
-        if (step.CompletedAt != null && _slaScheduler != null)
-        {
-            await _slaScheduler.CancelStepJobsAsync(step.Id, $"Step closed by {normalizedType}.", cancellationToken);
-        }
-
-        var decision = new WorkflowDecision
-        {
-            WorkflowInstanceId = instance.Id,
-            WorkflowStepId = step.Id,
-            DecidedByUserId = userId,
-            Decision = decisionStatus,
-            DecisionType = normalizedType,
-            Comment = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
-        };
-
-        _context.WorkflowDecisions.Add(decision);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        if (attachments != null)
-        {
-            foreach (var file in attachments.Where(item => item.Length > 0))
+            if (step == null || !await IsAssignedToUserAsync(step, userId, cancellationToken))
             {
-                var attachment = await AddAttachmentAsync(documentType, documentId, userId, file, step.Id, decision.Id, cancellationToken);
-                if (attachment != null)
+                return false;
+            }
+
+            var normalizedType = decisionType?.Trim() ?? WorkflowDecisionType.Comment;
+            var previousStepStatus = step.Status;
+            var decisionStatus = normalizedType switch
+            {
+                WorkflowDecisionType.Approve => WorkflowStatus.Approved,
+                WorkflowDecisionType.Reject => WorkflowStatus.Rejected,
+                WorkflowDecisionType.Return => WorkflowStatus.Returned,
+                WorkflowDecisionType.RequestChanges => WorkflowStatus.NeedsRevision,
+                WorkflowDecisionType.Forward => WorkflowStatus.PendingApproval,
+                WorkflowDecisionType.Delegate => WorkflowStatus.PendingApproval,
+                _ => step.Status
+            };
+
+            step.Status = decisionStatus;
+            step.CompletedAt = normalizedType == WorkflowDecisionType.Forward || normalizedType == WorkflowDecisionType.Delegate ? null : DateTimeOffset.UtcNow;
+            step.SlaState = WorkflowSlaState.OnTrack;
+            instance.LastActionAt = DateTimeOffset.UtcNow;
+
+            if (step.CompletedAt != null && _slaService != null)
+            {
+                await _slaService.CancelStepJobsAsync(step.Id, $"Step closed by {normalizedType}.", cancellationToken);
+            }
+
+            var decision = new WorkflowDecision
+            {
+                WorkflowInstanceId = instance.Id,
+                WorkflowStepId = step.Id,
+                DecidedByUserId = userId,
+                Decision = decisionStatus,
+                DecisionType = normalizedType,
+                Comment = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
+            };
+
+            _context.WorkflowDecisions.Add(decision);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            if (attachments != null)
+            {
+                foreach (var file in attachments.Where(item => item.Length > 0))
                 {
-                    decision.AttachmentCount++;
+                    var attachment = await AddAttachmentAsync(documentType, documentId, userId, file, step.Id, decision.Id, cancellationToken);
+                    if (attachment != null)
+                    {
+                        decision.AttachmentCount++;
+                    }
                 }
             }
-        }
 
-        if (!string.IsNullOrWhiteSpace(signatureText))
-        {
-            await CreateDocumentSignatureAsync(instance, decision, userId, signatureText, note, cancellationToken);
-        }
+            if (!string.IsNullOrWhiteSpace(signatureText))
+            {
+                await CreateDocumentSignatureAsync(instance, decision, userId, signatureText, note, cancellationToken);
+            }
 
-        switch (normalizedType)
-        {
-            case WorkflowDecisionType.Approve:
-                {
-                    var next = await AdvanceRoutingAsync(documentType, stepNumber, userId, instance.StartedByUserId, documentId, userId, note, cancellationToken);
-                    instance.Status = next.Status;
-                    instance.CurrentStatus = next.Status;
+            switch (normalizedType)
+            {
+                case WorkflowDecisionType.Approve:
+                    {
+                        var next = await AdvanceRoutingAsync(documentType, stepNumber, userId, instance.StartedByUserId, documentId, userId, note, cancellationToken);
+                        instance.Status = next.Status;
+                        instance.CurrentStatus = next.Status;
+                        break;
+                    }
+                case WorkflowDecisionType.Reject:
+                    instance.Status = WorkflowStatus.Rejected;
+                    instance.CurrentStatus = WorkflowStatus.Rejected;
+                    instance.ClosedAt = DateTimeOffset.UtcNow;
+                    instance.CompletedAt = DateTimeOffset.UtcNow;
                     break;
-                }
-            case WorkflowDecisionType.Reject:
-                instance.Status = WorkflowStatus.Rejected;
-                instance.CurrentStatus = WorkflowStatus.Rejected;
-                instance.ClosedAt = DateTimeOffset.UtcNow;
-                instance.CompletedAt = DateTimeOffset.UtcNow;
-                break;
-            case WorkflowDecisionType.RequestChanges:
-                instance.Status = WorkflowStatus.NeedsRevision;
-                instance.CurrentStatus = WorkflowStatus.NeedsRevision;
-                instance.CurrentAssigneeUserId = instance.StartedByUserId;
-                break;
-            case WorkflowDecisionType.Return:
-                await ReturnToPreviousStepAsync(instance, step, userId, note, cancellationToken);
-                break;
-            case WorkflowDecisionType.Forward:
-                await ForwardToUserAsync(instance, step, userId, forwardToUserId, note, cancellationToken);
-                break;
-        }
+                case WorkflowDecisionType.RequestChanges:
+                    instance.Status = WorkflowStatus.NeedsRevision;
+                    instance.CurrentStatus = WorkflowStatus.NeedsRevision;
+                    instance.CurrentAssigneeUserId = instance.StartedByUserId;
+                    break;
+                case WorkflowDecisionType.Return:
+                    await ReturnToPreviousStepAsync(instance, step, userId, note, cancellationToken);
+                    break;
+                case WorkflowDecisionType.Forward:
+                    await ForwardToUserAsync(instance, step, userId, forwardToUserId, note, cancellationToken);
+                    break;
+            }
 
-        if (normalizedType != WorkflowDecisionType.Approve)
-        {
-            EnqueueWorkflowStatusEvent(
-                instance,
-                step,
-                userId,
-                normalizedType,
-                previousStepStatus,
-                step.Status,
-                note);
-        }
+            if (normalizedType != WorkflowDecisionType.Approve)
+            {
+                EnqueueWorkflowStatusEvent(
+                    instance,
+                    step,
+                    userId,
+                    normalizedType,
+                    previousStepStatus,
+                    step.Status,
+                    note);
+            }
 
-        await AddActionLogAsync(instance.Id, step.Id, userId, normalizedType, note, signatureText, cancellationToken);
-        await RecordTransitionEventAsync(instance, step, userId, $"workflow.{normalizedType.ToLowerInvariant()}", previousStepStatus, instance.Status, step.StepNumber, instance.CurrentStepNumber, step.StepKey, step.StepName, note, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
-        return true;
+            await AddActionLogAsync(instance.Id, step.Id, userId, normalizedType, note, signatureText, cancellationToken);
+            await RecordTransitionEventAsync(instance, step, userId, $"workflow.{normalizedType.ToLowerInvariant()}", previousStepStatus, instance.Status, step.StepNumber, instance.CurrentStepNumber, step.StepKey, step.StepName, note, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -899,9 +862,9 @@ public sealed class WorkflowService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        if (!routing.IsCompleted && instance.Steps.Count > 0 && _slaScheduler != null)
+        if (!routing.IsCompleted && instance.Steps.Count > 0 && _slaService != null)
         {
-            await _slaScheduler.ScheduleStepAsync(instance, instance.Steps[0], ResolveSlaHours(stepDefinition), cancellationToken);
+            await _slaService.ScheduleStepAsync(instance, instance.Steps[0], ResolveSlaHours(stepDefinition), cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
         }
 
@@ -949,9 +912,9 @@ public sealed class WorkflowService
         {
             step.Status = WorkflowStatus.Normalize(decision);
             step.CompletedAt = DateTimeOffset.UtcNow;
-            if (_slaScheduler != null)
+            if (_slaService != null)
             {
-                await _slaScheduler.CancelStepJobsAsync(step.Id, $"Step advanced by {decisionType}.", cancellationToken);
+                await _slaService.CancelStepJobsAsync(step.Id, $"Step advanced by {decisionType}.", cancellationToken);
             }
         }
 
@@ -1005,10 +968,10 @@ public sealed class WorkflowService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        if (!nextRouting.IsCompleted && nextRouting.StepNumber > currentStep && _slaScheduler != null)
+        if (!nextRouting.IsCompleted && nextRouting.StepNumber > currentStep && _slaService != null)
         {
             var scheduledStep = instance.Steps.OrderByDescending(item => item.Id).First(item => item.StepNumber == nextRouting.StepNumber);
-            await _slaScheduler.ScheduleStepAsync(instance, scheduledStep, ResolveSlaHours(stepDefinition), cancellationToken);
+            await _slaService.ScheduleStepAsync(instance, scheduledStep, ResolveSlaHours(stepDefinition), cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
         }
 
@@ -1286,10 +1249,10 @@ public sealed class WorkflowService
         };
         instance.Steps.Add(reopenedStep);
 
-        if (_slaScheduler != null)
+        if (_slaService != null)
         {
-            await _slaScheduler.CancelStepJobsAsync(currentStep.Id, "Step returned to previous stage.", cancellationToken);
-            await _slaScheduler.ScheduleStepAsync(instance, reopenedStep, ResolveSlaHours(reopenedStep), cancellationToken);
+            await _slaService.CancelStepJobsAsync(currentStep.Id, "Step returned to previous stage.", cancellationToken);
+            await _slaService.ScheduleStepAsync(instance, reopenedStep, ResolveSlaHours(reopenedStep), cancellationToken);
         }
 
         await AddActionLogAsync(instance.Id, currentStep.Id, userId, WorkflowDecisionType.Return, note ?? "برگشت به مرحله قبل", null, cancellationToken);
@@ -1314,10 +1277,10 @@ public sealed class WorkflowService
         instance.CurrentAssigneeRoleId = null;
         instance.CurrentAssigneeDepartmentId = null;
         instance.SlaState = WorkflowSlaState.OnTrack;
-        if (_slaScheduler != null)
+        if (_slaService != null)
         {
-            await _slaScheduler.CancelStepJobsAsync(step.Id, "Step forwarded to another user.", cancellationToken);
-            await _slaScheduler.ScheduleStepAsync(instance, step, ResolveSlaHours(step), cancellationToken);
+            await _slaService.CancelStepJobsAsync(step.Id, "Step forwarded to another user.", cancellationToken);
+            await _slaService.ScheduleStepAsync(instance, step, ResolveSlaHours(step), cancellationToken);
         }
         await AddActionLogAsync(instance.Id, step.Id, userId, WorkflowDecisionType.Forward, note ?? "ارجاع شد", JsonSerializer.Serialize(new { forwardToUserId }), cancellationToken);
     }
@@ -1603,52 +1566,9 @@ public sealed class WorkflowService
                candidate == typeof(Guid);
     }
 
-    private static void ValidateWorkflowAttachment(IFormFile file)
+    private void ValidateWorkflowAttachment(IFormFile file)
     {
-        if (file.Length <= 0)
-        {
-            throw new InvalidOperationException("Workflow attachment is empty.");
-        }
-
-        if (file.Length > MaxWorkflowAttachmentBytes)
-        {
-            throw new InvalidOperationException("Workflow attachment exceeds the maximum allowed size.");
-        }
-
-        var extension = Path.GetExtension(file.FileName);
-        if (string.IsNullOrWhiteSpace(extension) || !AllowedWorkflowAttachmentExtensions.Contains(extension))
-        {
-            throw new InvalidOperationException("Workflow attachment file type is not allowed.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(file.ContentType) &&
-            !AllowedWorkflowAttachmentContentTypes.Contains(file.ContentType))
-        {
-            throw new InvalidOperationException("Workflow attachment content type is not allowed.");
-        }
-    }
-
-    private static string NormalizeWorkflowAttachmentContentType(string? contentType, string extension)
-    {
-        if (!string.IsNullOrWhiteSpace(contentType) && AllowedWorkflowAttachmentContentTypes.Contains(contentType))
-        {
-            return contentType;
-        }
-
-        return extension.ToLowerInvariant() switch
-        {
-            ".pdf" => "application/pdf",
-            ".png" => "image/png",
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".doc" => "application/msword",
-            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".xls" => "application/vnd.ms-excel",
-            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ".txt" => "text/plain",
-            ".csv" => "text/csv",
-            ".zip" => "application/zip",
-            _ => "application/octet-stream"
-        };
+        _attachmentService?.ValidateWorkflowAttachment(file);
     }
 
     private DecisionEvaluationResult EvaluateDecisionTable(

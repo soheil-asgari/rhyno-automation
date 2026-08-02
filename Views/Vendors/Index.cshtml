@@ -3,70 +3,136 @@
     ViewData["Title"] = "تامین‌کنندگان";
 }
 
-<div class="container-fluid py-4">
+<div class="w-full flex-1 flex flex-col gap-5 p-3 md:p-4" dir="rtl">
     @if (TempData["VendorMessage"] is string vendorMessage)
     {
-        <div class="alert alert-info py-2 px-3 small mb-3">@vendorMessage</div>
+        <div
+            class="flex items-center gap-2 p-3 bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/40 rounded-2xl text-xs font-semibold shadow-sm">
+            <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-sm"></i>
+            <span class="flex-1">@vendorMessage</span>
+        </div>
     }
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">تامین‌کنندگان</h6>
-        <a asp-action="Create" class="btn btn-sm btn-primary">تامین‌کننده جدید</a>
+    <!-- Header Card -->
+    <header
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
+        <div>
+            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">تامین‌کنندگان</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">مدیریت اطلاعات تامین‌کنندگان و پیمانکاران</p>
+        </div>
+        <a asp-action="Create"
+           class="flex items-center gap-1.5 px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm shadow-indigo-500/20 no-underline self-start sm:self-auto">
+            <i class="bi bi-plus-circle-fill"></i>
+            <span>تامین‌کننده جدید</span>
+        </a>
+    </header>
+
+    <!-- Search Filters -->
+    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
+        <form method="get" class="flex flex-col sm:flex-row gap-3 items-end">
+            <div class="flex-1 flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-500 dark:text-slate-400">جستجو</label>
+                <input name="searchTerm" value="@ViewBag.SearchTerm"
+                       class="w-full h-9 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20"
+                       placeholder="نام / کد اقتصادی / شناسه ملی" />
+            </div>
+            <button type="submit"
+                    class="h-9 flex items-center justify-center gap-1.5 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm shadow-indigo-500/20">
+                <i class="bi bi-search"></i>
+                <span>اعمال</span>
+            </button>
+        </form>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto " >
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 overflow-x-auto -body p-3 border-bottom" >
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted mb-1">جستجو</label>
-                    <input name="searchTerm" value="@ViewBag.SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="نام / کد اقتصادی / شناسه ملی" />
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-sm btn-primary">اعمال</button>
-                </div>
-            </form>
-        </div>
-        <div class="table-responsive">
-            <table class="w-full text-xs text-right border-collapse" >
-                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " ead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+    <!-- Data Table Card -->
+    <div
+        class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
+                <thead
+                    class="sticky top-0 z-10 bg-slate-50/80 dark:bg-slate-800/60 backdrop-blur-sm border-b border-slate-100 dark:border-slate-800/60">
                     <tr>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >نام</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >کد اقتصادی</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >شناسه ملی</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >تلفن</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold " >وضعیت</th>
-                        <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold text-center" >عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Any())
-                    {
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@item.Name</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@(string.IsNullOrWhiteSpace(item.EconomicCode) ? "-" : item.EconomicCode)</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@(string.IsNullOrWhiteSpace(item.NationalId) ? "-" : item.NationalId)</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " >@(string.IsNullOrWhiteSpace(item.Phone) ? "-" : item.Phone)</td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 " ><span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "فعال" : "غیرفعال")</span></td>
-                                <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 text-center" >
-                                    <div class="d-inline-flex gap-1">
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">ویرایش</a>
-                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('آیتم حذف/غیرفعال شود؟');">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    }
+                        <th
+                            class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            نام</th>
+                            <th
+                                class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                کد اقتصادی</th>
+                                <th
+                                    class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    شناسه ملی</th>
+                                    <th
+                                        class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        تلفن</th>
+                                        <th
+                                            class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center">
+                                            وضعیت</th>
+                                            <th
+                                                class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center w-1">
+                                                عملیات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                                            @if (Model.Any())
+                                            {
+                                                @foreach (var item in Model)
+                                                {
+                                                    <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                                                        <td class="px-4 py-3.5 font-medium text-slate-900 dark:text-white">@item.Name</td>
+                                                        <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-400">
+                                                            @(string.IsNullOrWhiteSpace(item.EconomicCode) ? "-" : item.EconomicCode)</td>
+                                                            <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-400">
+                                                                @(string.IsNullOrWhiteSpace(item.NationalId) ? "-" : item.NationalId)</td>
+                                                                <td class="px-4 py-3.5 font-mono text-slate-500 dark:text-slate-400" dir="ltr">
+                                                                    @(string.IsNullOrWhiteSpace(item.Phone) ? "-" : item.Phone)</td>
+                                                                    <td class="px-4 py-3.5 text-center">
+                                                                        @if (item.IsActive)
+                                                                        {
+                                                                            <span
+                                                                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
+                                                                                <span class="status-dot status-dot-pulse bg-emerald-500"></span>فعال
+                                                                            </span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span
+                                                                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700/40">
+                                                                                <span class="status-dot bg-slate-400"></span>غیرفعال
+                                                                            </span>
+                                                                        }
+                                                                    </td>
+                                                                    <td class="px-4 py-3.5 text-center w-1">
+                                                                        <div class="flex items-center justify-center gap-1.5">
+                                                                            <a asp-action="Edit" asp-route-id="@item.Id"
+                                                                               class="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 no-underline"
+                                                                               title="ویرایش">
+                                                                                <i class="bi bi-pencil-square text-xs"></i> ویرایش
+                                                                            </a>
+                                                                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline"
+                                                                                  onsubmit="return confirm('آیتم حذف/غیرفعال شود؟');">
+                                                                                @Html.AntiForgeryToken()
+                                                                                <button type="submit"
+                                                                                        class="inline-flex items-center gap-1 rounded-lg border border-rose-200/60 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors dark:border-rose-800/40 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
+                                                                                        title="حذف">
+                                                                                    <i class="bi bi-trash text-xs"></i> حذف
+                                                                                </button>
+                                                                            </form>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
                     else
-                    {
-                        <tr><td class="p-3 border-b border-slate-100 dark:border-slate-800/50 "  colspan="6" class="text-center text-muted py-3">رکوردی یافت نشد.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                                                        {
+                                                            <tr>
+                                                                <td colspan="6" class="px-4 py-12 text-center">
+                                                                    <partial name="_EmptyState"
+                                                                             model='new { Icon = "bi-building", Title = "هیچ تامین‌کننده‌ای ثبت نشده است", Description = "از دکمه تامین‌کننده جدید برای ثبت اولین مورد استفاده کنید.", ActionUrl = Url.Action("Create"), ActionText = "تامین‌کننده جدید" }' />
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>

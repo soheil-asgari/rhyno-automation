@@ -57,8 +57,9 @@ public sealed class ApiControllersTests
     public async Task FinanceApi_GetVouchers_ReturnsPagedResult()
     {
         using var context = CreateFinanceContext(nameof(FinanceApi_GetVouchers_ReturnsPagedResult));
-        var workflowService = new WorkflowService();
-        var ledgerService = CreateMock<FinanceLedgerService>();
+        var workflowContext = CreateWorkflowContext(Guid.NewGuid().ToString());
+        var workflowService = new WorkflowService(workflowContext);
+        var ledgerService = CreateMock<FinanceLedgerService>(context);
         var invoiceService = CreateFinanceInvoiceService(context);
 
         context.Invoices.Add(new Invoice
@@ -87,8 +88,9 @@ public sealed class ApiControllersTests
     public async Task FinanceApi_GetVoucher_ReturnsNotFound_WhenMissing()
     {
         using var context = CreateFinanceContext(nameof(FinanceApi_GetVoucher_ReturnsNotFound_WhenMissing));
-        var workflowService = new WorkflowService();
-        var ledgerService = CreateMock<FinanceLedgerService>();
+        var workflowContext = CreateWorkflowContext(Guid.NewGuid().ToString());
+        var workflowService = new WorkflowService(workflowContext);
+        var ledgerService = CreateMock<FinanceLedgerService>(context);
         var invoiceService = CreateFinanceInvoiceService(context);
 
         var controller = CreateFinanceController(context, workflowService, ledgerService, invoiceService);
@@ -103,8 +105,9 @@ public sealed class ApiControllersTests
     public async Task FinanceApi_CreateVoucher_ReturnsBadRequest_WhenModelInvalid()
     {
         using var context = CreateFinanceContext(nameof(FinanceApi_CreateVoucher_ReturnsBadRequest_WhenModelInvalid));
-        var workflowService = new WorkflowService();
-        var ledgerService = CreateMock<FinanceLedgerService>();
+        var workflowContext = CreateWorkflowContext(Guid.NewGuid().ToString());
+        var workflowService = new WorkflowService(workflowContext);
+        var ledgerService = CreateMock<FinanceLedgerService>(context);
         var invoiceService = CreateFinanceInvoiceService(context);
 
         var controller = CreateFinanceController(context, workflowService, ledgerService, invoiceService);
@@ -121,8 +124,9 @@ public sealed class ApiControllersTests
     public async Task FinanceApi_CreateVoucher_SuccessfullyCreatesInvoice()
     {
         using var context = CreateFinanceContext(nameof(FinanceApi_CreateVoucher_SuccessfullyCreatesInvoice));
-        var workflowService = new WorkflowService();
-        var ledgerService = CreateMock<FinanceLedgerService>();
+        var workflowContext = CreateWorkflowContext(Guid.NewGuid().ToString());
+        var workflowService = new WorkflowService(workflowContext);
+        var ledgerService = CreateMock<FinanceLedgerService>(context);
         var invoiceService = CreateFinanceInvoiceService(context);
 
         var controller = CreateFinanceController(context, workflowService, ledgerService, invoiceService);
@@ -153,8 +157,9 @@ public sealed class ApiControllersTests
     public async Task FinanceApi_GetBalanceReport_ReturnsReport()
     {
         using var context = CreateFinanceContext(nameof(FinanceApi_GetBalanceReport_ReturnsReport));
-        var workflowService = new WorkflowService();
-        var ledgerService = CreateMock<FinanceLedgerService>();
+        var workflowContext = CreateWorkflowContext(Guid.NewGuid().ToString());
+        var workflowService = new WorkflowService(workflowContext);
+        var ledgerService = CreateMock<FinanceLedgerService>(context);
         var invoiceService = CreateFinanceInvoiceService(context);
 
         var controller = CreateFinanceController(context, workflowService, ledgerService, invoiceService);
@@ -391,7 +396,7 @@ public sealed class ApiControllersTests
     private HrApiController CreateHrController(OfficeDbContext context)
     {
         var workflowContext = CreateWorkflowContext(Guid.NewGuid().ToString());
-        var workflowService = new WorkflowService();
+        var workflowService = new WorkflowService(workflowContext);
         var leaveWorkflowService = new LeaveWorkflowService(workflowContext, workflowService);
         var controller = new HrApiController(context, workflowService, leaveWorkflowService);
         SetupControllerContext(controller);
@@ -423,8 +428,10 @@ public sealed class ApiControllersTests
         return new FinancialInvoiceService(context, identityContext);
     }
 
-    private static T CreateMock<T>() where T : class
+    private static T CreateMock<T>(params object[] args) where T : class
     {
+        if (args.Length > 0)
+            return new Mock<T>(args).Object;
         return new Mock<T>().Object;
     }
 

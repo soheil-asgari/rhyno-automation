@@ -5,7 +5,7 @@ using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
 
 namespace OfficeAutomation.Modules.Finance.Application;
 
-public sealed class FinanceLedgerService
+public class FinanceLedgerService
 {
     private readonly FinanceDbContext _context;
     private readonly VoucherValidationGuard _voucherValidationGuard;

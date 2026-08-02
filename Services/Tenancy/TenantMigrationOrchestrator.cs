@@ -44,19 +44,47 @@ public sealed class TenantMigrationOrchestrator
             .OrderBy(item => item.TenantId)
             .ToListAsync(cancellationToken);
 
+        if (tenants.Count == 0)
+        {
+            _logger.LogInformation("Tenant migration: no active tenants found to migrate.");
+            return;
+        }
+
+        var successCount = 0;
+        var failureCount = 0;
+
         var migrationTasks = tenants.Select(async tenant =>
         {
+            // هر مستأجر یک timeout مستقل ۹۰ ثانیه‌ای دارد
+            using var perTenantCts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                perTenantCts.Token, cancellationToken);
+
             try
             {
-                await MigrateTenantAsync(tenant, cancellationToken);
+                await MigrateTenantAsync(tenant, linkedCts.Token);
+                Interlocked.Increment(ref successCount);
+                _logger.LogInformation("Tenant migration succeeded for tenant {TenantId}.", tenant.TenantId);
+            }
+            catch (OperationCanceledException) when (perTenantCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                Interlocked.Increment(ref failureCount);
+                _logger.LogError(
+                    "Tenant migration timed out after 90 seconds for tenant {TenantId}. The tenant may be temporarily unavailable.",
+                    tenant.TenantId);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                Interlocked.Increment(ref failureCount);
                 _logger.LogError(ex, "Tenant migration failed for tenant {TenantId}.", tenant.TenantId);
             }
         });
 
         await Task.WhenAll(migrationTasks);
+
+        _logger.LogInformation(
+            "Tenant migration completed: {SuccessCount} succeeded, {FailureCount} failed out of {TotalCount} active tenants.",
+            successCount, failureCount, tenants.Count);
     }
 
     private async Task SeedConfiguredTenantsAsync(PlatformDbContext context, CancellationToken cancellationToken)
