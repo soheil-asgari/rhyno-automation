@@ -9,8 +9,8 @@
 @section Styles {
     <style>
         /* ============================================
-                   VAT Dashboard - Eye-catching Card Design
-                   ============================================ */
+                       VAT Dashboard - Eye-catching Card Design
+                       ============================================ */
 
         .vat-cards-row {
             --bs-gutter-x: 0.35rem;
@@ -360,6 +360,12 @@
         }
 
         /* ---------- Responsive ---------- */
+        @@media (max-width: 767.98px) {
+            .vat-cards-row {
+                flex-wrap: wrap;
+            }
+        }
+
         @@media (max-width: 575.98px) {
             .vat-card {
                 padding: 0.4rem 0.5rem;
@@ -407,8 +413,8 @@
         </div>
 
         <!-- VAT Summary Cards - All in one row -->
-        <div class="row g-1 mb-3 vat-cards-row">
-            <div class="col-6 col-md">
+        <div class="row g-1 mb-3 vat-cards-row flex-md-nowrap">
+            <div class="col">
                 <div class="vat-card vat-card-sales">
                     <div class="vat-card-icon">
                         <i class="bi bi-graph-up-arrow fs-5"></i>
@@ -421,7 +427,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md">
+            <div class="col">
                 <div class="vat-card vat-card-purchase">
                     <div class="vat-card-icon">
                         <i class="bi bi-cart3 fs-5"></i>
@@ -434,7 +440,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md">
+            <div class="col">
                 <div class="vat-card vat-card-lines">
                     <div class="vat-card-icon">
                         <i class="bi bi-calculator fs-5"></i>
@@ -447,7 +453,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md">
+            <div class="col">
                 <div class="vat-card vat-card-net @(Model.NetVatPayableOrRefundable >= 0 ? "" : "vat-card-refund")">
                     <div class="vat-card-icon">
                         <i class="bi bi-cash-stack fs-5"></i>
@@ -460,7 +466,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md">
+            <div class="col">
                 <div class="vat-card vat-card-reconcile @(hasMismatch ? "" : "vat-card-success")">
                     <div class="vat-card-icon">
                         <i class="bi bi-arrow-left-right fs-5"></i>
@@ -473,7 +479,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md">
+            <div class="col">
                 <div class="vat-card vat-card-suspicious @(Model.VatMismatchInvoices > 0 ? "" : "vat-card-success")">
                     <div class="vat-card-icon">
                         <i class="bi bi-exclamation-triangle fs-5"></i>
@@ -486,7 +492,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md">
+            <div class="col">
                 <div class="vat-card vat-card-status @(hasMismatch ? "" : "vat-card-success")">
                     <div class="vat-card-icon">
                         <i class="bi @(hasMismatch ? "bi-shield-exclamation" : "bi-shield-check") fs-5"></i>

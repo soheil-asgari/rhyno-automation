@@ -275,6 +275,7 @@ namespace OfficeAutomation.Controllers
         }
 
         // GET: Letters/Create
+        [Services.Security.PermissionAuthorize("Letters.Create")]
         public async Task<IActionResult> Create(int? replyToId = null)
         {
             // ?. دريافت يوزري که لاگين کرده به روش ايمن
@@ -282,7 +283,7 @@ namespace OfficeAutomation.Controllers
 
             // مقداردهي براي امضا (حتي اگر کاربر پيدا نشد، سيستم کرش نکند)
             ViewBag.SenderFullName = currentUser?.FullName ?? "نامشخص";
-            ViewBag.SenderRole = currentUser?.JobTitle ;
+            ViewBag.SenderRole = currentUser?.JobTitle;
             ViewBag.UserSignature = currentUser?.SignaturePath;
             ViewBag.IsReplyMode = false;
             ViewBag.ReplyToLetterId = replyToId;
@@ -362,14 +363,18 @@ namespace OfficeAutomation.Controllers
 
             if (ModelState.IsValid)
             {
-                await ApplyWorkflowRoutingOnCreateAsync(letter);
                 _context.Add(letter);
                 await _context.SaveChangesAsync();
-                await _workflowService.StartRoutingAsync(
+
+                // ایجاد گردش کار فقط پس از ذخیره نامه (با شناسه معتبر)
+                var routing = await _workflowService.StartRoutingAsync(
                     letter.DocumentType,
                     letter.SenderId,
                     letter.ReceiverId,
                     letter.Id);
+                ApplyWorkflowRouting(letter, routing);
+                await _context.SaveChangesAsync();
+
                 await _notificationService.CreateAsync(
                     letter.ReceiverId,
                     "نامه جديد",
@@ -489,16 +494,6 @@ namespace OfficeAutomation.Controllers
         private static bool CanAccessLetter(Letter letter, string userId)
         {
             return letter.SenderId == userId || letter.ReceiverId == userId || letter.FinalReceiverId == userId;
-        }
-
-        private async Task ApplyWorkflowRoutingOnCreateAsync(Letter letter)
-        {
-            var routing = await _workflowService.StartRoutingAsync(
-                letter.DocumentType,
-                letter.SenderId,
-                letter.ReceiverId,
-                letter.Id);
-            ApplyWorkflowRouting(letter, routing);
         }
 
         private static void ApplyWorkflowRouting(Letter letter, WorkflowRoutingResult routing)

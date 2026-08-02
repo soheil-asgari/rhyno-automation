@@ -178,13 +178,14 @@
                         <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <div id="collapseManagementReusable" class="sidebar-collapse-reusable overflow-hidden transition-[max-height] duration-350 ease-in-out @(IsModuleOpen("Settings","Security","AuditDashboard","ProcessAnalysis","Reports","ManagementDashboard") ? "max-h-[600px]" : "max-h-0")">
+                 <div id="collapseManagementReusable" class="sidebar-collapse-reusable overflow-hidden transition-[max-height] duration-350 ease-in-out @(IsModuleOpen("Settings","Security","AuditDashboard","ProcessAnalysis","Reports","ManagementDashboard","DocumentArchive") ? "max-h-[600px]" : "max-h-0")">
                     <div class="mt-1 space-y-0.5 px-1">
                         <a class='@ChildLinkClass("ManagementDashboard", "Overview")' asp-controller="ManagementDashboard" asp-action="Overview"><i class="bi bi-grid-1x2 w-4 text-emerald-500"></i><span class="link-text truncate">داشبورد مدیریتی</span></a>
                         <a class='@ChildLinkClass("ManagementDashboard", "Index")' asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
                         <a class='@ChildLinkClass("Settings")' asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400"></i><span class="link-text truncate">تنظیمات</span></a>
                         <a class='@ChildLinkClass("Security")' asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500"></i><span class="link-text truncate">امنیت</span></a>
                         <a class='@ChildLinkClass("Security", "WorkflowBuilder")' asp-controller="Security" asp-action="WorkflowBuilder"><i class="bi bi-diagram-3 w-4 text-teal-500"></i><span class="link-text truncate">طراح گردش کار</span></a>
+                        <a class='@ChildLinkClass("DocumentArchive")' asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive w-4 text-amber-500"></i><span class="link-text truncate">بایگانی اسناد</span></a>
                         <a class='@ChildLinkClass("AuditDashboard")' asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500"></i><span class="link-text truncate">ممیزی</span></a>
                         <a class='@ChildLinkClass("ProcessAnalysis")' asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 w-4 text-purple-500"></i><span class="link-text truncate">تحلیل فرایند</span></a>
                         <a class='@ChildLinkClass("Reports")' asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph w-4 text-indigo-500"></i><span class="link-text truncate">گزارشات</span></a>

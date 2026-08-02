@@ -7,750 +7,329 @@
     var fa = CultureInfo.GetCultureInfo("fa-IR");
     string ToFa(int value) => value.ToString("N0", fa);
 
-    var displayName = User?.FindFirst("name")?.Value ?? User?.FindFirst(ClaimTypes.Name)?.Value ?? User?.Identity?.Name ?? "کاربر";
+    var displayName = User?.FindFirst("name")?.Value ?? User?.FindFirst(ClaimTypes.Name)?.Value ?? User?.Identity?.Name ??
+"کاربر";
     var userRole = User?.FindFirst(ClaimTypes.Role)?.Value ?? "کاربر سیستم";
 
-    var shortcuts = new List<(string Title, string Description, string Url, string Icon)>
+    var shortcuts = new List<(string Title, string Icon, string Url)>
     {
-        ("نامه‌ها", "مکاتبات و گردش نامه", "/Letters", "bi-envelope-paper"),
-        ("فاکتورها", "فروش، خرید و پیگیری", "/Financial/Invoices", "bi-receipt"),
-        ("کارتابل", "اقدام‌ها و تاییدها", "/WorkInbox", "bi-inboxes"),
-        ("انبار", "موجودی و رسید کالا", "/Warehouse", "bi-box-seam"),
-        ("گزارش‌ها", "نمای مدیریتی", "/Reports", "bi-file-bar-graph"),
-        ("جستجو", "دسترسی سریع", "/Search", "bi-search")
+        ("تنظیم مشخصات مالی کارمند", "bi-person-gear", "/HumanCapital"),
+        ("صدور سند حسابداری", "bi-journal-plus", "/Financial/LedgerOperations"),
+        ("مرور حساب‌ها", "bi-graph-up-arrow", "/Financial/GetTrialBalance"),
+        ("سند حسابداری", "bi-file-earmark-text", "/Financial/LedgerOperations"),
+        ("ثبت مقادیر عوامل ورودی", "bi-calculator", "/Financial"),
+        ("ایجاد فایل", "bi-file-earmark-plus", "/DocumentArchive"),
+        ("حکم کارگزینی", "bi-file-earmark-person", "/HumanCapital"),
+        ("ثبت حکم مالی", "bi-cash-stack", "/Payroll"),
+        ("محاسبه حقوق", "bi-calculator-fill", "/Payroll"),
     };
 }
 
 @section Styles {
     <style>
-        /* Drag & Drop layout and visual properties */
-        .executive-dashboard {
-            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        .dashboard-widget-icon {
+            transition: transform 0.2s ease, background 0.2s ease;
         }
 
-        .drag-mode .dashboard-panel {
-            border: 2px dashed var(--primary) !important;
-            opacity: 0.85;
-            position: relative;
-            cursor: move;
+        .rahkaran-widget-card:hover .dashboard-widget-icon {
+            transform: scale(1.1);
+            background: #dce8f0 !important;
         }
 
-        .drag-mode .dashboard-panel::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: color-mix(in srgb, var(--primary) 3%, transparent);
-            z-index: 10;
-        }
-
-        .drag-mode .dashboard-panel * {
-            pointer-events: none !important;
-        }
-
-        .drag-mode .dashboard-panel .drag-handle,
-        .drag-mode .dashboard-panel .drag-handle * {
-            pointer-events: auto !important;
-        }
-
-        .drag-handle {
-            display: none;
-        }
-        
-        .drag-mode .drag-handle {
-            display: inline-flex;
-        }
-
-        /* Preset swatches styling */
-        .bg-swatch {
-            width: 28px;
-            height: 28px;
-            border-radius: 9999px;
-            border: 1.5px solid rgba(156, 163, 175, 0.4);
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        
-        .bg-swatch:hover {
-            transform: scale(1.15);
-        }
-
-        .bg-swatch-gradient-1 { background: linear-gradient(135deg, #0f172a, #1e293b); }
-        .bg-swatch-gradient-2 { background: linear-gradient(135deg, #1e1b4b, #311042); }
-        .bg-swatch-gradient-3 { background: linear-gradient(135deg, #064e3b, #022c22); }
-        .bg-swatch-gradient-4 { background: linear-gradient(135deg, #1c1917, #0c0a09); }
-        .bg-swatch-gradient-5 { background: linear-gradient(135deg, #172554, #0f172a); }
-        .bg-swatch-default { background: transparent; }
-
-        /* Days Grid styling (calendar helper) */
-        .days-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 3px;
-        }
-
-        .days-grid span {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            aspect-ratio: 1;
-            font-size: 11px;
-            font-weight: 600;
-            border-radius: 9999px;
-            transition: all 0.15s ease;
-            user-select: none;
-            cursor: pointer;
-        }
-
-        .days-grid span:not(.off):not(.today):hover {
-            background-color: color-mix(in srgb, var(--primary) 12%, transparent);
-            color: var(--primary);
-        }
-
-        .days-grid span.today {
-            background-color: var(--primary);
-            color: #ffffff;
-            font-weight: 800;
-            box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 40%, transparent);
-        }
-
-        .days-grid span.holiday {
-            color: #e11d48;
-        }
-
-        .days-grid span.off {
-            opacity: 0.25;
-            cursor: default;
-        }
-
-        /* Weekly activity custom bar chart */
-        .weekly-activity-chart-bar {
-            background-color: var(--primary);
-            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .dark .weekly-activity-chart-bar,
-        .theme-dark .weekly-activity-chart-bar,
-        [data-theme="dark"] .weekly-activity-chart-bar {
-            background-color: var(--primary);
+        .kpi-value {
+            font-variant-numeric: tabular-nums;
         }
     </style>
 }
 
-<div class="executive-dashboard w-full h-full min-h-full flex-1 flex flex-col gap-2 p-2 border border-slate-200 dark:border-slate-800/80 rounded-lg transition-all duration-300 bg-transparent">
-    <!-- Header Card -->
-    <header class="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="min-w-0 flex items-center gap-3">
-            <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                    <h1 class="m-0 text-sm font-black text-slate-900 dark:text-white tracking-tight">داشبورد راینو</h1>
-                    <span class="text-[10px] font-bold text-teal-600 dark:text-teal-400 hidden sm:block">@Model.TodayText</span>
-                </div>
-                <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">@displayName · @userRole</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-1.5 flex-shrink-0">
-            <button id="btnToggleCustomization" type="button" class="flex items-center gap-1 px-2 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition">
-                <i class="bi bi-sliders text-teal-600 dark:text-teal-400 text-xs"></i>
-                <span class="hidden sm:inline">سفارشی‌سازی</span>
-            </button>
-            <button id="btnToggleDragMode" type="button" class="flex items-center gap-1 px-2 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition">
-                <i class="bi bi-grid text-teal-600 dark:text-teal-400 text-xs"></i>
-                <span class="hidden sm:inline">چیدمان</span>
-            </button>
-        </div>
-    </header>
+<!-- ═══════════════════════════════════════════════════════════
+DESKTOP TOOLBAR
+═══════════════════════════════════════════════════════════ -->
+<div class="desktop-toolbar">
+    <a href="@Url.Action("Index", "Settings")"><i class="bi bi-sliders"></i> تنظیمات ظاهری</a>
+    <a href="#" onclick="changeBackground()"><i class="bi bi-image"></i> تغییر پس‌زمینه</a>
+    <a href="#" onclick="addShortcut()"><i class="bi bi-star"></i> درج میانبر به صفحه</a>
+    <a href="#" onclick="addWidget()"><i class="bi bi-puzzle"></i> درج ویجت</a>
+    <a href="@Url.Action("Index", "Settings")"><i class="bi bi-tools"></i> مدیریت میز کار</a>
+</div>
 
-    <!-- Customization Config Panel -->
-    <div id="customizationPanel" class="p-2.5 border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-md rounded-lg hidden transition-all duration-300">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2.5">
-            <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <i class="bi bi-palette text-teal-600 dark:text-teal-400"></i>
-                تنظیمات ظاهر و چیدمان داشبورد
-            </h3>
-            <button type="button" id="btnCloseCustomization" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 border-0 bg-transparent cursor-pointer"><i class="bi bi-x-lg text-xs"></i></button>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <!-- Background Options -->
-            <div class="flex flex-col gap-2">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">پس‌زمینه داشبورد</span>
-                <div class="preset-backgrounds mt-1 flex flex-wrap gap-1.5">
-                    <button class="bg-swatch bg-swatch-default" data-bg="transparent" title="پیش‌فرض سیستم"></button>
-                    <button class="bg-swatch bg-swatch-gradient-1" data-bg="linear-gradient(135deg, #0f172a, #1e293b)" title="سرمه‌ای تیره"></button>
-                    <button class="bg-swatch bg-swatch-gradient-2" data-bg="linear-gradient(135deg, #1e1b4b, #311042)" title="بادمجانی"></button>
-                    <button class="bg-swatch bg-swatch-gradient-3" data-bg="linear-gradient(135deg, #064e3b, #022c22)" title="سبز یشمی"></button>
-                    <button class="bg-swatch bg-swatch-gradient-4" data-bg="linear-gradient(135deg, #1c1917, #0c0a09)" title="ذغالی"></button>
-                    <button class="bg-swatch bg-swatch-gradient-5" data-bg="linear-gradient(135deg, #172554, #0f172a)" title="آبی عمیق"></button>
-                </div>
-                <div class="flex gap-2 items-center mt-2 w-full">
-                    <input type="color" id="bgColorPicker" class="w-10 h-8 p-0.5 border border-slate-200 dark:border-slate-800 rounded cursor-pointer bg-white dark:bg-slate-900" title="انتخاب رنگ جامد" />
-                    <input type="text" id="bgImgInput" class="flex-1 text-xs p-1.5 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-teal-500/20" placeholder="آدرس تصویر پس‌زمینه (URL)..." />
-                </div>
+<!-- ═══════════════════════════════════════════════════════════
+WIDGETS GRID — Shortcut Cards
+═══════════════════════════════════════════════════════════ -->
+<div class="rahkaran-widgets-grid">
+    @foreach (var shortcut in shortcuts)
+    {
+        <a href="@shortcut.Url" class="rahkaran-widget-card">
+            <div class="widget-icon dashboard-widget-icon">
+                <i class="bi @shortcut.Icon"></i>
             </div>
-            
-            <!-- Metric switches -->
-            <div class="flex flex-col gap-2">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">نمایش کارت‌های آماری</span>
-                <div class="flex flex-wrap gap-2 mt-1">
-                    @foreach (var metric in Model.ExecutiveMetrics)
-                    {
-                        <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
-                            <input type="checkbox" checked class="metric-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="@metric.Title" />
-                            <span>@metric.Title</span>
-                        </label>
-                    }
-                </div>
-            </div>
-            
-            <!-- Widget switches -->
-            <div class="flex flex-col gap-2">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">نمایش بخش‌ها (ویجت‌ها)</span>
-                <div class="flex flex-wrap gap-2 mt-1">
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
-                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="pending-work" />
-                        <span>کارهای در انتظار اقدام</span>
-                    </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
-                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="calendar" />
-                        <span>تقویم و مناسبت‌ها</span>
-                    </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
-                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="system-alerts" />
-                        <span>هشدارهای عملیاتی</span>
-                    </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
-                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="weekly-activity" />
-                        <span>نمودار فعالیت هفتگی</span>
-                    </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
-                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="recent-activity" />
-                        <span>آخرین فعالیت‌ها</span>
-                    </label>
-                    <label class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs font-semibold select-none text-slate-700 dark:text-slate-300">
-                        <input type="checkbox" checked class="widget-toggle w-3.5 h-3.5 accent-teal-600 dark:accent-teal-400" data-target-id="quick-shortcuts" />
-                        <span>دسترسی سریع</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-        
-        <div class="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3 mt-4">
-            <button type="button" id="btnResetLayout" class="px-3 py-1.5 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-bold transition">حذف سفارشی‌سازی و بازنشانی چیدمان</button>
-        </div>
-    </div>
+            <div class="widget-title">@shortcut.Title</div>
+        </a>
+    }
+</div>
 
-    <!-- Summary Statistics Grid (KPI Widgets) -->
-    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 w-full">
+<!-- ═══════════════════════════════════════════════════════════
+KPI / STATISTICS CARD
+═══════════════════════════════════════════════════════════ -->
+<div class="rahkaran-kpi-card">
+    <span>🌐</span>
+    <span>تعداد کاربران آنلاین سیستم: </span>
+    <strong id="onlineUsersCount">@ToFa(Model.TotalUsers > 0 ? Model.TotalUsers : 2) نفر</strong>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+KPI METRICS GRID (from model)
+═══════════════════════════════════════════════════════════ -->
+@if (Model.ExecutiveMetrics != null && Model.ExecutiveMetrics.Count > 0)
+{
+    <div class="rahkaran-widgets-grid" style="margin-top:5px;">
         @{
-            var kpiColors = new[]
-            {
-                ("bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-300"),
-                ("bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300"),
-                ("bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"),
-                ("bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300"),
-                ("bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"),
-                ("bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"),
-                ("bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300"),
-                ("bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300")
-            };
-            int kpiIndex = 0;
+            var iconColors = new[] { "#007bb5", "#10b981", "#e11d48", "#f59e0b", "#8b5cf6", "#06b6d4", "#f97316", "#ec4899" };
+            int colorIndex = 0;
         }
         @foreach (var metric in Model.ExecutiveMetrics)
         {
-            var iconColor = kpiColors[kpiIndex % kpiColors.Length];
-            kpiIndex++;
-            <a href="@metric.Url" class="group flex items-center gap-2 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm hover:shadow-md hover:scale-[1.015] active:scale-[0.99] transition-all duration-150 no-underline" data-metric-id="@metric.Title">
-                <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg @iconColor text-sm transition group-hover:scale-110">
+            var bgColor = iconColors[colorIndex % iconColors.Length];
+            colorIndex++;
+            <div class="rahkaran-widget-card" style="cursor:default;height:auto;min-height:90px;padding:12px 10px;">
+                <div class="widget-icon dashboard-widget-icon" style="background:@bgColor;color:#fff;">
                     <i class="bi @metric.Icon"></i>
                 </div>
-                <div class="min-w-0 flex-1">
-                    <strong class="block text-sm font-black text-slate-800 dark:text-slate-100 font-mono tabular-nums leading-tight">@metric.Value</strong>
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium block truncate leading-tight">@metric.Title</span>
-                </div>
-            </a>
+                <div class="widget-title" style="font-size:11px;color:#555;">@metric.Title</div>
+                <strong class="kpi-value"
+                        style="font-size:18px;font-weight:900;color:#1a1a2e;margin-top:4px;">@metric.Value</strong>
+            </div>
         }
-    </section>
+    </div>
+}
 
-    <!-- Bento Grid (Widgets Layout) -->
-    <div id="widgetsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 w-full">
-        
-        <!-- Widget 1: Pending Work -->
-        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="pending-work">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
-                <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
-                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">کارهای در انتظار اقدام</h2>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-[10px] font-bold">@ToFa(Model.PendingWorkItems.Count) مورد</span>
-                    <a href="/WorkInbox" class="px-2 py-0.5 border border-slate-200 dark:border-slate-800 rounded text-[10px] bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-decoration-none text-slate-700 dark:text-slate-300 transition">کارتابل</a>
-                </div>
+<!-- ═══════════════════════════════════════════════════════════
+PENDING WORK ITEMS (if any)
+═══════════════════════════════════════════════════════════ -->
+@if (Model.PendingWorkItems != null && Model.PendingWorkItems.Count > 0)
+{
+    <div class="rahkaran-page-content" style="margin-top:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <h3 style="margin:0;font-size:14px;font-weight:800;">کارهای در انتظار اقدام</h3>
+            <span
+                style="background:#f1f5f9;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#64748b;">@ToFa(Model.PendingWorkItems.Count)
+                مورد</span>
             </div>
-            
-            <div class="flex-1 flex flex-col justify-between">
-                @if (Model.PendingWorkItems.Count == 0)
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                @foreach (var item in Model.PendingWorkItems)
                 {
-                    <div class="flex flex-col items-center justify-center py-4 text-center text-slate-400 dark:text-slate-500">
-                        <i class="bi bi-inbox text-lg mb-1.5"></i>
-                        <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">موردی برای اقدام فوری وجود ندارد</strong>
-                        <p class="text-[10px] mt-0.5 leading-normal">کارهای ارجاع‌شده در صندوق ورودی نمایش داده می‌شوند.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="space-y-1 max-h-[280px] overflow-y-auto pr-1">
-                        @foreach (var item in Model.PendingWorkItems)
-                        {
-                            var wfBadge = item.Status?.ToLowerInvariant() switch
-                            {
-                                "draft" or "پیش‌نویس" => "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
-                                "pending" or "در انتظار" or "waiting" => "bg-amber-500 text-white dark:bg-amber-600",
-                                "approved" or "تایید شد" => "bg-emerald-500 text-white dark:bg-emerald-600",
-                                "rejected" or "رد شد" => "bg-rose-500 text-white dark:bg-rose-600",
-                                _ => "bg-blue-500 text-white dark:bg-blue-600"
-                            };
-                            <a href="@item.Url" class="flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-950/20 rounded-md text-slate-700 dark:text-slate-300 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-200">
-                                <div class="w-7 h-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-teal-600 dark:text-teal-400 text-xs flex-shrink-0">
-                                    <i class="bi @item.Icon"></i>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <strong class="block text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">@item.Title</strong>
-                                    <small class="block text-[10px] text-slate-500 dark:text-slate-400 truncate font-mono">@item.Module · @item.DateText</small>
-                                </div>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold @wfBadge whitespace-nowrap">
-                                    @WorkflowStatus.Label(item.Status)
-                                </span>
-                            </a>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Widget 2: Interactive Persian Calendar -->
-        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="calendar">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
-                <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
-                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">تقویم و مناسبت‌ها</h2>
-                </div>
-                <div class="flex items-center gap-1">
-                    <button id="prevMonth" type="button" class="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer border-0 bg-transparent" title="ماه گذشته"><i class="bi bi-chevron-right text-[10px]"></i></button>
-                    <span id="monthDisplay" class="text-xs font-bold text-slate-800 dark:text-white px-1">---</span>
-                    <button id="nextMonth" type="button" class="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer border-0 bg-transparent" title="ماه آینده"><i class="bi bi-chevron-left text-[10px]"></i></button>
-                    <button class="btn-today px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer border-0">امروز</button>
-                </div>
-            </div>
-            
-            <div class="flex-1 flex flex-col justify-between">
-                <div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg px-1 py-1.5">
-                        <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span class="text-rose-500 dark:text-rose-400">ج</span>
-                    </div>
-                    <div id="daysContainer" class="days-grid mt-1">
-                        <!-- Rendered dynamically by JS -->
-                    </div>
-                </div>
-                <div id="eventLoader" class="flex justify-center py-2 hidden">
-                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-800 border-t-teal-650 dark:border-t-teal-400" role="status"></div>
-                </div>
-                <div id="eventContent" class="mt-2 rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-start gap-2.5">
-                        <i class="bi bi-info-circle text-teal-600 dark:text-teal-400 mt-0.5 text-sm"></i>
-                        <p id="eventDisplay" class="m-0 text-[11px] leading-5 text-slate-600 dark:text-slate-400">در حال دریافت رویدادهای این روز...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Widget 3: System Alerts -->
-        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="system-alerts">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
-                <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
-                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">هشدارهای عملیاتی</h2>
-                </div>
-                <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">@ToFa(Model.SystemWarnings) هشدار</span>
-            </div>
-            
-            <div class="flex-1 flex flex-col justify-between">
-                @if (Model.SystemAlerts.Count == 0)
-                {
-                    <div class="flex flex-col items-center justify-center py-5 text-center text-slate-400 dark:text-slate-500">
-                        <i class="bi bi-bell-slash text-xl mb-2"></i>
-                        <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">هشدار فعالی وجود ندارد</strong>
-                        <p class="text-[10px] mt-1">سیستم در وضعیت عادی و پایدار است.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
-                        @foreach (var alert in Model.SystemAlerts)
-                        {
-                            var severityClass = alert.Severity?.ToLowerInvariant() switch
-                            {
-                                "danger" => "border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100/70",
-                                "warning" => "border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100/70",
-                                "info" => "border-sky-200 dark:border-sky-800/60 bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-300 hover:bg-sky-100/70",
-                                "success" => "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/70",
-                                _ => "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100/70"
-                            };
-                            <a href="@alert.Url" class="flex gap-2 p-2 rounded-lg border text-decoration-none transition duration-200 @severityClass">
-                                <i class="bi @alert.Icon text-sm flex-shrink-0 mt-0.5"></i>
-                                <span>
-                                    <strong class="text-xs font-bold block leading-tight">@alert.Title</strong>
-                                    <small class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5 block">@alert.Description</small>
-                                </span>
-                            </a>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Widget 4: Weekly Activity -->
-        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="weekly-activity">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
-                <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
-                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">فعالیت هفت روز اخیر</h2>
-                </div>
-                <span class="px-2 py-0.5 rounded-full bg-teal-500 text-white text-[10px] font-bold">@ToFa(Model.TotalAuditEvents) رخداد</span>
-            </div>
-            
-            <div class="flex-1 flex flex-col justify-between">
-                <div class="h-24 flex items-end gap-1.5 pt-2 justify-between">
-                    @foreach (var point in Model.WeeklyActivity)
+                    var statusColor = item.Status?.ToLowerInvariant() switch
                     {
-                        <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
-                            <div class="h-16 w-full flex items-end rounded-md bg-slate-50 dark:bg-slate-950 p-0.5 border border-slate-200/50 dark:border-slate-800/50">
-                                <div class="weekly-activity-chart-bar w-full rounded-sm hover:bg-teal-500/80 dark:hover:bg-teal-400/80 transition-all duration-300 cursor-pointer" style="height: @(point.Percent)%" title="@point.Value رخداد سیستمی"></div>
-                            </div>
-                            <small class="truncate text-[9px] text-slate-500 dark:text-slate-400 font-bold font-mono">
-                                @(point.Label.Length >= 2 ? point.Label[^2..] : point.Label)
-                            </small>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Widget 5: Recent Audit Activities -->
-        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="recent-activity">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
-                <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
-                    <h2 class="text-sm font-bold text-slate-700 dark:text-slate-300">آخرین فعالیت‌های سیستم</h2>
-                </div>
-                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold">تراکنش‌های اخیر</span>
-            </div>
-            
-            <div class="flex-1 flex flex-col justify-between">
-                @if (Model.RecentActivities.Count == 0)
-                {
-                    <div class="flex flex-col items-center justify-center py-5 text-center text-slate-400 dark:text-slate-500">
-                        <i class="bi bi-activity text-xl mb-2"></i>
-                        <strong class="text-xs font-bold text-slate-700 dark:text-slate-300">هنوز رخدادی ثبت نشده است</strong>
-                    </div>
-                }
-                else
-                {
-                    <div class="space-y-1 max-h-[280px] overflow-y-auto pr-1">
-                        @foreach (var item in Model.RecentActivities)
-                        {
-                            var statusBadgeClass = item.StatusCssClass?.ToLowerInvariant() switch
-                            {
-                                "success" => "bg-emerald-500 text-white",
-                                "pending" => "bg-amber-500 text-white",
-                                "danger" => "bg-rose-500 text-white",
-                                _ => "bg-slate-400 text-white"
-                            };
-                            <div class="flex items-center justify-between gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/20 rounded-md">
-                                <span class="min-w-0">
-                                    <strong class="block text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">@item.DocumentType</strong>
-                                    <small class="block text-[10px] text-slate-500 dark:text-slate-400 font-mono">@item.DateText</small>
-                                </span>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold min-w-max @statusBadgeClass">@item.StatusText</span>
-                            </div>
-                        }
-                    </div>
+                        "draft" or "پیش‌نویس" => "#94a3b8",
+                        "pending" or "در انتظار" => "#f59e0b",
+                        "approved" or "تایید شد" => "#10b981",
+                        "rejected" or "رد شد" => "#e11d48",
+                        _ => "#007bb5"
+                    };
+                    <a href="@item.Url"
+                       style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;color:#374151;transition:all 0.2s;background:#fff;"
+                       onmouseover="this.style.background='#f9fafb';this.style.borderColor='#007bb5'"
+                       onmouseout="this.style.background='#fff';this.style.borderColor='#e5e7eb'">
+                        <span
+                            style="width:36px;height:36px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#007bb5;flex-shrink:0;">
+                            <i class="bi @item.Icon"></i>
+                        </span>
+                        <span style="flex:1;min-width:0;">
+                            <strong style="display:block;font-size:12px;font-weight:700;color:#1f2937;">@item.Title</strong>
+                            <small style="display:block;font-size:10px;color:#9ca3af;">@item.Module · @item.DateText</small>
+                        </span>
+                        <span
+                            style="background:@statusColor;color:#fff;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap;">
+                            @WorkflowStatus.Label(item.Status)
+                        </span>
+                    </a>
                 }
             </div>
         </div>
+    }
 
-        <!-- Widget 6: Quick Shortcuts -->
-        <div class="dashboard-panel p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col min-w-0" data-widget-id="quick-shortcuts">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1 mb-1.5">
-                <div class="flex items-center gap-2">
-                    <span class="drag-handle cursor-move w-6 h-6 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="bi bi-grip-vertical"></i></span>
-                    <h2 class="text-xs font-bold text-slate-700 dark:text-slate-300">دسترسی سریع</h2>
+    <!-- ═══════════════════════════════════════════════════════════
+SYSTEM ALERTS (if any)
+═══════════════════════════════════════════════════════════ -->
+    @if (Model.SystemAlerts != null && Model.SystemAlerts.Count > 0)
+    {
+        <div class="rahkaran-page-content" style="margin-top:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <h3 style="margin:0;font-size:14px;font-weight:800;">هشدارهای عملیاتی</h3>
+                <span
+                    style="background:#fef3c7;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#92400e;">@ToFa(Model.SystemAlerts.Count)
+                    هشدار</span>
                 </div>
-                <span class="text-[10px] text-slate-400 dark:text-slate-500">پرکاربرد</span>
-            </div>
-            
-            <div class="flex-1">
-                <div class="grid grid-cols-2 gap-1.5">
-                    @foreach (var shortcut in shortcuts)
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    @foreach (var alert in Model.SystemAlerts)
                     {
-                        <a href="@shortcut.Url" class="group flex items-center gap-2 px-2 py-1 border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 rounded-md text-slate-800 dark:text-slate-200 text-decoration-none hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:border-teal-500/20 transition-all duration-150">
-                            <i class="bi @shortcut.Icon text-xs text-slate-500 dark:text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 flex-shrink-0"></i>
-                            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">@shortcut.Title</span>
+                        var alertBg = alert.Severity?.ToLowerInvariant() switch
+                        {
+                            "danger" => "#fef2f2",
+                            "warning" => "#fffbeb",
+                            "info" => "#eff6ff",
+                            "success" => "#f0fdf4",
+                            _ => "#f9fafb"
+                        };
+                        var alertBorder = alert.Severity?.ToLowerInvariant() switch
+                        {
+                            "danger" => "#fecaca",
+                            "warning" => "#fde68a",
+                            "info" => "#bfdbfe",
+                            "success" => "#bbf7d0",
+                            _ => "#e5e7eb"
+                        };
+                        <a href="@alert.Url"
+                           style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid @alertBorder;border-radius:8px;text-decoration:none;background:@alertBg;transition:all 0.2s;border-right:3px solid @alertBorder;">
+                            <span style="color:#6b7280;flex-shrink:0;margin-top:1px;"><i class="bi @alert.Icon"></i></span>
+                            <span style="flex:1;min-width:0;">
+                                <strong style="display:block;font-size:12px;font-weight:700;color:#1f2937;">@alert.Title</strong>
+                                <small style="display:block;font-size:11px;color:#6b7280;line-height:1.5;">@alert.Description</small>
+                            </span>
                         </a>
                     }
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+        }
 
-@section Scripts {
-    <script src="~/js/jalali-moment.browser.js" asp-append-version="true"></script>
-    <script src="~/js/dashboard.js" asp-append-version="true"></script>
-    
-    <script>
-        (function () {
-            // DOM Elements
-            const customizationPanel = document.getElementById('customizationPanel');
-            const btnToggleCustomization = document.getElementById('btnToggleCustomization');
-            const btnCloseCustomization = document.getElementById('btnCloseCustomization');
-            const btnToggleDragMode = document.getElementById('btnToggleDragMode');
-            const btnResetLayout = document.getElementById('btnResetLayout');
-            
-            const bgColorPicker = document.getElementById('bgColorPicker');
-            const bgImgInput = document.getElementById('bgImgInput');
-            const widgetsGrid = document.getElementById('widgetsGrid');
-            
-            // Toggle Customization Panel
-            btnToggleCustomization?.addEventListener('click', () => {
-                customizationPanel.classList.toggle('hidden');
-                customizationPanel.classList.toggle('block');
-            });
-            
-            btnCloseCustomization?.addEventListener('click', () => {
-                customizationPanel.classList.add('hidden');
-                customizationPanel.classList.remove('block');
-            });
-            
-            // Toggle Drag Mode (widget reordering)
-            let dragModeActive = false;
-            btnToggleDragMode?.addEventListener('click', () => {
-                dragModeActive = !dragModeActive;
-                widgetsGrid.classList.toggle('drag-mode', dragModeActive);
-                
-                // Toggle active style on the button
-                if (dragModeActive) {
-                    btnToggleDragMode.classList.add('bg-slate-100', 'dark:bg-slate-800', 'border-teal-500/30');
-                } else {
-                    btnToggleDragMode.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'border-teal-500/30');
-                }
-                
-                // Enable/disable HTML5 Draggable property
-                const panels = widgetsGrid.querySelectorAll('.dashboard-panel');
-                panels.forEach(panel => {
-                    panel.setAttribute('draggable', dragModeActive ? 'true' : 'false');
-                });
-            });
-            
-            // Reset Layout & settings
-            btnResetLayout?.addEventListener('click', () => {
-                if (confirm('آیا مطمئن هستید که می‌خواهید ظاهر داشبورد را به حالت اولیه برگردانید؟')) {
-                    localStorage.removeItem('rhyno.dashboard.background');
-                    localStorage.removeItem('rhyno.dashboard.visibility');
-                    localStorage.removeItem('rhyno.dashboard.layout');
-                    window.location.reload();
-                }
-            });
-            
-            // Background Selection & Pickers
-            document.querySelectorAll('.preset-backgrounds .bg-swatch').forEach(swatch => {
-                swatch.addEventListener('click', () => {
-                    const bg = swatch.dataset.bg;
-                    applyBackground(bg);
-                });
-            });
-            
-            bgColorPicker?.addEventListener('input', (e) => {
-                applyBackground(e.target.value);
-            });
-            
-            bgImgInput?.addEventListener('input', (e) => {
-                const val = e.target.value.trim();
-                if (val) {
-                    applyBackground(`url('${val}') center/cover no-repeat`);
-                }
-            });
-            
-            // Visibility Toggles
-            document.querySelectorAll('.metric-toggle').forEach(chk => {
-                chk.addEventListener('change', () => {
-                    const id = chk.dataset.targetId;
-                    const card = document.querySelector(`[data-metric-id="${id}"]`);
-                    if (card) {
-                        card.classList.toggle('hidden', !chk.checked);
+        <!-- ═══════════════════════════════════════════════════════════
+RECENT ACTIVITIES (if any)
+═══════════════════════════════════════════════════════════ -->
+        @if (Model.RecentActivities != null && Model.RecentActivities.Count > 0)
+        {
+            <div class="rahkaran-page-content" style="margin-top:10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <h3 style="margin:0;font-size:14px;font-weight:800;">آخرین فعالیت‌های سیستم</h3>
+                    <span style="color:#9ca3af;font-size:11px;">تراکنش‌های اخیر</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    @foreach (var item in Model.RecentActivities)
+                    {
+                        var statusColor = item.StatusCssClass?.ToLowerInvariant() switch
+                        {
+                            "success" => "#10b981",
+                            "pending" => "#f59e0b",
+                            "danger" => "#e11d48",
+                            _ => "#94a3b8"
+                        };
+                        <div
+                            style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid #f3f4f6;border-radius:8px;background:#fafbfc;">
+                            <span style="min-width:0;">
+                                <strong style="display:block;font-size:12px;font-weight:700;color:#374151;">@item.DocumentType</strong>
+                                <small style="display:block;font-size:10px;color:#9ca3af;">@item.DateText</small>
+                            </span>
+                            <span
+                            style="background:@statusColor;color:#fff;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap;">@item.StatusText</span>
+                        </div>
                     }
-                    saveVisibility();
-                });
-            });
-            
-            document.querySelectorAll('.widget-toggle').forEach(chk => {
-                chk.addEventListener('change', () => {
-                    const id = chk.dataset.targetId;
-                    const panel = document.querySelector(`[data-widget-id="${id}"]`);
-                    if (panel) {
-                        panel.classList.toggle('hidden', !chk.checked);
+                </div>
+            </div>
+        }
+
+        @section Scripts {
+            <script>
+                // ── Background Change (upload file + URL) ──────────
+                function changeBackground() {
+                    const overlay = document.createElement('div');
+                    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);';
+                    overlay.id = 'bgUploadModal';
+
+                    const dialog = document.createElement('div');
+                    dialog.style.cssText = 'background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);direction:rtl;';
+                    dialog.innerHTML = ''
+                        + '<h3 style="margin:0 0 16px 0;font-size:16px;font-weight:800;color:#1f2937;">\uD83D\uDDBC\uFE0F \u062A\u063A\u06CC\u06CC\u0631 \u062A\u0635\u0648\u06CC\u0631 \u067E\u0633\u200C\u0632\u0645\u06CC\u0646\u0647</h3>'
+                        + '<div style="margin-bottom:16px;">'
+                        + '<label style="display:block;font-size:12px;font-weight:700;color:#4b5563;margin-bottom:8px;">\uD83D\uDCC1 \u0622\u067E\u0644\u0648\u062F \u0639\u06A9\u0633 \u0627\u0632 \u062F\u0633\u062A\u06AF\u0627\u0647:</label>'
+                        + '<input type="file" id="bgFileInput" accept="image/*" style="display:block;width:100%;padding:8px;border:2px dashed #d1d5db;border-radius:8px;font-size:12px;cursor:pointer;background:#f9fafb;" />'
+                        + '<div id="bgFilePreview" style="margin-top:8px;display:none;">'
+                        + '<img id="bgPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid #e5e7eb;" />'
+                        + '<button type="button" id="bgApplyFile" style="margin-top:8px;padding:8px 16px;background:#007bb5;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">\u0627\u0639\u0645\u0627\u0644 \u0627\u06CC\u0646 \u0639\u06A9\u0633</button>'
+                        + '</div></div>'
+                        + '<div style="margin-bottom:16px;">'
+                        + '<label style="display:block;font-size:12px;font-weight:700;color:#4b5563;margin-bottom:8px;">\uD83D\uDD17 \u06CC\u0627 \u0648\u0627\u0631\u062F \u06A9\u0631\u062F\u0646 \u0622\u062F\u0631\u0633 (URL):</label>'
+                        + '<div style="display:flex;gap:8px;">'
+                        + '<input type="text" id="bgUrlInput" placeholder="https://example.com/image.jpg" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;" />'
+                        + '<button type="button" id="bgApplyUrl" style="padding:8px 16px;background:#007bb5;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">\u0627\u0639\u0645\u0627\u0644</button>'
+                        + '</div></div>'
+                        + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+                        + '<button type="button" id="bgResetDefault" style="padding:8px 16px;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">\u0628\u0627\u0632\u0646\u0634\u0627\u0646\u06CC \u0628\u0647 \u067E\u06CC\u0634\u200C\u0641\u0631\u0636</button>'
+                        + '<button type="button" id="bgCloseModal" style="padding:8px 16px;background:#e5e7eb;color:#374151;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">\u0628\u0633\u062A\u0646</button>'
+                        + '</div>';
+                    overlay.appendChild(dialog);
+                    document.body.appendChild(overlay);
+
+                    const close = () => overlay.remove();
+                    document.getElementById('bgCloseModal').addEventListener('click', close);
+                    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+                    let uploadedDataUrl = null;
+                    document.getElementById('bgFileInput').addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (!file || !file.type.startsWith('image/')) { Rhyno.toast('\u0644\u0637\u0641\u0627\u064B \u06CC\u06A9 \u0641\u0627\u06CC\u0644 \u062A\u0635\u0648\u06CC\u0631\u06CC \u0627\u0646\u062A\u062E\u0627\u0628 \u06A9\u0646\u06CC\u062F.', 'error'); return; }
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            uploadedDataUrl = ev.target.result;
+                            document.getElementById('bgPreviewImg').src = uploadedDataUrl;
+                            document.getElementById('bgFilePreview').style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                    document.getElementById('bgApplyFile').addEventListener('click', () => {
+                        if (uploadedDataUrl) { applyBg(uploadedDataUrl); close(); }
+                    });
+                    document.getElementById('bgApplyUrl').addEventListener('click', () => {
+                        const url = document.getElementById('bgUrlInput').value.trim();
+                        if (url) { applyBg(url); close(); } else { Rhyno.toast('\u0644\u0637\u0641\u0627\u064B \u06CC\u06A9 \u0622\u062F\u0631\u0633 \u0645\u0639\u062A\u0628\u0631 \u0648\u0627\u0631\u062F \u06A9\u0646\u06CC\u062F.', 'warning'); }
+                    });
+                    document.getElementById('bgResetDefault').addEventListener('click', () => {
+                        localStorage.removeItem('rhyno.customBg');
+                        setBodyBg('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80');
+                        close();
+                        Rhyno.toast('\u067E\u0633\u200C\u0632\u0645\u06CC\u0646\u0647 \u0628\u0647 \u062D\u0627\u0644\u062A \u067E\u06CC\u0634\u200C\u0641\u0631\u0636 \u0628\u0627\u0632\u0646\u0634\u0627\u0646\u06CC \u0634\u062F.', 'success');
+                    });
+                }
+
+                function setBodyBg(src) {
+                    document.body.style.backgroundImage = `url('${src}')`;
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundPosition = 'center';
+                    document.body.style.backgroundRepeat = 'no-repeat';
+                    document.body.style.backgroundAttachment = 'fixed';
+                }
+
+                function applyBg(src) {
+                    setBodyBg(src);
+                    localStorage.setItem('rhyno.customBg', src);
+                    Rhyno.toast('\u067E\u0633\u200C\u0632\u0645\u06CC\u0646\u0647 \u0628\u0627 \u0645\u0648\u0641\u0642\u06CC\u062A \u062A\u063A\u06CC\u06CC\u0631 \u06A9\u0631\u062F.', 'success');
+                }
+
+                function addShortcut() {
+                    Rhyno.toast('\u0628\u0631\u0627\u06CC \u0627\u0641\u0632\u0648\u062F\u0646 \u0645\u06CC\u0627\u0646\u0628\u0631 \u0628\u0647 \u0635\u0641\u062D\u0647 \u0645\u0648\u0631\u062F \u0646\u0638\u0631 \u0628\u0631\u0648\u06CC\u062F.', 'info');
+                }
+
+                function addWidget() {
+                    Rhyno.toast('\u0648\u06CC\u062C\u062A\u200C\u0647\u0627\u06CC \u0628\u06CC\u0634\u062A\u0631\u06CC \u0628\u0647 \u0632\u0648\u062F\u06CC \u062F\u0631 \u062F\u0633\u062A\u0631\u0633 \u062E\u0648\u0627\u0647\u0646\u062F \u0628\u0648\u062F.', 'info');
+                }
+
+                // ── Restore custom background ────────────────────────
+                (() => {
+                    const savedBg = localStorage.getItem('rhyno.customBg');
+                    if (savedBg) {
+                        setBodyBg(savedBg);
                     }
-                    saveVisibility();
-                });
-            });
-            
-            // Drag and Drop implementation
-            let dragSourceEl = null;
-            
-            function handleDragStart(e) {
-                if (!dragModeActive) return;
-                this.classList.add('opacity-40');
-                dragSourceEl = this;
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', this.getAttribute('data-widget-id'));
-            }
-            
-            function handleDragOver(e) {
-                if (e.preventDefault) e.preventDefault();
-                return false;
-            }
-            
-            function handleDragEnter(e) {
-                if (!dragModeActive) return;
-                this.classList.add('border-teal-500', 'dark:border-teal-400');
-            }
-            
-            function handleDragLeave(e) {
-                this.classList.remove('border-teal-500', 'dark:border-teal-400');
-            }
-            
-            function handleDrop(e) {
-                e.stopPropagation();
-                if (dragSourceEl !== this && dragModeActive) {
-                    const children = Array.from(widgetsGrid.children);
-                    const sourceIndex = children.indexOf(dragSourceEl);
-                    const targetIndex = children.indexOf(this);
-                    
-                    if (sourceIndex < targetIndex) {
-                        widgetsGrid.insertBefore(dragSourceEl, this.nextSibling);
-                    } else {
-                        widgetsGrid.insertBefore(dragSourceEl, this);
+                })();
+
+                // ── Randomize online users count (demo) ──────────────
+                (() => {
+                    const el = document.getElementById('onlineUsersCount');
+                    if (el) {
+                        const base = parseInt(el.textContent.replace(/[^0-9]/g, '')) || 2;
+                        setInterval(() => {
+                            const delta = Math.floor(Math.random() * 3) - 1;
+                            const newVal = Math.max(1, base + delta);
+                            el.textContent = newVal.toLocaleString('fa-IR') + ' نفر';
+                        }, 30000);
                     }
-                    saveLayout();
-                }
-                return false;
-            }
-            
-            function handleDragEnd(e) {
-                this.classList.remove('opacity-40');
-                widgetsGrid.querySelectorAll('.dashboard-panel').forEach(p => {
-                    p.classList.remove('border-teal-500', 'dark:border-teal-400');
-                });
-            }
-            
-            function setupDragAndDrop() {
-                const panels = widgetsGrid.querySelectorAll('.dashboard-panel');
-                panels.forEach(panel => {
-                    panel.addEventListener('dragstart', handleDragStart, false);
-                    panel.addEventListener('dragenter', handleDragEnter, false);
-                    panel.addEventListener('dragover', handleDragOver, false);
-                    panel.addEventListener('dragleave', handleDragLeave, false);
-                    panel.addEventListener('drop', handleDrop, false);
-                    panel.addEventListener('dragend', handleDragEnd, false);
-                });
-            }
-            
-            // Background control
-            function applyBackground(bg) {
-                const dash = document.querySelector('.executive-dashboard');
-                if (!dash) return;
-                dash.style.background = bg;
-                if (bg !== 'transparent') {
-                     dash.classList.remove('bg-transparent');
-                     dash.classList.add('bg-opacity-95', 'backdrop-blur-md');
-                } else {
-                     dash.classList.add('bg-transparent');
-                     dash.classList.remove('bg-opacity-95', 'backdrop-blur-md');
-                }
-                localStorage.setItem('rhyno.dashboard.background', bg);
-            }
-            
-            function saveVisibility() {
-                const vis = {};
-                document.querySelectorAll('.metric-toggle').forEach(chk => {
-                    vis['m_' + chk.dataset.targetId] = chk.checked;
-                });
-                document.querySelectorAll('.widget-toggle').forEach(chk => {
-                    vis['w_' + chk.dataset.targetId] = chk.checked;
-                });
-                localStorage.setItem('rhyno.dashboard.visibility', JSON.stringify(vis));
-            }
-            
-            function saveLayout() {
-                const panels = Array.from(widgetsGrid.querySelectorAll('.dashboard-panel'));
-                const layout = panels.map(p => p.getAttribute('data-widget-id'));
-                localStorage.setItem('rhyno.dashboard.layout', JSON.stringify(layout));
-            }
-            
-            function restoreDashboardState() {
-                // Restore Background
-                const bg = localStorage.getItem('rhyno.dashboard.background');
-                if (bg) {
-                    applyBackground(bg);
-                    if (bgColorPicker && bg.startsWith('#')) bgColorPicker.value = bg;
-                    if (bgImgInput && bg.startsWith('url')) {
-                        const match = bg.match(/url\(['"]?([^'"]*)['"]?\)/);
-                        if (match) bgImgInput.value = match[1];
-                    }
-                }
-                
-                // Restore Visibility
-                const visStr = localStorage.getItem('rhyno.dashboard.visibility');
-                if (visStr) {
-                    try {
-                        const vis = JSON.parse(visStr);
-                        document.querySelectorAll('.metric-toggle').forEach(chk => {
-                            const id = chk.dataset.targetId;
-                            const state = vis['m_' + id];
-                            if (state !== undefined) {
-                                chk.checked = state;
-                                const card = document.querySelector(`[data-metric-id="${id}"]`);
-                                if (card) card.classList.toggle('hidden', !state);
-                            }
-                        });
-                        document.querySelectorAll('.widget-toggle').forEach(chk => {
-                            const id = chk.dataset.targetId;
-                            const state = vis['w_' + id];
-                            if (state !== undefined) {
-                                chk.checked = state;
-                                const panel = document.querySelector(`[data-widget-id="${id}"]`);
-                                if (panel) panel.classList.toggle('hidden', !state);
-                            }
-                        });
-                    } catch(e) {}
-                }
-                
-                // Restore Layout
-                const layoutStr = localStorage.getItem('rhyno.dashboard.layout');
-                if (layoutStr) {
-                    try {
-                        const layout = JSON.parse(layoutStr);
-                        layout.forEach(id => {
-                            const panel = widgetsGrid.querySelector(`[data-widget-id="${id}"]`);
-                            if (panel) {
-                                widgetsGrid.appendChild(panel);
-                            }
-                        });
-                    } catch(e) {}
-                }
-            }
-            
-            // Initialization
-            restoreDashboardState();
-            setupDragAndDrop();
-        })();
-    </script>
-}
+                })();
+            </script>
+        }

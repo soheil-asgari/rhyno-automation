@@ -1,0 +1,789 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Rhyno ERP — Rahkaran-Exact Theme
+   Replicates SystemGroup Rahkaran Shell 20/0 visual identity
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Core Rahkaran palette */
+  --rk-bg-top: #3289c7;
+  --rk-bg-mid: #7baed1;
+  --rk-bg-bottom: #e8d4d4;
+  --rk-header-bg: transparent;
+  --rk-toolbar-text: #ffffff;
+  --rk-toolbar-muted: rgba(255, 255, 255, 0.85);
+  --rk-card-bg: rgba(255, 255, 255, 0.86);
+  --rk-card-bg-solid: #f3f8fb;
+  --rk-card-hover-bg: rgba(255, 255, 255, 0.98);
+  --rk-card-border: rgba(255, 255, 255, 0.65);
+  --rk-text-main: #ffffff;
+  --rk-text-dark: #1f3a52;
+  --rk-text-muted: #5a7a94;
+  --rk-accent: #2b7cb3;
+  --rk-accent-light: #5aa8d8;
+  --rk-sidebar-bg: rgba(235, 245, 252, 0.92);
+  --rk-sidebar-header: #3a8cc7;
+  --rk-sidebar-text: #1f3a52;
+  --rk-sidebar-muted: #5a7a94;
+  --rk-sidebar-border: rgba(255, 255, 255, 0.55);
+  --rk-input-bg: rgba(255, 255, 255, 0.78);
+  --rk-input-border: rgba(255, 255, 255, 0.75);
+  --rk-success: #2e9d5e;
+  --rk-warning: #d4a017;
+  --rk-danger: #c0392b;
+  --rk-info: #2b7cb3;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    BODY — Gradient sky background (no overlay)
+    ═══════════════════════════════════════════════════════════ */
+body.rahkaran-theme {
+  direction: rtl;
+  background: linear-gradient(180deg, var(--rk-bg-top) 0%, var(--rk-bg-mid) 45%, var(--rk-bg-bottom) 100%) no-repeat fixed !important;
+  background-size: cover !important;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  font-family: 'Vazirmatn', 'Tahoma', 'Segoe UI', sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    MAIN HEADER — Transparent glass bar
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-header {
+  height: 52px;
+  min-height: 52px;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--rk-toolbar-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  z-index: 100;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.rahkaran-header .header-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rahkaran-header .btn-toggle-menu {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.rahkaran-header .btn-toggle-menu:hover {
+  background: rgba(255, 255, 255, 0.30);
+}
+
+.rahkaran-header .info-labels {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--rk-toolbar-text);
+  flex-wrap: wrap;
+}
+
+.rahkaran-header .info-labels span {
+  background: rgba(255, 255, 255, 0.14);
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.rahkaran-header .user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.rahkaran-header .user-name {
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════
+    APP BODY LAYOUT
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-app-body {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    SIDEBAR — Right-hand light-blue glass panel (Rahkaran style)
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-sidebar {
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  background: var(--rk-sidebar-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--rk-sidebar-text);
+  height: 100%;
+  border-left: 1px solid var(--rk-sidebar-border);
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.08);
+  transition: margin-right 0.3s ease, min-width 0.3s ease, width 0.3s ease, max-width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  z-index: 90;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+
+.rahkaran-sidebar.collapsed {
+  min-width: 0;
+  width: 0;
+  max-width: 0;
+  margin-right: 0;
+  overflow: hidden;
+  border-left: none;
+}
+
+/* Sidebar brand header */
+.rahkaran-sidebar .sidebar-brand {
+  padding: 12px;
+  border-bottom: 1px solid var(--rk-sidebar-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(90deg, rgba(58, 140, 199, 0.18), transparent);
+}
+
+.rahkaran-sidebar .sidebar-search {
+  padding: 10px;
+  border-bottom: 1px solid var(--rk-sidebar-border);
+}
+
+.rahkaran-sidebar .sidebar-search input {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--rk-input-border);
+  background: var(--rk-input-bg);
+  color: var(--rk-sidebar-text);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.rahkaran-sidebar .sidebar-search input:focus {
+  border-color: var(--rk-accent);
+  background: #fff;
+}
+
+.rahkaran-sidebar .sidebar-search input::placeholder {
+  color: var(--rk-sidebar-muted);
+}
+
+.rahkaran-sidebar .menu-groups {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8px;
+}
+
+.rahkaran-sidebar .menu-group {
+  margin-bottom: 12px;
+}
+
+.rahkaran-sidebar .menu-group h4 {
+  font-size: 11px;
+  color: var(--rk-sidebar-text);
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(31, 58, 82, 0.12);
+  padding-bottom: 4px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.rahkaran-sidebar .menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Accordion module button */
+.rahkaran-sidebar .module-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--rk-sidebar-text);
+  cursor: pointer;
+  transition: background 0.2s;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  font-family: inherit;
+  margin-bottom: 4px;
+}
+
+.rahkaran-sidebar .module-toggle:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.rahkaran-sidebar .module-toggle i.chevron {
+  transition: transform 0.25s ease;
+  font-size: 11px;
+  color: var(--rk-sidebar-muted);
+}
+
+.rahkaran-sidebar .module-toggle.expanded i.chevron {
+  transform: rotate(180deg);
+}
+
+.rahkaran-sidebar .module-children {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-right: 4px;
+}
+
+.rahkaran-sidebar .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--rk-sidebar-text);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  margin-bottom: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.rahkaran-sidebar .menu-item:hover {
+  background: rgba(43, 124, 179, 0.12);
+  color: var(--rk-accent);
+  border-color: rgba(43, 124, 179, 0.20);
+}
+
+.rahkaran-sidebar .menu-item.active {
+  background: rgba(43, 124, 179, 0.18);
+  color: var(--rk-accent);
+  border-right: 3px solid var(--rk-accent);
+}
+
+.rahkaran-sidebar .menu-item i,
+.rahkaran-sidebar .menu-item .menu-icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Sidebar scrollbar */
+.rahkaran-sidebar .menu-groups::-webkit-scrollbar {
+  width: 5px;
+}
+
+.rahkaran-sidebar .menu-groups::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rahkaran-sidebar .menu-groups::-webkit-scrollbar-thumb {
+  background: rgba(31, 58, 82, 0.20);
+  border-radius: 4px;
+}
+
+/* Sidebar footer */
+.rahkaran-sidebar .sidebar-footer {
+  border-top: 1px solid var(--rk-sidebar-border);
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.rahkaran-sidebar .sidebar-footer a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--rk-sidebar-text);
+  padding: 7px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.rahkaran-sidebar .sidebar-footer a:hover {
+  background: rgba(43, 124, 179, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════════
+    DESKTOP / MAIN CONTENT AREA
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-desktop {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 22px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Desktop Toolbar */
+.rahkaran-desktop .desktop-toolbar {
+  background: rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  flex-wrap: wrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.rahkaran-desktop .desktop-toolbar a,
+.rahkaran-desktop .desktop-toolbar button {
+  color: #fff;
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.95;
+  transition: all 0.2s;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.rahkaran-desktop .desktop-toolbar a:hover,
+.rahkaran-desktop .desktop-toolbar button:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+
+/* Widget Grid */
+.rahkaran-widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+}
+
+.rahkaran-widget-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 10px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.80);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  height: 110px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.70);
+}
+
+.rahkaran-widget-card:hover {
+  transform: translateY(-3px);
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+  border-color: rgba(255, 255, 255, 0.95);
+}
+
+.rahkaran-widget-card .widget-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #eef5fa 0%, #dcebf5 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  color: var(--rk-accent);
+}
+
+.rahkaran-widget-card .widget-title {
+  font-size: 11px;
+  color: var(--rk-text-dark);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* KPI Card */
+.rahkaran-kpi-card {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  width: fit-content;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+}
+
+.rahkaran-kpi-card strong {
+  color: #b6e3ff;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    PAGE CONTENT WRAPPER (for non-dashboard pages)
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-page-content {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  color: #1f3a52;
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.rahkaran-page-content h1,
+.rahkaran-page-content h2,
+.rahkaran-page-content h3 {
+  color: #1a2e42;
+}
+
+.rahkaran-page-content .text-muted {
+  color: var(--rk-text-muted) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    TABLE STYLING (for data tables in page content)
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-page-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rahkaran-page-content table thead {
+  background: #e8f2f8;
+}
+
+.rahkaran-page-content table th {
+  padding: 10px 12px;
+  text-align: right;
+  font-weight: 800;
+  color: #1f3a52;
+  border-bottom: 2px solid #b8d4e8;
+}
+
+.rahkaran-page-content table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #dcebf5;
+  color: #3a5a74;
+}
+
+.rahkaran-page-content table tbody tr:hover {
+  background: #f3f8fb;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    FORM ELEMENTS (in page content)
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-page-content input[type="text"],
+.rahkaran-page-content input[type="search"],
+.rahkaran-page-content input[type="number"],
+.rahkaran-page-content input[type="date"],
+.rahkaran-page-content select,
+.rahkaran-page-content textarea {
+  border: 1px solid #b8d4e8;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1f3a52;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.rahkaran-page-content input:focus,
+.rahkaran-page-content select:focus,
+.rahkaran-page-content textarea:focus {
+  border-color: var(--rk-accent);
+  box-shadow: 0 0 0 3px rgba(43, 124, 179, 0.12);
+}
+
+.rahkaran-page-content button,
+.rahkaran-page-content .btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.rahkaran-page-content .btn-primary {
+  background: var(--rk-accent);
+  color: #fff;
+  border-color: var(--rk-accent);
+}
+
+.rahkaran-page-content .btn-primary:hover {
+  background: #216a99;
+  border-color: #216a99;
+}
+
+.rahkaran-page-content .btn-secondary {
+  background: #eef5fa;
+  color: #1f3a52;
+  border-color: #b8d4e8;
+}
+
+.rahkaran-page-content .btn-secondary:hover {
+  background: #dcebf5;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    RESPONSIVE
+    ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .rahkaran-sidebar {
+    position: fixed;
+    right: 0;
+    top: 52px;
+    bottom: 0;
+    z-index: 200;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    transform: translateX(100%);
+    margin-right: 0 !important;
+    transition: transform 0.3s ease;
+  }
+
+  .rahkaran-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .rahkaran-sidebar.collapsed {
+    transform: translateX(100%);
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+  }
+
+  .rahkaran-header .info-labels {
+    display: none;
+  }
+
+  .rahkaran-header .info-labels span:first-child {
+    display: inline;
+  }
+
+  .rahkaran-desktop {
+    padding: 12px;
+    overflow-y: auto !important;
+  }
+
+  .rahkaran-widgets-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+
+  .rahkaran-widget-card {
+    height: 95px;
+    padding: 10px 6px;
+  }
+
+  .rahkaran-widget-card .widget-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .rahkaran-widget-card .widget-title {
+    font-size: 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+    ANIMATIONS
+    ═══════════════════════════════════════════════════════════ */
+@keyframes rk-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rahkaran-widget-card {
+  animation: rk-fade-in 0.4s ease-out both;
+}
+
+.rahkaran-widget-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.rahkaran-widget-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.rahkaran-widget-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.rahkaran-widget-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.rahkaran-widget-card:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.rahkaran-widget-card:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+.rahkaran-widget-card:nth-child(7) {
+  animation-delay: 0.35s;
+}
+
+.rahkaran-widget-card:nth-child(8) {
+  animation-delay: 0.4s;
+}
+
+.rahkaran-widget-card:nth-child(9) {
+  animation-delay: 0.45s;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    OVERLAY for mobile sidebar
+    ═══════════════════════════════════════════════════════════ */
+.rahkaran-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 150;
+}
+
+.rahkaran-sidebar-overlay.active {
+  display: block;
+}
+
+@media (min-width: 769px) {
+  .rahkaran-sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+    DROPDOWN STYLES (for notifications & user menu)
+    ═══════════════════════════════════════════════════════════ */
+.rhyno-dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(0.98);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+.rhyno-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* ═══════════════════════════════════════════════════════════
+    MODAL STYLES
+    ═══════════════════════════════════════════════════════════ */
+.rhyno-modal-overlay.open {
+  display: flex !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    PRINT STYLES
+    ═══════════════════════════════════════════════════════════ */
+@media print {
+  body.rahkaran-theme {
+    background: #fff !important;
+    overflow: auto !important;
+  }
+
+  .rahkaran-header,
+  .rahkaran-sidebar,
+  .rahkaran-desktop .desktop-toolbar,
+  .rahkaran-sidebar-overlay {
+    display: none !important;
+  }
+
+  .rahkaran-page-content {
+    background: #fff !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}

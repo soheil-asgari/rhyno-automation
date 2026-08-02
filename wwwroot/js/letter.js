@@ -4,16 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const autosaveDelay = 700;
     let autosaveTimer = null;
 
-    ClassicEditor.create(document.querySelector('#editor'), {
-        language: 'fa',
-        contentsLangDirection: 'rtl'
-    }).then(ed => {
-        myEditor = ed;
-        window.letterEditor = ed;
-        loadDraft();
-        ed.model.document.on('change:data', scheduleDraftSave);
-    });
-
     const allUsers = window.usersList || [];
     const replyConfig = window.letterReplyConfig || {};
     const subjectInput = document.getElementById('subjectInput');
@@ -21,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const draftStatus = document.getElementById('draftStatus');
     const previewModal = document.getElementById('letterPreviewModal');
     const previewBody = document.getElementById('letterPreviewBody');
+    const editorElement = document.getElementById('editor');
 
     if (replyConfig.isReplyMode && receiverSelect) {
         receiverSelect.value = replyConfig.defaultReceiverId || '';
@@ -36,6 +27,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const isPreviewOpen = () => previewModal && !previewModal.classList.contains('hidden');
+
+    const refreshOpenPreview = () => {
+        // اگر مودال پیش‌نمایش باز است، محتوا را با آخرین مقادیر به‌روزرسانی کن
+        if (isPreviewOpen()) {
+            renderPreview();
+        }
+    };
+
     const triggerReceiverChange = () => {
         if (!receiverSelect) return;
 
@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (receiverSpan) receiverSpan.innerText = '....................';
             if (prefixSpan) prefixSpan.innerText = 'جناب آقای / سرکار خانم';
             if (previewReceiver) previewReceiver.textContent = 'انتخاب نشده';
+            refreshOpenPreview();
             return;
         }
 
@@ -67,21 +68,23 @@ document.addEventListener("DOMContentLoaded", () => {
                         g === 'Department' ? 'واحد محترم' :
                             'جناب آقای / سرکار خانم';
         }
+
+        refreshOpenPreview();
     };
 
     const scheduleDraftSave = () => {
-        if (!myEditor) return;
+        if (!myEditor && !editorElement) return;
         clearTimeout(autosaveTimer);
         setDraftStatus("در حال ذخیره پیش‌نویس...");
         autosaveTimer = setTimeout(saveDraft, autosaveDelay);
     };
 
     const saveDraft = () => {
-        if (!myEditor) return;
+        const body = getEditorBody();
         const payload = {
             subject: subjectInput?.value || "",
             receiverId: receiverSelect?.value || "",
-            body: myEditor.getData() || "",
+            body: body || "",
             updatedAt: new Date().toISOString()
         };
         localStorage.setItem(draftKey, JSON.stringify(payload));
@@ -100,8 +103,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (draft.subject && subjectInput && !subjectInput.value) {
                 subjectInput.value = draft.subject;
             }
-            if (draft.body && myEditor?.setData) {
-                myEditor.setData(draft.body);
+            if (draft.body) {
+                if (myEditor?.setData) {
+                    myEditor.setData(draft.body);
+                } else if (editorElement) {
+                    editorElement.innerHTML = draft.body;
+                }
             }
             triggerReceiverChange();
             triggerSubjectChange();
@@ -118,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const previewSubject = document.getElementById('previewSubject');
         if (subjectDisplay) subjectDisplay.innerText = value;
         if (previewSubject) previewSubject.textContent = subjectInput.value || '-';
+        refreshOpenPreview();
     };
 
     if (receiverSelect) {
@@ -143,31 +151,54 @@ document.addEventListener("DOMContentLoaded", () => {
         replyHidden.value = replyConfig.replyToLetterId;
     }
 
+    /**
+     * دریافت متن ادیتور؛ در صورت در دسترس نبودن CKEditor،
+     * محتوای المان #editor (contenteditable) را برمی‌گرداند.
+     */
+    const getEditorBody = () => {
+        if (myEditor?.getData) {
+            try {
+                return myEditor.getData();
+            } catch {
+                // ignore
+            }
+        }
+        return editorElement?.innerHTML || '';
+    };
+
+    // در دسترس قرار دادن برای اسکریپت‌های دیگر (مثل letter-form.js)
+    window.rhynoLetterGetBody = getEditorBody;
+    window.rhynoLetterSubmit = () => {
+        document.getElementById('btnSendLetter')?.click();
+    };
+
     const renderPreview = () => {
-        if (!previewModal || !previewBody || !myEditor) return;
+        if (!previewModal || !previewBody) return;
         const receiver = document.getElementById('display-receiver')?.innerText || '....................';
         const prefix = document.getElementById('gender-prefix')?.innerText || '';
         const subject = subjectInput?.value || '....................';
-        const body = myEditor.getData();
+        const body = getEditorBody();
         previewBody.innerHTML = `
             <div class="paper-preview">
                 <p class="mb-2"><strong>گیرنده:</strong> ${prefix} ${receiver}</p>
                 <p class="mb-3"><strong>موضوع:</strong> ${subject}</p>
                 <div class="preview-render">${body}</div>
             </div>`;
-        previewModal.classList.remove('d-none');
+        previewModal.classList.remove('hidden');
         previewModal.setAttribute('aria-hidden', 'false');
     };
 
-    document.getElementById('btnPreviewLetter')?.addEventListener('click', renderPreview);
-    document.getElementById('btnClosePreview')?.addEventListener('click', () => {
-        previewModal?.classList.add('d-none');
+    const closePreview = () => {
+        previewModal?.classList.add('hidden');
         previewModal?.setAttribute('aria-hidden', 'true');
-    });
+    };
+
+    // ── اتصال رویدادها (مستقل از ادیتور / بدون وابستگی به CDN) ──
+    document.getElementById('btnPreviewLetter')?.addEventListener('click', renderPreview);
+    document.getElementById('btnClosePreview')?.addEventListener('click', closePreview);
     previewModal?.addEventListener('click', (e) => {
         if (e.target === previewModal) {
-            previewModal.classList.add('d-none');
-            previewModal.setAttribute('aria-hidden', 'true');
+            closePreview();
         }
     });
 
@@ -180,12 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (!myEditor) {
-            alert('ادیتور هنوز آماده نیست.');
-            return;
-        }
-
-        const body = myEditor.getData().trim();
+        const body = getEditorBody().trim();
 
         if (!body) {
             alert('متن نامه نباید خالی باشد.');
@@ -198,4 +224,35 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem(draftKey);
         document.getElementById('finalForm').submit();
     });
+
+    // ── راه‌اندازی ادیتور با محافظت در برابر نبود CDN ──
+    if (typeof ClassicEditor !== 'undefined' && editorElement) {
+        ClassicEditor.create(editorElement, {
+            language: 'fa',
+            contentsLangDirection: 'rtl'
+        }).then(ed => {
+            myEditor = ed;
+            window.letterEditor = ed;
+            loadDraft();
+            ed.model.document.on('change:data', () => {
+                scheduleDraftSave();
+                refreshOpenPreview();
+            });
+        }).catch(err => {
+            console.error('CKEditor failed to initialize:', err);
+            if (editorElement) {
+                editorElement.setAttribute('contenteditable', 'true');
+            }
+            setDraftStatus('ویرایشگر پیشرفته در دسترس نیست؛ از حالت ویرایش ساده استفاده کنید.');
+        });
+    } else if (editorElement) {
+        // بدون CKEditor - از contenteditable استفاده می‌کنیم
+        editorElement.setAttribute('contenteditable', 'true');
+        editorElement.addEventListener('input', () => {
+            scheduleDraftSave();
+            refreshOpenPreview();
+        });
+        loadDraft();
+        setDraftStatus('حالت ویرایش ساده');
+    }
 });

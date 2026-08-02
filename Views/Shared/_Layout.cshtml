@@ -10,7 +10,7 @@
 @inject ITenantSettingsService TenantSettingsService
 @{
     var antiforgeryTokens = Antiforgery.GetAndStoreTokens(Context);
-    
+
     var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
     var userContext = !string.IsNullOrWhiteSpace(userId) && User != null
         ? await UserContextService.GetUserContextAsync(userId, User)
@@ -19,11 +19,10 @@
     var displayName = userContext.DisplayName;
     var userRoleLabel = userContext.UserRoleLabel;
     var themePreference = userContext.ThemePreference;
-    var rootThemeClass = string.Equals(themePreference, "Dark", StringComparison.OrdinalIgnoreCase) ? "theme-dark dark" : "theme-light";
-    
+
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
-    
+
     var userCanAccessFinance = userContext.CanAccessFinance;
     var userCanAccessWarehouse = userContext.CanAccessWarehouse;
     var userCanAccessHumanCapital = userContext.CanAccessHumanCapital;
@@ -33,447 +32,319 @@
     var headerNotifications = userContext.Notifications;
     var headerNotificationCount = headerNotifications.Count;
 
-        string NavClass(string controller, string? action = null)
-        {
-            var active = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(action) || string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase));
-            return active 
-                ? "sidebar-link group relative flex items-center gap-2.5 rounded-xl border border-indigo-200/40 bg-indigo-600/5 px-3 py-2.5 text-[13px] font-semibold text-indigo-700 shadow-glow-sm dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 transition-all duration-300"
-                : "sidebar-link group relative flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-[13px] font-medium text-slate-600 transition-all duration-300 hover:border-slate-200/70 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-700/50 dark:hover:bg-slate-800/50 dark:hover:text-white";
-        }
-        var moduleButtonClass = "sidebar-module-btn flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[12px] font-bold text-slate-500 transition-all duration-300 hover:bg-slate-100/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200";
-
-    // ── White-labeling / Branding ─────────────────────────────────────────────
+    // Branding
     SystemSetting? brandingSettings = null;
     try { brandingSettings = await TenantSettingsService.GetSystemSettingsAsync(); } catch { }
     var brandPrimary = brandingSettings?.PrimaryColor;
     var brandAccent  = brandingSettings?.AccentColor;
     var brandLogo    = brandingSettings?.LogoUrl;
     var brandFavicon = brandingSettings?.FaviconUrl;
-    var brandLoginBg = brandingSettings?.LoginBackgroundUrl;
     var appTitle     = brandingSettings?.ApplicationTitle ?? "راینو ERP";
+
+    // Sidebar accordion state helper
+    bool IsExpanded(params string[] controllers)
+    {
+        return controllers.Any(c => string.Equals(currentController, c, StringComparison.OrdinalIgnoreCase));
+    }
 }
 <!DOCTYPE html>
-<html lang="fa" dir="rtl" data-theme="@themePreference.ToLowerInvariant()" class="@rootThemeClass">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="request-verification-token" content="@antiforgeryTokens.RequestToken" />
     <title>@ViewData["Title"] - @appTitle</title>
+
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+
+    <!-- Icons -->
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
+
+    <!-- Rahkaran Theme CSS -->
+    <link rel="stylesheet" href="~/css/rahkaran-theme.css" asp-append-version="true">
+
+    <!-- Tailwind (for legacy compatibility in page contents) -->
     <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
+
     @if (!string.IsNullOrWhiteSpace(brandFavicon))
     {
         <link rel="icon" href="@brandFavicon" />
     }
-    @if (!string.IsNullOrWhiteSpace(brandPrimary) || !string.IsNullOrWhiteSpace(brandAccent))
+
+    @if (!string.IsNullOrWhiteSpace(brandPrimary))
     {
         <style>
             :root {
-                @if (!string.IsNullOrWhiteSpace(brandPrimary)) { <text>--brand-primary: @brandPrimary;</text> }
-                @if (!string.IsNullOrWhiteSpace(brandAccent))  { <text>--brand-accent: @brandAccent;</text> }
-            }
-            @if (!string.IsNullOrWhiteSpace(brandPrimary))
-            {
-                <text>
-                .bg-indigo-600, .hover\:bg-indigo-700:hover  { background-color: var(--brand-primary) !important; }
-                .text-indigo-600, .text-indigo-700            { color: var(--brand-primary) !important; }
-                .border-indigo-500, .border-indigo-200        { border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent) !important; }
-                .focus\:border-indigo-500:focus               { border-color: var(--brand-primary) !important; }
-                .focus\:ring-indigo-500\/20:focus             { --tw-ring-color: color-mix(in srgb, var(--brand-primary) 20%, transparent) !important; }
-                .bg-indigo-50                                 { background-color: color-mix(in srgb, var(--brand-primary) 8%, white) !important; }
-                .dark .bg-indigo-500\/10                      { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important; }
-                .dark .text-indigo-200, .dark .text-indigo-300 { color: color-mix(in srgb, var(--brand-primary) 80%, white) !important; }
-                /* Legacy teal compatibility */
-                .bg-teal-600, .hover\:bg-teal-700:hover  { background-color: var(--brand-primary) !important; }
-                .text-teal-600, .text-teal-700            { color: var(--brand-primary) !important; }
-                .border-teal-500, .border-teal-200        { border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent) !important; }
-                .focus\:border-teal-500:focus             { border-color: var(--brand-primary) !important; }
-                .focus\:ring-teal-500\/10:focus           { --tw-ring-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important; }
-                .bg-teal-50                               { background-color: color-mix(in srgb, var(--brand-primary) 8%, white) !important; }
-                .dark .bg-teal-500\/10                    { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important; }
-                .dark .text-teal-200, .dark .text-teal-300 { color: color-mix(in srgb, var(--brand-primary) 80%, white) !important; }
-                </text>
-            }
-            @if (!string.IsNullOrWhiteSpace(brandAccent))
-            {
-                <text>
-                .text-purple-600, .text-purple-700       { color: var(--brand-accent) !important; }
-                .bg-purple-600, .hover\:bg-purple-700:hover { background-color: var(--brand-accent) !important; }
-                </text>
+                --rk-accent: @brandPrimary;
+                --rk-accent-light: @brandAccent;
             }
         </style>
     }
+
     @await RenderSectionAsync("Styles", required: false)
-    <style>
-        /* Force desktop static positioning & width for sidebar */
-        @@media (min-width: 1024px) {
-            #appSidebar.sidebar-right {
-                position: static !important;
-                display: flex !important;
-                flex-direction: column !important;
-                width: 15rem !important;
-                min-width: 15rem !important;
-                max-width: 15rem !important;
-                transform: none !important;
-                box-shadow: none !important;
-                z-index: 40 !important;
-            }
-        }
-
-        #appSidebar .sidebar-module,
-        #sidebarAccordion {
-            overflow: visible !important;
-        }
-
-        #sidebarScrollContainer {
-            overflow-y: auto !important;
-            overflow-x: visible !important;
-        }
-
-        /* Mobile sidebar open state */
-        #appSidebar.is-open {
-            transform: translateX(0) !important;
-        }
-
-        /* Active sidebar link left indicator bar */
-        .sidebar-link.bg-indigo-50\/80::before {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 60%;
-            border-radius: 0 3px 3px 0;
-            background-color: #4f46e5;
-        }
-        .dark .sidebar-link.dark\:bg-indigo-500\/10::before {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 60%;
-            border-radius: 0 3px 3px 0;
-            background-color: #818cf8;
-        }
-
-        #appSidebar .sidebar-collapse a.sidebar-link:not(.bg-indigo-50\/80):not(.dark\:bg-indigo-500\/10) {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            width: 100% !important;
-            padding: 6px 20px !important;
-            background: transparent !important;
-            color: #475569 !important;
-            border: 0 !important;
-            font-size: 11px !important;
-            font-weight: 500 !important;
-            min-height: auto !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            transition: background-color 0.2s, color 0.2s !important;
-        }
-        #appSidebar .sidebar-collapse a.sidebar-link i {
-            margin-left: 4px !important;
-            font-size: 14px !important;
-        }
-        #appSidebar .sidebar-collapse a.sidebar-link:not(.bg-indigo-50\/80):not(.dark\:bg-indigo-500\/10):hover {
-            background-color: #f1f5f9 !important;
-            color: #0f172a !important;
-        }
-
-        html.theme-dark #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10),
-        html[data-theme="dark"] #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10) {
-            color: #94a3b8 !important;
-            background: transparent !important;
-        }
-        html.theme-dark #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10):hover,
-        html[data-theme="dark"] #appSidebar .sidebar-collapse a.sidebar-link:not(.dark\:bg-indigo-500\/10):hover {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-
-        /* Dropdown animations */
-        .rhyno-dropdown {
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-4px) scale(0.98);
-            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-        }
-        .rhyno-dropdown.open {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0) scale(1);
-        }
-
-        /* Sidebar collapse */
-        .sidebar-collapse {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sidebar-collapse.open {
-            max-height: 800px;
-        }
-        .sidebar-module-btn .bi-chevron-down {
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sidebar-module-btn.expanded .bi-chevron-down {
-            transform: rotate(180deg);
-        }
-
-        /* Modal animations */
-        .rhyno-modal-overlay {
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s ease, visibility 0.2s;
-        }
-        .rhyno-modal-overlay.open {
-            opacity: 1;
-            visibility: visible;
-        }
-        .rhyno-modal-content {
-            transform: scale(0.95) translateY(12px);
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .rhyno-modal-overlay.open .rhyno-modal-content {
-            transform: scale(1) translateY(0);
-        }
-
-        /* Pulse dot animation for status badges */
-        @@keyframes status-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-        .status-dot-pulse {
-            animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        /* Smooth scrollbar for sidebar */
-        #sidebarScrollContainer::-webkit-scrollbar {
-            width: 4px;
-        }
-        #sidebarScrollContainer::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #sidebarScrollContainer::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .dark #sidebarScrollContainer::-webkit-scrollbar-thumb {
-            background: #475569;
-        }
-    </style>
 </head>
-<body data-theme="@themePreference.ToLowerInvariant()" class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans antialiased min-h-screen flex flex-col md:flex-row">
-    <div id="sidebarOverlay" class="fixed inset-0 z-40 hidden bg-slate-950/50 backdrop-blur-sm lg:hidden"></div>
-    <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
-    <div class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 w-full">
-        <!-- Sidebar ── Floating Glassmorphism -->
-        <aside id="appSidebar" class="sidebar-right print:hidden fixed inset-y-0 right-0 z-50 flex w-60 -translate-x-full flex-col border-l border-slate-200/50 bg-white/80 backdrop-blur-xl shadow-2xl transition-transform duration-300 lg:static lg:flex lg:w-60 lg:flex-shrink-0 lg:translate-x-0 lg:shadow-none dark:border-slate-800/40 dark:bg-slate-950/85">
-            <div class="flex h-12 items-center gap-2 border-b border-slate-200/60 px-3 dark:border-slate-800/60">
-                <a asp-controller="Home" asp-action="Index" class="flex min-w-0 flex-1 items-center gap-2 no-underline">
-                    @if (!string.IsNullOrWhiteSpace(brandLogo))
+<body class="rahkaran-theme">
+
+    <!-- ═══════════════════════════════════════════════════
+    ۱. HEADER — Transparent glass bar
+    ═══════════════════════════════════════════════════════ -->
+    <header class="rahkaran-header">
+        <div class="header-section">
+            <button class="btn-toggle-menu" id="btnToggleSidebar" title="نمایش/عدم نمایش منو" aria-label="منو">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="info-labels">
+                <span>امروز: <strong id="headerDate">---</strong></span>
+                <span>@appTitle</span>
+                <span>دفتر کل: اصلی</span>
+                <span>دوره مالی: ۱۴۰۵</span>
+            </div>
+        </div>
+
+        <div class="header-section">
+            <!-- Notifications -->
+            <div class="rhyno-dropdown-trigger relative" style="position:relative;">
+                <button class="btn-toggle-menu relative" type="button" aria-expanded="false" aria-label="اعلان‌ها" onclick="Rhyno.toggleDropdown(this)" style="position:relative;">
+                    <i class="bi bi-bell"></i>
+                    @if (headerNotificationCount > 0)
                     {
-                        <img src="@brandLogo" alt="@appTitle" class="h-8 w-8 rounded-lg object-contain border border-slate-200/60 dark:border-slate-700 bg-white p-0.5" onerror="this.parentElement.querySelector('.brand-fallback').style.display='flex'; this.style.display='none'" />
-                        <span class="brand-fallback hidden h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
+                        <span style="position:absolute;top:-2px;right:-4px;min-width:16px;height:16px;border-radius:50%;background:#e11d48;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">@headerNotificationCount.ToString("N0")</span>
+                    }
+                </button>
+                <div class="rhyno-dropdown absolute left-0 mt-2 w-80 overflow-hidden rounded-xl border border-white/40 bg-white/95 backdrop-blur-md p-0 shadow-2xl" style="z-index: 60;">
+                    <div class="flex items-center justify-between border-b border-slate-100/80 px-4 py-3">
+                        <strong class="text-sm text-slate-900">اعلان‌ها</strong>
+                        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">@headerNotificationCount.ToString("N0") مورد</span>
+                    </div>
+                    @if (headerNotifications.Count == 0)
+                    {
+                        <div class="px-4 py-6 text-center text-[12px] text-slate-500">اعلان مهمی برای نمایش وجود ندارد.</div>
                     }
                     else
                     {
-                        <span class="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white"><i class="bi bi-grid-1x2-fill text-sm"></i></span>
+                        foreach (var notification in headerNotifications.Take(8))
+                        {
+                            <a class="flex gap-3 border-b border-slate-100/60 px-4 py-3 no-underline transition-all hover:bg-slate-50/80" href="@notification.Url">
+                                <i class="bi @notification.Icon mt-0.5 text-slate-400"></i>
+                                <span class="min-w-0">
+                                    <strong class="block truncate text-[12px] text-slate-900">@notification.Title</strong>
+                                    <small class="block truncate text-[11px] text-slate-500">@notification.Message</small>
+                                </span>
+                            </a>
+                        }
                     }
-                    <span class="min-w-0"><span class="block truncate text-sm font-black text-slate-900 dark:text-white">@appTitle</span><span class="block truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">سیستم جامع سازمانی</span></span>
-                </a>
-                <button id="btnCloseSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100/80 hover:text-slate-600 lg:hidden dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300 transition-colors" aria-label="بستن منو"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="border-b border-slate-200/60 p-2.5 dark:border-slate-800/60">
-                <label class="relative block"><i class="bi bi-search pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i><input id="sidebarMenuSearch" type="search" autocomplete="off" placeholder="جستجوی منو" aria-label="جستجوی منو" class="h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/70 pr-10 pl-2 text-[12px] text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-900/70 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-900 dark:focus:ring-indigo-500/20" /></label>
-                <div class="mt-1.5 flex items-center justify-between px-1 text-[10px] text-slate-500 dark:text-slate-400"><span id="sidebarSearchCount">همه بخش‌ها</span><button id="sidebarSearchClear" type="button" class="hidden font-bold text-indigo-600 dark:text-indigo-400 hover:underline">پاک کردن</button></div>
-            </div>
-            <nav id="sidebarScrollContainer" class="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-3">
-                <div id="sidebarSearchNoResults" class="hidden rounded-xl border border-amber-200/60 bg-amber-50/70 px-3 py-2.5 text-[11px] text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">نتیجه‌ای در منو پیدا نشد.</div>
-                <section><div class="mb-1.5 px-2 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">دسترسی سریع</div><div class="space-y-0.5">
-                    <a class='@NavClass("Home")' data-nav-id="home-index" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2 w-4 text-sky-500"></i><span class="link-text truncate">میز کار</span></a>
-                    <a class='@NavClass("WorkInbox")' data-nav-id="workinbox-index" asp-controller="WorkInbox" asp-action="Index"><i class="bi bi-inboxes w-4 text-indigo-500"></i><span class="link-text truncate">کارتابل</span></a>
-                    @if (userCanAccessFinance) { <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-emerald-500"></i><span class="link-text truncate">تراز آزمایشی</span></a> }
-                </div></section>
-                <div id="sidebarAccordion" class="space-y-2">
-                    @if (userCanAccessHumanCapital)
-                    {
-                        <section class="sidebar-module">
-                            <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseHumanCapital"><span>سرمایه انسانی</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseHumanCapital" class="sidebar-collapse @((currentController == "HumanCapital" || currentController == "Leaves" || currentController == "Letters") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
-                                <a class='@NavClass("HumanCapital")' data-nav-id="humancapital-index" asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge w-4 text-amber-500"></i><span class="link-text truncate">منابع انسانی</span></a>
-                                <a class='@NavClass("Leaves")' data-nav-id="leaves-index" asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week w-4 text-sky-500"></i><span class="link-text truncate">مرخصی‌ها</span></a>
-                                <a class='@NavClass("Letters")' data-nav-id="letters-index" asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope w-4 text-purple-500"></i><span class="link-text truncate">نامه‌ها</span></a>
-                            </div></div>
-                        </section>
-                    }
-                    @if (userCanAccessFinance)
-                    {
-                        <section class="sidebar-module">
-                            <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseFinancial"><span>مالی و حسابداری</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseFinancial" class="sidebar-collapse @((currentController == "Payroll" || currentController == "Bimeh" || currentController == "Financial") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
-                                <a class='@NavClass("Financial", "Dashboard")' data-nav-id="financial-dashboard" asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap w-4 text-emerald-500"></i><span class="link-text truncate">داشبورد مالی</span></a>
-                                <a class='@NavClass("Financial", "Invoices")' data-nav-id="financial-invoices" asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt w-4 text-teal-500"></i><span class="link-text truncate">فاکتورها</span></a>
-                                <a class='@NavClass("Financial", "LedgerOperations")' data-nav-id="financial-ledger" asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext w-4 text-cyan-500"></i><span class="link-text truncate">دفتر کل</span></a>
-                                <a class='@NavClass("Financial", "GetTrialBalance")' data-nav-id="financial-trialbalance" asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-indigo-500"></i><span class="link-text truncate">تراز آزمایشی</span></a>
-                                <a class='@NavClass("Financial", "VatDashboard")' data-nav-id="financial-vat" asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent w-4 text-pink-500"></i><span class="link-text truncate">ارزش افزوده</span></a>
-                                <a class='@NavClass("Financial", "SeasonalTax")' data-nav-id="financial-seasonaltax" asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-bar-graph w-4 text-indigo-500"></i><span class="link-text truncate">گزارشات فصلی ۱۶۹</span></a>
-                                <a class='@NavClass("Financial", "ReportingHub")' data-nav-id="financial-reporting" asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line w-4 text-rose-500"></i><span class="link-text truncate">گزارش‌ها</span></a>
-                                <a class='@NavClass("Payroll")' data-nav-id="payroll-index" asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 w-4 text-violet-500"></i><span class="link-text truncate">حقوق</span></a>
-                                <a class='@NavClass("Bimeh")' data-nav-id="bimeh-index" asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check w-4 text-blue-500"></i><span class="link-text truncate">بیمه</span></a>
-                            </div></div>
-                        </section>
-                    }
-                    @if (userCanAccessWarehouse)
-                    {
-                        <section class="sidebar-module">
-                            <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseWarehouse"><span>انبار و عملیات</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseWarehouse" class="sidebar-collapse @((currentController == "Warehouse" || currentController == "WarehouseInventory" || currentController == "WarehouseReceipts" || currentController == "WarehouseIssuances" || currentController == "WarehouseTransfer" || currentController == "Vendors" || currentController == "Waybill") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
-                                <a class='@NavClass("Warehouse")' data-nav-id="warehouse-index" asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam w-4 text-orange-500"></i><span class="link-text truncate">داشبورد انبار</span></a>
-                                <a class='@NavClass("Warehouse", "Products")' data-nav-id="warehouse-products" asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box w-4 text-yellow-500"></i><span class="link-text truncate">کالاها</span></a>
-                                <a class='@NavClass("WarehouseInventory", "Stock")' data-nav-id="warehouse-stock" asp-controller="WarehouseInventory" asp-action="Stock"><i class="bi bi-layers w-4 text-lime-500"></i><span class="link-text truncate">موجودی</span></a>
-                                <a class='@NavClass("WarehouseReceipts", "Receipts")' data-nav-id="warehouse-receipts" asp-controller="WarehouseReceipts" asp-action="Receipts"><i class="bi bi-box-arrow-in-down w-4 text-emerald-500"></i><span class="link-text truncate">رسیدها</span></a>
-                                <a class='@NavClass("WarehouseIssuances", "Issuances")' data-nav-id="warehouse-issuances" asp-controller="WarehouseIssuances" asp-action="Issuances"><i class="bi bi-box-arrow-up w-4 text-red-500"></i><span class="link-text truncate">حواله‌ها</span></a>
-                                <a class='@NavClass("Vendors")' data-nav-id="vendors-index" asp-controller="Vendors" asp-action="Index"><i class="bi bi-building w-4 text-blue-500"></i><span class="link-text truncate">تامین‌کنندگان</span></a>
-                                <a class='@NavClass("Waybill")' data-nav-id="waybill-index" asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck w-4 text-rose-500"></i><span class="link-text truncate">بارنامه</span></a>
-                            </div></div>
-                        </section>
-                    }
-                    @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
-                    {
-                        <section class="sidebar-module">
-                            <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseManagement"><span>مدیریت سیستم</span><i class="bi bi-chevron-down text-[10px]"></i></button>
-                            <div id="collapseManagement" class="sidebar-collapse @((currentController == "Settings" || currentController == "Security" || currentController == "AuditDashboard" || currentController == "ProcessAnalysis" || currentController == "Reports" || currentController == "ManagementDashboard") ? "open" : "")"><div class="mt-1 space-y-0.5 px-1">
-                                @if (userCanAccessSystemSettings)
-                                {
-                                    <a class='@NavClass("ManagementDashboard", "Overview")' data-nav-id="management-overview" asp-controller="ManagementDashboard" asp-action="Overview"><i class="bi bi-grid-1x2 w-4 text-emerald-500"></i><span class="link-text truncate">داشبورد مدیریتی</span></a>
-                                    <a class='@NavClass("ManagementDashboard", "Index")' data-nav-id="management-dashboard" asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars w-4 text-indigo-500"></i><span class="link-text truncate">گزارش‌ساز هوشمند</span></a>
-                                    <a class='@NavClass("Settings")' data-nav-id="settings-index" asp-controller="Settings" asp-action="Index"><i class="bi bi-gear w-4 text-slate-500 dark:text-slate-400"></i><span class="link-text truncate">تنظیمات</span></a>
-                                    <a class='@NavClass("Security")' data-nav-id="security-index" asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500"></i><span class="link-text truncate">امنیت</span></a>
-                                    <a class='@NavClass("Security", "WorkflowBuilder")' data-nav-id="security-workflowbuilder" asp-controller="Security" asp-action="WorkflowBuilder"><i class="bi bi-diagram-3 w-4 text-teal-500"></i><span class="link-text truncate">طراح گردش کار</span></a>
-                                    <a class='@NavClass("AuditDashboard")' data-nav-id="audit-index" asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity w-4 text-cyan-500"></i><span class="link-text truncate">ممیزی</span></a>
-                                }
-                                @if (userCanAccessProcessAnalytics)
-                                {
-                                    <a class='@NavClass("ProcessAnalysis")' data-nav-id="process-index" asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 w-4 text-purple-500"></i><span class="link-text truncate">تحلیل فرایند</span></a>
-                                }
-                                <a class='@NavClass("Reports")' data-nav-id="reports-index" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph w-4 text-indigo-500"></i><span class="link-text truncate">گزارشات</span></a>
-                            </div></div>
-                        </section>
-                    }
+                    <a class="block px-4 py-3 text-center text-[12px] font-bold text-indigo-600 no-underline hover:bg-slate-50/80 rounded-b-xl" href="/Notifications">مشاهده همه اعلان‌ها</a>
                 </div>
-            </nav>
-            <div class="border-t border-slate-200/60 p-2.5 dark:border-slate-800/60">
-                <a class="flex items-center gap-2.5 rounded-xl border border-slate-200/60 bg-slate-50/70 px-2.5 py-2 no-underline transition-all hover:bg-white hover:shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:hover:bg-slate-800" asp-controller="Settings" asp-action="Index">
-                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-white text-slate-600 shadow-sm dark:bg-slate-700 dark:text-slate-300"><i class="bi bi-person"></i></span>
-                    <span class="min-w-0 flex-1"><span class="block truncate text-[12px] font-bold text-slate-800 dark:text-slate-200">@displayName</span><span class="block truncate text-[10px] text-slate-500 dark:text-slate-400">@userRoleLabel</span></span>
+            </div>
+
+            <!-- User Profile -->
+            <div class="user-profile">
+                <span style="color:#fff;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,0.2);">خوش‌آمدید، </span>
+                <span class="user-name" onclick="location.href='@Url.Action("Index", "Settings")'">@displayName</span>
+                <partial name="_LoginPartial" />
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════
+    ۲. APP BODY — Sidebar + Main Content
+    ═══════════════════════════════════════════════════════ -->
+    <div class="rahkaran-app-body">
+
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="rahkaran-sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- SIDEBAR -->
+        <aside class="rahkaran-sidebar" id="appSidebar">
+            <!-- Brand / Logo -->
+            <div class="sidebar-brand">
+                @if (!string.IsNullOrWhiteSpace(brandLogo))
+                {
+                    <img src="@brandLogo" alt="@appTitle" style="width:34px;height:34px;border-radius:8px;object-fit:contain;background:#fff;padding:2px;" />
+                }
+                else
+                {
+                    <span style="width:34px;height:34px;border-radius:8px;background:var(--rk-accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;"><i class="bi bi-grid-1x2-fill"></i></span>
+                }
+                <span style="min-width:0;">
+                    <span style="display:block;font-size:14px;font-weight:900;color:var(--rk-sidebar-text);line-height:1.2;">@appTitle</span>
+                    <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">سیستم جامع سازمانی</span>
+                </span>
+            </div>
+
+            <!-- Search -->
+            <div class="sidebar-search">
+                <input type="text" id="sidebarMenuSearch" placeholder="جستجو در صفحات سیستم..." autocomplete="off" />
+            </div>
+
+            <!-- Menu Groups -->
+            <div class="menu-groups" id="sidebarScrollContainer">
+
+                <!-- Quick Access -->
+                <div class="menu-group">
+                    <h4>دسترسی سریع</h4>
+                    <ul class="menu-list">
+                        <li>
+                            <a class='menu-item @(currentController == "Home" ? "active" : "")' asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-speedometer2 menu-icon"></i> میز کار
+                            </a>
+                        </li>
+                        <li>
+                            <a class='menu-item @(currentController == "WorkInbox" ? "active" : "")' asp-controller="WorkInbox" asp-action="Index">
+                                <i class="bi bi-inboxes menu-icon"></i> کارتابل
+                            </a>
+                        </li>
+                        @if (userCanAccessFinance)
+                        {
+                            <li>
+                                <a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")' asp-controller="Financial" asp-action="GetTrialBalance">
+                                    <i class="bi bi-table menu-icon"></i> تراز آزمایشی
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+                <!-- Human Capital Module -->
+                @if (userCanAccessHumanCapital)
+                {
+                    <div class="menu-group sidebar-module" data-module="human">
+                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                            <span>سرمایه انسانی</span>
+                            <i class="bi bi-chevron-down chevron"></i>
+                        </button>
+                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("HumanCapital","Leaves","Letters") ? "400px" : "0");">
+                            <li><a class='menu-item @(currentController == "HumanCapital" ? "active" : "")' asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge menu-icon"></i> منابع انسانی</a></li>
+                            <li><a class='menu-item @(currentController == "Leaves" ? "active" : "")' asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week menu-icon"></i> مرخصی‌ها</a></li>
+                            <li><a class='menu-item @(currentController == "Letters" ? "active" : "")' asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i> نامه‌ها</a></li>
+                        </ul>
+                    </div>
+                }
+
+                <!-- Finance Module -->
+                @if (userCanAccessFinance)
+                {
+                    <div class="menu-group sidebar-module" data-module="finance">
+                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                            <span>مالی و حسابداری</span>
+                            <i class="bi bi-chevron-down chevron"></i>
+                        </button>
+                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("Financial","Payroll","Bimeh") ? "600px" : "0");">
+                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "Dashboard" ? "active" : "")' asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap menu-icon"></i> داشبورد مالی</a></li>
+                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "Invoices" ? "active" : "")' asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt menu-icon"></i> فاکتورها</a></li>
+                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "LedgerOperations" ? "active" : "")' asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext menu-icon"></i> دفتر کل</a></li>
+                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")' asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table menu-icon"></i> تراز آزمایشی</a></li>
+                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "VatDashboard" ? "active" : "")' asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent menu-icon"></i> ارزش افزوده</a></li>
+                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "SeasonalTax" ? "active" : "")' asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-bar-graph menu-icon"></i> گزارشات فصلی ۱۶۹</a></li>
+                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "ReportingHub" ? "active" : "")' asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line menu-icon"></i> گزارش‌ها</a></li>
+                            <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")' asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 menu-icon"></i> حقوق</a></li>
+                            <li><a class='menu-item @(currentController == "Bimeh" ? "active" : "")' asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check menu-icon"></i> بیمه</a></li>
+                        </ul>
+                    </div>
+                }
+
+                <!-- Warehouse Module -->
+                @if (userCanAccessWarehouse)
+                {
+                    <div class="menu-group sidebar-module" data-module="warehouse">
+                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                            <span>انبار و عملیات</span>
+                            <i class="bi bi-chevron-down chevron"></i>
+                        </button>
+                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("Warehouse","WarehouseInventory","WarehouseReceipts","WarehouseIssuances","WarehouseTransfer","Vendors","Waybill") ? "600px" : "0");">
+                            <li><a class='menu-item @(currentController == "Warehouse" ? "active" : "")' asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam menu-icon"></i> داشبورد انبار</a></li>
+                            <li><a class='menu-item @(currentController == "Warehouse" && currentAction == "Products" ? "active" : "")' asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box menu-icon"></i> کالاها</a></li>
+                            <li><a class='menu-item @(currentController == "WarehouseInventory" && currentAction == "Stock" ? "active" : "")' asp-controller="WarehouseInventory" asp-action="Stock"><i class="bi bi-layers menu-icon"></i> موجودی</a></li>
+                            <li><a class='menu-item @(currentController == "WarehouseReceipts" ? "active" : "")' asp-controller="WarehouseReceipts" asp-action="Receipts"><i class="bi bi-box-arrow-in-down menu-icon"></i> رسیدها</a></li>
+                            <li><a class='menu-item @(currentController == "WarehouseIssuances" ? "active" : "")' asp-controller="WarehouseIssuances" asp-action="Issuances"><i class="bi bi-box-arrow-up menu-icon"></i> حواله‌ها</a></li>
+                            <li><a class='menu-item @(currentController == "Vendors" ? "active" : "")' asp-controller="Vendors" asp-action="Index"><i class="bi bi-building menu-icon"></i> تامین‌کنندگان</a></li>
+                            <li><a class='menu-item @(currentController == "Waybill" ? "active" : "")' asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck menu-icon"></i> بارنامه</a></li>
+                        </ul>
+                    </div>
+                }
+
+                <!-- Management Module -->
+                @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
+                {
+                    <div class="menu-group sidebar-module" data-module="management">
+                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                            <span>مدیریت سیستم</span>
+                            <i class="bi bi-chevron-down chevron"></i>
+                        </button>
+                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("ManagementDashboard","Settings","Security","AuditDashboard","ProcessAnalysis","Reports","DocumentArchive") ? "600px" : "0");">
+                            @if (userCanAccessSystemSettings)
+                            {
+                                <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Overview" ? "active" : "")' asp-controller="ManagementDashboard" asp-action="Overview"><i class="bi bi-grid-1x2 menu-icon"></i> داشبورد مدیریتی</a></li>
+                                <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Index" ? "active" : "")' asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars menu-icon"></i> گزارش‌ساز هوشمند</a></li>
+                                <li><a class='menu-item @(currentController == "Settings" ? "active" : "")' asp-controller="Settings" asp-action="Index"><i class="bi bi-gear menu-icon"></i> تنظیمات</a></li>
+                                <li><a class='menu-item @(currentController == "Security" ? "active" : "")' asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock menu-icon"></i> امنیت</a></li>
+                                <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")' asp-controller="Security" asp-action="WorkflowBuilder"><i class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
+                                <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")' asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
+                                <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")' asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity menu-icon"></i> ممیزی</a></li>
+                            }
+                            @if (userCanAccessProcessAnalytics)
+                            {
+                                <li><a class='menu-item @(currentController == "ProcessAnalysis" ? "active" : "")' asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 menu-icon"></i> تحلیل فرایند</a></li>
+                            }
+                            <li><a class='menu-item @(currentController == "Reports" ? "active" : "")' asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph menu-icon"></i> گزارشات</a></li>
+                        </ul>
+                    </div>
+                }
+
+            </div>
+
+            <!-- User Footer in Sidebar -->
+            <div class="sidebar-footer">
+                <a asp-controller="Settings" asp-action="Index">
+                    <span style="width:32px;height:32px;border-radius:8px;background:#dcebf5;display:flex;align-items:center;justify-content:center;color:var(--rk-accent);font-size:14px;"><i class="bi bi-person"></i></span>
+                    <span style="min-width:0;flex:1;">
+                        <span style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
+                        <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
+                    </span>
                 </a>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden z-10">
-            <!-- Top Navbar ── Glassmorphism -->
-            <header class="print:hidden sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-slate-200/60 bg-white/80 backdrop-blur-md px-3 dark:border-slate-800/60 dark:bg-slate-900/80">
-                <button id="btnOpenSidebar" type="button" class="grid h-8 w-8 place-items-center rounded-lg border border-slate-200/60 bg-white text-slate-500 lg:hidden dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-400" aria-label="باز کردن منو"><i class="bi bi-list text-lg"></i></button>
-                <form asp-controller="Search" asp-action="Index" method="get" role="search" class="relative hidden min-w-0 flex-1 md:block"><i class="bi bi-search pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i><input name="q" value="@(Context.Request.Query["q"].ToString())" autocomplete="off" placeholder="جستجو در سیستم..." class="h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/60 pr-10 pl-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-900/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20" /></form>
-                <div class="mr-auto flex items-center gap-2">
-                    <div class="hidden items-center gap-2 rounded-lg border border-slate-200/60 bg-slate-50/60 px-2.5 py-1 text-[11px] text-slate-500 md:flex dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-400"><i class="bi bi-clock-history"></i><span id="topbarDate">--/--/--</span><span class="text-slate-300 dark:text-slate-600">|</span><span id="topbarTime">--:--</span></div>
-                    <!-- Notifications Dropdown (Vanilla JS) -->
-                    <div class="rhyno-dropdown-trigger relative">
-                        <button class="relative grid h-8 w-8 place-items-center rounded-lg border border-slate-200/60 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200" type="button" aria-expanded="false" aria-label="اعلان‌ها" onclick="Rhyno.toggleDropdown(this)"><i class="bi bi-bell"></i>@if (headerNotificationCount > 0){<span class="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-rose-500 px-1 text-[9px] font-black leading-[18px] text-white shadow-sm">@headerNotificationCount.ToString("N0")</span>}</button>
-                        <div class="rhyno-dropdown absolute left-0 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-0 shadow-2xl dark:border-slate-700/80 dark:bg-slate-900/95" style="z-index: 60;">
-                            <div class="flex items-center justify-between border-b border-slate-100/80 px-4 py-3 dark:border-slate-800/80"><strong class="text-sm text-slate-900 dark:text-white">اعلان‌ها</strong><span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">@headerNotificationCount.ToString("N0") مورد</span></div>
-                            @if (headerNotifications.Count == 0){<div class="px-4 py-6 text-center text-[12px] text-slate-500 dark:text-slate-400">اعلان مهمی برای نمایش وجود ندارد.</div>}else{foreach (var notification in headerNotifications.Take(8)){<a class="flex gap-3 border-b border-slate-100/60 px-4 py-3 no-underline transition-all hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-800/60" href="@notification.Url"><i class="bi @notification.Icon mt-0.5 text-slate-400 dark:text-slate-500"></i><span class="min-w-0"><strong class="block truncate text-[12px] text-slate-900 dark:text-white">@notification.Title</strong><small class="block truncate text-[11px] text-slate-500 dark:text-slate-400">@notification.Message</small></span></a>}}
-                            <a class="block px-4 py-3 text-center text-[12px] font-bold text-indigo-600 no-underline hover:bg-slate-50/80 dark:text-indigo-400 dark:hover:bg-slate-800/60 rounded-b-2xl" href="/Notifications">مشاهده همه اعلان‌ها</a>
-                        </div>
-                    </div>
-                    <partial name="_LoginPartial" />
-                </div>
-            </header>
-            <main id="main-content-wrapper" class="flex-1 flex flex-col w-full overflow-hidden">
-                <div class="p-3 md:p-4 lg:p-5 overflow-y-auto w-full flex-1 print:w-full print:m-0 print:p-0 print:block">
-                    @RenderBody()
-                </div>
-            </main>
-        </div>
+        <!-- ═══════════════════════════════════════════════════
+        MAIN CONTENT — Desktop / Page Content Area
+        ═══════════════════════════════════════════════════════ -->
+        <main class="rahkaran-desktop" id="mainContentArea">
+            @RenderBody()
+        </main>
+
     </div>
 
-    <!-- Confirm Dialog (Vanilla JS Modal) -->
-    <div id="appConfirmDialog" class="rhyno-modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
-        <div class="rhyno-modal-content w-full max-w-md rounded-2xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-900">
-            <div class="flex items-center justify-between border-b border-slate-100/80 px-5 py-3.5 dark:border-slate-800/80">
-                <h5 class="text-sm font-bold text-slate-900 dark:text-white">تایید عملیات</h5>
-                <button type="button" class="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors" onclick="Rhyno.hideModal('appConfirmDialog')"><i class="bi bi-x-lg"></i></button>
+    <!-- Hidden AntiForgery Form -->
+    <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
+
+    <!-- ═══════════════════════════════════════════════════════
+    CONFIRM DIALOG (Vanilla JS Modal)
+    ═══════════════════════════════════════════════════════════ -->
+    <div id="appConfirmDialog" class="rhyno-modal-overlay" style="position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+        <div class="rhyno-modal-content" style="width:100%;max-width:420px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f3f4f6;">
+                <h5 style="margin:0;font-size:14px;font-weight:800;color:#1f2937;">تایید عملیات</h5>
+                <button type="button" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="Rhyno.hideModal('appConfirmDialog')">&times;</button>
             </div>
-            <div class="px-5 py-4"><p id="appConfirmMessage" class="mb-0 text-sm text-slate-700 dark:text-slate-300">آیا مطمئن هستید؟</p></div>
-            <div class="flex items-center justify-end gap-2 border-t border-slate-100/80 px-5 py-3.5 dark:border-slate-800/80">
-                <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
-                <button type="button" class="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 transition-colors shadow-sm" id="appConfirmOk">تایید</button>
+            <div style="padding:16px 18px;">
+                <p id="appConfirmMessage" style="margin:0;font-size:13px;color:#4b5563;">آیا مطمئن هستید؟</p>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #f3f4f6;">
+                <button type="button" style="padding:8px 16px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;" onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
+                <button type="button" id="appConfirmOk" style="padding:8px 16px;border:none;background:#e11d48;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">تایید</button>
             </div>
         </div>
     </div>
 
-    <!-- Smart Report Modal (Management Dashboard in Popup) -->
-    <div id="appSmartReportModal" class="rhyno-modal-overlay fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-2">
-        <div class="rhyno-modal-content w-full max-w-screen-2xl h-[92vh] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-900 flex flex-col">
-            <div class="flex items-center justify-between border-b border-slate-100/80 px-5 py-3 dark:border-slate-800/80 flex-shrink-0">
-                <h5 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2"><i class="bi bi-stars text-indigo-500"></i>گزارش‌ساز هوشمند</h5>
-                <button type="button" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors" onclick="Rhyno.hideModal('appSmartReportModal')"><i class="bi bi-x-lg text-lg"></i></button>
-            </div>
-            <div class="flex-1 overflow-hidden">
-                <iframe id="appSmartReportFrame" class="w-full h-full border-none" style="min-height: 85vh;" src="" loading="lazy" title="گزارش‌ساز هوشمند"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <!-- Command Palette (Vanilla JS Modal) ── Refined -->
-    <div id="appCommandPalette" class="rhyno-modal-overlay fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-slate-950/50 backdrop-blur-sm p-4">
-        <div class="rhyno-modal-content w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xl dark:border-slate-700/80 dark:bg-slate-900/95">
-            <div class="flex items-center gap-3 border-b border-slate-100/80 p-4 dark:border-slate-800/80">
-                <i class="bi bi-command text-slate-400 text-lg"></i>
-                <input id="appCommandInput" type="search" autocomplete="off" placeholder="جستجوی فرمان، صفحه یا گزارش..." aria-label="جستجوی فرمان" class="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-500">
-                <kbd class="rounded-lg border border-slate-200/80 bg-slate-50/80 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-300">Ctrl K</kbd>
-            </div>
-            <div id="appCommandList" class="max-h-80 overflow-y-auto p-2"></div>
-            <div class="border-t border-slate-100/80 px-4 py-2.5 text-[11px] text-slate-400 dark:border-slate-800/80 dark:text-slate-500">Enter برای اجرا، Esc برای بستن</div>
-        </div>
-    </div>
-
+    <!-- ═══════════════════════════════════════════════════════
+    SCRIPTS
+    ═══════════════════════════════════════════════════════════ -->
     <script src="~/js/layout.js" asp-append-version="true"></script>
     <script src="~/js/professional-table.js" asp-append-version="true"></script>
     <script>
-        // ── Theme Initialization ──────────────────────────────────────
-        (() => {
-            const html = document.documentElement;
-            const storedPreference = localStorage.getItem('rhyno.theme.preference');
-            const activePreference = storedPreference || '@themePreference';
-            const normalized = (activePreference || 'System').toLowerCase();
-            html.classList.remove('theme-light', 'theme-dark', 'dark');
-            html.setAttribute('data-theme', normalized);
-            document.body?.setAttribute('data-theme', normalized);
-            if (normalized === 'dark') { html.classList.add('theme-dark', 'dark'); window.dispatchEvent(new Event('themechange')); return; }
-            if (normalized === 'light') { html.classList.add('theme-light'); window.dispatchEvent(new Event('themechange')); return; }
-            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            html.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
-            if (prefersDark) html.classList.add('dark');
-            window.dispatchEvent(new Event('themechange'));
-        })();
-
-        // ── Rhyno Core Utilities (Vanilla JS – replaces Bootstrap JS) ──
+        // ── Rhyno Core Utilities ──────────────────────────────────
         window.Rhyno = (() => {
-            // Dropdowns
             const toggleDropdown = (btn) => {
                 const container = btn.closest('.rhyno-dropdown-trigger');
                 if (!container) return;
@@ -494,10 +365,10 @@
                 });
             };
 
-            // Modals
             const showModal = (id) => {
                 const el = document.getElementById(id);
                 if (!el) return;
+                el.style.display = 'flex';
                 el.classList.add('open');
                 document.body.style.overflow = 'hidden';
             };
@@ -505,40 +376,11 @@
             const hideModal = (id) => {
                 const el = document.getElementById(id);
                 if (!el) return;
+                el.style.display = 'none';
                 el.classList.remove('open');
                 document.body.style.overflow = '';
             };
 
-            // Sidebar
-            const openSidebar = () => {
-                const sidebar = document.getElementById('appSidebar');
-                const overlay = document.getElementById('sidebarOverlay');
-                if (sidebar) sidebar.classList.add('is-open');
-                if (overlay) overlay.classList.remove('hidden');
-            };
-
-            const closeSidebar = () => {
-                const sidebar = document.getElementById('appSidebar');
-                const overlay = document.getElementById('sidebarOverlay');
-                if (sidebar) sidebar.classList.remove('is-open');
-                if (overlay) overlay.classList.add('hidden');
-            };
-
-            // Sidebar accordion
-            const toggleSidebarCollapse = (btn) => {
-                const target = document.querySelector(btn.getAttribute('data-sidebar-toggle'));
-                if (!target) return;
-                const isOpen = target.classList.contains('open');
-                if (isOpen) {
-                    target.classList.remove('open');
-                    btn.classList.remove('expanded');
-                } else {
-                    target.classList.add('open');
-                    btn.classList.add('expanded');
-                }
-            };
-
-            // Confirm dialog
             let _confirmCallback = null;
             const confirm = (message, callback) => {
                 document.getElementById('appConfirmMessage').textContent = message || 'آیا مطمئن هستید؟';
@@ -546,194 +388,124 @@
                 showModal('appConfirmDialog');
             };
 
-            // Toast notification
             const toast = (message, type = 'info') => {
-                const colors = { success: 'bg-emerald-600', error: 'bg-rose-600', warning: 'bg-amber-600', info: 'bg-indigo-600' };
+                const colors = { success: '#10b981', error: '#e11d48', warning: '#f59e0b', info: '#2b7cb3' };
                 const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
                 const toast = document.createElement('div');
-                toast.className = `fixed bottom-4 left-4 z-[200] flex items-center gap-2 rounded-xl ${colors[type] || colors.info} px-4 py-3 text-sm font-bold text-white shadow-lg transition-all duration-300 translate-y-4 opacity-0`;
+                toast.style.cssText = `position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;align-items:center;gap:8px;background:${colors[type] || colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(16px);opacity:0;transition:all 0.3s ease;`;
                 toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i> ${message}`;
                 document.body.appendChild(toast);
-                requestAnimationFrame(() => { toast.classList.remove('translate-y-4', 'opacity-0'); });
+                requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; });
                 setTimeout(() => {
-                    toast.classList.add('translate-y-4', 'opacity-0');
+                    toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
                     setTimeout(() => toast.remove(), 300);
                 }, 3500);
             };
 
-            return { toggleDropdown, closeAllDropdowns, showModal, hideModal, openSidebar, closeSidebar, toggleSidebarCollapse, confirm, toast };
-        })();
-
-        // ── Clock & Persian Date ──────────────────────────────────────
-        (() => {
-            const timeElem = document.getElementById('topbarTime');
-            const dateElem = document.getElementById('topbarDate');
-            if (!timeElem || !dateElem) return;
-            const updateClockAndDate = () => {
-                const now = new Date();
-                timeElem.textContent = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false });
-                dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+            // Sidebar toggle
+            const toggleSidebar = () => {
+                const sidebar = document.getElementById('appSidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (!sidebar) return;
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('mobile-open');
+                    if (overlay) overlay.classList.toggle('active');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                }
             };
-            updateClockAndDate();
-            setInterval(updateClockAndDate, 30000);
+
+            const closeSidebar = () => {
+                const sidebar = document.getElementById('appSidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (sidebar) sidebar.classList.remove('mobile-open');
+                if (overlay) overlay.classList.remove('active');
+            };
+
+            // Module accordion toggle
+            const toggleModule = (btn) => {
+                const module = btn.closest('.sidebar-module');
+                const children = module?.querySelector('.module-children');
+                if (!children) return;
+                const isOpen = children.style.maxHeight && children.style.maxHeight !== '0px';
+                if (isOpen) {
+                    children.style.maxHeight = '0px';
+                    btn.classList.remove('expanded');
+                } else {
+                    children.style.maxHeight = children.scrollHeight + 'px';
+                    btn.classList.add('expanded');
+                }
+            };
+
+            return { toggleDropdown, closeAllDropdowns, showModal, hideModal, confirm, toast, toggleSidebar, closeSidebar, toggleModule };
         })();
 
-        // ── Sidebar Search ────────────────────────────────────────────
+        // ── Clock & Persian Date ────────────────────────────────
+        (() => {
+            const dateElem = document.getElementById('headerDate');
+            if (!dateElem) return;
+            const update = () => {
+                const now = new Date();
+                try {
+                    dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+                } catch(e) {
+                    dateElem.textContent = now.toLocaleDateString('fa-IR');
+                }
+            };
+            update();
+            setInterval(update, 60000);
+        })();
+
+        // ── Sidebar Search ──────────────────────────────────────
         (() => {
             const input = document.getElementById('sidebarMenuSearch');
-            const clearButton = document.getElementById('sidebarSearchClear');
-            const countLabel = document.getElementById('sidebarSearchCount');
-            const noResults = document.getElementById('sidebarSearchNoResults');
-            const sidebarContainer = document.getElementById('sidebarScrollContainer');
-            if (!input || !clearButton || !countLabel || !noResults || !sidebarContainer) return;
-            
-            const normalize = (value) => String(value || '').replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').replace(/\s+/g, ' ').trim().toLowerCase();
-            const links = Array.from(sidebarContainer.querySelectorAll('a.sidebar-link'));
-            const groups = Array.from(sidebarContainer.querySelectorAll('.sidebar-module'));
-            
-            const initialCollapseStates = new Map();
-            groups.forEach(group => {
-                const collapseDiv = group.querySelector('.sidebar-collapse');
-                if (collapseDiv) initialCollapseStates.set(collapseDiv, collapseDiv.classList.contains('open'));
+            if (!input) return;
+            input.addEventListener('input', () => {
+                const query = input.value.trim().toLowerCase();
+                const items = document.querySelectorAll('#appSidebar .menu-item');
+                const modules = document.querySelectorAll('#appSidebar .sidebar-module');
+                items.forEach(item => {
+                    const text = (item.textContent || '').toLowerCase();
+                    item.style.display = (!query || text.includes(query)) ? '' : 'none';
+                });
+                modules.forEach(mod => {
+                    const visibleItems = Array.from(mod.querySelectorAll('.menu-item')).some(i => i.style.display !== 'none');
+                    const headerMatch = query && (mod.querySelector('.module-toggle span')?.textContent || '').toLowerCase().includes(query);
+                    mod.style.display = (visibleItems || headerMatch || !query) ? '' : 'none';
+                    const children = mod.querySelector('.module-children');
+                    const btn = mod.querySelector('.module-toggle');
+                    if (query && (visibleItems || headerMatch)) {
+                        children.style.maxHeight = children.scrollHeight + 'px';
+                        btn.classList.add('expanded');
+                    } else if (!query) {
+                        // keep server-rendered state untouched when query cleared
+                    }
+                });
             });
-            
-            const resetSearch = () => {
-                links.forEach((link) => link.classList.remove('hidden'));
-                groups.forEach((group) => {
-                    group.classList.remove('hidden');
-                    const collapseDiv = group.querySelector('.sidebar-collapse');
-                    if (collapseDiv) {
-                        const wasInitiallyOpen = initialCollapseStates.get(collapseDiv);
-                        if (wasInitiallyOpen) { collapseDiv.classList.add('open'); group.querySelector('.sidebar-module-btn')?.classList.add('expanded'); }
-                        else { collapseDiv.classList.remove('open'); group.querySelector('.sidebar-module-btn')?.classList.remove('expanded'); }
-                    }
-                });
-                noResults.classList.add('hidden');
-                clearButton.classList.add('hidden');
-                countLabel.textContent = 'همه بخش‌ها';
-            };
-            
-            const applySearch = () => {
-                const query = normalize(input.value);
-                if (!query) { resetSearch(); return; }
-                let matchCount = 0;
-                links.forEach((link) => {
-                    const matches = normalize(link.textContent).includes(query);
-                    link.classList.toggle('hidden', !matches);
-                    if (matches) matchCount += 1;
-                });
-                groups.forEach((group) => {
-                    const groupLinks = Array.from(group.querySelectorAll('a.sidebar-link'));
-                    const hasVisibleLink = groupLinks.some((link) => !link.classList.contains('hidden'));
-                    const headerMatches = normalize(group.querySelector('.sidebar-module-btn')?.textContent).includes(query);
-                    const isVisible = hasVisibleLink || headerMatches;
-                    group.classList.toggle('hidden', !isVisible);
-                    const collapseDiv = group.querySelector('.sidebar-collapse');
-                    if (collapseDiv) {
-                        if (isVisible) {
-                            collapseDiv.classList.add('open');
-                            group.querySelector('.sidebar-module-btn')?.classList.add('expanded');
-                            if (headerMatches) groupLinks.forEach((link) => link.classList.remove('hidden'));
-                        } else {
-                            collapseDiv.classList.remove('open');
-                            group.querySelector('.sidebar-module-btn')?.classList.remove('expanded');
-                        }
-                    }
-                });
-                noResults.classList.toggle('hidden', matchCount !== 0);
-                clearButton.classList.remove('hidden');
-                countLabel.textContent = matchCount === 0 ? 'بدون نتیجه' : `${matchCount.toLocaleString('fa-IR')} نتیجه`;
-            };
-            
-            input.addEventListener('input', applySearch);
-            clearButton.addEventListener('click', () => { input.value = ''; input.focus(); resetSearch(); });
         })();
 
-        // ── Global Event Delegation ────────────────────────────────────
+        // ── Event Delegation ────────────────────────────────────
         document.addEventListener('click', (e) => {
-            // Close dropdowns when clicking outside
-            if (!e.target.closest('.rhyno-dropdown-trigger')) {
-                Rhyno.closeAllDropdowns();
-            }
-            // Sidebar modal close
-            if (e.target.id === 'sidebarOverlay') {
-                Rhyno.closeSidebar();
-            }
-            // Close modals on overlay click
-            if (e.target.classList.contains('rhyno-modal-overlay')) {
-                Rhyno.hideModal(e.target.id);
-            }
-            // Sidebar toggle buttons
-            const toggleBtn = e.target.closest('[data-sidebar-toggle]');
-            if (toggleBtn) {
-                e.preventDefault();
-                Rhyno.toggleSidebarCollapse(toggleBtn);
-            }
+            if (!e.target.closest('.rhyno-dropdown-trigger')) Rhyno.closeAllDropdowns();
+            const overlay = document.getElementById('sidebarOverlay');
+            if (e.target === overlay) Rhyno.closeSidebar();
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                document.querySelectorAll('.rhyno-modal-overlay.open').forEach(m => {
-                    if (m.id !== 'appCommandPalette') Rhyno.hideModal(m.id);
-                });
                 Rhyno.closeAllDropdowns();
+                Rhyno.hideModal('appConfirmDialog');
+                Rhyno.closeSidebar();
             }
         });
 
-        // ── Sidebar buttons ───────────────────────────────────────────
-        document.getElementById('btnOpenSidebar')?.addEventListener('click', Rhyno.openSidebar);
-        document.getElementById('btnCloseSidebar')?.addEventListener('click', Rhyno.closeSidebar);
-
-        // ── Smart Report Modal lazy-load ───────────────────────────────
-        document.getElementById('appSmartReportModal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                Rhyno.hideModal('appSmartReportModal');
-            }
+        // ── Sidebar Toggle Button ───────────────────────────────
+        document.getElementById('btnToggleSidebar')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            Rhyno.toggleSidebar();
         });
-        (() => {
-            let loaded = false;
-            const frame = document.getElementById('appSmartReportFrame');
 
-            const notifyIframeResize = () => {
-                if (!frame || !frame.contentWindow) return;
-                frame.contentWindow.postMessage({ type: 'rhyno:modal-opened' }, window.location.origin);
-            };
-
-            const bindFrameLoad = () => {
-                frame.addEventListener('load', function onLoad() {
-                    frame.removeEventListener('load', onLoad);
-                    setTimeout(notifyIframeResize, 200);
-                    setTimeout(notifyIframeResize, 600);
-                    setTimeout(notifyIframeResize, 1200);
-                });
-            };
-
-            const observer = new MutationObserver(() => {
-                const modal = document.getElementById('appSmartReportModal');
-                if (modal && modal.classList.contains('open')) {
-                    if (!loaded && frame) {
-                        frame.src = '/ManagementDashboard/Index';
-                        loaded = true;
-                        bindFrameLoad();
-                    } else if (loaded) {
-                        setTimeout(notifyIframeResize, 150);
-                    }
-                }
-            });
-            const modal = document.getElementById('appSmartReportModal');
-            if (modal) observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    const m = document.getElementById('appSmartReportModal');
-                    if (m && m.classList.contains('open')) {
-                        Rhyno.hideModal('appSmartReportModal');
-                    }
-                }
-            });
-        })();
-
-        // ── Confirm dialog bind ───────────────────────────────────────
+        // ── Confirm Dialog Bind ─────────────────────────────────
         document.getElementById('appConfirmOk')?.addEventListener('click', () => {
             if (window.Rhyno._confirmCallback) {
                 window.Rhyno._confirmCallback();
@@ -742,7 +514,7 @@
             Rhyno.hideModal('appConfirmDialog');
         });
 
-        // ── SignalR ───────────────────────────────────────────────────
+        // ── SignalR ────────────────────────────────────────────
         (function() {
             if (typeof signalR === 'undefined') return;
             const connection = new signalR.HubConnectionBuilder()
@@ -751,21 +523,11 @@
                 .build();
             connection.on("ReceiveNewTaskNotification", function (data) {
                 Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
-                const sidebarItem = document.querySelector('[data-nav-id="workinbox-index"]');
-                if (sidebarItem) {
-                    let badge = sidebarItem.querySelector('.inbox-badge-count');
-                    if (!badge) {
-                        badge = document.createElement('span');
-                        badge.className = 'inbox-badge-count inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-black mr-auto';
-                        sidebarItem.appendChild(badge);
-                    }
-                    const currentCount = parseInt(badge.textContent) || 0;
-                    badge.textContent = currentCount + 1;
-                }
             });
             connection.start().then(() => console.log("SignalR Connected.")).catch(err => console.error("SignalR Error:", err));
         })();
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
     <script src="~/js/app-ui.js" asp-append-version="true"></script>
     <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>

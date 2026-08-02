@@ -4,261 +4,505 @@
 @inject ITenantSettingsService TenantSettingsService
 @{
     Layout = null;
-    // Load branding for white-labeling on the login page
     OfficeAutomation.Models.SystemSetting? loginBranding = null;
     try { loginBranding = await TenantSettingsService.GetSystemSettingsAsync(); } catch { }
-    var loginAppTitle    = loginBranding?.ApplicationTitle ?? "راینو ERP";
-    var loginBgUrl       = loginBranding?.LoginBackgroundUrl;
-    var loginLogoUrl     = loginBranding?.LogoUrl;
-    var loginFaviconUrl  = loginBranding?.FaviconUrl;
+    var loginAppTitle = loginBranding?.ApplicationTitle ?? "راینو ERP";
+    var loginBgUrl = loginBranding?.LoginBackgroundUrl;
+    var loginLogoUrl = loginBranding?.LogoUrl;
+    var loginFaviconUrl = loginBranding?.FaviconUrl;
     var loginPrimaryColor = loginBranding?.PrimaryColor;
 }
 
 <!DOCTYPE html>
-<html lang="fa" dir="rtl" class="light">
+<html lang="fa" dir="rtl">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ورود - @loginAppTitle</title>
-    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true" />
     @if (!string.IsNullOrWhiteSpace(loginFaviconUrl))
     {
         <link rel="icon" href="@loginFaviconUrl" />
     }
     <style>
-        .auth-bg-pattern {
-            background-image: radial-gradient(circle at 1px 1px, rgba(15,23,42,0.015) 1px, transparent 0);
-            background-size: 24px 24px;
-        }
-        /* Bulletproof validation summary hiding when valid */
-        .validation-summary-valid,
-        .validation-summary-valid * {
-            display: none !important;
-        }
-        @if (!string.IsNullOrWhiteSpace(loginBgUrl))
-        {
-            <text>
-        .login-custom-bg {
-            background-image: url('@loginBgUrl');
-            background-size: cover;
-            background-position: center;
-        }
-        .login-custom-bg::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(248, 250, 252, 0.88);
-            backdrop-filter: blur(2px);
-        }
-            </text>
-        }
-        @if (!string.IsNullOrWhiteSpace(loginPrimaryColor))
-        {
-            <text>
-        .btn-primary-brand { background-color: @loginPrimaryColor !important; }
-        .btn-primary-brand:hover { filter: brightness(0.9); }
-            </text>
-        }
+            @@font-face {
+                font-family: 'Vazirmatn';
+                src: url('/fonts/Vazir-Medium-FD-WOL.woff2') format('woff2');
+                font-weight: 500;
+                font-style: normal;
+                font-display: swap;
+            }
+
+            :root {
+                --rk-login-sky-1: #3a8cc7;
+                --rk-login-sky-2: #7eb8dd;
+                --rk-login-sky-3: #c8d9e8;
+                --rk-login-sky-4: #e6d3d3;
+                --rk-login-card: rgba(255, 255, 255, 0.78);
+                --rk-login-card-solid: #f7fafc;
+                --rk-login-input: rgba(255, 255, 255, 0.88);
+                --rk-login-border: rgba(255, 255, 255, 0.65);
+                --rk-login-text: #1f3a52;
+                --rk-login-muted: #5a7a94;
+                --rk-login-primary:
+                    @(string.IsNullOrWhiteSpace(loginPrimaryColor)
+                    ?
+        "#2b7cb3" :
+                    loginPrimaryColor)
+                ;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                height: 100%;
+                margin: 0;
+            }
+
+            body {
+                font-family: 'Vazirmatn', 'Tahoma', 'Segoe UI', sans-serif;
+                color: var(--rk-login-text);
+                background: linear-gradient(180deg, var(--rk-login-sky-1) 0%, var(--rk-login-sky-2) 38%, var(--rk-login-sky-3) 72%, var(--rk-login-sky-4) 100%);
+                min-height: 100vh;
+                overflow: hidden;
+                position: relative;
+                display: grid;
+                place-items: center;
+            }
+
+            /* Animated cloud-like shapes to mimic Rahkaran SVG background */
+            .clouds {
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                z-index: 0;
+                opacity: 0.55;
+            }
+
+            .clouds::before,
+            .clouds::after {
+                content: '';
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(60px);
+            }
+
+            .clouds::before {
+                width: 70vw;
+                height: 60vh;
+                right: -15vw;
+                top: 10vh;
+                background: rgba(255, 255, 255, 0.35);
+                animation: drift 28s ease-in-out infinite alternate;
+            }
+
+            .clouds::after {
+                width: 60vw;
+                height: 50vh;
+                left: -10vw;
+                bottom: 5vh;
+                background: rgba(255, 255, 255, 0.28);
+                animation: drift 22s ease-in-out infinite alternate-reverse;
+            }
+
+            @@keyframes drift {
+                from {
+                    transform: translateX(0) translateY(0);
+                }
+
+                to {
+                    transform: translateX(-40px) translateY(20px);
+                }
+            }
+
+            .login-wrapper {
+                position: relative;
+                z-index: 2;
+                width: min(1080px, 96vw);
+                min-height: 560px;
+                display: grid;
+                grid-template-columns: 0.85fr 1.15fr;
+                gap: 16px;
+                padding: 16px;
+            }
+
+            /* Left panel — login form card */
+            .login-card {
+                border-radius: 18px;
+                background: var(--rk-login-card);
+                backdrop-filter: blur(24px) saturate(130%);
+                -webkit-backdrop-filter: blur(24px) saturate(130%);
+                border: 1px solid var(--rk-login-border);
+                box-shadow: 0 24px 70px rgba(0, 0, 0, 0.12);
+                padding: 38px 34px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                order: 1;
+            }
+
+            /* Right panel — branding / empty visual like Rahkaran */
+            .login-visual {
+                order: 2;
+                border-radius: 18px;
+                background: rgba(255, 255, 255, 0.12);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.25);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding: 42px;
+                color: #fff;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
+            }
+
+            .login-visual .brand-lockup {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .login-visual .brand-logo {
+                width: 64px;
+                height: 64px;
+                border-radius: 18px;
+                background: rgba(255, 255, 255, 0.92);
+                display: grid;
+                place-items: center;
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            }
+
+            .login-visual .brand-logo img {
+                max-width: 80%;
+                max-height: 80%;
+                object-fit: contain;
+            }
+
+            .login-visual .brand-logo .fallback {
+                color: var(--rk-login-primary);
+                font-size: 28px;
+                font-weight: 900;
+            }
+
+            .login-visual .brand-title {
+                font-size: 1.6rem;
+                font-weight: 900;
+                letter-spacing: -0.02em;
+                text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            }
+
+            .login-visual .brand-subtitle {
+                font-size: 0.82rem;
+                opacity: 0.88;
+                margin-top: 4px;
+            }
+
+            .login-visual .hero-copy h1 {
+                margin: 0;
+                font-size: clamp(1.6rem, 3vw, 2.6rem);
+                font-weight: 900;
+                line-height: 1.35;
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+            }
+
+            .login-visual .hero-copy p {
+                margin: 14px 0 0;
+                font-size: 1rem;
+                line-height: 1.9;
+                opacity: 0.9;
+                max-width: 460px;
+            }
+
+            .login-visual .hero-metrics {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .metric-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 8px 12px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.16);
+                border: 1px solid rgba(255, 255, 255, 0.25);
+                font-size: 0.78rem;
+                font-weight: 800;
+            }
+
+
+            .form-head {
+                text-align: center;
+                margin-bottom: 26px;
+            }
+
+            .form-head h1 {
+                margin: 0;
+                font-size: 1.45rem;
+                font-weight: 900;
+                color: var(--rk-login-text);
+            }
+
+            .form-head h2 {
+                margin: 8px 0 0;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--rk-login-muted);
+            }
+
+            .form-group {
+                margin-bottom: 14px;
+            }
+
+            .form-group label {
+                display: block;
+                font-size: 0.78rem;
+                font-weight: 800;
+                color: var(--rk-login-muted);
+                margin-bottom: 6px;
+            }
+
+            .input-wrap {
+                position: relative;
+            }
+
+            .input-wrap i {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--rk-login-primary);
+                font-size: 1rem;
+            }
+
+            .form-control {
+                width: 100%;
+                height: 48px;
+                padding: 10px 42px 10px 12px;
+                border: 1px solid rgba(148, 163, 184, 0.35);
+                border-radius: 12px;
+                background: var(--rk-login-input);
+                color: var(--rk-login-text);
+                font-size: 0.92rem;
+                font-weight: 600;
+                font-family: inherit;
+                outline: none;
+                transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+
+            .form-control:focus {
+                background: #fff;
+                border-color: var(--rk-login-primary);
+                box-shadow: 0 0 0 3px rgba(43, 124, 179, 0.12);
+            }
+
+            .form-control::placeholder {
+                color: #94a3b8;
+                opacity: 1;
+            }
+
+            .login-options {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin: 6px 0 18px;
+            }
+
+            .remember-check {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                font-size: 0.76rem;
+                font-weight: 700;
+                color: var(--rk-login-muted);
+            }
+
+            .remember-check input {
+                width: 15px;
+                height: 15px;
+                accent-color: var(--rk-login-primary);
+                cursor: pointer;
+            }
+
+            .forgot-link {
+                font-size: 0.76rem;
+                font-weight: 800;
+                color: var(--rk-login-primary);
+                text-decoration: none;
+            }
+
+            .forgot-link:hover {
+                text-decoration: underline;
+            }
+
+            .btn-login {
+                width: 100%;
+                height: 50px;
+                border: 0;
+                border-radius: 12px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                color: #fff;
+                background: linear-gradient(135deg, var(--rk-login-primary), #216a99);
+                box-shadow: 0 14px 32px rgba(43, 124, 179, 0.28);
+                font-size: 0.98rem;
+                font-weight: 900;
+                cursor: pointer;
+                transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+            }
+
+            .btn-login:hover {
+                transform: translateY(-1px);
+                filter: brightness(1.05);
+                box-shadow: 0 18px 40px rgba(43, 124, 179, 0.34);
+            }
+
+            .validation-summary {
+                margin-bottom: 12px;
+                padding: 10px 12px;
+                border-radius: 10px;
+                background: rgba(192, 57, 43, 0.10);
+                border: 1px solid rgba(192, 57, 43, 0.22);
+                color: #a03025;
+                font-size: 0.78rem;
+                font-weight: 700;
+                line-height: 1.6;
+            }
+
+            .validation-summary:empty,
+            .validation-summary-valid {
+                display: none !important;
+            }
+
+            .login-footer {
+                margin-top: 22px;
+                text-align: center;
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: var(--rk-login-muted);
+            }
+
+            /* Responsive */
+            @@media (max-width: 900px) {
+                .login-wrapper {
+                    grid-template-columns: 1fr;
+                    max-width: 460px;
+                }
+
+                .login-visual {
+                    display: none;
+                }
+
+                .login-card {
+                    padding: 28px 22px;
+                }
+            }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased auth-bg-pattern @(!string.IsNullOrWhiteSpace(loginBgUrl) ? "login-custom-bg" : "") flex flex-col justify-between relative overflow-hidden">
-    
-    <!-- HTML5 Canvas for Antigravity Mouse-Reactive Effect -->
-    <canvas id="antigravity-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
 
-    <main class="flex-1 flex items-center justify-center px-4 py-12 z-10 relative">
-        <section class="w-full max-w-sm">
+<body>
+    <div class="clouds"></div>
 
-            <!-- Logo & Brand (White-labeled or default) -->
-            <div class="flex flex-col items-center justify-center gap-2 mb-6 text-center select-none">
-                @if (!string.IsNullOrWhiteSpace(loginLogoUrl))
-                {
-                    <img src="@loginLogoUrl" alt="@loginAppTitle" class="h-10 max-w-[120px] object-contain rounded-lg" onerror="this.style.display='none'" />
-                }
-                else
-                {
-                    <span class="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm font-black shadow-sm">R</span>
-                }
+    <main class="login-wrapper">
+        <!-- Left visual panel -->
+        <section class="login-visual">
+            <div class="brand-lockup">
+                <div class="brand-logo">
+                    @if (!string.IsNullOrWhiteSpace(loginLogoUrl))
+                    {
+                        <img src="@loginLogoUrl" alt="@loginAppTitle"
+                             onerror="this.style.display='none';this.parentElement.querySelector('.fallback').style.display='grid'" />
+                        <span class="fallback" style="display:none;">R</span>
+                    }
+                    else
+                    {
+                        <span class="fallback"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+                    }
+                </div>
                 <div>
-                    <span class="block text-sm font-extrabold text-slate-900 tracking-tight">@loginAppTitle</span>
-                    <span class="block text-[10px] text-slate-500 font-medium tracking-wide mt-0.5">WORK PORTAL SYSTEM</span>
+                    <div class="brand-title">@loginAppTitle</div>
+                    <div class="brand-subtitle">سامانه یکپارچه مدیریت سازمانی</div>
                 </div>
             </div>
 
-            <!-- Login Card (Glassmorphic light container) -->
-            <div class="w-full bg-white/90 border border-slate-200/80 rounded-xl shadow-xl backdrop-blur-sm p-7 space-y-5">
-
-                <!-- Card Header -->
-                <div class="space-y-1 text-center">
-                    <h1 class="text-base font-extrabold text-slate-900 tracking-tight">خوش آمدید</h1>
-                    <p class="text-[11px] text-slate-500">برای اتصال امن به شبکه سازمانی وارد شوید.</p>
+            <div class="hero-copy">
+                <h1>به داشبورد سازمانی خوش آمدید</h1>
+                <p>برای دسترسی به اطلاعات مالی، منابع انسانی، انبارداری و گزارش‌های مدیریتی، لطفاً با حساب کاربری خود
+                    وارد شوید.</p>
                 </div>
 
-                <!-- Validation Summary (Fixed: Hidden when valid) -->
-                <div asp-validation-summary="All"
-                     class="flex items-start gap-2.5 px-3 py-2.5 border border-rose-200 bg-rose-50 rounded-md text-[11px] text-rose-700 empty:hidden">
+                <div class="hero-metrics">
+                    <span class="metric-pill"><i class="bi bi-shield-check"></i> امنیت سازمانی</span>
+                    <span class="metric-pill"><i class="bi bi-cloud-check"></i> دسترسی ابری</span>
+                    <span class="metric-pill"><i class="bi bi-graph-up-arrow"></i> گزارش‌دهی لحظه‌ای</span>
+                </div>
+            </section>
+
+            <!-- Right login form panel -->
+            <section class="login-card">
+                <div class="form-head">
+                    <h1>ورود کاربران</h1>
+                    <h2>لطفا مشخصات حساب کاربری خود را وارد نمایید</h2>
                 </div>
 
-                <!-- Form -->
-                <form method="post" class="space-y-4">
+                <form method="post" id="account">
+                    <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
 
-                    <!-- Email / Username (Fixed Label Highlight) -->
-                    <div class="space-y-1">
-                        <label asp-for="Input.Email" class="block text-[11px] font-bold text-slate-600 bg-transparent p-0 m-0">نام کاربری یا ایمیل</label>
-                        <input asp-for="Input.Email"
-                               autocomplete="username"
-                               placeholder="username@company.com"
-                               dir="ltr"
-                               class="w-full h-9 px-3 text-[12px] font-mono text-left bg-white border border-slate-200 rounded-md outline-none placeholder:text-slate-400 text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition duration-150" />
-                        <span asp-validation-for="Input.Email" class="block text-[10px] font-semibold text-rose-600"></span>
+                    <div class="form-group">
+                        <label asp-for="Input.Email">نام کاربری یا ایمیل</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person"></i>
+                            <input asp-for="Input.Email" class="form-control" autocomplete="username"
+                                   placeholder="نام کاربری خود را وارد کنید" />
+                        </div>
+                        <span asp-validation-for="Input.Email" class="text-danger"
+                              style="font-size:0.72rem;color:#a03025;"></span>
                     </div>
 
-                    <!-- Password -->
-                    <div class="space-y-1">
-                        <label asp-for="Input.Password" class="block text-[11px] font-bold text-slate-600 bg-transparent p-0 m-0">رمز عبور</label>
-                        <input asp-for="Input.Password"
-                               type="password"
-                               autocomplete="current-password"
-                               placeholder="••••••••"
-                               class="w-full h-9 px-3 text-[12px] bg-white border border-slate-200 rounded-md outline-none placeholder:text-slate-400 text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition duration-150" />
-                        <span asp-validation-for="Input.Password" class="block text-[10px] font-semibold text-rose-600"></span>
+                    <div class="form-group">
+                        <label asp-for="Input.Password">کلمه عبور</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-lock"></i>
+                            <input asp-for="Input.Password" type="password" class="form-control"
+                                   autocomplete="current-password" placeholder="••••••••" />
+                        </div>
+                        <span asp-validation-for="Input.Password" class="text-danger"
+                              style="font-size:0.72rem;color:#a03025;"></span>
                     </div>
 
-                    <!-- Remember Me & Forgot -->
-                    <div class="flex items-center justify-between gap-3 pt-0.5">
-                        <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
-                            <input asp-for="Input.RememberMe"
-                                   type="checkbox"
-                                   class="w-3.5 h-3.5 rounded border-slate-300 bg-white text-teal-600 focus:ring-2 focus:ring-teal-500/10 accent-teal-600" />
-                            <span class="text-[11px] font-medium text-slate-500">مرا به خاطر بسپار</span>
+                    <div class="login-options">
+                        <label class="remember-check">
+                            <input asp-for="Input.RememberMe" />
+                            <span>مرا به خاطر بسپار</span>
                         </label>
-                        <a asp-area="Identity" asp-page="/Account/ForgotPassword"
-                           class="text-[11px] font-bold text-teal-600 hover:text-teal-500 hover:underline no-underline transition">
-                            فراموشی رمز عبور؟
-                        </a>
+                        <a asp-area="Identity" asp-page="/Account/ForgotPassword" class="forgot-link">فراموشی رمز عبور؟</a>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit"
-                            class="w-full py-2 px-3 bg-teal-600 hover:bg-teal-500 active:scale-[0.985] text-white text-[12px] font-bold rounded-md transition-all duration-150 shadow-md shadow-teal-500/10 flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
-                        <i class="bi bi-box-arrow-in-right text-xs"></i>
+                    <button type="submit" class="btn-login">
+                        <i class="bi bi-box-arrow-in-right"></i>
                         <span>ورود به سامانه</span>
                     </button>
                 </form>
-            </div>
 
-            <!-- Footer note -->
-            <p class="mt-5 text-center text-[10px] text-slate-400 select-none">
-                Rhyno Automation &mdash; Workspace &copy; @DateTime.Now.Year
-            </p>
+                <div class="login-footer">
+                    @loginAppTitle &mdash; نسخه ۱.۰ &copy; @DateTime.Now.Year
+                </div>
+            </section>
+        </main>
 
-        </section>
-    </main>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+                integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+        <partial name="_ValidationScriptsPartial" />
+    </body>
 
-    <partial name="_ValidationScriptsPartial" />
-
-    <!-- Lightweight Interactive Antigravity Mouse Particle Effect Script -->
-    <script>
-        (() => {
-            const canvas = document.getElementById('antigravity-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            let w, h;
-            const particles = [];
-            const mouse = { x: null, y: null, radius: 110 };
-
-            window.addEventListener('resize', resizeCanvas);
-            window.addEventListener('mousemove', (e) => {
-                mouse.x = e.clientX;
-                mouse.y = e.clientY;
-            });
-            window.addEventListener('mouseleave', () => {
-                mouse.x = null;
-                mouse.y = null;
-            });
-
-            function resizeCanvas() {
-                w = canvas.width = window.innerWidth;
-                h = canvas.height = window.innerHeight;
-            }
-
-            const colors = [
-                'rgba(66, 133, 244, 0.35)',  // Google Blue
-                'rgba(234, 67, 53, 0.35)',   // Google Red / Coral
-                'rgba(251, 188, 5, 0.4)',    // Google Yellow / Gold
-                'rgba(52, 168, 83, 0.35)',   // Google Green
-                'rgba(168, 85, 247, 0.35)',  // Electric Purple
-                'rgba(236, 72, 153, 0.35)'   // Magenta / Pink
-            ];
-
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * w;
-                    this.y = Math.random() * h;
-                    this.size = Math.random() * 3 + 1.5;
-                    this.speedX = Math.random() * 0.3 - 0.15;
-                    this.speedY = -(Math.random() * 0.4 + 0.1); // Slowly float up
-                    this.color = colors[Math.floor(Math.random() * colors.length)];
-                }
-                update() {
-                    this.y += this.speedY;
-                    this.x += this.speedX;
-                    
-                    if (this.y < -10) {
-                        this.y = h + 10;
-                        this.x = Math.random() * w;
-                    }
-                    if (this.x < -10 || this.x > w + 10) {
-                        this.x = Math.random() * w;
-                    }
-
-                    // Smooth parallax repulsion from cursor
-                    if (mouse.x !== null && mouse.y !== null) {
-                        const dx = mouse.x - this.x;
-                        const dy = mouse.y - this.y;
-                        const distance = Math.hypot(dx, dy);
-                        if (distance < mouse.radius) {
-                            const force = (mouse.radius - distance) / mouse.radius;
-                            const directionX = dx / distance;
-                            const directionY = dy / distance;
-                            // Smoothly drift opposite to mouse direction
-                            this.x -= directionX * force * 1.8;
-                            this.y -= directionY * force * 1.8;
-                        }
-                    }
-                }
-                draw() {
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            function init() {
-                resizeCanvas();
-                particles.length = 0;
-                const particleCount = Math.min(Math.floor(w * h / 18000), 75);
-                for (let i = 0; i < particleCount; i++) {
-                    particles.push(new Particle());
-                }
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, w, h);
-                for (let i = 0; i < particles.length; i++) {
-                    particles[i].update();
-                    particles[i].draw();
-                }
-                requestAnimationFrame(animate);
-            }
-
-            init();
-            animate();
-        })();
-    </script>
-</body>
 </html>
-
-
-

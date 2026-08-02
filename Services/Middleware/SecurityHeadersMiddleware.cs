@@ -46,7 +46,11 @@ public sealed class SecurityHeadersMiddleware
         // Cross-Origin policies
         headers["Cross-Origin-Opener-Policy"] = "same-origin";
         headers["Cross-Origin-Resource-Policy"] = "same-origin";
-        headers["Cross-Origin-Embedder-Policy"] = "require-corp";
+        // COEP "require-corp" blocks cross-origin CDN resources (CKEditor, Chart.js, ...)
+        // that do not send a Cross-Origin-Resource-Policy header, causing errors like
+        // ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep.
+        // Using "unsafe-none" allows these standard CDN subresources to load normally.
+        headers["Cross-Origin-Embedder-Policy"] = "unsafe-none";
 
         // Remove server header
         headers.Remove("Server");
@@ -61,9 +65,9 @@ public sealed class SecurityHeadersMiddleware
         var policies = new List<string>
         {
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://lib.arvancloud.ir",
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://lib.arvancloud.ir https://fonts.googleapis.com",
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://lib.arvancloud.ir",
             "img-src 'self' data: https: blob:",
             "connect-src 'self' wss: https:",
             "media-src 'self'",

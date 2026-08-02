@@ -11,7 +11,7 @@
     string replyReceiverId = (ViewBag.ReplyToReceiverId as string) ?? string.Empty;
 }
 
-<script src="https://lib.arvancloud.ir/ckeditor5/36.0.1/ckeditor.js"></script>
+<script src="https://lib.arvancloud.ir/ckeditor5/36.0.1/ckeditor.js" crossorigin="anonymous"></script>
 
 <div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
     <!-- Header/Toolbar Card -->
@@ -170,5 +170,5 @@
         defaultReceiverId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replyReceiverId ?? string.Empty))
     };
 </script>
-<script src="/js/letter.js"></script>
-<script src="/js/letters-ai.js"></script>
+<script src="~/js/letter.js" asp-append-version="true"></script>
+<script src="~/js/letters-ai.js" asp-append-version="true"></script>
