@@ -8,7 +8,7 @@
   --rk-bg-top: #3289c7;
   --rk-bg-mid: #7baed1;
   --rk-bg-bottom: #e8d4d4;
-  --rk-header-bg: transparent;
+  --rk-header-bg: #2f3846;
   --rk-toolbar-text: #ffffff;
   --rk-toolbar-muted: rgba(255, 255, 255, 0.85);
   --rk-card-bg: rgba(255, 255, 255, 0.86);
@@ -20,11 +20,11 @@
   --rk-text-muted: #5a7a94;
   --rk-accent: #2b7cb3;
   --rk-accent-light: #5aa8d8;
-  --rk-sidebar-bg: rgba(235, 245, 252, 0.92);
-  --rk-sidebar-header: #3a8cc7;
-  --rk-sidebar-text: #1f3a52;
-  --rk-sidebar-muted: #5a7a94;
-  --rk-sidebar-border: rgba(255, 255, 255, 0.55);
+  --rk-sidebar-bg: rgba(255, 255, 255, 0.95);
+  --rk-sidebar-header: #3e4756;
+  --rk-sidebar-text: #2d3446;
+  --rk-sidebar-muted: #5f6673;
+  --rk-sidebar-border: rgba(0, 0, 0, 0.15);
   --rk-input-bg: rgba(255, 255, 255, 0.78);
   --rk-input-border: rgba(255, 255, 255, 0.75);
   --rk-success: #2e9d5e;
@@ -51,23 +51,26 @@ body.rahkaran-theme {
 }
 
 /* ═══════════════════════════════════════════════════════════
-    MAIN HEADER — Transparent glass bar
+    MAIN HEADER — Permanently mounted dark shell bar
     ═══════════════════════════════════════════════════════════ */
 .rahkaran-header {
   height: 52px;
   min-height: 52px;
-  background: rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: var(--rk-toolbar-text);
+  /* SOLID permanent dark header — prevents white-on-white text on pages
+     with white backgrounds (e.g. Trial Balance). Applies even inside
+     tab iframes which may override body/theme surfaces. */
+  background: #2f3846 !important;
+  background: var(--rk-header-bg, #2f3846) !important;
+  color: var(--rk-toolbar-text, #ffffff) !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
   z-index: 100;
   position: relative;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .rahkaran-header .header-section {
@@ -97,7 +100,7 @@ body.rahkaran-theme {
   display: flex;
   gap: 10px;
   font-size: 12px;
-  color: var(--rk-toolbar-text);
+  color: var(--rk-toolbar-text, #ffffff) !important;
   flex-wrap: wrap;
 }
 
@@ -107,8 +110,13 @@ body.rahkaran-theme {
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   white-space: nowrap;
-  color: #fff;
+  color: #fff !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.rahkaran-header .info-labels span strong {
+  color: #fff !important;
+  font-weight: 800;
 }
 
 .rahkaran-header .user-profile {
@@ -118,10 +126,14 @@ body.rahkaran-theme {
   font-size: 13px;
 }
 
+.rahkaran-header .user-profile > span {
+  color: #fff !important;
+}
+
 .rahkaran-header .user-name {
   cursor: pointer;
   font-weight: 600;
-  color: #fff;
+  color: #fff !important;
   background: rgba(255, 255, 255, 0.16);
   padding: 5px 10px;
   border-radius: 4px;
@@ -140,13 +152,13 @@ body.rahkaran-theme {
 }
 
 /* ═══════════════════════════════════════════════════════════
-    SIDEBAR — Right-hand light-blue glass panel (Rahkaran style)
+    SIDEBAR — Right-nav frosted white panel (DimGray Next Shell)
     ═══════════════════════════════════════════════════════════ */
 .rahkaran-sidebar {
   width: 260px;
   min-width: 260px;
   max-width: 260px;
-  background: var(--rk-sidebar-bg);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: var(--rk-sidebar-text);
@@ -171,27 +183,30 @@ body.rahkaran-theme {
   border-left: none;
 }
 
-/* Sidebar brand header */
+/* Sidebar brand header — dark slate (DimGray MDI group header) */
 .rahkaran-sidebar .sidebar-brand {
-  padding: 12px;
-  border-bottom: 1px solid var(--rk-sidebar-border);
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(90deg, rgba(58, 140, 199, 0.18), transparent);
+  background: #3e4756;
+  color: #fff;
+  flex-shrink: 0;
 }
 
 .rahkaran-sidebar .sidebar-search {
-  padding: 10px;
-  border-bottom: 1px solid var(--rk-sidebar-border);
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .rahkaran-sidebar .sidebar-search input {
   width: 100%;
-  padding: 7px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--rk-input-border);
-  background: var(--rk-input-bg);
+  height: 32px;
+  padding: 5px 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: #fff;
   color: var(--rk-sidebar-text);
   font-size: 12px;
   outline: none;
@@ -200,32 +215,36 @@ body.rahkaran-theme {
 }
 
 .rahkaran-sidebar .sidebar-search input:focus {
-  border-color: var(--rk-accent);
+  border-color: #ff9800;
   background: #fff;
 }
 
 .rahkaran-sidebar .sidebar-search input::placeholder {
-  color: var(--rk-sidebar-muted);
+  color: #777;
 }
 
 .rahkaran-sidebar .menu-groups {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 8px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .rahkaran-sidebar .menu-group {
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
+/* Group headers — flat #f2f2f2 bands with top/bottom hairline borders */
 .rahkaran-sidebar .menu-group h4 {
   font-size: 11px;
   color: var(--rk-sidebar-text);
-  margin-bottom: 6px;
-  border-bottom: 1px solid rgba(31, 58, 82, 0.12);
-  padding-bottom: 4px;
+  margin: 0 0 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 5px 8px;
   font-weight: 900;
   letter-spacing: 0.3px;
+  background: #f2f2f2;
 }
 
 .rahkaran-sidebar .menu-list {
@@ -234,33 +253,34 @@ body.rahkaran-theme {
   margin: 0;
 }
 
-/* Accordion module button */
+/* Accordion module button — compact, flat */
 .rahkaran-sidebar .module-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 7px 9px;
-  border-radius: 6px;
+  padding: 6px 8px;
+  border-radius: 2px;
   font-size: 12px;
   font-weight: 800;
   color: var(--rk-sidebar-text);
   cursor: pointer;
-  transition: background 0.2s;
-  background: rgba(255, 255, 255, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  transition: background 0.15s;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   font-family: inherit;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .rahkaran-sidebar .module-toggle:hover {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .rahkaran-sidebar .module-toggle i.chevron {
   transition: transform 0.25s ease;
   font-size: 11px;
-  color: var(--rk-sidebar-muted);
+  color: #777;
 }
 
 .rahkaran-sidebar .module-toggle.expanded i.chevron {
@@ -277,34 +297,36 @@ body.rahkaran-theme {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 9px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 2px;
+  font-size: 11.5px;
   color: var(--rk-sidebar-text);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.15s, color 0.15s;
   text-decoration: none;
-  margin-bottom: 2px;
-  background: rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  margin-bottom: 1px;
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .rahkaran-sidebar .menu-item:hover {
-  background: rgba(43, 124, 179, 0.12);
-  color: var(--rk-accent);
-  border-color: rgba(43, 124, 179, 0.20);
+  background: #f0f4f8;
+  color: var(--rk-sidebar-text);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
+/* Active item — signature Rahkaran soft yellow highlight */
 .rahkaran-sidebar .menu-item.active {
-  background: rgba(43, 124, 179, 0.18);
-  color: var(--rk-accent);
-  border-right: 3px solid var(--rk-accent);
+  background: #fff1b9;
+  color: #000;
+  border-right: 3px solid #ff9800;
+  font-weight: 700;
 }
 
 .rahkaran-sidebar .menu-item i,
 .rahkaran-sidebar .menu-item .menu-icon {
-  font-size: 15px;
-  width: 20px;
+  font-size: 14px;
+  width: 18px;
   text-align: center;
   flex-shrink: 0;
 }
@@ -319,15 +341,15 @@ body.rahkaran-theme {
 }
 
 .rahkaran-sidebar .menu-groups::-webkit-scrollbar-thumb {
-  background: rgba(31, 58, 82, 0.20);
+  background: rgba(0, 0, 0, 0.20);
   border-radius: 4px;
 }
 
 /* Sidebar footer */
 .rahkaran-sidebar .sidebar-footer {
-  border-top: 1px solid var(--rk-sidebar-border);
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.35);
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .rahkaran-sidebar .sidebar-footer a {
@@ -336,13 +358,13 @@ body.rahkaran-theme {
   gap: 8px;
   text-decoration: none;
   color: var(--rk-sidebar-text);
-  padding: 7px;
-  border-radius: 6px;
-  transition: background 0.2s;
+  padding: 6px;
+  border-radius: 2px;
+  transition: background 0.15s;
 }
 
 .rahkaran-sidebar .sidebar-footer a:hover {
-  background: rgba(43, 124, 179, 0.12);
+  background: #f0f4f8;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -776,6 +798,8 @@ body.rahkaran-theme {
 
   .rahkaran-header,
   .rahkaran-sidebar,
+  .rhyno-tab-bar-host,
+  .rhyno-tab-viewport,
   .rahkaran-desktop .desktop-toolbar,
   .rahkaran-sidebar-overlay {
     display: none !important;
@@ -786,4 +810,580 @@ body.rahkaran-theme {
     box-shadow: none !important;
     border-radius: 0 !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+    DIMGRAY COMPACT PANELS (dashboard work items + alerts)
+    Rahkaran enterprise density — 11-12px type, sharp corners
+    ═══════════════════════════════════════════════════════════ */
+.rk-dimgray-panel {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.rk-dimgray-panel .rk-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  background: #3e4756;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.rk-dimgray-panel .rk-panel-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.rk-dimgray-panel .rk-panel-title i {
+  color: #ffc107;
+}
+
+.rk-dimgray-panel .rk-panel-badge {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rk-dimgray-panel .rk-panel-badge-amber {
+  background: #f08046;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.rk-dimgray-panel .rk-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: #fafafa;
+}
+
+.rk-dimgray-panel .rk-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+  text-decoration: none;
+  background: #ffffff;
+  color: #374151;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.rk-dimgray-panel .rk-list-item:hover {
+  background: #fff6d2;
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+.rk-dimgray-panel .rk-item-icon {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+  background: #f0f4f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2d3446;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.rk-dimgray-panel .rk-item-status {
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    PAGE-VIEW FIX — Solid readable surface for non-desktop pages
+    Fixes glassy boxes + unreadable text outside boxes
+    Only applies in LIGHT / SYSTEM mode (dark mode keeps its own theme)
+    ═══════════════════════════════════════════════════════════ */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view {
+  background: #e9eef4 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view .rahkaran-desktop {
+  background: #eef2f7;
+  padding: 16px 20px;
+  gap: 14px;
+}
+
+/* Force all inner cards/panels on page views to be SOLID so text is readable */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .bg-white,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .bg-white\/90,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .bg-white\/95,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .bg-white\/80 {
+  background-color: #ffffff !important;
+}
+
+/* Remove glass translucency on gradient KPI cards (ManagementDashboard KPI, etc.) */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .from-emerald-500\/5,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .from-rose-500\/5,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .from-blue-500\/5,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .from-amber-500\/5 {
+  background: #ffffff !important;
+}
+
+/* Ensure headings / body text on page views are dark & readable everywhere */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main h1,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main h2,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main h3,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main h4,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main p,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main span,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main a,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main td,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main th,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main label,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main small,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main strong {
+  color: #1f2937 !important;
+}
+
+/* Subdued/muted text stays muted but darker for readability on light bg */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-slate-400,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-slate-500,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-slate-600,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-gray-400,
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-white {
+  color: #ffffff !important;
+}
+
+/* Keep colored status text (emerald/rose/amber/blue etc.) intact */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-emerald-600 {
+  color: #059669 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-rose-600 {
+  color: #e11d48 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-amber-600 {
+  color: #d97706 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-blue-600 {
+  color: #2563eb !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-indigo-600 {
+  color: #4f46e5 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-sky-600 {
+  color: #0284c7 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-teal-600 {
+  color: #0d9488 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-rose-500 {
+  color: #f43f5e !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-amber-500 {
+  color: #f59e0b !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-blue-500 {
+  color: #3b82f6 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-sky-500 {
+  color: #0ea5e9 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-indigo-500 {
+  color: #6366f1 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-emerald-700 {
+  color: #047857 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-rose-700 {
+  color: #be123c !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-amber-700 {
+  color: #b45309 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-blue-700 {
+  color: #1d4ed8 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-sky-700 {
+  color: #0369a1 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-teal-700 {
+  color: #0f766e !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-rose-400 {
+  color: #fb7185 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-emerald-400 {
+  color: #34d399 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-sky-400 {
+  color: #38bdf8 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-teal-400 {
+  color: #2dd4bf !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-indigo-400 {
+  color: #818cf8 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-slate-800 {
+  color: #1e293b !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .text-slate-900 {
+  color: #0f172a !important;
+}
+
+/* VAT Dashboard — force cards side-by-side in one row (no Bootstrap loaded) */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-cards-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+  margin-bottom: 12px !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-cards-row>.col {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card {
+  height: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid #d8dee8 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Fix VAT glassy gradient values — solid colors for readability */
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card-value {
+  -webkit-text-fill-color: initial !important;
+  -webkit-background-clip: initial !important;
+  background: none !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card-value.text-emerald-600 {
+  color: #059669 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card-value.text-blue-600 {
+  color: #2563eb !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card-value.text-indigo-600 {
+  color: #4f46e5 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card-value.text-rose-600 {
+  color: #e11d48 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card-value.text-sky-600 {
+  color: #0284c7 !important;
+}
+
+html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-card-value.text-amber-600 {
+  color: #d97706 !important;
+}
+
+/* Responsive: allow wrapping on very narrow screens */
+@media (max-width: 991.98px) {
+  html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-cards-row {
+    flex-wrap: wrap !important;
+  }
+
+  html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-cards-row>.col {
+    flex: 1 1 45% !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .vat-cards-row>.col {
+    flex: 1 1 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+    PERSISTENT SHELL — MULTI-TAB ENTERPRISE BAR
+    Rendered under the main header. Rahkaran dim-gray density.
+    ═══════════════════════════════════════════════════════════ */
+.rhyno-tab-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.rhyno-tab-bar-host {
+  height: 34px;
+  min-height: 34px;
+  background: rgba(30, 35, 48, 0.85);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  z-index: 95;
+  position: relative;
+  direction: rtl;
+  scrollbar-width: thin;
+}
+
+.rhyno-tab-bar-host::-webkit-scrollbar {
+  height: 3px;
+}
+
+.rhyno-tab-bar-host::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+/* Individual tab pill — dense, MDI-style */
+.rhyno-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px 0 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+  max-width: 220px;
+}
+
+/* Active tab — signature Rahkaran soft yellow highlight, black text */
+.rhyno-tab.active {
+  background: #fff1b9;
+  border-color: #ff9800;
+  color: #000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.rhyno-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.rhyno-tab.fixed {
+  padding-left: 8px;
+}
+
+.rhyno-tab-icon {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.rhyno-tab.active .rhyno-tab-icon {
+  color: #b45309;
+}
+
+.rhyno-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Close button on each tab (x) */
+.rhyno-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.65;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 2px 0 0;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.rhyno-tab-close:hover {
+  background: #c00;
+  color: #fff;
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    TAB WORKSPACE / VIEWPORT
+    Holds the iframe stack; only the active tab is visible.
+    ═══════════════════════════════════════════════════════════ */
+.rhyno-tab-viewport {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: #eef2f7;
+}
+
+.rhyno-tab-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+.rhyno-tab-frame-active {
+  opacity: 1;
+  pointer-events: auto;
+  animation: rk-tab-reveal 0.22s ease;
+}
+
+@keyframes rk-tab-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+    TAB LOADING STATE — Spinner overlay + top progress bar
+    ═══════════════════════════════════════════════════════════ */
+.rhyno-tab-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(238, 242, 247, 0.94);
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rhyno-spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid rgba(43, 124, 179, 0.2);
+  border-top-color: #2b7cb3;
+  border-radius: 50%;
+  animation: rhyno-spin 0.7s linear infinite;
+}
+
+@keyframes rhyno-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Thin top progress bar while a tab frame is loading */
+.rhyno-tab-loading-frame::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 3px;
+  width: 40%;
+  background: linear-gradient(90deg, #ff9800, #ffc107);
+  z-index: 6;
+  animation: rhyno-progress 1.1s ease-in-out infinite;
+  border-radius: 0 0 3px 3px;
+}
+
+@keyframes rhyno-progress {
+  0% {
+    right: -40%;
+  }
+
+  100% {
+    right: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+    TAB CONTENT LAYOUT — iframe pages (no nested shell)
+    ═══════════════════════════════════════════════════════════ */
+body.rahkaran-tab-content {
+  background: #eef2f7 !important;
+  overflow: auto !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  display: block !important;
+}
+
+body.rahkaran-tab-content .rahkaran-desktop {
+  padding: 16px 20px;
+  gap: 14px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+    SHELL INITIALIZED — hide static server-rendered body
+    Once tab-manager.js creates the first tab frame, the static
+    @RenderBody() region is hidden so the tab owns the viewport.
+    ═══════════════════════════════════════════════════════════ */
+body.rhyno-shell-active #mainContentArea {
+  display: none !important;
 }

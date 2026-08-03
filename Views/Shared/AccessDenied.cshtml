@@ -1,6 +1,7 @@
 @{
     ViewData["Title"] = "دسترسی غیرمجاز";
-    Layout = "_Layout";
+    var isTabContent = Context.Request.Query.ContainsKey("_tab");
+    Layout = isTabContent ? "_TabLayout" : "_Layout";
 }
 
 <div class="flex min-h-[80vh] items-center justify-center px-4">

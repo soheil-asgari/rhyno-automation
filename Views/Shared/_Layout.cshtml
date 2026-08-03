@@ -84,7 +84,7 @@
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="rahkaran-theme">
+<body class="rahkaran-theme @(currentController == "Home" && currentAction == "Index" ? "rahkaran-is-desktop" : "rahkaran-page-view")">
 
     <!-- ═══════════════════════════════════════════════════
     ۱. HEADER — Transparent glass bar
@@ -157,19 +157,19 @@
 
         <!-- SIDEBAR -->
         <aside class="rahkaran-sidebar" id="appSidebar">
-            <!-- Brand / Logo -->
+            <!-- Brand / Logo — dark slate MDI group header -->
             <div class="sidebar-brand">
                 @if (!string.IsNullOrWhiteSpace(brandLogo))
                 {
-                    <img src="@brandLogo" alt="@appTitle" style="width:34px;height:34px;border-radius:8px;object-fit:contain;background:#fff;padding:2px;" />
+                    <img src="@brandLogo" alt="@appTitle" style="width:34px;height:34px;border-radius:2px;object-fit:contain;background:#fff;padding:2px;" />
                 }
                 else
                 {
-                    <span style="width:34px;height:34px;border-radius:8px;background:var(--rk-accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;"><i class="bi bi-grid-1x2-fill"></i></span>
+                    <span style="width:34px;height:34px;border-radius:2px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;border:1px solid rgba(255,255,255,0.25);"><i class="bi bi-grid-1x2-fill"></i></span>
                 }
                 <span style="min-width:0;">
-                    <span style="display:block;font-size:14px;font-weight:900;color:var(--rk-sidebar-text);line-height:1.2;">@appTitle</span>
-                    <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">سیستم جامع سازمانی</span>
+                    <span style="display:block;font-size:14px;font-weight:900;color:#fff;line-height:1.2;">@appTitle</span>
+                    <span style="display:block;font-size:10px;color:rgba(255,255,255,0.75);">سیستم جامع سازمانی</span>
                 </span>
             </div>
 
@@ -297,7 +297,7 @@
             <!-- User Footer in Sidebar -->
             <div class="sidebar-footer">
                 <a asp-controller="Settings" asp-action="Index">
-                    <span style="width:32px;height:32px;border-radius:8px;background:#dcebf5;display:flex;align-items:center;justify-content:center;color:var(--rk-accent);font-size:14px;"><i class="bi bi-person"></i></span>
+                    <span style="width:32px;height:32px;border-radius:2px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;color:var(--rk-sidebar-text);font-size:14px;border:1px solid rgba(0,0,0,0.15);"><i class="bi bi-person"></i></span>
                     <span style="min-width:0;flex:1;">
                         <span style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
                         <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
@@ -312,6 +312,21 @@
         <main class="rahkaran-desktop" id="mainContentArea">
             @RenderBody()
         </main>
+
+        <!-- ═══════════════════════════════════════════════════
+        MULTI-TAB WORKSPACE — Persistent Enterprise Shell
+        Tab bar + iframe stack render here via tab-manager.js.
+        Wrapped in a column so the bar spans full width above the
+        viewport (app-body is a flex row: [sidebar | tab-column]).
+        The static @RenderBody() above is hidden once tabs init;
+        the default fixed tab (میز کار) then owns the viewport.
+        ═══════════════════════════════════════════════════════ -->
+        <div class="rhyno-tab-column">
+            <div class="rhyno-tab-bar-host" id="rhynoTabBarHost" role="tablist" aria-label="تب های باز">
+                <div class="rhyno-tab-bar" id="rhynoTabBar"></div>
+            </div>
+            <div class="rhyno-tab-viewport" id="rhynoWorkspace" aria-live="polite"></div>
+        </div>
 
     </div>
 
@@ -341,6 +356,7 @@
     SCRIPTS
     ═══════════════════════════════════════════════════════════ -->
     <script src="~/js/layout.js" asp-append-version="true"></script>
+    <script src="~/js/tab-manager.js" asp-append-version="true"></script>
     <script src="~/js/professional-table.js" asp-append-version="true"></script>
     <script>
         // ── Rhyno Core Utilities ──────────────────────────────────

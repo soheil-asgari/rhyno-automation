@@ -1,0 +1,42 @@
+@* ═══════════════════════════════════════════════════════════════
+   _TabLayout.cshtml  —  "Naked" content layout for shell tabs
+   Used when a page is embedded inside a tab iframe (_tab=1).
+   No header / sidebar / tab bar — just the page body.
+   ═══════════════════════════════════════════════════════════════ *@
+@{
+    Layout = null;
+    var tabAppTitle = ViewData["Title"] ?? "راینو ERP";
+}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@tabAppTitle</title>
+
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
+
+    <!-- Rahkaran Theme CSS -->
+    <link rel="stylesheet" href="~/css/rahkaran-theme.css" asp-append-version="true">
+
+    <!-- Tailwind (for legacy compatibility in page contents) -->
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="rahkaran-theme rahkaran-page-view rahkaran-tab-content">
+    <main class="rahkaran-desktop" id="mainContentArea">
+        @RenderBody()
+    </main>
+
+    <!-- Hidden AntiForgery Form (some views rely on it being present) -->
+    <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
+
+    <script src="~/js/layout.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

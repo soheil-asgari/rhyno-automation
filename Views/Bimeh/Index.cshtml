@@ -1,7 +1,8 @@
 @model InsuranceIndexVM
 @{
     ViewData["Title"] = "لیست بیمه";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isTabContent = Context.Request.Query.ContainsKey("_tab");
+    Layout = isTabContent ? "_TabLayout" : "~/Views/Shared/_Layout.cshtml";
     var quickActions = new List<OfficeAutomation.Models.FinancialQuickActionVM>
     {
         new() { Title = "لیست جدید", Description = "ساخت لیست بیمه جدید", Url = Url.Action("Create", "Bimeh") ?? "#", Icon =

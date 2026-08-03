@@ -1,7 +1,8 @@
 @model OfficeAutomation.Models.OverviewDashboardViewModel
 @{
     ViewData["Title"] = "داشبورد مدیریتی راینو";
-    Layout = "_Layout";
+    var isTabContent = Context.Request.Query.ContainsKey("_tab");
+    Layout = isTabContent ? "_TabLayout" : "_Layout";
 }
 
 <div class="space-y-6 pb-12 animate-fade-in">

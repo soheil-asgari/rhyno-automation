@@ -25,8 +25,10 @@ public sealed class SecurityHeadersMiddleware
         // Prevent MIME type sniffing
         headers["X-Content-Type-Options"] = "nosniff";
 
-        // Prevent clickjacking
-        headers["X-Frame-Options"] = "DENY";
+        // Prevent clickjacking — SAMEORIGIN allows the persistent-shell tab system
+        // (tab-manager.js) to embed same-origin pages in iframes while still
+        // blocking cross-origin framing.
+        headers["X-Frame-Options"] = "SAMEORIGIN";
 
         // Enable XSS protection in older browsers
         headers["X-XSS-Protection"] = "1; mode=block";

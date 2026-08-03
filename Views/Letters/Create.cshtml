@@ -1,6 +1,7 @@
 @model OfficeAutomation.Models.Letter
 @{
-    Layout = "_Layout";
+    var isTabContent = Context.Request.Query.ContainsKey("_tab");
+    Layout = isTabContent ? "_TabLayout" : "_Layout";
     ViewData["Title"] = "ارسال نامه جدید";
 
     var pc = new System.Globalization.PersianCalendar();
