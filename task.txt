@@ -1,209 +1,28 @@
-🧾 1. ماژول ورودی فاکتور (Invoice Intake)
-🔹 Core
-آپلود فایل:
-JPG / PNG / PDF
-Drag & Drop
-Multi-upload (حداقل 50 فایل)
-نمایش preview
-حذف / ویرایش فایل قبل پردازش
-🔸 Pro
-آپلود ZIP (bulk)
-اتصال ایمیل (IMAP fetch)
-webhook ورودی
-🔥 Killer
-ربات تلگرام/واتساپ:
-forward → ثبت خودکار
-auto-fetch از پوشه Google Drive
-🧠 2. OCR Engine
-🔹 Core
-استخراج متن فارسی
-تشخیص:
-تاریخ
-مبلغ
-شماره فاکتور
-خروجی JSON
-🔸 Pro
-Layout detection (header / table)
-استخراج table line-items
-confidence score per field
-fallback OCR (چند موتور)
-🔥 Killer
-OCR دست‌نویس فارسی
-self-learning correction
-مدل اختصاصی برای فاکتورهای ایرانی
-🧩 3. Data Structuring Engine
-🔹 Core
+Act as a Senior Frontend & Razor Views Engineer. Fix the raw unstyled UI in the Mowadiyan Settings page (`Views/Mowadiyan/Settings.cshtml`).
 
-map داده به schema:
+Problem:
+The settings page loads as an unstyled HTML form inside the inner ERP tab because CSS links are either missing or inside non-rendered Razor sections, and the form layout lacks structure.
 
-{
-  seller,
-  buyer,
-  date,
-  items[],
-  total,
-  tax
-}
-validation اولیه
-🔸 Pro
-auto-detect:
-نوع مالیات
-نوع فاکتور
-normalize:
-تومان ↔ ریال
-🔥 Killer
-AI semantic understanding:
-“این عدد تخفیفه یا مالیاته؟”
-entity resolution:
-یکی کردن فروشنده‌های مشابه
-🏛 4. ماژول سامانه مودیان
-🔹 Core
-ساخت payload استاندارد
-ارسال API
-دریافت response
-🔸 Pro
-retry queue
-status tracking:
-pending
-success
-failed
-🔥 Killer
-sandbox mode (simulate before send)
-auto-fix error (مثلاً فرمت اشتباه)
-💰 5. موتور مالیات
-🔹 Core
-محاسبه VAT
-جمع کل
-تفکیک مالیات و مبلغ
-🔸 Pro
-rules:
-معاف / مشمول
-multi-rate tax
-🔥 Killer
-tax optimization suggestion
-prediction پایان دوره
-📊 6. داشبورد
-🔹 Core
-تعداد فاکتورها
-مجموع مالیات
-نمودار ساده
-🔸 Pro
-فیلتر:
-تاریخ
-فروشنده
-breakdown هزینه‌ها
-🔥 Killer
-AI insight:
-“این ماه ۳۰٪ بیشتر مالیات دادی”
-🔍 7. جستجو و آرشیو
-🔹 Core
-لیست فاکتورها
-جستجو ساده
-🔸 Pro
-full-text search (OCR text)
-فیلتر پیشرفته
-🔥 Killer
-semantic search:
-“فاکتورهای بالای ۵۰ میلیون از دیجی‌کالا”
-🔄 8. تطبیق (Reconciliation)
-🔹 Core
-مقایسه فاکتور با مودیان
-🔸 Pro
-نمایش اختلاف
-🔥 Killer
-auto-match AI
-پیشنهاد اصلاح
-🚨 9. سیستم هشدار
-🔹 Core
-خطای ارسال
-deadline
-🔸 Pro
-ایمیل / SMS
-🔥 Killer
-priority alert (AI-based)
-👨‍💼 10. مدیریت کاربران
-🔹 Core
-ثبت‌نام / لاگین
-نقش‌ها:
-admin
-accountant
-🔸 Pro
-multi-company
-permission matrix
-🔥 Killer
-audit trail کامل
-🔗 11. API و Integration
-🔹 Core
-REST API:
-create invoice
-get status
-🔸 Pro
-webhook
-export:
-Excel
-🔥 Killer
-plugin برای:
-سپیدار
-راهکاران
-📱 12. موبایل
-🔹 Core
-عکس گرفتن
-آپلود
-🔸 Pro
-crop + enhance
-🔥 Killer
-real-time OCR preview
-🤖 13. AI Assistant
-🔹 Core
-چت ساده
-🔸 Pro
-query روی داده:
-“مالیات این ماه؟”
-🔥 Killer
-توصیه:
-“این فاکتور ثبت نشده”
-🛡 14. امنیت
-🔹 Core
-JWT auth
-HTTPS
-🔸 Pro
-encryption at rest
-🔥 Killer
-anomaly detection (login, usage)
-⚙️ 15. Dev & Infra Features (مهم برای مقیاس)
-🔹 Core
-logging
-error handling
-🔸 Pro
-queue (RabbitMQ)
-microservice separation
-🔥 Killer
-autoscaling OCR workers
-model versioning
-💳 16. سیستم درآمدی
-🔹 Core
-subscription
-🔸 Pro
-usage-based billing
-🔥 Killer
-pay-per-success (مثلاً فقط فاکتور موفق)
-🚀 ترتیب پیشنهادی توسعه (خیلی مهم)
-فاز 1 (۲-۴ هفته)
-upload
-OCR ساده
-نمایش دیتا
-فاز 2
-ساختاردهی
-ذخیره
-داشبورد ساده
-فاز 3
-اتصال مودیان
-فاز 4
-AI + automation
-🧠 نکته حیاتی (فرق شکست و موفقیت)
+Tasks to execute:
+1. Fix CSS Asset Loading:
+   - Move or add the required CSS stylesheet links (e.g., `<link rel="stylesheet" href="~/css/mowadiyan.css" />` and icon fonts) directly inside the top of `Views/Mowadiyan/Settings.cshtml` body so styles execute in Partial/Tab mode.
 
-اگر اینو بزنی:
-❌ فقط OCR → شکست
+2. Overhaul UI/UX & Layout (Rhyno ERP Design Standard):
+   - Wrap the form in clean, modern card containers (`card`, `card-header`, `card-body`) with RTL alignment and glassmorphism / Rahkaran styling.
+   - Group settings logically into 3 grid sections/cards:
+     a. **شناسه‌های ارتباطی و هویت (Identity & Keys):**
+        - Client ID (شناسه سرویس‌گیرنده)
+        - Memory Key (کلید حافظه مالیاتی)
+        - کد اقتصادی / شناسه ملی
+     b. **گواهی دیجیتال و امنیت (PKI & Certificates):**
+        - مسیر فایل کلید خصوصی (.pfx / .pem)
+        - رمز کلید خصوصی (Password field with toggle visibility)
+     c. **تنظیمات اتصال و سرور (Connection & Environment):**
+        - آدرس API سامانه مودیان (`https://tp.tax.gov.ir`)
+        - سوئیچ فعال‌سازی وضعیت آزمایشی (Sandbox Mode toggle)
+   - Use standard form controls (`form-label`, `form-control`, input group icons, custom switches, and `btn btn-primary` / `btn-outline-secondary` for "ذخیره تنظیمات" and "بازگشت").
 
-اگر اینو بزنی:
-✅ “کاهش درد مالیاتی + اتوماسیون کامل” → موفقیت
+3. Controller Integration Check:
+   - Ensure `MowadiyanController.cs` `Settings` action returns `PartialView("Settings", model)` when invoked via tab/AJAX (`RhynoTabRequest`).
+
+Rebuild (`dotnet build`) and verify that opening the Mowadiyan Settings tab renders a fully styled, structured ERP form.

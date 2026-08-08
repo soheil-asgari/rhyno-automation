@@ -1,0 +1,86 @@
+@using OfficeAutomation.Modules.InvoiceStructuring
+@using OfficeAutomation.Modules.TaxAnalytics
+@{
+    ViewData["Title"] = "تحلیل‌های هوشمند مالیات";
+    var snapshot = ViewBag.Snapshot as TaxAnalyticsSnapshot ?? new TaxAnalyticsSnapshot();
+}
+
+<link rel="stylesheet" href="~/css/tax-analytics.css" asp-append-version="true" />
+
+<div class="tax-root" dir="rtl">
+    <div class="tax-header">
+        <div class="tax-header-left">
+            <i class="bi bi-robot"></i>
+            <h5>تحلیل هوشمند مالیات و هشدارها</h5>
+        </div>
+        <div class="tax-header-actions">
+            <a class="sg-btn sg-btn-primary" asp-action="Assistant"><i class="bi bi-chat-dots"></i> دستیار هوشمند</a>
+        </div>
+    </div>
+
+    <div class="tax-stat-cards">
+        <div class="tax-stat-card tax-stat-primary">
+            <div class="tax-stat-icon"><i class="bi bi-receipt"></i></div>
+            <div class="tax-stat-body">
+                <span class="tax-stat-value">@CurrencyNormalizer.ToPersianDigits(snapshot.TotalInvoices.ToString("N0"))</span>
+                <span class="tax-stat-label">کل فاکتورها</span>
+            </div>
+        </div>
+        <div class="tax-stat-card tax-stat-warning">
+            <div class="tax-stat-icon"><i class="bi bi-cash-stack"></i></div>
+            <div class="tax-stat-body">
+                <span class="tax-stat-value">@CurrencyNormalizer.ToPersianDigits(snapshot.TotalTaxPaid.ToString("N0")) ریال</span>
+                <span class="tax-stat-label">مجموع مالیات پرداختی</span>
+            </div>
+        </div>
+        <div class="tax-stat-card tax-stat-info">
+            <div class="tax-stat-icon"><i class="bi bi-graph-up"></i></div>
+            <div class="tax-stat-body">
+                <span class="tax-stat-value">
+                    @(snapshot.TaxMoMChangePercent.HasValue
+                        ? CurrencyNormalizer.ToPersianDigits(snapshot.TaxMoMChangePercent.Value.ToString("N1")) + "٪"
+                        : "—")
+                </span>
+                <span class="tax-stat-label">تغییر ماه به ماه مالیات</span>
+            </div>
+        </div>
+        <div class="tax-stat-card tax-stat-danger">
+            <div class="tax-stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="tax-stat-body">
+                <span class="tax-stat-value">@CurrencyNormalizer.ToPersianDigits(snapshot.MissingEconomicCodeInvoices.ToString("N0"))</span>
+                <span class="tax-stat-label">فاکتورهای فاقد کد اقتصادی</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tax-section-title">هشدارها و بینش‌های خودکار</div>
+    <div class="tax-alert-list">
+        @if (snapshot.Alerts.Count == 0)
+        {
+            <div class="tax-empty">هشدار یا ناهنجاری‌ای شناسایی نشد. وضعیت مالیاتی شما نرمال است.</div>
+        }
+        @foreach (var alert in snapshot.Alerts)
+        {
+            <div class="tax-alert tax-alert-@alert.Severity.ToString().ToLowerInvariant()">
+                <div class="tax-alert-icon">
+                    @switch (alert.Severity)
+                    {
+                        case InsightSeverity.Critical: <i class="bi bi-x-octagon"></i> break;
+                        case InsightSeverity.Warning: <i class="bi bi-exclamation-triangle"></i> break;
+                        default: <i class="bi bi-info-circle"></i> break;
+                    }
+                </div>
+                <div class="tax-alert-body">
+                    <div class="tax-alert-title">@alert.Title</div>
+                    <div class="tax-alert-message">@alert.Message</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="tax-section-title">وضعیت ارسال به سامانه مودیان</div>
+    <div class="tax-submission-bar">
+        <span class="tax-submission-chip"><i class="bi bi-hourglass-split"></i> در صف: @CurrencyNormalizer.ToPersianDigits(snapshot.PendingSubmissions.ToString("N0"))</span>
+        <span class="tax-submission-chip tax-chip-danger"><i class="bi bi-x-circle"></i> رد شده: @CurrencyNormalizer.ToPersianDigits(snapshot.RejectedSubmissions.ToString("N0"))</span>
+    </div>
+</div>

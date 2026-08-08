@@ -1,0 +1,144 @@
+@using OfficeAutomation.Modules.InvoiceStructuring
+@using OfficeAutomation.Modules.Persistence.Entities
+@{
+    ViewData["Title"] = "داشبورد فاکتور و مالیات";
+    var totalProcessed = ViewBag.TotalProcessed as int? ?? 0;
+    var totalTax = ViewBag.TotalTaxLiability as decimal? ?? 0m;
+    var totalRevenue = ViewBag.TotalRevenue as decimal? ?? 0m;
+    var totalExpense = ViewBag.TotalExpense as decimal? ?? 0m;
+}
+
+<link rel="stylesheet" href="~/css/invoice-dashboard.css" asp-append-version="true" />
+
+<div class="inv-dashboard-root" dir="rtl">
+
+    <div class="inv-dash-header">
+        <div class="inv-dash-header-left">
+            <i class="bi bi-graph-up-arrow"></i>
+            <h5>داشبورد فاکتور و مدیریت مالیات</h5>
+        </div>
+        <span class="inv-dash-header-date">@JalaliDateHelper.TodayShamsi()</span>
+    </div>
+
+    <div class="inv-stat-cards">
+        <div class="inv-stat-card inv-stat-primary">
+            <div class="inv-stat-icon"><i class="bi bi-receipt"></i></div>
+            <div class="inv-stat-body">
+                <span class="inv-stat-value">@totalProcessed.ToString("N0")</span>
+                <span class="inv-stat-label">فاکتورهای پردازش شده</span>
+            </div>
+        </div>
+        <div class="inv-stat-card inv-stat-warning">
+            <div class="inv-stat-icon"><i class="bi bi-cash-stack"></i></div>
+            <div class="inv-stat-body">
+                <span class="inv-stat-value">@CurrencyNormalizer.ToPersianDigits(totalTax.ToString("N0")) ریال</span>
+                <span class="inv-stat-label">مجموع مالیات (بدهی مالیاتی)</span>
+            </div>
+        </div>
+        <div class="inv-stat-card inv-stat-success">
+            <div class="inv-stat-icon"><i class="bi bi-arrow-up-circle"></i></div>
+            <div class="inv-stat-body">
+                <span class="inv-stat-value">@CurrencyNormalizer.ToPersianDigits(totalRevenue.ToString("N0")) ریال</span>
+                <span class="inv-stat-label">کل درآمد (فروش)</span>
+            </div>
+        </div>
+        <div class="inv-stat-card inv-stat-danger">
+            <div class="inv-stat-icon"><i class="bi bi-arrow-down-circle"></i></div>
+            <div class="inv-stat-body">
+                <span class="inv-stat-value">@CurrencyNormalizer.ToPersianDigits(totalExpense.ToString("N0")) ریال</span>
+                <span class="inv-stat-label">کل هزینه (خرید)</span>
+            </div>
+        </div>
+    </div>
+    <div class="inv-filters-bar">
+        <div class="inv-search-wrap">
+            <i class="bi bi-search inv-search-icon"></i>
+            <input type="text" id="invSearchInput" class="inv-search-input"
+                   placeholder="جستجو در متن OCR، شماره فاکتور، فروشنده یا خریدار..." />
+        </div>
+        <div class="inv-filter-group">
+            <label>از تاریخ:</label>
+            <input type="text" id="invDateFrom" class="inv-date-input" dir="ltr" placeholder="۱۴۰۳/۰۱/۰۱" />
+        </div>
+        <div class="inv-filter-group">
+            <label>تا تاریخ:</label>
+            <input type="text" id="invDateTo" class="inv-date-input" dir="ltr" placeholder="۱۴۰۳/۱۲/۲۹" />
+        </div>
+        <div class="inv-filter-group">
+            <label>فروشنده:</label>
+            <input type="text" id="invSellerFilter" class="inv-filter-input" placeholder="نام فروشنده..." />
+        </div>
+        <button type="button" id="invSearchBtn" class="sg-btn sg-btn-primary">
+            <i class="bi bi-search"></i> جستجو
+        </button>
+        <button type="button" id="invClearBtn" class="sg-btn sg-btn-secondary">
+            <i class="bi bi-x-circle"></i> پاک کردن
+        </button>
+    <div class="inv-table-wrap">
+        <table class="inv-data-table" id="invDataTable">
+            <thead>
+                <tr>
+                    <th>شماره فاکتور</th><th>تاریخ (شمسی)</th><th>فروشنده</th>
+                    <th>خریدار</th><th>مبلغ کل (ریال)</th><th>مالیات (ریال)</th>
+                    <th>قابل پرداخت (ریال)</th><th>وضعیت</th><th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody id="invTableBody">
+                @if (ViewBag.RecentInvoices is List<InvoiceRecord> recent)
+                {
+                    @foreach (var inv in recent)
+                    {
+                        <tr data-id="@inv.Id">
+                            <td class="inv-cell-number">@inv.InvoiceNumber</td>
+                            <td>@inv.DateShamsi</td>
+                            <td>@(inv.Seller?.Name ?? "-")</td>
+                            <td>@(inv.Buyer?.Name ?? "-")</td>
+                            <td class="inv-cell-amount">@CurrencyNormalizer.ToPersianDigits(inv.TotalAmount.ToString("N0"))</td>
+                            <td class="inv-cell-amount">@CurrencyNormalizer.ToPersianDigits(inv.VatAmount.ToString("N0"))</td>
+                            <td class="inv-cell-amount">@CurrencyNormalizer.ToPersianDigits(inv.FinalAmount.ToString("N0"))</td>
+                            <td><span class="inv-status-badge inv-status-@inv.Status.ToLower()">@inv.Status</span></td>
+                            <td>
+                                <button type="button" class="sg-btn sg-btn-sm sg-btn-secondary inv-detail-btn"
+                                        data-id="@inv.Id" title="جزئیات">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="inv-pagination" id="invPagination">
+        <span id="invPageInfo">صفحه ۱</span>
+        <button type="button" class="sg-btn sg-btn-sm sg-btn-secondary" id="invPrevPage" disabled>قبلی</button>
+        <button type="button" class="sg-btn sg-btn-sm sg-btn-secondary" id="invNextPage">بعدی</button>
+    </div>
+</div>
+
+@* Detail Modal *@
+<div class="inv-modal-overlay hidden" id="invDetailOverlay">
+    <div class="inv-modal" id="invDetailModal">
+        <div class="inv-modal-header">
+            <h6><i class="bi bi-file-text"></i> جزئیات فاکتور</h6>
+            <button type="button" class="inv-modal-close" id="invDetailClose">&times;</button>
+        </div>
+        <div class="inv-modal-body" id="invDetailBody">
+        </div>
+        <div class="inv-modal-footer">
+            <button type="button" class="sg-btn sg-btn-secondary" id="invDetailCancel">بستن</button>
+            <button type="button" class="sg-btn sg-btn-warning" id="invRecalcTaxBtn">
+                <i class="bi bi-calculator"></i> محاسبه مجدد مالیات
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script src="~/js/invoice-dashboard.js" asp-append-version="true"></script>
+}
+
+
+    </div>
+

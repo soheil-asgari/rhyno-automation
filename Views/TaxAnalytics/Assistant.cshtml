@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "دستیار هوشمند مالیات";
+}
+
+<link rel="stylesheet" href="~/css/tax-analytics.css" asp-append-version="true" />
+
+<div class="tax-root" dir="rtl">
+    <div class="tax-header">
+        <div class="tax-header-left">
+            <i class="bi bi-chat-dots"></i>
+            <h5>دستیار هوشمند مالیات</h5>
+        </div>
+        <a class="sg-btn sg-btn-secondary" asp-action="Insights"><i class="bi bi-graph-up-arrow"></i> تحلیل‌ها</a>
+    </div>
+
+    <div class="tax-chat-tip">
+        سوالات خود را به زبان طبیعی درباره داده‌های فاکتور بپرسید؛
+        مثلاً: «مجموع خرید از دیجی‌کالا در این ماه چقدر بوده است؟» یا «چند فاکتور فاقد کد اقتصادی هستند؟»
+    </div>
+
+    <div class="tax-chat-card">
+        <div class="tax-chat-messages" id="taxChatMessages">
+            <div class="tax-msg tax-msg-ai">
+                <div class="tax-msg-bubble">
+                    سلام! من دستیار هوشمند مالیات هستم. می‌توانید درباره مجموع خرید/فروش، مالیات و وضعیت فاکتورها از من بپرسید.
+                </div>
+            </div>
+        </div>
+        <div class="tax-chat-input-row">
+            <input type="text" id="taxChatInput" class="tax-chat-input"
+                   placeholder="سوال خود را بنویسید..." autocomplete="off" />
+            <button type="button" id="taxChatSend" class="sg-btn sg-btn-primary">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script src="~/js/tax-assistant.js" asp-append-version="true"></script>
+}

@@ -397,7 +397,7 @@
                     if (value) queryParams.set(key, value.toString());
                 }
 
-                excelExportLink.href = `${dataUrl.replace('/ChartData', '/ExportExcel')}?${queryParams.toString()}`;
+                excelExportLink.href = `${(dataUrl || '').replace('/ChartData', '/ExportExcel')}?${queryParams.toString()}`;
 
                 const response = await fetch(`${dataUrl}?${queryParams.toString()}`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }

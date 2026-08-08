@@ -1,0 +1,191 @@
+@model OfficeAutomation.Modules.Persistence.Entities.MowadiyanSettings
+@using OfficeAutomation.Modules.InvoiceStructuring
+@{
+    ViewData["Title"] = "تنظیمات سامانه مودیان";
+    var alert = TempData["AlertMessage"] as string;
+}
+
+<!-- ═══════════════════════════════════════════════════════
+     CSS loaded directly (not inside a Razor section) so styles
+     execute both in full-view (_Layout / _TabLayout) and
+     PartialView / tab / AJAX modes.
+     ═══════════════════════════════════════════════════════ -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
+      integrity="sha384-dpuaG1TqWkv1UwFQJUjsAkGlA2TBMu7Z+JmBfXBfCRbLsUUPyaYcBvATHkPOtNF" crossorigin="anonymous" />
+<link rel="stylesheet" href="~/css/mowadiyan.css" asp-append-version="true" />
+
+<div class="mow-root" dir="rtl">
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <div class="mow-header">
+        <div class="mow-header-left">
+            <i class="bi bi-gear"></i>
+            <h5>تنظیمات سامانه مودیان</h5>
+        </div>
+        <span class="mow-header-date">@JalaliDateHelper.TodayShamsi()</span>
+    </div>
+
+    <!-- ═══════════════ ALERT ═══════════════ -->
+    @if (!string.IsNullOrWhiteSpace(alert))
+    {
+        <div class="alert alert-success mow-alert-success py-2 px-3 small">@alert</div>
+    }
+
+    <form asp-action="SaveSettings" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:none;"></div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             CARD 1  —  شناسه‌های ارتباطی و هویت  (Identity & Keys)
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="card mow-settings-card mb-3">
+            <div class="card-header mow-card-header">
+                <i class="bi bi-person-badge"></i>
+                <span>شناسه‌های ارتباطی و هویت</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="ClientId" class="form-label mow-form-label">شناسه سرویس‌گیرنده (Client ID)</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input asp-for="ClientId" class="form-control" dir="ltr" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" />
+                        </div>
+                        <span asp-validation-for="ClientId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="MemorySecret" class="form-label mow-form-label">کلید حافظه مالیاتی (Memory Secret)</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                            <input asp-for="MemorySecret" class="form-control" dir="ltr" type="password" id="pwdMemorySecret" />
+                            <button class="btn btn-outline-secondary mow-toggle-pwd" type="button" onclick="togglePassword('pwdMemorySecret', this)" title="نمایش/مخفی‌سازی">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="MemorySecret" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="EconomicCode" class="form-label mow-form-label">کد اقتصادی</label>
+                        <input asp-for="EconomicCode" class="form-control form-control-sm" dir="ltr" placeholder="۱۲۳۴۵۶۷۸۹۰" />
+                        <span asp-validation-for="EconomicCode" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NationalId" class="form-label mow-form-label">شناسه ملی</label>
+                        <input asp-for="NationalId" class="form-control form-control-sm" dir="ltr" placeholder="۰۰۱۲۳۴۵۶۷۸" />
+                        <span asp-validation-for="NationalId" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             CARD 2  —  گواهی دیجیتال و امنیت  (PKI & Certificates)
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="card mow-settings-card mb-3">
+            <div class="card-header mow-card-header">
+                <i class="bi bi-shield-check"></i>
+                <span>گواهی دیجیتال و امنیت</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="PrivateKeyPath" class="form-label mow-form-label">مسیر فایل کلید خصوصی (.pfx / .pem)</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-file-earmark-lock"></i></span>
+                            <input asp-for="PrivateKeyPath" class="form-control" dir="ltr" placeholder="C:\certs\tax-private.pfx" />
+                        </div>
+                        <span asp-validation-for="PrivateKeyPath" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PrivateKeyPassword" class="form-label mow-form-label">رمز کلید خصوصی</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input asp-for="PrivateKeyPassword" class="form-control" dir="ltr" type="password" id="pwdPrivateKey" />
+                            <button class="btn btn-outline-secondary mow-toggle-pwd" type="button" onclick="togglePassword('pwdPrivateKey', this)" title="نمایش/مخفی‌سازی">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="PrivateKeyPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             CARD 3  —  تنظیمات اتصال و سرور  (Connection & Environment)
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="card mow-settings-card mb-3">
+            <div class="card-header mow-card-header">
+                <i class="bi bi-cloud"></i>
+                <span>تنظیمات اتصال و سرور</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="BaseUrl" class="form-label mow-form-label">آدرس API سامانه مودیان</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-globe2"></i></span>
+                            <input asp-for="BaseUrl" class="form-control" dir="ltr" placeholder="https://tp.tax.gov.ir" />
+                        </div>
+                        <span asp-validation-for="BaseUrl" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mow-form-label">وضعیت آزمایشی (Sandbox Mode)</label>
+                        <div class="form-check form-switch mow-switch mt-2">
+                            <input asp-for="IsSandbox" class="form-check-input" type="checkbox" role="switch" id="chkSandbox" />
+                            <label asp-for="IsSandbox" class="form-check-label">
+                                @(Model?.IsSandbox == true ? "حالت آزمایشی فعال" : "حالت آزمایشی غیرفعال")
+                            </label>
+                        </div>
+                        <div class="mow-sandbox-hint">
+                            <i class="bi bi-info-circle"></i>
+                            <span>در حالت آزمایشی، داده‌ها به سرور اصلی سامانه مودیان ارسال نمی‌شوند.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ ACTIONS ═══════════════ -->
+        <div class="mow-form-actions">
+            <a class="btn btn-outline-secondary mow-btn-back" asp-action="Index">
+                <i class="bi bi-arrow-right"></i> بازگشت
+            </a>
+            <button type="submit" class="btn btn-primary mow-btn-save">
+                <i class="bi bi-check-lg"></i> ذخیره تنظیمات
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Inline scripts — NOT inside a Razor section so they work
+     in PartialView / tab / AJAX modes too.
+     ═══════════════════════════════════════════════════════ -->
+<script>
+    // Password visibility toggle
+    function togglePassword(inputId, btn) {
+        var input = document.getElementById(inputId);
+        var icon = btn.querySelector('i');
+        if (!input) return;
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) { icon.className = 'bi bi-eye-slash'; }
+        } else {
+            input.type = 'password';
+            if (icon) { icon.className = 'bi bi-eye'; }
+        }
+    }
+
+    // Update sandbox label text when toggle changes
+    (function() {
+        var chk = document.getElementById('chkSandbox');
+        var lbl = chk && chk.parentElement && chk.parentElement.querySelector('.form-check-label');
+        if (chk && lbl) {
+            var updateLabel = function() {
+                lbl.textContent = chk.checked ? 'حالت آزمایشی فعال' : 'حالت آزمایشی غیرفعال';
+            };
+            chk.addEventListener('change', updateLabel);
+        }
+    })();
+</script>

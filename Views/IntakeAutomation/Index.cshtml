@@ -1,0 +1,95 @@
+@using OfficeAutomation.Modules.InvoiceStructuring
+@{
+    ViewData["Title"] = "اتوماسیون دریافت فاکتور";
+    var maxEntries = ViewBag.MaxEntries as int? ?? 200;
+    var maxZipMb = ViewBag.MaxZipMb as long? ?? 100;
+    var alertType = TempData["AlertType"] as string;
+    var alertMessage = TempData["AlertMessage"] as string;
+    var zipErrors = TempData["ZipErrors"] as List<string>;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/intake-automation.css" asp-append-version="true" />
+}
+
+<div class="ia-root" dir="rtl">
+    <div class="ia-header">
+        <div class="ia-header-left">
+            <i class="bi bi-box-seam"></i>
+            <h5>اتوماسیون دریافت فاکتور</h5>
+        </div>
+        <span class="ia-header-date">@JalaliDateHelper.TodayShamsi()</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(alertMessage))
+    {
+        <div class="ia-alert ia-alert-@(alertType == "error" ? "error" : "success")">@alertMessage</div>
+    }
+
+    <div class="ia-grid">
+        <div class="ia-card">
+            <div class="ia-card-title"><i class="bi bi-file-zip"></i> بارگذاری دسته‌ای ZIP</div>
+            <p class="ia-card-desc">
+                یک آرشیو ZIP حاوی فاکتورها (PNG، JPG، PDF) بارگذاری کنید تا به‌صورت خودکار
+                در صف پردازش OCR قرار گیرند. حداکثر @maxEntries فایل و @maxZipMb مگابایت.
+            </p>
+            <form asp-action="UploadZip" method="post" enctype="multipart/form-data" class="ia-upload-form">
+                @Html.AntiForgeryToken()
+                <div class="ia-file-drop">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <input type="file" name="file" accept=".zip" required />
+                    <span>انتخاب فایل ZIP</span>
+                </div>
+                <button type="submit" class="sg-btn sg-btn-primary">
+                    <i class="bi bi-upload"></i> بارگذاری و پردازش خودکار
+                </button>
+            </form>
+
+            @if (zipErrors is { Count: > 0 })
+            {
+                <div class="ia-errors">
+                    @foreach (var err in zipErrors)
+                    {
+                        <div class="ia-error">@err</div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="ia-card">
+            <div class="ia-card-title"><i class="bi bi-plug"></i> کانکتورهای وب‌هوک</div>
+            <p class="ia-card-desc">
+                از طریق API با کلید امنیتی، فاکتورها را به‌صورت خودکار دریافت کنید.
+            </p>
+            <div class="ia-endpoint">
+                <code>POST /api/v1/intake/webhook</code>
+                <span class="ia-badge-warning">نیازمند X-Api-Key</span>
+            </div>
+            <div class="ia-endpoint">
+                <code>POST /api/v1/intake/zip</code>
+                <span class="ia-badge-warning">ZIP دسته‌ای</span>
+            </div>
+            <div class="ia-endpoint">
+                <code>POST /api/v1/intake/webhook/telegram</code>
+                <span class="ia-badge-info">تلگرام/واتس‌اپ</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="ia-section-title">فایل‌های اخیر جلسه</div>
+    <div class="ia-table-wrap">
+        <table class="ia-data-table" id="iaTable">
+            <thead>
+                <tr>
+                    <th>نام فایل</th><th>وضعیت</th><th>اعتماد OCR</th><th>خطا</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script src="~/js/intake-automation.js" asp-append-version="true"></script>
+}

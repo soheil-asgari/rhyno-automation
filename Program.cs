@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.OpenApi.Models;
@@ -28,6 +29,17 @@ using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Finance.Application;
 using OfficeAutomation.Modules.Platform.Application.SavedViews;
+using OfficeAutomation.Modules.Ocr;
+using OfficeAutomation.Modules.InvoiceIntake;
+using OfficeAutomation.Modules.InvoiceStructuring;
+using OfficeAutomation.Modules.TaxEngine;
+using OfficeAutomation.Modules.Persistence;
+using OfficeAutomation.Modules.MowadiyanIntegration;
+using OfficeAutomation.Modules.Reconciliation;
+using OfficeAutomation.Modules.IntakeAutomation;
+using OfficeAutomation.Modules.AiEngine;
+using OfficeAutomation.Modules.TaxAnalytics;
+using OfficeAutomation.Modules.SecurityAndAudit;
 
 var builder = WebApplication.CreateBuilder(args);
 var isEfDesignTime = Environment.GetCommandLineArgs()
@@ -44,6 +56,7 @@ builder.Services.Configure<OutboxOptions>(builder.Configuration.GetSection(Outbo
 builder.Services.Configure<ConnectorOptions>(builder.Configuration.GetSection(ConnectorOptions.SectionName));
 builder.Services.Configure<TenantOptions>(builder.Configuration.GetSection(TenantOptions.SectionName));
 builder.Services.Configure<AuditRetentionOptions>(builder.Configuration.GetSection(AuditRetentionOptions.SectionName));
+builder.Services.Configure<OcrOptions>(builder.Configuration.GetSection(OcrOptions.SectionName));
 
 // ── Swagger / OpenAPI ──────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
@@ -168,6 +181,12 @@ builder.Services.AddScoped<IWorkflowDbContext>(sp => sp.GetRequiredService<Workf
 builder.Services.AddDbContext<FinanceDbContext>(ConfigureTenantDbContext);
 builder.Services.AddDbContext<InventoryDbContext>(ConfigureTenantDbContext);
 builder.Services.AddDbContext<OfficeDbContext>(ConfigureTenantDbContext);
+// TaxDbContext is resolved through a SCOPED factory (see Modules/Persistence/TaxDbContextFactory.cs).
+// Registering it as a scoped factory ensures the options (and the scoped tenancy services such as
+// ITenantConnectionStringResolver and the EF interceptors) are resolved from a real IServiceScope
+// instead of from the application root provider — fixing the
+// "Cannot resolve scoped service 'ITenantConnectionStringResolver' from root provider" exception.
+builder.Services.AddScoped<IDbContextFactory<TaxDbContext>, TaxDbContextFactory>();
 builder.Services.AddDbContext<PlatformDbContext>((serviceProvider, options) =>
     options
         .UseSqlServer(GetPlatformConnectionString(serviceProvider.GetRequiredService<IConfiguration>()))
@@ -236,6 +255,34 @@ builder.Services.AddScoped<IWorkflowAttachmentService, WorkflowAttachmentService
 builder.Services.AddScoped<IWorkflowSlaService, WorkflowSlaService>();
 builder.Services.AddScoped<WorkflowSlaEscalationNotifier>();
 builder.Services.AddScoped<FinancialAppService>();
+builder.Services.AddScoped<IOcrEngine, TesseractOcrEngine>();
+builder.Services.AddScoped<IIntakeSessionStore, DatabaseIntakeSessionStore>();
+builder.Services.AddScoped<InvoiceIntakeService>();
+builder.Services.AddScoped<ITaxCalculatorService, TaxCalculatorService>();
+builder.Services.Configure<MowadiyanOptions>(builder.Configuration.GetSection(MowadiyanOptions.SectionName));
+    builder.Services.AddScoped<IMowadiyanPayloadBuilder, MowadiyanPayloadBuilder>();
+    builder.Services.AddScoped<IMowadiyanCryptoService, MowadiyanCryptoService>();
+    builder.Services.AddHttpClient<IMowadiyanApiClient, MowadiyanApiClient>((sp, client) =>
+    {
+        var options = sp.GetRequiredService<IOptions<MowadiyanOptions>>().Value;
+        client.Timeout = TimeSpan.FromSeconds(60);
+        if (!string.IsNullOrWhiteSpace(options.BaseUrl))
+        {
+            client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+        }
+    });
+    builder.Services.AddScoped<SandboxMowadiyanApiClient>();
+    builder.Services.AddSingleton<IMowadiyanSubmissionService, MowadiyanSubmissionService>();
+    builder.Services.AddHostedService<MowadiyanSubmissionQueueHostedService>();
+    builder.Services.AddScoped<IInvoiceReconciliationService, InvoiceReconciliationService>();
+builder.Services.AddScoped<ZipArchiveProcessor>();
+builder.Services.AddScoped<TelegramBotWebhookHandler>();
+builder.Services.AddScoped<ISemanticDisambiguationService, SemanticDisambiguationService>();
+builder.Services.AddScoped<IEntityResolutionService, EntityResolutionService>();
+builder.Services.AddScoped<ITaxInsightsService, TaxInsightsService>();
+builder.Services.AddScoped<ITaxQueryService, TaxQueryService>();
+builder.Services.AddScoped<IInvoiceExportService, InvoiceExportService>();
+builder.Services.AddScoped<ITaxAuditService, TaxAuditService>();
 builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
 builder.Services.AddScoped<ConnectorExecutionService>();
 builder.Services.AddScoped<ProcessMiningService>();
@@ -479,9 +526,37 @@ app.MapRazorPages();
 app.MapHealthChecks("/health");
 app.MapHub<OfficeAutomation.Hubs.AutomationHub>("/automationHub");
 
+// ── TaxDbContext auto-migration (runs unconditionally to ensure InvoiceRecords & MowadiyanSubmissions tables exist) ──
+try
+{
+    using var scope = app.Services.CreateScope();
+    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TaxDbContext>>();
+    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+    await dbContext.Database.MigrateAsync();
+    logger.LogInformation("TaxDbContext migrations applied successfully on startup.");
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "TaxDbContext MigrateAsync failed, falling back to EnsureCreated: {Message}", ex.Message);
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TaxDbContext>>();
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        await dbContext.Database.EnsureCreatedAsync();
+        logger.LogInformation("TaxDbContext schema ensured via EnsureCreated fallback.");
+    }
+    catch (Exception fallbackEx)
+    {
+        logger.LogWarning(fallbackEx, "TaxDbContext EnsureCreated also failed (DB may not be ready): {Message}", fallbackEx.Message);
+    }
+}
+
 if (builder.Configuration.GetValue("Bootstrap:RunOnStartup", false))
 {
     logger.LogWarning("Bootstrap:RunOnStartup is enabled. Run database/bootstrap tasks only after SQL Server is confirmed available.");
+
+    // Additional bootstrap tasks can be added here.
 }
 else
 {

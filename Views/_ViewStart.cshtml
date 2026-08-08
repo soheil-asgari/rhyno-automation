@@ -1,6 +1,13 @@
 @{
-    // When a page is requested inside a shell tab (_tab=1) render the compact
-    // "naked" layout (no header/sidebar/tab-bar) so we never get a nested shell.
-    var isTabContent = Context.Request.Query.ContainsKey("_tab");
+    // When a page is requested inside a shell tab render the compact "naked"
+    // layout (no header/sidebar/tab-bar) so we never get a nested shell.
+    // A tab load is signalled either by the "_tab" query parameter (iframe tabs)
+    // or by an AJAX / Rahkaran-tab request header.
+    var isTabContent =
+        Context.Request.Query.ContainsKey("_tab")
+        || string.Equals(Context.Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase)
+        || Context.Request.Headers.ContainsKey("X-Rhyno-Tab")
+        || Context.Request.Headers.ContainsKey("X-Rahkaran-Tab")
+        || Context.Request.Headers.ContainsKey("X-Tab");
     Layout = isTabContent ? "_TabLayout" : "_Layout";
 }

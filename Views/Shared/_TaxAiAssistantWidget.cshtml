@@ -1,0 +1,43 @@
+@* ────────────────────────────────────────────────────────────────────────────
+   _TaxAiAssistantWidget.cshtml — Rahkaran-styled slide-over AI tax assistant
+   Self-contained: renders a floating launcher + slide-over chat panel.
+   The panel posts to the TaxAnalyticsController.Ask endpoint (anti-forgery aware).
+   ──────────────────────────────────────────────────────────────────────────── *@
+@{
+    var taxWidgetToken = Context.RequestServices.GetService<Microsoft.AspNetCore.Antiforgery.IAntiforgery>()
+        ?.GetAndStoreTokens(Context)?.RequestToken;
+}
+<link rel="stylesheet" href="~/css/tax-analytics.css" asp-append-version="true" />
+<div id="taxAiLauncher" title="دستیار هوشمند مالیات">
+    <i class="bi bi-robot"></i>
+    <span class="tax-widget-launcher-badge"></span>
+</div>
+
+<div id="taxAiOverlay" role="dialog" aria-label="دستیار هوشمند مالیات" aria-hidden="true">
+    <div id="taxAiPanel" dir="rtl">
+        <div class="tax-widget-header">
+            <div class="tax-widget-title"><i class="bi bi-chat-dots"></i> دستیار هوشمند مالیات</div>
+            <button type="button" id="taxAiClose" class="tax-widget-close" aria-label="بستن">&times;</button>
+        </div>
+        <div class="tax-widget-body" id="taxAiMessages">
+            <div class="tax-widget-msg tax-widget-ai">
+                <div class="tax-widget-bubble">
+                    سلام! درباره مالیات و فاکتورهای خود از من بپرسید.
+                </div>
+            </div>
+        </div>
+        <div class="tax-widget-input-row">
+            <input type="text" id="taxAiInput" class="tax-widget-input"
+                   placeholder="مثلاً: مجموع خرید از دیجی‌کالا در این ماه؟" autocomplete="off" />
+            <button type="button" id="taxAiSend" class="tax-widget-send"><i class="bi bi-send"></i></button>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(taxWidgetToken))
+{
+    <script>
+        window.__taxAntiForgeryToken = '@taxWidgetToken';
+    </script>
+}
+<script src="~/js/tax-widget.js" asp-append-version="true"></script>

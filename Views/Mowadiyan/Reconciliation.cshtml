@@ -1,0 +1,123 @@
+@using OfficeAutomation.Modules.InvoiceStructuring
+@using OfficeAutomation.Modules.Persistence.Entities
+@{
+    ViewData["Title"] = "تطبیق سامانه مودیان";
+    var results = ViewBag.Results as List<InvoiceReconciliationResult> ?? new List<InvoiceReconciliationResult>();
+    var alert = TempData["AlertMessage"] as string;
+}
+
+<!-- CSS loaded directly for Partial/Tab mode -->
+<link rel="stylesheet" href="~/css/mowadiyan.css" asp-append-version="true" />
+
+<div class="mow-root" dir="rtl">
+    <div class="mow-header">
+        <div class="mow-header-left">
+            <i class="bi bi-arrow-left-right"></i>
+            <h5>ماتریس تطبیق فاکتورها با سامانه مودیان</h5>
+        </div>
+        <span class="mow-header-date">@JalaliDateHelper.TodayShamsi()</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(alert))
+    {
+        <div class="mow-alert mow-alert-success">@alert</div>
+    }
+
+    <div class="mow-action-bar">
+        <form asp-action="RunReconciliation" method="post" style="margin:0;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="sg-btn sg-btn-primary" title="انجام تطبیق برای همه فاکتورهای ارسال شده">
+                <i class="bi bi-arrow-repeat"></i> اجرای تطبیق
+            </button>
+        </form>
+        <a class="sg-btn sg-btn-secondary" asp-action="Index"><i class="bi bi-arrow-right"></i> بازگشت به داشبورد</a>
+    </div>
+
+    <div class="mow-table-wrap">
+        <table class="mow-data-table">
+            <thead>
+                <tr>
+                    <th>شماره فاکتور</th>
+                    <th>وضعیت تطبیق</th>
+                    <th>شماره پیگیری مالیاتی</th>
+                    <th>مبلغ محلی (ریال)</th>
+                    <th>مبلغ سامانه (ریال)</th>
+                    <th>نرخ محلی</th>
+                    <th>نرخ سامانه</th>
+                    <th>اختلافات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (results.Count == 0)
+                {
+                    <tr><td colspan="8" style="text-align:center; color:#888;">نتیجه تطبیقی ثبت نشده است. ابتدا فاکتورها را ارسال کنید.</td></tr>
+                }
+                @foreach (var r in results)
+                {
+                    var cls = "mow-rec-" + r.Status.ToString().ToLowerInvariant();
+                    <tr class="@(r.Status == ReconciliationStatus.Mismatched ? "mow-discrepancy" : "")">
+                        <td class="mow-cell-number">@(r.InvoiceRecord?.InvoiceNumber ?? r.InvoiceRecordId.ToString("N"))</td>
+                        <td><span class="mow-badge @cls">@StatusLabel(r.Status)</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(r.TaxReferenceId))
+                            {
+                                <span class="mow-ref-badge">@CurrencyNormalizer.ToPersianDigits(r.TaxReferenceId)</span>
+                            }
+                            else
+                            {
+                                <span style="color:#888;">—</span>
+                            }
+                        </td>
+                        <td class="mow-cell-amount">@CurrencyNormalizer.ToPersianDigits((r.InvoiceRecord?.FinalAmount ?? 0).ToString("N0"))</td>
+                        <td class="mow-cell-amount">@CurrencyNormalizer.ToPersianDigits((r.PortalTotalAmount ?? 0).ToString("N0"))</td>
+                        <td>@((r.InvoiceRecord?.VatRate ?? 0).ToString("0.##"))%</td>
+                        <td>@((r.PortalVatRate ?? 0).ToString("0.##"))%</td>
+                        <td>
+                            @if (r.Discrepancies.Count > 0)
+                            {
+                                var tooltip = string.Join(" | ", r.Discrepancies.Select(d => d.Description));
+                                <span class="mow-badge mow-status-rejectedbytaxorg" title="@tooltip">
+                                    @CurrencyNormalizer.ToPersianDigits(r.Discrepancies.Count.ToString()) مورد
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="color:#888;">—</span>
+                            }
+                        </td>
+                    </tr>
+                    @if (r.Discrepancies.Count > 0)
+                    {
+                        <tr class="mow-discrepancy">
+                            <td colspan="8" style="white-space:normal;">
+                                <ul style="margin:0; padding-right:1rem; font-size:11px;">
+                                    @foreach (var d in r.Discrepancies)
+                                    {
+                                        <li>
+                                            <strong>@d.Description</strong>
+                                            @if (!string.IsNullOrWhiteSpace(d.Suggestion))
+                                            {
+                                                <span style="color:#2e7d32;"> — پیشنهاد: @d.Suggestion</span>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    static string StatusLabel(ReconciliationStatus s) => s switch
+    {
+        ReconciliationStatus.Matched => "تطبیق شده",
+        ReconciliationStatus.Mismatched => "نامطابق",
+        ReconciliationStatus.Pending => "در انتظار",
+        ReconciliationStatus.NotSubmitted => "ارسال نشده",
+        _ => s.ToString()
+    };
+}

@@ -1,0 +1,56 @@
+@using OfficeAutomation.Modules.InvoiceStructuring
+@using OfficeAutomation.Modules.SecurityAndAudit
+@{
+    ViewData["Title"] = "ممیزی مالیات";
+    var entries = ViewBag.Entries as IReadOnlyList<TaxAuditEntry> ?? new List<TaxAuditEntry>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/tax-audit.css" asp-append-version="true" />
+}
+
+<div class="audit-root" dir="rtl">
+    <div class="audit-header">
+        <div class="audit-header-left">
+            <i class="bi bi-shield-lock"></i>
+            <h5>ممیزی و ردیابی عملیات مالیات</h5>
+        </div>
+        <span class="audit-header-date">@JalaliDateHelper.TodayShamsi()</span>
+    </div>
+
+    <div class="audit-filter-bar">
+        <input type="text" id="auditSearch" class="audit-filter-input" placeholder="جستجو در موجودیت / جزئیات..." />
+        <button type="button" id="auditSearchBtn" class="sg-btn sg-btn-primary"><i class="bi bi-search"></i> جستجو</button>
+    </div>
+
+    <div class="audit-table-wrap">
+        <table class="audit-data-table">
+            <thead>
+                <tr>
+                    <th>زمان</th><th>کاربر</th><th>عملیات</th><th>موجودیت</th><th>جزئیات</th>
+                </tr>
+            </thead>
+            <tbody id="auditTableBody">
+                @if (entries.Count == 0)
+                {
+                    <tr><td colspan="5" style="text-align:center;color:#888;">هیچ رکورد ممیزی‌ای ثبت نشده است.</td></tr>
+                }
+                @foreach (var e in entries)
+                {
+                    <tr>
+                        <td class="audit-cell-number">@e.DateTime.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss")</td>
+                        <td>@CurrencyNormalizer.ToPersianDigits(e.UserId ?? "-")</td>
+                        <td><span class="audit-action">@e.Action</span></td>
+                        <td>@e.EntityName@(string.IsNullOrWhiteSpace(e.EntityId) ? "" : " (" + e.EntityId + ")")</td>
+                        <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@(e.Details ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script src="~/js/tax-audit.js" asp-append-version="true"></script>
+}

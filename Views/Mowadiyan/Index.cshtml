@@ -1,0 +1,150 @@
+@using OfficeAutomation.Modules.InvoiceStructuring
+@using OfficeAutomation.Modules.Persistence.Entities
+@using OfficeAutomation.Modules.MowadiyanIntegration
+@{
+    ViewData["Title"] = "سامانه مودیان";
+    var summary = ViewBag.Summary as MowadiyanQueueSummary ?? new MowadiyanQueueSummary();
+    var recent = ViewBag.RecentSubmissions as List<MowadiyanSubmission> ?? new List<MowadiyanSubmission>();
+    var isSandbox = ViewBag.IsSandbox as bool? ?? true;
+    var alert = TempData["AlertMessage"] as string;
+}
+
+<link rel="stylesheet" href="~/css/mowadiyan.css" asp-append-version="true" />
+
+<div class="mow-root" dir="rtl">
+    <div class="mow-header">
+        <div class="mow-header-left">
+            <i class="bi bi-globe2"></i>
+            <h5>داشبورد سامانه مودیان</h5>
+        </div>
+        <span class="mow-header-date">
+            @JalaliDateHelper.TodayShamsi()
+            @if (isSandbox)
+            {
+                <span class="mow-badge mow-status-pendingsubmission">حالت آزمایشی (Sandbox)</span>
+            }
+        </span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(alert))
+    {
+        <div class="mow-alert mow-alert-success">@alert</div>
+    }
+
+    <div class="mow-action-bar">
+        <form asp-action="BatchSend" method="post" style="margin:0;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="sg-btn sg-btn-primary" title="ارسال دسته‌ای فاکتورهای در انتظار">
+                <i class="bi bi-send"></i> ارسال دسته‌ای
+            </button>
+        </form>
+        <form asp-action="RetryFailed" method="post" style="margin:0;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="sg-btn sg-btn-warning" title="تلاش مجدد برای ارسال‌های ناموفق">
+                <i class="bi bi-arrow-repeat"></i> تلاش مجدد
+            </button>
+        </form>
+        <a class="sg-btn sg-btn-secondary" asp-action="Reconciliation"><i class="bi bi-arrow-left-right"></i> تطبیق</a>
+        <a class="sg-btn sg-btn-secondary" asp-action="Settings"><i class="bi bi-gear"></i> تنظیمات</a>
+    </div>
+
+    <div class="mow-stat-cards">
+        <div class="mow-stat-card mow-stat-primary">
+            <div class="mow-stat-icon"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="mow-stat-body">
+                <span class="mow-stat-value">@CurrencyNormalizer.ToPersianDigits(summary.Draft.ToString("N0"))</span>
+                <span class="mow-stat-label">پیش‌نویس</span>
+            </div>
+        </div>
+        <div class="mow-stat-card mow-stat-warning">
+            <div class="mow-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="mow-stat-body">
+                <span class="mow-stat-value">@CurrencyNormalizer.ToPersianDigits(summary.PendingSubmission.ToString("N0"))</span>
+                <span class="mow-stat-label">در صف ارسال</span>
+            </div>
+        </div>
+        <div class="mow-stat-card mow-stat-info">
+            <div class="mow-stat-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+            <div class="mow-stat-body">
+                <span class="mow-stat-value">@CurrencyNormalizer.ToPersianDigits(summary.Submitted.ToString("N0"))</span>
+                <span class="mow-stat-label">ارسال شده</span>
+            </div>
+        </div>
+        <div class="mow-stat-card mow-stat-success">
+            <div class="mow-stat-icon"><i class="bi bi-check-circle"></i></div>
+            <div class="mow-stat-body">
+                <span class="mow-stat-value">@CurrencyNormalizer.ToPersianDigits(summary.Success.ToString("N0"))</span>
+                <span class="mow-stat-label">موفق</span>
+            </div>
+        </div>
+        <div class="mow-stat-card mow-stat-danger">
+            <div class="mow-stat-icon"><i class="bi bi-x-circle"></i></div>
+            <div class="mow-stat-body">
+                <span class="mow-stat-value">@CurrencyNormalizer.ToPersianDigits(summary.RejectedByTaxOrg.ToString("N0"))</span>
+                <span class="mow-stat-label">رد شده</span>
+            </div>
+        </div>
+        <div class="mow-stat-card mow-stat-muted">
+            <div class="mow-stat-icon"><i class="bi bi-exclamation-octagon"></i></div>
+            <div class="mow-stat-body">
+                <span class="mow-stat-value">@CurrencyNormalizer.ToPersianDigits(summary.RetryLimitExceeded.ToString("N0"))</span>
+                <span class="mow-stat-label">تلاش‌های ناموفق</span>
+            </div>
+        </div>
+    </div>
+<div class="mow-section-title">آخرین ارسال‌ها به سامانه مودیان</div>
+    <div class="mow-table-wrap">
+        <table class="mow-data-table">
+            <thead>
+                <tr>
+                    <th>شماره فاکتور</th>
+                    <th>وضعیت</th>
+                    <th>شماره پیگیری مالیاتی</th>
+                    <th>تلاش</th>
+                    <th>پیام / خطا</th>
+                    <th>تاریخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (recent.Count == 0)
+                {
+                    <tr><td colspan="6" style="text-align:center; color:#888;">ارسال‌ای ثبت نشده است.</td></tr>
+                }
+                @foreach (var s in recent)
+                {
+                    var cls = "mow-status-" + s.StatusText.ToLowerInvariant();
+                    <tr>
+                        <td class="mow-cell-number">@(s.InvoiceRecord?.InvoiceNumber ?? s.InvoiceRecordId.ToString("N"))</td>
+                        <td><span class="mow-badge @cls">@StatusLabel(s.Status)</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(s.TaxReferenceId))
+                            {
+                                <span class="mow-ref-badge">@CurrencyNormalizer.ToPersianDigits(s.TaxReferenceId)</span>
+                            }
+                            else
+                            {
+                                <span style="color:#888;">—</span>
+                            }
+                        </td>
+                        <td>@CurrencyNormalizer.ToPersianDigits(s.RetryCount.ToString())</td>
+                        <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis;">@(s.ErrorMessage ?? "—")</td>
+                        <td class="mow-cell-number">@s.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    static string StatusLabel(MowadiyanSubmissionStatus s) => s switch
+    {
+        MowadiyanSubmissionStatus.Draft => "پیش‌نویس",
+        MowadiyanSubmissionStatus.PendingSubmission => "در صف ارسال",
+        MowadiyanSubmissionStatus.Submitted => "ارسال شده",
+        MowadiyanSubmissionStatus.Success => "موفق",
+        MowadiyanSubmissionStatus.RejectedByTaxOrg => "رد شده",
+        MowadiyanSubmissionStatus.RetryLimitExceeded => "تلاش‌های ناموفق",
+        _ => s.ToString()
+    };
+}

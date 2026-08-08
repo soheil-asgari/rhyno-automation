@@ -1,0 +1,107 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   tax-analytics.css — Tax Analytics & AI Assistant module
+   Rahkaran / DimGray dense enterprise design tokens
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+    --tax-head: #2d3446;
+    --tax-head-2: #3e4756;
+    --tax-border: rgba(0,0,0,0.15);
+    --tax-soft-yellow: #fff6d2;
+    --tax-accent: #ff9800;
+    --tax-form-bg: #fafafa;
+}
+
+.tax-root { font-family: 'Vazirmatn','Tahoma',sans-serif; font-size: 12px; color: #1f2937; padding: 14px; }
+.tax-header { display: flex; align-items: center; justify-content: space-between; background: var(--tax-head); color: #fff; padding: 10px 14px; border-radius: 3px; margin-bottom: 14px; }
+.tax-header-left { display: flex; align-items: center; gap: 8px; }
+.tax-header-left h5 { margin: 0; font-size: 14px; font-weight: 800; }
+.tax-header-left i { font-size: 18px; color: #ffc107; }
+.tax-header-actions { display: flex; gap: 6px; }
+
+/* Stat cards */
+.tax-stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.tax-stat-card { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--tax-border); border-radius: 3px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.tax-stat-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 3px; font-size: 18px; color: #fff; }
+.tax-stat-primary .tax-stat-icon { background: #4d99d0; }
+.tax-stat-warning .tax-stat-icon { background: #f08046; }
+.tax-stat-info .tax-stat-icon { background: #118AB2; }
+.tax-stat-danger .tax-stat-icon { background: #ef404d; }
+.tax-stat-value { display: block; font-size: 15px; font-weight: 800; }
+.tax-stat-label { display: block; font-size: 11px; color: #6b7280; }
+
+/* Alerts */
+.tax-section-title { font-size: 13px; font-weight: 800; color: var(--tax-head); margin: 16px 0 8px; padding-right: 2px; }
+.tax-alert-list { display: flex; flex-direction: column; gap: 8px; }
+.tax-alert { display: flex; align-items: flex-start; gap: 10px; background: #fff; border: 1px solid var(--tax-border); border-right: 4px solid #4d99d0; border-radius: 3px; padding: 10px 12px; }
+.tax-alert-critical { border-right-color: #ef404d; }
+.tax-alert-warning { border-right-color: #f08046; }
+.tax-alert-icon { font-size: 18px; color: #4d99d0; }
+.tax-alert-critical .tax-alert-icon { color: #ef404d; }
+.tax-alert-warning .tax-alert-icon { color: #f08046; }
+.tax-alert-title { font-weight: 800; font-size: 12px; }
+.tax-alert-message { font-size: 11px; color: #4b5563; margin-top: 2px; }
+.tax-empty { background: var(--tax-soft-yellow); border: 1px solid var(--tax-border); border-radius: 3px; padding: 12px; font-size: 12px; }
+
+/* Submission status */
+.tax-submission-bar { display: flex; gap: 8px; }
+.tax-submission-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--tax-border); border-radius: 2px; padding: 6px 10px; font-size: 11px; }
+.tax-chip-danger { color: #ef404d; }
+/* ── AI Assistant chat ── */
+.tax-chat-tip { background: var(--tax-soft-yellow); border: 1px solid var(--tax-border); border-radius: 3px; padding: 10px 12px; font-size: 12px; margin-bottom: 12px; }
+.tax-chat-card { background: #fff; border: 1px solid var(--tax-border); border-radius: 3px; display: flex; flex-direction: column; height: 480px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.tax-chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--tax-form-bg); }
+.tax-msg { display: flex; }
+.tax-msg-ai { justify-content: flex-start; }
+.tax-msg-user { justify-content: flex-end; }
+.tax-msg-bubble { max-width: 80%; padding: 8px 12px; border-radius: 3px; font-size: 12px; line-height: 1.6; }
+.tax-msg-ai .tax-msg-bubble { background: #fff; border: 1px solid var(--tax-border); }
+.tax-msg-user .tax-msg-bubble { background: var(--tax-head); color: #fff; }
+.tax-chat-input-row { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--tax-border); }
+.tax-chat-input { flex: 1; border: 1px solid var(--tax-border); border-radius: 2px; padding: 8px 10px; font-family: inherit; font-size: 12px; outline: none; }
+.tax-chat-input:focus { border-color: var(--tax-accent); }
+
+/* ── Floating AI widget (Launcher + compact Flyout chat box) ── */
+#taxAiLauncher {
+    position: fixed; bottom: 20px; left: 20px; z-index: 10000;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--tax-head); color: #fff; display: grid; place-items: center;
+    font-size: 22px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border: 2px solid #ffc107;
+}
+#taxAiLauncher:hover { background: var(--tax-head-2); }
+#taxAiLauncher .tax-widget-launcher-badge { position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; border-radius: 50%; background: #ef404d; border: 2px solid #fff; }
+
+/* Flyout container — absolutely positioned, does NOT alter document flow. */
+#taxAiOverlay {
+    position: fixed; bottom: 82px; left: 20px; z-index: 10000;
+    width: 360px; max-width: calc(100vw - 40px);
+    background: #fff; border: 1px solid var(--tax-border);
+    border-radius: 3px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    display: flex; flex-direction: column; overflow: hidden;
+    transform: translateY(12px); opacity: 0; pointer-events: none;
+    transition: transform .18s ease, opacity .18s ease;
+}
+#taxAiOverlay.open {
+    transform: translateY(0); opacity: 1; pointer-events: auto;
+}
+#taxAiPanel {
+    display: flex; flex-direction: column; height: 100%;
+    min-height: 0;
+}
+.tax-widget-header { display: flex; align-items: center; justify-content: space-between; background: var(--tax-head); color: #fff; padding: 10px 12px; }
+.tax-widget-title { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.tax-widget-title i { color: #ffc107; }
+.tax-widget-close { background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer; line-height: 1; }
+.tax-widget-close:hover { color: #f08046; }
+.tax-widget-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--tax-form-bg); height: 320px; }
+.tax-widget-msg { display: flex; }
+.tax-widget-ai { justify-content: flex-start; }
+.tax-widget-user { justify-content: flex-end; }
+.tax-widget-bubble { max-width: 82%; padding: 8px 12px; border-radius: 3px; font-size: 12px; line-height: 1.6; }
+.tax-widget-ai .tax-widget-bubble { background: #fff; border: 1px solid var(--tax-border); }
+.tax-widget-user .tax-widget-bubble { background: var(--tax-head); color: #fff; }
+.tax-widget-input-row { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--tax-border); }
+.tax-widget-input { flex: 1; border: 1px solid var(--tax-border); border-radius: 2px; padding: 8px 10px; font-family: inherit; font-size: 12px; outline: none; }
+.tax-widget-input:focus { border-color: var(--tax-accent); }
+.tax-widget-send { width: 40px; border: none; background: var(--tax-head); color: #fff; border-radius: 2px; cursor: pointer; font-size: 16px; }
+.tax-widget-send:hover { background: var(--tax-head-2); }

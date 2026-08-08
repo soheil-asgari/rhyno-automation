@@ -6,6 +6,7 @@ using OfficeAutomation.Models;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
+using OfficeAutomation.Modules.Persistence;
 using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 
@@ -132,6 +133,9 @@ public sealed class TenantMigrationOrchestrator
 
             await using var officeContext = CreateDbContext<OfficeDbContext>(tenant.ConnectionString);
             await officeContext.Database.MigrateAsync(cancellationToken);
+
+            await using var taxContext = CreateDbContext<TaxDbContext>(tenant.ConnectionString);
+            await taxContext.Database.MigrateAsync(cancellationToken);
         }
         finally
         {

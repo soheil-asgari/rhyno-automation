@@ -1,0 +1,147 @@
+@using OfficeAutomation.Modules.InvoiceStructuring
+@model OfficeAutomation.Modules.Persistence.Entities.InvoiceRecord
+@{
+    ViewData["Title"] = $"جزئیات فاکتور {Model.InvoiceNumber}";
+    Layout = null; // Modal content – no layout wrapper
+}
+
+<div class="inv-detail" dir="rtl">
+    <div class="inv-detail-section">
+        <h6 class="inv-detail-heading">اطلاعات اصلی</h6>
+        <div class="inv-detail-grid">
+            <div class="inv-detail-field">
+                <label>شماره فاکتور</label>
+                <span>@Model.InvoiceNumber</span>
+            </div>
+            <div class="inv-detail-field">
+                <label>تاریخ (شمسی)</label>
+                <span>@Model.DateShamsi</span>
+            </div>
+            <div class="inv-detail-field">
+                <label>تاریخ میلادی</label>
+                <span>@(Model.InvoiceDate?.ToString("yyyy/MM/dd") ?? "-")</span>
+            </div>
+            <div class="inv-detail-field">
+                <label>نوع فاکتور</label>
+                <span>@Model.InvoiceType</span>
+            </div>
+            <div class="inv-detail-field">
+                <label>وضعیت</label>
+                <span class="inv-status-badge inv-status-@Model.Status.ToLower()">@Model.Status</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="inv-detail-section">
+        <h6 class="inv-detail-heading">طرف‌های معامله</h6>
+        <div class="inv-detail-grid">
+            <div class="inv-detail-field">
+                <label>فروشنده</label>
+                <span>@(Model.Seller?.Name ?? "-")</span>
+            </div>
+            <div class="inv-detail-field">
+                <label>کد اقتصادی فروشنده</label>
+                <span>@(Model.Seller?.EconomicCode ?? "-")</span>
+            </div>
+            <div class="inv-detail-field">
+                <label>خریدار</label>
+                <span>@(Model.Buyer?.Name ?? "-")</span>
+            </div>
+            <div class="inv-detail-field">
+                <label>کد اقتصادی خریدار</label>
+                <span>@(Model.Buyer?.EconomicCode ?? "-")</span>
+            </div>
+        </div>
+    </div>
+    <div class="inv-detail-section">
+        <h6 class="inv-detail-heading">اقلام فاکتور</h6>
+        <table class="inv-detail-table">
+            <thead>
+                <tr><th>#</th><th>شرح</th><th>نوع</th><th>مبلغ (ریال)</th><th>معاف</th></tr>
+            </thead>
+            <tbody>
+                @if (Model.LineItems.Count > 0)
+                {
+                    int idx = 1;
+                    @foreach (var li in Model.LineItems)
+                    {
+                        <tr>
+                            <td>@idx</td><td>@li.Description</td>
+                            <td><span class="inv-item-kind inv-kind-@li.Kind.ToLower()">@li.Kind</span></td>
+                            <td class="inv-cell-amount">@CurrencyNormalizer.ToPersianDigits(li.LineAmount.ToString("N0"))</td>
+                            <td>@(li.IsTaxExempt ? "✓" : "-")</td>
+                        </tr>
+                        idx++;
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="5" class="text-center text-muted">بدون اقلام</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="inv-detail-section">
+        <h6 class="inv-detail-heading">خلاصه مالیاتی</h6>
+        <div class="inv-tax-summary">
+            <div class="inv-tax-row">
+                <span>جمع قبل از کسر مالیات:</span>
+                <strong>@CurrencyNormalizer.ToPersianDigits(Model.SubTotal.ToString("N0")) ریال</strong>
+            </div>
+            <div class="inv-tax-row">
+                <span>تخفیف:</span>
+                <strong>@CurrencyNormalizer.ToPersianDigits(Model.DiscountAmount.ToString("N0")) ریال</strong>
+            </div>
+            <div class="inv-tax-row">
+                <span>نرخ مالیات:</span>
+                <strong>@((Model.VatRate * 100).ToString("0"))%</strong>
+            </div>
+            <div class="inv-tax-row">
+                <span>مالیات بر ارزش افزوده:</span>
+                <strong>@CurrencyNormalizer.ToPersianDigits(Model.VatAmount.ToString("N0")) ریال</strong>
+            </div>
+            <div class="inv-tax-row">
+                <span>عوارض:</span>
+                <strong>@CurrencyNormalizer.ToPersianDigits(Model.DutyAmount.ToString("N0")) ریال</strong>
+            </div>
+    @if (Model.TaxLogs.Count > 0)
+    {
+        <div class="inv-detail-section">
+            <h6 class="inv-detail-heading">تاریخچه محاسبات مالیاتی</h6>
+            <table class="inv-detail-table">
+                <thead>
+                    <tr><th>تاریخ</th><th>مشمول</th><th>معاف</th><th>مالیات</th><th>نهایی</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var tl in Model.TaxLogs)
+                    {
+                        <tr>
+                            <td>@tl.CalculatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                            <td>@CurrencyNormalizer.ToPersianDigits(tl.TaxableAmount.ToString("N0"))</td>
+                            <td>@CurrencyNormalizer.ToPersianDigits(tl.ExemptAmount.ToString("N0"))</td>
+                            <td>@CurrencyNormalizer.ToPersianDigits(tl.TaxAmount.ToString("N0"))</td>
+                            <td>@CurrencyNormalizer.ToPersianDigits(tl.FinalAmount.ToString("N0"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.RawOcrText))
+    {
+        <div class="inv-detail-section">
+            <h6 class="inv-detail-heading">متن خام OCR</h6>
+            <pre class="inv-ocr-text">@Model.RawOcrText</pre>
+        </div>
+    }
+</div>
+
+            <div class="inv-tax-row inv-tax-final">
+                <span>مبلغ نهایی قابل پرداخت:</span>
+                <strong>@CurrencyNormalizer.ToPersianDigits(Model.FinalAmount.ToString("N0")) ریال</strong>
+            </div>
+        </div>
+    </div>
+

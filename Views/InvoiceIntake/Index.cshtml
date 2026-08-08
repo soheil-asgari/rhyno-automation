@@ -1,0 +1,125 @@
+@using OfficeAutomation.Modules.InvoiceIntake
+@{
+    ViewData["Title"] = "ورود فاکتور و اسناد مالی";
+    var maxFiles = ViewBag.MaxFiles as int? ?? 50;
+    var maxFileMb = ViewBag.MaxFileMb as int? ?? 20;
+}
+
+<link rel="stylesheet" href="~/css/invoice-intake.css" asp-append-version="true" />
+
+@* ═══════════════════════════════════════════════════════════════
+   Tax & Invoice Intake Module — Phase 1
+   Drag & Drop multi-upload with OCR processing for Persian invoices.
+   ═══════════════════════════════════════════════════════════════ *@
+<div class="invoice-intake-root" dir="rtl" data-max-files="@maxFiles" data-max-file-mb="@maxFileMb">
+
+    <div class="intake-header">
+        <div class="intake-header-title">
+            <i class="bi bi-receipt"></i>
+            <h5>ورود فاکتور و اسناد مالی</h5>
+        </div>
+        <span class="intake-header-badge">حداکثر @maxFiles فایل — PNG, JPG, PDF (حداکثر @maxFileMb مگابایت)</span>
+    </div>
+
+    @* ── Drop Zone ───────────────────────────────────────────────── *@
+    <div class="intake-dropzone" id="intakeDropzone">
+        <input type="file"
+               id="intakeFileInput"
+               multiple
+               accept=".png,.jpg,.jpeg,.pdf"
+               class="hidden" />
+        <div class="intake-dropzone-content" id="intakeDropzoneContent">
+            <i class="bi bi-cloud-upload intake-dropzone-icon"></i>
+            <p class="intake-dropzone-text">فایل‌های فاکتور را اینجا بکشید و رها کنید</p>
+            <p class="intake-dropzone-sub">یا برای انتخاب فایل کلیک کنید</p>
+            <p class="intake-dropzone-hint">PNG, JPG, PDF — حداکثر @maxFiles فایل — هر فایل حداکثر @maxFileMb مگابایت</p>
+        </div>
+    </div>
+
+    @* ── Progress Bar ────────────────────────────────────────────── *@
+    <div class="intake-progress hidden" id="intakeProgress">
+        <div class="intake-progress-bar">
+            <div class="intake-progress-fill" id="intakeProgressFill"></div>
+        </div>
+        <span class="intake-progress-text" id="intakeProgressText">در حال بارگذاری...</span>
+    </div>
+
+    @* ── Error / Status Messages ─────────────────────────────────── *@
+    <div class="intake-message intake-message-error hidden" id="intakeError"></div>
+    <div class="intake-message intake-message-success hidden" id="intakeSuccess"></div>
+
+    @* ── File Cards Grid ─────────────────────────────────────────── *@
+    <div class="intake-cards-grid" id="intakeCardsGrid">
+        @* Dynamically populated by JS *@
+    </div>
+
+    @* ── Empty State ─────────────────────────────────────────────── *@
+    <div class="intake-empty-state" id="intakeEmptyState">
+        <i class="bi bi-inbox"></i>
+        <p>هنوز فایلی بارگذاری نشده است.</p>
+        <p class="text-muted small">فایل‌های فاکتور خود را برای استخراج خودکار اطلاعات بارگذاری کنید.</p>
+    </div>
+
+    @* ── Metadata Editor Modal ───────────────────────────────────── *@
+    <div class="intake-modal-overlay hidden" id="intakeModalOverlay">
+        <div class="intake-modal" id="intakeModal">
+            <div class="intake-modal-header">
+                <h6><i class="bi bi-pencil-square"></i> ویرایش اطلاعات فاکتور</h6>
+                <button type="button" class="intake-modal-close" id="intakeModalClose" title="بستن">&times;</button>
+            </div>
+            <div class="intake-modal-body">
+                <input type="hidden" id="modalFileId" />
+                <div class="intake-form-row">
+                    <label class="intake-label" for="modalInvoiceNumber">شماره فاکتور <span class="text-danger">*</span></label>
+                    <input type="text" id="modalInvoiceNumber" class="intake-input"
+                           placeholder="مثال: INV-1403-00125" />
+                </div>
+                <div class="intake-form-row">
+                    <label class="intake-label" for="modalDateShamsi">تاریخ فاکتور (شمسی) <span class="text-danger">*</span></label>
+                    <input type="text" id="modalDateShamsi" class="intake-input"
+                           placeholder="مثال: ۱۴۰۳/۰۶/۲۵" dir="ltr" />
+                </div>
+                <div class="intake-form-row">
+                    <label class="intake-label" for="modalTotalAmount">مبلغ کل (ریال) <span class="text-danger">*</span></label>
+                    <input type="text" id="modalTotalAmount" class="intake-input intake-input-numeric"
+                           placeholder="مثال: ۱۲۵۰۰۰۰۰۰" dir="ltr" />
+                </div>
+                <div class="intake-form-row">
+                    <label class="intake-label" for="modalSellerName">نام فروشنده <span class="text-danger">*</span></label>
+                    <input type="text" id="modalSellerName" class="intake-input"
+                           placeholder="نام شرکت / شخص فروشنده" />
+                </div>
+                <div class="intake-form-row">
+                    <label class="intake-label" for="modalBuyerName">نام خریدار <span class="text-danger">*</span></label>
+                    <input type="text" id="modalBuyerName" class="intake-input"
+                           placeholder="نام شرکت / شخص خریدار" />
+                </div>
+            </div>
+            <div class="intake-modal-footer">
+                <button type="button" class="sg-btn sg-btn-secondary" id="intakeModalCancel">انصراف</button>
+                <button type="button" class="sg-btn sg-btn-primary" id="intakeModalSave">
+                    <i class="bi bi-check-lg"></i> ذخیره
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* ── Preview Modal ───────────────────────────────────────────── *@
+    <div class="intake-modal-overlay hidden" id="intakePreviewOverlay">
+        <div class="intake-modal intake-modal-preview" id="intakePreviewModal">
+            <div class="intake-modal-header">
+                <h6 id="intakePreviewTitle"><i class="bi bi-eye"></i> پیش‌نمایش</h6>
+                <button type="button" class="intake-modal-close" id="intakePreviewClose" title="بستن">&times;</button>
+            </div>
+            <div class="intake-modal-body intake-preview-body" id="intakePreviewBody">
+                @* Image or PDF iframe injected here *@
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script src="~/js/invoice-intake.js" asp-append-version="true"></script>
+}

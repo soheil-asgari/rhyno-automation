@@ -1,0 +1,487 @@
+/* ═══════════════════════════════════════════════════════════════
+   Tax & Invoice Intake — Rahkaran/DimGray Design System
+   Ultra-compact enterprise multi-upload UI. RTL, dense spacing.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Root Layout ─────────────────────────────────────────── */
+.invoice-intake-root {
+    padding: 0.75rem 1rem;
+    font-family: 'sg_main', 'Vazirmatn', 'Tahoma', sans-serif;
+    font-size: 12px;
+    color: #212529;
+    background: #fafafa;
+    min-height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.intake-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.75rem;
+    background: #3e4756;
+    border-radius: 2px;
+}
+
+.intake-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ffffff;
+}
+
+.intake-header-title h5 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.intake-header-badge {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 8px;
+    border-radius: 2px;
+}
+
+
+/* ── Drop Zone ───────────────────────────────────────────── */
+.intake-dropzone {
+    border: 2px dashed rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    background: #ffffff;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+    margin-bottom: 0.75rem;
+}
+
+.intake-dropzone:hover,
+.intake-dropzone.drag-active {
+    border-color: #4799ff;
+    background: #f0f7ff;
+}
+
+.intake-dropzone.drag-active {
+    border-style: solid;
+    border-color: #4799ff;
+    background: #e8f2ff;
+}
+
+.intake-dropzone-icon {
+    font-size: 2.5rem;
+    color: rgba(0, 0, 0, 0.3);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.intake-dropzone-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 0.25rem 0;
+}
+
+.intake-dropzone-sub {
+    font-size: 11px;
+    color: #888;
+    margin: 0;
+}
+
+.intake-dropzone-hint {
+    font-size: 10px;
+    color: #aaa;
+    margin: 0.35rem 0 0 0;
+}
+
+/* ── Progress Bar ────────────────────────────────────────── */
+.intake-progress {
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.intake-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.intake-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4799ff, #326984);
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+.intake-progress-text {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* ── Messages ────────────────────────────────────────────── */
+.intake-message {
+    padding: 0.5rem 0.75rem;
+    border-radius: 2px;
+    font-size: 11px;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.intake-message-error {
+    background: #f2dede;
+    color: #c0392b;
+    border: 1px solid rgba(239, 64, 77, 0.25);
+}
+
+.intake-message-success {
+    background: #dff0d8;
+    color: #18af08;
+    border: 1px solid rgba(24, 175, 8, 0.25);
+}
+
+/* ── Empty State ─────────────────────────────────────────── */
+.intake-empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #999;
+}
+
+.intake-empty-state i {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.intake-empty-state p {
+    margin: 0.25rem 0;
+    font-size: 12px;
+}
+
+/* ── Cards Grid ──────────────────────────────────────────── */
+.intake-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.5rem;
+}
+
+
+/* ── File Card ───────────────────────────────────────────── */
+.intake-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.intake-card-thumb {
+    height: 120px;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+.intake-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.intake-card-thumb-pdf {
+    background: #f5f0eb;
+    color: #d35400;
+    font-size: 2.5rem;
+}
+
+.intake-card-status-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-weight: 600;
+}
+
+.intake-card-status-pending {
+    background: #fff1b9;
+    color: #6d5e00;
+}
+
+.intake-card-status-processing {
+    background: #d9edf7;
+    color: #31708f;
+}
+
+.intake-card-status-completed {
+    background: #dff0d8;
+    color: #3c763d;
+}
+
+.intake-card-status-failed {
+    background: #f2dede;
+    color: #a94442;
+}
+
+.intake-card-body {
+    padding: 0.4rem 0.5rem;
+    font-size: 11px;
+}
+
+.intake-card-filename {
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.15rem;
+}
+
+.intake-card-meta {
+    color: #888;
+    font-size: 10px;
+    margin-bottom: 0.15rem;
+}
+
+.intake-card-error {
+    color: #ef404d;
+    font-size: 10px;
+    margin-top: 0.15rem;
+}
+
+.intake-card-fields {
+    margin-top: 0.3rem;
+    font-size: 10px;
+    color: #555;
+}
+
+.intake-card-fields dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1px 0.4rem;
+}
+
+.intake-card-fields dt {
+    color: #888;
+    font-weight: normal;
+}
+
+.intake-card-fields dd {
+    margin: 0;
+    color: #333;
+}
+
+.intake-card-actions {
+    display: flex;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.intake-card-actions .sg-btn {
+    flex: 1;
+    font-size: 10px;
+    padding: 4px 6px;
+    border-radius: 0;
+    border: none;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.intake-card-actions .sg-btn:last-child {
+    border-left: none;
+}
+
+/* ── Modals ──────────────────────────────────────────────── */
+.intake-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.intake-modal {
+    background: #ffffff;
+    border-radius: 3px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 480px;
+    max-width: 95vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.intake-modal-preview {
+    width: 680px;
+}
+
+.intake-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #3e4756;
+    color: #fff;
+}
+
+.intake-modal-header h6 {
+    margin: 0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.intake-modal-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.3rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 0.2rem;
+}
+
+.intake-modal-close:hover {
+    color: #fff;
+}
+
+.intake-modal-body {
+    padding: 0.75rem;
+    overflow-y: auto;
+}
+
+.intake-preview-body {
+    padding: 0.5rem;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.intake-preview-body img {
+    max-width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+}
+
+.intake-preview-body iframe {
+    width: 100%;
+    height: 65vh;
+    border: none;
+}
+
+.intake-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    background: #f9f9f9;
+}
+
+/* ── Form Fields ─────────────────────────────────────────── */
+.intake-form-row {
+    margin-bottom: 0.6rem;
+}
+
+.intake-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 0.2rem;
+}
+
+.intake-input {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+    background: #fff;
+    color: #333;
+    font-family: inherit;
+}
+
+.intake-input:focus {
+    outline: none;
+    border-color: #4799ff;
+    box-shadow: 0 0 0 2px rgba(71, 153, 255, 0.15);
+}
+
+.intake-input-numeric {
+    direction: ltr;
+    text-align: right;
+}
+
+/* ── SG Buttons (Rahkaran style) ─────────────────────────── */
+.sg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-family: inherit;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+    cursor: pointer;
+    background: #eee linear-gradient(#fff, transparent);
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.14);
+    color: #333;
+}
+
+.sg-btn:hover {
+    background-color: #fff;
+    border-color: rgba(0, 0, 0, 0.5);
+}
+
+.sg-btn-primary {
+    background: #326984 linear-gradient(#4799ff, transparent);
+    color: #fff;
+    border-color: #326984;
+}
+
+.sg-btn-primary:hover {
+    background: #3b7ba0 linear-gradient(#5aa8ff, transparent);
+    color: #fff;
+    border-color: #326984;
+}
+
+.sg-btn-danger {
+    color: #ef404d;
+}
+
+.sg-btn-danger:hover {
+    background: #fff0f0;
+    border-color: #ef404d;
+}
+
+.sg-btn-small {
+    padding: 2px 6px;
+    font-size: 10px;
+}
+
+/* ── Utility ─────────────────────────────────────────────── */
+.hidden {
+    display: none !important;
+}

@@ -302,7 +302,7 @@
                                                 <i class="bi bi-chevron-down chevron"></i>
                                             </button>
                                             <ul class="menu-list module-children"
-                                                style="max-height:@(IsExpanded("Financial","Payroll","Bimeh") ? "600px" : "0");">
+                                                style="max-height:@(IsExpanded("Financial","Payroll","Bimeh","InvoiceIntake","InvoiceDashboard","Mowadiyan","TaxAnalytics") ? "800px" : "0");">
                                                 <li><a class='menu-item @(currentController == "Financial" && currentAction == "Dashboard" ? "active" : "")'
                                                        asp-controller="Financial" asp-action="Dashboard"><i
                                                     class="bi bi-grid-3x3-gap menu-icon"></i> داشبورد مالی</a></li>
@@ -324,6 +324,20 @@
                                                                         <li><a class='menu-item @(currentController == "Financial" && currentAction == "ReportingHub" ? "active" : "")'
                                                                                asp-controller="Financial" asp-action="ReportingHub"><i
                                                                             class="bi bi-bar-chart-line menu-icon"></i> گزارش‌ها</a></li>
+                                                                             <!-- TAX MODULE MENU LOADED -->
+                                                                             <li><a class='menu-item @(currentController == "InvoiceIntake" ? "active" : "")'
+                                                                                    asp-controller="InvoiceIntake" asp-action="Index"><i
+                                                                                 class="bi bi-receipt-cutoff menu-icon"></i> ورود و پردازش فاکتورها</a></li>
+                                                                                 <li><a class='menu-item @(currentController == "InvoiceDashboard" ? "active" : "")'
+                                                                                        asp-controller="InvoiceDashboard" asp-action="Index"><i
+                                                                                     class="bi bi-graph-up-arrow menu-icon"></i> داشبورد جامع مالیاتی</a></li>
+                                                                                     <li><a class='menu-item @(currentController == "Mowadiyan" ? "active" : "")'
+                                                                                            asp-controller="Mowadiyan" asp-action="Index"><i
+                                                                                         class="bi bi-globe2 menu-icon"></i> سامانه مودیان و تطبیق</a></li>
+                                                                                         <li><a class='menu-item @(currentController == "TaxAnalytics" ? "active" : "")'
+                                                                                                asp-controller="TaxAnalytics" asp-action="Index"><i
+                                                                                             class="bi bi-robot menu-icon"></i> تحلیل و دستیار هوشمند مالیاتی</a></li>
+
                                                                             <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")'
                                                                                    asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 menu-icon"></i>
                                                                                 حقوق</a></li>
@@ -489,6 +503,8 @@
                                                                                                                                 <!-- ═══════════════════════════════════════════════════════
     SCRIPTS
     ═══════════════════════════════════════════════════════════ -->
+                                                                                                                                <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+
                                                                                                                                 <script src="~/js/layout.js" asp-append-version="true"></script>
                                                                                                                                 <script src="~/js/tab-manager.js" asp-append-version="true"></script>
                                                                                                                                 <script src="~/js/professional-table.js" asp-append-version="true"></script>
@@ -682,6 +698,10 @@
                                                                                                                                 <script src="~/js/app-ui.js" asp-append-version="true"></script>
                                                                                                                                 <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
                                                                                                                                 <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
+                                                                                                                                @if (User?.Identity?.IsAuthenticated == true)
+                                                                                                                                {
+                                                                                                                                    @await Html.PartialAsync("_TaxAiAssistantWidget")
+                                                                                                                                }
                                                                                                                             </body>
 
                                                                                                                         </html>

@@ -128,19 +128,28 @@
 
             @* ── 2. Financial & Accounting ── *@
             <section class="sidebar-module-reusable">
+                    <!-- TAX MODULE MENU LOADED -->
                 <button class="@moduleButtonClass" type="button" data-sidebar-toggle="#collapseFinancialReusable">
                     <span>مالی و حسابداری</span>
                     <svg class="sidebar-chevron h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-300" viewBox="0 0 12 12" fill="none">
                         <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <div id="collapseFinancialReusable" class="sidebar-collapse-reusable overflow-hidden transition-[max-height] duration-350 ease-in-out @(IsModuleOpen("Payroll","Bimeh","Financial") ? "max-h-[600px]" : "max-h-0")">
+                <div id="collapseFinancialReusable" class="sidebar-collapse-reusable overflow-hidden transition-[max-height] duration-350 ease-in-out @(IsModuleOpen("Payroll","Bimeh","Financial","Mowadiyan","TaxAnalytics","InvoiceIntake","InvoiceDashboard","IntakeAutomation","TaxAudit") ? "max-h-[800px]" : "max-h-0")">
                     <div class="mt-1 space-y-0.5 px-1">
                         <a class='@ChildLinkClass("Financial", "Dashboard")' asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap w-4 text-emerald-500"></i><span class="link-text truncate">داشبورد مالی</span></a>
+                        <a class='@ChildLinkClass("InvoiceIntake")' asp-controller="InvoiceIntake" asp-action="Index"><i class="bi bi-receipt-cutoff w-4 text-blue-500"></i><span class="link-text truncate">ورود و پردازش فاکتورها</span></a>
+                        <a class='@ChildLinkClass("InvoiceDashboard")' asp-controller="InvoiceDashboard" asp-action="Index"><i class="bi bi-graph-up-arrow w-4 text-teal-500"></i><span class="link-text truncate">داشبورد جامع مالیاتی</span></a>
                         <a class='@ChildLinkClass("Financial", "Invoices")' asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt w-4 text-teal-500"></i><span class="link-text truncate">فاکتورها</span></a>
                         <a class='@ChildLinkClass("Financial", "LedgerOperations")' asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext w-4 text-cyan-500"></i><span class="link-text truncate">دفتر کل</span></a>
                         <a class='@ChildLinkClass("Financial", "GetTrialBalance")' asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table w-4 text-indigo-500"></i><span class="link-text truncate">تراز آزمایشی</span></a>
                         <a class='@ChildLinkClass("Financial", "VatDashboard")' asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent w-4 text-pink-500"></i><span class="link-text truncate">ارزش افزوده</span></a>
+                        <a class='@ChildLinkClass("Mowadiyan", "Index")' asp-controller="Mowadiyan" asp-action="Index"><i class="bi bi-globe2 w-4 text-sky-500"></i><span class="link-text truncate">سامانه مودیان</span></a>
+                        <a class='@ChildLinkClass("Mowadiyan", "Reconciliation")' asp-controller="Mowadiyan" asp-action="Reconciliation"><i class="bi bi-arrow-left-right w-4 text-orange-500"></i><span class="link-text truncate">تطبیق مالیاتی</span></a>
+                        <a class='@ChildLinkClass("TaxAnalytics", "Insights")' asp-controller="TaxAnalytics" asp-action="Insights"><i class="bi bi-robot w-4 text-purple-500"></i><span class="link-text truncate">تحلیل هوشمند مالیات</span></a>
+                        <a class='@ChildLinkClass("TaxAnalytics", "Assistant")' asp-controller="TaxAnalytics" asp-action="Assistant"><i class="bi bi-chat-dots w-4 text-violet-500"></i><span class="link-text truncate">دستیار هوشمند</span></a>
+                        <a class='@ChildLinkClass("IntakeAutomation")' asp-controller="IntakeAutomation" asp-action="Index"><i class="bi bi-box-seam w-4 text-teal-500"></i><span class="link-text truncate">اتوماسیون دریافت</span></a>
+                        <a class='@ChildLinkClass("TaxAudit")' asp-controller="TaxAudit" asp-action="Index"><i class="bi bi-shield-lock w-4 text-rose-500"></i><span class="link-text truncate">ممیزی مالیات</span></a>
                         <a class='@ChildLinkClass("Financial", "SeasonalTax")' asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-bar-graph w-4 text-indigo-500"></i><span class="link-text truncate">گزارشات فصلی ۱۶۹</span></a>
                         <a class='@ChildLinkClass("Financial", "ReportingHub")' asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line w-4 text-rose-500"></i><span class="link-text truncate">گزارش‌ها</span></a>
                         <a class='@ChildLinkClass("Payroll")' asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 w-4 text-violet-500"></i><span class="link-text truncate">حقوق</span></a>

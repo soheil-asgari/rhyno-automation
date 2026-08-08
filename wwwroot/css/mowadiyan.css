@@ -1,0 +1,284 @@
+/* ═══════════════════════════════════════════════════════════
+   Mowadiyan (سامانه مودیان) — Rahkaran / DimGray Design System
+   RTL, compact, enterprise MDI style.
+   ═══════════════════════════════════════════════════════════ */
+
+.mow-root {
+    padding: 0.75rem;
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    font-size: 12px;
+    background: #fafafa;
+    min-height: 100vh;
+}
+
+.mow-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #3e4756;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 2px;
+}
+.mow-header-left { display: flex; align-items: center; gap: 0.5rem; }
+.mow-header-left h5 { margin: 0; font-size: 14px; font-weight: 600; }
+.mow-header-date { font-size: 11px; opacity: 0.85; }
+
+/* Action bar */
+.mow-action-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    margin-bottom: 1rem;
+    border-radius: 2px;
+    flex-wrap: wrap;
+}
+
+/* Stat cards */
+.mow-stat-cards {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.mow-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.mow-stat-icon {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; border-radius: 2px;
+}
+.mow-stat-primary .mow-stat-icon { background: #d9edf7; color: #4d99d0; }
+.mow-stat-success .mow-stat-icon { background: #dff0d8; color: #18af08; }
+.mow-stat-warning .mow-stat-icon { background: #fcf8e3; color: #f08046; }
+.mow-stat-danger  .mow-stat-icon { background: #f2dede; color: #ef404d; }
+.mow-stat-info     .mow-stat-icon { background: #e3f2fd; color: #1565c0; }
+.mow-stat-muted    .mow-stat-icon { background: #eeeeee; color: #607d8b; }
+.mow-stat-body { display: flex; flex-direction: column; }
+.mow-stat-value { font-size: 14px; font-weight: 700; color: #222; }
+.mow-stat-label { font-size: 10px; color: #666; }
+/* Table */
+.mow-table-wrap { background: #fff; border: 1px solid rgba(0,0,0,0.12); border-radius: 2px; overflow-x: auto; margin-bottom: 1rem; }
+.mow-data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.mow-data-table th {
+    background: #eaeaea; color: #333; padding: 0.4rem 0.5rem;
+    text-align: right; font-weight: 600; border-bottom: 2px solid rgba(0,0,0,0.15); white-space: nowrap;
+}
+.mow-data-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.06); white-space: nowrap; }
+.mow-data-table tbody tr:hover { background: #fff6d2; }
+.mow-cell-number { font-family: Consolas, monospace; direction: ltr; text-align: right; }
+.mow-cell-amount { text-align: left; direction: ltr; font-weight: 600; }
+
+/* Status badges */
+.mow-badge {
+    display: inline-block; padding: 0.1rem 0.5rem; border-radius: 2px;
+    font-size: 10px; font-weight: 600;
+}
+.mow-status-draft            { background: #eeeeee; color: #424242; }
+.mow-status-pendingsubmission { background: #fff3e0; color: #e65100; }
+.mow-status-submitted        { background: #e3f2fd; color: #1565c0; }
+.mow-status-success          { background: #dff0d8; color: #18af08; }
+.mow-status-rejectedbytaxorg { background: #f2dede; color: #ef404d; }
+.mow-status-retrylimitexceeded { background: #fce4ec; color: #c62828; }
+
+/* Reconciliation status */
+.mow-rec-matched    { background: #dff0d8; color: #18af08; }
+.mow-rec-mismatched { background: #f2dede; color: #ef404d; }
+.mow-rec-pending    { background: #fff3e0; color: #e65100; }
+.mow-rec-notsubmitted { background: #eeeeee; color: #607d8b; }
+
+/* Tax reference badge */
+.mow-ref-badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 2px;
+    font-size: 10px;
+    font-family: Consolas, monospace;
+    background: #fff1b9;
+    color: #000;
+    direction: ltr;
+}
+
+/* Discrepancy row */
+.mow-discrepancy { border-right: 3px solid #ef404d; background: #fff7f7; }
+.mow-discrepancy td { color: #b71c1c; }
+
+/* ═══════════════════════════════════════════════════════════
+   SETTINGS PAGE — Bootstrap 5 cards + Rahkaran compact overrides
+   ═══════════════════════════════════════════════════════════ */
+.mow-settings-card {
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    border-radius: 2px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.mow-settings-card .card-header.mow-card-header {
+    background: #3e4756;
+    color: #fff;
+    padding: 0.45rem 0.75rem;
+    font-size: 12px;
+    font-weight: 600;
+    border-bottom: none;
+    border-radius: 1px 1px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.mow-settings-card .card-header.mow-card-header i {
+    font-size: 14px;
+}
+.mow-settings-card .card-body {
+    padding: 0.75rem;
+    background: #fff;
+    font-size: 12px;
+}
+
+/* Compact form labels */
+.mow-form-label {
+    font-size: 11px !important;
+    color: #444 !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.2rem !important;
+}
+
+/* Compact form controls */
+.mow-root .form-control,
+.mow-root .form-control-sm {
+    font-size: 12px !important;
+    padding: 0.3rem 0.5rem !important;
+    border-radius: 2px !important;
+    border: 1px solid rgba(0,0,0,0.2) !important;
+    background: #fff;
+}
+.mow-root .form-control:focus {
+    border-color: #4d99d0 !important;
+    box-shadow: 0 0 0 0.15rem rgba(77,153,208,0.25) !important;
+}
+.mow-root .input-group-text {
+    font-size: 11px !important;
+    padding: 0.25rem 0.45rem !important;
+    border-radius: 2px 0 0 2px !important;
+    background: #f5f5f5;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+.mow-root .input-group-sm .input-group-text i {
+    font-size: 12px;
+}
+
+/* Password toggle button */
+.mow-toggle-pwd {
+    border-radius: 0 2px 2px 0 !important;
+    padding: 0.25rem 0.45rem !important;
+    font-size: 11px !important;
+}
+
+/* Sandbox switch */
+.mow-switch .form-check-input {
+    width: 2.5em !important;
+    height: 1.25em !important;
+    margin-left: 0.5rem !important;
+    cursor: pointer;
+}
+.mow-switch .form-check-input:checked {
+    background-color: #f08046 !important;
+    border-color: #d06830 !important;
+}
+.mow-switch .form-check-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+}
+.mow-sandbox-hint {
+    font-size: 10px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+    font-style: italic;
+}
+
+/* Form actions bar */
+.mow-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Compact action buttons */
+.mow-btn-save {
+    font-size: 12px !important;
+    padding: 4px 14px !important;
+    border-radius: 2px !important;
+    font-weight: 600;
+}
+.mow-btn-back {
+    font-size: 12px !important;
+    padding: 4px 12px !important;
+    border-radius: 2px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SG BUTTONS (legacy, kept for Index / Reconciliation pages)
+   ═══════════════════════════════════════════════════════════ */
+.sg-btn {
+    padding: 4px 10px; font-size: 11px; border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.3); cursor: pointer;
+    background: #eee linear-gradient(#fff, transparent);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.14); font-family: inherit;
+    text-decoration: none; color: #222; display: inline-flex; align-items: center; gap: 0.3rem;
+}
+.sg-btn:hover { background: #fff; border-color: rgba(0,0,0,0.5); }
+.sg-btn-primary { background: #4d99d0 linear-gradient(#6db5e0, #3d89c0); color: #fff; border-color: #3d89c0; }
+.sg-btn-secondary { background: #eee linear-gradient(#fff, transparent); }
+.sg-btn-warning { background: #f08046 linear-gradient(#f5a070, #e07036); color: #fff; border-color: #e07036; }
+.sg-btn-sm { padding: 2px 8px; font-size: 10px; }
+
+/* ═══════════════════════════════════════════════════════════
+   ALERTS
+   ═══════════════════════════════════════════════════════════ */
+.mow-alert {
+    padding: 0.5rem 0.75rem; border-radius: 2px; font-size: 12px;
+    margin-bottom: 1rem; border: 1px solid rgba(0,0,0,0.1);
+}
+.mow-alert-success { background: #dff0d8; color: #2e7d32; border-color: #18af08; }
+.mow-alert-info { background: #d9edf7; color: #1565c0; border-color: #4d99d0; }
+
+/* Legacy section title (kept for Index / Reconciliation) */
+.mow-section-title {
+    font-size: 13px; font-weight: 700; color: #3e4756;
+    border-bottom: 2px solid #eaeaea; padding-bottom: 0.25rem; margin-bottom: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Legacy settings form (compatibility — deprecated by cards)
+   ═══════════════════════════════════════════════════════════ */
+.mow-form-card {
+    background: #fff; border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 2px; padding: 1rem; margin-bottom: 1rem;
+}
+.mow-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+.mow-form-field { display: flex; flex-direction: column; gap: 0.25rem; }
+.mow-form-field label { font-size: 11px; color: #444; font-weight: 600; }
+.mow-form-field input, .mow-form-field select {
+    padding: 0.35rem 0.5rem; font-size: 12px;
+    border: 1px solid rgba(0,0,0,0.2); border-radius: 2px; outline: none; background: #fff;
+}
+.mow-form-field input:focus, .mow-form-field select:focus { border-color: #4d99d0; }
+.mow-toggle { display: flex; align-items: center; gap: 0.5rem; }
+.mow-toggle input { width: auto; }
