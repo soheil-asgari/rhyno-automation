@@ -1,46 +1,209 @@
-Act as a Senior Frontend & UI/UX Architect. I need you to refactor the main application layout and navigation structure in this repository to support a Persistent Enterprise ERP Shell with a Multi-Tab Interface (similar to Rahkaran System / Enterprise ERPs).
+🧾 1. ماژول ورودی فاکتور (Invoice Intake)
+🔹 Core
+آپلود فایل:
+JPG / PNG / PDF
+Drag & Drop
+Multi-upload (حداقل 50 فایل)
+نمایش preview
+حذف / ویرایش فایل قبل پردازش
+🔸 Pro
+آپلود ZIP (bulk)
+اتصال ایمیل (IMAP fetch)
+webhook ورودی
+🔥 Killer
+ربات تلگرام/واتساپ:
+forward → ثبت خودکار
+auto-fetch از پوشه Google Drive
+🧠 2. OCR Engine
+🔹 Core
+استخراج متن فارسی
+تشخیص:
+تاریخ
+مبلغ
+شماره فاکتور
+خروجی JSON
+🔸 Pro
+Layout detection (header / table)
+استخراج table line-items
+confidence score per field
+fallback OCR (چند موتور)
+🔥 Killer
+OCR دست‌نویس فارسی
+self-learning correction
+مدل اختصاصی برای فاکتورهای ایرانی
+🧩 3. Data Structuring Engine
+🔹 Core
 
-### 🚨 Problems to Fix:
-1. **Header Contrast & Background Bug:** The top header elements (Date, Financial Period, Ledger, System Title, User Profile) become unreadable (white-on-white text) when navigating to content pages with white backgrounds (e.g., Trial Balance).
-2. **Missing Persistent Layout:** Navigation currently replaces or affects the whole page layout instead of retaining a fixed top header shell.
-3. **Missing Multi-Tab Navigation:** Opening sidebar items currently re-routes/replaces the view. It should open views in dynamic browser-style tabs underneath the main header without closing previous pages.
-4. **Missing Loading State:** Switching between pages/tabs lacks smooth transition indicators or loading states.
+map داده به schema:
 
----
+{
+  seller,
+  buyer,
+  date,
+  items[],
+  total,
+  tax
+}
+validation اولیه
+🔸 Pro
+auto-detect:
+نوع مالیات
+نوع فاکتور
+normalize:
+تومان ↔ ریال
+🔥 Killer
+AI semantic understanding:
+“این عدد تخفیفه یا مالیاته؟”
+entity resolution:
+یکی کردن فروشنده‌های مشابه
+🏛 4. ماژول سامانه مودیان
+🔹 Core
+ساخت payload استاندارد
+ارسال API
+دریافت response
+🔸 Pro
+retry queue
+status tracking:
+pending
+success
+failed
+🔥 Killer
+sandbox mode (simulate before send)
+auto-fix error (مثلاً فرمت اشتباه)
+💰 5. موتور مالیات
+🔹 Core
+محاسبه VAT
+جمع کل
+تفکیک مالیات و مبلغ
+🔸 Pro
+rules:
+معاف / مشمول
+multi-rate tax
+🔥 Killer
+tax optimization suggestion
+prediction پایان دوره
+📊 6. داشبورد
+🔹 Core
+تعداد فاکتورها
+مجموع مالیات
+نمودار ساده
+🔸 Pro
+فیلتر:
+تاریخ
+فروشنده
+breakdown هزینه‌ها
+🔥 Killer
+AI insight:
+“این ماه ۳۰٪ بیشتر مالیات دادی”
+🔍 7. جستجو و آرشیو
+🔹 Core
+لیست فاکتورها
+جستجو ساده
+🔸 Pro
+full-text search (OCR text)
+فیلتر پیشرفته
+🔥 Killer
+semantic search:
+“فاکتورهای بالای ۵۰ میلیون از دیجی‌کالا”
+🔄 8. تطبیق (Reconciliation)
+🔹 Core
+مقایسه فاکتور با مودیان
+🔸 Pro
+نمایش اختلاف
+🔥 Killer
+auto-match AI
+پیشنهاد اصلاح
+🚨 9. سیستم هشدار
+🔹 Core
+خطای ارسال
+deadline
+🔸 Pro
+ایمیل / SMS
+🔥 Killer
+priority alert (AI-based)
+👨‍💼 10. مدیریت کاربران
+🔹 Core
+ثبت‌نام / لاگین
+نقش‌ها:
+admin
+accountant
+🔸 Pro
+multi-company
+permission matrix
+🔥 Killer
+audit trail کامل
+🔗 11. API و Integration
+🔹 Core
+REST API:
+create invoice
+get status
+🔸 Pro
+webhook
+export:
+Excel
+🔥 Killer
+plugin برای:
+سپیدار
+راهکاران
+📱 12. موبایل
+🔹 Core
+عکس گرفتن
+آپلود
+🔸 Pro
+crop + enhance
+🔥 Killer
+real-time OCR preview
+🤖 13. AI Assistant
+🔹 Core
+چت ساده
+🔸 Pro
+query روی داده:
+“مالیات این ماه؟”
+🔥 Killer
+توصیه:
+“این فاکتور ثبت نشده”
+🛡 14. امنیت
+🔹 Core
+JWT auth
+HTTPS
+🔸 Pro
+encryption at rest
+🔥 Killer
+anomaly detection (login, usage)
+⚙️ 15. Dev & Infra Features (مهم برای مقیاس)
+🔹 Core
+logging
+error handling
+🔸 Pro
+queue (RabbitMQ)
+microservice separation
+🔥 Killer
+autoscaling OCR workers
+model versioning
+💳 16. سیستم درآمدی
+🔹 Core
+subscription
+🔸 Pro
+usage-based billing
+🔥 Killer
+pay-per-success (مثلاً فقط فاکتور موفق)
+🚀 ترتیب پیشنهادی توسعه (خیلی مهم)
+فاز 1 (۲-۴ هفته)
+upload
+OCR ساده
+نمایش دیتا
+فاز 2
+ساختاردهی
+ذخیره
+داشبورد ساده
+فاز 3
+اتصال مودیان
+فاز 4
+AI + automation
+🧠 نکته حیاتی (فرق شکست و موفقیت)
 
-### 🎯 Requirements & Refactoring Tasks:
+اگر اینو بزنی:
+❌ فقط OCR → شکست
 
-#### Task 1: Persistent Shell & Header Fix (`AppLayout` / Shell)
-- Ensure the main Top Header is part of a fixed root Layout shell (`MainLayout`/`ShellLayout`).
-- Assign a solid, permanent dark background color to the Header (e.g., `bg-[#2f3846]` or `bg-slate-800`) so white header text (e.g., `امروز: ۱۴۰۵/۰۵/۱۱`, `Rhyno Dashboard`, `دفتر کل: اصلی`, `دوره مالی: ۱۴۰۵`) remains 100% visible regardless of the page/tab content background.
-- Ensure the Header and Sidebar stay permanently mounted and do NOT re-render or flicker during sub-navigation.
-
-#### Task 2: Multi-Tab State Management System
-- Implement or update a centralized Tab Store/Context (e.g., using Zustand or React Context) to manage open tabs.
-- Tab Data Structure: `{ id, title, path/component, isActive, icon }`.
-- Modify Sidebar menu clicks: Clicking a menu item must:
-  1. Check if the tab is already open (if yes, set it as `isActive`).
-  2. If not open, push a new tab to the tab list and activate it.
-- Add a **Tab Bar UI component** immediately below the main Header:
-  - Display active tab with distinct styling (highlighted/active background).
-  - Include a close button (`x`) on each tab to remove it from the state.
-  - Keep default tab (e.g., "میز کار / Rhyno Dashboard") non-closeable or fixed.
-
-#### Task 3: Content Area & Tab Rendering
-- In the main content viewport:
-  - Render active tab content dynamically.
-  - Option A: Use `Suspense` and `React.lazy` for tab component rendering.
-  - Option B: Use hidden state CSS (`display: none` / `hidden`) for background tabs if form/state retention is required across tabs.
-
-#### Task 4: Tab Transition & Loading States
-- Add a smooth Loading Spinner or Skeleton / Progress Bar when loading dynamic tab contents or fetching remote tab views.
-- Add transition feedback during tab switching.
-
----
-
-### 🛠️ Execution Steps for Cline:
-1. First, search and inspect the current Layout, Sidebar, Header, and Routing setup in the repository.
-2. Outline the files you plan to modify or create (e.g., `useTabStore.ts`, `TabBar.tsx`, `Header.tsx`, `MainLayout.tsx`).
-3. Apply code changes step-by-step while maintaining existing RTL/Tailwind styles.
-4. Verify that Tailwind contrast classes (e.g., `text-white`, `bg-[#2f3846]`) prevent any invisible text issues.
-5. Provide a summary of all changes made once complete.
+اگر اینو بزنی:
+✅ “کاهش درد مالیاتی + اتوماسیون کامل” → موفقیت

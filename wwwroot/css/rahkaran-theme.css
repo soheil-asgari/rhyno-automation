@@ -126,7 +126,7 @@ body.rahkaran-theme {
   font-size: 13px;
 }
 
-.rahkaran-header .user-profile > span {
+.rahkaran-header .user-profile>span {
   color: #fff !important;
 }
 
@@ -1187,6 +1187,31 @@ html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .va
   border-radius: 3px;
 }
 
+/* Tab bar inner container — holds the tab pills (rendered by tab-manager.js).
+   Explicit flexbox row prevents any floating / absolute positioning edge cases. */
+#rhynoTabBarHost,
+.rhyno-tab-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  background-color: #1e2530 !important;
+  width: 100% !important;
+  height: 34px !important;
+  position: relative !important;
+  top: 0 !important;
+  right: 0 !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  box-sizing: border-box !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Hidden state — used by tab-manager.js when no tabs are open */
+.rhyno-tab-bar-host.rhyno-tab-bar-hidden {
+  display: none !important;
+}
+
 /* Individual tab pill — dense, MDI-style */
 .rhyno-tab {
   display: inline-flex;
@@ -1383,7 +1408,40 @@ body.rahkaran-tab-content .rahkaran-desktop {
     SHELL INITIALIZED — hide static server-rendered body
     Once tab-manager.js creates the first tab frame, the static
     @RenderBody() region is hidden so the tab owns the viewport.
+
+    DEFAULT STATE: tab-column VISIBLE, mainContentArea HIDDEN.
+    This prevents the static Home/Index desktop toolbar and
+    shortcut cards from overlapping the tab bar headers (Bug 1).
+
+    ❗ Scoped to body.rahkaran-is-desktop so the rules do NOT
+       bleed into _TabLayout iframes (which also load this CSS).
     ═══════════════════════════════════════════════════════════ */
-body.rhyno-shell-active #mainContentArea {
+
+/* Default: show the persistent tab column, hide the static body */
+body.rahkaran-is-desktop .rhyno-tab-column {
+  display: flex !important;
+}
+
+body.rahkaran-is-desktop #mainContentArea {
   display: none !important;
 }
+
+/* When the shell is not active (e.g. tab-manager.js detects
+   a non-shell page or _tab=1 content), revert to static body */
+body.rahkaran-is-desktop.rhyno-shell-fallback .rhyno-tab-column {
+  display: none !important;
+}
+
+body.rahkaran-is-desktop.rhyno-shell-fallback #mainContentArea {
+  display: flex !important;
+}
+
+/* Keep shell-active rule for tab-column visibility */
+body.rhyno-shell-active .rhyno-tab-column {
+  display: flex !important;
+}
+
+/* ❗ REMOVED: body.rhyno-shell-active #mainContentArea { display: none !important; }
+   #mainContentArea visibility is now toggled by tab-manager.js
+   based on whether any dynamic tabs are open.  When tabs.length === 0
+   the home dashboard is shown; when tabs.length > 0 it is hidden. */

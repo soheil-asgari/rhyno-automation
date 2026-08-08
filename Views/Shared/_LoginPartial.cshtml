@@ -20,7 +20,7 @@
                 <strong style="display:block;font-size:12px;color:#1f2937;">@displayName</strong>
                 <span style="display:block;font-size:11px;color:#9ca3af;">@User.Identity?.Name</span>
             </div>
-            <a asp-controller="Settings" asp-action="Index"
+            <a href="@Url.Action("Index", "Settings")" class="menu-item"
                style="display:flex;align-items:center;gap:8px;padding:10px 14px;text-decoration:none;color:#374151;font-size:12px;font-weight:600;transition:background 0.15s;"
                onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
                 <i class="bi bi-person-gear"></i>

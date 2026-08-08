@@ -144,7 +144,13 @@
             });
 
             // Auto-click the stored tab or the first active tab on load
-            const storedTarget = window.location.hash || localStorage.getItem('rhyno.settings.activeTab');
+            // When loaded inside a shell tab iframe (_tab=1), always default to
+            // the first tab to avoid localStorage contamination from prior visits.
+            const isInsideTab = new URLSearchParams(window.location.search).has('_tab');
+            let storedTarget = null;
+            if (!isInsideTab) {
+                storedTarget = window.location.hash || localStorage.getItem('rhyno.settings.activeTab');
+            }
             let tabToClick = null;
             if (storedTarget) {
                 tabToClick = document.querySelector(`.tab-btn[data-target="${storedTarget}"]`);

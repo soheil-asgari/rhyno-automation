@@ -8,7 +8,7 @@
  *    • Tab bar rendering below the main header
  *    • iframe-based tab content (state retention — Option B)
  *    • Loading spinner / progress bar during tab loads
- *    • Fixed non-closeable default tab (میز کار)
+ *    • Tab bar auto-hides when no tabs are open
  *    • Deep-link seeding: opening /Some/Page directly opens it in a tab
  *    • Hides the static server-rendered body once the shell is active
  *
@@ -19,14 +19,6 @@
     'use strict';
 
     var STORAGE_KEY = 'rhyno.tabs.v1';
-    var DEFAULT_TAB = {
-        id: 'home',
-        title: 'میز کار / Rhyno Dashboard',
-        url: '/',
-        icon: 'bi-speedometer2',
-        fixed: true
-    };
-
     // ── State ─────────────────────────────────────────────────────
     var tabs = [];
     var activeTabId = null;
@@ -48,9 +40,18 @@
     }
 
     function buildTabUrl(url) {
+        // IMPORTANT: _tab=1 must go BEFORE the hash (#) so the server
+        // can detect it via Request.Query and switch to _TabLayout.
+        // Hash fragments are client-side only and never sent to the server.
         var clean = normalizeUrl(url);
+        var hashPart = '';
+        var hashIdx = clean.indexOf('#');
+        if (hashIdx >= 0) {
+            hashPart = clean.substring(hashIdx);
+            clean = clean.substring(0, hashIdx);
+        }
         var sep = clean.indexOf('?') >= 0 ? '&' : '?';
-        return clean + sep + '_tab=1';
+        return clean + sep + '_tab=1' + hashPart;
     }
 
     function makeId(url) {
@@ -143,28 +144,24 @@
     function closeTab(id) {
         var idx = tabs.findIndex(function (t) { return t.id === id; });
         if (idx < 0) return;
-        if (tabs[idx].fixed) return; // default tab cannot be closed
 
         var wasActive = tabs[idx].isActive;
         tabs.splice(idx, 1);
 
         if (wasActive) {
-            // Activate the neighbour (prefer the right/previous in RTL order = idx-1)
-            var next = tabs[idx - 1] || tabs[idx] || null;
-            if (next) {
+            if (tabs.length > 0) {
+                var next = tabs[idx - 1] || tabs[0];
                 activeTabId = next.id;
                 tabs.forEach(function (t) { t.isActive = (t.id === next.id); });
             } else {
-                // No tabs left — restore default
-                tabs = [Object.assign({}, DEFAULT_TAB, { isActive: true })];
-                activeTabId = tabs[0].id;
+                // وقتی همه تب‌ها بسته شدند
+                activeTabId = null;
             }
         }
 
         persist();
         render();
     }
-
     // ── Rendering ─────────────────────────────────────────────────
     function render() {
         if (!initialized) return;
@@ -172,17 +169,60 @@
         if (!elWorkspace) elWorkspace = document.getElementById('rhynoWorkspace');
         if (!elTabBar || !elWorkspace) return;
 
+        var mainContent = document.getElementById('mainContentArea');
+        var tabColumn = document.querySelector('.rhyno-tab-column');
+
+        if (tabs.length === 0) {
+            // ── No dynamic tabs → show server-rendered home dashboard ──
+            // If the user is currently on a non-home page (e.g., navigated
+            // directly to /Settings), redirect to home so the main content
+            // shows the dashboard instead of a stale page.
+            var currentPath = window.location.pathname;
+            if (currentPath !== '/' && currentPath.indexOf('/Home/Index') !== 0 && currentPath.indexOf('/Home') !== 0) {
+                window.location.replace('/');
+                return;
+            }
+            if (mainContent) {
+                mainContent.style.setProperty('display', 'flex', 'important');
+            }
+            if (elWorkspace) {
+                elWorkspace.style.setProperty('display', 'none', 'important');
+            }
+            // Hide the entire tab-column so it doesn't consume flex space
+            // next to #mainContentArea (Bug 1: Layout Shift / Huge Blank Gap)
+            if (tabColumn) {
+                tabColumn.style.setProperty('display', 'none', 'important');
+            }
+        } else {
+            // ── Dynamic tabs open → hide static body, show workspace ──
+            if (mainContent) {
+                mainContent.style.setProperty('display', 'none', 'important');
+            }
+            if (elWorkspace) {
+                elWorkspace.style.removeProperty('display');
+            }
+            if (tabColumn) {
+                tabColumn.style.removeProperty('display');
+            }
+        }
+
         renderTabBar();
         renderWorkspace();
         syncSidebarActiveState();
     }
 
     function renderTabBar() {
+        if (!elTabBar) elTabBar = document.getElementById('rhynoTabBar');
+        if (!elTabBar) return;
+
+        var barHost = elTabBar.parentElement;
+        if (!barHost) return;
+
         if (tabs.length === 0) {
-            elTabBar.parentElement.style.display = 'none';
+            barHost.classList.add('rhyno-tab-bar-hidden');
             return;
         }
-        elTabBar.parentElement.style.display = '';
+        barHost.classList.remove('rhyno-tab-bar-hidden');
 
         var html = '';
         tabs.forEach(function (tab, index) {
@@ -190,15 +230,15 @@
             var closeBtn = tab.fixed
                 ? ''
                 : '<button type="button" class="rhyno-tab-close" data-tab-close="' + escapeHtml(tab.id) + '" title="بستن تب" aria-label="بستن تب">' +
-                  '<svg viewBox="0 0 12 12" width="10" height="10" fill="none"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>' +
-                  '</button>';
+                '<svg viewBox="0 0 12 12" width="10" height="10" fill="none"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>' +
+                '</button>';
 
             html += '<div class="rhyno-tab ' + (isActive ? 'active' : '') + (tab.fixed ? ' fixed' : '') + '" ' +
-                    'data-tab-id="' + escapeHtml(tab.id) + '" data-tab-index="' + index + '" role="tab" aria-selected="' + (isActive ? 'true' : 'false') + '">' +
-                    '<i class="bi ' + escapeHtml(tab.icon) + ' rhyno-tab-icon"></i>' +
-                    '<span class="rhyno-tab-title">' + escapeHtml(tab.title) + '</span>' +
-                    closeBtn +
-                    '</div>';
+                'data-tab-id="' + escapeHtml(tab.id) + '" data-tab-index="' + index + '" role="tab" aria-selected="' + (isActive ? 'true' : 'false') + '">' +
+                '<i class="bi ' + escapeHtml(tab.icon) + ' rhyno-tab-icon"></i>' +
+                '<span class="rhyno-tab-title">' + escapeHtml(tab.title) + '</span>' +
+                closeBtn +
+                '</div>';
         });
 
         elTabBar.innerHTML = html;
@@ -268,7 +308,7 @@
             if (!tabUrl) return;
             var cleanHref = normalizeUrl(href);
             var isMatch = cleanHref === tabUrl ||
-                          (tabUrl !== '/' && cleanHref.indexOf(tabUrl) === 0);
+                (tabUrl !== '/' && cleanHref.indexOf(tabUrl) === 0);
             a.classList.toggle('active', isMatch);
         });
     }
@@ -277,7 +317,7 @@
     function wireEvents() {
         // Sidebar menu item clicks → open tab
         document.addEventListener('click', function (e) {
-            var link = e.target.closest('a.menu-item[href]');
+            var link = e.target.closest('a.menu-item[href], .desktop-toolbar a[href], .rahkaran-widget-card[href], .rk-list-item[href]');
             if (!link) return;
             var href = link.getAttribute('href');
             if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
@@ -312,7 +352,7 @@
         var title = '';
         var icon = '';
 
-        var titleEl = link.querySelector('.link-text, .tab-link-text, span');
+        var titleEl = link.querySelector('.link-text, .tab-link-text, .widget-title, strong, h1, h2, h3, h4, h5, h6, span');
         if (titleEl) title = titleEl.textContent.trim();
         if (!title) title = link.textContent.trim();
 
@@ -327,12 +367,11 @@
 
     // ── Init ──────────────────────────────────────────────────────
     function seedFromCurrentUrl() {
-        // If the user deep-links to a real page (not just "/"), open it as the
-        // active tab alongside the fixed default tab.
+        // If the user deep-links to a real page (not just "/"), open it as a new
+        // active tab.
         var path = currentPath();
-        if (!path || path === '/' ) return;
+        if (!path || path === '/' || path === '/Home/Index') return;
 
-        var defaultTab = tabs.find(function (t) { return t.fixed; });
         var alreadyOpen = tabs.some(function (t) { return t.id === makeId(path); });
         if (alreadyOpen) return;
 
@@ -352,12 +391,6 @@
             }
         });
 
-        // Home path always maps to the fixed default tab
-        if (path === DEFAULT_TAB.url || makeId(path) === DEFAULT_TAB.id) {
-            activeTabId = defaultTab ? defaultTab.id : DEFAULT_TAB.id;
-            return;
-        }
-
         tabs.push({
             id: makeId(path),
             title: title,
@@ -374,38 +407,30 @@
         try { restored = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { restored = null; }
 
         if (restored && Array.isArray(restored.tabs) && restored.tabs.length > 0) {
-            // Always ensure the default tab exists first
-            var hasDefault = restored.tabs.some(function (t) { return t.fixed; });
-            if (!hasDefault) {
-                restored.tabs.unshift(Object.assign({}, DEFAULT_TAB));
-            }
             tabs = restored.tabs;
             activeTabId = restored.activeTabId;
             if (!tabs.some(function (t) { return t.id === activeTabId; })) {
-                activeTabId = tabs[0].id;
+                activeTabId = tabs[0] ? tabs[0].id : null;
             }
             tabs.forEach(function (t) { t.isActive = (t.id === activeTabId); });
-
-            // Deep-link seeding: the restored session already has tabs, but if the
-            // current URL is a distinct page not yet open, activate it too.
-            seedFromCurrentUrl();
         } else {
-            tabs = [Object.assign({}, DEFAULT_TAB, { isActive: true })];
-            activeTabId = DEFAULT_TAB.id;
-            // First visit (or cleared storage): if deep-linked, open that page in a tab.
-            seedFromCurrentUrl();
-            // If seeding changed the active tab, keep the default as a background tab.
-            if (activeTabId !== DEFAULT_TAB.id) {
-                tabs[0].isActive = false;
-            }
+            // هیچ تبی پیش‌فرض باز نمی‌شود
+            tabs = [];
+            activeTabId = null;
         }
 
         persist();
     }
-
     function init() {
         if (initialized) return;
-        if (!isShellPage()) return; // login pages & tab-content iframes skip
+
+        if (!isShellPage()) {
+            // Non-shell page (login, identity, _tab content inside iframes):
+            // show the static @RenderBody() content since the tab system
+            // should not activate here. (Bug 1 / Bug 2 fix)
+            document.body.classList.add('rhyno-shell-fallback');
+            return;
+        }
 
         elTabBar = document.getElementById('rhynoTabBar');
         elWorkspace = document.getElementById('rhynoWorkspace');
@@ -415,6 +440,7 @@
         document.body.classList.add('rhyno-shell-active');
 
         restoreOrInit();
+        seedFromCurrentUrl();
         initialized = true;
         wireEvents();
         render();

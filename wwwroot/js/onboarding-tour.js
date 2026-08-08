@@ -32,7 +32,7 @@
             icon: 'bi-inboxes'
         },
         {
-            target: '#topbarDate',
+            target: '#headerDate',
             title: 'تنظیمات و پروفایل',
             content: 'تاریخ شمسی، اعلان‌ها، تنظیمات پروفایل و تم سیستم از این بخش قابل دسترسی است.',
             placement: 'bottom',
@@ -141,13 +141,10 @@
         const finishBtn = tourTooltip.querySelector('.onboarding-finish');
         const skipBtn = tourTooltip.querySelector('.onboarding-skip');
 
-        if (nextBtn) nextBtn.addEventListener('click', () => nextStep());
-        if (prevBtn) prevBtn.addEventListener('click', () => prevStep());
-        if (finishBtn) finishBtn.addEventListener('click', () => endTour());
-        if (skipBtn) skipBtn.addEventListener('click', () => endTour());
-
-        // Keyboard navigation
-        document.addEventListener('keydown', handleKeyboard);
+        if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); nextStep(); });
+        if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); prevStep(); });
+        if (finishBtn) finishBtn.addEventListener('click', (e) => { e.stopPropagation(); endTour(); });
+        if (skipBtn) skipBtn.addEventListener('click', (e) => { e.stopPropagation(); endTour(); });
 
         // Scroll target into view
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -307,6 +304,9 @@
                 // Don't close on overlay click - user must use buttons
             }
         });
+
+        // Keyboard navigation - registered once for the entire tour
+        document.addEventListener('keydown', handleKeyboard);
 
         // Start from first step
         setTimeout(() => showStep(0), 500);

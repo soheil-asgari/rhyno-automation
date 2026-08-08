@@ -1,4 +1,7 @@
 ﻿
 @{
-    Layout = "/Views/Shared/_Layout.cshtml";
+    // When a page is requested inside a shell tab (_tab=1) render the compact
+    // "naked" layout (no header/sidebar/tab-bar) so we never get a nested shell.
+    var isTabContent = Context.Request.Query.ContainsKey("_tab");
+    Layout = isTabContent ? "/Views/Shared/_TabLayout" : "/Views/Shared/_Layout.cshtml";
 }

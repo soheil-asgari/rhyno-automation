@@ -36,10 +36,10 @@
     SystemSetting? brandingSettings = null;
     try { brandingSettings = await TenantSettingsService.GetSystemSettingsAsync(); } catch { }
     var brandPrimary = brandingSettings?.PrimaryColor;
-    var brandAccent  = brandingSettings?.AccentColor;
-    var brandLogo    = brandingSettings?.LogoUrl;
+    var brandAccent = brandingSettings?.AccentColor;
+    var brandLogo = brandingSettings?.LogoUrl;
     var brandFavicon = brandingSettings?.FaviconUrl;
-    var appTitle     = brandingSettings?.ApplicationTitle ?? "راینو ERP";
+    var appTitle = brandingSettings?.ApplicationTitle ?? "راینو ERP";
 
     // Sidebar accordion state helper
     bool IsExpanded(params string[] controllers)
@@ -49,14 +49,57 @@
 }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="request-verification-token" content="@antiforgeryTokens.RequestToken" />
+
+    <!-- ══════════════════════════════════════════════════════════
+         SAFETY GUARD — Infinite Iframe Loop Prevention
+         If _Layout.cshtml is accidentally loaded inside an iframe
+         (tab), hide all shell chrome immediately so we never get
+         a nested shell. This is belt-and-suspenders together with
+         _ViewStart.cshtml routing _tab=1 → _TabLayout.cshtml.
+         ══════════════════════════════════════════════════════════ -->
+    <script>
+            if (window.top !== window.self) {
+                document.documentElement.classList.add('is-inside-tab-iframe');
+            }
+    </script>
+    <style>
+            html.is-inside-tab-iframe .rahkaran-header,
+            html.is-inside-tab-iframe .rahkaran-sidebar,
+            html.is-inside-tab-iframe .rahkaran-sidebar-overlay,
+            html.is-inside-tab-iframe .rhyno-tab-bar-host,
+            html.is-inside-tab-iframe #rhynoTabBarHost,
+            html.is-inside-tab-iframe .rhyno-tab-column {
+                display: none !important;
+            }
+
+            html.is-inside-tab-iframe .rahkaran-app-body {
+                display: block !important;
+            }
+
+            html.is-inside-tab-iframe body {
+                padding-top: 0 !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+            }
+
+            /* Higher specificity to override body.rahkaran-is-desktop #mainContentArea */
+            html.is-inside-tab-iframe body.rahkaran-is-desktop #mainContentArea,
+            html.is-inside-tab-iframe body #mainContentArea {
+                display: flex !important;
+                background: #ffffff;
+            }
+    </style>
+
     <title>@ViewData["Title"] - @appTitle</title>
 
     <!-- Vazirmatn Font -->
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"
+          type="text/css" />
 
     <!-- Icons -->
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
@@ -75,21 +118,26 @@
     @if (!string.IsNullOrWhiteSpace(brandPrimary))
     {
         <style>
-            :root {
-                --rk-accent: @brandPrimary;
-                --rk-accent-light: @brandAccent;
-            }
+                :root {
+                    --rk-accent:
+                        @brandPrimary
+                    ;
+                    --rk-accent-light:
+                        @brandAccent
+                    ;
+                }
         </style>
     }
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="rahkaran-theme @(currentController == "Home" && currentAction == "Index" ? "rahkaran-is-desktop" : "rahkaran-page-view")">
+
+<body class="rahkaran-theme rahkaran-is-desktop">
 
     <!-- ═══════════════════════════════════════════════════
     ۱. HEADER — Transparent glass bar
     ═══════════════════════════════════════════════════════ -->
-    <header class="rahkaran-header">
+    <header class="rahkaran-header" style="background:#2f3846;">
         <div class="header-section">
             <button class="btn-toggle-menu" id="btnToggleSidebar" title="نمایش/عدم نمایش منو" aria-label="منو">
                 <i class="bi bi-list"></i>
@@ -105,215 +153,293 @@
         <div class="header-section">
             <!-- Notifications -->
             <div class="rhyno-dropdown-trigger relative" style="position:relative;">
-                <button class="btn-toggle-menu relative" type="button" aria-expanded="false" aria-label="اعلان‌ها" onclick="Rhyno.toggleDropdown(this)" style="position:relative;">
+                <button class="btn-toggle-menu relative" type="button" aria-expanded="false" aria-label="اعلان‌ها"
+                        onclick="Rhyno.toggleDropdown(this)" style="position:relative;">
                     <i class="bi bi-bell"></i>
                     @if (headerNotificationCount > 0)
                     {
-                        <span style="position:absolute;top:-2px;right:-4px;min-width:16px;height:16px;border-radius:50%;background:#e11d48;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">@headerNotificationCount.ToString("N0")</span>
+                        <span
+                        style="position:absolute;top:-2px;right:-4px;min-width:16px;height:16px;border-radius:50%;background:#e11d48;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">@headerNotificationCount.ToString("N0")</span>
                     }
                 </button>
-                <div class="rhyno-dropdown absolute left-0 mt-2 w-80 overflow-hidden rounded-xl border border-white/40 bg-white/95 backdrop-blur-md p-0 shadow-2xl" style="z-index: 60;">
+                <div class="rhyno-dropdown absolute left-0 mt-2 w-80 overflow-hidden rounded-xl border border-white/40 bg-white/95 backdrop-blur-md p-0 shadow-2xl"
+                     style="z-index: 60;">
                     <div class="flex items-center justify-between border-b border-slate-100/80 px-4 py-3">
                         <strong class="text-sm text-slate-900">اعلان‌ها</strong>
-                        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">@headerNotificationCount.ToString("N0") مورد</span>
+                        <span
+                            class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">@headerNotificationCount.ToString("N0")
+                            مورد</span>
+                        </div>
+                        @if (headerNotifications.Count == 0)
+                        {
+                            <div class="px-4 py-6 text-center text-[12px] text-slate-500">اعلان مهمی برای نمایش وجود ندارد.
+                            </div>
+                        }
+                        else
+                        {
+                            foreach (var notification in headerNotifications.Take(8))
+                            {
+                                <a class="flex gap-3 border-b border-slate-100/60 px-4 py-3 no-underline transition-all hover:bg-slate-50/80"
+                                   href="@notification.Url">
+                                    <i class="bi @notification.Icon mt-0.5 text-slate-400"></i>
+                                    <span class="min-w-0">
+                                        <strong class="block truncate text-[12px] text-slate-900">@notification.Title</strong>
+                                        <small class="block truncate text-[11px] text-slate-500">@notification.Message</small>
+                                    </span>
+                                </a>
+                            }
+                        }
+                        <a class="block px-4 py-3 text-center text-[12px] font-bold text-indigo-600 no-underline hover:bg-slate-50/80 rounded-b-xl"
+                           href="/Notifications">مشاهده همه اعلان‌ها</a>
                     </div>
-                    @if (headerNotifications.Count == 0)
+                </div>
+
+                <!-- User Profile -->
+                <div class="user-profile">
+                    <span style="color:#fff;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,0.2);">خوش‌آمدید، </span>
+                    <span class="user-name" style="cursor:pointer;"
+                          onclick="event.preventDefault(); if(window.RhynoTabs){ window.RhynoTabs.open('/Settings', 'تنظیمات', 'bi-gear'); } else { location.href='@Url.Action("Index", "Settings")'; }">@displayName</span>
+                    <partial name="_LoginPartial" />
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══════════════════════════════════════════════════
+    ۲. APP BODY — Sidebar + Main Content
+    ═══════════════════════════════════════════════════════ -->
+        <div class="rahkaran-app-body">
+
+            <!-- Sidebar Overlay (mobile) -->
+            <div class="rahkaran-sidebar-overlay" id="sidebarOverlay"></div>
+
+            <!-- SIDEBAR -->
+            <aside class="rahkaran-sidebar" id="appSidebar">
+                <!-- Brand / Logo — dark slate MDI group header -->
+                <div class="sidebar-brand">
+                    @if (!string.IsNullOrWhiteSpace(brandLogo))
                     {
-                        <div class="px-4 py-6 text-center text-[12px] text-slate-500">اعلان مهمی برای نمایش وجود ندارد.</div>
+                        <img src="@brandLogo" alt="@appTitle"
+                             style="width:34px;height:34px;border-radius:2px;object-fit:contain;background:#fff;padding:2px;" />
                     }
                     else
                     {
-                        foreach (var notification in headerNotifications.Take(8))
-                        {
-                            <a class="flex gap-3 border-b border-slate-100/60 px-4 py-3 no-underline transition-all hover:bg-slate-50/80" href="@notification.Url">
-                                <i class="bi @notification.Icon mt-0.5 text-slate-400"></i>
-                                <span class="min-w-0">
-                                    <strong class="block truncate text-[12px] text-slate-900">@notification.Title</strong>
-                                    <small class="block truncate text-[11px] text-slate-500">@notification.Message</small>
-                                </span>
-                            </a>
+                        <span
+                            style="width:34px;height:34px;border-radius:2px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;border:1px solid rgba(255,255,255,0.25);"><i
+                            class="bi bi-grid-1x2-fill"></i></span>
                         }
-                    }
-                    <a class="block px-4 py-3 text-center text-[12px] font-bold text-indigo-600 no-underline hover:bg-slate-50/80 rounded-b-xl" href="/Notifications">مشاهده همه اعلان‌ها</a>
-                </div>
-            </div>
+                        <span style="min-width:0;">
+                            <span
+                            style="display:block;font-size:14px;font-weight:900;color:#fff;line-height:1.2;">@appTitle</span>
+                            <span style="display:block;font-size:10px;color:rgba(255,255,255,0.75);">سیستم جامع سازمانی</span>
+                        </span>
+                    </div>
 
-            <!-- User Profile -->
-            <div class="user-profile">
-                <span style="color:#fff;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,0.2);">خوش‌آمدید، </span>
-                <span class="user-name" onclick="location.href='@Url.Action("Index", "Settings")'">@displayName</span>
-                <partial name="_LoginPartial" />
-            </div>
-        </div>
-    </header>
+                    <!-- Search -->
+                    <div class="sidebar-search">
+                        <input type="text" id="sidebarMenuSearch" placeholder="جستجو در صفحات سیستم..." autocomplete="off" />
+                    </div>
 
-    <!-- ═══════════════════════════════════════════════════
-    ۲. APP BODY — Sidebar + Main Content
-    ═══════════════════════════════════════════════════════ -->
-    <div class="rahkaran-app-body">
+                    <!-- Menu Groups -->
+                    <div class="menu-groups" id="sidebarScrollContainer">
 
-        <!-- Sidebar Overlay (mobile) -->
-        <div class="rahkaran-sidebar-overlay" id="sidebarOverlay"></div>
+                        <!-- Quick Access -->
+                        <div class="menu-group">
+                            <h4>دسترسی سریع</h4>
+                            <ul class="menu-list">
+                                @* <li>
+                                    <a class='menu-item @(currentController == "Home" ? "active" : "")' asp-controller="Home"
+                                       asp-action="Index" data-nav-id="home-index">
+                                        <i class="bi bi-speedometer2 menu-icon"></i> میز کار
+                                    </a>
+                                </li> *@
+                                <li>
+                                    <a class='menu-item @(currentController == "WorkInbox" ? "active" : "")'
+                                       asp-controller="WorkInbox" asp-action="Index" data-nav-id="workinbox-index">
+                                        <i class="bi bi-inboxes menu-icon"></i> کارتابل
+                                    </a>
+                                </li>
+                                @if (userCanAccessFinance)
+                                {
+                                    <li>
+                                        <a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")'
+                                           asp-controller="Financial" asp-action="GetTrialBalance">
+                                            <i class="bi bi-table menu-icon"></i> تراز آزمایشی
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
 
-        <!-- SIDEBAR -->
-        <aside class="rahkaran-sidebar" id="appSidebar">
-            <!-- Brand / Logo — dark slate MDI group header -->
-            <div class="sidebar-brand">
-                @if (!string.IsNullOrWhiteSpace(brandLogo))
-                {
-                    <img src="@brandLogo" alt="@appTitle" style="width:34px;height:34px;border-radius:2px;object-fit:contain;background:#fff;padding:2px;" />
-                }
-                else
-                {
-                    <span style="width:34px;height:34px;border-radius:2px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;border:1px solid rgba(255,255,255,0.25);"><i class="bi bi-grid-1x2-fill"></i></span>
-                }
-                <span style="min-width:0;">
-                    <span style="display:block;font-size:14px;font-weight:900;color:#fff;line-height:1.2;">@appTitle</span>
-                    <span style="display:block;font-size:10px;color:rgba(255,255,255,0.75);">سیستم جامع سازمانی</span>
-                </span>
-            </div>
-
-            <!-- Search -->
-            <div class="sidebar-search">
-                <input type="text" id="sidebarMenuSearch" placeholder="جستجو در صفحات سیستم..." autocomplete="off" />
-            </div>
-
-            <!-- Menu Groups -->
-            <div class="menu-groups" id="sidebarScrollContainer">
-
-                <!-- Quick Access -->
-                <div class="menu-group">
-                    <h4>دسترسی سریع</h4>
-                    <ul class="menu-list">
-                        <li>
-                            <a class='menu-item @(currentController == "Home" ? "active" : "")' asp-controller="Home" asp-action="Index">
-                                <i class="bi bi-speedometer2 menu-icon"></i> میز کار
-                            </a>
-                        </li>
-                        <li>
-                            <a class='menu-item @(currentController == "WorkInbox" ? "active" : "")' asp-controller="WorkInbox" asp-action="Index">
-                                <i class="bi bi-inboxes menu-icon"></i> کارتابل
-                            </a>
-                        </li>
-                        @if (userCanAccessFinance)
+                        <!-- Human Capital Module -->
+                        @if (userCanAccessHumanCapital)
                         {
-                            <li>
-                                <a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")' asp-controller="Financial" asp-action="GetTrialBalance">
-                                    <i class="bi bi-table menu-icon"></i> تراز آزمایشی
-                                </a>
-                            </li>
-                        }
-                    </ul>
-                </div>
+                            <div class="menu-group sidebar-module" data-module="human">
+                                <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                    <span>سرمایه انسانی</span>
+                                    <i class="bi bi-chevron-down chevron"></i>
+                                </button>
+                                <ul class="menu-list module-children"
+                                    style="max-height:@(IsExpanded("HumanCapital","Leaves","Letters") ? "400px" : "0");">
+                                    <li><a class='menu-item @(currentController == "HumanCapital" ? "active" : "")'
+                                           asp-controller="HumanCapital" asp-action="Index"><i
+                                        class="bi bi-person-badge menu-icon"></i> منابع انسانی</a></li>
+                                        <li><a class='menu-item @(currentController == "Leaves" ? "active" : "")'
+                                               asp-controller="Leaves" asp-action="Index"><i
+                                            class="bi bi-calendar2-week menu-icon"></i> مرخصی‌ها</a></li>
+                                            <li><a class='menu-item @(currentController == "Letters" ? "active" : "")'
+                                                   asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i>
+                                                نامه‌ها</a></li>
+                                            </ul>
+                                        </div>
+                                    }
 
-                <!-- Human Capital Module -->
-                @if (userCanAccessHumanCapital)
-                {
-                    <div class="menu-group sidebar-module" data-module="human">
-                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                            <span>سرمایه انسانی</span>
-                            <i class="bi bi-chevron-down chevron"></i>
-                        </button>
-                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("HumanCapital","Leaves","Letters") ? "400px" : "0");">
-                            <li><a class='menu-item @(currentController == "HumanCapital" ? "active" : "")' asp-controller="HumanCapital" asp-action="Index"><i class="bi bi-person-badge menu-icon"></i> منابع انسانی</a></li>
-                            <li><a class='menu-item @(currentController == "Leaves" ? "active" : "")' asp-controller="Leaves" asp-action="Index"><i class="bi bi-calendar2-week menu-icon"></i> مرخصی‌ها</a></li>
-                            <li><a class='menu-item @(currentController == "Letters" ? "active" : "")' asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i> نامه‌ها</a></li>
-                        </ul>
-                    </div>
-                }
+                                    <!-- Finance Module -->
+                                    @if (userCanAccessFinance)
+                                    {
+                                        <div class="menu-group sidebar-module" data-module="finance">
+                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                <span>مالی و حسابداری</span>
+                                                <i class="bi bi-chevron-down chevron"></i>
+                                            </button>
+                                            <ul class="menu-list module-children"
+                                                style="max-height:@(IsExpanded("Financial","Payroll","Bimeh") ? "600px" : "0");">
+                                                <li><a class='menu-item @(currentController == "Financial" && currentAction == "Dashboard" ? "active" : "")'
+                                                       asp-controller="Financial" asp-action="Dashboard"><i
+                                                    class="bi bi-grid-3x3-gap menu-icon"></i> داشبورد مالی</a></li>
+                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "Invoices" ? "active" : "")'
+                                                           asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt menu-icon"></i>
+                                                        فاکتورها</a></li>
+                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "LedgerOperations" ? "active" : "")'
+                                                               asp-controller="Financial" asp-action="LedgerOperations"><i
+                                                            class="bi bi-journal-richtext menu-icon"></i> دفتر کل</a></li>
+                                                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")'
+                                                                   asp-controller="Financial" asp-action="GetTrialBalance"><i
+                                                                class="bi bi-table menu-icon"></i> تراز آزمایشی</a></li>
+                                                                <li><a class='menu-item @(currentController == "Financial" && currentAction == "VatDashboard" ? "active" : "")'
+                                                                       asp-controller="Financial" asp-action="VatDashboard"><i
+                                                                    class="bi bi-percent menu-icon"></i> ارزش افزوده</a></li>
+                                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "SeasonalTax" ? "active" : "")'
+                                                                           asp-controller="Financial" asp-action="SeasonalTax"><i
+                                                                        class="bi bi-file-earmark-bar-graph menu-icon"></i> گزارشات فصلی ۱۶۹</a></li>
+                                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "ReportingHub" ? "active" : "")'
+                                                                               asp-controller="Financial" asp-action="ReportingHub"><i
+                                                                            class="bi bi-bar-chart-line menu-icon"></i> گزارش‌ها</a></li>
+                                                                            <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")'
+                                                                                   asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 menu-icon"></i>
+                                                                                حقوق</a></li>
+                                                                                <li><a class='menu-item @(currentController == "Bimeh" ? "active" : "")' asp-controller="Bimeh"
+                                                                                           asp-action="Index"><i class="bi bi-shield-check menu-icon"></i> بیمه</a></li>
+                                                                                </ul>
+                                                                            </div>
+                                                                        }
 
-                <!-- Finance Module -->
-                @if (userCanAccessFinance)
-                {
-                    <div class="menu-group sidebar-module" data-module="finance">
-                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                            <span>مالی و حسابداری</span>
-                            <i class="bi bi-chevron-down chevron"></i>
-                        </button>
-                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("Financial","Payroll","Bimeh") ? "600px" : "0");">
-                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "Dashboard" ? "active" : "")' asp-controller="Financial" asp-action="Dashboard"><i class="bi bi-grid-3x3-gap menu-icon"></i> داشبورد مالی</a></li>
-                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "Invoices" ? "active" : "")' asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt menu-icon"></i> فاکتورها</a></li>
-                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "LedgerOperations" ? "active" : "")' asp-controller="Financial" asp-action="LedgerOperations"><i class="bi bi-journal-richtext menu-icon"></i> دفتر کل</a></li>
-                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")' asp-controller="Financial" asp-action="GetTrialBalance"><i class="bi bi-table menu-icon"></i> تراز آزمایشی</a></li>
-                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "VatDashboard" ? "active" : "")' asp-controller="Financial" asp-action="VatDashboard"><i class="bi bi-percent menu-icon"></i> ارزش افزوده</a></li>
-                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "SeasonalTax" ? "active" : "")' asp-controller="Financial" asp-action="SeasonalTax"><i class="bi bi-file-earmark-bar-graph menu-icon"></i> گزارشات فصلی ۱۶۹</a></li>
-                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "ReportingHub" ? "active" : "")' asp-controller="Financial" asp-action="ReportingHub"><i class="bi bi-bar-chart-line menu-icon"></i> گزارش‌ها</a></li>
-                            <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")' asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 menu-icon"></i> حقوق</a></li>
-                            <li><a class='menu-item @(currentController == "Bimeh" ? "active" : "")' asp-controller="Bimeh" asp-action="Index"><i class="bi bi-shield-check menu-icon"></i> بیمه</a></li>
-                        </ul>
-                    </div>
-                }
+                                                                        <!-- Warehouse Module -->
+                                                                        @if (userCanAccessWarehouse)
+                                                                        {
+                                                                            <div class="menu-group sidebar-module" data-module="warehouse">
+                                                                                <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                                    <span>انبار و عملیات</span>
+                                                                                    <i class="bi bi-chevron-down chevron"></i>
+                                                                                </button>
+                                                                                <ul class="menu-list module-children"
+                                                                                    style="max-height:@(IsExpanded("Warehouse","WarehouseInventory","WarehouseReceipts","WarehouseIssuances","WarehouseTransfer","Vendors","Waybill") ? "600px" : "0");">
+                                                                                    <li><a class='menu-item @(currentController == "Warehouse" ? "active" : "")'
+                                                                                           asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam menu-icon"></i>
+                                                                                        داشبورد انبار</a></li>
+                                                                                        <li><a class='menu-item @(currentController == "Warehouse" && currentAction == "Products" ? "active" : "")'
+                                                                                               asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box menu-icon"></i>
+                                                                                            کالاها</a></li>
+                                                                                            <li><a class='menu-item @(currentController == "WarehouseInventory" && currentAction == "Stock" ? "active" : "")'
+                                                                                                   asp-controller="WarehouseInventory" asp-action="Stock"><i
+                                                                                                class="bi bi-layers menu-icon"></i> موجودی</a></li>
+                                                                                                <li><a class='menu-item @(currentController == "WarehouseReceipts" ? "active" : "")'
+                                                                                                       asp-controller="WarehouseReceipts" asp-action="Receipts"><i
+                                                                                                    class="bi bi-box-arrow-in-down menu-icon"></i> رسیدها</a></li>
+                                                                                                    <li><a class='menu-item @(currentController == "WarehouseIssuances" ? "active" : "")'
+                                                                                                           asp-controller="WarehouseIssuances" asp-action="Issuances"><i
+                                                                                                        class="bi bi-box-arrow-up menu-icon"></i> حواله‌ها</a></li>
+                                                                                                        <li><a class='menu-item @(currentController == "Vendors" ? "active" : "")'
+                                                                                                               asp-controller="Vendors" asp-action="Index"><i class="bi bi-building menu-icon"></i>
+                                                                                                            تامین‌کنندگان</a></li>
+                                                                                                            <li><a class='menu-item @(currentController == "Waybill" ? "active" : "")'
+                                                                                                                   asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck menu-icon"></i>
+                                                                                                                بارنامه</a></li>
+                                                                                                            </ul>
+                                                                                                        </div>
+                                                                                                    }
 
-                <!-- Warehouse Module -->
-                @if (userCanAccessWarehouse)
-                {
-                    <div class="menu-group sidebar-module" data-module="warehouse">
-                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                            <span>انبار و عملیات</span>
-                            <i class="bi bi-chevron-down chevron"></i>
-                        </button>
-                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("Warehouse","WarehouseInventory","WarehouseReceipts","WarehouseIssuances","WarehouseTransfer","Vendors","Waybill") ? "600px" : "0");">
-                            <li><a class='menu-item @(currentController == "Warehouse" ? "active" : "")' asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam menu-icon"></i> داشبورد انبار</a></li>
-                            <li><a class='menu-item @(currentController == "Warehouse" && currentAction == "Products" ? "active" : "")' asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box menu-icon"></i> کالاها</a></li>
-                            <li><a class='menu-item @(currentController == "WarehouseInventory" && currentAction == "Stock" ? "active" : "")' asp-controller="WarehouseInventory" asp-action="Stock"><i class="bi bi-layers menu-icon"></i> موجودی</a></li>
-                            <li><a class='menu-item @(currentController == "WarehouseReceipts" ? "active" : "")' asp-controller="WarehouseReceipts" asp-action="Receipts"><i class="bi bi-box-arrow-in-down menu-icon"></i> رسیدها</a></li>
-                            <li><a class='menu-item @(currentController == "WarehouseIssuances" ? "active" : "")' asp-controller="WarehouseIssuances" asp-action="Issuances"><i class="bi bi-box-arrow-up menu-icon"></i> حواله‌ها</a></li>
-                            <li><a class='menu-item @(currentController == "Vendors" ? "active" : "")' asp-controller="Vendors" asp-action="Index"><i class="bi bi-building menu-icon"></i> تامین‌کنندگان</a></li>
-                            <li><a class='menu-item @(currentController == "Waybill" ? "active" : "")' asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck menu-icon"></i> بارنامه</a></li>
-                        </ul>
-                    </div>
-                }
+                                                                                                    <!-- Management Module -->
+                                                                                                    @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
+                                                                                                    {
+                                                                                                        <div class="menu-group sidebar-module" data-module="management">
+                                                                                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                                                                <span>مدیریت سیستم</span>
+                                                                                                                <i class="bi bi-chevron-down chevron"></i>
+                                                                                                            </button>
+                                                                                                            <ul class="menu-list module-children"
+                                                                                                                style="max-height:@(IsExpanded("ManagementDashboard","Settings","Security","AuditDashboard","ProcessAnalysis","Reports","DocumentArchive") ? "600px" : "0");">
+                                                                                                                @if (userCanAccessSystemSettings)
+                                                                                                                {
+                                                                                                                    <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Overview" ? "active" : "")'
+                                                                                                                           asp-controller="ManagementDashboard" asp-action="Overview"><i
+                                                                                                                        class="bi bi-grid-1x2 menu-icon"></i> داشبورد مدیریتی</a></li>
+                                                                                                                        <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Index" ? "active" : "")'
+                                                                                                                               asp-controller="ManagementDashboard" asp-action="Index"><i
+                                                                                                                            class="bi bi-stars menu-icon"></i> گزارش‌ساز هوشمند</a></li>
+                                                                                                                            <li><a class='menu-item @(currentController == "Settings" ? "active" : "")'
+                                                                                                                                   asp-controller="Settings" asp-action="Index"><i class="bi bi-gear menu-icon"></i>
+                                                                                                                                تنظیمات</a></li>
+                                                                                                                                <li><a class='menu-item @(currentController == "Security" ? "active" : "")'
+                                                                                                                                       asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock menu-icon"></i>
+                                                                                                                                    امنیت</a></li>
+                                                                                                                                    <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")'
+                                                                                                                                           asp-controller="Security" asp-action="WorkflowBuilder"><i
+                                                                                                                                        class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
+                                                                                                                                        <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")'
+                                                                                                                                               asp-controller="DocumentArchive" asp-action="Index"><i
+                                                                                                                                            class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
+                                                                                                                                            <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")'
+                                                                                                                                                   asp-controller="AuditDashboard" asp-action="Index"><i
+                                                                                                                                                class="bi bi-activity menu-icon"></i> ممیزی</a></li>
+                                                                                                                                            }
+                                                                                                                                            @if (userCanAccessProcessAnalytics)
+                                                                                                                                            {
+                                                                                                                                                <li><a class='menu-item @(currentController == "ProcessAnalysis" ? "active" : "")'
+                                                                                                                                                       asp-controller="ProcessAnalysis" asp-action="Index"><i
+                                                                                                                                                    class="bi bi-diagram-3 menu-icon"></i> تحلیل فرایند</a></li>
+                                                                                                                                                }
+                                                                                                                                                <li><a class='menu-item @(currentController == "Reports" ? "active" : "")'
+                                                                                                                                                       asp-controller="Reports" asp-action="Index"><i
+                                                                                                                                                    class="bi bi-file-bar-graph menu-icon"></i> گزارشات</a></li>
+                                                                                                                                                </ul>
+                                                                                                                                            </div>
+                                                                                                                                        }
 
-                <!-- Management Module -->
-                @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
-                {
-                    <div class="menu-group sidebar-module" data-module="management">
-                        <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                            <span>مدیریت سیستم</span>
-                            <i class="bi bi-chevron-down chevron"></i>
-                        </button>
-                        <ul class="menu-list module-children" style="max-height:@(IsExpanded("ManagementDashboard","Settings","Security","AuditDashboard","ProcessAnalysis","Reports","DocumentArchive") ? "600px" : "0");">
-                            @if (userCanAccessSystemSettings)
-                            {
-                                <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Overview" ? "active" : "")' asp-controller="ManagementDashboard" asp-action="Overview"><i class="bi bi-grid-1x2 menu-icon"></i> داشبورد مدیریتی</a></li>
-                                <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Index" ? "active" : "")' asp-controller="ManagementDashboard" asp-action="Index"><i class="bi bi-stars menu-icon"></i> گزارش‌ساز هوشمند</a></li>
-                                <li><a class='menu-item @(currentController == "Settings" ? "active" : "")' asp-controller="Settings" asp-action="Index"><i class="bi bi-gear menu-icon"></i> تنظیمات</a></li>
-                                <li><a class='menu-item @(currentController == "Security" ? "active" : "")' asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock menu-icon"></i> امنیت</a></li>
-                                <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")' asp-controller="Security" asp-action="WorkflowBuilder"><i class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
-                                <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")' asp-controller="DocumentArchive" asp-action="Index"><i class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
-                                <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")' asp-controller="AuditDashboard" asp-action="Index"><i class="bi bi-activity menu-icon"></i> ممیزی</a></li>
-                            }
-                            @if (userCanAccessProcessAnalytics)
-                            {
-                                <li><a class='menu-item @(currentController == "ProcessAnalysis" ? "active" : "")' asp-controller="ProcessAnalysis" asp-action="Index"><i class="bi bi-diagram-3 menu-icon"></i> تحلیل فرایند</a></li>
-                            }
-                            <li><a class='menu-item @(currentController == "Reports" ? "active" : "")' asp-controller="Reports" asp-action="Index"><i class="bi bi-file-bar-graph menu-icon"></i> گزارشات</a></li>
-                        </ul>
-                    </div>
-                }
+                                                                                                                                    </div>
 
-            </div>
+                                                                                                                                    <!-- User Footer in Sidebar -->
+                                                                                                                                    <div class="sidebar-footer">
+                                                                                                                                        <a asp-controller="Settings" asp-action="Index">
+                                                                                                                                            <span
+                                                                                                                                                style="width:32px;height:32px;border-radius:2px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;color:var(--rk-sidebar-text);font-size:14px;border:1px solid rgba(0,0,0,0.15);"><i
+                                                                                                                                                class="bi bi-person"></i></span>
+                                                                                                                                                <span style="min-width:0;flex:1;">
+                                                                                                                                                    <span
+                                                                                                                                                    style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
+                                                                                                                                                    <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
+                                                                                                                                                </span>
+                                                                                                                                            </a>
+                                                                                                                                        </div>
+                                                                                                                                    </aside>
 
-            <!-- User Footer in Sidebar -->
-            <div class="sidebar-footer">
-                <a asp-controller="Settings" asp-action="Index">
-                    <span style="width:32px;height:32px;border-radius:2px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;color:var(--rk-sidebar-text);font-size:14px;border:1px solid rgba(0,0,0,0.15);"><i class="bi bi-person"></i></span>
-                    <span style="min-width:0;flex:1;">
-                        <span style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
-                        <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
-                    </span>
-                </a>
-            </div>
-        </aside>
-
-        <!-- ═══════════════════════════════════════════════════
+                                                                                                                                    <!-- ═══════════════════════════════════════════════════
         MAIN CONTENT — Desktop / Page Content Area
         ═══════════════════════════════════════════════════════ -->
-        <main class="rahkaran-desktop" id="mainContentArea">
-            @RenderBody()
-        </main>
+                                                                                                                                    <main class="rahkaran-desktop" id="mainContentArea">
+                                                                                                                                        @RenderBody()
+                                                                                                                                    </main>
 
-        <!-- ═══════════════════════════════════════════════════
+                                                                                                                                    <!-- ═══════════════════════════════════════════════════
         MULTI-TAB WORKSPACE — Persistent Enterprise Shell
         Tab bar + iframe stack render here via tab-manager.js.
         Wrapped in a column so the bar spans full width above the
@@ -321,232 +447,241 @@
         The static @RenderBody() above is hidden once tabs init;
         the default fixed tab (میز کار) then owns the viewport.
         ═══════════════════════════════════════════════════════ -->
-        <div class="rhyno-tab-column">
-            <div class="rhyno-tab-bar-host" id="rhynoTabBarHost" role="tablist" aria-label="تب های باز">
-                <div class="rhyno-tab-bar" id="rhynoTabBar"></div>
-            </div>
-            <div class="rhyno-tab-viewport" id="rhynoWorkspace" aria-live="polite"></div>
-        </div>
+                                                                                                                                    <div class="rhyno-tab-column">
+                                                                                                                                        <div class="rhyno-tab-bar-host" id="rhynoTabBarHost" role="tablist" aria-label="تب های باز">
+                                                                                                                                            <div class="rhyno-tab-bar" id="rhynoTabBar"></div>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="rhyno-tab-viewport" id="rhynoWorkspace" aria-live="polite"></div>
+                                                                                                                                    </div>
 
-    </div>
+                                                                                                                                </div>
 
-    <!-- Hidden AntiForgery Form -->
-    <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
+                                                                                                                                <!-- Hidden AntiForgery Form -->
+                                                                                                                                <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
 
-    <!-- ═══════════════════════════════════════════════════════
+                                                                                                                                <!-- ═══════════════════════════════════════════════════════
     CONFIRM DIALOG (Vanilla JS Modal)
     ═══════════════════════════════════════════════════════════ -->
-    <div id="appConfirmDialog" class="rhyno-modal-overlay" style="position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-        <div class="rhyno-modal-content" style="width:100%;max-width:420px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f3f4f6;">
-                <h5 style="margin:0;font-size:14px;font-weight:800;color:#1f2937;">تایید عملیات</h5>
-                <button type="button" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="Rhyno.hideModal('appConfirmDialog')">&times;</button>
-            </div>
-            <div style="padding:16px 18px;">
-                <p id="appConfirmMessage" style="margin:0;font-size:13px;color:#4b5563;">آیا مطمئن هستید؟</p>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #f3f4f6;">
-                <button type="button" style="padding:8px 16px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;" onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
-                <button type="button" id="appConfirmOk" style="padding:8px 16px;border:none;background:#e11d48;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">تایید</button>
-            </div>
-        </div>
-    </div>
+                                                                                                                                <div id="appConfirmDialog" class="rhyno-modal-overlay"
+                                                                                                                                     style="position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+                                                                                                                                    <div class="rhyno-modal-content"
+                                                                                                                                         style="width:100%;max-width:420px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+                                                                                                                                        <div
+                                                                                                                                            style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f3f4f6;">
+                                                                                                                                            <h5 style="margin:0;font-size:14px;font-weight:800;color:#1f2937;">تایید عملیات</h5>
+                                                                                                                                            <button type="button"
+                                                                                                                                                    style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;"
+                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">&times;</button>
+                                                                                                                                        </div>
+                                                                                                                                        <div style="padding:16px 18px;">
+                                                                                                                                            <p id="appConfirmMessage" style="margin:0;font-size:13px;color:#4b5563;">آیا مطمئن هستید؟</p>
+                                                                                                                                        </div>
+                                                                                                                                        <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #f3f4f6;">
+                                                                                                                                            <button type="button"
+                                                                                                                                                    style="padding:8px 16px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;"
+                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
+                                                                                                                                            <button type="button" id="appConfirmOk"
+                                                                                                                                                    style="padding:8px 16px;border:none;background:#e11d48;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">تایید</button>
+                                                                                                                                        </div>
+                                                                                                                                    </div>
+                                                                                                                                </div>
 
-    <!-- ═══════════════════════════════════════════════════════
+                                                                                                                                <!-- ═══════════════════════════════════════════════════════
     SCRIPTS
     ═══════════════════════════════════════════════════════════ -->
-    <script src="~/js/layout.js" asp-append-version="true"></script>
-    <script src="~/js/tab-manager.js" asp-append-version="true"></script>
-    <script src="~/js/professional-table.js" asp-append-version="true"></script>
-    <script>
-        // ── Rhyno Core Utilities ──────────────────────────────────
-        window.Rhyno = (() => {
-            const toggleDropdown = (btn) => {
-                const container = btn.closest('.rhyno-dropdown-trigger');
-                if (!container) return;
-                const dropdown = container.querySelector('.rhyno-dropdown');
-                if (!dropdown) return;
-                const isOpen = dropdown.classList.contains('open');
-                closeAllDropdowns();
-                if (!isOpen) {
-                    dropdown.classList.add('open');
-                    btn.setAttribute('aria-expanded', 'true');
-                }
-            };
+                                                                                                                                <script src="~/js/layout.js" asp-append-version="true"></script>
+                                                                                                                                <script src="~/js/tab-manager.js" asp-append-version="true"></script>
+                                                                                                                                <script src="~/js/professional-table.js" asp-append-version="true"></script>
+                                                                                                                                <script>
+                                                                                                                                    // ── Rhyno Core Utilities ──────────────────────────────────
+                                                                                                                                    window.Rhyno = (() => {
+                                                                                                                                    const toggleDropdown = (btn) => {
+                                                                                                                                    const container = btn.closest('.rhyno-dropdown-trigger');
+                                                                                                                                    if (!container) return;
+                                                                                                                                    const dropdown = container.querySelector('.rhyno-dropdown');
+                                                                                                                                    if (!dropdown) return;
+                                                                                                                                    const isOpen = dropdown.classList.contains('open');
+                                                                                                                                    closeAllDropdowns();
+                                                                                                                                    if (!isOpen) {
+                                                                                                                                    dropdown.classList.add('open');
+                                                                                                                                    btn.setAttribute('aria-expanded', 'true');
+                                                                                                                                    }
+                                                                                                                                    };
 
-            const closeAllDropdowns = () => {
-                document.querySelectorAll('.rhyno-dropdown.open').forEach(d => {
-                    d.classList.remove('open');
-                    d.closest('.rhyno-dropdown-trigger')?.querySelector('button')?.setAttribute('aria-expanded', 'false');
-                });
-            };
+                                                                                                                                    const closeAllDropdowns = () => {
+                                                                                                                                    document.querySelectorAll('.rhyno-dropdown.open').forEach(d => {
+                                                                                                                                    d.classList.remove('open');
+                                                                                                                                    d.closest('.rhyno-dropdown-trigger')?.querySelector('button')?.setAttribute('aria-expanded', 'false');
+                                                                                                                                    });
+                                                                                                                                    };
 
-            const showModal = (id) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.style.display = 'flex';
-                el.classList.add('open');
-                document.body.style.overflow = 'hidden';
-            };
+                                                                                                                                    const showModal = (id) => {
+                                                                                                                                    const el = document.getElementById(id);
+                                                                                                                                    if (!el) return;
+                                                                                                                                    el.style.display = 'flex';
+                                                                                                                                    el.classList.add('open');
+                                                                                                                                    document.body.style.overflow = 'hidden';
+                                                                                                                                    };
 
-            const hideModal = (id) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.style.display = 'none';
-                el.classList.remove('open');
-                document.body.style.overflow = '';
-            };
+                                                                                                                                    const hideModal = (id) => {
+                                                                                                                                    const el = document.getElementById(id);
+                                                                                                                                    if (!el) return;
+                                                                                                                                    el.style.display = 'none';
+                                                                                                                                    el.classList.remove('open');
+                                                                                                                                    document.body.style.overflow = '';
+                                                                                                                                    };
 
-            let _confirmCallback = null;
-            const confirm = (message, callback) => {
-                document.getElementById('appConfirmMessage').textContent = message || 'آیا مطمئن هستید؟';
-                _confirmCallback = callback;
-                showModal('appConfirmDialog');
-            };
+                                                                                                                                    let _confirmCallback = null;
+                                                                                                                                    const confirm = (message, callback) => {
+                                                                                                                                    document.getElementById('appConfirmMessage').textContent = message || 'آیا مطمئن هستید؟';
+                                                                                                                                    _confirmCallback = callback;
+                                                                                                                                    showModal('appConfirmDialog');
+                                                                                                                                    };
 
-            const toast = (message, type = 'info') => {
-                const colors = { success: '#10b981', error: '#e11d48', warning: '#f59e0b', info: '#2b7cb3' };
-                const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
-                const toast = document.createElement('div');
-                toast.style.cssText = `position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;align-items:center;gap:8px;background:${colors[type] || colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(16px);opacity:0;transition:all 0.3s ease;`;
-                toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i> ${message}`;
-                document.body.appendChild(toast);
-                requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; });
-                setTimeout(() => {
-                    toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
-                    setTimeout(() => toast.remove(), 300);
-                }, 3500);
-            };
+                                                                                                                                    const toast = (message, type = 'info') => {
+                                                                                                                                    const colors = { success: '#10b981', error: '#e11d48', warning: '#f59e0b', info: '#2b7cb3' };
+                                                                                                                                    const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
+                                                                                                                                    const toast = document.createElement('div');
+                                                                                                                                    toast.style.cssText = `position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;align-items:center;gap:8px;background:${colors[type] || colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(16px);opacity:0;transition:all 0.3s ease;`;
+                                                                                                                                    toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i> ${message}`;
+                                                                                                                                    document.body.appendChild(toast);
+                                                                                                                                    requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; });
+                                                                                                                                    setTimeout(() => {
+                                                                                                                                    toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
+                                                                                                                                    setTimeout(() => toast.remove(), 300);
+                                                                                                                                    }, 3500);
+                                                                                                                                    };
 
-            // Sidebar toggle
-            const toggleSidebar = () => {
-                const sidebar = document.getElementById('appSidebar');
-                const overlay = document.getElementById('sidebarOverlay');
-                if (!sidebar) return;
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.toggle('mobile-open');
-                    if (overlay) overlay.classList.toggle('active');
-                } else {
-                    sidebar.classList.toggle('collapsed');
-                }
-            };
+                                                                                                                                    // Sidebar toggle
+                                                                                                                                    const toggleSidebar = () => {
+                                                                                                                                    const sidebar = document.getElementById('appSidebar');
+                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
+                                                                                                                                    if (!sidebar) return;
+                                                                                                                                    if (window.innerWidth <= 768) {
+                                                                                                                                    sidebar.classList.toggle('mobile-open');
+                                                                                                                                    if (overlay) overlay.classList.toggle('active');
+                                                                                                                                    } else {
+                                                                                                                                    sidebar.classList.toggle('collapsed');
+                                                                                                                                    }
+                                                                                                                                    };
 
-            const closeSidebar = () => {
-                const sidebar = document.getElementById('appSidebar');
-                const overlay = document.getElementById('sidebarOverlay');
-                if (sidebar) sidebar.classList.remove('mobile-open');
-                if (overlay) overlay.classList.remove('active');
-            };
+                                                                                                                                    const closeSidebar = () => {
+                                                                                                                                    const sidebar = document.getElementById('appSidebar');
+                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
+                                                                                                                                    if (sidebar) sidebar.classList.remove('mobile-open');
+                                                                                                                                    if (overlay) overlay.classList.remove('active');
+                                                                                                                                    };
 
-            // Module accordion toggle
-            const toggleModule = (btn) => {
-                const module = btn.closest('.sidebar-module');
-                const children = module?.querySelector('.module-children');
-                if (!children) return;
-                const isOpen = children.style.maxHeight && children.style.maxHeight !== '0px';
-                if (isOpen) {
-                    children.style.maxHeight = '0px';
-                    btn.classList.remove('expanded');
-                } else {
-                    children.style.maxHeight = children.scrollHeight + 'px';
-                    btn.classList.add('expanded');
-                }
-            };
+                                                                                                                                    // Module accordion toggle
+                                                                                                                                    const toggleModule = (btn) => {
+                                                                                                                                    const module = btn.closest('.sidebar-module');
+                                                                                                                                    const children = module?.querySelector('.module-children');
+                                                                                                                                    if (!children) return;
+                                                                                                                                    const isOpen = children.style.maxHeight && children.style.maxHeight !== '0px';
+                                                                                                                                    if (isOpen) {
+                                                                                                                                    children.style.maxHeight = '0px';
+                                                                                                                                    btn.classList.remove('expanded');
+                                                                                                                                    } else {
+                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
+                                                                                                                                    btn.classList.add('expanded');
+                                                                                                                                    }
+                                                                                                                                    };
 
-            return { toggleDropdown, closeAllDropdowns, showModal, hideModal, confirm, toast, toggleSidebar, closeSidebar, toggleModule };
-        })();
+                                                                                                                                    return { toggleDropdown, closeAllDropdowns, showModal, hideModal, confirm, toast, toggleSidebar, closeSidebar, toggleModule };
+                                                                                                                                    })();
 
-        // ── Clock & Persian Date ────────────────────────────────
-        (() => {
-            const dateElem = document.getElementById('headerDate');
-            if (!dateElem) return;
-            const update = () => {
-                const now = new Date();
-                try {
-                    dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-                } catch(e) {
-                    dateElem.textContent = now.toLocaleDateString('fa-IR');
-                }
-            };
-            update();
-            setInterval(update, 60000);
-        })();
+                                                                                                                                    // ── Clock & Persian Date ────────────────────────────────
+                                                                                                                                    (() => {
+                                                                                                                                    const dateElem = document.getElementById('headerDate');
+                                                                                                                                    if (!dateElem) return;
+                                                                                                                                    const update = () => {
+                                                                                                                                    const now = new Date();
+                                                                                                                                    try {
+                                                                                                                                    dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+                                                                                                                                    } catch (e) {
+                                                                                                                                    dateElem.textContent = now.toLocaleDateString('fa-IR');
+                                                                                                                                    }
+                                                                                                                                    };
+                                                                                                                                    update();
+                                                                                                                                    setInterval(update, 60000);
+                                                                                                                                    })();
 
-        // ── Sidebar Search ──────────────────────────────────────
-        (() => {
-            const input = document.getElementById('sidebarMenuSearch');
-            if (!input) return;
-            input.addEventListener('input', () => {
-                const query = input.value.trim().toLowerCase();
-                const items = document.querySelectorAll('#appSidebar .menu-item');
-                const modules = document.querySelectorAll('#appSidebar .sidebar-module');
-                items.forEach(item => {
-                    const text = (item.textContent || '').toLowerCase();
-                    item.style.display = (!query || text.includes(query)) ? '' : 'none';
-                });
-                modules.forEach(mod => {
-                    const visibleItems = Array.from(mod.querySelectorAll('.menu-item')).some(i => i.style.display !== 'none');
-                    const headerMatch = query && (mod.querySelector('.module-toggle span')?.textContent || '').toLowerCase().includes(query);
-                    mod.style.display = (visibleItems || headerMatch || !query) ? '' : 'none';
-                    const children = mod.querySelector('.module-children');
-                    const btn = mod.querySelector('.module-toggle');
-                    if (query && (visibleItems || headerMatch)) {
-                        children.style.maxHeight = children.scrollHeight + 'px';
-                        btn.classList.add('expanded');
-                    } else if (!query) {
-                        // keep server-rendered state untouched when query cleared
-                    }
-                });
-            });
-        })();
+                                                                                                                                    // ── Sidebar Search ──────────────────────────────────────
+                                                                                                                                    (() => {
+                                                                                                                                    const input = document.getElementById('sidebarMenuSearch');
+                                                                                                                                    if (!input) return;
+                                                                                                                                    input.addEventListener('input', () => {
+                                                                                                                                    const query = input.value.trim().toLowerCase();
+                                                                                                                                    const items = document.querySelectorAll('#appSidebar .menu-item');
+                                                                                                                                    const modules = document.querySelectorAll('#appSidebar .sidebar-module');
+                                                                                                                                    items.forEach(item => {
+                                                                                                                                    const text = (item.textContent || '').toLowerCase();
+                                                                                                                                    item.style.display = (!query || text.includes(query)) ? '' : 'none';
+                                                                                                                                    });
+                                                                                                                                    modules.forEach(mod => {
+                                                                                                                                    const visibleItems = Array.from(mod.querySelectorAll('.menu-item')).some(i => i.style.display !== 'none');
+                                                                                                                                    const headerMatch = query && (mod.querySelector('.module-toggle span')?.textContent || '').toLowerCase().includes(query);
+                                                                                                                                    mod.style.display = (visibleItems || headerMatch || !query) ? '' : 'none';
+                                                                                                                                    const children = mod.querySelector('.module-children');
+                                                                                                                                    const btn = mod.querySelector('.module-toggle');
+                                                                                                                                    if (query && (visibleItems || headerMatch)) {
+                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
+                                                                                                                                    btn.classList.add('expanded');
+                                                                                                                                    } else if (!query) {
+                                                                                                                                    // keep server-rendered state untouched when query cleared
+                                                                                                                                    }
+                                                                                                                                    });
+                                                                                                                                    });
+                                                                                                                                    })();
 
-        // ── Event Delegation ────────────────────────────────────
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.rhyno-dropdown-trigger')) Rhyno.closeAllDropdowns();
-            const overlay = document.getElementById('sidebarOverlay');
-            if (e.target === overlay) Rhyno.closeSidebar();
-        });
+                                                                                                                                    // ── Event Delegation ────────────────────────────────────
+                                                                                                                                    document.addEventListener('click', (e) => {
+                                                                                                                                    if (!e.target.closest('.rhyno-dropdown-trigger')) Rhyno.closeAllDropdowns();
+                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
+                                                                                                                                    if (e.target === overlay) Rhyno.closeSidebar();
+                                                                                                                                    });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                Rhyno.closeAllDropdowns();
-                Rhyno.hideModal('appConfirmDialog');
-                Rhyno.closeSidebar();
-            }
-        });
+                                                                                                                                    document.addEventListener('keydown', (e) => {
+                                                                                                                                    if (e.key === 'Escape') {
+                                                                                                                                    Rhyno.closeAllDropdowns();
+                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
+                                                                                                                                    Rhyno.closeSidebar();
+                                                                                                                                    }
+                                                                                                                                    });
 
-        // ── Sidebar Toggle Button ───────────────────────────────
-        document.getElementById('btnToggleSidebar')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            Rhyno.toggleSidebar();
-        });
+                                                                                                                                    // ── Sidebar Toggle Button ───────────────────────────────
+                                                                                                                                    document.getElementById('btnToggleSidebar')?.addEventListener('click', (e) => {
+                                                                                                                                    e.preventDefault();
+                                                                                                                                    Rhyno.toggleSidebar();
+                                                                                                                                    });
 
-        // ── Confirm Dialog Bind ─────────────────────────────────
-        document.getElementById('appConfirmOk')?.addEventListener('click', () => {
-            if (window.Rhyno._confirmCallback) {
-                window.Rhyno._confirmCallback();
-                window.Rhyno._confirmCallback = null;
-            }
-            Rhyno.hideModal('appConfirmDialog');
-        });
+                                                                                                                                    // ── Confirm Dialog Bind ─────────────────────────────────
+                                                                                                                                    document.getElementById('appConfirmOk')?.addEventListener('click', () => {
+                                                                                                                                    if (window.Rhyno._confirmCallback) {
+                                                                                                                                    window.Rhyno._confirmCallback();
+                                                                                                                                    window.Rhyno._confirmCallback = null;
+                                                                                                                                    }
+                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
+                                                                                                                                    });
 
-        // ── SignalR ────────────────────────────────────────────
-        (function() {
-            if (typeof signalR === 'undefined') return;
-            const connection = new signalR.HubConnectionBuilder()
-                .withUrl("/automationHub")
-                .withAutomaticReconnect()
-                .build();
-            connection.on("ReceiveNewTaskNotification", function (data) {
-                Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
-            });
-            connection.start().then(() => console.log("SignalR Connected.")).catch(err => console.error("SignalR Error:", err));
-        })();
-    </script>
+                                                                                                                                    // ── SignalR ────────────────────────────────────────────
+                                                                                                                                    (function () {
+                                                                                                                                    if (typeof signalR === 'undefined') return;
+                                                                                                                                    const connection = new signalR.HubConnectionBuilder()
+                                                                                                                                    .withUrl("/automationHub")
+                                                                                                                                    .withAutomaticReconnect()
+                                                                                                                                    .build();
+                                                                                                                                    connection.on("ReceiveNewTaskNotification", function (data) {
+                                                                                                                                    Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
+                                                                                                                                    });
+                                                                                                                                    connection.start().then(() => console.log("SignalR Connected.")).catch(err => console.error("SignalR Error:", err));
+                                                                                                                                    })();
+                                                                                                                                </script>
 
-    @await RenderSectionAsync("Scripts", required: false)
-    <script src="~/js/app-ui.js" asp-append-version="true"></script>
-    <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
-    <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
-</body>
-</html>
+                                                                                                                                @await RenderSectionAsync("Scripts", required: false)
+                                                                                                                                <script src="~/js/app-ui.js" asp-append-version="true"></script>
+                                                                                                                                <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
+                                                                                                                                <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
+                                                                                                                            </body>
+
+                                                                                                                        </html>

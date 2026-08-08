@@ -214,10 +214,17 @@ namespace OfficeAutomation.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult Error(int? code)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var statusCode = code ?? HttpContext.Response.StatusCode;
+            return View("~/Views/Shared/Error.cshtml",
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                    StatusCode = statusCode
+                });
         }
 
         private async Task<List<DashboardWorkItem>> BuildPendingWorkItemsAsync(CancellationToken cancellationToken)
