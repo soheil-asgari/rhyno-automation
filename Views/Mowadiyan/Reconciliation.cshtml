@@ -30,8 +30,20 @@
                 <i class="bi bi-arrow-repeat"></i> اجرای تطبیق
             </button>
         </form>
+        <button type="button" class="sg-btn sg-btn-info" id="btnOpenExportModal" onclick="mowOpenExportModal()" title="دریافت خودکار صورتحساب‌های خرید از سامانه مودیان">
+            <i class="bi bi-download"></i> دریافت فایل خروجی (مودیان)
+        </button>
         <a class="sg-btn sg-btn-secondary" asp-action="Index"><i class="bi bi-arrow-right"></i> بازگشت به داشبورد</a>
     </div>
+
+    @if (ViewBag.HasPortalSettings != null && ViewBag.HasPortalSettings == false)
+    {
+        <div class="mow-alert mow-alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            برای دریافت فایل خروجی باید ابتدا «نام کاربری و رمز عبور پورتال مودیان» را در بخش تنظیمات وارد کنید.
+            <a asp-action="Settings" class="mow-alert-link">رفتن به تنظیمات</a>
+        </div>
+    }
 
     <div class="mow-table-wrap">
         <table class="mow-data-table">
@@ -109,7 +121,319 @@
             </tbody>
         </table>
     </div>
+
+    <!-- ═══════════════════ MODAL: دریافت فایل خروجی (مودیان) ═══════════════════ -->
+    <div class="mow-modal-overlay" id="mowExportModal" style="display:none;">
+        <div class="mow-modal" role="dialog" aria-modal="true" aria-labelledby="mowExportTitle">
+            <div class="mow-modal-header">
+                <h5 id="mowExportTitle"><i class="bi bi-download"></i> درخواست فایل خروجی از سامانه مودیان</h5>
+                <button type="button" class="mow-modal-close" onclick="mowCloseExportModal()" title="بستن">&times;</button>
+            </div>
+
+            <form id="frmPortalExport" method="post" onsubmit="return false;">
+                @Html.AntiForgeryToken()
+
+                <!-- Step A — انتخاب سال و دوره مالیاتی -->
+                <div class="mow-modal-body" id="mowExportFormBody">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="mow-form-label">سال مالیاتی</label>
+                            <select id="mowTaxYear" class="form-control form-control-sm mow-select">
+                                @for (var y = 1400; y <= 1410; y++)
+                                {
+                                    <option value="@y" selected="@(y == (JalaliDateHelper.CurrentShamsiYear()))">@CurrencyNormalizer.ToPersianDigits(y.ToString())</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="mow-form-label">دوره مالیاتی (فصل)</label>
+                            <select id="mowTaxPeriod" class="form-control form-control-sm mow-select">
+                                <option value="1">بهار</option>
+                                <option value="2" selected>تابستان</option>
+                                <option value="3">پاییز</option>
+                                <option value="4">زمستان</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mow-otp-box">
+                        <i class="bi bi-chat-dots"></i>
+                        <div>
+                            <label class="mow-form-label" for="mowOtpCode">کد تأیید پیامکی (SMS OTP)</label>
+                            <p class="mow-hint">با کلیک روی «ارسال کد پیامک»، کد یکبارمصرف برای شما پیامک می‌شود.</p>
+                        </div>
+                        <button type="button" class="sg-btn sg-btn-info mow-send-otp-btn" id="btnSendOtp" onclick="mowInitiateLogin()">
+                            <i class="bi bi-send"></i> ارسال کد پیامک
+                        </button>
+                    </div>
+                    <input id="mowOtpCode" name="otpCode" class="form-control form-control-sm mow-otp-input" dir="ltr"
+                           maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                           placeholder="کد ۶ رقمی" disabled />
+                    <div class="mow-otp-status" id="mowOtpStatus" role="status"></div>
+                </div>
+
+                <!-- Step B — پیشرفت مرحله‌به‌مرحله -->
+                <div class="mow-modal-body" id="mowExportProgressBody" style="display:none;">
+                    <div class="mow-progress-list">
+                        <div class="mow-progress-item" data-role="p-Authenticating">
+                            <i class="bi bi-shield-lock mow-progress-icon"></i>
+                            <span>احراز هویت و تأیید کد پیامکی</span>
+                        </div>
+                        <div class="mow-progress-item" data-role="p-Submitting">
+                            <i class="bi bi-send mow-progress-icon"></i>
+                            <span>ارسال درخواست خروجی (خرید داخلی - تمام وضعیت‌ها)</span>
+                        </div>
+                        <div class="mow-progress-item" data-role="p-Producing">
+                            <i class="bi bi-hourglass-split mow-progress-icon"></i>
+                            <span>در حال تولید فایل توسط سامانه مودیان</span>
+                        </div>
+                        <div class="mow-progress-item" data-role="p-Importing">
+                            <i class="bi bi-cloud-arrow-down mow-progress-icon"></i>
+                            <span>دانلود و ثبت خودکار فاکتورها در دیتابیس</span>
+                        </div>
+                        <div class="mow-progress-item" data-role="p-Completed">
+                            <i class="bi bi-check-circle mow-progress-icon"></i>
+                            <span>با موفقیت انجام شد</span>
+                        </div>
+                    </div>
+                    <div class="mow-progress-message" id="mowProgressMessage"></div>
+                    <div class="mow-progress-cta" id="mowProgressCta" style="display:none;">
+                        <button type="button" class="sg-btn sg-btn-primary" onclick="mowCloseExportModal(true)">بسته</button>
+                    </div>
+                </div>
+
+                <div class="mow-modal-footer">
+                    <button type="button" class="sg-btn sg-btn-secondary" id="btnCancelExport" onclick="mowCloseExportModal()">انصراف</button>
+                    <button type="button" class="sg-btn sg-btn-success" id="btnStartExport" onclick="mowStartExport()" disabled>
+                        <i class="bi bi-download"></i> دریافت و ثبت
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+<script>
+    (function () {
+        window.mowOpenExportModal = function () {
+            var modal = document.getElementById('mowExportModal');
+            var formBody = document.getElementById('mowExportFormBody');
+            var progressBody = document.getElementById('mowExportProgressBody');
+            var startBtn = document.getElementById('btnStartExport');
+            var cancelBtn = document.getElementById('btnCancelExport');
+            var otpInput = document.getElementById('mowOtpCode');
+            window.mowAlreadyLoggedIn = false;
+            closeProgressState();
+            if (formBody) formBody.style.display = '';
+            if (progressBody) progressBody.style.display = 'none';
+            if (startBtn) startBtn.disabled = true;
+            if (cancelBtn) cancelBtn.style.display = '';
+            if (otpInput) { otpInput.disabled = true; otpInput.value = ''; }
+            if (modal) modal.style.display = 'flex';
+
+            // Immediately trigger the portal login challenge (submits username/password so the
+            // Tax Portal sends the SMS OTP) before asking the user for their OTP code.
+            mowInitiateLogin();
+        };
+
+        window.mowCloseExportModal = function (refresh) {
+            var modal = document.getElementById('mowExportModal');
+            if (modal) modal.style.display = 'none';
+            if (refresh && typeof window.mowReloadReconciliation === 'function') {
+                window.mowReloadReconciliation();
+            }
+        };
+
+        window.closeProgressState = function () {
+            document.querySelectorAll('.mow-progress-item').forEach(function (el) {
+                el.classList.remove('active', 'done', 'fail');
+            });
+            var msg = document.getElementById('mowProgressMessage');
+            var cta = document.getElementById('mowProgressCta');
+            if (msg) { msg.textContent = ''; msg.classList.remove('mow-msg-error'); }
+            if (cta) cta.style.display = 'none';
+        };
+
+        window.setStepState = function (role, state) {
+            document.querySelectorAll('.mow-progress-item[data-role]').forEach(function (el) {
+                if (el.getAttribute('data-role') === role) {
+                    el.classList.remove('active', 'done', 'fail');
+                    if (state) el.classList.add(state);
+                } else if (el.classList.contains('active') && state === 'done') {
+                    el.classList.remove('active', 'fail');
+                    el.classList.add('done');
+                }
+            });
+        };
+
+        window.mowSetStepActive = function (stage) { setStepState('p-' + stage, 'active'); };
+        window.mowSetStepDone = function (stage) { setStepState('p-' + stage, 'done'); };
+
+        window.mowInitiateLogin = function () {
+            var status = document.getElementById('mowOtpStatus');
+            var otpInput = document.getElementById('mowOtpCode');
+            var startBtn = document.getElementById('btnStartExport');
+            var sendBtn = document.getElementById('btnSendOtp');
+            var token = document.querySelector('#frmPortalExport input[name="__RequestVerificationToken"]');
+            var afToken = token ? token.value : '';
+            var url = '@Url.Action("InitiatePortalLogin")';
+
+            if (otpInput) otpInput.disabled = true;
+            if (startBtn) startBtn.disabled = true;
+            if (sendBtn) sendBtn.disabled = true;
+            if (status) {
+                status.className = 'mow-otp-status mow-otp-status-pending';
+                status.innerHTML = '<span class="mow-spinner"></span> در حال ارسال اطلاعات ورود و درخواست کد پیامکی از سامانه مودیان...';
+            }
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': afToken
+                }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.ok) {
+                    if (status) {
+                        status.className = 'mow-otp-status mow-otp-status-error';
+                        status.textContent = data.message || 'درخواست کد پیامک ناموفق بود.';
+                    }
+                    if (sendBtn) sendBtn.disabled = false;
+                    if (otpInput) otpInput.disabled = true;
+                    if (startBtn) startBtn.disabled = true;
+                    return;
+                }
+
+                if (status) {
+                    var msg = data.message || 'کد پیامک با موفقیت به شماره شما ارسال شد.';
+                    if (data.maskedPhone) msg += ' (' + data.maskedPhone + ')';
+                    status.className = 'mow-otp-status mow-otp-status-success';
+                    status.textContent = msg;
+                }
+
+                window.mowAlreadyLoggedIn = !!data.alreadyLoggedIn;
+                if (window.mowAlreadyLoggedIn) {
+                    // Session already active — auto-advance directly to the download
+                    // (دریافت فاکتورها) step without asking for an SMS OTP code.
+                    if (otpInput) {
+                        otpInput.disabled = true;
+                        otpInput.value = '';
+                        otpInput.placeholder = 'نیازی به کد — نشست فعال است';
+                    }
+                } else {
+                    if (otpInput) otpInput.disabled = false;
+                }
+                if (startBtn) startBtn.disabled = false;
+                if (sendBtn) sendBtn.disabled = false;
+                if (!window.mowAlreadyLoggedIn && otpInput) otpInput.focus();
+            })
+            .catch(function (err) {
+                if (status) {
+                    status.className = 'mow-otp-status mow-otp-status-error';
+                    status.textContent = err.message || 'خطا در ارتباط با سرور برای دریافت کد پیامک.';
+                }
+                if (sendBtn) sendBtn.disabled = false;
+                if (otpInput) otpInput.disabled = true;
+                if (startBtn) startBtn.disabled = true;
+            });
+        };
+
+        window.mowStartExport = function () {
+            var startBtn = document.getElementById('btnStartExport');
+            var cancelBtn = document.getElementById('btnCancelExport');
+            var year = Number(document.getElementById('mowTaxYear').value);
+            var period = Number(document.getElementById('mowTaxPeriod').value);
+            var otp = (document.getElementById('mowOtpCode').value || '').trim();
+            var alreadyLoggedIn = !!window.mowAlreadyLoggedIn;
+
+            if (!alreadyLoggedIn && !otp) { alert('لطفاً کد تأیید پیامکی (OTP) را وارد کنید.'); return; }
+            if (startBtn) startBtn.disabled = true;
+            if (cancelBtn) cancelBtn.style.display = 'none';
+
+            document.getElementById('mowExportFormBody').style.display = 'none';
+            document.getElementById('mowExportProgressBody').style.display = '';
+            closeProgressState();
+
+            var token = document.querySelector('#frmPortalExport input[name="__RequestVerificationToken"]');
+            var afToken = token ? token.value : '';
+            var url = '@Url.Action("CreatePortalExport")';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': afToken
+                },
+                body: JSON.stringify({ taxYear: year, taxPeriod: period, otpCode: otp, alreadyLoggedIn: alreadyLoggedIn })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.ok) { mowFailProgress(data.message || 'خطا در شروع عملیات'); return; }
+                mowPollExport(data.jobId);
+            })
+            .catch(function (err) { mowFailProgress(err.message || 'خطا در ارتباط با سرور'); });
+        };
+window.mowPollExport = function (jobId) {
+            var url = '@Url.Action("ExportProgress")' + '?jobId=' + encodeURIComponent(jobId);
+            var poll = window.setInterval(function () {
+                fetch(url, { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (p) {
+                    if (!p.ok) { window.clearInterval(poll); mowFailProgress(p.message || 'وضعیت نامشخص است.'); return; }
+
+                    var order = ['Authenticating', 'Submitting', 'Producing', 'Importing', 'Completed'];
+                    var idx = order.indexOf(p.stageText);
+                    order.forEach(function (s, i) {
+                        if (i < idx) mowSetStepDone(s);
+                        else if (i === idx) mowSetStepActive(s);
+                    });
+
+                    var msg = document.getElementById('mowProgressMessage');
+                    if (msg) {
+                        msg.textContent = p.message + (p.pollElapsedSeconds ? ' (' + p.pollElapsedSeconds + ' ثانیه)' : '');
+                    }
+
+                    if (p.isFailed) {
+                        window.clearInterval(poll);
+                        document.querySelectorAll('.mow-progress-item.active').forEach(function (el) { el.classList.add('fail'); });
+                        if (msg) { msg.classList.add('mow-msg-error'); msg.textContent = p.error || p.message; }
+                        showProgressCta();
+                        return;
+                    }
+
+                    if (p.isComplete) {
+                        window.clearInterval(poll);
+                        mowSetStepDone('Completed');
+                        showProgressCta();
+                    }
+                })
+                .catch(function (err) {
+                    window.clearInterval(poll);
+                    mowFailProgress(err.message || 'خطا در دریافت وضعیت');
+                });
+            }, 2000);
+        };
+
+        window.showProgressCta = function () {
+            var startBtn = document.getElementById('btnStartExport');
+            var cta = document.getElementById('mowProgressCta');
+            if (startBtn) startBtn.disabled = true;
+            if (cta) cta.style.display = '';
+        };
+
+        window.mowFailProgress = function (message) {
+            var msg = document.getElementById('mowProgressMessage');
+            if (msg) { msg.classList.add('mow-msg-error'); msg.textContent = message || 'عملیات ناموفق بود.'; }
+            showProgressCta();
+        };
+
+        window.mowReloadReconciliation = function () {
+            var url = '@Url.Action("Reconciliation")' + (window.location.search || '');
+            window.location.href = url;
+        };
+    })();
+</script>
 
 @functions {
     static string StatusLabel(ReconciliationStatus s) => s switch

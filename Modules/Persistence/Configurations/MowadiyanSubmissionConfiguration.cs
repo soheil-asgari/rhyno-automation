@@ -37,6 +37,8 @@ public sealed class MowadiyanSettingsConfiguration : IEntityTypeConfiguration<Mo
         builder.Property(s => s.PrivateKeyPassword).HasMaxLength(200);
         builder.Property(s => s.EconomicCode).HasMaxLength(50);
         builder.Property(s => s.NationalId).HasMaxLength(20);
+        builder.Property(s => s.PortalUsername).HasMaxLength(200);
+        builder.Property(s => s.PortalPassword).HasMaxLength(500);
         builder.Property(s => s.BaseUrl).HasMaxLength(300);
     }
 }

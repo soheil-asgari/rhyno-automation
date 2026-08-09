@@ -40,4 +40,22 @@ public sealed class MowadiyanOptions
 
     /// <summary>Maximum backoff delay (seconds).</summary>
     public int MaxBackoffSeconds { get; set; } = 600;
+
+    /// <summary>
+    /// Executable used to run the Python Playwright exporter
+    /// (<c>scripts/tax_exporter.py</c>). Defaults to <c>python</c>.
+    /// </summary>
+    public string PythonExecutable { get; set; } = "python";
+
+    /// <summary>
+    /// Absolute path to <c>tax_exporter.py</c>. When empty the script is resolved
+    /// relative to the content root (<c>{ContentRoot}/scripts/tax_exporter.py</c>).
+    /// </summary>
+    public string? PythonScriptPath { get; set; }
+
+    /// <summary>
+    /// Directory where the Python exporter writes downloaded .xlsx/.zip files.
+    /// Defaults to <c>{ContentRoot}/wwwroot/uploads/mowadiyan</c>.
+    /// </summary>
+    public string? ExportOutDir { get; set; }
 }

@@ -107,6 +107,17 @@ public class MowadiyanSettings
     [StringLength(20)]
     public string? NationalId { get; set; }
 
+    /// <summary>
+    /// Web-portal login username used to authenticate against the Tax Portal
+    /// (سامانه مودیان) for requesting output files (درخواست فایل خروجی).
+    /// </summary>
+    [StringLength(200)]
+    public string PortalUsername { get; set; } = string.Empty;
+
+    /// <summary>Web-portal login password for the Tax Portal output-file session.</summary>
+    [StringLength(500)]
+    public string? PortalPassword { get; set; }
+
     /// <summary>Base URL of the Tax Portal API.</summary>
     [StringLength(300)]
     public string BaseUrl { get; set; } = "https://tp.tax.gov.ir";

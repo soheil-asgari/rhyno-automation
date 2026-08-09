@@ -282,3 +282,91 @@
 .mow-form-field input:focus, .mow-form-field select:focus { border-color: #4d99d0; }
 .mow-toggle { display: flex; align-items: center; gap: 0.5rem; }
 .mow-toggle input { width: auto; }
+
+/* ═══════════════════════════════════════════════════════════
+   PORTAL EXPORT MODAL & STEP PROGRESS  (دریافت فایل خروجی مودیان)
+   ═══════════════════════════════════════════════════════════ */
+.mow-modal-overlay {
+    position: fixed; inset: 0; z-index: 100000;
+    background: rgba(30, 35, 48, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+}
+.mow-modal {
+    background: #fff; border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px; width: 100%; max-width: 520px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    display: flex; flex-direction: column; max-height: 92vh;
+}
+.mow-modal-header {
+    background: #3e4756; color: #fff; padding: 0.55rem 0.9rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 3px 3px 0 0;
+}
+.mow-modal-header h5 { margin: 0; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+.mow-modal-close {
+    background: none; border: 0; color: #fff; font-size: 20px; line-height: 1; cursor: pointer;
+    width: 24px; height: 24px; border-radius: 2px;
+}
+.mow-modal-close:hover { background: #c00; }
+.mow-modal-body { padding: 1rem; overflow: auto; }
+.mow-modal-footer {
+    display: flex; justify-content: flex-end; gap: 0.5rem;
+    padding: 0.65rem 0.9rem; border-top: 1px solid rgba(0,0,0,0.1); background: #fafafa;
+    border-radius: 0 0 3px 3px;
+}
+.mow-form-label { font-size: 11px; color: #444; font-weight: 600; }
+.mow-select { font-size: 12px; }
+.mow-otp-box {
+    display: flex; align-items: center; gap: 0.6rem; margin-top: 1rem;
+    background: #d9edf7; border: 1px solid #bcd8ee; border-radius: 2px; padding: 0.5rem 0.75rem;
+}
+.mow-otp-box i { font-size: 18px; color: #4d99d0; }
+.mow-otp-box .mow-form-label { color: #1565c0; }
+.mow-hint { margin: 0; font-size: 10px; color: #5a7f99; }
+.mow-otp-input { margin-top: 0.6rem; font-size: 16px; font-weight: 700; letter-spacing: 3px; text-align: center; }
+.mow-otp-input:disabled { background: #eee; color: #888; }
+.mow-send-otp-btn { margin-inline-start: auto; white-space: nowrap; }
+.mow-otp-status {
+    margin-top: 0.6rem; font-size: 11px; line-height: 1.4;
+    display: flex; align-items: center; gap: 0.4rem;
+    min-height: 16px;
+}
+.mow-otp-status .mow-spinner {
+    width: 12px; height: 12px; flex: 0 0 auto;
+    border: 2px solid rgba(0,0,0,0.15); border-top-color: #f08046;
+    border-radius: 50%; animation: mow-spin 0.8s linear infinite;
+}
+.mow-otp-status-pending { color: #5a7f99; }
+.mow-otp-status-success { color: #2e7d32; font-weight: 600; }
+.mow-otp-status-error { color: #b71c1c; font-weight: 600; }
+@keyframes mow-spin { to { transform: rotate(360deg); } }
+.mow-alert-warning { background: #fcf8e3; color: #8a6d3b; border-color: #f08046; }
+.mow-alert-link { font-weight: 700; text-decoration: underline; margin-inline-start: 0.4rem; }
+
+/* Step progress list */
+.mow-progress-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.mow-progress-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.5rem 0.65rem; border: 1px solid rgba(0,0,0,0.1);
+    background: #fafafa; border-radius: 2px; font-size: 12px; color: #888;
+}
+.mow-progress-icon { font-size: 16px; width: 18px; text-align: center; color: #bbb; }
+.mow-progress-item.active {
+    background: #fff6d2; border-color: #f0be4b; color: #222; font-weight: 600;
+}
+.mow-progress-item.active .mow-progress-icon { color: #f08046; }
+.mow-progress-item.done {
+    background: #dff0d8; border-color: #18af08; color: #2e7d32; font-weight: 600;
+}
+.mow-progress-item.done .mow-progress-icon { color: #18af08; }
+.mow-progress-item.fail { background: #f2dede; border-color: #ef404d; color: #b71c1c; }
+.mow-progress-item.fail .mow-progress-icon { color: #ef404d; }
+.mow-progress-message {
+    margin-top: 0.75rem; font-size: 12px; color: #444; text-align: center;
+    background: #f0f4f8; border: 1px dashed rgba(0,0,0,0.15); border-radius: 2px; padding: 0.5rem;
+}
+.mow-progress-message.mow-msg-error { background: #f2dede; color: #b71c1c; border-color: #ef404d; }
+.mow-progress-cta { margin-top: 0.75rem; text-align: center; }
+.sg-btn-success { background: #18af08 linear-gradient(#3cc33a, #0f9702); color: #fff; border-color: #0f9702; }
+.sg-btn-info { background: #4d99d0 linear-gradient(#6db5e0, #3d89c0); color: #fff; border-color: #3d89c0; }

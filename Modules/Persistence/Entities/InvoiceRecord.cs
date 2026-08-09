@@ -66,6 +66,12 @@ public class InvoiceRecord
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
+    /// <summary>
+    /// Indicates the record was imported/synchronized from a Mowadiyan (سامانه مودیان)
+    /// output-file export rather than the local OCR intake pipeline.
+    /// </summary>
+    public bool IsMowadiyanSynced { get; set; }
+
     public List<InvoiceLineItem> LineItems { get; set; } = new();
     public List<TaxLog> TaxLogs { get; set; } = new();
     public List<MowadiyanSubmission> MowadiyanSubmissions { get; set; } = new();

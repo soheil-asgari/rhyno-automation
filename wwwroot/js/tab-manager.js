@@ -313,16 +313,60 @@ function syncSidebarActiveState() {
     });
 }
 
+// ── GET-only link guard ───────────────────────────────────────
+// The tab system must ONLY hijack pure GET navigation links (<a>).
+// POST form submissions and AJAX endpoints (e.g. /Mowadiyan/SaveSettings)
+// must never be rewritten into a tab URL, otherwise the framework returns
+// 404 for the missing GET handler on a [HttpPost] action.
+function isSubmitControl(node) {
+    var el = node && node.closest ? node.closest('button[type="submit"], input[type="submit"], input[type="image"]') : null;
+    return !!el;
+}
+
+function isWithinPostForm(link) {
+    var form = link.closest('form');
+    if (!form) return false;
+    var method = (form.getAttribute('method') || 'get').toLowerCase();
+    if (method === 'post') return true;
+
+    // If the link's href matches the form's action attribute, the anchor is acting
+    // as the form action target — do not treat it as a tab navigation link.
+    var action = form.getAttribute('action') || '';
+    var href = link.getAttribute('href') || '';
+    return !!action && !!href && (action.indexOf(href) >= 0 || href.indexOf(action) >= 0);
+}
+
+function shouldInterceptLink(link, e) {
+    var href = link.getAttribute('href');
+    if (!href || href === '#' || href.indexOf('javascript:') === 0) return false;
+    // Only intercept same-origin, non-download, no-target links (GET navigation)
+    if (link.hasAttribute('download') || link.hasAttribute('target')) return false;
+
+    // 1) Never hijack clicks on form submission controls.
+    if (isSubmitControl(e && e.target)) return false;
+
+    // 2) Never hijack links nested inside a POST form (or a form's action target).
+    if (isWithinPostForm(link)) return false;
+
+    // 3) Bug-fix guard: on a submit, the target may bubble up to a surrounding <a>.
+    //    If the originating event is a form submission, we must NOT rewrite the URL.
+    var form = link.closest('form');
+    if (form && (e && e.target && e.target.form)) return false;
+
+    // 4) Skip explicit AJAX/unobtrusive-AJAX links — those are handled elsewhere.
+    if (link.hasAttribute('data-ajax') || link.hasAttribute('data-ajax-url')) return false;
+
+    return true;
+}
+
 // ── Event wiring ──────────────────────────────────────────────
 function wireEvents() {
-    // Sidebar menu item clicks → open tab
+    // Sidebar menu item clicks → open tab (ONLY for pure GET navigation links;
+    // POST forms and AJAX endpoints are excluded by shouldInterceptLink).
     document.addEventListener('click', function (e) {
         var link = e.target.closest('a.menu-item[href], a.sidebar-link[href], .desktop-toolbar a[href], .rahkaran-widget-card[href], .rk-list-item[href]');
         if (!link) return;
-        var href = link.getAttribute('href');
-        if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
-        // Only intercept same-origin, non-download, no-target links
-        if (link.hasAttribute('download') || link.hasAttribute('target')) return;
+        if (!shouldInterceptLink(link, e)) return;
 
         e.preventDefault();
         openTabFromLink(link);

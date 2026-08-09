@@ -275,6 +275,9 @@ builder.Services.Configure<MowadiyanOptions>(builder.Configuration.GetSection(Mo
     builder.Services.AddSingleton<IMowadiyanSubmissionService, MowadiyanSubmissionService>();
     builder.Services.AddHostedService<MowadiyanSubmissionQueueHostedService>();
     builder.Services.AddScoped<IInvoiceReconciliationService, InvoiceReconciliationService>();
+    // The portal session / output-file interaction is delegated to the Python Playwright
+    // exporter (scripts/tax_exporter.py); C# only orchestrates the database import.
+    builder.Services.AddSingleton<IMowadiyanPortalSyncService, MowadiyanPortalSyncService>();
 builder.Services.AddScoped<ZipArchiveProcessor>();
 builder.Services.AddScoped<TelegramBotWebhookHandler>();
 builder.Services.AddScoped<ISemanticDisambiguationService, SemanticDisambiguationService>();
