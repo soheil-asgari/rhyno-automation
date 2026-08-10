@@ -44,7 +44,7 @@
 
     getTableInstance();
 
-            // ۲. لود لیست کاربران با Fetch و SweetAlert
+    // ۲. لود لیست کاربران با Fetch و SweetAlert
     const btnLoad = document.getElementById('btn-load-users');
     if (btnLoad) {
         btnLoad.addEventListener('click', function () {
@@ -108,7 +108,7 @@
         }
 
         // اجرای تغییر سایز هنگام باز شدن تب امضا
-        const sigTabBtn = document.querySelector('button[data-bs-target="#tab-signature"], button[data-bs-target="#v-pills-signature"]');
+        const sigTabBtn = document.querySelector('button[data-target="#signature"]');
         if (sigTabBtn) {
             sigTabBtn.addEventListener('shown.bs.tab', resizeCanvas);
         }
@@ -143,9 +143,9 @@
         });
     }
 });
-        // ۵. توابع Global (خارج از Ready برای دسترسی مستقیم HTML)
+// ۵. توابع Global (خارج از Ready برای دسترسی مستقیم HTML)
 
-            window.createUser = function () {
+window.createUser = function () {
     const name = document.getElementById('add_name').value;
     const email = document.getElementById('add_email').value;
     const pass = document.getElementById('add_pass').value;
@@ -173,47 +173,47 @@
         method: 'POST',
         body: params
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            Swal.fire('تبریک!', 'کاربر با موفقیت ایجاد شد.', 'success')
-                .then(() => window.location.reload());
-        } else {
-            Swal.fire('خطا', data.message, 'error');
-        }
-    })
-    .catch(err => {
-        Swal.fire('خطا', 'عدم برقراری ارتباط با سرور', 'error');
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('تبریک!', 'کاربر با موفقیت ایجاد شد.', 'success')
+                    .then(() => window.location.reload());
+            } else {
+                Swal.fire('خطا', data.message, 'error');
+            }
+        })
+        .catch(err => {
+            Swal.fire('خطا', 'عدم برقراری ارتباط با سرور', 'error');
+        });
 };
 
-        window.deleteUser = function (id) {
-            Swal.fire({
-                title: 'آیا مطمئن هستید؟',
-                text: "این عملیات غیرقابل بازگشت است!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'بله، حذف شود',
-                cancelButtonText: 'انصراف'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const params = new URLSearchParams();
-                    params.append('userId', id);
-                    fetch('/Settings/DeleteUser', {
-                        method: 'POST',
-                        body: params
-                    }).then(res => {
-                        if (res.ok) {
-                            Swal.fire('حذف شد', 'کاربر با موفقیت حذف گردید.', 'success').then(() => location.reload());
-                        } else {
-                            Swal.fire('خطا', 'عملیات حذف انجام نشد.', 'error');
-                        }
-                    });
+window.deleteUser = function (id) {
+    Swal.fire({
+        title: 'آیا مطمئن هستید؟',
+        text: "این عملیات غیرقابل بازگشت است!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'بله، حذف شود',
+        cancelButtonText: 'انصراف'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const params = new URLSearchParams();
+            params.append('userId', id);
+            fetch('/Settings/DeleteUser', {
+                method: 'POST',
+                body: params
+            }).then(res => {
+                if (res.ok) {
+                    Swal.fire('حذف شد', 'کاربر با موفقیت حذف گردید.', 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('خطا', 'عملیات حذف انجام نشد.', 'error');
                 }
             });
-        };window.editUser = function(id) {
+        }
+    });
+}; window.editUser = function (id) {
     // نمایش وضعیت در حال لود
     // Swal.fire({ title: 'در حال دریافت اطلاعات...', didOpen: () => Swal.showLoading() });
 
@@ -235,7 +235,7 @@
             document.getElementById('edit_is_manager').checked = user.isManager || false;
             document.getElementById('edit_manager').value = user.managerId || "";
             document.getElementById('edit_role').value = user.role || "User";
-            
+
             // اصلاح اصلی: استفاده از user.location بر اساس خروجی کنسول شما
             document.getElementById('edit_location').value = user.location || user.serviceLocation || "مرکز اصلی";
 
@@ -255,7 +255,7 @@
         });
 };
 
-     window.updateUser = function() {
+window.updateUser = function () {
     const params = new URLSearchParams();
 
     // گرفتن مقادیر از فیلدهای مودال ویرایش
@@ -267,7 +267,7 @@
     const department = document.getElementById('edit_department').value;
     const isManager = document.getElementById('edit_is_manager').checked;
     const managerId = document.getElementById('edit_manager').value;
-    const locValue = document.getElementById('edit_location').value; 
+    const locValue = document.getElementById('edit_location').value;
     const role = document.getElementById('edit_role').value;
     const newPassword = document.getElementById('edit_new_password').value;
 
@@ -286,7 +286,7 @@
     params.append('ManagerId', managerId);
     params.append('ServiceLocation', locValue); // ارسال به سمت سرور
     params.append('Role', role);
-    if(newPassword) params.append('NewPassword', newPassword);
+    if (newPassword) params.append('NewPassword', newPassword);
 
     Swal.fire({ title: 'در حال ذخیره...', didOpen: () => Swal.showLoading() });
 
@@ -294,19 +294,19 @@
         method: 'POST',
         body: params
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            Swal.fire('موفقیت', 'تغییرات با موفقیت ثبت شد', 'success')
-                .then(() => window.location.reload());
-        } else {
-            Swal.fire('خطا', data.message || 'خطایی رخ داد', 'error');
-        }
-    })
-    .catch(err => {
-        console.error("Update Error:", err);
-        Swal.fire('خطا', 'ارتباط با سرور برقرار نشد.', 'error');
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('موفقیت', 'تغییرات با موفقیت ثبت شد', 'success')
+                    .then(() => window.location.reload());
+            } else {
+                Swal.fire('خطا', data.message || 'خطایی رخ داد', 'error');
+            }
+        })
+        .catch(err => {
+            console.error("Update Error:", err);
+            Swal.fire('خطا', 'ارتباط با سرور برقرار نشد.', 'error');
+        });
 };
 
 
@@ -355,7 +355,7 @@ function resizeCanvas() {
 }
 
 // اجرای تنظیم سایز بلافاصله بعد از باز شدن تب امضا
-document.querySelector('button[data-bs-target="#tab-signature"]').addEventListener('shown.bs.tab', function () {
+document.querySelector('button[data-target="#signature"]').addEventListener('shown.bs.tab', function () {
     resizeCanvas();
 });
 

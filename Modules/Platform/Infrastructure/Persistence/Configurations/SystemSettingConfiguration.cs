@@ -18,5 +18,6 @@ public sealed class SystemSettingConfiguration : IEntityTypeConfiguration<System
             builder.Ignore(setting => setting.LogoUrl);
             builder.Ignore(setting => setting.FaviconUrl);
             builder.Ignore(setting => setting.LoginBackgroundUrl);
+            builder.Ignore(setting => setting.DesktopBackgroundUrl);
     }
 }

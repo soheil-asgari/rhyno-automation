@@ -217,8 +217,8 @@ public class MowadiyanController : Controller
             // Defensive clamp to the configured column sizes so over-long credentials
             // never surface as a DbUpdateException ("String or binary data would be truncated")
             // and take the whole endpoint down with an HTTP 500.
-            model.PortalUsername = Clamp(model.PortalUsername, 200);
-            model.PortalPassword = Clamp(model.PortalPassword, 500);
+            model.PortalUsername = Clamp(model.PortalUsername, 200) ?? string.Empty;
+            model.PortalPassword = Clamp(model.PortalPassword, 500) ?? string.Empty;
 
             using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
 

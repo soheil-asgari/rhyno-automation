@@ -39,6 +39,7 @@
     var brandAccent = brandingSettings?.AccentColor;
     var brandLogo = brandingSettings?.LogoUrl;
     var brandFavicon = brandingSettings?.FaviconUrl;
+    var brandBgUrl = brandingSettings?.DesktopBackgroundUrl;
     var appTitle = brandingSettings?.ApplicationTitle ?? "راینو ERP";
 
     // Sidebar accordion state helper
@@ -125,6 +126,29 @@
                     --rk-accent-light:
                         @brandAccent
                     ;
+                }
+        </style>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(brandBgUrl))
+    {
+        <style>
+                body.rahkaran-theme {
+                    background-color: #7baed1; /* fallback if image fails to load */
+                    background: url('@brandBgUrl') no-repeat center center fixed;
+                    background-size: cover;
+                }
+        </style>
+    }
+    else
+    {
+        @* Ensure the default gradient background is always present so a reset
+           never leaves a white/blank page. The gradient is defined in
+           rahkaran-theme.css; this just guards against it being overridden. *@
+        <style>
+                body.rahkaran-theme {
+                    background: linear-gradient(180deg, #3289c7 0%, #7baed1 45%, #e8d4d4 100%) no-repeat fixed;
+                    background-size: cover;
                 }
         </style>
     }

@@ -51,6 +51,11 @@ namespace OfficeAutomation.Models
         /// <summary>URL of the background image shown on the login / lock screen.</summary>
         [MaxLength(512)]
         public string? LoginBackgroundUrl { get; set; }
+
+        /// <summary>URL of the background image shown on the main desktop/workspace area.
+        /// When empty, the default gradient background from rahkaran-theme.css is used.</summary>
+        [MaxLength(512)]
+        public string? DesktopBackgroundUrl { get; set; }
     }
 }
 

@@ -116,6 +116,10 @@ namespace OfficeAutomation.Models
     /// </summary>
     public class BrandingSettingsViewModel
     {
+        [Display(Name = "نام شرکت / عنوان سامانه")]
+        [MaxLength(120)]
+        public string? ApplicationTitle { get; set; }
+
         [Display(Name = "رنگ اصلی (Primary)")]
         [MaxLength(32)]
         public string? PrimaryColor { get; set; }
@@ -135,6 +139,10 @@ namespace OfficeAutomation.Models
         [Display(Name = "تصویر پس‌زمینه صفحه ورود")]
         [MaxLength(512)]
         public string? LoginBackgroundUrl { get; set; }
+
+        [Display(Name = "تصویر پس‌زمینه میزکار اصلی")]
+        [MaxLength(512)]
+        public string? DesktopBackgroundUrl { get; set; }
     }
 
     public class InsuranceEmployeeRowViewModel

@@ -63,11 +63,13 @@ public sealed class TenantSettingsService : ITenantSettingsService
         apply(current);
         current.UpdatedAtUtc = DateTime.UtcNow;
 
+        await UpsertAsync(descriptor.TenantId, "Branding.ApplicationTitle", current.ApplicationTitle ?? string.Empty, cancellationToken);
         await UpsertAsync(descriptor.TenantId, "Branding.PrimaryColor", current.PrimaryColor ?? string.Empty, cancellationToken);
         await UpsertAsync(descriptor.TenantId, "Branding.AccentColor", current.AccentColor ?? string.Empty, cancellationToken);
         await UpsertAsync(descriptor.TenantId, "Branding.LogoUrl", current.LogoUrl ?? string.Empty, cancellationToken);
         await UpsertAsync(descriptor.TenantId, "Branding.FaviconUrl", current.FaviconUrl ?? string.Empty, cancellationToken);
         await UpsertAsync(descriptor.TenantId, "Branding.LoginBackgroundUrl", current.LoginBackgroundUrl ?? string.Empty, cancellationToken);
+        await UpsertAsync(descriptor.TenantId, "Branding.DesktopBackgroundUrl", current.DesktopBackgroundUrl ?? string.Empty, cancellationToken);
     }
 
     private async Task UpsertAsync(string tenantId, string key, string value, CancellationToken cancellationToken)
@@ -108,6 +110,11 @@ public sealed class TenantSettingsService : ITenantSettingsService
         if (overrides.TryGetValue("System.ApplicationTitle", out var title) && !string.IsNullOrWhiteSpace(title))
         {
             resolved.ApplicationTitle = title;
+        }
+
+        if (overrides.TryGetValue("Branding.ApplicationTitle", out var brandTitle) && !string.IsNullOrWhiteSpace(brandTitle))
+        {
+            resolved.ApplicationTitle = brandTitle;
         }
 
         if (overrides.TryGetValue("System.SystemLanguage", out var language) && !string.IsNullOrWhiteSpace(language))
@@ -155,6 +162,11 @@ public sealed class TenantSettingsService : ITenantSettingsService
         if (overrides.TryGetValue("Branding.LoginBackgroundUrl", out var loginBg) && !string.IsNullOrWhiteSpace(loginBg))
         {
             resolved.LoginBackgroundUrl = loginBg;
+        }
+
+        if (overrides.TryGetValue("Branding.DesktopBackgroundUrl", out var desktopBg) && !string.IsNullOrWhiteSpace(desktopBg))
+        {
+            resolved.DesktopBackgroundUrl = desktopBg;
         }
 
         return resolved;

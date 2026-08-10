@@ -19,7 +19,7 @@ $(document).ready(function () {
     }
 
     // اجرای تنظیم سایز هنگام باز شدن تب امضا
-    $('button[data-bs-target="#tab-signature"]').on('shown.bs.tab', function () {
+    $('button[data-target="#signature"]').on('shown.bs.tab', function () {
         resizeCanvas();
     });
 

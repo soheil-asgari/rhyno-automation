@@ -308,11 +308,13 @@ public class SettingsController : Controller
 
         await _tenantSettingsService.UpdateBrandingAsync(s =>
         {
+            s.ApplicationTitle    = string.IsNullOrWhiteSpace(model.ApplicationTitle)    ? string.Empty : model.ApplicationTitle.Trim();
             s.PrimaryColor      = string.IsNullOrWhiteSpace(model.PrimaryColor)      ? null : model.PrimaryColor.Trim();
             s.AccentColor       = string.IsNullOrWhiteSpace(model.AccentColor)       ? null : model.AccentColor.Trim();
             s.LogoUrl           = string.IsNullOrWhiteSpace(model.LogoUrl)           ? null : model.LogoUrl.Trim();
             s.FaviconUrl        = string.IsNullOrWhiteSpace(model.FaviconUrl)        ? null : model.FaviconUrl.Trim();
-            s.LoginBackgroundUrl= string.IsNullOrWhiteSpace(model.LoginBackgroundUrl)? null : model.LoginBackgroundUrl.Trim();
+            s.LoginBackgroundUrl = string.IsNullOrWhiteSpace(model.LoginBackgroundUrl) ? null : model.LoginBackgroundUrl.Trim();
+            s.DesktopBackgroundUrl = string.IsNullOrWhiteSpace(model.DesktopBackgroundUrl) ? null : model.DesktopBackgroundUrl.Trim();
         }, cancellationToken);
 
         _logger.LogInformation("Branding settings updated by {UserId}.", _userManager.GetUserId(User));
@@ -423,11 +425,13 @@ public class SettingsController : Controller
             },
             Branding = new BrandingSettingsViewModel
             {
+                ApplicationTitle    = resolvedSystem.ApplicationTitle,
                 PrimaryColor       = resolvedSystem.PrimaryColor,
                 AccentColor        = resolvedSystem.AccentColor,
                 LogoUrl            = resolvedSystem.LogoUrl,
                 FaviconUrl         = resolvedSystem.FaviconUrl,
-                LoginBackgroundUrl = resolvedSystem.LoginBackgroundUrl
+                LoginBackgroundUrl = resolvedSystem.LoginBackgroundUrl,
+                DesktopBackgroundUrl = resolvedSystem.DesktopBackgroundUrl
             },
             CurrentUserSignaturePath = user.SignaturePath,
             CanManageSecurity = canManageSecurity,

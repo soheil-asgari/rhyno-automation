@@ -72,8 +72,8 @@ public sealed class MowadiyanCryptoService : IMowadiyanCryptoService
 
         try
         {
-            var cert = new X509Certificate2(
-                settings.PrivateKeyPath,
+            var cert = X509CertificateLoader.LoadPkcs12(
+                File.ReadAllBytes(settings.PrivateKeyPath),
                 settings.PrivateKeyPassword ?? string.Empty,
                 X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
 

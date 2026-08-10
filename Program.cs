@@ -250,6 +250,7 @@ builder.Services.AddScoped<IDecisionEngine, DecisionEngine>();
 builder.Services.AddScoped<IWorkflowDefinitionSelector, WorkflowDefinitionSelector>();
 builder.Services.AddScoped<WorkflowGovernanceService>();
 builder.Services.AddScoped<WorkflowService>();
+builder.Services.AddScoped<BootstrapAdminSeeder>();
 builder.Services.AddScoped<WorkflowSlaScheduler>();
 builder.Services.AddScoped<IWorkflowAttachmentService, WorkflowAttachmentService>();
 builder.Services.AddScoped<IWorkflowSlaService, WorkflowSlaService>();
@@ -260,24 +261,24 @@ builder.Services.AddScoped<IIntakeSessionStore, DatabaseIntakeSessionStore>();
 builder.Services.AddScoped<InvoiceIntakeService>();
 builder.Services.AddScoped<ITaxCalculatorService, TaxCalculatorService>();
 builder.Services.Configure<MowadiyanOptions>(builder.Configuration.GetSection(MowadiyanOptions.SectionName));
-    builder.Services.AddScoped<IMowadiyanPayloadBuilder, MowadiyanPayloadBuilder>();
-    builder.Services.AddScoped<IMowadiyanCryptoService, MowadiyanCryptoService>();
-    builder.Services.AddHttpClient<IMowadiyanApiClient, MowadiyanApiClient>((sp, client) =>
+builder.Services.AddScoped<IMowadiyanPayloadBuilder, MowadiyanPayloadBuilder>();
+builder.Services.AddScoped<IMowadiyanCryptoService, MowadiyanCryptoService>();
+builder.Services.AddHttpClient<IMowadiyanApiClient, MowadiyanApiClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<MowadiyanOptions>>().Value;
+    client.Timeout = TimeSpan.FromSeconds(60);
+    if (!string.IsNullOrWhiteSpace(options.BaseUrl))
     {
-        var options = sp.GetRequiredService<IOptions<MowadiyanOptions>>().Value;
-        client.Timeout = TimeSpan.FromSeconds(60);
-        if (!string.IsNullOrWhiteSpace(options.BaseUrl))
-        {
-            client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
-        }
-    });
-    builder.Services.AddScoped<SandboxMowadiyanApiClient>();
-    builder.Services.AddSingleton<IMowadiyanSubmissionService, MowadiyanSubmissionService>();
-    builder.Services.AddHostedService<MowadiyanSubmissionQueueHostedService>();
-    builder.Services.AddScoped<IInvoiceReconciliationService, InvoiceReconciliationService>();
-    // The portal session / output-file interaction is delegated to the Python Playwright
-    // exporter (scripts/tax_exporter.py); C# only orchestrates the database import.
-    builder.Services.AddSingleton<IMowadiyanPortalSyncService, MowadiyanPortalSyncService>();
+        client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+    }
+});
+builder.Services.AddScoped<SandboxMowadiyanApiClient>();
+builder.Services.AddSingleton<IMowadiyanSubmissionService, MowadiyanSubmissionService>();
+builder.Services.AddHostedService<MowadiyanSubmissionQueueHostedService>();
+builder.Services.AddScoped<IInvoiceReconciliationService, InvoiceReconciliationService>();
+// The portal session / output-file interaction is delegated to the Python Playwright
+// exporter (scripts/tax_exporter.py); C# only orchestrates the database import.
+builder.Services.AddSingleton<IMowadiyanPortalSyncService, MowadiyanPortalSyncService>();
 builder.Services.AddScoped<ZipArchiveProcessor>();
 builder.Services.AddScoped<TelegramBotWebhookHandler>();
 builder.Services.AddScoped<ISemanticDisambiguationService, SemanticDisambiguationService>();
@@ -564,6 +565,19 @@ if (builder.Configuration.GetValue("Bootstrap:RunOnStartup", false))
 else
 {
     logger.LogInformation("Startup bootstrap skipped because Bootstrap:RunOnStartup is disabled.");
+}
+
+// ── Bootstrap Admin User (always runs, idempotent) ──
+try
+{
+    using var adminScope = app.Services.CreateScope();
+    var seeder = adminScope.ServiceProvider.GetRequiredService<BootstrapAdminSeeder>();
+    await seeder.SeedAsync();
+    logger.LogInformation("BootstrapAdmin: seed completed.");
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "BootstrapAdmin: seed failed (DB may not be ready): {Message}", ex.Message);
 }
 
 app.Run();

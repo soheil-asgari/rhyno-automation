@@ -23,48 +23,48 @@
 
     <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3 md:p-4">
         <nav id="settings-tab" class="flex gap-3 overflow-x-auto border-b border-slate-200 pb-2 mb-3 dark:border-slate-800" aria-label="بخش‌های تنظیمات">
-            <button type="button" data-target="#tab-general" class="tab-btn active inline-flex shrink-0 items-center gap-2 border-b-2 border-teal-500 px-1 pb-2 text-xs font-black text-teal-700 dark:text-teal-300"><i class="bi bi-gear pointer-events-none"></i>عمومی</button>
-            <button type="button" data-target="#tab-security" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-shield-check pointer-events-none"></i>پروفایل و امنیت</button>
-            <button type="button" data-target="#tab-system" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-server pointer-events-none"></i>زیرساخت</button>
-            <button type="button" data-target="#tab-ui" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-window-stack pointer-events-none"></i>ظاهر</button>
+            <button type="button" data-target="#general" class="tab-btn active inline-flex shrink-0 items-center gap-2 border-b-2 border-teal-500 px-1 pb-2 text-xs font-black text-teal-700 dark:text-teal-300"><i class="bi bi-gear pointer-events-none"></i>عمومی</button>
+            <button type="button" data-target="#security" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-shield-check pointer-events-none"></i>پروفایل و امنیت</button>
+            <button type="button" data-target="#system" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-server pointer-events-none"></i>زیرساخت</button>
+            <button type="button" data-target="#appearance" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-window-stack pointer-events-none"></i>ظاهر</button>
             @if (Model.CanManageSecurity)
             {
-                <button type="button" data-target="#tab-signature" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-pen-fill pointer-events-none"></i>امضا</button>
-                <button type="button" data-target="#tab-adduser" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-person-plus pointer-events-none"></i>کاربران</button>
-                <button type="button" data-target="#tab-branding" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-palette2 pointer-events-none"></i>برندینگ</button>
+                <button type="button" data-target="#signature" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-pen-fill pointer-events-none"></i>امضا</button>
+                <button type="button" data-target="#users" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-person-plus pointer-events-none"></i>کاربران</button>
+                <button type="button" data-target="#branding" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-brush pointer-events-none"></i>هویت بصری</button>
             }
         </nav>
 
         <!-- اضافه شدن تگ فرم برای ذخیره تنظیمات -->
         <form asp-action="SaveSettings" method="post" class="settings-content">
 
-            <div id="tab-general" class="tab-pane block">
+            <div id="general" class="tab-pane block">
                 <!-- نکته: اگر پارشیال عمومی مدل خاص خودش را دارد، به جای Model بنویس Model.General یا مشابه آن -->
                 <partial name="_GeneralSettings" model="Model" />
             </div>
 
-            <div id="tab-security" class="tab-pane hidden">
+            <div id="security" class="tab-pane hidden">
                 <partial name="_ProfileSecuritySettings" model="Model" />
             </div>
 
-            <div id="tab-system" class="tab-pane hidden">
+            <div id="system" class="tab-pane hidden">
                 <partial name="_SystemConnectivitySettings" model="Model" />
             </div>
 
-            <div id="tab-ui" class="tab-pane hidden">
+            <div id="appearance" class="tab-pane hidden">
                 <partial name="_UiPreferencesSettings" model="Model" />
             </div>
 
             @if (Model.CanManageSecurity)
             {
-                <div id="tab-branding" class="tab-pane hidden">
+                <div id="branding" class="tab-pane hidden">
                     <partial name="_BrandingSettings" model="Model" />
                 </div>
             }
 
             @if (Model.CanManageSecurity)
             {
-                <div id="tab-signature" class="tab-pane hidden">
+                <div id="signature" class="tab-pane hidden">
                     <!-- کدهای امضا همانطور که بود -->
                     <div class="space-y-3">
                         <div><h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white"><i class="bi bi-pen-fill text-teal-600 dark:text-teal-400"></i>مدیریت امضای کاربر</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">ثبت، بارگذاری یا به‌روزرسانی امضای دیجیتال برای اسناد سامانه</p></div>
@@ -79,7 +79,7 @@
 </div></div>
                 </div>
             </div>
-            <div id="tab-adduser" class="tab-pane hidden"><div class="space-y-3"><div><h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white"><i class="bi bi-people text-teal-600 dark:text-teal-400"></i>افزودن کاربر جدید</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">ایجاد حساب کاربری از مسیر مدیریت کاربران انجام می‌شود.</p></div><div class="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-3 text-xs font-bold text-sky-700 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300"><i class="bi bi-shield-check ml-1"></i>برای ثبت کاربر جدید به فرم اختصاصی مدیریت کاربران منتقل شوید.</div><div class="border-t border-slate-100 pt-3 mt-3 dark:border-slate-800"><a asp-controller="Settings" asp-action="AddNewUser" class="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-2.5 py-2.5 text-xs font-black text-white no-underline shadow-sm transition hover:bg-teal-700"><i class="bi bi-person-plus-fill"></i>افزودن کاربر</a></div></div></div>
+            <div id="users" class="tab-pane hidden"><div class="space-y-3"><div><h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white"><i class="bi bi-people text-teal-600 dark:text-teal-400"></i>افزودن کاربر جدید</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">ایجاد حساب کاربری از مسیر مدیریت کاربران انجام می‌شود.</p></div><div class="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-3 text-xs font-bold text-sky-700 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300"><i class="bi bi-shield-check ml-1"></i>برای ثبت کاربر جدید به فرم اختصاصی مدیریت کاربران منتقل شوید.</div><div class="border-t border-slate-100 pt-3 mt-3 dark:border-slate-800"><a asp-controller="Settings" asp-action="AddNewUser" class="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-2.5 py-2.5 text-xs font-black text-white no-underline shadow-sm transition hover:bg-teal-700"><i class="bi bi-person-plus-fill"></i>افزودن کاربر</a></div></div></div>
                         }
 
             <!-- دکمه ذخیره نهایی کل تنظیمات -->
@@ -102,44 +102,63 @@
             const buttons = document.querySelectorAll('.tab-btn');
             const panes = document.querySelectorAll('.tab-pane');
 
+            // ── Legacy hash map ──────────────────────────────────────────
+            // Maps old #tab-xxx hashes to new clean hash names for backward
+            // compatibility with bookmarks / external links that may still
+            // reference the old format.
+            const legacyHashMap = {
+                '#tab-general':  '#general',
+                '#tab-security': '#security',
+                '#tab-system':   '#system',
+                '#tab-ui':       '#appearance',
+                '#tab-signature':'#signature',
+                '#tab-adduser':  '#users',
+                '#tab-branding': '#branding'
+            };
+
             const activeClasses = ['active', 'border-teal-500', 'text-teal-700', 'dark:text-teal-300', 'font-black'];
             const inactiveClasses = ['border-transparent', 'text-slate-500', 'dark:text-slate-400', 'font-bold'];
 
+            function activateTab(targetSelector) {
+                const targetPane = document.querySelector(targetSelector);
+                if (!targetPane) return;
+
+                // Hide all panes
+                panes.forEach(pane => {
+                    pane.classList.add('hidden');
+                    pane.classList.remove('block');
+                });
+
+                // Reset all buttons styling
+                buttons.forEach(btn => {
+                    activeClasses.forEach(c => btn.classList.remove(c));
+                    inactiveClasses.forEach(c => btn.classList.add(c));
+                });
+
+                // Find and activate the matching button
+                const matchingBtn = document.querySelector(`.tab-btn[data-target="${targetSelector}"]`);
+                if (matchingBtn) {
+                    activeClasses.forEach(c => matchingBtn.classList.add(c));
+                    inactiveClasses.forEach(c => matchingBtn.classList.remove(c));
+                }
+
+                // Show target pane
+                targetPane.classList.remove('hidden');
+                targetPane.classList.add('block');
+
+                // Save selected tab in storage & history
+                localStorage.setItem('rhyno.settings.activeTab', targetSelector);
+                if (history.replaceState) {
+                    history.replaceState(null, '', targetSelector);
+                }
+
+                // Dispatch CustomEvent for signature resizing etc
+                document.dispatchEvent(new CustomEvent('rhyno:settings-tab-shown', { detail: { target: targetSelector } }));
+            }
+
             buttons.forEach(button => {
                 button.addEventListener('click', function() {
-                    const targetSelector = button.getAttribute('data-target');
-                    const targetPane = document.querySelector(targetSelector);
-
-                    if (targetPane) {
-                        // Hide all panes
-                        panes.forEach(pane => {
-                            pane.classList.add('hidden');
-                            pane.classList.remove('block');
-                        });
-
-                        // Reset all buttons styling
-                        buttons.forEach(btn => {
-                            activeClasses.forEach(c => btn.classList.remove(c));
-                            inactiveClasses.forEach(c => btn.classList.add(c));
-                        });
-
-                        // Activate clicked button styling
-                        activeClasses.forEach(c => button.classList.add(c));
-                        inactiveClasses.forEach(c => button.classList.remove(c));
-
-                        // Show target pane
-                        targetPane.classList.remove('hidden');
-                        targetPane.classList.add('block');
-
-                        // Save selected tab in storage & history
-                        localStorage.setItem('rhyno.settings.activeTab', targetSelector);
-                        if (history.replaceState) {
-                            history.replaceState(null, '', targetSelector);
-                        }
-
-                        // Dispatch CustomEvent for signature resizing etc
-                        document.dispatchEvent(new CustomEvent('rhyno:settings-tab-shown', { detail: { target: targetSelector } }));
-                    }
+                    activateTab(button.getAttribute('data-target'));
                 });
             });
 
@@ -150,6 +169,11 @@
             let storedTarget = null;
             if (!isInsideTab) {
                 storedTarget = window.location.hash || localStorage.getItem('rhyno.settings.activeTab');
+
+                // ── Backward compatibility: resolve legacy #tab-* hashes ──
+                if (storedTarget && legacyHashMap[storedTarget]) {
+                    storedTarget = legacyHashMap[storedTarget];
+                }
             }
             let tabToClick = null;
             if (storedTarget) {
@@ -159,7 +183,8 @@
                 tabToClick = document.querySelector('.tab-btn.active') || document.querySelector('.tab-btn');
             }
             if (tabToClick) {
-                tabToClick.click();
+                // Use activateTab so the URL hash is updated to the clean format
+                activateTab(tabToClick.getAttribute('data-target'));
             }
         });
     </script>

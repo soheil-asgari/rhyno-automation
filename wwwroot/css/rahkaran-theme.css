@@ -38,8 +38,8 @@
     ═══════════════════════════════════════════════════════════ */
 body.rahkaran-theme {
   direction: rtl;
-  background: linear-gradient(180deg, var(--rk-bg-top) 0%, var(--rk-bg-mid) 45%, var(--rk-bg-bottom) 100%) no-repeat fixed !important;
-  background-size: cover !important;
+  background: linear-gradient(180deg, var(--rk-bg-top) 0%, var(--rk-bg-mid) 45%, var(--rk-bg-bottom) 100%) no-repeat fixed;
+  background-size: cover;
   min-height: 100vh;
   height: 100vh;
   overflow: hidden;
@@ -1257,6 +1257,61 @@ html:not(.dark):not(.theme-dark) body.rahkaran-theme.rahkaran-page-view main .va
 
 .rhyno-tab.active .rhyno-tab-icon {
   color: #b45309;
+}
+
+/* ── Tab Context Menu (Right-Click) ──────────────────────────────── */
+.rhyno-tab-context-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+  direction: rtl;
+  font-family: Vazirmatn, Tahoma, sans-serif;
+}
+
+.rhyno-tab-context-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f2937;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: right;
+  white-space: nowrap;
+  transition: background 0.12s;
+  line-height: 1.4;
+  font-family: inherit;
+}
+
+.rhyno-tab-context-item:hover {
+  background: #f0f4f8;
+}
+
+.rhyno-tab-context-item:active {
+  background: #e2e8f0;
+}
+
+.rhyno-tab-context-item.disabled {
+  color: #9ca3af;
+  cursor: default;
+  font-style: italic;
+}
+
+.rhyno-tab-context-item.disabled:hover {
+  background: none;
+}
+
+.rhyno-tab-context-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .rhyno-tab-title {

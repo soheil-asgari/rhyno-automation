@@ -66,7 +66,8 @@
             body {
                 font-family: 'Vazirmatn', 'Tahoma', 'Segoe UI', sans-serif;
                 color: var(--rk-login-text);
-                background: linear-gradient(160deg, #e8eef3 0%, #dce3ea 30%, #c8d6e0 65%, #e0e5eb 100%);
+                background: @(!string.IsNullOrWhiteSpace(loginBgUrl) ? $"url('{loginBgUrl}') no-repeat center center fixed" : "linear-gradient(160deg, #e8eef3 0%, #dce3ea 30%, #c8d6e0 65%, #e0e5eb 100%)");
+                background-size: cover;
                 min-height: 100vh;
                 overflow: hidden;
                 position: relative;

@@ -182,7 +182,7 @@
         });
     });
 
-    const signatureTabButton = document.querySelector('.tab-btn[data-target="#tab-signature"]');
+    const signatureTabButton = document.querySelector('.tab-btn[data-target="#signature"]');
     const signatureCanvas = document.getElementById('signature-canvas');
     const signatureSaveButton = document.getElementById('signature-save-btn');
     const signatureClearButton = document.getElementById('signature-clear-btn');
@@ -213,7 +213,7 @@
         });
 
         document.addEventListener('rhyno:settings-tab-shown', (event) => {
-            if (event.detail?.target === '#tab-signature') {
+            if (event.detail?.target === '#signature') {
                 resizeSignatureCanvas();
             }
         });

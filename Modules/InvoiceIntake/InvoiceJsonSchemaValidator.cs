@@ -31,7 +31,13 @@ public sealed class InvoiceJsonSchemaValidator
         }
 
         var issues = new List<InvoiceSchemaIssue>();
-        foreach (var detail in results.Details)
+        var details = results.Details;
+        if (details is null)
+        {
+            return issues;
+        }
+
+        foreach (var detail in details)
         {
             if (detail.IsValid)
             {
