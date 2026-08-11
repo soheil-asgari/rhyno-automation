@@ -42,6 +42,17 @@ namespace OfficeAutomation.Filters
                 return;
             }
 
+            // ═══════════════════════════════════════════════════════════════
+            //  SUPER ADMIN BYPASS — Admin role bypasses ALL area/controller
+            //  permission checks (including Settings, Security, Contracts, etc.)
+            // ═══════════════════════════════════════════════════════════════
+            if (user.IsInRole("Admin") ||
+                string.Equals(user.Identity?.Name, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                await next();
+                return;
+            }
+
             var areaRequirement = context.ActionDescriptor.EndpointMetadata
                 .OfType<RequireAccessAreaAttribute>()
                 .FirstOrDefault();

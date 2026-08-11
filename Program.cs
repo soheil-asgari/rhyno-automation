@@ -140,6 +140,7 @@ builder.Services.AddHttpClient("ExternalServices", client =>
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IBulkImportService, BulkImportService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<ITemplateRenderingService, TemplateRenderingService>();
 builder.Services.AddSingleton<ITenantRegistry, TenantRegistry>();
 builder.Services.AddScoped<TenantMigrationOrchestrator>();
 builder.Services.AddHostedService<TenantMigrationHostedService>();
@@ -555,6 +556,30 @@ catch (Exception ex)
     catch (Exception fallbackEx)
     {
         logger.LogWarning(fallbackEx, "TaxDbContext EnsureCreated also failed (DB may not be ready): {Message}", fallbackEx.Message);
+    }
+}
+
+// ── OfficeDbContext auto-migration (ensures Contracts, ContractTemplates, Customers, etc. exist) ──
+try
+{
+    using var officeScope = app.Services.CreateScope();
+    var officeContext = officeScope.ServiceProvider.GetRequiredService<OfficeDbContext>();
+    await officeContext.Database.MigrateAsync();
+    logger.LogInformation("OfficeDbContext migrations applied successfully on startup.");
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "OfficeDbContext MigrateAsync failed, falling back to EnsureCreated: {Message}", ex.Message);
+    try
+    {
+        using var officeScope = app.Services.CreateScope();
+        var officeContext = officeScope.ServiceProvider.GetRequiredService<OfficeDbContext>();
+        await officeContext.Database.EnsureCreatedAsync();
+        logger.LogInformation("OfficeDbContext schema ensured via EnsureCreated fallback.");
+    }
+    catch (Exception fallbackEx)
+    {
+        logger.LogWarning(fallbackEx, "OfficeDbContext EnsureCreated also failed (DB may not be ready): {Message}", fallbackEx.Message);
     }
 }
 

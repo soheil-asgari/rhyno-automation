@@ -3,108 +3,160 @@
     ViewData["Title"] = "بایگانی قراردادها";
 }
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-2 space-y-2" dir="rtl">
     @if (TempData["SuccessMessage"] is string successMsg)
     {
-        <div class="alert alert-success py-2 px-3 small mb-3">@successMsg</div>
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-3.5 py-2.5 text-[11px] text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
+            <i class="bi bi-check-circle-fill text-emerald-500"></i>
+            <span>@successMsg</span>
+        </div>
     }
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    @* Section Header *@
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
-            <h6 class="fw-bold mb-0">بایگانی قراردادها</h6>
-            <small class="text-muted">@Model.FilteredCount مورد از @Model.TotalCount کل قراردادها</small>
+            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">بایگانی قراردادها</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">@Model.FilteredCount مورد از @Model.TotalCount کل قراردادها</p>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Index" class="btn btn-sm btn-outline-primary">قراردادهای فعال</a>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <i class="bi bi-list-ul ml-1"></i>قراردادهای فعال
+            </a>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-3 border-bottom">
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted mb-1">جستجو</label>
-                    <input name="SearchTerm" value="@Model.SearchTerm" class="form-control form-control-sm"
-                           placeholder="عنوان / شماره / مشتری" />
-                </div>
-                <div class="col-6 col-md-2">
-                    <label class="form-label small text-muted mb-1">وضعیت</label>
-                    <select name="Status" class="form-select form-select-sm" asp-items="Model.StatusOptions">
-                        <option value="">همه</option>
-                    </select>
-                </div>
-                <div class="col-auto d-flex gap-1">
-                    <button class="btn btn-sm btn-primary">اعمال</button>
-                    <a asp-action="Archive" class="btn btn-sm btn-outline-secondary">پاکسازی</a>
-                </div>
-            </form>
-        </div>
-
-        <div class="card-body p-0">
-            @if (Model.Items.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>شماره قرارداد</th>
-                                <th>عنوان</th>
-                                <th>مشتری</th>
-                                <th>مبلغ کل</th>
-                                <th>تاریخ بایگانی</th>
-                                <th>وضعیت</th>
-                                <th>مسئول</th>
-                                <th class="text-center">عملیات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model.Items)
-                            {
-                                <tr>
-                                    <td>@item.Id</td>
-                                    <td>@item.ContractNumber</td>
-                                    <td>@item.Title</td>
-                                    <td>@item.ClientName</td>
-                                    <td class="SgFarsiDigits">@item.TotalAmount.ToString("N0")</td>
-                                    <td class="SgFarsiDigits">@item.ArchivedAt?.ToString("yyyy/MM/dd")</td>
-                                    <td>
-                                        <span class="badge @(item.Status switch
-                                              {
-                                                  var s when s == ContractStatuses.Archived => "text-bg-warning",
-                                                  var s when s == ContractStatuses.Active => "text-bg-success",
-                                                  _ => "text-bg-light"
-                                              })">@item.Status</span>
-                                    </td>
-                                    <td>@item.ResponsibleUserName</td>
-                                    <td class="text-center">
-                                        <div class="d-inline-flex gap-1">
-                                            <a asp-action="Details" asp-route-id="@item.Id"
-                                               class="btn btn-sm btn-outline-info">نمایش</a>
-                                            @if (item.IsOwnedByCurrentUser || User.IsInRole("Admin"))
-                                            {
-                                                <form asp-action="UnarchiveContract" asp-route-id="@item.Id" method="post"
-                                                      class="d-inline">
-                                                    @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-success">خروج از
-                                                        بایگانی</button>
-                                                    </form>
-                                                }
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="card-footer text-muted small px-3 py-2">
-                        @Model.FilteredCount مورد نمایش‌داده‌شده
-                    </div>
-                }
-            else
-                {
-                    <div class="text-center text-muted py-3 small">هیچ قرارداد بایگانی‌شده‌ای یافت نشد.</div>
-                }
+    @* Filter Card *@
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3">
+        <form method="get" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 items-end">
+            <div class="col-span-2 md:col-span-1">
+                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">جستجو</label>
+                <input name="SearchTerm" value="@Model.SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="عنوان / شماره / مشتری" />
             </div>
-        </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">وضعیت</label>
+                <select name="Status" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.StatusOptions">
+                    <option value="">همه</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">نوع قرارداد</label>
+                <select name="ContractType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.ContractTypeOptions">
+                    <option value="">همه</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">وضعیت پرداخت</label>
+                <select name="PaymentStatus" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.PaymentStatusOptions">
+                    <option value="">همه</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">مسئول</label>
+                <select name="AssignedUserId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.ResponsibleUserOptions">
+                    <option value="">همه</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">از تاریخ شروع</label>
+                <input name="StartDateFrom" value="@Model.StartDateFrom?.ToString("yyyy-MM-dd")" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تا تاریخ شروع</label>
+                <input name="StartDateTo" value="@Model.StartDateTo?.ToString("yyyy-MM-dd")" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+            </div>
+            <div class="flex gap-1">
+                <button class="h-7 rounded-lg bg-teal-600 px-3 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                    <i class="bi bi-funnel ml-1"></i>اعمال
+                </button>
+                <a asp-action="Archive" class="h-7 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition flex items-center">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
     </div>
+
+    @* Data Table *@
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        @if (Model.Items.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-[11px]">
+                    <thead>
+                        <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">#</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">شماره قرارداد</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">عنوان</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">مشتری</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">مبلغ کل</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">تاریخ بایگانی</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">وضعیت</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">مسئول</th>
+                            <th class="text-center px-3 py-2 font-bold text-slate-500 dark:text-slate-400">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                <td class="px-3 py-2 text-slate-500">@item.Id</td>
+                                <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@item.ContractNumber</td>
+                                <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@item.Title</td>
+                                <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@item.ClientName</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-800 dark:text-slate-200 font-bold">@item.TotalAmount.ToString("N0")</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@item.ArchivedAt?.ToString("yyyy/MM/dd")</td>
+                                <td class="px-3 py-2">
+                                    @{
+                                        var archiveBadge = item.Status switch
+                                        {
+                                            var s when s == ContractStatuses.Archived => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-900/50",
+                                            var s when s == ContractStatuses.Active => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50",
+                                            _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                                        };
+                                    }
+                                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @archiveBadge">@item.Status</span>
+                                </td>
+                                <td class="px-3 py-2 text-slate-600 dark:text-slate-400">@item.ResponsibleUserName</td>
+                                <td class="px-3 py-2 text-center">
+                                    <div class="inline-flex gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="نمایش">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (item.IsOwnedByCurrentUser || User.IsInRole("Admin"))
+                                        {
+                                            <form asp-action="UnarchiveContract" asp-route-id="@item.Id" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-400 transition" title="خروج از بایگانی">
+                                                    <i class="bi bi-box-arrow-up"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="px-3 py-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400">
+                @Model.FilteredCount مورد نمایش‌داده‌شده
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-8">
+                <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
+                    <i class="bi bi-archive text-slate-400 text-lg"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">هیچ قرارداد بایگانی‌شده‌ای یافت نشد</h3>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ قراردادی در بایگانی وجود ندارد.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .font-mono { font-variant-numeric: tabular-nums; }
+    </style>
+}

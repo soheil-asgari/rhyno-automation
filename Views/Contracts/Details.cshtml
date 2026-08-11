@@ -1,203 +1,381 @@
 @model ContractDetailsVM
 @{
     ViewData["Title"] = "جزئیات قرارداد";
+    var activeTab = ViewBag.ActiveTab ?? "overview";
 }
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-2 space-y-2" dir="rtl">
     @if (TempData["SuccessMessage"] is string successMsg)
     {
-        <div class="alert alert-success py-2 px-3 small mb-3">@successMsg</div>
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-3.5 py-2.5 text-[11px] text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
+            <i class="bi bi-check-circle-fill text-emerald-500"></i>
+            <span>@successMsg</span>
+        </div>
     }
     @if (TempData["ErrorMessage"] is string errorMsg)
     {
-        <div class="alert alert-danger py-2 px-3 small mb-3">@errorMsg</div>
+        <div class="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20 px-3.5 py-2.5 text-[11px] text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
+            <i class="bi bi-exclamation-circle-fill text-rose-500"></i>
+            <span>@errorMsg</span>
+        </div>
     }
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">جزئیات قرارداد - @Model.Title</h6>
-        <div class="d-flex gap-2 flex-wrap">
+    @* Section Header *@
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
+        <div>
+            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">جزئیات قرارداد - @Model.Title</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">@Model.ContractNumber</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
             @if (Model.CanEdit)
             {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">ویرایش</a>
-                <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="d-inline">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                    <i class="bi bi-pencil ml-1"></i>ویرایش
+                </a>
+                <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="inline">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-warning">بایگانی</button>
+                    <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
+                        <i class="bi bi-archive ml-1"></i>بایگانی
+                    </button>
                 </form>
-                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline"
-                      onsubmit="return confirm('آیتم حذف شود؟');">
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" onsubmit="return confirm('آیتم حذف شود؟');">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                    <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
+                        <i class="bi bi-trash ml-1"></i>حذف
+                    </button>
                 </form>
             }
-            <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="btn btn-sm btn-outline-info">چاپ/PDF</a>
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+            <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <i class="bi bi-printer ml-1"></i>چاپ/PDF
+            </a>
+            <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <i class="bi bi-arrow-right ml-1"></i>بازگشت به فهرست
+            </a>
         </div>
     </div>
 
-    @* Contract Info Card *@
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-light py-2 px-3">
-            <small class="fw-bold">اطلاعات قرارداد</small>
+    @* Modern Tabs *@
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden" data-contract-tabs>
+        <div class="border-b border-slate-100 dark:border-slate-800">
+            <ul class="flex flex-wrap text-[11px] font-bold" role="tablist">
+                <li role="presentation">
+                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "overview" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="overview" type="button">
+                        <i class="bi bi-speedometer2 ml-1"></i>نمای کلی
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "content" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="content" type="button">
+                        <i class="bi bi-file-text ml-1"></i>متن قرارداد
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "payments" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="payments" type="button">
+                        <i class="bi bi-wallet2 ml-1"></i>پرداخت‌ها
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "attachments" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="attachments" type="button">
+                        <i class="bi bi-paperclip ml-1"></i>ضمیمه‌ها
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "activity" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="activity" type="button">
+                        <i class="bi bi-clock-history ml-1"></i>تاریخچه فعالیت
+                    </button>
+                </li>
+            </ul>
         </div>
-        <div class="card-body p-3">
-            <div class="row g-2">
-                <div class="col-md-3"><small class="text-muted d-block">شماره قرارداد</small><span class="fw-bold">@Model.ContractNumber</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">عنوان</small><span>@Model.Title</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">نوع قرارداد</small><span>@(Model.ContractType ?? "-")</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">وضعیت</small>
-                    <span class="badge @(Model.Status switch
-                    {
-                        var s when s == ContractStatuses.Active => "text-bg-success",
-                        var s when s == ContractStatuses.Completed => "text-bg-primary",
-                        var s when s == ContractStatuses.Draft => "text-bg-secondary",
-                        var s when s == ContractStatuses.Cancelled => "text-bg-danger",
-                        var s when s == ContractStatuses.Archived => "text-bg-warning",
-                        var s when s == ContractStatuses.Expired => "text-bg-dark",
-                        var s when s == ContractStatuses.Suspended => "text-bg-info",
-                        var s when s == ContractStatuses.Terminated => "text-bg-danger",
-                        _ => "text-bg-light"
-                    })">@Model.Status</span>
-                </div>
-                <div class="col-md-3"><small class="text-muted d-block">مشتری</small><span>@(!string.IsNullOrEmpty(Model.CustomerName) ? Model.CustomerName : Model.ClientName)</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">تلفن مشتری</small><span>@(Model.ClientPhone ?? "-")</span></div>
-                <div class="col-md-6"><small class="text-muted d-block">آدرس مشتری</small><span>@(Model.ClientAddress ?? "-")</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">قالب</small><span>@(Model.TemplateName ?? "بدون قالب")</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">مسئول پیگیری</small><span>@(Model.ResponsibleUserName ?? "-")</span></div>
-                <div class="col-md-12"><small class="text-muted d-block">توضیحات</small><span>@(Model.Description ?? "-")</span></div>
-            </div>
-        </div>
-    </div>
 
-    @* Dates Card *@
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-light py-2 px-3">
-            <small class="fw-bold">تاریخ‌ها</small>
-        </div>
-        <div class="card-body p-3">
-            <div class="row g-2">
-                <div class="col-md-2"><small class="text-muted d-block">تاریخ شروع</small><span class="SgFarsiDigits">@Model.StartDate.ToString("yyyy/MM/dd")</span></div>
-                <div class="col-md-2"><small class="text-muted d-block">تاریخ پایان</small><span class="SgFarsiDigits">@(Model.EndDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
-                <div class="col-md-2"><small class="text-muted d-block">تاریخ امضا</small><span class="SgFarsiDigits">@(Model.SigningDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
-                <div class="col-md-2"><small class="text-muted d-block">تاریخ تمدید</small><span class="SgFarsiDigits">@(Model.RenewalDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
-                <div class="col-md-2"><small class="text-muted d-block">تاریخ انقضا</small><span class="SgFarsiDigits">@(Model.ExpirationDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
-            </div>
-        </div>
-    </div>
-
-    @* Terms & Notes Card *@
-    @if (!string.IsNullOrEmpty(Model.TermsAndConditions) || !string.IsNullOrEmpty(Model.Notes))
-    {
-        <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-light py-2 px-3">
-                <small class="fw-bold">شرایط و یادداشت‌ها</small>
-            </div>
-            <div class="card-body p-3">
-                <div class="row g-2">
-                    @if (!string.IsNullOrEmpty(Model.TermsAndConditions))
-                    {
-                        <div class="col-md-6"><small class="text-muted d-block">شرایط و ضوابط</small><span>@Model.TermsAndConditions</span></div>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.Notes))
-                    {
-                        <div class="col-md-6"><small class="text-muted d-block">یادداشت‌ها</small><span>@Model.Notes</span></div>
-                    }
-                </div>
-            </div>
-        </div>
-    }
-
-    @* Financial Info Card *@
-    @if (Model.CanViewFinancials)
-    {
-        <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-light py-2 px-3">
-                <small class="fw-bold">اطلاعات مالی</small>
-            </div>
-            <div class="card-body p-3">
-                <div class="row g-2">
-                    <div class="col-md-3"><small class="text-muted d-block">مبلغ کل</small>
-                        <span class="SgFarsiDigits fw-bold text-primary">@Model.TotalAmount.ToString("N0")</span>
+        <div class="p-3.5">
+            @* Tab 1: Overview & Metrics *@
+            <div class="tab-panel @(activeTab == "overview" ? "" : "hidden")" id="tab-overview">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                    <div class="rounded-lg bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/20 dark:to-emerald-950/20 border border-teal-100 dark:border-teal-900/30 p-3">
+                        <span class="text-[9px] font-bold text-teal-600 dark:text-teal-400">مبلغ کل</span>
+                        <div class="text-sm font-black text-slate-900 dark:text-white font-mono tabular-nums mt-1">@Model.TotalAmount.ToString("N0")</div>
                     </div>
-                    <div class="col-md-3"><small class="text-muted d-block">پرداخت‌شده</small>
-                        <span class="SgFarsiDigits fw-bold text-success">@Model.PaidAmount.ToString("N0")</span>
+                    <div class="rounded-lg bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 border border-emerald-100 dark:border-emerald-900/30 p-3">
+                        <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">پرداخت شده</span>
+                        <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums mt-1">@Model.PaidAmount.ToString("N0")</div>
                     </div>
-                    <div class="col-md-3"><small class="text-muted d-block">باقی‌مانده</small>
-                        <span class="SgFarsiDigits fw-bold text-danger">@Model.RemainingAmount.ToString("N0")</span>
+                    <div class="rounded-lg bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/20 border border-rose-100 dark:border-rose-900/30 p-3">
+                        <span class="text-[9px] font-bold text-rose-600 dark:text-rose-400">باقی مانده</span>
+                        <div class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums mt-1">@Model.RemainingBalance.ToString("N0")</div>
                     </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">وضعیت پرداخت</small>
-                        <span class="badge @(Model.RemainingAmount <= 0 ? "text-bg-success" : Model.PaidAmount > 0 ? "text-bg-warning" : "text-bg-secondary")">
-                            @(Model.RemainingAmount <= 0 ? "تسویه شده" : Model.PaidAmount > 0 ? "پرداخت جزئی" : "پرداخت نشده")
-                        </span>
+                    <div class="rounded-lg bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-amber-100 dark:border-amber-900/30 p-3">
+                        <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400">روزهای باقی‌مانده</span>
+                        <div class="text-sm font-black text-amber-600 dark:text-amber-400 font-mono tabular-nums mt-1">@Model.DaysRemaining روز</div>
                     </div>
                 </div>
-            </div>
-        </div>
-    }
 
-    @* Meta Info Card *@
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-light py-2 px-3">
-            <small class="fw-bold">اطلاعات سیستمی</small>
-        </div>
-        <div class="card-body p-3">
-            <div class="row g-2">
-                <div class="col-md-3"><small class="text-muted d-block">مسئول</small><span>@Model.ResponsibleUserName</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">ایجادکننده</small><span>@Model.CreatedByUserName</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">تاریخ ایجاد</small><span class="SgFarsiDigits">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span></div>
-                <div class="col-md-3"><small class="text-muted d-block">آخرین ویرایش</small><span class="SgFarsiDigits">@Model.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</span></div>
-                @if (Model.IsArchived)
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-2">اطلاعات قرارداد</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">شماره قرارداد:</span><span class="font-bold text-slate-800 dark:text-slate-200">@Model.ContractNumber</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">عنوان:</span><span class="text-slate-700 dark:text-slate-300">@Model.Title</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">نوع:</span><span class="text-slate-700 dark:text-slate-300">@(Model.ContractType ?? "-")</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">وضعیت:</span>
+                                @{
+                                    var sBadge = Model.Status switch
+                                    {
+                                        var s when s == ContractStatuses.Active => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                                        var s when s == ContractStatuses.Completed => "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                                        var s when s == ContractStatuses.Draft => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+                                        var s when s == ContractStatuses.ExpiringSoon => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                                        var s when s == ContractStatuses.Expired => "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400",
+                                        _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                    };
+                                }
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold @sBadge">@Model.Status</span>
+                            </div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">مشتری:</span><span class="text-slate-700 dark:text-slate-300">@(!string.IsNullOrEmpty(Model.CustomerName) ? Model.CustomerName : Model.ClientName)</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">مسئول:</span><span class="text-slate-700 dark:text-slate-300">@(Model.ResponsibleUserName ?? "-")</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">قالب:</span><span class="text-slate-700 dark:text-slate-300">@(Model.TemplateName ?? "بدون قالب")</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-2">تاریخ‌های مهم</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ شروع:</span><span class="font-bold text-slate-800 dark:text-slate-200 font-mono">@Model.StartDate.ToString("yyyy/MM/dd")</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ پایان:</span><span class="font-mono text-slate-700 dark:text-slate-300">@(Model.EndDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ امضا:</span><span class="font-mono text-slate-700 dark:text-slate-300">@(Model.SignDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">وضعیت پرداخت:</span>
+                                @{
+                                    var pBadge = Model.PaymentStatus switch
+                                    {
+                                        "FullyPaid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                                        "PartiallyPaid" => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                                        _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                    };
+                                    var pText = Model.PaymentStatus switch
+                                    {
+                                        "FullyPaid" => "تسویه شده",
+                                        "PartiallyPaid" => "پرداخت جزئی",
+                                        _ => "پرداخت نشده"
+                                    };
+                                }
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold @pBadge">@pText</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.TotalAmount > 0)
                 {
-                    <div class="col-md-3"><small class="text-muted d-block">تاریخ بایگانی</small><span class="SgFarsiDigits">@Model.ArchivedAt?.ToString("yyyy/MM/dd HH:mm")</span></div>
+                    var paidPct = (int)(Model.PaidAmount * 100 / Model.TotalAmount);
+                    <div class="mt-2">
+                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                            <span>پیشرفت پرداخت</span>
+                            <span class="font-bold">@paidPct%</span>
+                        </div>
+                        <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: @paidPct%"></div>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="mt-3">
+                        <span class="text-[10px] font-bold text-slate-500 block mb-1">توضیحات</span>
+                        <p class="text-[11px] text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 rounded-lg p-2.5">@Model.Description</p>
+                    </div>
                 }
             </div>
-        </div>
-    </div>
 
-    @* Payments Card *@
-    @if (Model.CanViewFinancials)
-    {
-        <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
-                <small class="fw-bold">پرداخت‌ها</small>
-                @if (Model.CanEdit)
+            @* Tab 2: Document Content *@
+            <div class="tab-panel @(activeTab == "content" ? "" : "hidden")" id="tab-content">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-[11px] font-black text-slate-900 dark:text-white">متن قرارداد</h3>
+                    <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                        <i class="bi bi-printer ml-1"></i>چاپ / Save PDF
+                    </a>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.ContractBodyHtml))
                 {
-                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addPaymentModal">+ پرداخت جدید</button>
+                    <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white">
+                        @Html.Raw(Model.ContractBodyHtml)
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(Model.TermsAndConditions))
+                {
+                    <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white">
+                        @Html.Raw(Model.TermsAndConditions)
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-8">
+                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
+                            <i class="bi bi-file-text text-slate-400"></i>
+                        </div>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500">متن قراردادی ثبت نشده است.</p>
+                    </div>
                 }
             </div>
-            <div class="card-body p-0">
-                @if (Model.Payments.Any())
+
+            @* Tab 3: Payments & Installments *@
+            <div class="tab-panel @(activeTab == "payments" ? "" : "hidden")" id="tab-payments">
+                @if (Model.CanViewFinancials)
                 {
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>مبلغ</th>
-                                    <th>تاریخ پرداخت</th>
-                                    <th>روش پرداخت</th>
-                                    <th>شماره مرجع</th>
-                                    <th>توضیحات</th>
-                                    <th class="text-center">عملیات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var payment in Model.Payments)
-                                {
-                                    <tr>
-                                        <td class="SgFarsiDigits">@payment.Amount.ToString("N0")</td>
-                                        <td class="SgFarsiDigits">@payment.PaymentDate.ToString("yyyy/MM/dd")</td>
-                                        <td>@(payment.PaymentMethod ?? "-")</td>
-                                        <td>@(payment.ReferenceNumber ?? "-")</td>
-                                        <td>@(payment.Description ?? "-")</td>
-                                        <td class="text-center">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-[11px] font-black text-slate-900 dark:text-white">پرداخت‌ها</h3>
+                        @if (Model.CanEdit)
+                        {
+                            <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline" data-modal-target="addPaymentModal" onclick="openModal('addPaymentModal')">
+                                <i class="bi bi-plus-circle ml-1"></i>پرداخت جدید
+                            </button>
+                        }
+                    </div>
+
+                    @if (Model.TotalAmount > 0)
+                    {
+                        var paidPct = (int)(Model.PaidAmount * 100 / Model.TotalAmount);
+                        <div class="mb-3">
+                            <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                                <span>پیشرفت پرداخت (@Model.PaidAmount.ToString("N0") از @Model.TotalAmount.ToString("N0"))</span>
+                                <span class="font-bold">@paidPct%</span>
+                            </div>
+                            <div class="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: @paidPct%"></div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.Payments.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[11px]">
+                                <thead>
+                                    <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                                        <th class="text-right px-3 py-2 font-bold text-slate-500">مبلغ</th>
+                                        <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ پرداخت</th>
+                                        <th class="text-right px-3 py-2 font-bold text-slate-500">سررسید</th>
+                                        <th class="text-right px-3 py-2 font-bold text-slate-500">وضعیت</th>
+                                        <th class="text-right px-3 py-2 font-bold text-slate-500">روش پرداخت</th>
+                                        <th class="text-right px-3 py-2 font-bold text-slate-500">شماره مرجع</th>
+                                        <th class="text-right px-3 py-2 font-bold text-slate-500">توضیحات</th>
+                                        @if (Model.CanEdit)
+                                        {
+                                            <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                                    @foreach (var payment in Model.Payments)
+                                    {
+                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                            <td class="px-3 py-2 font-mono tabular-nums font-bold text-slate-800 dark:text-slate-200">@payment.Amount.ToString("N0")</td>
+                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@payment.PaymentDate.ToString("yyyy/MM/dd")</td>
+                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@(payment.DueDate?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                            <td class="px-3 py-2">
+                                                @{
+                                                    var payStatusBadge = payment.Status switch
+                                                    {
+                                                        "Paid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                                                        "Pending" => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                                                        "Overdue" => "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+                                                        _ => "bg-slate-100 text-slate-600"
+                                                    };
+                                                    var payStatusText = payment.Status switch
+                                                    {
+                                                        "Paid" => "پرداخت شده",
+                                                        "Pending" => "در انتظار",
+                                                        "Overdue" => "سررسید گذشته",
+                                                        _ => payment.Status
+                                                    };
+                                                }
+                                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @payStatusBadge">@payStatusText</span>
+                                            </td>
+                                            <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@(payment.PaymentMethod ?? "-")</td>
+                                            <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@(payment.ReferenceNumber ?? "-")</td>
+                                            <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@(payment.Notes ?? "-")</td>
                                             @if (Model.CanEdit)
                                             {
-                                                <form asp-action="DeletePayment" asp-route-paymentId="@payment.Id" asp-route-contractId="@Model.Id" method="post" class="d-inline"
-                                                      onsubmit="return confirm('پرداخت حذف شود؟');">
-                                                    @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
-                                                </form>
+                                                <td class="px-3 py-2 text-center">
+                                                    <form asp-action="DeletePayment" asp-route-paymentId="@payment.Id" asp-route-contractId="@Model.Id" method="post" class="inline" onsubmit="return confirm('پرداخت حذف شود؟');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
                                             }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-6">
+                            <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
+                                <i class="bi bi-credit-card text-slate-400"></i>
+                            </div>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ پرداختی ثبت نشده است.</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-6">
+                        <i class="bi bi-lock text-slate-400 text-lg"></i>
+                        <p class="text-[11px] text-slate-400 mt-2">شما به اطلاعات مالی دسترسی ندارید.</p>
+                    </div>
+                }
+            </div>
+
+            @* Tab 4: Attachments *@
+            <div class="tab-panel @(activeTab == "attachments" ? "" : "hidden")" id="tab-attachments">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-[11px] font-black text-slate-900 dark:text-white">ضمیمه‌ها</h3>
+                    @if (Model.CanEdit)
+                    {
+                        <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline" data-modal-target="uploadAttachmentModal" onclick="openModal('uploadAttachmentModal')">
+                            <i class="bi bi-cloud-upload ml-1"></i>بارگذاری فایل
+                        </button>
+                    }
+                </div>
+                @if (Model.Attachments.Any())
+                {
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[11px]">
+                            <thead>
+                                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">نام فایل</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">نوع</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">حجم</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ</th>
+                                    <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                                @foreach (var att in Model.Attachments)
+                                {
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">
+                                            <i class="bi bi-file-earmark ml-1 text-slate-400"></i>@att.FileName
+                                        </td>
+                                        <td class="px-3 py-2 text-slate-600">@att.ContentType</td>
+                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
+                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@att.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                        <td class="px-3 py-2 text-center">
+                                            <div class="inline-flex gap-1">
+                                                <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود">
+                                                    <i class="bi bi-download"></i>
+                                                </a>
+                                                @if (Model.CanEdit)
+                                                {
+                                                    <form asp-action="DeleteAttachment" asp-route-attachmentId="@att.Id" asp-route-contractId="@Model.Id" method="post" class="inline" onsubmit="return confirm('فایل حذف شود؟');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
                                         </td>
                                     </tr>
                                 }
@@ -207,64 +385,70 @@
                 }
                 else
                 {
-                    <div class="text-center text-muted py-3 small">هیچ پرداختی ثبت نشده است.</div>
+                    <div class="text-center py-6">
+                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
+                            <i class="bi bi-paperclip text-slate-400"></i>
+                        </div>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمیمه‌ای وجود ندارد.</p>
+                    </div>
                 }
             </div>
-        </div>
-    }
 
-    @* Attachments Card *@
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
-            <small class="fw-bold">ضمیمه‌ها</small>
-            @if (Model.CanEdit)
-            {
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadAttachmentModal">+ بارگذاری فایل</button>
-            }
-        </div>
-        <div class="card-body p-0">
-            @if (Model.Attachments.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>نام فایل</th>
-                                <th>نوع</th>
-                                <th>حجم</th>
-                                <th>تاریخ</th>
-                                <th class="text-center">عملیات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var att in Model.Attachments)
-                            {
-                                <tr>
-                                    <td>@att.FileName</td>
-                                    <td>@att.ContentType</td>
-                                    <td class="SgFarsiDigits">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
-                                    <td class="SgFarsiDigits">@att.CreatedAt.ToString("yyyy/MM/dd")</td>
-                                    <td class="text-center">
-                                        <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="btn btn-sm btn-outline-info">دانلود</a>
-                                        @if (Model.CanEdit)
+            @* Tab 5: Activity Log *@
+            <div class="tab-panel @(activeTab == "activity" ? "" : "hidden")" id="tab-activity">
+                <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-3">تاریخچه فعالیت</h3>
+                @if (Model.AuditLogs.Any())
+                {
+                    <div class="space-y-2">
+                        @foreach (var log in Model.AuditLogs)
+                        {
+                            <div class="flex items-start gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                                <div class="h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+                                    <i class="bi bi-person text-teal-600 dark:text-teal-400 text-xs"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@log.UserName</span>
+                                        <span class="text-[9px] text-slate-400">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                        @switch (log.Action)
                                         {
-                                            <form asp-action="DeleteAttachment" asp-route-attachmentId="@att.Id" asp-route-contractId="@Model.Id" method="post" class="d-inline"
-                                                  onsubmit="return confirm('فایل حذف شود؟');">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
-                                            </form>
+                                            case "Created":
+                                                <span>قرارداد را ایجاد کرد</span>
+                                                break;
+                                            case "StatusChanged":
+                                                <span>وضعیت را از <strong>@log.OldStatus</strong> به <strong>@log.NewStatus</strong> تغییر داد</span>
+                                                break;
+                                            case "Archived":
+                                                <span>قرارداد را بایگانی کرد</span>
+                                                break;
+                                            case "Unarchived":
+                                                <span>قرارداد را از بایگانی خارج کرد</span>
+                                                break;
+                                            case "Edited":
+                                                <span>قرارداد را ویرایش کرد</span>
+                                                break;
+                                            default:
+                                                <span>@log.Action - @log.Description</span>
+                                                break;
                                         }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <div class="text-center text-muted py-3 small">هیچ ضمیمه‌ای وجود ندارد.</div>
-            }
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-6">
+                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
+                            <i class="bi bi-clock-history text-slate-400"></i>
+                        </div>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ فعالیتی ثبت نشده است.</p>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -272,44 +456,61 @@
 @* Add Payment Modal *@
 @if (Model.CanViewFinancials && Model.CanEdit)
 {
-    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <form asp-action="AddPayment" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="ContractId" value="@Model.Id" />
-                    <div class="modal-header py-2 px-3">
-                        <small class="fw-bold">ثبت پرداخت جدید</small>
-                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-3">
-                        <div class="mb-2">
-                            <label class="form-label small">مبلغ</label>
-                            <input name="Amount" type="number" class="form-control form-control-sm" required />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">تاریخ پرداخت</label>
-                            <input name="PaymentDate" type="date" class="form-control form-control-sm" required />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">روش پرداخت</label>
-                            <input name="PaymentMethod" class="form-control form-control-sm" />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">شماره مرجع</label>
-                            <input name="ReferenceNumber" class="form-control form-control-sm" />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">توضیحات</label>
-                            <textarea name="Description" class="form-control form-control-sm" rows="2"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer py-2 px-3">
-                        <button type="submit" class="btn btn-sm btn-success">ثبت پرداخت</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
-                    </div>
-                </form>
+    <div class="rhyno-modal-overlay" id="addPaymentModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+            <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-wallet2 text-teal-600 text-xs"></i>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">ثبت پرداخت جدید</span>
+                </div>
+                <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('addPaymentModal')">&times;</button>
             </div>
+            <form asp-action="AddPayment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ContractId" value="@Model.Id" />
+                <div class="p-3 space-y-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">مبلغ</label>
+                        <input name="Amount" type="number" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" required />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تاریخ پرداخت</label>
+                        <input name="PaymentDate" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" required />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تاریخ سررسید</label>
+                        <input name="DueDate" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">وضعیت</label>
+                        <select name="Status" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                            <option value="Paid">پرداخت شده</option>
+                            <option value="Pending">در انتظار</option>
+                            <option value="Overdue">سررسید گذشته</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">روش پرداخت</label>
+                        <input name="PaymentMethod" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">شماره مرجع</label>
+                        <input name="ReferenceNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">توضیحات</label>
+                        <textarea name="Notes" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="submit" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                        <i class="bi bi-check-lg ml-1"></i>ثبت پرداخت
+                    </button>
+                    <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('addPaymentModal')">
+                        <i class="bi bi-x-lg ml-1"></i>انصراف
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 }
@@ -317,28 +518,138 @@
 @* Upload Attachment Modal *@
 @if (Model.CanEdit)
 {
-    <div class="modal fade" id="uploadAttachmentModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="contractId" value="@Model.Id" />
-                    <div class="modal-header py-2 px-3">
-                        <small class="fw-bold">بارگذاری فایل</small>
-                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-3">
-                        <div class="mb-2">
-                            <label class="form-label small">انتخاب فایل</label>
-                            <input name="file" type="file" class="form-control form-control-sm" required />
-                        </div>
-                    </div>
-                    <div class="modal-footer py-2 px-3">
-                        <button type="submit" class="btn btn-sm btn-primary">بارگذاری</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
-                    </div>
-                </form>
+    <div class="rhyno-modal-overlay" id="uploadAttachmentModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+            <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-cloud-upload text-teal-600 text-xs"></i>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">بارگذاری فایل</span>
+                </div>
+                <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('uploadAttachmentModal')">&times;</button>
             </div>
+            <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="contractId" value="@Model.Id" />
+                <div class="p-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">انتخاب فایل</label>
+                        <input name="file" type="file" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none file:border-0 file:bg-teal-50 file:text-teal-700 file:rounded file:px-2 file:py-0.5 file:text-[10px] file:font-bold" required />
+                    </div>
+                </div>
+                <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="submit" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                        <i class="bi bi-cloud-upload ml-1"></i>بارگذاری
+                    </button>
+                    <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('uploadAttachmentModal')">
+                        <i class="bi bi-x-lg ml-1"></i>انصراف
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+}
+
+@section Styles {
+    <style>
+        .font-mono { font-variant-numeric: tabular-nums; }
+        .tab-panel { min-height: 200px; }
+        .tab-panel.hidden { display: none; }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        (function() {
+            'use strict';
+
+            // ── Vanilla JS Tab Switcher ────────────────────────────────
+            function initTabs() {
+                var container = document.querySelector('[data-contract-tabs]');
+                if (!container) return;
+                var buttons = container.querySelectorAll('.tab-btn');
+                var panels = container.querySelectorAll('.tab-panel');
+
+                function activateTab(tabId) {
+                    // Update button states
+                    buttons.forEach(function(btn) {
+                        var isActive = btn.getAttribute('data-tab') === tabId;
+                        btn.className = 'tab-btn px-4 py-2.5 border-b-2 transition ' +
+                            (isActive
+                                ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300');
+                    });
+
+                    // Show/hide panels
+                    panels.forEach(function(panel) {
+                        var isTarget = panel.id === 'tab-' + tabId;
+                        if (isTarget) {
+                            panel.classList.remove('hidden');
+                        } else {
+                            panel.classList.add('hidden');
+                        }
+                    });
+                }
+
+                buttons.forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var tabId = btn.getAttribute('data-tab');
+                        if (tabId) activateTab(tabId);
+                    });
+                });
+            }
+
+            // ── Vanilla JS Modal helpers ────────────────────────────────
+            window.openModal = function(modalId) {
+                var el = document.getElementById(modalId);
+                if (!el) return;
+                el.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            };
+
+            window.closeModal = function(modalId) {
+                var el = document.getElementById(modalId);
+                if (!el) return;
+                el.style.display = 'none';
+                document.body.style.overflow = '';
+            };
+
+            // Close modal on backdrop click
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('rhyno-modal-overlay') && e.target.style.display === 'flex') {
+                    e.target.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // Escape key to close modals
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.rhyno-modal-overlay').forEach(function(el) {
+                        if (el.style.display === 'flex') {
+                            el.style.display = 'none';
+                            document.body.style.overflow = '';
+                        }
+                    });
+                }
+            });
+
+            // ── Wire up Bootstrap-free modal triggers ──────────────────
+            document.addEventListener('DOMContentLoaded', function() {
+                initTabs();
+
+                // Payment modal trigger
+                var payBtn = document.querySelector('[data-modal-target="addPaymentModal"]');
+                if (payBtn) {
+                    payBtn.addEventListener('click', function() { openModal('addPaymentModal'); });
+                }
+
+                // Upload modal trigger
+                var uploadBtn = document.querySelector('[data-modal-target="uploadAttachmentModal"]');
+                if (uploadBtn) {
+                    uploadBtn.addEventListener('click', function() { openModal('uploadAttachmentModal'); });
+                }
+            });
+        })();
+    </script>
 }

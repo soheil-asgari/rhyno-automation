@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
 using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
+using OfficeAutomation.Services.Security;
 
 namespace OfficeAutomation.Services;
 
@@ -139,35 +140,49 @@ public class BootstrapAdminSeeder
         _dbContext.Users.Update(adminUser);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // ── Seed all Contract.* permissions to the Admin role ─────────
+        // ── Seed ALL permissions from PermissionCatalog to the Permissions table & Admin role ────
+        // This runs on every startup (not just first-run), so existing databases are
+        // also covered — idempotent by design (no duplicates, no deletions).
+        // This ensures the Admin role has EVERY registered permission, including Settings.*,
+        // Security.*, Contracts.*, Finance.*, Warehouse.*, HR.*, etc.
         var adminRole = await _roleManager.FindByNameAsync("Admin");
         if (adminRole != null)
         {
-            var contractPermissions = new[]
+            foreach (var corePerm in PermissionCatalog.CorePermissions)
             {
-                "Contract.View", "Contract.Create", "Contract.Edit",
-                "Contract.Delete", "Contract.Payment", "Contract.Settings",
-                "Contract.Archive"
-            };
+                // 1. Ensure the permission exists in the Permissions table (for UI role management)
+                var permExists = await _dbContext.Permissions
+                    .AnyAsync(p => p.Key == corePerm.Key, cancellationToken);
 
-            foreach (var permKey in contractPermissions)
-            {
-                var exists = await _dbContext.RolePermissions
-                    .AnyAsync(rp => rp.RoleId == adminRole.Id && rp.PermissionKey == permKey, cancellationToken);
+                if (!permExists)
+                {
+                    _dbContext.Permissions.Add(new Permission
+                    {
+                        Key = corePerm.Key,
+                        DisplayName = corePerm.DisplayName,
+                        Category = corePerm.Category,
+                        Description = corePerm.Description,
+                        IsSystem = true
+                    });
+                }
 
-                if (!exists)
+                // 2. Ensure the Admin role has this permission in RolePermissions
+                var rpExists = await _dbContext.RolePermissions
+                    .AnyAsync(rp => rp.RoleId == adminRole.Id && rp.PermissionKey == corePerm.Key, cancellationToken);
+
+                if (!rpExists)
                 {
                     _dbContext.RolePermissions.Add(new RolePermission
                     {
                         RoleId = adminRole.Id,
-                        PermissionKey = permKey,
+                        PermissionKey = corePerm.Key,
                         IsAllowed = true
                     });
                 }
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("BootstrapAdmin: Contract permissions seeded to Admin role.");
+            _logger.LogInformation("BootstrapAdmin: All {Count} permissions from PermissionCatalog synchronized to Permissions table and Admin role.", PermissionCatalog.CorePermissions.Count);
         }
     }
 }

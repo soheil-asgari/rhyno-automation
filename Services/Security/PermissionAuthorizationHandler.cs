@@ -21,6 +21,16 @@ namespace OfficeAutomation.Services.Security
                 return;
             }
 
+            // ═══════════════════════════════════════════════════════════════
+            //  SUPER ADMIN BYPASS — Admin role gets UNRESTRICTED access
+            // ═══════════════════════════════════════════════════════════════
+            if (context.User.IsInRole("Admin") ||
+                string.Equals(context.User.Identity?.Name, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Succeed(requirement);
+                return;
+            }
+
             var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
             {

@@ -36,8 +36,9 @@ public interface IContractService
     Task<bool> SetDefaultTemplateAsync(int templateId, string currentUserId, CancellationToken ct = default);
     Task<List<ContractTemplate>> GetUserTemplatesAsync(string currentUserId, CancellationToken ct = default);
 
-    // ── Document Generation ───────────────────────────────────────
+    // ── Document Generation & Template Rendering ──────────────────
     Task<string> GenerateContractDocumentAsync(int contractId, int? templateId, string currentUserId, CancellationToken ct = default);
+    Task<string> PreviewTemplateAsync(int templateId, string currentUserId, CancellationToken ct = default);
 
     // ── Dashboard ─────────────────────────────────────────────────
     Task<ContractDashboardVM> GetDashboardAsync(string currentUserId, CancellationToken ct = default);
@@ -48,11 +49,19 @@ public interface IContractService
     Task<Customer> CreateCustomerAsync(Customer customer, CancellationToken ct = default);
     Task<Customer> UpdateCustomerAsync(Customer customer, CancellationToken ct = default);
 
-    // ── Authorization ─────────────────────────────────────────────
+    // ── Authorization & RLS ───────────────────────────────────────
     bool CanUserViewContract(Contract contract, string currentUserId, bool isAdmin);
     bool CanUserEditContract(Contract contract, string currentUserId, bool isAdmin);
     bool CanUserViewFinancials(Contract contract, string currentUserId, bool isAdmin);
+    Task EnforceAccessAsync(int contractId, string currentUserId, CancellationToken ct = default);
 
     // ── Validation ────────────────────────────────────────────────
     Task<bool> IsContractNumberUniqueAsync(string contractNumber, int? excludeId = null, CancellationToken ct = default);
+    Task<string> GenerateNextContractNumberAsync(CancellationToken ct = default);
+
+    // ── Financial Tracking ────────────────────────────────────────
+    Task RecalculatePaymentStatusAsync(int contractId, CancellationToken ct = default);
+
+    // ── Expiry Engine ─────────────────────────────────────────────
+    Task<int> UpdateExpiringSoonStatusesAsync(CancellationToken ct = default);
 }

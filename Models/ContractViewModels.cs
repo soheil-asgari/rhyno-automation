@@ -18,12 +18,15 @@ namespace OfficeAutomation.Models
         public string? ContractType { get; set; }
 
         [Display(Name = "مسئول پیگیری")]
-        public string? ResponsibleUserId { get; set; }
+        public string? AssignedUserId { get; set; }
 
         [Display(Name = "طرف قرارداد")]
         public string? ClientName { get; set; }
 
         public int? CustomerId { get; set; }
+
+        [Display(Name = "وضعیت پرداخت")]
+        public string? PaymentStatus { get; set; }
 
         [Display(Name = "از تاریخ شروع")]
         [DataType(DataType.Date)]
@@ -41,28 +44,14 @@ namespace OfficeAutomation.Models
         [DataType(DataType.Date)]
         public DateTime? EndDateTo { get; set; }
 
-        [Display(Name = "از تاریخ انقضا")]
-        [DataType(DataType.Date)]
-        public DateTime? ExpirationDateFrom { get; set; }
-
-        [Display(Name = "تا تاریخ انقضا")]
-        [DataType(DataType.Date)]
-        public DateTime? ExpirationDateTo { get; set; }
-
         [Display(Name = "حداقل مبلغ")]
         public decimal? MinAmount { get; set; }
 
         [Display(Name = "حداکثر مبلغ")]
         public decimal? MaxAmount { get; set; }
 
-        [Display(Name = "فقط پرداخت کامل")]
-        public bool? FullyPaidOnly { get; set; }
-
-        [Display(Name = "فقط پرداخت نشده")]
-        public bool? UnpaidOnly { get; set; }
-
-        [Display(Name = "فقط پرداخت جزئی")]
-        public bool? PartiallyPaidOnly { get; set; }
+        [Display(Name = "فقط در شرف انقضا")]
+        public bool? ExpiringSoonOnly { get; set; }
 
         [Display(Name = "نمایش بایگانی")]
         public bool ShowArchived { get; set; }
@@ -79,6 +68,7 @@ namespace OfficeAutomation.Models
         public int ActiveCount { get; set; }
         public int CompletedCount { get; set; }
         public int DraftCount { get; set; }
+        public int ExpiringSoonCount { get; set; }
         public int FilteredCount { get; set; }
         public decimal TotalAmountSum { get; set; }
         public decimal TotalPaidSum { get; set; }
@@ -88,6 +78,7 @@ namespace OfficeAutomation.Models
         public List<SelectListItem> ContractTypeOptions { get; set; } = new();
         public List<SelectListItem> ResponsibleUserOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
+        public List<SelectListItem> PaymentStatusOptions { get; set; } = new();
         public List<ContractIndexItemVM> Items { get; set; } = new();
     }
 
@@ -101,20 +92,17 @@ namespace OfficeAutomation.Models
         public string? ContractType { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal PaidAmount { get; set; }
-        public decimal RemainingAmount => TotalAmount - PaidAmount;
+        public decimal RemainingBalance { get; set; }
+        public string? PaymentStatus { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public string Status { get; set; } = string.Empty;
         public string? ResponsibleUserName { get; set; }
-        public string? ResponsibleUserId { get; set; }
+        public string? AssignedUserId { get; set; }
         public bool IsArchived { get; set; }
         public bool IsOwnedByCurrentUser { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        /// <summary>تاریخ بایگانی (فقط در فهرست بایگانی پر می‌شود)</summary>
         public DateTime? ArchivedAt { get; set; }
-
-        /// <summary>نام کاربر بایگانی‌کننده (فقط در فهرست بایگانی پر می‌شود)</summary>
         public string? ArchivedByUserName { get; set; }
     }
 
@@ -123,10 +111,8 @@ namespace OfficeAutomation.Models
     /// </summary>
     public class ContractCreateVM
     {
-        [Required(ErrorMessage = "شماره قرارداد الزامی است.")]
-        [StringLength(60, ErrorMessage = "شماره قرارداد نمی‌تواند بیشتر از 60 کاراکتر باشد.")]
         [Display(Name = "شماره قرارداد")]
-        public string ContractNumber { get; set; } = string.Empty;
+        public string? ContractNumber { get; set; } // Auto-generated if empty
 
         [Required(ErrorMessage = "عنوان قرارداد الزامی است.")]
         [StringLength(200, ErrorMessage = "عنوان قرارداد نمی‌تواند بیشتر از 200 کاراکتر باشد.")]
@@ -159,8 +145,8 @@ namespace OfficeAutomation.Models
         [Display(Name = "شرایط و ضوابط")]
         public string? TermsAndConditions { get; set; }
 
-        [Display(Name = "یادداشت‌ها")]
-        public string? Notes { get; set; }
+        [Display(Name = "متن قرارداد")]
+        public string? ContractBodyHtml { get; set; }
 
         [Required(ErrorMessage = "مبلغ کل قرارداد الزامی است.")]
         [Range(0, 999999999999, ErrorMessage = "مبلغ کل معتبر نیست.")]
@@ -178,24 +164,19 @@ namespace OfficeAutomation.Models
 
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ امضا")]
-        public DateTime? SigningDate { get; set; }
+        public DateTime? SignDate { get; set; }
 
-        [DataType(DataType.Date)]
-        [Display(Name = "تاریخ تمدید")]
-        public DateTime? RenewalDate { get; set; }
-
-        [DataType(DataType.Date)]
-        [Display(Name = "تاریخ انقضا")]
-        public DateTime? ExpirationDate { get; set; }
+        [Display(Name = "روزهای اخطار انقضا")]
+        public int ExpiryNoticeDays { get; set; } = 30;
 
         [Display(Name = "وضعیت")]
         public string Status { get; set; } = ContractStatuses.Draft;
 
         [Display(Name = "مسئول پیگیری")]
-        public string? ResponsibleUserId { get; set; }
+        public string? AssignedUserId { get; set; }
 
         [Display(Name = "قالب قرارداد")]
-        public int? ContractTemplateId { get; set; }
+        public int? TemplateId { get; set; }
 
         public List<SelectListItem> StatusOptions { get; set; } = new();
         public List<SelectListItem> ContractTypeOptions { get; set; } = new();
@@ -247,8 +228,8 @@ namespace OfficeAutomation.Models
         [Display(Name = "شرایط و ضوابط")]
         public string? TermsAndConditions { get; set; }
 
-        [Display(Name = "یادداشت‌ها")]
-        public string? Notes { get; set; }
+        [Display(Name = "متن قرارداد")]
+        public string? ContractBodyHtml { get; set; }
 
         [Required(ErrorMessage = "مبلغ کل قرارداد الزامی است.")]
         [Range(0, 999999999999, ErrorMessage = "مبلغ کل معتبر نیست.")]
@@ -257,6 +238,12 @@ namespace OfficeAutomation.Models
 
         [Display(Name = "مبلغ پرداخت شده")]
         public decimal PaidAmount { get; set; }
+
+        [Display(Name = "باقی مانده")]
+        public decimal RemainingBalance { get; set; }
+
+        [Display(Name = "وضعیت پرداخت")]
+        public string? PaymentStatus { get; set; }
 
         [Required(ErrorMessage = "تاریخ شروع الزامی است.")]
         [DataType(DataType.Date)]
@@ -269,25 +256,20 @@ namespace OfficeAutomation.Models
 
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ امضا")]
-        public DateTime? SigningDate { get; set; }
+        public DateTime? SignDate { get; set; }
 
-        [DataType(DataType.Date)]
-        [Display(Name = "تاریخ تمدید")]
-        public DateTime? RenewalDate { get; set; }
-
-        [DataType(DataType.Date)]
-        [Display(Name = "تاریخ انقضا")]
-        public DateTime? ExpirationDate { get; set; }
+        [Display(Name = "روزهای اخطار انقضا")]
+        public int ExpiryNoticeDays { get; set; } = 30;
 
         [Required(ErrorMessage = "وضعیت الزامی است.")]
         [Display(Name = "وضعیت")]
         public string Status { get; set; } = ContractStatuses.Draft;
 
         [Display(Name = "مسئول پیگیری")]
-        public string? ResponsibleUserId { get; set; }
+        public string? AssignedUserId { get; set; }
 
         [Display(Name = "قالب قرارداد")]
-        public int? ContractTemplateId { get; set; }
+        public int? TemplateId { get; set; }
 
         public List<SelectListItem> StatusOptions { get; set; } = new();
         public List<SelectListItem> ContractTypeOptions { get; set; } = new();
@@ -312,18 +294,18 @@ namespace OfficeAutomation.Models
         public string? CustomerName { get; set; }
         public string? Description { get; set; }
         public string? TermsAndConditions { get; set; }
-        public string? Notes { get; set; }
+        public string? ContractBodyHtml { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal PaidAmount { get; set; }
-        public decimal RemainingAmount => TotalAmount - PaidAmount;
+        public decimal RemainingBalance { get; set; }
+        public string? PaymentStatus { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public DateTime? SigningDate { get; set; }
-        public DateTime? RenewalDate { get; set; }
-        public DateTime? ExpirationDate { get; set; }
+        public DateTime? SignDate { get; set; }
+        public int ExpiryNoticeDays { get; set; } = 30;
         public string Status { get; set; } = string.Empty;
         public string? ResponsibleUserName { get; set; }
-        public string? ResponsibleUserId { get; set; }
+        public string? AssignedUserId { get; set; }
         public string? TemplateName { get; set; }
         public bool IsArchived { get; set; }
         public DateTime? ArchivedAt { get; set; }
@@ -332,9 +314,11 @@ namespace OfficeAutomation.Models
         public DateTime UpdatedAt { get; set; }
         public bool CanEdit { get; set; }
         public bool CanViewFinancials { get; set; }
+        public int DaysRemaining { get; set; }
 
         public List<ContractPaymentVM> Payments { get; set; } = new();
         public List<ContractAttachmentVM> Attachments { get; set; } = new();
+        public List<ContractAuditLogVM> AuditLogs { get; set; } = new();
     }
 
     public class ContractPaymentVM
@@ -342,9 +326,11 @@ namespace OfficeAutomation.Models
         public int Id { get; set; }
         public decimal Amount { get; set; }
         public DateTime PaymentDate { get; set; }
+        public DateTime? DueDate { get; set; }
+        public string? Status { get; set; }
         public string? PaymentMethod { get; set; }
         public string? ReferenceNumber { get; set; }
-        public string? Description { get; set; }
+        public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
@@ -354,6 +340,17 @@ namespace OfficeAutomation.Models
         public string FileName { get; set; } = string.Empty;
         public string? ContentType { get; set; }
         public long FileSize { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class ContractAuditLogVM
+    {
+        public int Id { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string? OldStatus { get; set; }
+        public string? NewStatus { get; set; }
+        public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
@@ -371,11 +368,8 @@ namespace OfficeAutomation.Models
         [Display(Name = "توضیحات")]
         public string? Description { get; set; }
 
-        [Display(Name = "تنظیمات فرمت (JSON)")]
-        public string? FormatJson { get; set; }
-
         [Display(Name = "قالب HTML")]
-        public string? TemplateHtml { get; set; }
+        public string? HtmlContent { get; set; }
 
         [Display(Name = "قالب پیش‌فرض")]
         public bool IsDefault { get; set; }
@@ -394,6 +388,18 @@ namespace OfficeAutomation.Models
         public List<SelectListItem> StatusOptions { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<ContractTemplateListItemVM> Templates { get; set; } = new();
+
+        /// <summary>
+        /// تگ‌های قابل استفاده در ویرایشگر قالب (برای نمایش در سایدبار)
+        /// </summary>
+        public List<ContractTemplateTagVM> AvailableTags { get; set; } = new();
+    }
+
+    public class ContractTemplateTagVM
+    {
+        public string Tag { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 
     public class ContractTemplateListItemVM
@@ -402,6 +408,7 @@ namespace OfficeAutomation.Models
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsDefault { get; set; }
+        public string? TemplateType { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
 
@@ -423,6 +430,13 @@ namespace OfficeAutomation.Models
         [Display(Name = "تاریخ پرداخت")]
         public DateTime PaymentDate { get; set; } = DateTime.Today;
 
+        [DataType(DataType.Date)]
+        [Display(Name = "تاریخ سررسید")]
+        public DateTime? DueDate { get; set; }
+
+        [Display(Name = "وضعیت")]
+        public string Status { get; set; } = "Paid";
+
         [StringLength(60)]
         [Display(Name = "روش پرداخت")]
         public string? PaymentMethod { get; set; }
@@ -433,7 +447,7 @@ namespace OfficeAutomation.Models
 
         [StringLength(500)]
         [Display(Name = "توضیحات")]
-        public string? Description { get; set; }
+        public string? Notes { get; set; }
     }
 
     /// <summary>
@@ -447,7 +461,27 @@ namespace OfficeAutomation.Models
         [Display(Name = "وضعیت")]
         public string? Status { get; set; }
 
+        [Display(Name = "نوع قرارداد")]
+        public string? ContractType { get; set; }
+
+        [Display(Name = "وضعیت پرداخت")]
+        public string? PaymentStatus { get; set; }
+
+        [Display(Name = "مسئول")]
+        public string? AssignedUserId { get; set; }
+
+        [Display(Name = "از تاریخ شروع")]
+        [DataType(DataType.Date)]
+        public DateTime? StartDateFrom { get; set; }
+
+        [Display(Name = "تا تاریخ شروع")]
+        [DataType(DataType.Date)]
+        public DateTime? StartDateTo { get; set; }
+
         public List<SelectListItem> StatusOptions { get; set; } = new();
+        public List<SelectListItem> ContractTypeOptions { get; set; } = new();
+        public List<SelectListItem> PaymentStatusOptions { get; set; } = new();
+        public List<SelectListItem> ResponsibleUserOptions { get; set; } = new();
         public List<ContractIndexItemVM> Items { get; set; } = new();
         public int TotalCount { get; set; }
         public int FilteredCount { get; set; }

@@ -26,6 +26,15 @@ namespace OfficeAutomation.Models
         [Display(Name = "تاریخ پرداخت")]
         public DateTime PaymentDate { get; set; } = DateTime.Today;
 
+        [DataType(DataType.Date)]
+        [Display(Name = "تاریخ سررسید")]
+        public DateTime? DueDate { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        [Display(Name = "وضعیت")]
+        public string Status { get; set; } = "Paid"; // Paid, Pending, Overdue
+
         [StringLength(60)]
         [Display(Name = "روش پرداخت")]
         public string? PaymentMethod { get; set; }
@@ -36,7 +45,7 @@ namespace OfficeAutomation.Models
 
         [StringLength(500)]
         [Display(Name = "توضیحات")]
-        public string? Description { get; set; }
+        public string? Notes { get; set; }
 
         [Display(Name = "تاریخ ثبت")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;

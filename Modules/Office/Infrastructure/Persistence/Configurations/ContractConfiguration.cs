@@ -15,13 +15,12 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
         builder.HasIndex(item => item.ContractNumber).IsUnique();
         builder.HasIndex(item => item.ClientName);
         builder.HasIndex(item => item.Status);
-        builder.HasIndex(item => item.ResponsibleUserId);
+        builder.HasIndex(item => item.AssignedUserId);
         builder.HasIndex(item => item.IsArchived);
         builder.HasIndex(item => item.CustomerId);
         builder.HasIndex(item => item.ContractType);
         builder.HasIndex(item => item.StartDate);
         builder.HasIndex(item => item.EndDate);
-        builder.HasIndex(item => item.ExpirationDate);
 
         builder.Property(item => item.ContractNumber).HasMaxLength(60).IsRequired();
         builder.Property(item => item.Title).HasMaxLength(200).IsRequired();
@@ -31,23 +30,24 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
         builder.Property(item => item.ClientAddress).HasMaxLength(300);
         builder.Property(item => item.Description).HasMaxLength(2000);
         builder.Property(item => item.TermsAndConditions).HasColumnType("ntext");
-        builder.Property(item => item.Notes).HasColumnType("ntext");
+        builder.Property(item => item.ContractBodyHtml).HasColumnType("ntext");
         builder.Property(item => item.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(item => item.PaidAmount).HasColumnType("decimal(18,2)");
+        builder.Property(item => item.RemainingBalance).HasColumnType("decimal(18,2)").HasComputedColumnSql("TotalAmount - PaidAmount");
+        builder.Property(item => item.PaymentStatus).HasMaxLength(20).IsRequired();
         builder.Property(item => item.Status).HasMaxLength(40).IsRequired();
         builder.Property(item => item.CreatedByUserId).HasMaxLength(450).IsRequired();
-
-        builder.Ignore(item => item.RemainingAmount);
+        builder.Property(item => item.ExpiryNoticeDays).HasDefaultValue(30);
 
         builder.HasOne(item => item.Customer)
             .WithMany(customer => customer.Contracts)
             .HasForeignKey(item => item.CustomerId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasOne(item => item.ResponsibleUser)
+        builder.HasOne(item => item.AssignedUser)
             .WithMany()
-            .HasForeignKey(item => item.ResponsibleUserId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .HasForeignKey(item => item.AssignedUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(item => item.CreatedByUser)
             .WithMany()
@@ -56,7 +56,7 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
 
         builder.HasOne(item => item.ContractTemplate)
             .WithMany(template => template.Contracts)
-            .HasForeignKey(item => item.ContractTemplateId)
+            .HasForeignKey(item => item.TemplateId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasMany(item => item.Payments)
@@ -67,6 +67,11 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
         builder.HasMany(item => item.Attachments)
             .WithOne(attachment => attachment.Contract)
             .HasForeignKey(attachment => attachment.ContractId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(item => item.AuditLogs)
+            .WithOne(al => al.Contract)
+            .HasForeignKey(al => al.ContractId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

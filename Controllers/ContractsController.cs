@@ -69,10 +69,10 @@ public class ContractsController : Controller
             var vm = await _contractService.BuildCreateViewModelAsync(currentUserId, ct);
             vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
             vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
-            vm.TermsAndConditions = model.TermsAndConditions; vm.Notes = model.Notes;
+            vm.TermsAndConditions = model.TermsAndConditions; vm.ContractBodyHtml = model.ContractBodyHtml;
             vm.TotalAmount = model.TotalAmount; vm.StartDate = model.StartDate; vm.EndDate = model.EndDate;
-            vm.SigningDate = model.SigningDate; vm.RenewalDate = model.RenewalDate; vm.ExpirationDate = model.ExpirationDate;
-            vm.Status = model.Status; vm.ResponsibleUserId = model.ResponsibleUserId; vm.ContractTemplateId = model.ContractTemplateId;
+            vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
+            vm.Status = model.Status; vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
             vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
             return View(vm);
         }
@@ -90,10 +90,10 @@ public class ContractsController : Controller
             var vm = await _contractService.BuildCreateViewModelAsync(currentUser, ct);
             vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
             vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
-            vm.TermsAndConditions = model.TermsAndConditions; vm.Notes = model.Notes;
+            vm.TermsAndConditions = model.TermsAndConditions; vm.ContractBodyHtml = model.ContractBodyHtml;
             vm.TotalAmount = model.TotalAmount; vm.StartDate = model.StartDate; vm.EndDate = model.EndDate;
-            vm.SigningDate = model.SigningDate; vm.RenewalDate = model.RenewalDate; vm.ExpirationDate = model.ExpirationDate;
-            vm.Status = model.Status; vm.ResponsibleUserId = model.ResponsibleUserId; vm.ContractTemplateId = model.ContractTemplateId;
+            vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
+            vm.Status = model.Status; vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
             vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
             return View(vm);
         }
@@ -109,11 +109,14 @@ public class ContractsController : Controller
     {
         try
         {
+            // Enforce RLS - will throw if user cannot access
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _contractService.EnforceAccessAsync(id, currentUserId, ct);
             var vm = await _contractService.BuildEditViewModelAsync(id, currentUserId, ct);
             return View(vm);
         }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
     [HttpPost]
@@ -129,11 +132,11 @@ public class ContractsController : Controller
                 var vm = await _contractService.BuildEditViewModelAsync(model.Id, currentUserId, ct);
                 vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
                 vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
-                vm.TermsAndConditions = model.TermsAndConditions; vm.Notes = model.Notes;
+                vm.TermsAndConditions = model.TermsAndConditions; vm.ContractBodyHtml = model.ContractBodyHtml;
                 vm.TotalAmount = model.TotalAmount; vm.PaidAmount = model.PaidAmount;
                 vm.StartDate = model.StartDate; vm.EndDate = model.EndDate; vm.Status = model.Status;
-                vm.SigningDate = model.SigningDate; vm.RenewalDate = model.RenewalDate; vm.ExpirationDate = model.ExpirationDate;
-                vm.ResponsibleUserId = model.ResponsibleUserId; vm.ContractTemplateId = model.ContractTemplateId;
+                vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
+                vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
                 vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
                 return View(vm);
             }
@@ -142,11 +145,13 @@ public class ContractsController : Controller
         try
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _contractService.EnforceAccessAsync(model.Id, currentUserId, ct);
             await _contractService.UpdateContractAsync(model, currentUserId, ct);
             TempData["SuccessMessage"] = "قرارداد با موفقیت ویرایش شد.";
             return RedirectToAction(nameof(Details), new { id = model.Id });
         }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError("ContractNumber", ex.Message);
@@ -182,6 +187,12 @@ public class ContractsController : Controller
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        try
+        {
+            await _contractService.EnforceAccessAsync(id, currentUserId, ct);
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+
         var deleted = await _contractService.DeleteContractAsync(id, currentUserId, ct);
         if (!deleted) return NotFound();
         TempData["SuccessMessage"] = "قرارداد با موفقیت حذف شد.";
@@ -207,6 +218,12 @@ public class ContractsController : Controller
     public async Task<IActionResult> ArchiveContract(int id, CancellationToken ct)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        try
+        {
+            await _contractService.EnforceAccessAsync(id, currentUserId, ct);
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+
         var archived = await _contractService.ArchiveContractAsync(id, currentUserId, ct);
         if (!archived) return NotFound();
         TempData["SuccessMessage"] = "قرارداد با موفقیت بایگانی شد.";
@@ -219,6 +236,12 @@ public class ContractsController : Controller
     public async Task<IActionResult> UnarchiveContract(int id, CancellationToken ct)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        try
+        {
+            await _contractService.EnforceAccessAsync(id, currentUserId, ct);
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+
         var unarchived = await _contractService.UnarchiveContractAsync(id, currentUserId, ct);
         if (!unarchived) return NotFound();
         TempData["SuccessMessage"] = "قرارداد از بایگانی خارج شد.";
@@ -369,8 +392,8 @@ public class ContractsController : Controller
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var vm = await _contractService.GetSettingsViewModelAsync(currentUserId, ct);
-            vm.TemplateName = model.TemplateName; vm.FormatJson = model.FormatJson;
-            vm.TemplateHtml = model.TemplateHtml; vm.IsDefault = model.IsDefault;
+            vm.TemplateName = model.TemplateName; vm.HtmlContent = model.HtmlContent;
+            vm.IsDefault = model.IsDefault;
             return View(nameof(Settings), vm);
         }
         var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -401,5 +424,25 @@ public class ContractsController : Controller
         if (!set) return NotFound();
         TempData["SuccessMessage"] = "قالب پیش‌فرض با موفقیت تنظیم شد.";
         return RedirectToAction(nameof(Settings));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Template Preview (for auto-populate in Create/Edit)
+    // ═══════════════════════════════════════════════════════════════
+
+    [HttpGet("Contracts/PreviewTemplate")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> PreviewTemplate(int id, bool raw = false, CancellationToken ct = default)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var template = await _contractService.GetUserTemplatesAsync(currentUserId, ct);
+        var t = template.FirstOrDefault(x => x.Id == id);
+        if (t == null) return NotFound();
+        if (raw)
+        {
+            return Content(t.HtmlContent ?? "", "text/plain", System.Text.Encoding.UTF8);
+        }
+        var preview = await _contractService.PreviewTemplateAsync(id, currentUserId, ct);
+        return Content(preview, "text/html", System.Text.Encoding.UTF8);
     }
 }

@@ -18,6 +18,7 @@ public sealed class ContractPaymentConfiguration : IEntityTypeConfiguration<Cont
         builder.Property(item => item.Amount).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(item => item.PaymentMethod).HasMaxLength(60);
         builder.Property(item => item.ReferenceNumber).HasMaxLength(120);
-        builder.Property(item => item.Description).HasMaxLength(500);
+        builder.Property(item => item.Notes).HasMaxLength(500);
+        builder.Property(item => item.Status).HasMaxLength(20).IsRequired();
     }
 }

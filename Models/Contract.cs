@@ -9,6 +9,7 @@ namespace OfficeAutomation.Models
         public const string Draft = "پیش‌نویس";
         public const string PendingApproval = "در انتظار تایید";
         public const string Active = "فعال";
+        public const string ExpiringSoon = "در شرف انقضا";
         public const string Suspended = "معلق";
         public const string Expired = "منقضی شده";
         public const string Completed = "تکمیل شده";
@@ -21,6 +22,7 @@ namespace OfficeAutomation.Models
             Draft,
             PendingApproval,
             Active,
+            ExpiringSoon,
             Suspended,
             Expired,
             Completed,
@@ -44,14 +46,25 @@ namespace OfficeAutomation.Models
         public const string Partnership = "مشارکت";
         public const string Maintenance = "نگهداری";
         public const string Consulting = "مشاوره";
+        public const string NDA = "NDA";
+        public const string Custom = "سفارشی";
         public const string Other = "سایر";
 
-        public static readonly string[] All = [Service, Sales, Purchase, Lease, Partnership, Maintenance, Consulting, Other];
+        public static readonly string[] All = [Service, Sales, Purchase, Lease, Partnership, Maintenance, Consulting, NDA, Custom, Other];
 
         public static List<SelectListItem> GetTypeOptions()
         {
             return All.Select(s => new SelectListItem { Value = s, Text = s }).ToList();
         }
+    }
+
+    public static class PaymentStatuses
+    {
+        public const string Unpaid = "Unpaid";
+        public const string PartiallyPaid = "PartiallyPaid";
+        public const string FullyPaid = "FullyPaid";
+
+        public static readonly string[] All = [Unpaid, PartiallyPaid, FullyPaid];
     }
 
     public class Contract
@@ -120,7 +133,13 @@ namespace OfficeAutomation.Models
         /// <summary>باقی مانده (محاسبه خودکار)</summary>
         [Display(Name = "باقی مانده")]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal RemainingAmount => TotalAmount - PaidAmount;
+        public decimal RemainingBalance { get; set; }
+
+        /// <summary>وضعیت پرداخت (محاسبه خودکار)</summary>
+        [Required]
+        [StringLength(20)]
+        [Display(Name = "وضعیت پرداخت")]
+        public string PaymentStatus { get; set; } = "Unpaid"; // Unpaid, PartiallyPaid, FullyPaid
 
         // ── Dates ──
         [Required(ErrorMessage = "تاریخ شروع الزامی است.")]
@@ -134,15 +153,11 @@ namespace OfficeAutomation.Models
 
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ امضا")]
-        public DateTime? SigningDate { get; set; }
+        public DateTime? SignDate { get; set; }
 
-        [DataType(DataType.Date)]
-        [Display(Name = "تاریخ تمدید")]
-        public DateTime? RenewalDate { get; set; }
-
-        [DataType(DataType.Date)]
-        [Display(Name = "تاریخ انقضا")]
-        public DateTime? ExpirationDate { get; set; }
+        /// <summary>تعداد روزهای قبل از انقضا برای اخطار (پیش‌فرض: 30)</summary>
+        [Display(Name = "روزهای اخطار انقضا")]
+        public int ExpiryNoticeDays { get; set; } = 30;
 
         // ── Status ──
         [Required]
@@ -151,12 +166,12 @@ namespace OfficeAutomation.Models
         public string Status { get; set; } = ContractStatuses.Draft;
 
         // ── Responsible / Assignment ──
-        /// <summary>کاربر مسئول پیگیری</summary>
+        /// <summary>کاربر مسئول پیگیری (AssignedUserId)</summary>
         [Display(Name = "مسئول پیگیری")]
-        public string? ResponsibleUserId { get; set; }
+        public string? AssignedUserId { get; set; }
 
         [Display(Name = "مسئول پیگیری")]
-        public User? ResponsibleUser { get; set; }
+        public User? AssignedUser { get; set; }
 
         [Required]
         public string CreatedByUserId { get; set; } = string.Empty;
@@ -165,10 +180,14 @@ namespace OfficeAutomation.Models
 
         /// <summary>قالب/تمپلیت انتخابی برای این قرارداد</summary>
         [Display(Name = "قالب قرارداد")]
-        public int? ContractTemplateId { get; set; }
+        public int? TemplateId { get; set; }
 
         [Display(Name = "قالب قرارداد")]
         public ContractTemplate? ContractTemplate { get; set; }
+
+        /// <summary>متن قرارداد با فیلدهای جایگزاری شده</summary>
+        [Display(Name = "متن قرارداد")]
+        public string? ContractBodyHtml { get; set; }
 
         // ── Archive ──
         /// <summary>بایگانی شده یا خیر</summary>
@@ -195,5 +214,6 @@ namespace OfficeAutomation.Models
         // ── Navigation ──
         public List<ContractPayment> Payments { get; set; } = new();
         public List<ContractAttachment> Attachments { get; set; } = new();
+        public List<ContractAuditLog> AuditLogs { get; set; } = new();
     }
 }

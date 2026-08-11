@@ -3,116 +3,220 @@
     ViewData["Title"] = "داشبورد قراردادها";
 }
 
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">داشبورد قراردادها</h6>
-        <a asp-action="Index" class="btn btn-sm btn-outline-primary">فهرست قراردادها</a>
-    </div>
-
-    @* Summary Cards *@
-    <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-primary">@Model.TotalContracts.ToString("N0")</div>
-                <small class="text-muted">کل قراردادها</small>
-            </div>
+<div class="container-fluid py-2 space-y-2" dir="rtl">
+    @* Section Header *@
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
+        <div>
+            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">داشبورد قراردادها</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">نمای کلی وضعیت قراردادها و اطلاعات مالی</p>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-success">@Model.ActiveContracts.ToString("N0")</div>
-                <small class="text-muted">فعال</small>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-warning">@Model.ExpiringSoonCount.ToString("N0")</div>
-                <small class="text-muted">در حال انقضا (30 روز)</small>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-danger">@Model.ExpiredContracts.ToString("N0")</div>
-                <small class="text-muted">منقضی شده</small>
-            </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <i class="bi bi-list-ul ml-1"></i>فهرست قراردادها
+            </a>
+            <a asp-action="Create" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                <i class="bi bi-plus-circle ml-1"></i>قرارداد جدید
+            </a>
         </div>
     </div>
 
-    <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-secondary">@Model.DraftContracts.ToString("N0")</div>
-                <small class="text-muted">پیش‌نویس</small>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-info">@Model.ArchivedContracts.ToString("N0")</div>
-                <small class="text-muted">بایگانی شده</small>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-success">@Model.FullyPaid.ToString("N0")</div>
-                <small class="text-muted">پرداخت کامل</small>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3">
-                <div class="SgFarsiDigits fs-5 fw-bold text-danger">@Model.Unpaid.ToString("N0")</div>
-                <small class="text-muted">پرداخت نشده</small>
-            </div>
-        </div>
-    </div>
-
-    @* Financial Summary *@
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-light py-2 px-3">
-            <small class="fw-bold">خلاصه مالی</small>
-        </div>
-        <div class="card-body p-3">
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <small class="text-muted d-block">مبلغ کل قراردادها</small>
-                    <span class="SgFarsiDigits fw-bold text-primary fs-5">@Model.TotalAmount.ToString("N0")</span>
+    @* Metric Cards Grid *@
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <!-- Total Contracts -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">کل قراردادها</span>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white mt-0.5 font-mono tabular-nums">@Model.TotalContracts.ToString("N0")</h3>
                 </div>
-                <div class="col-md-4">
-                    <small class="text-muted d-block">مبلغ پرداخت شده</small>
-                    <span class="SgFarsiDigits fw-bold text-success fs-5">@Model.TotalPaid.ToString("N0")</span>
-                </div>
-                <div class="col-md-4">
-                    <small class="text-muted d-block">باقی مانده</small>
-                    <span class="SgFarsiDigits fw-bold text-danger fs-5">@Model.TotalOutstanding.ToString("N0")</span>
+                <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                    <i class="bi bi-file-signature text-sm"></i>
                 </div>
             </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">مجموع قراردادهای ثبت‌شده</p>
+        </div>
+
+        <!-- Active Contracts -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">فعال</span>
+                    <h3 class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tabular-nums">@Model.ActiveContracts.ToString("N0")</h3>
+                </div>
+                <div class="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <i class="bi bi-check-circle text-sm"></i>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">قراردادهای در حال اجرا</p>
+        </div>
+
+        <!-- Expiring Soon -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">در حال انقضا</span>
+                    <h3 class="text-sm font-black text-amber-600 dark:text-amber-400 mt-0.5 font-mono tabular-nums">@Model.ExpiringSoonCount.ToString("N0")</h3>
+                </div>
+                <div class="h-8 w-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                    <i class="bi bi-exclamation-triangle text-sm"></i>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">30 روز آینده</p>
+        </div>
+
+        <!-- Expired -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">منقضی شده</span>
+                    <h3 class="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5 font-mono tabular-nums">@Model.ExpiredContracts.ToString("N0")</h3>
+                </div>
+                <div class="h-8 w-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                    <i class="bi bi-clock-history text-sm"></i>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">نیازمند بررسی</p>
+        </div>
+
+        <!-- Drafts -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">پیش‌نویس</span>
+                    <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 mt-0.5 font-mono tabular-nums">@Model.DraftContracts.ToString("N0")</h3>
+                </div>
+                <div class="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800/30 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                    <i class="bi bi-file-text text-sm"></i>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">تکمیل نشده</p>
+        </div>
+
+        <!-- Archived -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">بایگانی شده</span>
+                    <h3 class="text-sm font-black text-sky-600 dark:text-sky-400 mt-0.5 font-mono tabular-nums">@Model.ArchivedContracts.ToString("N0")</h3>
+                </div>
+                <div class="h-8 w-8 rounded-lg bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center text-sky-600 dark:text-sky-400">
+                    <i class="bi bi-archive text-sm"></i>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">قراردادهای بایگانی</p>
+        </div>
+
+        <!-- Fully Paid -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">پرداخت کامل</span>
+                    <h3 class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tabular-nums">@Model.FullyPaid.ToString("N0")</h3>
+                </div>
+                <div class="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <i class="bi bi-cash-stack text-sm"></i>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">تسویه شده</p>
+        </div>
+
+        <!-- Unpaid -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">پرداخت نشده</span>
+                    <h3 class="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5 font-mono tabular-nums">@Model.Unpaid.ToString("N0")</h3>
+                </div>
+                <div class="h-8 w-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                    <i class="bi bi-credit-card-2-back text-sm"></i>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">نیازمند پیگیری</p>
         </div>
     </div>
 
-    @* Payment Status Breakdown *@
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light py-2 px-3">
-            <small class="fw-bold">وضعیت پرداخت</small>
-        </div>
-        <div class="card-body p-3">
-            <div class="row g-2 text-center">
-                <div class="col-4">
-                    <div class="p-2 bg-success bg-opacity-10 rounded">
-                        <div class="SgFarsiDigits fw-bold text-success">@Model.FullyPaid.ToString("N0")</div>
-                        <small class="text-muted">تکمیل</small>
+    @* Financial Summary + Payment Status *@
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        @* Financial Summary Card *@
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">
+                    <i class="bi bi-pie-chart ml-1 text-teal-600"></i>خلاصه مالی
+                </h2>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">مبلغ کل قراردادها</span>
+                        <span class="text-[11px] font-black text-slate-900 dark:text-white font-mono tabular-nums">@Model.TotalAmount.ToString("N0")</span>
+                    </div>
+                    <div class="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <div class="h-full rounded-full bg-blue-500" style="width: 100%"></div>
                     </div>
                 </div>
-                <div class="col-4">
-                    <div class="p-2 bg-warning bg-opacity-10 rounded">
-                        <div class="SgFarsiDigits fw-bold text-warning">@Model.PartiallyPaid.ToString("N0")</div>
-                        <small class="text-muted">جزئی</small>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">مبلغ پرداخت شده</span>
+                        <span class="text-[11px] font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">@Model.TotalPaid.ToString("N0")</span>
+                    </div>
+                    <div class="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        @{
+                            var paidPercent = Model.TotalAmount > 0 ? (Model.TotalPaid * 100 / Model.TotalAmount) : 0;
+                        }
+                        <div class="h-full rounded-full bg-emerald-500" style="width: @paidPercent%"></div>
                     </div>
                 </div>
-                <div class="col-4">
-                    <div class="p-2 bg-danger bg-opacity-10 rounded">
-                        <div class="SgFarsiDigits fw-bold text-danger">@Model.Unpaid.ToString("N0")</div>
-                        <small class="text-muted">پرداخت نشده</small>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">باقی مانده</span>
+                        <span class="text-[11px] font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums">@Model.TotalOutstanding.ToString("N0")</span>
                     </div>
+                    <div class="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        @{
+                            var outstandingPercent = Model.TotalAmount > 0 ? (Model.TotalOutstanding * 100 / Model.TotalAmount) : 0;
+                        }
+                        <div class="h-full rounded-full bg-rose-500" style="width: @outstandingPercent%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Payment Status Breakdown *@
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">
+                    <i class="bi bi-bar-chart ml-1 text-teal-600"></i>وضعیت پرداخت
+                </h2>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 p-3 text-center">
+                    <div class="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-1.5">
+                        <i class="bi bi-check-lg text-emerald-600 dark:text-emerald-400 text-sm"></i>
+                    </div>
+                    <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">@Model.FullyPaid.ToString("N0")</div>
+                    <div class="text-[9px] text-emerald-700 dark:text-emerald-400/70 font-bold mt-0.5">تکمیل</div>
+                </div>
+                <div class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20 p-3 text-center">
+                    <div class="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mx-auto mb-1.5">
+                        <i class="bi bi-hourglass-split text-amber-600 dark:text-amber-400 text-sm"></i>
+                    </div>
+                    <div class="text-sm font-black text-amber-600 dark:text-amber-400 font-mono tabular-nums">@Model.PartiallyPaid.ToString("N0")</div>
+                    <div class="text-[9px] text-amber-700 dark:text-amber-400/70 font-bold mt-0.5">جزئی</div>
+                </div>
+                <div class="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20 p-3 text-center">
+                    <div class="h-8 w-8 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center mx-auto mb-1.5">
+                        <i class="bi bi-x-lg text-rose-600 dark:text-rose-400 text-sm"></i>
+                    </div>
+                    <div class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums">@Model.Unpaid.ToString("N0")</div>
+                    <div class="text-[9px] text-rose-700 dark:text-rose-400/70 font-bold mt-0.5">پرداخت نشده</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        .font-mono { font-variant-numeric: tabular-nums; }
+    </style>
+}

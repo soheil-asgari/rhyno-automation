@@ -5,32 +5,34 @@ namespace OfficeAutomation.Models
 {
     /// <summary>
     /// قالب/فرمت اختصاصی هر کاربر برای قراردادها
-    /// هر کاربر می‌تواند قالب منحصر به فرد خود را داشته باشد
+    /// OwnerUserId = null means Global Template (Admin only)
+    /// OwnerUserId = Has Value means Personal Template for that specific employee
     /// </summary>
     public class ContractTemplate
     {
         public int Id { get; set; }
 
-        [Required]
+        /// <summary>
+        /// Null = Global Template for all users; Has Value = Personal template for that employee
+        /// </summary>
         [MaxLength(450)]
-        public string UserId { get; set; } = string.Empty;
+        public string? OwnerUserId { get; set; }
 
-        public User? User { get; set; }
+        public User? OwnerUser { get; set; }
 
         [Required(ErrorMessage = "نام قالب الزامی است.")]
         [StringLength(120, ErrorMessage = "نام قالب نمی‌تواند بیشتر از 120 کاراکتر باشد.")]
         [Display(Name = "نام قالب")]
         public string Name { get; set; } = string.Empty;
 
-        /// <summary>تنظیمات فرمت به صورت JSON (شامل فیلدها، ترتیب، رنگ و ...)</summary>
-        [Display(Name = "تنظیمات فرمت (JSON)")]
-        public string? FormatJson { get; set; }
-
-        /// <summary>قالب HTML برای چاپ/نمایش قرارداد</summary>
+        /// <summary>قالب HTML برای چاپ/نمایش قرارداد (شامل placeholders مانند {{CustomerName}})</summary>
         [Display(Name = "قالب HTML")]
-        public string? TemplateHtml { get; set; }
+        public string? HtmlContent { get; set; }
 
-        /// <summary>آیا این قالب پیش‌فرض کاربر است</summary>
+        /// <summary>نوع قالب (Global/Personal)</summary>
+        [StringLength(20)]
+        public string? TemplateType { get; set; } // "Global" or "Personal"
+
         [StringLength(500)]
         [Display(Name = "توضیحات")]
         public string? Description { get; set; }

@@ -3,163 +3,342 @@
     ViewData["Title"] = "تنظیمات قراردادها";
 }
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-2 space-y-2" dir="rtl">
     @if (TempData["SuccessMessage"] is string successMsg)
     {
-        <div class="alert alert-success py-2 px-3 small mb-3">@successMsg</div>
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-3.5 py-2.5 text-[11px] text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
+            <i class="bi bi-check-circle-fill text-emerald-500"></i>
+            <span>@successMsg</span>
+        </div>
     }
     @if (TempData["ErrorMessage"] is string errorMsg)
     {
-        <div class="alert alert-danger py-2 px-3 small mb-3">@errorMsg</div>
+        <div class="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20 px-3.5 py-2.5 text-[11px] text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
+            <i class="bi bi-exclamation-circle-fill text-rose-500"></i>
+            <span>@errorMsg</span>
+        </div>
     }
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0">تنظیمات قراردادها</h6>
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+    @* Section Header *@
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
+        <div>
+            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">تنظیمات قراردادها</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">مدیریت تنظیمات عمومی و قالب‌های قرارداد</p>
+        </div>
+        <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+            <i class="bi bi-arrow-right ml-1"></i>بازگشت
+        </a>
     </div>
 
-    @* General Settings Card *@
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-light py-2 px-3">
-            <small class="fw-bold">تنظیمات عمومی</small>
-        </div>
-        <div class="card-body p-3">
+    @* Side-by-side Cards: General Settings + Templates *@
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        @* General Settings Card *@
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="h-7 w-7 rounded-lg bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                    <i class="bi bi-gear text-xs"></i>
+                </div>
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">تنظیمات عمومی</h2>
+            </div>
             <form asp-action="Settings" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="UserId" />
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-4">
-                        <label asp-for="DefaultStatus" class="form-label small"></label>
-                        <select asp-for="DefaultStatus" class="form-select form-select-sm"
-                                asp-items="Model.StatusOptions">
-                            <option value="">پیش‌فرض (پیش‌نویس)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label asp-for="DefaultResponsibleUserId" class="form-label small"></label>
-                        <select asp-for="DefaultResponsibleUserId" class="form-select form-select-sm"
-                                asp-items="Model.UserOptions">
-                            <option value="">بدون پیش‌فرض</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <div class="form-check">
-                            <input asp-for="NotifyOnCreate" class="form-check-input" />
-                            <label asp-for="NotifyOnCreate" class="form-check-label small">اعلان هنگام ایجاد
-                                قرارداد</label>
-                            </div>
-                        </div>
-                        <div class="col-12 mt-2">
-                            <button type="submit" class="btn btn-sm btn-success">ذخیره تنظیمات</button>
+                <div class="space-y-3">
+                    <div>
+                        <label asp-for="DefaultStatus" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                                <i class="bi bi-flag text-xs"></i>
+                            </span>
+                            <select asp-for="DefaultStatus" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none appearance-none" asp-items="Model.StatusOptions">
+                                <option value="">پیش‌فرض (پیش‌نویس)</option>
+                            </select>
                         </div>
                     </div>
-                </form>
-            </div>
+                    <div>
+                        <label asp-for="DefaultResponsibleUserId" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                                <i class="bi bi-person text-xs"></i>
+                            </span>
+                            <select asp-for="DefaultResponsibleUserId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none appearance-none" asp-items="Model.UserOptions">
+                                <option value="">بدون پیش‌فرض</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="NotifyOnCreate" class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/20" />
+                        <label asp-for="NotifyOnCreate" class="text-[11px] text-slate-700 dark:text-slate-300 font-bold">اعلان هنگام ایجاد قرارداد</label>
+                    </div>
+                    <div class="pt-2">
+                        <button type="submit" class="rounded-lg bg-teal-600 px-4 py-2 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                            <i class="bi bi-check-lg ml-1"></i>ذخیره تنظیمات
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
 
         @* Template Manager Card *@
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
-                <small class="fw-bold">قالب‌های قرارداد</small>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#addTemplateModal">+ قالب جدید</button>
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <div class="h-7 w-7 rounded-lg bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                        <i class="bi bi-file-earmark-text text-xs"></i>
+                    </div>
+                    <h2 class="text-xs font-black text-slate-900 dark:text-white">قالب‌های قرارداد</h2>
+                </div>
+                <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline" onclick="openModal('addTemplateModal')">
+                    <i class="bi bi-plus-circle ml-1"></i>قالب جدید
+                </button>
             </div>
-            <div class="card-body p-0">
-                @if (Model.Templates.Any())
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>نام قالب</th>
-                                    <th>توضیحات</th>
-                                    <th>پیش‌فرض</th>
-                                    <th class="text-center">عملیات</th>
+            @if (Model.Templates.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[11px]">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                                <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">نام قالب</th>
+                                <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">توضیحات</th>
+                                <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">نوع</th>
+                                <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">پیش‌فرض</th>
+                                <th class="text-center px-3 py-2 font-bold text-slate-500 dark:text-slate-400">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                            @foreach (var template in Model.Templates)
+                            {
+                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                    <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@template.Name</td>
+                                    <td class="px-3 py-2 text-slate-600 dark:text-slate-400">@(template.Description ?? "-")</td>
+                                    <td class="px-3 py-2">
+                                        <span class="inline-flex items-center rounded-md bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700">
+                                            @(template.TemplateType == "Global" ? "عمومی" : "شخصی")
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        @if (template.IsDefault)
+                                        {
+                                            <span class="inline-flex items-center rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 px-2 py-0.5 text-[9px] font-bold">
+                                                <i class="bi bi-check-circle ml-1"></i>فعال
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="SetDefaultTemplate" asp-route-templateId="@template.Id" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-0.5 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-400 transition">
+                                                    انتخاب
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                    <td class="px-3 py-2 text-center">
+                                        <form asp-action="DeleteTemplate" asp-route-templateId="@template.Id" method="post" class="inline" onsubmit="return confirm('قالب حذف شود؟');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var template in Model.Templates)
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-6">
+                    <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
+                        <i class="bi bi-file-earmark-text text-slate-400"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ قالبی تعریف نشده است.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* Add Template Modal (Vanilla JS) *@
+<div class="rhyno-modal-overlay" id="addTemplateModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+    <div class="rhyno-modal-content" style="width:100%;max-width:820px;max-height:85vh;overflow-y:auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-file-earmark-plus text-teal-600 text-xs"></i>
+                <span class="text-xs font-bold text-slate-900 dark:text-white">قالب جدید</span>
+            </div>
+            <button type="button" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('addTemplateModal')">&times;</button>
+        </div>
+        <form asp-action="SaveTemplate" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="CurrentTemplateId" />
+            <div class="p-3 space-y-3">
+                <div>
+                    <label asp-for="TemplateName" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
+                    <input asp-for="TemplateName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" required />
+                </div>
+                <div>
+                    <label asp-for="Description" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
+                    <textarea asp-for="Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2"></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-1 min-w-0">
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            <i class="bi bi-pencil-square text-xs ml-1 text-blue-500"></i>ویرایشگر بصری قالب
+                        </label>
+                        @* Toolbar *@
+                        <div class="flex flex-wrap items-center gap-1 mb-1.5 px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="bold" title="ضخیم"><b>B</b></button>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="italic" title="کج"><i>I</i></button>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="underline" title="زیرخط"><u>U</u></button>
+                            <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertOrderedList" title="لیست شماره‌دار"><i class="bi bi-list-ol"></i></button>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertUnorderedList" title="لیست نقطه‌ای"><i class="bi bi-list-ul"></i></button>
+                            <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyRight" title="راست‌چین"><i class="bi bi-text-right"></i></button>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyCenter" title="وسط‌چین"><i class="bi bi-text-center"></i></button>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyLeft" title="چپ‌چین"><i class="bi bi-text-left"></i></button>
+                            <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertHorizontalRule" title="خط افقی"><i class="bi bi-hr"></i></button>
+                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" onclick="document.getElementById('htmlEditor').focus();document.execCommand('insertHTML', false, '<br/><p style=\\'text-align:center;\\'><strong>--- صفحه جدید ---</strong></p><br/>')" title="شکن صفحه"><i class="bi bi-file-earmark-break"></i></button>
+                        </div>
+                        @* Contenteditable editor *@
+                        <div id="htmlEditor" class="wysiwyg-editor" contenteditable="true"
+                             style="min-height:240px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:right;overflow-y:auto;"
+                             data-placeholder="متن قالب را اینجا بنویسید..."></div>
+                        <textarea asp-for="HtmlContent" class="hidden" id="HtmlContent" rows="8"></textarea>
+                    </div>
+                    @if (Model.AvailableTags.Any())
+                    {
+                        <div class="w-48 shrink-0 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-200 dark:border-slate-800 p-2.5">
+                            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+                                <i class="bi bi-tags text-xs"></i>
+                                <span>تگ‌های قابل استفاده</span>
+                            </div>
+                            <div class="space-y-1 max-h-64 overflow-y-auto">
+                                @foreach (var tag in Model.AvailableTags)
                                 {
-                                    <tr>
-                                        <td>@template.Name</td>
-                                        <td>@(template.Description ?? "-")</td>
-                                        <td>
-                                            @if (template.IsDefault)
-                                            {
-                                                <span class="badge text-bg-success">فعال</span>
-                                            }
-                                            else
-                                            {
-                                                <form asp-action="SetDefaultTemplate" asp-route-templateId="@template.Id" method="post"
-                                                      class="d-inline">
-                                                    @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-success">انتخاب</button>
-                                                </form>
-                                            }
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="d-inline-flex gap-1">
-                                                <form asp-action="DeleteTemplate" asp-route-templateId="@template.Id" method="post"
-                                                      class="d-inline" onsubmit="return confirm('قالب حذف شود؟');">
-                                                    @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <button type="button" class="w-full text-right rounded-md px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:text-teal-600 dark:hover:text-teal-400 transition cursor-pointer border-0"
+                                            onclick="insertTagWysiwyg('@tag.Tag')"
+                                            title="@tag.Description">
+                                        <span class="font-bold">@tag.Tag</span>
+                                        <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
+                                    </button>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center text-muted py-3 small">هیچ قالبی تعریف نشده است.</div>
-                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="flex items-center gap-2">
+                    <input asp-for="IsDefault" class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/20" type="checkbox" />
+                    <label asp-for="IsDefault" class="text-[11px] text-slate-700 dark:text-slate-300 font-bold">به عنوان قالب پیش‌فرض</label>
+                </div>
             </div>
-        </div>
-    </div>
-    @* Add Template Modal *@
-    <div class="modal fade" id="addTemplateModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form asp-action="SaveTemplate" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" asp-for="CurrentTemplateId" />
-                    <div class="modal-header py-2 px-3">
-                        <small class="fw-bold">قالب جدید</small>
-                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-3">
-                        <div class="mb-2">
-                            <label asp-for="TemplateName" class="form-label small"></label>
-                            <input asp-for="TemplateName" class="form-control form-control-sm" required />
-                        </div>
-                        <div class="mb-2">
-                            <label asp-for="Description" class="form-label small"></label>
-                            <textarea asp-for="Description" class="form-control form-control-sm" rows="2"></textarea>
-                        </div>
-                        <div class="mb-2">
-                            <label asp-for="FormatJson" class="form-label small"></label>
-                            <textarea asp-for="FormatJson" class="form-control form-control-sm font-monospace" rows="4"
-                                      placeholder='{"fields":["title","clientName","totalAmount"],"showHeader":true}'></textarea>
-                        </div>
-                        <div class="mb-2">
-                            <label asp-for="TemplateHtml" class="form-label small"></label>
-                            <textarea asp-for="TemplateHtml" class="form-control form-control-sm font-monospace" rows="6"
-                                      placeholder="<html>...</html>"></textarea>
-                        </div>
-                        <div class="form-check">
-                            <input asp-for="IsDefault" class="form-check-input" type="checkbox" />
-                            <label asp-for="IsDefault" class="form-check-label small">به عنوان قالب پیش‌فرض</label>
-                        </div>
-                    </div>
-                    <div class="modal-footer py-2 px-3">
-                        <button type="submit" class="btn btn-sm btn-success">ذخیره</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-bs-dismiss="modal">انصراف</button>
-                    </div>
-                </form>
+            <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
+                <button type="submit" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700" onclick="syncEditor()">
+                    <i class="bi bi-check-lg ml-1"></i>ذخیره
+                </button>
+                <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('addTemplateModal')">
+                    <i class="bi bi-x-lg ml-1"></i>انصراف
+                </button>
             </div>
-        </div>
+        </form>
     </div>
+</div>
+
+@section Styles {
+    <style>
+        .font-mono { font-variant-numeric: tabular-nums; }
+        .wysiwyg-editor:empty:before {
+            content: attr(data-placeholder);
+            color: #94a3b8;
+        }
+        .wysiwyg-editor:focus {
+            outline: 2px solid #14b8a6;
+            outline-offset: -1px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        (function() {
+            'use strict';
+
+            // ── Modal helpers ──────────────────────────────────────────
+            window.openModal = window.openModal || function(modalId) {
+                var el = document.getElementById(modalId);
+                if (!el) return;
+                el.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            };
+            window.closeModal = window.closeModal || function(modalId) {
+                var el = document.getElementById(modalId);
+                if (!el) return;
+                el.style.display = 'none';
+                document.body.style.overflow = '';
+            };
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('rhyno-modal-overlay') && e.target.style.display === 'flex') {
+                    e.target.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.rhyno-modal-overlay').forEach(function(el) {
+                        if (el.style.display === 'flex') {
+                            el.style.display = 'none';
+                            document.body.style.overflow = '';
+                        }
+                    });
+                }
+            });
+
+            // ── WYSIWYG Editor ────────────────────────────────────────
+            var editor = document.getElementById('htmlEditor');
+            var textarea = document.getElementById('HtmlContent');
+
+            function syncEditor() {
+                if (editor && textarea) {
+                    textarea.value = editor.innerHTML;
+                }
+            }
+
+            // Sync before form submit
+            var form = editor && editor.closest('form');
+            if (form) {
+                form.addEventListener('submit', syncEditor);
+            }
+
+            // Toolbar commands
+            document.querySelectorAll('.wysiwyg-btn[data-cmd]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var cmd = btn.getAttribute('data-cmd');
+                    if (editor) editor.focus();
+                    document.execCommand(cmd, false, null);
+                    syncEditor();
+                });
+            });
+
+            // Initial sync: load any existing textarea value into editor
+            if (editor && textarea && textarea.value) {
+                editor.innerHTML = textarea.value;
+            }
+
+            // Auto-sync on input
+            if (editor) {
+                editor.addEventListener('input', syncEditor);
+            }
+
+            // ── Insert tag into WYSIWYG ──────────────────────────────
+            window.insertTagWysiwyg = function(tag) {
+                if (!editor) return;
+                editor.focus();
+                document.execCommand('insertHTML', false, tag);
+                syncEditor();
+            };
+        })();
+    </script>
+}
