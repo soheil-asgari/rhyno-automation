@@ -138,5 +138,36 @@ public class BootstrapAdminSeeder
 
         _dbContext.Users.Update(adminUser);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // ── Seed all Contract.* permissions to the Admin role ─────────
+        var adminRole = await _roleManager.FindByNameAsync("Admin");
+        if (adminRole != null)
+        {
+            var contractPermissions = new[]
+            {
+                "Contract.View", "Contract.Create", "Contract.Edit",
+                "Contract.Delete", "Contract.Payment", "Contract.Settings",
+                "Contract.Archive"
+            };
+
+            foreach (var permKey in contractPermissions)
+            {
+                var exists = await _dbContext.RolePermissions
+                    .AnyAsync(rp => rp.RoleId == adminRole.Id && rp.PermissionKey == permKey, cancellationToken);
+
+                if (!exists)
+                {
+                    _dbContext.RolePermissions.Add(new RolePermission
+                    {
+                        RoleId = adminRole.Id,
+                        PermissionKey = permKey,
+                        IsAllowed = true
+                    });
+                }
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("BootstrapAdmin: Contract permissions seeded to Admin role.");
+        }
     }
 }

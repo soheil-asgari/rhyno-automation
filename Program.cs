@@ -21,6 +21,7 @@ using OfficeAutomation.Services.Security;
 using OfficeAutomation.Services.Tenancy;
 using OfficeAutomation.Services.Middleware;
 using OfficeAutomation.Services.HealthChecks;
+using OfficeAutomation.Services.Contracts;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
@@ -138,6 +139,7 @@ builder.Services.AddHttpClient("ExternalServices", client =>
 // ── Export & Import Services ───────────────────────────
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IBulkImportService, BulkImportService>();
+builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddSingleton<ITenantRegistry, TenantRegistry>();
 builder.Services.AddScoped<TenantMigrationOrchestrator>();
 builder.Services.AddHostedService<TenantMigrationHostedService>();

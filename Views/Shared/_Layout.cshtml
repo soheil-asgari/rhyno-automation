@@ -28,6 +28,7 @@
     var userCanAccessHumanCapital = userContext.CanAccessHumanCapital;
     var userCanAccessSystemSettings = userContext.CanAccessSystemSettings;
     var userCanAccessProcessAnalytics = userContext.CanAccessProcessAnalytics;
+    var userCanAccessContracts = userContext.CanAccessContracts;
 
     var headerNotifications = userContext.Notifications;
     var headerNotificationCount = headerNotifications.Count;
@@ -134,7 +135,8 @@
     {
         <style>
                 body.rahkaran-theme {
-                    background-color: #7baed1; /* fallback if image fails to load */
+                    background-color: #7baed1;
+                    /* fallback if image fails to load */
                     background: url('@brandBgUrl') no-repeat center center fixed;
                     background-size: cover;
                 }
@@ -303,7 +305,7 @@
                                     <i class="bi bi-chevron-down chevron"></i>
                                 </button>
                                 <ul class="menu-list module-children"
-                                    style="max-height:@(IsExpanded("HumanCapital","Leaves","Letters") ? "400px" : "0");">
+                                    style="max-height:@(IsExpanded("HumanCapital","Leaves","Letters") ? "500px" : "0");">
                                     <li><a class='menu-item @(currentController == "HumanCapital" ? "active" : "")'
                                            asp-controller="HumanCapital" asp-action="Index"><i
                                         class="bi bi-person-badge menu-icon"></i> منابع انسانی</a></li>
@@ -313,6 +315,35 @@
                                             <li><a class='menu-item @(currentController == "Letters" ? "active" : "")'
                                                    asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i>
                                                 نامه‌ها</a></li>
+                                            </ul>
+                                        </div>
+                                    }
+
+                                    <!-- Contracts Module (Standalone) -->
+                                    @if (userCanAccessContracts)
+                                    {
+                                        <div class="menu-group sidebar-module" data-module="contracts">
+                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                <span>قراردادها</span>
+                                                <i class="bi bi-chevron-down chevron"></i>
+                                            </button>
+                                            <ul class="menu-list module-children"
+                                                style="max-height:@(IsExpanded("Contracts") ? "400px" : "0");">
+                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Dashboard" ? "active" : "")'
+                                                       asp-controller="Contracts" asp-action="Dashboard"><i
+                                                    class="bi bi-grid-1x2 menu-icon"></i> داشبورد قراردادها</a></li>
+                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Index" ? "active" : "")'
+                                                       asp-controller="Contracts" asp-action="Index"><i
+                                                    class="bi bi-file-earmark-text menu-icon"></i> فهرست قراردادها</a></li>
+                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Create" ? "active" : "")'
+                                                       asp-controller="Contracts" asp-action="Create"><i
+                                                    class="bi bi-plus-circle menu-icon"></i> قرارداد جدید</a></li>
+                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Archive" ? "active" : "")'
+                                                       asp-controller="Contracts" asp-action="Archive"><i
+                                                    class="bi bi-archive menu-icon"></i> بایگانی</a></li>
+                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Settings" ? "active" : "")'
+                                                       asp-controller="Contracts" asp-action="Settings"><i
+                                                    class="bi bi-gear menu-icon"></i> تنظیمات</a></li>
                                             </ul>
                                         </div>
                                     }
@@ -348,136 +379,136 @@
                                                                         <li><a class='menu-item @(currentController == "Financial" && currentAction == "ReportingHub" ? "active" : "")'
                                                                                asp-controller="Financial" asp-action="ReportingHub"><i
                                                                             class="bi bi-bar-chart-line menu-icon"></i> گزارش‌ها</a></li>
-                                                                             <!-- TAX MODULE MENU LOADED -->
-                                                                             <li><a class='menu-item @(currentController == "InvoiceIntake" ? "active" : "")'
-                                                                                    asp-controller="InvoiceIntake" asp-action="Index"><i
-                                                                                 class="bi bi-receipt-cutoff menu-icon"></i> ورود و پردازش فاکتورها</a></li>
-                                                                                 <li><a class='menu-item @(currentController == "InvoiceDashboard" ? "active" : "")'
-                                                                                        asp-controller="InvoiceDashboard" asp-action="Index"><i
-                                                                                     class="bi bi-graph-up-arrow menu-icon"></i> داشبورد جامع مالیاتی</a></li>
-                                                                                     <li><a class='menu-item @(currentController == "Mowadiyan" ? "active" : "")'
-                                                                                            asp-controller="Mowadiyan" asp-action="Index"><i
-                                                                                         class="bi bi-globe2 menu-icon"></i> سامانه مودیان و تطبیق</a></li>
-                                                                                         <li><a class='menu-item @(currentController == "TaxAnalytics" ? "active" : "")'
-                                                                                                asp-controller="TaxAnalytics" asp-action="Index"><i
-                                                                                             class="bi bi-robot menu-icon"></i> تحلیل و دستیار هوشمند مالیاتی</a></li>
+                                                                            <!-- TAX MODULE MENU LOADED -->
+                                                                            <li><a class='menu-item @(currentController == "InvoiceIntake" ? "active" : "")'
+                                                                                   asp-controller="InvoiceIntake" asp-action="Index"><i
+                                                                                class="bi bi-receipt-cutoff menu-icon"></i> ورود و پردازش فاکتورها</a></li>
+                                                                                <li><a class='menu-item @(currentController == "InvoiceDashboard" ? "active" : "")'
+                                                                                       asp-controller="InvoiceDashboard" asp-action="Index"><i
+                                                                                    class="bi bi-graph-up-arrow menu-icon"></i> داشبورد جامع مالیاتی</a></li>
+                                                                                    <li><a class='menu-item @(currentController == "Mowadiyan" ? "active" : "")'
+                                                                                           asp-controller="Mowadiyan" asp-action="Index"><i class="bi bi-globe2 menu-icon"></i>
+                                                                                        سامانه مودیان و تطبیق</a></li>
+                                                                                        <li><a class='menu-item @(currentController == "TaxAnalytics" ? "active" : "")'
+                                                                                               asp-controller="TaxAnalytics" asp-action="Index"><i class="bi bi-robot menu-icon"></i>
+                                                                                            تحلیل و دستیار هوشمند مالیاتی</a></li>
 
-                                                                            <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")'
-                                                                                   asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 menu-icon"></i>
-                                                                                حقوق</a></li>
-                                                                                <li><a class='menu-item @(currentController == "Bimeh" ? "active" : "")' asp-controller="Bimeh"
-                                                                                           asp-action="Index"><i class="bi bi-shield-check menu-icon"></i> بیمه</a></li>
-                                                                                </ul>
-                                                                            </div>
-                                                                        }
+                                                                                            <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")'
+                                                                                                   asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 menu-icon"></i>
+                                                                                                حقوق</a></li>
+                                                                                                <li><a class='menu-item @(currentController == "Bimeh" ? "active" : "")' asp-controller="Bimeh"
+                                                                                                           asp-action="Index"><i class="bi bi-shield-check menu-icon"></i> بیمه</a></li>
+                                                                                                </ul>
+                                                                                            </div>
+                                                                                        }
 
-                                                                        <!-- Warehouse Module -->
-                                                                        @if (userCanAccessWarehouse)
-                                                                        {
-                                                                            <div class="menu-group sidebar-module" data-module="warehouse">
-                                                                                <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                                                                                    <span>انبار و عملیات</span>
-                                                                                    <i class="bi bi-chevron-down chevron"></i>
-                                                                                </button>
-                                                                                <ul class="menu-list module-children"
-                                                                                    style="max-height:@(IsExpanded("Warehouse","WarehouseInventory","WarehouseReceipts","WarehouseIssuances","WarehouseTransfer","Vendors","Waybill") ? "600px" : "0");">
-                                                                                    <li><a class='menu-item @(currentController == "Warehouse" ? "active" : "")'
-                                                                                           asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam menu-icon"></i>
-                                                                                        داشبورد انبار</a></li>
-                                                                                        <li><a class='menu-item @(currentController == "Warehouse" && currentAction == "Products" ? "active" : "")'
-                                                                                               asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box menu-icon"></i>
-                                                                                            کالاها</a></li>
-                                                                                            <li><a class='menu-item @(currentController == "WarehouseInventory" && currentAction == "Stock" ? "active" : "")'
-                                                                                                   asp-controller="WarehouseInventory" asp-action="Stock"><i
-                                                                                                class="bi bi-layers menu-icon"></i> موجودی</a></li>
-                                                                                                <li><a class='menu-item @(currentController == "WarehouseReceipts" ? "active" : "")'
-                                                                                                       asp-controller="WarehouseReceipts" asp-action="Receipts"><i
-                                                                                                    class="bi bi-box-arrow-in-down menu-icon"></i> رسیدها</a></li>
-                                                                                                    <li><a class='menu-item @(currentController == "WarehouseIssuances" ? "active" : "")'
-                                                                                                           asp-controller="WarehouseIssuances" asp-action="Issuances"><i
-                                                                                                        class="bi bi-box-arrow-up menu-icon"></i> حواله‌ها</a></li>
-                                                                                                        <li><a class='menu-item @(currentController == "Vendors" ? "active" : "")'
-                                                                                                               asp-controller="Vendors" asp-action="Index"><i class="bi bi-building menu-icon"></i>
-                                                                                                            تامین‌کنندگان</a></li>
-                                                                                                            <li><a class='menu-item @(currentController == "Waybill" ? "active" : "")'
-                                                                                                                   asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck menu-icon"></i>
-                                                                                                                بارنامه</a></li>
-                                                                                                            </ul>
-                                                                                                        </div>
-                                                                                                    }
+                                                                                        <!-- Warehouse Module -->
+                                                                                        @if (userCanAccessWarehouse)
+                                                                                        {
+                                                                                            <div class="menu-group sidebar-module" data-module="warehouse">
+                                                                                                <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                                                    <span>انبار و عملیات</span>
+                                                                                                    <i class="bi bi-chevron-down chevron"></i>
+                                                                                                </button>
+                                                                                                <ul class="menu-list module-children"
+                                                                                                    style="max-height:@(IsExpanded("Warehouse","WarehouseInventory","WarehouseReceipts","WarehouseIssuances","WarehouseTransfer","Vendors","Waybill") ? "600px" : "0");">
+                                                                                                    <li><a class='menu-item @(currentController == "Warehouse" ? "active" : "")'
+                                                                                                           asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam menu-icon"></i>
+                                                                                                        داشبورد انبار</a></li>
+                                                                                                        <li><a class='menu-item @(currentController == "Warehouse" && currentAction == "Products" ? "active" : "")'
+                                                                                                               asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box menu-icon"></i>
+                                                                                                            کالاها</a></li>
+                                                                                                            <li><a class='menu-item @(currentController == "WarehouseInventory" && currentAction == "Stock" ? "active" : "")'
+                                                                                                                   asp-controller="WarehouseInventory" asp-action="Stock"><i
+                                                                                                                class="bi bi-layers menu-icon"></i> موجودی</a></li>
+                                                                                                                <li><a class='menu-item @(currentController == "WarehouseReceipts" ? "active" : "")'
+                                                                                                                       asp-controller="WarehouseReceipts" asp-action="Receipts"><i
+                                                                                                                    class="bi bi-box-arrow-in-down menu-icon"></i> رسیدها</a></li>
+                                                                                                                    <li><a class='menu-item @(currentController == "WarehouseIssuances" ? "active" : "")'
+                                                                                                                           asp-controller="WarehouseIssuances" asp-action="Issuances"><i
+                                                                                                                        class="bi bi-box-arrow-up menu-icon"></i> حواله‌ها</a></li>
+                                                                                                                        <li><a class='menu-item @(currentController == "Vendors" ? "active" : "")'
+                                                                                                                               asp-controller="Vendors" asp-action="Index"><i class="bi bi-building menu-icon"></i>
+                                                                                                                            تامین‌کنندگان</a></li>
+                                                                                                                            <li><a class='menu-item @(currentController == "Waybill" ? "active" : "")'
+                                                                                                                                   asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck menu-icon"></i>
+                                                                                                                                بارنامه</a></li>
+                                                                                                                            </ul>
+                                                                                                                        </div>
+                                                                                                                    }
 
-                                                                                                    <!-- Management Module -->
-                                                                                                    @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
-                                                                                                    {
-                                                                                                        <div class="menu-group sidebar-module" data-module="management">
-                                                                                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                                                                                                                <span>مدیریت سیستم</span>
-                                                                                                                <i class="bi bi-chevron-down chevron"></i>
-                                                                                                            </button>
-                                                                                                            <ul class="menu-list module-children"
-                                                                                                                style="max-height:@(IsExpanded("ManagementDashboard","Settings","Security","AuditDashboard","ProcessAnalysis","Reports","DocumentArchive") ? "600px" : "0");">
-                                                                                                                @if (userCanAccessSystemSettings)
-                                                                                                                {
-                                                                                                                    <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Overview" ? "active" : "")'
-                                                                                                                           asp-controller="ManagementDashboard" asp-action="Overview"><i
-                                                                                                                        class="bi bi-grid-1x2 menu-icon"></i> داشبورد مدیریتی</a></li>
-                                                                                                                        <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Index" ? "active" : "")'
-                                                                                                                               asp-controller="ManagementDashboard" asp-action="Index"><i
-                                                                                                                            class="bi bi-stars menu-icon"></i> گزارش‌ساز هوشمند</a></li>
-                                                                                                                            <li><a class='menu-item @(currentController == "Settings" ? "active" : "")'
-                                                                                                                                   asp-controller="Settings" asp-action="Index"><i class="bi bi-gear menu-icon"></i>
-                                                                                                                                تنظیمات</a></li>
-                                                                                                                                <li><a class='menu-item @(currentController == "Security" ? "active" : "")'
-                                                                                                                                       asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock menu-icon"></i>
-                                                                                                                                    امنیت</a></li>
-                                                                                                                                    <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")'
-                                                                                                                                           asp-controller="Security" asp-action="WorkflowBuilder"><i
-                                                                                                                                        class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
-                                                                                                                                        <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")'
-                                                                                                                                               asp-controller="DocumentArchive" asp-action="Index"><i
-                                                                                                                                            class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
-                                                                                                                                            <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")'
-                                                                                                                                                   asp-controller="AuditDashboard" asp-action="Index"><i
-                                                                                                                                                class="bi bi-activity menu-icon"></i> ممیزی</a></li>
-                                                                                                                                            }
-                                                                                                                                            @if (userCanAccessProcessAnalytics)
-                                                                                                                                            {
-                                                                                                                                                <li><a class='menu-item @(currentController == "ProcessAnalysis" ? "active" : "")'
-                                                                                                                                                       asp-controller="ProcessAnalysis" asp-action="Index"><i
-                                                                                                                                                    class="bi bi-diagram-3 menu-icon"></i> تحلیل فرایند</a></li>
-                                                                                                                                                }
-                                                                                                                                                <li><a class='menu-item @(currentController == "Reports" ? "active" : "")'
-                                                                                                                                                       asp-controller="Reports" asp-action="Index"><i
-                                                                                                                                                    class="bi bi-file-bar-graph menu-icon"></i> گزارشات</a></li>
-                                                                                                                                                </ul>
-                                                                                                                                            </div>
-                                                                                                                                        }
+                                                                                                                    <!-- Management Module -->
+                                                                                                                    @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
+                                                                                                                    {
+                                                                                                                        <div class="menu-group sidebar-module" data-module="management">
+                                                                                                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                                                                                <span>مدیریت سیستم</span>
+                                                                                                                                <i class="bi bi-chevron-down chevron"></i>
+                                                                                                                            </button>
+                                                                                                                            <ul class="menu-list module-children"
+                                                                                                                                style="max-height:@(IsExpanded("ManagementDashboard","Settings","Security","AuditDashboard","ProcessAnalysis","Reports","DocumentArchive") ? "600px" : "0");">
+                                                                                                                                @if (userCanAccessSystemSettings)
+                                                                                                                                {
+                                                                                                                                    <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Overview" ? "active" : "")'
+                                                                                                                                           asp-controller="ManagementDashboard" asp-action="Overview"><i
+                                                                                                                                        class="bi bi-grid-1x2 menu-icon"></i> داشبورد مدیریتی</a></li>
+                                                                                                                                        <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Index" ? "active" : "")'
+                                                                                                                                               asp-controller="ManagementDashboard" asp-action="Index"><i
+                                                                                                                                            class="bi bi-stars menu-icon"></i> گزارش‌ساز هوشمند</a></li>
+                                                                                                                                            <li><a class='menu-item @(currentController == "Settings" ? "active" : "")'
+                                                                                                                                                   asp-controller="Settings" asp-action="Index"><i class="bi bi-gear menu-icon"></i>
+                                                                                                                                                تنظیمات</a></li>
+                                                                                                                                                <li><a class='menu-item @(currentController == "Security" ? "active" : "")'
+                                                                                                                                                       asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock menu-icon"></i>
+                                                                                                                                                    امنیت</a></li>
+                                                                                                                                                    <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")'
+                                                                                                                                                           asp-controller="Security" asp-action="WorkflowBuilder"><i
+                                                                                                                                                        class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
+                                                                                                                                                        <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")'
+                                                                                                                                                               asp-controller="DocumentArchive" asp-action="Index"><i
+                                                                                                                                                            class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
+                                                                                                                                                            <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")'
+                                                                                                                                                                   asp-controller="AuditDashboard" asp-action="Index"><i
+                                                                                                                                                                class="bi bi-activity menu-icon"></i> ممیزی</a></li>
+                                                                                                                                                            }
+                                                                                                                                                            @if (userCanAccessProcessAnalytics)
+                                                                                                                                                            {
+                                                                                                                                                                <li><a class='menu-item @(currentController == "ProcessAnalysis" ? "active" : "")'
+                                                                                                                                                                       asp-controller="ProcessAnalysis" asp-action="Index"><i
+                                                                                                                                                                    class="bi bi-diagram-3 menu-icon"></i> تحلیل فرایند</a></li>
+                                                                                                                                                                }
+                                                                                                                                                                <li><a class='menu-item @(currentController == "Reports" ? "active" : "")'
+                                                                                                                                                                       asp-controller="Reports" asp-action="Index"><i
+                                                                                                                                                                    class="bi bi-file-bar-graph menu-icon"></i> گزارشات</a></li>
+                                                                                                                                                                </ul>
+                                                                                                                                                            </div>
+                                                                                                                                                        }
 
-                                                                                                                                    </div>
+                                                                                                                                                    </div>
 
-                                                                                                                                    <!-- User Footer in Sidebar -->
-                                                                                                                                    <div class="sidebar-footer">
-                                                                                                                                        <a asp-controller="Settings" asp-action="Index">
-                                                                                                                                            <span
-                                                                                                                                                style="width:32px;height:32px;border-radius:2px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;color:var(--rk-sidebar-text);font-size:14px;border:1px solid rgba(0,0,0,0.15);"><i
-                                                                                                                                                class="bi bi-person"></i></span>
-                                                                                                                                                <span style="min-width:0;flex:1;">
-                                                                                                                                                    <span
-                                                                                                                                                    style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
-                                                                                                                                                    <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
-                                                                                                                                                </span>
-                                                                                                                                            </a>
-                                                                                                                                        </div>
-                                                                                                                                    </aside>
+                                                                                                                                                    <!-- User Footer in Sidebar -->
+                                                                                                                                                    <div class="sidebar-footer">
+                                                                                                                                                        <a asp-controller="Settings" asp-action="Index">
+                                                                                                                                                            <span
+                                                                                                                                                                style="width:32px;height:32px;border-radius:2px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;color:var(--rk-sidebar-text);font-size:14px;border:1px solid rgba(0,0,0,0.15);"><i
+                                                                                                                                                                class="bi bi-person"></i></span>
+                                                                                                                                                                <span style="min-width:0;flex:1;">
+                                                                                                                                                                    <span
+                                                                                                                                                                    style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
+                                                                                                                                                                    <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
+                                                                                                                                                                </span>
+                                                                                                                                                            </a>
+                                                                                                                                                        </div>
+                                                                                                                                                    </aside>
 
-                                                                                                                                    <!-- ═══════════════════════════════════════════════════
+                                                                                                                                                    <!-- ═══════════════════════════════════════════════════
         MAIN CONTENT — Desktop / Page Content Area
         ═══════════════════════════════════════════════════════ -->
-                                                                                                                                    <main class="rahkaran-desktop" id="mainContentArea">
-                                                                                                                                        @RenderBody()
-                                                                                                                                    </main>
+                                                                                                                                                    <main class="rahkaran-desktop" id="mainContentArea">
+                                                                                                                                                        @RenderBody()
+                                                                                                                                                    </main>
 
-                                                                                                                                    <!-- ═══════════════════════════════════════════════════
+                                                                                                                                                    <!-- ═══════════════════════════════════════════════════
         MULTI-TAB WORKSPACE — Persistent Enterprise Shell
         Tab bar + iframe stack render here via tab-manager.js.
         Wrapped in a column so the bar spans full width above the
@@ -485,247 +516,247 @@
         The static @RenderBody() above is hidden once tabs init;
         the default fixed tab (میز کار) then owns the viewport.
         ═══════════════════════════════════════════════════════ -->
-                                                                                                                                    <div class="rhyno-tab-column">
-                                                                                                                                        <div class="rhyno-tab-bar-host" id="rhynoTabBarHost" role="tablist" aria-label="تب های باز">
-                                                                                                                                            <div class="rhyno-tab-bar" id="rhynoTabBar"></div>
-                                                                                                                                        </div>
-                                                                                                                                        <div class="rhyno-tab-viewport" id="rhynoWorkspace" aria-live="polite"></div>
-                                                                                                                                    </div>
+                                                                                                                                                    <div class="rhyno-tab-column">
+                                                                                                                                                        <div class="rhyno-tab-bar-host" id="rhynoTabBarHost" role="tablist" aria-label="تب های باز">
+                                                                                                                                                            <div class="rhyno-tab-bar" id="rhynoTabBar"></div>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="rhyno-tab-viewport" id="rhynoWorkspace" aria-live="polite"></div>
+                                                                                                                                                    </div>
 
-                                                                                                                                </div>
+                                                                                                                                                </div>
 
-                                                                                                                                <!-- Hidden AntiForgery Form -->
-                                                                                                                                <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
+                                                                                                                                                <!-- Hidden AntiForgery Form -->
+                                                                                                                                                <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
 
-                                                                                                                                <!-- ═══════════════════════════════════════════════════════
+                                                                                                                                                <!-- ═══════════════════════════════════════════════════════
     CONFIRM DIALOG (Vanilla JS Modal)
     ═══════════════════════════════════════════════════════════ -->
-                                                                                                                                <div id="appConfirmDialog" class="rhyno-modal-overlay"
-                                                                                                                                     style="position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-                                                                                                                                    <div class="rhyno-modal-content"
-                                                                                                                                         style="width:100%;max-width:420px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
-                                                                                                                                        <div
-                                                                                                                                            style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f3f4f6;">
-                                                                                                                                            <h5 style="margin:0;font-size:14px;font-weight:800;color:#1f2937;">تایید عملیات</h5>
-                                                                                                                                            <button type="button"
-                                                                                                                                                    style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;"
-                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">&times;</button>
-                                                                                                                                        </div>
-                                                                                                                                        <div style="padding:16px 18px;">
-                                                                                                                                            <p id="appConfirmMessage" style="margin:0;font-size:13px;color:#4b5563;">آیا مطمئن هستید؟</p>
-                                                                                                                                        </div>
-                                                                                                                                        <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #f3f4f6;">
-                                                                                                                                            <button type="button"
-                                                                                                                                                    style="padding:8px 16px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;"
-                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
-                                                                                                                                            <button type="button" id="appConfirmOk"
-                                                                                                                                                    style="padding:8px 16px;border:none;background:#e11d48;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">تایید</button>
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                </div>
+                                                                                                                                                <div id="appConfirmDialog" class="rhyno-modal-overlay"
+                                                                                                                                                     style="position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+                                                                                                                                                    <div class="rhyno-modal-content"
+                                                                                                                                                         style="width:100%;max-width:420px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+                                                                                                                                                        <div
+                                                                                                                                                            style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f3f4f6;">
+                                                                                                                                                            <h5 style="margin:0;font-size:14px;font-weight:800;color:#1f2937;">تایید عملیات</h5>
+                                                                                                                                                            <button type="button"
+                                                                                                                                                                    style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;"
+                                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">&times;</button>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div style="padding:16px 18px;">
+                                                                                                                                                            <p id="appConfirmMessage" style="margin:0;font-size:13px;color:#4b5563;">آیا مطمئن هستید؟</p>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #f3f4f6;">
+                                                                                                                                                            <button type="button"
+                                                                                                                                                                    style="padding:8px 16px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;"
+                                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
+                                                                                                                                                            <button type="button" id="appConfirmOk"
+                                                                                                                                                                    style="padding:8px 16px;border:none;background:#e11d48;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">تایید</button>
+                                                                                                                                                        </div>
+                                                                                                                                                    </div>
+                                                                                                                                                </div>
 
-                                                                                                                                <!-- ═══════════════════════════════════════════════════════
+                                                                                                                                                <!-- ═══════════════════════════════════════════════════════
     SCRIPTS
     ═══════════════════════════════════════════════════════════ -->
-                                                                                                                                <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+                                                                                                                                                <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
 
-                                                                                                                                <script src="~/js/layout.js" asp-append-version="true"></script>
-                                                                                                                                <script src="~/js/tab-manager.js" asp-append-version="true"></script>
-                                                                                                                                <script src="~/js/professional-table.js" asp-append-version="true"></script>
-                                                                                                                                <script>
-                                                                                                                                    // ── Rhyno Core Utilities ──────────────────────────────────
-                                                                                                                                    window.Rhyno = (() => {
-                                                                                                                                    const toggleDropdown = (btn) => {
-                                                                                                                                    const container = btn.closest('.rhyno-dropdown-trigger');
-                                                                                                                                    if (!container) return;
-                                                                                                                                    const dropdown = container.querySelector('.rhyno-dropdown');
-                                                                                                                                    if (!dropdown) return;
-                                                                                                                                    const isOpen = dropdown.classList.contains('open');
-                                                                                                                                    closeAllDropdowns();
-                                                                                                                                    if (!isOpen) {
-                                                                                                                                    dropdown.classList.add('open');
-                                                                                                                                    btn.setAttribute('aria-expanded', 'true');
-                                                                                                                                    }
-                                                                                                                                    };
+                                                                                                                                                <script src="~/js/layout.js" asp-append-version="true"></script>
+                                                                                                                                                <script src="~/js/tab-manager.js" asp-append-version="true"></script>
+                                                                                                                                                <script src="~/js/professional-table.js" asp-append-version="true"></script>
+                                                                                                                                                <script>
+                                                                                                                                                    // ── Rhyno Core Utilities ──────────────────────────────────
+                                                                                                                                                    window.Rhyno = (() => {
+                                                                                                                                                    const toggleDropdown = (btn) => {
+                                                                                                                                                    const container = btn.closest('.rhyno-dropdown-trigger');
+                                                                                                                                                    if (!container) return;
+                                                                                                                                                    const dropdown = container.querySelector('.rhyno-dropdown');
+                                                                                                                                                    if (!dropdown) return;
+                                                                                                                                                    const isOpen = dropdown.classList.contains('open');
+                                                                                                                                                    closeAllDropdowns();
+                                                                                                                                                    if (!isOpen) {
+                                                                                                                                                    dropdown.classList.add('open');
+                                                                                                                                                    btn.setAttribute('aria-expanded', 'true');
+                                                                                                                                                    }
+                                                                                                                                                    };
 
-                                                                                                                                    const closeAllDropdowns = () => {
-                                                                                                                                    document.querySelectorAll('.rhyno-dropdown.open').forEach(d => {
-                                                                                                                                    d.classList.remove('open');
-                                                                                                                                    d.closest('.rhyno-dropdown-trigger')?.querySelector('button')?.setAttribute('aria-expanded', 'false');
-                                                                                                                                    });
-                                                                                                                                    };
+                                                                                                                                                    const closeAllDropdowns = () => {
+                                                                                                                                                    document.querySelectorAll('.rhyno-dropdown.open').forEach(d => {
+                                                                                                                                                    d.classList.remove('open');
+                                                                                                                                                    d.closest('.rhyno-dropdown-trigger')?.querySelector('button')?.setAttribute('aria-expanded', 'false');
+                                                                                                                                                    });
+                                                                                                                                                    };
 
-                                                                                                                                    const showModal = (id) => {
-                                                                                                                                    const el = document.getElementById(id);
-                                                                                                                                    if (!el) return;
-                                                                                                                                    el.style.display = 'flex';
-                                                                                                                                    el.classList.add('open');
-                                                                                                                                    document.body.style.overflow = 'hidden';
-                                                                                                                                    };
+                                                                                                                                                    const showModal = (id) => {
+                                                                                                                                                    const el = document.getElementById(id);
+                                                                                                                                                    if (!el) return;
+                                                                                                                                                    el.style.display = 'flex';
+                                                                                                                                                    el.classList.add('open');
+                                                                                                                                                    document.body.style.overflow = 'hidden';
+                                                                                                                                                    };
 
-                                                                                                                                    const hideModal = (id) => {
-                                                                                                                                    const el = document.getElementById(id);
-                                                                                                                                    if (!el) return;
-                                                                                                                                    el.style.display = 'none';
-                                                                                                                                    el.classList.remove('open');
-                                                                                                                                    document.body.style.overflow = '';
-                                                                                                                                    };
+                                                                                                                                                    const hideModal = (id) => {
+                                                                                                                                                    const el = document.getElementById(id);
+                                                                                                                                                    if (!el) return;
+                                                                                                                                                    el.style.display = 'none';
+                                                                                                                                                    el.classList.remove('open');
+                                                                                                                                                    document.body.style.overflow = '';
+                                                                                                                                                    };
 
-                                                                                                                                    let _confirmCallback = null;
-                                                                                                                                    const confirm = (message, callback) => {
-                                                                                                                                    document.getElementById('appConfirmMessage').textContent = message || 'آیا مطمئن هستید؟';
-                                                                                                                                    _confirmCallback = callback;
-                                                                                                                                    showModal('appConfirmDialog');
-                                                                                                                                    };
+                                                                                                                                                    let _confirmCallback = null;
+                                                                                                                                                    const confirm = (message, callback) => {
+                                                                                                                                                    document.getElementById('appConfirmMessage').textContent = message || 'آیا مطمئن هستید؟';
+                                                                                                                                                    _confirmCallback = callback;
+                                                                                                                                                    showModal('appConfirmDialog');
+                                                                                                                                                    };
 
-                                                                                                                                    const toast = (message, type = 'info') => {
-                                                                                                                                    const colors = { success: '#10b981', error: '#e11d48', warning: '#f59e0b', info: '#2b7cb3' };
-                                                                                                                                    const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
-                                                                                                                                    const toast = document.createElement('div');
-                                                                                                                                    toast.style.cssText = `position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;align-items:center;gap:8px;background:${colors[type] || colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(16px);opacity:0;transition:all 0.3s ease;`;
-                                                                                                                                    toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i> ${message}`;
-                                                                                                                                    document.body.appendChild(toast);
-                                                                                                                                    requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; });
-                                                                                                                                    setTimeout(() => {
-                                                                                                                                    toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
-                                                                                                                                    setTimeout(() => toast.remove(), 300);
-                                                                                                                                    }, 3500);
-                                                                                                                                    };
+                                                                                                                                                    const toast = (message, type = 'info') => {
+                                                                                                                                                    const colors = { success: '#10b981', error: '#e11d48', warning: '#f59e0b', info: '#2b7cb3' };
+                                                                                                                                                    const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
+                                                                                                                                                    const toast = document.createElement('div');
+                                                                                                                                                    toast.style.cssText = `position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;align-items:center;gap:8px;background:${colors[type] || colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(16px);opacity:0;transition:all 0.3s ease;`;
+                                                                                                                                                    toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i> ${message}`;
+                                                                                                                                                    document.body.appendChild(toast);
+                                                                                                                                                    requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; });
+                                                                                                                                                    setTimeout(() => {
+                                                                                                                                                    toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
+                                                                                                                                                    setTimeout(() => toast.remove(), 300);
+                                                                                                                                                    }, 3500);
+                                                                                                                                                    };
 
-                                                                                                                                    // Sidebar toggle
-                                                                                                                                    const toggleSidebar = () => {
-                                                                                                                                    const sidebar = document.getElementById('appSidebar');
-                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
-                                                                                                                                    if (!sidebar) return;
-                                                                                                                                    if (window.innerWidth <= 768) {
-                                                                                                                                    sidebar.classList.toggle('mobile-open');
-                                                                                                                                    if (overlay) overlay.classList.toggle('active');
-                                                                                                                                    } else {
-                                                                                                                                    sidebar.classList.toggle('collapsed');
-                                                                                                                                    }
-                                                                                                                                    };
+                                                                                                                                                    // Sidebar toggle
+                                                                                                                                                    const toggleSidebar = () => {
+                                                                                                                                                    const sidebar = document.getElementById('appSidebar');
+                                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
+                                                                                                                                                    if (!sidebar) return;
+                                                                                                                                                    if (window.innerWidth <= 768) {
+                                                                                                                                                    sidebar.classList.toggle('mobile-open');
+                                                                                                                                                    if (overlay) overlay.classList.toggle('active');
+                                                                                                                                                    } else {
+                                                                                                                                                    sidebar.classList.toggle('collapsed');
+                                                                                                                                                    }
+                                                                                                                                                    };
 
-                                                                                                                                    const closeSidebar = () => {
-                                                                                                                                    const sidebar = document.getElementById('appSidebar');
-                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
-                                                                                                                                    if (sidebar) sidebar.classList.remove('mobile-open');
-                                                                                                                                    if (overlay) overlay.classList.remove('active');
-                                                                                                                                    };
+                                                                                                                                                    const closeSidebar = () => {
+                                                                                                                                                    const sidebar = document.getElementById('appSidebar');
+                                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
+                                                                                                                                                    if (sidebar) sidebar.classList.remove('mobile-open');
+                                                                                                                                                    if (overlay) overlay.classList.remove('active');
+                                                                                                                                                    };
 
-                                                                                                                                    // Module accordion toggle
-                                                                                                                                    const toggleModule = (btn) => {
-                                                                                                                                    const module = btn.closest('.sidebar-module');
-                                                                                                                                    const children = module?.querySelector('.module-children');
-                                                                                                                                    if (!children) return;
-                                                                                                                                    const isOpen = children.style.maxHeight && children.style.maxHeight !== '0px';
-                                                                                                                                    if (isOpen) {
-                                                                                                                                    children.style.maxHeight = '0px';
-                                                                                                                                    btn.classList.remove('expanded');
-                                                                                                                                    } else {
-                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
-                                                                                                                                    btn.classList.add('expanded');
-                                                                                                                                    }
-                                                                                                                                    };
+                                                                                                                                                    // Module accordion toggle
+                                                                                                                                                    const toggleModule = (btn) => {
+                                                                                                                                                    const module = btn.closest('.sidebar-module');
+                                                                                                                                                    const children = module?.querySelector('.module-children');
+                                                                                                                                                    if (!children) return;
+                                                                                                                                                    const isOpen = children.style.maxHeight && children.style.maxHeight !== '0px';
+                                                                                                                                                    if (isOpen) {
+                                                                                                                                                    children.style.maxHeight = '0px';
+                                                                                                                                                    btn.classList.remove('expanded');
+                                                                                                                                                    } else {
+                                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
+                                                                                                                                                    btn.classList.add('expanded');
+                                                                                                                                                    }
+                                                                                                                                                    };
 
-                                                                                                                                    return { toggleDropdown, closeAllDropdowns, showModal, hideModal, confirm, toast, toggleSidebar, closeSidebar, toggleModule };
-                                                                                                                                    })();
+                                                                                                                                                    return { toggleDropdown, closeAllDropdowns, showModal, hideModal, confirm, toast, toggleSidebar, closeSidebar, toggleModule };
+                                                                                                                                                    })();
 
-                                                                                                                                    // ── Clock & Persian Date ────────────────────────────────
-                                                                                                                                    (() => {
-                                                                                                                                    const dateElem = document.getElementById('headerDate');
-                                                                                                                                    if (!dateElem) return;
-                                                                                                                                    const update = () => {
-                                                                                                                                    const now = new Date();
-                                                                                                                                    try {
-                                                                                                                                    dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-                                                                                                                                    } catch (e) {
-                                                                                                                                    dateElem.textContent = now.toLocaleDateString('fa-IR');
-                                                                                                                                    }
-                                                                                                                                    };
-                                                                                                                                    update();
-                                                                                                                                    setInterval(update, 60000);
-                                                                                                                                    })();
+                                                                                                                                                    // ── Clock & Persian Date ────────────────────────────────
+                                                                                                                                                    (() => {
+                                                                                                                                                    const dateElem = document.getElementById('headerDate');
+                                                                                                                                                    if (!dateElem) return;
+                                                                                                                                                    const update = () => {
+                                                                                                                                                    const now = new Date();
+                                                                                                                                                    try {
+                                                                                                                                                    dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+                                                                                                                                                    } catch (e) {
+                                                                                                                                                    dateElem.textContent = now.toLocaleDateString('fa-IR');
+                                                                                                                                                    }
+                                                                                                                                                    };
+                                                                                                                                                    update();
+                                                                                                                                                    setInterval(update, 60000);
+                                                                                                                                                    })();
 
-                                                                                                                                    // ── Sidebar Search ──────────────────────────────────────
-                                                                                                                                    (() => {
-                                                                                                                                    const input = document.getElementById('sidebarMenuSearch');
-                                                                                                                                    if (!input) return;
-                                                                                                                                    input.addEventListener('input', () => {
-                                                                                                                                    const query = input.value.trim().toLowerCase();
-                                                                                                                                    const items = document.querySelectorAll('#appSidebar .menu-item');
-                                                                                                                                    const modules = document.querySelectorAll('#appSidebar .sidebar-module');
-                                                                                                                                    items.forEach(item => {
-                                                                                                                                    const text = (item.textContent || '').toLowerCase();
-                                                                                                                                    item.style.display = (!query || text.includes(query)) ? '' : 'none';
-                                                                                                                                    });
-                                                                                                                                    modules.forEach(mod => {
-                                                                                                                                    const visibleItems = Array.from(mod.querySelectorAll('.menu-item')).some(i => i.style.display !== 'none');
-                                                                                                                                    const headerMatch = query && (mod.querySelector('.module-toggle span')?.textContent || '').toLowerCase().includes(query);
-                                                                                                                                    mod.style.display = (visibleItems || headerMatch || !query) ? '' : 'none';
-                                                                                                                                    const children = mod.querySelector('.module-children');
-                                                                                                                                    const btn = mod.querySelector('.module-toggle');
-                                                                                                                                    if (query && (visibleItems || headerMatch)) {
-                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
-                                                                                                                                    btn.classList.add('expanded');
-                                                                                                                                    } else if (!query) {
-                                                                                                                                    // keep server-rendered state untouched when query cleared
-                                                                                                                                    }
-                                                                                                                                    });
-                                                                                                                                    });
-                                                                                                                                    })();
+                                                                                                                                                    // ── Sidebar Search ──────────────────────────────────────
+                                                                                                                                                    (() => {
+                                                                                                                                                    const input = document.getElementById('sidebarMenuSearch');
+                                                                                                                                                    if (!input) return;
+                                                                                                                                                    input.addEventListener('input', () => {
+                                                                                                                                                    const query = input.value.trim().toLowerCase();
+                                                                                                                                                    const items = document.querySelectorAll('#appSidebar .menu-item');
+                                                                                                                                                    const modules = document.querySelectorAll('#appSidebar .sidebar-module');
+                                                                                                                                                    items.forEach(item => {
+                                                                                                                                                    const text = (item.textContent || '').toLowerCase();
+                                                                                                                                                    item.style.display = (!query || text.includes(query)) ? '' : 'none';
+                                                                                                                                                    });
+                                                                                                                                                    modules.forEach(mod => {
+                                                                                                                                                    const visibleItems = Array.from(mod.querySelectorAll('.menu-item')).some(i => i.style.display !== 'none');
+                                                                                                                                                    const headerMatch = query && (mod.querySelector('.module-toggle span')?.textContent || '').toLowerCase().includes(query);
+                                                                                                                                                    mod.style.display = (visibleItems || headerMatch || !query) ? '' : 'none';
+                                                                                                                                                    const children = mod.querySelector('.module-children');
+                                                                                                                                                    const btn = mod.querySelector('.module-toggle');
+                                                                                                                                                    if (query && (visibleItems || headerMatch)) {
+                                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
+                                                                                                                                                    btn.classList.add('expanded');
+                                                                                                                                                    } else if (!query) {
+                                                                                                                                                    // keep server-rendered state untouched when query cleared
+                                                                                                                                                    }
+                                                                                                                                                    });
+                                                                                                                                                    });
+                                                                                                                                                    })();
 
-                                                                                                                                    // ── Event Delegation ────────────────────────────────────
-                                                                                                                                    document.addEventListener('click', (e) => {
-                                                                                                                                    if (!e.target.closest('.rhyno-dropdown-trigger')) Rhyno.closeAllDropdowns();
-                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
-                                                                                                                                    if (e.target === overlay) Rhyno.closeSidebar();
-                                                                                                                                    });
+                                                                                                                                                    // ── Event Delegation ────────────────────────────────────
+                                                                                                                                                    document.addEventListener('click', (e) => {
+                                                                                                                                                    if (!e.target.closest('.rhyno-dropdown-trigger')) Rhyno.closeAllDropdowns();
+                                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
+                                                                                                                                                    if (e.target === overlay) Rhyno.closeSidebar();
+                                                                                                                                                    });
 
-                                                                                                                                    document.addEventListener('keydown', (e) => {
-                                                                                                                                    if (e.key === 'Escape') {
-                                                                                                                                    Rhyno.closeAllDropdowns();
-                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
-                                                                                                                                    Rhyno.closeSidebar();
-                                                                                                                                    }
-                                                                                                                                    });
+                                                                                                                                                    document.addEventListener('keydown', (e) => {
+                                                                                                                                                    if (e.key === 'Escape') {
+                                                                                                                                                    Rhyno.closeAllDropdowns();
+                                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
+                                                                                                                                                    Rhyno.closeSidebar();
+                                                                                                                                                    }
+                                                                                                                                                    });
 
-                                                                                                                                    // ── Sidebar Toggle Button ───────────────────────────────
-                                                                                                                                    document.getElementById('btnToggleSidebar')?.addEventListener('click', (e) => {
-                                                                                                                                    e.preventDefault();
-                                                                                                                                    Rhyno.toggleSidebar();
-                                                                                                                                    });
+                                                                                                                                                    // ── Sidebar Toggle Button ───────────────────────────────
+                                                                                                                                                    document.getElementById('btnToggleSidebar')?.addEventListener('click', (e) => {
+                                                                                                                                                    e.preventDefault();
+                                                                                                                                                    Rhyno.toggleSidebar();
+                                                                                                                                                    });
 
-                                                                                                                                    // ── Confirm Dialog Bind ─────────────────────────────────
-                                                                                                                                    document.getElementById('appConfirmOk')?.addEventListener('click', () => {
-                                                                                                                                    if (window.Rhyno._confirmCallback) {
-                                                                                                                                    window.Rhyno._confirmCallback();
-                                                                                                                                    window.Rhyno._confirmCallback = null;
-                                                                                                                                    }
-                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
-                                                                                                                                    });
+                                                                                                                                                    // ── Confirm Dialog Bind ─────────────────────────────────
+                                                                                                                                                    document.getElementById('appConfirmOk')?.addEventListener('click', () => {
+                                                                                                                                                    if (window.Rhyno._confirmCallback) {
+                                                                                                                                                    window.Rhyno._confirmCallback();
+                                                                                                                                                    window.Rhyno._confirmCallback = null;
+                                                                                                                                                    }
+                                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
+                                                                                                                                                    });
 
-                                                                                                                                    // ── SignalR ────────────────────────────────────────────
-                                                                                                                                    (function () {
-                                                                                                                                    if (typeof signalR === 'undefined') return;
-                                                                                                                                    const connection = new signalR.HubConnectionBuilder()
-                                                                                                                                    .withUrl("/automationHub")
-                                                                                                                                    .withAutomaticReconnect()
-                                                                                                                                    .build();
-                                                                                                                                    connection.on("ReceiveNewTaskNotification", function (data) {
-                                                                                                                                    Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
-                                                                                                                                    });
-                                                                                                                                    connection.start().then(() => console.log("SignalR Connected.")).catch(err => console.error("SignalR Error:", err));
-                                                                                                                                    })();
-                                                                                                                                </script>
+                                                                                                                                                    // ── SignalR ────────────────────────────────────────────
+                                                                                                                                                    (function () {
+                                                                                                                                                    if (typeof signalR === 'undefined') return;
+                                                                                                                                                    const connection = new signalR.HubConnectionBuilder()
+                                                                                                                                                    .withUrl("/automationHub")
+                                                                                                                                                    .withAutomaticReconnect()
+                                                                                                                                                    .build();
+                                                                                                                                                    connection.on("ReceiveNewTaskNotification", function (data) {
+                                                                                                                                                    Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
+                                                                                                                                                    });
+                                                                                                                                                    connection.start().then(() => console.log("SignalR Connected.")).catch(err => console.error("SignalR Error:", err));
+                                                                                                                                                    })();
+                                                                                                                                                </script>
 
-                                                                                                                                @await RenderSectionAsync("Scripts", required: false)
-                                                                                                                                <script src="~/js/app-ui.js" asp-append-version="true"></script>
-                                                                                                                                <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
-                                                                                                                                <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
-                                                                                                                                @if (User?.Identity?.IsAuthenticated == true)
-                                                                                                                                {
-                                                                                                                                    @await Html.PartialAsync("_TaxAiAssistantWidget")
-                                                                                                                                }
-                                                                                                                            </body>
+                                                                                                                                                @await RenderSectionAsync("Scripts", required: false)
+                                                                                                                                                <script src="~/js/app-ui.js" asp-append-version="true"></script>
+                                                                                                                                                <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
+                                                                                                                                                <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
+                                                                                                                                                @if (User?.Identity?.IsAuthenticated == true)
+                                                                                                                                                {
+                                                                                                                                                    @await Html.PartialAsync("_TaxAiAssistantWidget")
+                                                                                                                                                }
+                                                                                                                                            </body>
 
-                                                                                                                        </html>
+                                                                                                                                        </html>

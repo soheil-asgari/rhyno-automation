@@ -1,0 +1,344 @@
+@model ContractDetailsVM
+@{
+    ViewData["Title"] = "جزئیات قرارداد";
+}
+
+<div class="container-fluid py-4">
+    @if (TempData["SuccessMessage"] is string successMsg)
+    {
+        <div class="alert alert-success py-2 px-3 small mb-3">@successMsg</div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMsg)
+    {
+        <div class="alert alert-danger py-2 px-3 small mb-3">@errorMsg</div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">جزئیات قرارداد - @Model.Title</h6>
+        <div class="d-flex gap-2 flex-wrap">
+            @if (Model.CanEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">ویرایش</a>
+                <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-warning">بایگانی</button>
+                </form>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline"
+                      onsubmit="return confirm('آیتم حذف شود؟');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                </form>
+            }
+            <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="btn btn-sm btn-outline-info">چاپ/PDF</a>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">بازگشت</a>
+        </div>
+    </div>
+
+    @* Contract Info Card *@
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-light py-2 px-3">
+            <small class="fw-bold">اطلاعات قرارداد</small>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-2">
+                <div class="col-md-3"><small class="text-muted d-block">شماره قرارداد</small><span class="fw-bold">@Model.ContractNumber</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">عنوان</small><span>@Model.Title</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">نوع قرارداد</small><span>@(Model.ContractType ?? "-")</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">وضعیت</small>
+                    <span class="badge @(Model.Status switch
+                    {
+                        var s when s == ContractStatuses.Active => "text-bg-success",
+                        var s when s == ContractStatuses.Completed => "text-bg-primary",
+                        var s when s == ContractStatuses.Draft => "text-bg-secondary",
+                        var s when s == ContractStatuses.Cancelled => "text-bg-danger",
+                        var s when s == ContractStatuses.Archived => "text-bg-warning",
+                        var s when s == ContractStatuses.Expired => "text-bg-dark",
+                        var s when s == ContractStatuses.Suspended => "text-bg-info",
+                        var s when s == ContractStatuses.Terminated => "text-bg-danger",
+                        _ => "text-bg-light"
+                    })">@Model.Status</span>
+                </div>
+                <div class="col-md-3"><small class="text-muted d-block">مشتری</small><span>@(!string.IsNullOrEmpty(Model.CustomerName) ? Model.CustomerName : Model.ClientName)</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">تلفن مشتری</small><span>@(Model.ClientPhone ?? "-")</span></div>
+                <div class="col-md-6"><small class="text-muted d-block">آدرس مشتری</small><span>@(Model.ClientAddress ?? "-")</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">قالب</small><span>@(Model.TemplateName ?? "بدون قالب")</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">مسئول پیگیری</small><span>@(Model.ResponsibleUserName ?? "-")</span></div>
+                <div class="col-md-12"><small class="text-muted d-block">توضیحات</small><span>@(Model.Description ?? "-")</span></div>
+            </div>
+        </div>
+    </div>
+
+    @* Dates Card *@
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-light py-2 px-3">
+            <small class="fw-bold">تاریخ‌ها</small>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-2">
+                <div class="col-md-2"><small class="text-muted d-block">تاریخ شروع</small><span class="SgFarsiDigits">@Model.StartDate.ToString("yyyy/MM/dd")</span></div>
+                <div class="col-md-2"><small class="text-muted d-block">تاریخ پایان</small><span class="SgFarsiDigits">@(Model.EndDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+                <div class="col-md-2"><small class="text-muted d-block">تاریخ امضا</small><span class="SgFarsiDigits">@(Model.SigningDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+                <div class="col-md-2"><small class="text-muted d-block">تاریخ تمدید</small><span class="SgFarsiDigits">@(Model.RenewalDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+                <div class="col-md-2"><small class="text-muted d-block">تاریخ انقضا</small><span class="SgFarsiDigits">@(Model.ExpirationDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+            </div>
+        </div>
+    </div>
+
+    @* Terms & Notes Card *@
+    @if (!string.IsNullOrEmpty(Model.TermsAndConditions) || !string.IsNullOrEmpty(Model.Notes))
+    {
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-light py-2 px-3">
+                <small class="fw-bold">شرایط و یادداشت‌ها</small>
+            </div>
+            <div class="card-body p-3">
+                <div class="row g-2">
+                    @if (!string.IsNullOrEmpty(Model.TermsAndConditions))
+                    {
+                        <div class="col-md-6"><small class="text-muted d-block">شرایط و ضوابط</small><span>@Model.TermsAndConditions</span></div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <div class="col-md-6"><small class="text-muted d-block">یادداشت‌ها</small><span>@Model.Notes</span></div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Financial Info Card *@
+    @if (Model.CanViewFinancials)
+    {
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-light py-2 px-3">
+                <small class="fw-bold">اطلاعات مالی</small>
+            </div>
+            <div class="card-body p-3">
+                <div class="row g-2">
+                    <div class="col-md-3"><small class="text-muted d-block">مبلغ کل</small>
+                        <span class="SgFarsiDigits fw-bold text-primary">@Model.TotalAmount.ToString("N0")</span>
+                    </div>
+                    <div class="col-md-3"><small class="text-muted d-block">پرداخت‌شده</small>
+                        <span class="SgFarsiDigits fw-bold text-success">@Model.PaidAmount.ToString("N0")</span>
+                    </div>
+                    <div class="col-md-3"><small class="text-muted d-block">باقی‌مانده</small>
+                        <span class="SgFarsiDigits fw-bold text-danger">@Model.RemainingAmount.ToString("N0")</span>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted d-block">وضعیت پرداخت</small>
+                        <span class="badge @(Model.RemainingAmount <= 0 ? "text-bg-success" : Model.PaidAmount > 0 ? "text-bg-warning" : "text-bg-secondary")">
+                            @(Model.RemainingAmount <= 0 ? "تسویه شده" : Model.PaidAmount > 0 ? "پرداخت جزئی" : "پرداخت نشده")
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Meta Info Card *@
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-light py-2 px-3">
+            <small class="fw-bold">اطلاعات سیستمی</small>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-2">
+                <div class="col-md-3"><small class="text-muted d-block">مسئول</small><span>@Model.ResponsibleUserName</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">ایجادکننده</small><span>@Model.CreatedByUserName</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">تاریخ ایجاد</small><span class="SgFarsiDigits">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span></div>
+                <div class="col-md-3"><small class="text-muted d-block">آخرین ویرایش</small><span class="SgFarsiDigits">@Model.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</span></div>
+                @if (Model.IsArchived)
+                {
+                    <div class="col-md-3"><small class="text-muted d-block">تاریخ بایگانی</small><span class="SgFarsiDigits">@Model.ArchivedAt?.ToString("yyyy/MM/dd HH:mm")</span></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Payments Card *@
+    @if (Model.CanViewFinancials)
+    {
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+                <small class="fw-bold">پرداخت‌ها</small>
+                @if (Model.CanEdit)
+                {
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addPaymentModal">+ پرداخت جدید</button>
+                }
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Payments.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>مبلغ</th>
+                                    <th>تاریخ پرداخت</th>
+                                    <th>روش پرداخت</th>
+                                    <th>شماره مرجع</th>
+                                    <th>توضیحات</th>
+                                    <th class="text-center">عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var payment in Model.Payments)
+                                {
+                                    <tr>
+                                        <td class="SgFarsiDigits">@payment.Amount.ToString("N0")</td>
+                                        <td class="SgFarsiDigits">@payment.PaymentDate.ToString("yyyy/MM/dd")</td>
+                                        <td>@(payment.PaymentMethod ?? "-")</td>
+                                        <td>@(payment.ReferenceNumber ?? "-")</td>
+                                        <td>@(payment.Description ?? "-")</td>
+                                        <td class="text-center">
+                                            @if (Model.CanEdit)
+                                            {
+                                                <form asp-action="DeletePayment" asp-route-paymentId="@payment.Id" asp-route-contractId="@Model.Id" method="post" class="d-inline"
+                                                      onsubmit="return confirm('پرداخت حذف شود؟');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-3 small">هیچ پرداختی ثبت نشده است.</div>
+                }
+            </div>
+        </div>
+    }
+
+    @* Attachments Card *@
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+            <small class="fw-bold">ضمیمه‌ها</small>
+            @if (Model.CanEdit)
+            {
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadAttachmentModal">+ بارگذاری فایل</button>
+            }
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Attachments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>نام فایل</th>
+                                <th>نوع</th>
+                                <th>حجم</th>
+                                <th>تاریخ</th>
+                                <th class="text-center">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var att in Model.Attachments)
+                            {
+                                <tr>
+                                    <td>@att.FileName</td>
+                                    <td>@att.ContentType</td>
+                                    <td class="SgFarsiDigits">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
+                                    <td class="SgFarsiDigits">@att.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                    <td class="text-center">
+                                        <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="btn btn-sm btn-outline-info">دانلود</a>
+                                        @if (Model.CanEdit)
+                                        {
+                                            <form asp-action="DeleteAttachment" asp-route-attachmentId="@att.Id" asp-route-contractId="@Model.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('فایل حذف شود؟');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-3 small">هیچ ضمیمه‌ای وجود ندارد.</div>
+            }
+        </div>
+    </div>
+</div>
+
+@* Add Payment Modal *@
+@if (Model.CanViewFinancials && Model.CanEdit)
+{
+    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <form asp-action="AddPayment" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ContractId" value="@Model.Id" />
+                    <div class="modal-header py-2 px-3">
+                        <small class="fw-bold">ثبت پرداخت جدید</small>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-3">
+                        <div class="mb-2">
+                            <label class="form-label small">مبلغ</label>
+                            <input name="Amount" type="number" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">تاریخ پرداخت</label>
+                            <input name="PaymentDate" type="date" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">روش پرداخت</label>
+                            <input name="PaymentMethod" class="form-control form-control-sm" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">شماره مرجع</label>
+                            <input name="ReferenceNumber" class="form-control form-control-sm" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">توضیحات</label>
+                            <textarea name="Description" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2 px-3">
+                        <button type="submit" class="btn btn-sm btn-success">ثبت پرداخت</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@* Upload Attachment Modal *@
+@if (Model.CanEdit)
+{
+    <div class="modal fade" id="uploadAttachmentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="contractId" value="@Model.Id" />
+                    <div class="modal-header py-2 px-3">
+                        <small class="fw-bold">بارگذاری فایل</small>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-3">
+                        <div class="mb-2">
+                            <label class="form-label small">انتخاب فایل</label>
+                            <input name="file" type="file" class="form-control form-control-sm" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2 px-3">
+                        <button type="submit" class="btn btn-sm btn-primary">بارگذاری</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

@@ -56,7 +56,16 @@ namespace OfficeAutomation.Services.Security
             new() { Key = "AuditLogs.Export", DisplayName = "خروجی لاگ‌های ممیزی", Category = "امنیت", Description = "دریافت خروجی لاگ‌های ممیزی." },
 
             new() { Key = "تحلیل.مشاهده", DisplayName = "مشاهده داشبورد تحلیل", Category = "تحلیل", Description = "مشاهده داشبورد تحلیل فرآیند و ممیزی." },
-            new() { Key = "تحلیل.خروجی", DisplayName = "خروجی داشبورد تحلیل", Category = "تحلیل", Description = "دریافت فایل خروجی از داشبورد تحلیل." }
+            new() { Key = "تحلیل.خروجی", DisplayName = "خروجی داشبورد تحلیل", Category = "تحلیل", Description = "دریافت فایل خروجی از داشبورد تحلیل." },
+
+            // ── Contracts Module ────────────────────────────────────
+            new() { Key = "Contract.View", DisplayName = "مشاهده قراردادها", Category = "قراردادها", Description = "مشاهده فهرست و جزئیات قراردادها." },
+            new() { Key = "Contract.Create", DisplayName = "ایجاد قرارداد", Category = "قراردادها", Description = "ایجاد قرارداد جدید." },
+            new() { Key = "Contract.Edit", DisplayName = "ویرایش قرارداد", Category = "قراردادها", Description = "ویرایش قراردادهای موجود." },
+            new() { Key = "Contract.Delete", DisplayName = "حذف قرارداد", Category = "قراردادها", Description = "حذف قراردادها." },
+            new() { Key = "Contract.Payment", DisplayName = "مدیریت پرداخت‌ها", Category = "قراردادها", Description = "ثبت و حذف پرداخت‌های قرارداد." },
+            new() { Key = "Contract.Settings", DisplayName = "تنظیمات قراردادها", Category = "قراردادها", Description = "مدیریت قالب‌ها و تنظیمات قراردادها." },
+            new() { Key = "Contract.Archive", DisplayName = "بایگانی قراردادها", Category = "قراردادها", Description = "بایگانی و خروج از بایگانی قراردادها." }
         ];
 
         public static readonly IReadOnlyDictionary<string, string[]> ControllerFallbackPermissions =
@@ -77,6 +86,7 @@ namespace OfficeAutomation.Services.Security
                 ["AuditLogs"] = ["AuditLogs.Read"],
                 ["OrganizationCalendar"] = ["Calendar.View"],
                 ["DocumentArchive"] = ["Archive.View"],
+                ["Contracts"] = ["Contract.View"],
                 ["تحلیل‌فرآیند"] = ["تحلیل.مشاهده"]
             };
     }

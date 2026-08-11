@@ -26,6 +26,16 @@ public sealed class OfficeDbContext : ModularDbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Department> Departments => Set<Department>();
 
+    // ── Customers Module ──────────────────────────────────────────
+    public DbSet<Customer> Customers => Set<Customer>();
+
+    // ── Contracts Module ──────────────────────────────────────────
+    public DbSet<Contract> Contracts => Set<Contract>();
+    public DbSet<ContractTemplate> ContractTemplates => Set<ContractTemplate>();
+    public DbSet<ContractPayment> ContractPayments => Set<ContractPayment>();
+    public DbSet<ContractAttachment> ContractAttachments => Set<ContractAttachment>();
+    public DbSet<ContractUserSetting> ContractUserSettings => Set<ContractUserSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ApplyTenantSchema(modelBuilder);

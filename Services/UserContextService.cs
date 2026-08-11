@@ -19,6 +19,7 @@ public sealed class UserContextModel
     public bool CanAccessHumanCapital { get; set; }
     public bool CanAccessSystemSettings { get; set; }
     public bool CanAccessProcessAnalytics { get; set; }
+    public bool CanAccessContracts { get; set; }
     public string DisplayName { get; set; } = "کاربر";
     public string UserRoleLabel { get; set; } = "کاربر سیستم";
     public List<HeaderNotificationVM> Notifications { get; set; } = new();
@@ -70,9 +71,9 @@ public sealed class UserContextService : IUserContextService
         else if (string.Equals(savedTheme, "Dark", StringComparison.OrdinalIgnoreCase)) model.ThemePreference = "Dark";
 
         // 2. Display Name
-        model.DisplayName = principal.FindFirst("name")?.Value 
-            ?? principal.FindFirst(ClaimTypes.Name)?.Value 
-            ?? principal.Identity?.Name 
+        model.DisplayName = principal.FindFirst("name")?.Value
+            ?? principal.FindFirst(ClaimTypes.Name)?.Value
+            ?? principal.Identity?.Name
             ?? "کاربر";
 
         // 3. User Role Label & Security Admin check
@@ -93,6 +94,7 @@ public sealed class UserContextService : IUserContextService
         model.CanAccessHumanCapital = userHasSecurityAccess;
         model.CanAccessSystemSettings = userHasSecurityAccess;
         model.CanAccessProcessAnalytics = userHasSecurityAccess;
+        model.CanAccessContracts = userHasSecurityAccess;
 
         if (!userHasSecurityAccess)
         {
@@ -110,6 +112,7 @@ public sealed class UserContextService : IUserContextService
                 model.CanAccessSystemSettings = permission.CanAccessSystemSettings;
             }
             model.CanAccessProcessAnalytics = await _authorizationFacade.HasPermissionAsync("تحلیل.مشاهده");
+            model.CanAccessContracts = await _authorizationFacade.HasPermissionAsync("Contract.View");
         }
 
         // 5. Notifications
