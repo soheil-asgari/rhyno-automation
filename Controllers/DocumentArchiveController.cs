@@ -90,8 +90,6 @@ namespace OfficeAutomation.Controllers
                     ContentType = item.ContentType,
                     FileSize = item.FileSize,
                     IsPreviewable = item.IsPreviewable,
-                    IsUnderLegalHold = item.IsUnderLegalHold,
-                    HoldReason = item.HoldReason,
                     CreatedAt = item.CreatedAt,
                     CreatorName = item.CreatedByUser?.FullName ?? item.CreatedByUser?.UserName ?? "کاربر"
                 }).ToList()
@@ -246,15 +244,6 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
-            try
-            {
-                EnsureNotUnderLegalHold(item);
-            }
-            catch (InvalidOperationException error)
-            {
-                TempData["ArchiveMessage"] = error.Message;
-                return BadRequest(error.Message);
-            }
 
             var physicalPath = _tenantPathResolver.MapRelativeToPhysical(Path.Combine(_environment.ContentRootPath, "App_Data"), item.RelativePath);
             if (!System.IO.File.Exists(physicalPath))
@@ -302,8 +291,6 @@ namespace OfficeAutomation.Controllers
                 ContentType = item.ContentType,
                 FileSize = item.FileSize,
                 IsPreviewable = item.IsPreviewable,
-                IsUnderLegalHold = item.IsUnderLegalHold,
-                HoldReason = item.HoldReason,
                 CurrentVersion = item.CurrentVersion,
                 ExpirationDate = item.ExpirationDate,
                 IsArchived = item.IsArchived,
@@ -333,15 +320,6 @@ namespace OfficeAutomation.Controllers
 
             if (document == null) return NotFound();
 
-            try
-            {
-                DocumentArchiveController.EnsureNotUnderLegalHold(document);
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["ArchiveMessage"] = ex.Message;
-                return RedirectToAction(nameof(Versions), new { id });
-            }
 
             if (model.File != null)
             {
@@ -570,18 +548,5 @@ namespace OfficeAutomation.Controllers
             }
         }
 
-        public static void EnsureNotUnderLegalHold(DocumentArchiveItem item)
-        {
-            if (!item.IsUnderLegalHold)
-            {
-                return;
-            }
-
-            var reason = string.IsNullOrWhiteSpace(item.HoldReason)
-                ? "این سند تحت نگهداری قانونی است."
-                : item.HoldReason.Trim();
-            throw new InvalidOperationException(
-                $"امکان حذف یا ویرایش سند به دلیل فرآیندهای قانونی وجود ندارد. دلیل نگهداری: {reason}");
-        }
     }
 }

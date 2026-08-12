@@ -400,6 +400,16 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStaticFiles();
 
+// ── Force UTF-8 Encoding for all requests/responses ────
+app.Use(async (context, next) =>
+{
+    context.Request.ContentType = "text/html; charset=utf-8";
+    await next();
+    if (context.Response.HasStarted)
+        return;
+    context.Response.ContentType = context.Response.ContentType ?? "text/html; charset=utf-8";
+});
+
 // ── Security Headers ───────────────────────────────────
 app.UseSecurityHeaders();
 

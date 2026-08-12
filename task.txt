@@ -1,70 +1,45 @@
-# TASK: REFIX CONTRACTS UI/UX WITH TAILWIND CSS & VANILLA JS (STRICTLY NO BOOTSTRAP / NO JQUERY)
+# CRITICAL FIXES: DATABASE CONFLICTS, ENCODING, HR MODULE, AND VANILLA JS STRICT COMPLIANCE
 
-Fix all reported bugs, tab interactions, dashboard metrics, Jalali date pickers, RTL layout issues, and print stylesheets in the Client Contracts module. 
+You must fix several critical bugs caused by overlapping domains, character encoding issues, and residual ASP.NET default behaviors.
 
-CRITICAL REQUIREMENT: Do NOT use Bootstrap or jQuery anywhere. The tech stack is strictly Tailwind CSS and Native Vanilla JavaScript.
+### 1. SEPARATE ARCHIVES & FIX SQL EXCEPTION (500 ERROR)
+* **Bug:** `SqlException: Invalid column name 'HoldReason'. Invalid column name 'IsUnderLegalHold'.` on `/DocumentArchive`.
+* **Root Cause:** You previously mixed up the `Contract` archive logic with the pre-existing global `DocumentArchive` system. 
+* **Fix:** 
+  - Strictly separate the two domains. `DocumentArchive` and `ContractArchive` are entirely independent.
+  - Revert or fix the EF Core queries in `DocumentArchiveController` or `DocumentService`. Remove any references to `HoldReason` or `IsUnderLegalHold` if they do not exist in the `DocumentArchive` SQL table, or correctly add them via a new EF Migration if they belong there.
 
----
+### 2. FIX PERSIAN ENCODING IN DROPDOWNS (GIBBERISH TEXT)
+* **Bug:** "Cooperation Type" (نوع همکاری) displays as `ÊãÇã æÞÊ` instead of `تمام وقت`.
+* **Root Cause:** The C# Enum (e.g., `EmploymentType`), the ViewModel, or the `.cshtml` file was saved using ANSI/Windows-1256 encoding instead of UTF-8.
+* **Fix:** Open the affected files (Enums and HR Views), convert their encoding to **UTF-8 with BOM** (or standard UTF-8), and re-type the Persian strings correctly (تمام وقت، پاره وقت، پروژه‌ای، کارآموزی).
 
-### 1. FIX JS ERROR & TAB SWITCHING (VANILLA JS ONLY)
-- Remove all `bootstrap` object calls, `data-bs-*` attributes, and Bootstrap JS code.
-- Implement a lightweight, pure **Vanilla JS tab switcher** for `Details.cshtml`:
-  - Attach `click` listeners to tab buttons (`#tab-overview`, `#tab-document`, `#tab-payments`, `#tab-attachments`, `#tab-history`).
-  - Toggle Tailwind active/inactive utility classes (e.g., `text-emerald-600 border-emerald-500` vs `text-slate-400 border-transparent`) and show/hide corresponding content `<div>` panels using `hidden` class.
+### 3. STRICT JQUERY REMOVAL (HR MODULE CRASHES)
+* **Bug:** `Uncaught ReferenceError: jQuery is not defined` from `jquery.validate.min.js`. HR Create form fails to submit.
+* **Root Cause:** ASP.NET Core automatically scaffolds `<partial name="_ValidationScriptsPartial" />` at the bottom of `Create.cshtml` and `Edit.cshtml` views. This injects jQuery.
+* **Fix:** 
+  - Search across ALL views (especially Human Capital and Contracts) and **DELETE** `@await Html.PartialAsync("_ValidationScriptsPartial")` or `<partial name="_ValidationScriptsPartial" />`.
+  - Implement basic HTML5 validation (`required`, `minlength`) or Vanilla JS validation instead.
+  - Fix the `TypeError: Cannot set properties of null (setting 'innerHTML')` in `HumanCapital?_tab=1:264` by ensuring the target DOM element exists before modifying it.
 
----
+### 4. FIX JALALI DATEPICKER (`persianDatepicker is not a constructor`)
+* **Bug:** The calendar buttons do nothing, and the console throws an error.
+* **Fix:** 
+  - Ensure a lightweight, **Vanilla JS** Jalali datepicker library is correctly linked in `_Layout.cshtml` (e.g., via CDN or local file).
+  - In your JS initialization, bind the click event of the calendar **icon/button** to focus or trigger the associated `<input>` so the calendar popup opens correctly.
 
-### 2. FIX BACK BUTTON & RTL ROUTING
-- Update the "بازگشت" button in `Details.cshtml`, `Create.cshtml`, and `Settings.cshtml`:
-  - Set explicit link destination: `href="@Url.Action("Index", "Contracts")"`.
-  - Fix arrow icon direction for RTL layout: use right-arrow (`fa-arrow-right` or `heroicons/arrow-right`) instead of left-arrow.
-
----
-
-### 3. JALALI PERSIAN DATE PICKER (VANILLA JS)
-- Replace standard HTML `<input type="date">` inputs across `Create.cshtml`, `Edit.cshtml`, and filter panels with a pure JavaScript Jalali datepicker (e.g., `kamadatepicker` or `@majidjoshany/jalali-datepicker`).
-- Handle Jalali-to-Gregorian conversion in the script before form submission so backend EF Core models receive valid DateTime values.
-
----
-
-### 4. FIX RTL FORM INPUTS & ICON OVERLAPS
-- Refactor input fields, `<select>` elements, and icon wrappers in `Create.cshtml` and `Settings.cshtml` using Tailwind CSS:
-  - Fix RTL padding (`pr-10 pl-3`) so drop-down arrows and leading icons do NOT overlap with option texts or labels.
-  - Apply clean Tailwind floating labels or standard stacked labels.
-
----
-
-### 5. REAL-TIME DASHBOARD DATA BINDING
-- Update `ContractsController.Dashboard()` to query and compute actual live data from SQL Server:
-  - Total Contracts, Active, Expiring Soon, Expired, Drafts, Archived.
-  - Aggregate Financial Metrics: Total Value, Amount Paid, Outstanding Balance.
-- Pass live Model/ViewModel data to `Dashboard.cshtml` so stat cards and progress bars update dynamically.
-
----
-
-### 6. BRANDED PRINT & PDF LAYOUT WITH SIGNATURE BLOCK
-- Create a dedicated print layout / print stylesheet (`@media print` or `Print.cshtml` view):
-  - Read company branding settings (Company Name, Logo, Primary Brand Colors) from system settings and display them in the print header.
-  - **Signature Section:** Add two side-by-side bordered signature boxes pinned at the bottom of the printed contract:
-    - **"محل امضا و مهر کارفرما (طرف اول)"**
-    - **"محل امضا و مهر مجری/مشتری (طرف دوم)"**
-  - Apply CSS rule `break-inside: avoid` on the signature block so it stays intact on the final page.
-
----
-
-### 7. VISUAL CONTRACT TEMPLATE EDITOR (NO HTML KNOWLEDGE REQUIRED)
-- Replace raw HTML textareas in `Settings.cshtml` and `Create.cshtml` with a simple Vanilla JS WYSIWYG editor or rich visual builder (e.g., Quill JS or EasyMDE).
-- Provide a visual sidebar with clickable pill buttons for tags (e.g., `[نام مشتری]`, `[مبلغ کل]`, `[شماره قرارداد]`, `[تاریخ شروع]`).
-- Clicking a button inserts the corresponding placeholder tag into the editor at the current cursor position.
-
----
+### 5. UI/UX: TEXT/ICON OVERLAPS & DETACHED HEADINGS
+* **Bug:** Text inputs like "طرف قرارداد" overlap with absolute-positioned icons. Headings look detached and float awkwardly.
+* **Fix (Tailwind CSS):**
+  - Add `pr-10` (or `pr-12` for RTL) to `<input>` elements that have icons inside them to prevent text from sliding under the icon.
+  - Wrap section headings (`<h1>`, `<h2>`, `<h3>`) with proper typography classes and margin bottoms: `class="text-xl font-bold text-slate-800 mb-6 border-b pb-2"`. Do not leave headers floating without structural margins.
 
 ### VERIFICATION CHECKLIST
-- [ ] Run `dotnet build` — 0 errors, 0 warnings.
-- [ ] No Bootstrap or jQuery scripts/styles referenced.
-- [ ] Tabs on the Details page toggle smoothly using Vanilla JS.
-- [ ] Back button correctly navigates to Contracts Index.
-- [ ] Jalali date pickers operate seamlessly in Persian.
-- [ ] Form select elements and icons do not overlap in RTL.
-- [ ] Dashboard displays live Database counts and sums.
-- [ ] Printed contract displays company branding and bottom signature boxes.
+- [ ] Document Archive loads without `SqlException`.
+- [ ] HR Dropdowns display valid Persian characters.
+- [ ] NO jQuery validation scripts are loaded on any page.
+- [ ] Jalali datepicker opens when clicking the input OR its icon.
+- [ ] Text inside form inputs does not overlap with icons.
+- [ ] Submitting a new employee in Human Capital successfully saves to the database without JS crashes.
+
+and build for sure to no error found

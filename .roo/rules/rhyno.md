@@ -23,3 +23,5 @@
 
 4. **CONTEXT & MEMORY USAGE:**
    - Use the `codebase-memory` MCP tool to recall past architectural decisions, database schemas, or JS module structures before implementing major updates.
+
+   You are allowed to execute any CMD or PowerShell command.

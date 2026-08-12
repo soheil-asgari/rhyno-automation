@@ -79,11 +79,6 @@ namespace OfficeAutomation.Models
 
         public bool IsPreviewable { get; set; }
 
-        public bool IsUnderLegalHold { get; set; }
-
-        [StringLength(1000)]
-        public string? HoldReason { get; set; }
-
         /// <summary>شماره نسخه فعلی سند (مثل 1.0، 2.0)</summary>
         [StringLength(20)]
         public string CurrentVersion { get; set; } = "1.0";
@@ -93,6 +88,13 @@ namespace OfficeAutomation.Models
 
         /// <summary>وضعیت آرشیو شدن سند</summary>
         public bool IsArchived { get; set; }
+
+        /// <summary>مشاوره نگهداری قانونی (پرونده قضایی)</summary>
+        public bool IsUnderLegalHold { get; set; }
+
+        /// <summary>دلیل نگهداری قانونی</summary>
+        [StringLength(1000)]
+        public string? HoldReason { get; set; }
 
         [Required]
         public string CreatedByUserId { get; set; } = string.Empty;

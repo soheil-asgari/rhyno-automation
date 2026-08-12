@@ -322,8 +322,6 @@
     </div>
 </div>
 
-<partial name="_ValidationScriptsPartial" />
-
 <script>
     (() => {
         const salarySalary = document.getElementById('SalaryIncrease_NewSalary');
@@ -357,8 +355,13 @@
             statusPreview.textContent = `نوع: ${type || '-'}\nتاریخ: ${date || '-'}\nمرجع: ${reference || '-'}\nشرح: ${description || '-'}${exitReason ? `\nدلیل خروج: ${exitReason}` : ''}`;
         };
 
-        [salarySalary, salaryPrev, salaryReason, salaryDate].forEach(input => input?.addEventListener('input', renderSalary));
-        [statusType, statusDate, statusRef, statusDesc, statusExit].forEach(input => input?.addEventListener('input', renderStatus));
+        // Safe event listener attachment - skip null elements
+        [salarySalary, salaryPrev, salaryReason, salaryDate].forEach(input => {
+            if (input) input.addEventListener('input', renderSalary);
+        });
+        [statusType, statusDate, statusRef, statusDesc, statusExit].forEach(input => {
+            if (input) input.addEventListener('input', renderStatus);
+        });
         renderSalary();
         renderStatus();
     })();

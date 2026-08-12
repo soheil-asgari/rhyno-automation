@@ -140,23 +140,23 @@
                     <div>
                         <label asp-for="StartDate" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
                         <div class="jalali-datepicker-wrapper relative">
-                            <input asp-for="StartDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="StartDate" placeholder="تاریخ را انتخاب کنید" readonly />
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none"><i class="bi bi-calendar3 text-xs"></i></span>
+                            <input asp-for="StartDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-10 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="StartDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
                         </div>
                         <span asp-validation-for="StartDate" class="text-[9px] text-rose-500 mt-0.5 block"></span>
                     </div>
                     <div>
                         <label asp-for="EndDate" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
                         <div class="jalali-datepicker-wrapper relative">
-                            <input asp-for="EndDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="EndDate" placeholder="تاریخ را انتخاب کنید" readonly />
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none"><i class="bi bi-calendar3 text-xs"></i></span>
+                            <input asp-for="EndDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-10 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="EndDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
                         </div>
                     </div>
                     <div>
                         <label asp-for="SignDate" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
                         <div class="jalali-datepicker-wrapper relative">
-                            <input asp-for="SignDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="SignDate" placeholder="تاریخ را انتخاب کنید" readonly />
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none"><i class="bi bi-calendar3 text-xs"></i></span>
+                            <input asp-for="SignDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-10 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="SignDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
                         </div>
                     </div>
                 </div>
@@ -273,7 +273,6 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script src="~/js/persian-date.min.js"></script>
     <script src="~/js/persian-datepicker.min.js"></script>
     <link rel="stylesheet" href="~/css/persian-datepicker.min.css" />
@@ -299,14 +298,33 @@
                         } catch(e) {}
                     }
 
-                    input.addEventListener('click', function() {
-                        var picker = new persianDatepicker(input, {
-                            format: 'YYYY/MM/DD',
-                            autoClose: true,
-                            observer: true,
-                            initialValue: input.value || false
-                        });
+                    // Create picker instance once
+                    var picker = new persianDatepicker(input, {
+                        format: 'YYYY/MM/DD',
+                        autoClose: true,
+                        observer: true,
+                        initialValue: input.value || false,
+                        onSelect: function() {}
                     });
+                    input.persianDatepickerInstance = picker;
+
+                    // Attach click handler to input
+                    input.addEventListener('click', function() {
+                        if (picker.show) picker.show();
+                    });
+
+                    // Attach click handler to the calendar icon (sibling span)
+                    var wrapper = input.closest('.jalali-datepicker-wrapper');
+                    if (wrapper) {
+                        var icon = wrapper.querySelector('span.absolute');
+                        if (icon) {
+                            icon.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (picker.show) picker.show();
+                            });
+                        }
+                    }
                 });
             }
 

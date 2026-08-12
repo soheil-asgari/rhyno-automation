@@ -18,19 +18,19 @@ namespace OfficeAutomation.Controllers
 
         private static readonly string[] DefaultEmploymentTypes =
         [
-            " „«„ùÊﬁ ",
-            "Å«—ÂùÊﬁ ",
-            "Å—ÊéÂù«Ì",
-            "ﬁ—«—œ«œÌ",
-            "ò«—¬„Ê“"
+            "ÿ™ŸÖÿßŸÖ ŸàŸÇÿ™",
+            "Ÿæÿßÿ±Ÿá ŸàŸÇÿ™",
+            "Ÿæÿ±Ÿà⁄òŸá‚Äåÿß€å",
+            "⁄©ÿßÿ±ÿ¢ŸÖŸàÿ≤€å",
+            "ŸÜ€åÿ±Ÿà€å ÿØŸàÿ±⁄©ÿßÿ±"
         ];
 
         private static readonly string[] DefaultStatuses =
         [
-            "›⁄«·",
-            " ⁄œÌ· ‘œÂ",
-            " —ò ò«—",
-            "Å«Ì«‰ Œœ„ "
+            "ŸÅÿπÿßŸÑ",
+            "ÿØÿ± ÿßŸÜÿ™ÿ∏ÿßÿ± ÿ™ÿß€å€åÿØ",
+            "ŸÖÿ±ÿÆÿµ€å ŸÖŸàŸÇÿ™",
+            "ÿßÿÆÿ±ÿßÿ¨ ÿ¥ÿØŸá"
         ];
 
         public HumanCapitalController(OfficeDbContext context, IDataIsolationService dataIsolationService, ISecurityFieldMaskingService securityFieldMaskingService)
@@ -65,11 +65,11 @@ namespace OfficeAutomation.Controllers
 
             if (string.Equals(filter.WorkflowView, "active", StringComparison.OrdinalIgnoreCase))
             {
-                query = query.Where(employee => employee.CurrentStatus == "›⁄«·");
+                query = query.Where(employee => employee.CurrentStatus == "ŸÅÿπÿßŸÑ");
             }
             else if (string.Equals(filter.WorkflowView, "separated", StringComparison.OrdinalIgnoreCase))
             {
-                query = query.Where(employee => employee.CurrentStatus != "›⁄«·");
+                query = query.Where(employee => employee.CurrentStatus != "ŸÅÿπÿßŸÑ");
             }
 
             if (filter.DepartmentId.HasValue)
@@ -80,8 +80,8 @@ namespace OfficeAutomation.Controllers
             var fullListQuery = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.HumanCapitalEmployees.AsNoTracking());
 
             filter.TotalCount = await fullListQuery.CountAsync();
-            filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "›⁄«·");
-            filter.SeparatedCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus != "›⁄«·");
+            filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "ŸÅÿπÿßŸÑ");
+            filter.SeparatedCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus != "ŸÅÿπÿßŸÑ");
             filter.FilteredCount = await query.CountAsync();
             filter.WorkflowView ??= "all";
 
@@ -148,7 +148,7 @@ namespace OfficeAutomation.Controllers
                 PositionTitle = model.PositionTitle.Trim(),
                 EmploymentType = model.EmploymentType.Trim(),
                 CurrentSalary = model.CurrentSalary,
-                CurrentStatus = "›⁄«·",
+                CurrentStatus = "ŸÅÿπÿßŸÑ",
                 PhoneNumber = model.PhoneNumber?.Trim(),
                 Email = model.Email?.Trim(),
                 Address = model.Address?.Trim(),
@@ -168,8 +168,8 @@ namespace OfficeAutomation.Controllers
                 EffectiveDate = employee.HireDate,
                 PreviousSalary = 0,
                 NewSalary = employee.CurrentSalary,
-                PromotionTitle = "À»  «Ê·ÌÂ",
-                Reason = "À»  ÕﬁÊﬁ «Ê·ÌÂ œ— “„«‰ «” Œœ«„",
+                PromotionTitle = "ÿßŸàŸÑ€åŸÜ ÿ≠ŸÇŸàŸÇ",
+                Reason = "ÿßŸàŸÑ€åŸá ÿµÿØŸàÿ± ÿßÿ≥ÿ™ÿÆÿØÿßŸÖ",
                 CreatedAt = now
             });
 
@@ -214,38 +214,25 @@ namespace OfficeAutomation.Controllers
                 PositionTitle = employee.PositionTitle,
                 EmploymentType = employee.EmploymentType,
                 CurrentSalary = employee.CurrentSalary,
-                CurrentStatus = employee.CurrentStatus,
                 PhoneNumber = employee.PhoneNumber,
                 Email = employee.Email,
                 Address = employee.Address,
-                Notes = employee.Notes
+                Notes = employee.Notes,
+                CurrentStatus = employee.CurrentStatus
             };
 
             await PopulateCreateEditOptionsAsync(model);
+
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [PermissionAuthorize("HR.Edit")]
-        public async Task<IActionResult> Edit(int id, HumanCapitalEditVM model)
+        public async Task<IActionResult> Edit(HumanCapitalEditVM model)
         {
-            if (id != model.Id)
-            {
-                return NotFound();
-            }
-
-            var employee = await _context.HumanCapitalEmployees
-                .FirstOrDefaultAsync(item => item.Id == id);
-
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode, id);
+            await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode, model.Id);
             ValidateEmployeeDates(model.BirthDate, model.HireDate, model.ContractEndDate);
-            ValidateCurrentStatus(model.CurrentStatus);
 
             if (!ModelState.IsValid)
             {
@@ -254,10 +241,15 @@ namespace OfficeAutomation.Controllers
             }
 
             var now = DateTime.Now;
-            var previousSalary = employee.CurrentSalary;
-            var previousStatus = employee.CurrentStatus;
+            var employee = await _context.HumanCapitalEmployees.FindAsync(model.Id);
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            var salaryChanged = employee.CurrentSalary != model.CurrentSalary;
+            var statusChanged = employee.CurrentStatus != model.CurrentStatus;
 
             employee.PersonnelCode = model.PersonnelCode.Trim();
             employee.FullName = model.FullName.Trim();
@@ -270,35 +262,39 @@ namespace OfficeAutomation.Controllers
             employee.PositionTitle = model.PositionTitle.Trim();
             employee.EmploymentType = model.EmploymentType.Trim();
             employee.CurrentSalary = model.CurrentSalary;
-            employee.CurrentStatus = model.CurrentStatus.Trim();
+            employee.CurrentStatus = model.CurrentStatus;
             employee.PhoneNumber = model.PhoneNumber?.Trim();
             employee.Email = model.Email?.Trim();
             employee.Address = model.Address?.Trim();
             employee.Notes = model.Notes?.Trim();
             employee.UpdatedAt = now;
 
-            if (previousSalary != model.CurrentSalary)
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            await _context.SaveChangesAsync();
+
+            if (salaryChanged)
             {
                 _context.HumanCapitalSalaryHistories.Add(new HumanCapitalSalaryHistory
                 {
                     EmployeeId = employee.Id,
-                    EffectiveDate = now.Date,
-                    PreviousSalary = previousSalary,
+                    EffectiveDate = now,
+                    PreviousSalary = employee.CurrentSalary,
                     NewSalary = model.CurrentSalary,
-                    PromotionTitle = "ÊÌ—«Ì‘ Å—Ê‰œÂ",
-                    Reason = "«’·«Õ ÕﬁÊﬁ œ— ›—¬Ì‰œ ÊÌ—«Ì‘ Å—Ê‰œÂ Å—”‰·Ì",
+                    PromotionTitle = "ÿ™ÿ∫€å€åÿ± ÿ≠ŸÇŸàŸÇ",
+                    Reason = "ÿ™ÿ∫€å€åÿ± ÿ≠ŸÇŸàŸÇ",
                     CreatedAt = now
                 });
             }
 
-            if (!string.Equals(previousStatus, model.CurrentStatus.Trim(), StringComparison.Ordinal))
+            if (statusChanged)
             {
                 _context.HumanCapitalStatusHistories.Add(new HumanCapitalStatusHistory
                 {
                     EmployeeId = employee.Id,
-                    StatusType = model.CurrentStatus.Trim(),
-                    EffectiveDate = now.Date,
-                    Description = " €ÌÌ— Ê÷⁄Ì  «“ ÿ—Ìﬁ ÊÌ—«Ì‘ Å—Ê‰œÂ",
+                    StatusType = "ÿ™ÿ∫€å€åÿ± Ÿàÿ∂ÿπ€åÿ™",
+                    EffectiveDate = now,
+                    Description = "ÿ™ÿ∫€å€åÿ± Ÿàÿ∂ÿπ€åÿ™",
                     CreatedAt = now
                 });
             }
@@ -311,249 +307,19 @@ namespace OfficeAutomation.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
-            var model = await BuildDetailsViewModelAsync(id);
-            if (model == null)
-            {
-                return NotFound();
-            }
-
-            await _securityFieldMaskingService.MaskHumanCapitalDetailsAsync(model);
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddSalaryIncrease([Bind(Prefix = "SalaryIncrease")] HumanCapitalSalaryIncreaseVM model)
-        {
-            var employee = await _context.HumanCapitalEmployees
-                .FirstOrDefaultAsync(item => item.Id == model.EmployeeId);
-
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            if (!string.Equals(employee.CurrentStatus, "›⁄«·", StringComparison.Ordinal))
-            {
-                ModelState.AddModelError(string.Empty, "»—«Ì Å—”‰· €Ì—›⁄«·° «›“«Ì‘ ÕﬁÊﬁ À»  ‰„Ìù‘Êœ.");
-            }
-
-            if (model.EffectiveDate.Date < employee.HireDate.Date)
-            {
-                ModelState.AddModelError("SalaryIncrease.EffectiveDate", " «—ÌŒ «⁄„«· ‰„Ìù Ê«‰œ ﬁ»· «“  «—ÌŒ «” Œœ«„ »«‘œ.");
-            }
-
-            if (model.NewSalary <= employee.CurrentSalary)
-            {
-                ModelState.AddModelError("SalaryIncrease.NewSalary", "ÕﬁÊﬁ ÃœÌœ »«Ìœ »Ì‘ — «“ ÕﬁÊﬁ ›⁄·Ì »«‘œ.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                var invalidVm = await BuildDetailsViewModelAsync(model.EmployeeId, model, null);
-                if (invalidVm == null)
-                {
-                    return NotFound();
-                }
-
-                return View("Details", invalidVm);
-            }
-
-            var now = DateTime.Now;
-            var previousSalary = employee.CurrentSalary;
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            employee.CurrentSalary = model.NewSalary;
-            employee.UpdatedAt = now;
-
-            _context.HumanCapitalSalaryHistories.Add(new HumanCapitalSalaryHistory
-            {
-                EmployeeId = model.EmployeeId,
-                EffectiveDate = model.EffectiveDate.Date,
-                PreviousSalary = previousSalary,
-                NewSalary = model.NewSalary,
-                PromotionTitle = model.PromotionTitle?.Trim(),
-                Reason = model.Reason.Trim(),
-                CreatedAt = now
-            });
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return RedirectToAction(nameof(Details), new { id = model.EmployeeId });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddStatusChange([Bind(Prefix = "StatusChange")] HumanCapitalStatusChangeVM model)
-        {
-            var employee = await _context.HumanCapitalEmployees
-                .FirstOrDefaultAsync(item => item.Id == model.EmployeeId);
-
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            if (model.EffectiveDate.Date < employee.HireDate.Date)
-            {
-                ModelState.AddModelError("StatusChange.EffectiveDate", " «—ÌŒ —Œœ«œ ‰„Ìù Ê«‰œ ﬁ»· «“  «—ÌŒ «” Œœ«„ »«‘œ.");
-            }
-
-            if (!HumanCapitalProcessTypes.All.Contains(model.StatusType))
-            {
-                ModelState.AddModelError("StatusChange.StatusType", "‰Ê⁄ ›—¬Ì‰œ «‰ Œ«»ù‘œÂ „⁄ »— ‰Ì” .");
-            }
-
-            if (string.Equals(employee.CurrentStatus, MapCurrentStatus(model.StatusType), StringComparison.Ordinal))
-            {
-                ModelState.AddModelError("StatusChange.StatusType", "Ê÷⁄Ì  ›⁄·Ì »« Ê÷⁄Ì  «‰ Œ«»ù‘œÂ Ìò”«‰ «” .");
-            }
-
-            if (RequiresExitReason(model.StatusType) && string.IsNullOrWhiteSpace(model.ExitReason))
-            {
-                ModelState.AddModelError("StatusChange.ExitReason", "»—«Ì «Ì‰ ›—¬Ì‰œ° œ·Ì· Œ—ÊÃ «·“«„Ì «” .");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                var invalidVm = await BuildDetailsViewModelAsync(model.EmployeeId, null, model);
-                if (invalidVm == null)
-                {
-                    return NotFound();
-                }
-
-                return View("Details", invalidVm);
-            }
-
-            var now = DateTime.Now;
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            employee.CurrentStatus = MapCurrentStatus(model.StatusType);
-            employee.UpdatedAt = now;
-
-            _context.HumanCapitalStatusHistories.Add(new HumanCapitalStatusHistory
-            {
-                EmployeeId = model.EmployeeId,
-                StatusType = model.StatusType,
-                EffectiveDate = model.EffectiveDate.Date,
-                ReferenceNumber = model.ReferenceNumber?.Trim(),
-                Description = model.Description.Trim(),
-                ExitReason = model.ExitReason?.Trim(),
-                CreatedAt = now
-            });
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return RedirectToAction(nameof(Details), new { id = model.EmployeeId });
-        }
-
-        private async Task<HumanCapitalDetailsVM?> BuildDetailsViewModelAsync(
-            int employeeId,
-            HumanCapitalSalaryIncreaseVM? salaryDraft = null,
-            HumanCapitalStatusChangeVM? statusDraft = null)
-        {
             var employee = await _context.HumanCapitalEmployees
                 .AsNoTracking()
-                .Include(item => item.Department)
-                .Include(item => item.SalaryHistories)
-                .Include(item => item.StatusHistories)
-                .FirstOrDefaultAsync(item => item.Id == employeeId);
+                .Include(e => e.Department)
+                .Include(e => e.SalaryHistories)
+                .Include(e => e.StatusHistories)
+                .FirstOrDefaultAsync(item => item.Id == id);
 
             if (employee == null)
             {
-                return null;
+                return NotFound();
             }
 
-            var salaryVm = salaryDraft ?? new HumanCapitalSalaryIncreaseVM
-            {
-                EmployeeId = employee.Id,
-                EffectiveDate = DateTime.Today,
-                NewSalary = employee.CurrentSalary
-            };
-            salaryVm.EmployeeId = employee.Id;
-
-            var statusVm = statusDraft ?? new HumanCapitalStatusChangeVM
-            {
-                EmployeeId = employee.Id,
-                EffectiveDate = DateTime.Today,
-                StatusType = HumanCapitalProcessTypes.Termination
-            };
-            statusVm.EmployeeId = employee.Id;
-            if (string.Equals(employee.CurrentStatus, "›⁄«·", StringComparison.Ordinal))
-            {
-                statusVm.StatusType = HumanCapitalProcessTypes.Resignation;
-            }
-
-            var salaryHistories = employee.SalaryHistories
-                .OrderByDescending(item => item.EffectiveDate)
-                .ThenByDescending(item => item.CreatedAt)
-                .Select(item => new HumanCapitalSalaryHistoryVM
-                {
-                    EffectiveDate = item.EffectiveDate,
-                    PreviousSalary = item.PreviousSalary,
-                    NewSalary = item.NewSalary,
-                    PromotionTitle = item.PromotionTitle,
-                    Reason = item.Reason,
-                    CreatedAt = item.CreatedAt
-                })
-                .ToList();
-
-            var statusHistories = employee.StatusHistories
-                .OrderByDescending(item => item.EffectiveDate)
-                .ThenByDescending(item => item.CreatedAt)
-                .Select(item => new HumanCapitalStatusHistoryVM
-                {
-                    StatusType = item.StatusType,
-                    EffectiveDate = item.EffectiveDate,
-                    ReferenceNumber = item.ReferenceNumber,
-                    Description = item.Description,
-                    ExitReason = item.ExitReason,
-                    CreatedAt = item.CreatedAt
-                })
-                .ToList();
-
-            var timelineItems = salaryHistories
-                .Select(item => new HumanCapitalTimelineItemVM
-                {
-                    SortDate = item.CreatedAt,
-                    Title = "«›“«Ì‘ ÕﬁÊﬁ",
-                    Description = $"{item.PreviousSalary:N0} -> {item.NewSalary:N0}" + (string.IsNullOrWhiteSpace(item.PromotionTitle) ? string.Empty : $" | {item.PromotionTitle}"),
-                    Tone = "success"
-                })
-                .Concat(statusHistories.Select(item => new HumanCapitalTimelineItemVM
-                {
-                    SortDate = item.CreatedAt,
-                    Title = "—Œœ«œ Ê÷⁄Ì ",
-                    Description = $"{item.StatusType}" + (string.IsNullOrWhiteSpace(item.ReferenceNumber) ? string.Empty : $" | {item.ReferenceNumber}") + $" | {item.Description}",
-                    Tone = RequiresExitReason(item.StatusType) ? "danger" : "primary"
-                }))
-                .OrderByDescending(item => item.SortDate)
-                .ToList();
-
-            var auditTrailItems = salaryHistories
-                .Select(item => new HumanCapitalAuditTrailItemVM
-                {
-                    When = new DateTimeOffset(item.CreatedAt, TimeSpan.Zero),
-                    Title = "À»  «›“«Ì‘ ÕﬁÊﬁ",
-                    Detail = $"{item.PreviousSalary:N0} -> {item.NewSalary:N0}" + (string.IsNullOrWhiteSpace(item.PromotionTitle) ? string.Empty : $" | {item.PromotionTitle}"),
-                    Source = "SalaryHistory"
-                })
-                .Concat(statusHistories.Select(item => new HumanCapitalAuditTrailItemVM
-                {
-                    When = new DateTimeOffset(item.CreatedAt, TimeSpan.Zero),
-                    Title = "À»  —Œœ«œ Ê÷⁄Ì ",
-                    Detail = $"{item.StatusType}" + (string.IsNullOrWhiteSpace(item.ReferenceNumber) ? string.Empty : $" | {item.ReferenceNumber}") + $" | {item.Description}",
-                    Source = "StatusHistory"
-                }))
-                .OrderByDescending(item => item.When)
-                .ToList();
-
-            return new HumanCapitalDetailsVM
+            var vm = new HumanCapitalDetailsVM
             {
                 Id = employee.Id,
                 PersonnelCode = employee.PersonnelCode,
@@ -572,164 +338,138 @@ namespace OfficeAutomation.Controllers
                 Email = employee.Email,
                 Address = employee.Address,
                 Notes = employee.Notes,
-                SalaryIncrease = salaryVm,
-                StatusChange = statusVm,
-                ProcessTypeOptions = BuildProcessTypeOptions(statusVm.StatusType),
-                SalaryHistories = salaryHistories,
-                StatusHistories = statusHistories,
-                TimelineItems = timelineItems
-                    ,
-                AuditTrailItems = auditTrailItems
+                SalaryHistories = employee.SalaryHistories
+                    .OrderByDescending(sh => sh.EffectiveDate)
+                    .Select(sh => new HumanCapitalSalaryHistoryVM
+                    {
+                        EffectiveDate = sh.EffectiveDate,
+                        PreviousSalary = sh.PreviousSalary,
+                        NewSalary = sh.NewSalary,
+                        PromotionTitle = sh.PromotionTitle,
+                        Reason = sh.Reason,
+                        CreatedAt = sh.CreatedAt
+                    })
+                    .ToList(),
+                StatusHistories = employee.StatusHistories
+                    .OrderByDescending(sh => sh.EffectiveDate)
+                    .Select(sh => new HumanCapitalStatusHistoryVM
+                    {
+                        StatusType = sh.StatusType,
+                        EffectiveDate = sh.EffectiveDate,
+                        ReferenceNumber = sh.ReferenceNumber,
+                        Description = sh.Description,
+                        CreatedAt = sh.CreatedAt
+                    })
+                    .ToList()
             };
+
+            await _securityFieldMaskingService.MaskHumanCapitalDetailsAsync(vm);
+
+            return View(vm);
         }
 
-        private async Task<List<SelectListItem>> BuildDepartmentOptionsAsync(int? selectedDepartmentId = null)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Delete")]
+        public async Task<IActionResult> Delete(int id)
         {
-            return await _context.Departments
-                .AsNoTracking()
-                .OrderBy(department => department.Name)
-                .Select(department => new SelectListItem
-                {
-                    Value = department.Id.ToString(),
-                    Text = department.Name,
-                    Selected = selectedDepartmentId.HasValue && selectedDepartmentId.Value == department.Id
-                })
-                .ToListAsync();
-        }
+            var employee = await _context.HumanCapitalEmployees.FindAsync(id);
 
-        private async Task<List<string>> BuildStatusOptionsAsync()
-        {
-            var dbStatuses = await _context.HumanCapitalEmployees
-                .AsNoTracking()
-                .Where(employee => !string.IsNullOrWhiteSpace(employee.CurrentStatus))
-                .Select(employee => employee.CurrentStatus)
-                .Distinct()
-                .ToListAsync();
+            if (employee == null)
+            {
+                return NotFound();
+            }
 
-            return DefaultStatuses
-                .Concat(dbStatuses)
-                .Where(status => !string.IsNullOrWhiteSpace(status))
-                .Select(status => status.Trim())
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(status => status)
-                .ToList();
+            _context.HumanCapitalEmployees.Remove(employee);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
         private async Task PopulateCreateEditOptionsAsync(HumanCapitalBaseUpsertVM model)
         {
-            if (string.IsNullOrWhiteSpace(model.EmploymentType))
+            var departments = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.Departments.AsNoTracking());
+            model.DepartmentOptions = departments.Select(d => new SelectListItem
             {
-                model.EmploymentType = DefaultEmploymentTypes[0];
-            }
+                Text = d.Name,
+                Value = d.Id.ToString()
+            }).ToList();
 
-            model.DepartmentOptions = await BuildDepartmentOptionsAsync(model.DepartmentId);
             model.EmploymentTypeOptions = DefaultEmploymentTypes
                 .Distinct()
                 .Select(type => new SelectListItem
                 {
-                    Value = type,
                     Text = type,
+                    Value = type,
                     Selected = string.Equals(type, model.EmploymentType, StringComparison.Ordinal)
                 })
                 .ToList();
         }
 
-        private void ValidateInitialStatus(DateTime statusDate, DateTime hireDate, string? description)
+        private async Task<List<SelectListItem>> BuildDepartmentOptionsAsync(int? selectedDepartmentId)
         {
-            if (statusDate.Date < hireDate.Date)
+            var departments = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.Departments.AsNoTracking());
+            var options = departments.Select(d => new SelectListItem
             {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDate), " «—ÌŒ —Œœ«œ «Ê·ÌÂ ‰„Ìù Ê«‰œ ﬁ»· «“  «—ÌŒ «” Œœ«„ »«‘œ.");
-            }
-
-            if (string.IsNullOrWhiteSpace(description))
-            {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.InitialStatusDescription), " Ê÷ÌÕ —Œœ«œ «Ê·ÌÂ «·“«„Ì «” .");
-            }
+                Text = d.Name,
+                Value = d.Id.ToString(),
+                Selected = d.Id == selectedDepartmentId
+            }).ToList();
+            options.Insert(0, new SelectListItem { Value = "", Text = "--- ŸáŸÖŸá ÿØŸæÿßÿ±ÿ™ŸÖÿßŸÜ‚ÄåŸáÿß ---" });
+            return options;
         }
 
-        private void ValidateCurrentStatus(string currentStatus)
+        private async Task<List<SelectListItem>> BuildStatusOptionsAsync()
         {
-            if (string.IsNullOrWhiteSpace(currentStatus))
+            var statuses = new List<SelectListItem>
             {
-                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "Ê÷⁄Ì  ›⁄·Ì «·“«„Ì «” .");
-                return;
-            }
-
-            if (!string.Equals(currentStatus, "›⁄«·", StringComparison.Ordinal) && !string.Equals(currentStatus, " ⁄œÌ· ‘œÂ", StringComparison.Ordinal) && !string.Equals(currentStatus, " —ò ò«—", StringComparison.Ordinal) && !string.Equals(currentStatus, "Å«Ì«‰ Œœ„ ", StringComparison.Ordinal))
-            {
-                ModelState.AddModelError(nameof(HumanCapitalEditVM.CurrentStatus), "Ê÷⁄Ì  «‰ Œ«»ù‘œÂ „⁄ »— ‰Ì” .");
-            }
-        }
-
-        private async Task ValidateEmployeeUniquenessAsync(string personnelCode, string nationalCode, int? employeeId = null)
-        {
-            var personnelCodeNormalized = personnelCode.Trim();
-            var nationalCodeNormalized = nationalCode.Trim();
-
-            var duplicatePersonnelCode = await _context.HumanCapitalEmployees
-                .AsNoTracking()
-                .AnyAsync(employee =>
-                    employee.PersonnelCode == personnelCodeNormalized &&
-                    (!employeeId.HasValue || employee.Id != employeeId.Value));
-
-            if (duplicatePersonnelCode)
-            {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.PersonnelCode), "«Ì‰ òœ Å—”‰·Ì ﬁ»·« À»  ‘œÂ «” .");
-            }
-
-            var duplicateNationalCode = await _context.HumanCapitalEmployees
-                .AsNoTracking()
-                .AnyAsync(employee =>
-                    employee.NationalCode == nationalCodeNormalized &&
-                    (!employeeId.HasValue || employee.Id != employeeId.Value));
-
-            if (duplicateNationalCode)
-            {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.NationalCode), "«Ì‰ òœ „·Ì ﬁ»·« À»  ‘œÂ «” .");
-            }
-        }
-
-        private void ValidateEmployeeDates(DateTime birthDate, DateTime hireDate, DateTime? contractEndDate)
-        {
-            if (birthDate.Date >= hireDate.Date)
-            {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.BirthDate), " «—ÌŒ  Ê·œ »«Ìœ ﬁ»· «“  «—ÌŒ «” Œœ«„ »«‘œ.");
-            }
-
-            if (contractEndDate.HasValue && contractEndDate.Value.Date < hireDate.Date)
-            {
-                ModelState.AddModelError(nameof(HumanCapitalCreateVM.ContractEndDate), " «—ÌŒ Å«Ì«‰ ﬁ—«—œ«œ ‰„Ìù Ê«‰œ ﬁ»· «“  «—ÌŒ «” Œœ«„ »«‘œ.");
-            }
-        }
-
-        private static string MapCurrentStatus(string statusType)
-        {
-            return statusType switch
-            {
-                HumanCapitalProcessTypes.Termination => " ⁄œÌ· ‘œÂ",
-                HumanCapitalProcessTypes.Resignation => " —ò ò«—",
-                HumanCapitalProcessTypes.EndOfService => "Å«Ì«‰ Œœ„ ",
-                _ => "›⁄«·"
+                new SelectListItem { Value = "", Text = "--- ŸáŸÖŸá Ÿàÿ∂ÿπ€åÿ™‚ÄåŸáÿß ---" }
             };
+            statuses.AddRange(DefaultStatuses.Select(s => new SelectListItem { Text = s, Value = s }).ToList());
+            return statuses;
         }
 
-        private static bool RequiresExitReason(string statusType)
+        private async Task ValidateEmployeeUniquenessAsync(string personnelCode, string nationalCode, int? excludeId = null)
         {
-            return statusType == HumanCapitalProcessTypes.Termination ||
-                   statusType == HumanCapitalProcessTypes.Resignation ||
-                   statusType == HumanCapitalProcessTypes.EndOfService;
-        }
+            var existingEmployee = await _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e =>
+                    (e.PersonnelCode.Trim().Equals(personnelCode.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                     e.NationalCode.Trim().Equals(nationalCode.Trim(), StringComparison.OrdinalIgnoreCase)) &&
+                    (!excludeId.HasValue || e.Id != excludeId));
 
-        private static List<SelectListItem> BuildProcessTypeOptions(string selectedStatusType)
-        {
-            return HumanCapitalProcessTypes.All
-                .Select(type => new SelectListItem
+            if (existingEmployee != null)
+            {
+                if (existingEmployee.PersonnelCode.Trim().Equals(personnelCode.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    Value = type,
-                    Text = type,
-                    Selected = string.Equals(type, selectedStatusType, StringComparison.Ordinal)
-                })
-                .ToList();
+                    ModelState.AddModelError("PersonnelCode", "⁄©ÿØ Ÿæÿ±ÿ≥ŸÜŸÑ€å ÿ™⁄©ÿ±ÿßÿ±€å ÿßÿ≥ÿ™.");
+                }
+                if (existingEmployee.NationalCode.Trim().Equals(nationalCode.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError("NationalCode", "⁄©ÿØ ŸÖŸÑ€å ÿ™⁄©ÿ±ÿßÿ±€å ÿßÿ≥ÿ™.");
+                }
+            }
+        }
+
+        private void ValidateEmployeeDates(DateTime? birthDate, DateTime? hireDate, DateTime? contractEndDate)
+        {
+            if (birthDate.HasValue && hireDate.HasValue && birthDate.Value.Date >= hireDate.Value.Date)
+            {
+                ModelState.AddModelError("BirthDate", "ÿ™ÿßÿ±€åÿÆ ÿ™ŸàŸÑÿØ ÿ®ÿß€åÿØ ŸÇÿ®ŸÑ ÿßÿ≤ ÿ™ÿßÿ±€åÿÆ ÿßÿ≥ÿ™ÿÆÿØÿßŸÖ ÿ®ÿßÿ¥ÿØ.");
+            }
+
+            if (contractEndDate.HasValue && hireDate.HasValue && contractEndDate.Value.Date < hireDate.Value.Date)
+            {
+                ModelState.AddModelError("ContractEndDate", "ÿ™ÿßÿ±€åÿÆ Ÿæÿß€åÿßŸÜ ŸÇÿ±ÿßÿ±ÿØÿßÿØ ÿ®ÿß€åÿØ ÿ®ÿπÿØ ÿßÿ≤ ÿ™ÿßÿ±€åÿÆ ÿßÿ≥ÿ™ÿÆÿØÿßŸÖ ÿ®ÿßÿ¥ÿØ.");
+            }
+        }
+
+        private void ValidateInitialStatus(DateTime initialStatusDate, DateTime hireDate, string initialStatusDescription)
+        {
+            if (initialStatusDate.Date < hireDate.Date)
+            {
+                ModelState.AddModelError("InitialStatusDate", "ÿ™ÿßÿ±€åÿÆ ÿ¥ÿ±Ÿàÿπ Ÿàÿ∂ÿπ€åÿ™ ÿßŸàŸÑ€åŸá ÿ®ÿß€åÿØ ÿ®ÿπÿØ ÿßÿ≤ ÿ™ÿßÿ±€åÿÆ ÿßÿ≥ÿ™ÿÆÿØÿßŸÖ ÿ®ÿßÿ¥ÿØ.");
+            }
         }
     }
 }
