@@ -46,21 +46,30 @@
                 <!-- Birth Date -->
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="BirthDate" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="BirthDate" type="date" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+                    <div class="jalali-datepicker-wrapper relative">
+                        <input asp-for="BirthDate" type="text" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 pl-9 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 jalali-date-input" data-jalali="BirthDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
+                    </div>
                     <span asp-validation-for="BirthDate" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
                 <!-- Hire Date -->
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="HireDate" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="HireDate" type="date" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+                    <div class="jalali-datepicker-wrapper relative">
+                        <input asp-for="HireDate" type="text" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 pl-9 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 jalali-date-input" data-jalali="HireDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
+                    </div>
                     <span asp-validation-for="HireDate" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
                 <!-- Contract End Date -->
                 <div class="flex flex-col gap-1.5">
                     <label asp-for="ContractEndDate" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="ContractEndDate" type="date" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" />
+                    <div class="jalali-datepicker-wrapper relative">
+                        <input asp-for="ContractEndDate" type="text" class="h-8 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 pl-9 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 jalali-date-input" data-jalali="ContractEndDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
+                    </div>
                     <span asp-validation-for="ContractEndDate" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
@@ -153,4 +162,92 @@
         </form>
     </div>
 </div>
+
+@await Html.PartialAsync("_ValidationScriptsPartial")
+
+@section Scripts {
+    <link rel="stylesheet" href="~/css/persian-datepicker.min.css" />
+    <script src="~/js/persian-date.min.js"></script>
+    <script src="~/js/persian-datepicker.min.js"></script>
+    <script>
+        (() => {
+            'use strict';
+            const form = document.querySelector('form[asp-action="Edit"]');
+            if (!form) return;
+
+            // ── Jalali (Persian) Date Picker Initialization ──
+            const initJalaliPickers = () => {
+                const pickers = document.querySelectorAll('.jalali-date-input');
+                if (!pickers.length || typeof persianDatepicker === 'undefined') return;
+
+                pickers.forEach((input) => {
+                    const existing = input.value;
+                    if (existing) {
+                        try {
+                            const d = new Date(existing);
+                            if (!isNaN(d.getTime()) && typeof persianDate !== 'undefined') {
+                                input.value = new persianDate(d).format('YYYY/MM/DD');
+                            }
+                        } catch (err) { /* leave as-is */ }
+                    }
+
+                    const picker = new persianDatepicker(input, {
+                        format: 'YYYY/MM/DD',
+                        autoClose: true,
+                        observer: true,
+                        initialValue: true,
+                        onSelect: function () { /* display value already bound */ }
+                    });
+                    input.persianDatepickerInstance = picker;
+
+                    const wrapper = input.closest('.jalali-datepicker-wrapper');
+                    if (wrapper) {
+                        const icon = wrapper.querySelector('span.absolute');
+                        if (icon) {
+                            icon.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (picker.show) picker.show();
+                            });
+                        }
+                    }
+                });
+            };
+
+            // ── Convert displayed Jalali dates to Gregorian ISO (yyyy-MM-dd) before submit ──
+            const convertJalaliDates = () => {
+                form.querySelectorAll('.jalali-date-input').forEach((input) => {
+                    const jalaliText = (input.value || '').trim();
+                    if (!jalaliText) return;
+
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(jalaliText)) return;
+
+                    const parts = jalaliText.split('/');
+                    if (parts.length !== 3) return;
+
+                    const jYear = parseInt(parts[0], 10);
+                    const jMonth = parseInt(parts[1], 10);
+                    const jDay = parseInt(parts[2], 10);
+                    if (isNaN(jYear) || isNaN(jMonth) || isNaN(jDay)) return;
+
+                    try {
+                        const gregDate = new persianDate([jYear, jMonth, jDay]).toDate();
+                        const iso = gregDate.getFullYear() + '-' +
+                            String(gregDate.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(gregDate.getDate()).padStart(2, '0');
+                        input.value = iso;
+                    } catch (err) {
+                        console.warn('Jalali conversion failed for', input.name, err);
+                    }
+                });
+            };
+
+            initJalaliPickers();
+
+            form.addEventListener('submit', () => {
+                convertJalaliDates();
+            });
+        })();
+    </script>
+}
 

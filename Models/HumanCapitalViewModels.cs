@@ -33,6 +33,9 @@ namespace OfficeAutomation.Models
         [Display(Name = "دپارتمان")]
         public int? DepartmentId { get; set; }
 
+        [Display(Name = "نوع همکاری")]
+        public string? EmploymentType { get; set; }
+
         public int TotalCount { get; set; }
 
         public int FilteredCount { get; set; }
@@ -41,9 +44,19 @@ namespace OfficeAutomation.Models
 
         public int SeparatedCount { get; set; }
 
+        public int PendingOnboardingCount { get; set; }
+
+        public int OnLeaveCount { get; set; }
+
+        public decimal TotalMonthlyPayroll { get; set; }
+
+        public decimal AverageSalary { get; set; }
+
         public List<SelectListItem> DepartmentOptions { get; set; } = new();
 
         public List<string> StatusOptions { get; set; } = new();
+
+        public List<string> EmploymentTypeOptions { get; set; } = new();
 
         public List<HumanCapitalIndexItemVM> Items { get; set; } = new();
     }
@@ -59,6 +72,14 @@ namespace OfficeAutomation.Models
         public string? DepartmentName { get; set; }
 
         public string PositionTitle { get; set; } = string.Empty;
+
+        public string NationalCode { get; set; } = string.Empty;
+
+        public string? PhoneNumber { get; set; }
+
+        public string EmploymentType { get; set; } = string.Empty;
+
+        public bool OnboardingCompleted { get; set; }
 
         public DateTime HireDate { get; set; }
 
@@ -90,15 +111,15 @@ namespace OfficeAutomation.Models
 
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ تولد")]
-        public DateTime BirthDate { get; set; } = DateTime.Today.AddYears(-25);
+        public string? BirthDate { get; set; }
 
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ استخدام")]
-        public DateTime HireDate { get; set; } = DateTime.Today;
+        public string? HireDate { get; set; }
 
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ پایان قرارداد")]
-        public DateTime? ContractEndDate { get; set; }
+        public string? ContractEndDate { get; set; }
 
         [Display(Name = "تکمیل ورود به کار")]
         public bool OnboardingCompleted { get; set; } = true;
@@ -148,7 +169,7 @@ namespace OfficeAutomation.Models
         [Required(ErrorMessage = "تاریخ رخداد استخدام الزامی است.")]
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ رخداد")]
-        public DateTime InitialStatusDate { get; set; } = DateTime.Today;
+        public string? InitialStatusDate { get; set; }
 
         [StringLength(120, ErrorMessage = "شماره مرجع نمی‌تواند بیشتر از 120 کاراکتر باشد.")]
         [Display(Name = "شماره مرجع")]
@@ -167,6 +188,29 @@ namespace OfficeAutomation.Models
         [Required]
         [StringLength(40)]
         public string CurrentStatus { get; set; } = "فعال";
+    }
+
+    public class HumanCapitalDateInputVM
+    {
+        [DataType(DataType.Date)]
+        [Display(Name = "تاریخ تولد")]
+        public string? BirthDate { get; set; }
+
+        [DataType(DataType.Date)]
+        [Display(Name = "تاریخ استخدام")]
+        public string? HireDate { get; set; }
+
+        [DataType(DataType.Date)]
+        [Display(Name = "تاریخ پایان قرارداد")]
+        public string? ContractEndDate { get; set; }
+
+        [DataType(DataType.Date)]
+        [Display(Name = "تاریخ رخداد")]
+        public string? InitialStatusDate { get; set; }
+
+        [DataType(DataType.Date)]
+        [Display(Name = "تاریخ اعمال")]
+        public string? EffectiveDate { get; set; }
     }
 
     public class HumanCapitalDetailsVM

@@ -1,45 +1,67 @@
-# CRITICAL FIXES: DATABASE CONFLICTS, ENCODING, HR MODULE, AND VANILLA JS STRICT COMPLIANCE
+@Controllers/HumanCapitalController.cs @Views/HumanCapital/Create.cshtml @Views/HumanCapital/Index.cshtml
 
-You must fix several critical bugs caused by overlapping domains, character encoding issues, and residual ASP.NET default behaviors.
+We have two critical bugs breaking the Human Capital module:
 
-### 1. SEPARATE ARCHIVES & FIX SQL EXCEPTION (500 ERROR)
-* **Bug:** `SqlException: Invalid column name 'HoldReason'. Invalid column name 'IsUnderLegalHold'.` on `/DocumentArchive`.
-* **Root Cause:** You previously mixed up the `Contract` archive logic with the pre-existing global `DocumentArchive` system. 
-* **Fix:** 
-  - Strictly separate the two domains. `DocumentArchive` and `ContractArchive` are entirely independent.
-  - Revert or fix the EF Core queries in `DocumentArchiveController` or `DocumentService`. Remove any references to `HoldReason` or `IsUnderLegalHold` if they do not exist in the `DocumentArchive` SQL table, or correctly add them via a new EF Migration if they belong there.
+1. **Date Model Binding Crash (400 Bad Request):**
+   - Error: `The value '۱۴۰۵/۰۵/۲۲' is not valid for تاریخ استخدام.`
+   - Cause: The form submits Jalali date strings with Persian unicode digits (`۱۴۰۵/۰۵/۲۲`). ASP.NET Core Model Binding attempts to bind this directly to a `DateTime` property on the ViewModel and throws a `400 Bad Request` before reaching controller logic.
 
-### 2. FIX PERSIAN ENCODING IN DROPDOWNS (GIBBERISH TEXT)
-* **Bug:** "Cooperation Type" (نوع همکاری) displays as `ÊãÇã æÞÊ` instead of `تمام وقت`.
-* **Root Cause:** The C# Enum (e.g., `EmploymentType`), the ViewModel, or the `.cshtml` file was saved using ANSI/Windows-1256 encoding instead of UTF-8.
-* **Fix:** Open the affected files (Enums and HR Views), convert their encoding to **UTF-8 with BOM** (or standard UTF-8), and re-type the Persian strings correctly (تمام وقت، پاره وقت، پروژه‌ای، کارآموزی).
+2. **Broken Header Layout UI:**
+   - In `Index.cshtml` / `Create.cshtml`, the title ("مدیریت سرمایه انسانی") and action button ("استخدام جدید") overlap messily instead of being cleanly aligned.
 
-### 3. STRICT JQUERY REMOVAL (HR MODULE CRASHES)
-* **Bug:** `Uncaught ReferenceError: jQuery is not defined` from `jquery.validate.min.js`. HR Create form fails to submit.
-* **Root Cause:** ASP.NET Core automatically scaffolds `<partial name="_ValidationScriptsPartial" />` at the bottom of `Create.cshtml` and `Edit.cshtml` views. This injects jQuery.
-* **Fix:** 
-  - Search across ALL views (especially Human Capital and Contracts) and **DELETE** `@await Html.PartialAsync("_ValidationScriptsPartial")` or `<partial name="_ValidationScriptsPartial" />`.
-  - Implement basic HTML5 validation (`required`, `minlength`) or Vanilla JS validation instead.
-  - Fix the `TypeError: Cannot set properties of null (setting 'innerHTML')` in `HumanCapital?_tab=1:264` by ensuring the target DOM element exists before modifying it.
+---
 
-### 4. FIX JALALI DATEPICKER (`persianDatepicker is not a constructor`)
-* **Bug:** The calendar buttons do nothing, and the console throws an error.
-* **Fix:** 
-  - Ensure a lightweight, **Vanilla JS** Jalali datepicker library is correctly linked in `_Layout.cshtml` (e.g., via CDN or local file).
-  - In your JS initialization, bind the click event of the calendar **icon/button** to focus or trigger the associated `<input>` so the calendar popup opens correctly.
+### Step 1: Fix Date Model Binding & Persian Digit Parsing
+1. **Update ViewModel (`HumanCapitalCreateVM.cs`):**
+   - Change all Jalali date properties (`HireDate`, `BirthDate`, `ContractEndDate`, `EventDate`, etc.) from `DateTime?` or `DateTime` to `string?`. This prevents ASP.NET Core Model Binding from throwing a 400 error on raw strings.
 
-### 5. UI/UX: TEXT/ICON OVERLAPS & DETACHED HEADINGS
-* **Bug:** Text inputs like "طرف قرارداد" overlap with absolute-positioned icons. Headings look detached and float awkwardly.
-* **Fix (Tailwind CSS):**
-  - Add `pr-10` (or `pr-12` for RTL) to `<input>` elements that have icons inside them to prevent text from sliding under the icon.
-  - Wrap section headings (`<h1>`, `<h2>`, `<h3>`) with proper typography classes and margin bottoms: `class="text-xl font-bold text-slate-800 mb-6 border-b pb-2"`. Do not leave headers floating without structural margins.
+2. **Implement Persian Digit Normalization in Controller (`HumanCapitalController.cs`):**
+   - Add a helper method to convert Persian/Arabic unicode digits to standard ASCII English digits:
+     ```csharp
+     private static string? NormalizePersianDigits(string? input)
+     {
+         if (string.IsNullOrWhiteSpace(input)) return input;
+         return input.Replace('۰', '0').Replace('۱', '1').Replace('۲', '2')
+                     .Replace('۳', '3').Replace('۴', '4').Replace('۵', '5')
+                     .Replace('۶', '6').Replace('۷', '7').Replace('۸', '8')
+                     .Replace('۹', '9');
+     }
+     ```
+   - Add a Jalali-to-Gregorian parser method using `System.Globalization.PersianCalendar`:
+     ```csharp
+     private static DateTime? ParseJalaliToGregorian(string? jalaliStr)
+     {
+         var normalized = NormalizePersianDigits(jalaliStr);
+         if (string.IsNullOrWhiteSpace(normalized)) return null;
 
-### VERIFICATION CHECKLIST
-- [ ] Document Archive loads without `SqlException`.
-- [ ] HR Dropdowns display valid Persian characters.
-- [ ] NO jQuery validation scripts are loaded on any page.
-- [ ] Jalali datepicker opens when clicking the input OR its icon.
-- [ ] Text inside form inputs does not overlap with icons.
-- [ ] Submitting a new employee in Human Capital successfully saves to the database without JS crashes.
+         var parts = normalized.Replace('/', '-').Split('-');
+         if (parts.Length == 3 &&
+             int.TryParse(parts[0], out int year) &&
+             int.TryParse(parts[1], out int month) &&
+             int.TryParse(parts[2], out int day))
+         {
+             var pc = new System.Globalization.PersianCalendar();
+             return pc.ToDateTime(year, month, day, 0, 0, 0, 0);
+         }
+         return null;
+     }
+     ```
+3. **Map Dates Before Database Save:**
+   - In `[HttpPost] Create`, map the string properties from `HumanCapitalCreateVM` to the entity's `DateTime?` properties using `ParseJalaliToGregorian(...)` before calling `_context.SaveChangesAsync()`.
 
-and build for sure to no error found
+---
+
+### Step 2: Redesign Page Header UI (Tailwind CSS)
+Fix the ugly header overlap in `Views/HumanCapital/Index.cshtml` and `Create.cshtml`:
+- Replace the current header markup with a clean, responsive Tailwind flex container:
+  ```html
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">مدیریت سرمایه انسانی</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">ثبت، جستجو، وضعیت‌های شغلی و تاریخچه حقوق در یک نمای عملیاتی</p>
+      </div>
+      <a href="/HumanCapital/Create" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-500/20 whitespace-nowrap">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          استخدام جدید
+      </a>
+  </div>

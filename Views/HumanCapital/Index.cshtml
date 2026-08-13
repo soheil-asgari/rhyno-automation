@@ -1,242 +1,464 @@
 @model HumanCapitalIndexVM
+@using OfficeAutomation.Modules.InvoiceStructuring
 @{
     ViewData["Title"] = "مدیریت سرمایه انسانی";
     ViewData["SectionTitle"] = "مدیریت سرمایه انسانی";
     ViewData["SectionSubtitle"] = "ثبت، جستجو، وضعیت‌های شغلی و تاریخچه حقوق در یک نمای عملیاتی";
     ViewData["SectionActionUrl"] = Url.Action("Create", "HumanCapital");
     ViewData["SectionActionText"] = "استخدام جدید";
+
+    string Jalali(DateTime date) => JalaliDateHelper.ToShamsiStringPersianDigits(date);
+    string JalaliOrDash(DateTime? date) => date.HasValue ? JalaliDateHelper.ToShamsiStringPersianDigits(date.Value) : "—";
+    string SalaryLabel(decimal value) => value > 0 ? value.ToString("N0") : "—";
 }
 
 <div class="w-full flex-1 flex flex-col gap-3 p-2.5 md:p-3" dir="rtl">
-    <!-- Header Partial View -->
-    <partial name="_SectionHeader" />
-
-    <!-- Numerical Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <!-- Stat 1 -->
-        <a asp-action="Index" asp-route-workflowView="all" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="no-underline flex flex-col items-start gap-1 p-2.5 bg-white dark:bg-slate-900 border @(string.IsNullOrWhiteSpace(Model.WorkflowView) || Model.WorkflowView == "all" ? "border-teal-600 dark:border-teal-500 ring-2 ring-teal-500/10" : "border-slate-200 dark:border-slate-800") rounded-lg shadow-sm transition hover:-translate-y-0.5 active:scale-98">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">کل پرسنل</span>
-            <span class="text-lg font-black text-slate-800 dark:text-white mt-1">@Model.TotalCount</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">کل کارمندان ثبت شده</span>
-        </a>
-        <!-- Stat 2 -->
-        <a asp-action="Index" asp-route-workflowView="active" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="no-underline flex flex-col items-start gap-1 p-2.5 bg-white dark:bg-slate-900 border @(Model.WorkflowView == "active" ? "border-teal-600 dark:border-teal-500 ring-2 ring-teal-500/10" : "border-slate-200 dark:border-slate-800") rounded-lg shadow-sm transition hover:-translate-y-0.5 active:scale-98">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">پرسنل فعال</span>
-            <span class="text-lg font-black text-emerald-600 mt-1">@Model.ActiveCount</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">مشغول به کار در سازمان</span>
-        </a>
-        <!-- Stat 3 -->
-        <a asp-action="Index" asp-route-workflowView="separated" asp-route-searchTerm="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-departmentId="@Model.DepartmentId" class="no-underline flex flex-col items-start gap-1 p-2.5 bg-white dark:bg-slate-900 border @(Model.WorkflowView == "separated" ? "border-teal-600 dark:border-teal-500 ring-2 ring-teal-500/10" : "border-slate-200 dark:border-slate-800") rounded-lg shadow-sm transition hover:-translate-y-0.5 active:scale-98">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">خارج‌شده</span>
-            <span class="text-lg font-black text-rose-600 mt-1">@Model.SeparatedCount</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">قطع همکاری یا تعلیق</span>
-        </a>
-        <!-- Stat 4 -->
-        <div class="flex flex-col items-start gap-1 p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">نتیجه فیلتر</span>
-            <span class="text-lg font-black text-teal-600 dark:text-teal-400 mt-1">@Model.FilteredCount</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">رکورد فیلتر شده جاری</span>
+    <!-- ═══════════════ ۱. Header ═══════════════ -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">مدیریت سرمایه انسانی</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">ثبت، جستجو، وضعیت‌های شغلی و تاریخچه حقوق در یک نمای عملیاتی</p>
         </div>
+        <a href="/HumanCapital/Create" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-500/20 whitespace-nowrap">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            استخدام جدید
+        </a>
     </div>
 
-    <!-- Content 2-Column Grid (Main Area & Sidebar) -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
-        <!-- Main: Filter panel & Table list (Col span 3) -->
-        <div class="lg:col-span-3 flex flex-col gap-3">
-            <!-- Filter panel -->
-            <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
-                <div>
-                    <h2 class="m-0 text-sm font-black text-slate-900 dark:text-white">فیلتر و جستجو</h2>
-                    <p class="m-0 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">لیست پرسنل را بر اساس نام، وضعیت و دپارتمان محدود کنید.</p>
+    @{
+        ViewData["SavedFiltersSaveButtonId"] = "hc-save-filter";
+        ViewData["SavedFiltersClearButtonId"] = "hc-clear-filters";
+        ViewData["SavedFiltersContainerId"] = "hc-saved-filters";
+    }
+
+    <!-- ═══════════════ ۲. KPI Summary Cards ═══════════════ -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <!-- کل پرسنل -->
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3 transition hover:shadow-md hover:-translate-y-0.5">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+                <i class="bi bi-people-fill text-lg"></i>س
+            </div>
+            <div class="min-w-0">
+                <p class="m-0 text-[11px] font-bold text-slate-500">👥 کل پرسنل</p>
+                <p class="m-0 text-lg font-black text-slate-800 tabular-nums">@Model.TotalCount</p>
+                <p class="m-0 text-[10px] text-slate-400">کل کارمندان ثبت‌شده</p>
+            </div>
+        </div>
+
+        <!-- شاغلین فعال -->
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3 transition hover:shadow-md hover:-translate-y-0.5">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <i class="bi bi-check2-circle text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="m-0 text-[11px] font-bold text-slate-500">✅ شاغلین فعال</p>
+                <p class="m-0 text-lg font-black text-emerald-600 tabular-nums">@Model.ActiveCount</p>
+                <p class="m-0 text-[10px] text-slate-400">مشغول به کار در سازمان</p>
+            </div>
+        </div>
+
+        <!-- در انتظار تکمیل پرونده / مرخصی -->
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3 transition hover:shadow-md hover:-translate-y-0.5">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
+                <i class="bi bi-hourglass-split text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="m-0 text-[11px] font-bold text-slate-500">📋 در انتظار تکمیل پرونده / مرخصی</p>
+                <p class="m-0 text-lg font-black text-amber-600 tabular-nums">@(Model.PendingOnboardingCount + Model.OnLeaveCount)</p>
+                <p class="m-0 text-[10px] text-slate-400">پرونده ناتمام: @Model.PendingOnboardingCount • مرخصی: @Model.OnLeaveCount</p>
+            </div>
+        </div>
+
+        <!-- مجموع حقوق ماهانه -->
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3 transition hover:shadow-md hover:-translate-y-0.5">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
+                <i class="bi bi-cash-stack text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="m-0 text-[11px] font-bold text-slate-500">💰 مجموع حقوق ماهانه</p>
+                <p class="m-0 text-lg font-black text-rose-600 tabular-nums">@SalaryLabel(Model.TotalMonthlyPayroll)</p>
+                <p class="m-0 text-[10px] text-slate-400">میانگین: @SalaryLabel(Model.AverageSalary)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ۳. Tabs Navigation ═══════════════ -->
+    <nav class="flex flex-wrap items-center gap-1 rounded-lg border border-black/10 bg-white p-1 shadow-sm" aria-label="نمای‌ها">
+        <button type="button" data-hc-tab="all" class="hc-tab-btn flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 active">
+            <i class="bi bi-person-badge"></i>📁 همه پرسنل
+        </button>
+        <button type="button" data-hc-tab="status" class="hc-tab-btn flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100">
+            <i class="bi bi-arrow-repeat"></i>🔄 وضعیت‌های شغلی
+        </button>
+        <button type="button" data-hc-tab="salary" class="hc-tab-btn flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100">
+            <i class="bi bi-credit-card"></i>💳 تاریخچه حقوق و مزایا
+        </button>
+        <button type="button" data-hc-tab="directives" class="hc-tab-btn flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100">
+            <i class="bi bi-gear"></i>⚙️ تنظیمات و احکام
+        </button>
+    </nav>
+
+    <!-- ═══════════════ ۴. Advanced Search & Filter Bar (Sticky) ═══════════════ -->
+    <section class="sticky top-0 z-20 rounded-lg border border-black/10 bg-white shadow-md">
+        <form method="get" asp-action="Index" id="hc-filter-form" class="flex flex-col gap-2.5 p-2.5">
+            <input type="hidden" asp-for="WorkflowView" />
+
+            <div class="flex flex-col gap-2.5 md:flex-row md:items-center">
+                <!-- Instant Search -->
+                <div class="relative flex-1 min-w-[220px]">
+                    <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-slate-400">
+                        <i class="bi bi-search text-sm"></i>
+                    </span>
+                    <input asp-for="SearchTerm" id="hc-instant-search"
+                           class="h-9 w-full rounded-lg border border-black/15 bg-white pr-8 pl-3 text-xs text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200"
+                           placeholder="جستجوی فوری: نام، کد ملی یا کد پرسنلی..." autocomplete="off" />
                 </div>
-                
+
+                <!-- Department -->
+                <div class="flex flex-col gap-1 min-w-[150px]">
+                    <label asp-for="DepartmentId" class="text-[10px] font-bold text-slate-500">دپارتمان</label>
+                    <select asp-for="DepartmentId" class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200">
+                        <option value="">همه دپارتمان‌ها</option>
+                        @foreach (var dept in Model.DepartmentOptions)
+                        {
+                            <option value="@dept.Value" selected="@dept.Selected">@dept.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div class="flex flex-col gap-1 min-w-[150px]">
+                    <label asp-for="Status" class="text-[10px] font-bold text-slate-500">وضعیت شغلی</label>
+                    <select asp-for="Status" class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="فعال">فعال</option>
+                        <option value="در انتظار تایید">در انتظار تایید</option>
+                        <option value="مرخصی موقت">مرخصی موقت</option>
+                        <option value="اخراج شده">اخراج شده</option>
+                    </select>
+                </div>
+
+                <!-- Employment Type -->
+                <div class="flex flex-col gap-1 min-w-[150px]">
+                    <label asp-for="EmploymentType" class="text-[10px] font-bold text-slate-500">نوع همکاری</label>
+                    <select asp-for="EmploymentType" class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200">
+                        <option value="">همه انواع همکاری</option>
+                        @foreach (var type in Model.EmploymentTypeOptions)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-end md:flex-col lg:flex-row">
+                    <a asp-action="Create"
+                       class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 no-underline whitespace-nowrap">
+                        <i class="bi bi-plus-lg text-sm"></i> استخدام کارمند جدید
+                    </a>
+                    <a href="#" id="hc-export-btn"
+                       class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-black/20 bg-gradient-to-b from-white to-slate-100 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white no-underline whitespace-nowrap">
+                        <i class="bi bi-file-earmark-spreadsheet text-sm"></i> خروجی اکسل
+                    </a>
+                    <button type="button" id="hc-reset-btn"
+                            class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-black/20 bg-gradient-to-b from-white to-slate-100 px-3.5 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-white whitespace-nowrap">
+                        <i class="bi bi-eraser text-sm"></i> پاک‌سازی فیلترها
+                    </button>
+                </div>
+            </div>
+
+            <!-- Saved Filters Row -->
+            <div class="border-t border-black/5 pt-2">
                 <partial name="_SavedFiltersPanel" />
-                
-                <form method="get" asp-action="Index" class="flex flex-col gap-3 sm:flex-row sm:items-end" id="hc-filter-form">
-                    <input type="hidden" asp-for="WorkflowView" />
-                    
-                    <div class="flex-1 min-w-[200px] flex flex-col gap-1">
-                        <label asp-for="SearchTerm" class="text-xs font-bold text-slate-500 dark:text-slate-400">جستجو</label>
-                        <input asp-for="SearchTerm" class="h-8 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" placeholder="نام، کد پرسنلی، کد ملی یا عنوان شغلی..." />
-                    </div>
-                    
-                    <div class="w-48 flex flex-col gap-1">
-                        <label asp-for="Status" class="text-xs font-bold text-slate-500 dark:text-slate-400">وضعیت</label>
-                        <select asp-for="Status" class="h-8 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800">
-                            <option value="">همه وضعیت‌ها</option>
-                            @foreach (var status in Model.StatusOptions)
-                            {
-                                <option value="@status">@status</option>
-                            }
-                        </select>
-                    </div>
-                    
-                    <div class="w-48 flex flex-col gap-1">
-                        <label asp-for="DepartmentId" class="text-xs font-bold text-slate-500 dark:text-slate-400">دپارتمان</label>
-                        <select asp-for="DepartmentId" class="h-8 rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" asp-items="Model.DepartmentOptions">
-                            <option value="">همه دپارتمان‌ها</option>
-                        </select>
-                    </div>
-                    
-                    <div class="sm:w-32">
-                        <button type="submit" class="h-8 w-full flex items-center justify-center gap-1.5 px-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-teal-50 dark:hover:bg-teal-600 text-white text-xs font-bold transition shadow-sm">
-                            <i class="bi bi-filter"></i>
-                            <span>اعمال فیلتر</span>
-                        </button>
-                    </div>
-                </form>
             </div>
+        </form>
+    </section>
 
-            <!-- List Table Card -->
-            <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <div>
-                        <h2 class="m-0 text-sm font-black text-slate-900 dark:text-white">لیست کارمندان</h2>
-                        <p class="m-0 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">نمای عملیاتی پرسنل با دسترسی سریع به جزئیات و ویرایش.</p>
-                    </div>
-                    <div class="text-[11px] font-bold text-teal-600 dark:text-teal-400">@Model.FilteredCount رکورد نمایش داده می‌شود</div>
-                </div>
-
-                <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-                    <div class="overflow-x-auto w-full">
-                        <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300">
-                            <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                                <tr>
-                                    <th class="px-3 py-2.5 font-bold">پرسنل</th>
-                                    <th class="px-3 py-2.5 font-bold">سمت / دپارتمان</th>
-                                    <th class="px-3 py-2.5 font-bold text-center">استخدام</th>
-                                    <th class="px-3 py-2.5 font-bold text-left">حقوق فعلی</th>
-                                    <th class="px-3 py-2.5 font-bold text-center">وضعیت</th>
-                                    <th class="px-3 py-2.5 font-bold">سوابق</th>
-                                    <th class="px-3 py-2.5 font-bold text-center w-1">عملیات</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-                                @if (Model.Items.Any())
-                                {
-                                    foreach (var employee in Model.Items)
-                                    {
-                                        var statusBadgeClass = employee.CurrentStatus == "فعال" || employee.CurrentStatus == "مشغول به کار"
-                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200/40"
-                                            : (employee.CurrentStatus == "قطع همکاری" || employee.CurrentStatus == "غیرفعال"
-                                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200/40"
-                                            : "bg-slate-100 text-slate-700 dark:bg-slate-800/40 dark:text-slate-400 border-slate-200/40");
-                                            
-                                        var nameInitials = string.IsNullOrWhiteSpace(employee.FullName) ? "?" : employee.FullName.Substring(0, 1);
-
-                                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                                            <!-- Personnel Name and Avatar -->
-                                            <td class="px-3 py-3">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-950/40 border border-teal-200/40 dark:border-teal-800/30 text-teal-700 dark:text-teal-400 flex items-center justify-center font-black text-xs">
-                                                        @nameInitials
-                                                    </div>
-                                                    <div>
-                                                        <div class="font-bold text-slate-900 dark:text-white">@employee.FullName</div>
-                                                        <div class="text-[10px] text-slate-500 font-mono">کد پرسنلی: @employee.PersonnelCode</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            
-                                            <!-- Title & Department -->
-                                            <td class="px-3 py-3">
-                                                <div class="font-medium text-slate-800 dark:text-slate-200">@employee.PositionTitle</div>
-                                                <div class="text-[10px] text-slate-500">@(employee.DepartmentName ?? "-")</div>
-                                            </td>
-                                            
-                                            <!-- Hire Date -->
-                                            <td class="px-3 py-3 text-center font-mono text-slate-500">@employee.HireDate.ToString("yyyy/MM/dd")</td>
-                                            
-                                            <!-- Salary -->
-                                            <td class="px-3 py-3 text-left font-mono tabular-nums font-bold text-slate-900 dark:text-white">@employee.CurrentSalary.ToString("N0")</td>
-                                            
-                                            <!-- Status badge -->
-                                            <td class="px-3 py-3 text-center">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border @statusBadgeClass">
-                                                    @employee.CurrentStatus
-                                                </span>
-                                            </td>
-                                            
-                                            <!-- Records history -->
-                                            <td class="px-3 py-3 text-[10px] text-slate-500 leading-normal">
-                                                <div>افزایش حقوق: <span class="font-mono">@employee.SalaryChangeCount</span></div>
-                                                <div>آخرین رخداد: <span class="font-mono">@(employee.LatestStatusDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
-                                            </td>
-                                            
-                                            <!-- Minimal Actions -->
-                                            <td class="px-3 py-3 text-center w-1">
-                                                <div class="flex items-center justify-center gap-1.5">
-                                                    <a asp-action="Details" asp-route-id="@employee.Id" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition hc-track-visit" data-id="@employee.Id" data-name="@employee.FullName" data-url="@Url.Action("Details", "HumanCapital", new { id = employee.Id })" title="پروفایل/جزئیات">
-                                                        <i class="bi bi-person-bounding-box text-sm"></i>
-                                                    </a>
-                                                    <a asp-action="Edit" asp-route-id="@employee.Id" class="p-1 text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition" title="ویرایش">
-                                                        <i class="bi bi-pencil-square text-sm"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                                else
-                                {
-                                    <tr>
-                                        <td colspan="7" class="px-3 py-4 text-center text-slate-400 dark:text-slate-500">موردی برای نمایش وجود ندارد.</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    <!-- ═══════════════ ۵. Tab Panels ═══════════════ -->
+    <section id="hc-panel-status" class="hidden">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="rounded-lg border border-black/10 bg-white p-3 shadow-sm">
+                <p class="m-0 text-[11px] font-bold text-slate-500">فعال</p>
+                <p class="m-0 text-lg font-black text-emerald-600">@Model.ActiveCount</p>
+            </div>
+            <div class="rounded-lg border border-black/10 bg-white p-3 shadow-sm">
+                <p class="m-0 text-[11px] font-bold text-slate-500">مرخصی موقت</p>
+                <p class="m-0 text-lg font-black text-amber-600">@Model.OnLeaveCount</p>
+            </div>
+            <div class="rounded-lg border border-black/10 bg-white p-3 shadow-sm">
+                <p class="m-0 text-[11px] font-bold text-slate-500">در انتظار تکمیل پرونده</p>
+                <p class="m-0 text-lg font-black text-amber-600">@Model.PendingOnboardingCount</p>
+            </div>
+            <div class="rounded-lg border border-black/10 bg-white p-3 shadow-sm">
+                <p class="m-0 text-[11px] font-bold text-slate-500">خارج‌شده / غیرفعال</p>
+                <p class="m-0 text-lg font-black text-rose-600">@Model.SeparatedCount</p>
             </div>
         </div>
+        <p class="mt-2.5 text-[11px] text-slate-500">برای مشاهده و ویرایش جزئیات وضعیت هر پرسنل، از منوی عملیات ردیف مربوطه گزینه «تغییر وضعیت» را انتخاب کنید.</p>
+    </section>
 
-        <!-- Sidebar: Recent Views (Col span 1) -->
-        <div class="flex flex-col gap-3">
-            <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm flex flex-col gap-3">
+    <section id="hc-panel-salary" class="hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white p-3 shadow-sm">
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600"><i class="bi bi-cash-stack"></i></div>
                 <div>
-                    <h2 class="m-0 text-sm font-black text-slate-900 dark:text-white">آخرین بازدیدها</h2>
-                    <p class="m-0 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">افرادی که اخیراً باز کرده‌اید اینجا ذخیره می‌شوند.</p>
+                    <p class="m-0 text-[11px] font-bold text-slate-500">مجموع حقوق ماهانه</p>
+                    <p class="m-0 text-base font-black text-slate-800">@SalaryLabel(Model.TotalMonthlyPayroll)</p>
                 </div>
-                <div id="hc-recent-items" class="flex flex-col gap-3"></div>
+            </div>
+            <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white p-3 shadow-sm">
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><i class="bi bi-bar-chart"></i></div>
+                <div>
+                    <p class="m-0 text-[11px] font-bold text-slate-500">میانگین حقوق</p>
+                    <p class="m-0 text-base font-black text-slate-800">@SalaryLabel(Model.AverageSalary)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white p-3 shadow-sm">
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"><i class="bi bi-people"></i></div>
+                <div>
+                    <p class="m-0 text-[11px] font-bold text-slate-500">تعداد پرسنل مشمول</p>
+                    <p class="m-0 text-base font-black text-slate-800">@Model.TotalCount</p>
+                </div>
             </div>
         </div>
-    </div>
+        <p class="mt-2.5 text-[11px] text-slate-500">جزئیات کامل افزایش حقوق و مزایای هر پرسنل از گزینه «تاریخچه حقوق» در منوی عملیات ردیف مربوطه قابل مشاهده است.</p>
+    </section>
+
+    <section id="hc-panel-directives" class="hidden">
+        <div class="rounded-lg border border-black/10 bg-white p-4 shadow-sm">
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><i class="bi bi-file-earmark-text"></i></div>
+                <div>
+                    <p class="m-0 text-sm font-black text-slate-800">احکام و تنظیمات پرسنلی</p>
+                    <p class="m-0 mt-1 text-[11px] text-slate-500">احکام (تغییر وضعیت، تعدیل، مرخصی) و تاریخچه حقوق هر کارمند از طریق پرونده پرسنلی قابل ثبت و پیگیری است.</p>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <a asp-action="Create" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white no-underline transition hover:bg-emerald-700">
+                            <i class="bi bi-person-plus"></i> استخدام جدید
+                        </a>
+                        <a href="@Url.Action("Index", "Leaves")" class="inline-flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 no-underline transition hover:bg-slate-50">
+                            <i class="bi bi-calendar2-week"></i> مدیریت مرخصی‌ها
+                        </a>
+                        <a href="@Url.Action("Index", "Letters")" class="inline-flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 no-underline transition hover:bg-slate-50">
+                            <i class="bi bi-envelope"></i> نامه‌ها
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ۶. Enterprise Operational Data Table ═══════════════ -->
+    <section id="hc-panel-table" class="rounded-lg border border-black/10 bg-white shadow-sm">
+        <!-- Table Toolbar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-black/5 px-3 py-2.5">
+            <div class="flex items-center gap-2">
+                <h2 class="m-0 text-sm font-black text-slate-800">لیست کارمندان</h2>
+                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">@Model.FilteredCount رکورد</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
+                <span>نمایش</span>
+                <select id="hc-page-size" class="h-7 rounded-md border border-black/15 bg-white px-1.5 text-[11px] font-bold text-slate-600 outline-none">
+                    <option value="10">۱۰</option>
+                    <option value="20">۲۰</option>
+                    <option value="50">۵۰</option>
+                    <option value="100">۱۰۰</option>
+                </select>
+                <span>رکورد در هر صفحه</span>
+            </div>
+        </div>
+
+        <!-- Data Grid -->
+        <div class="overflow-x-auto w-full">
+            <table class="w-full min-w-[960px] text-xs text-right border-collapse text-slate-700">
+                <thead class="sticky top-0 z-10 bg-slate-50 border-b border-black/10">
+                    <tr>
+                        <th class="px-3 py-2.5 font-bold text-slate-600">پرسنل</th>
+                        <th class="px-3 py-2.5 font-bold text-slate-600">دپارتمان و عنوان شغلی</th>
+                        <th class="px-3 py-2.5 font-bold text-slate-600">کد ملی و شماره تماس</th>
+                        <th class="px-3 py-2.5 font-bold text-slate-600">تاریخ استخدام</th>
+                        <th class="px-3 py-2.5 font-bold text-slate-600">وضعیت شغلی</th>
+                        <th class="px-3 py-2.5 font-bold text-slate-600 w-1">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody id="hc-table-body" class="divide-y divide-black/5">
+                    @if (Model.Items.Any())
+                    {
+                        foreach (var employee in Model.Items)
+                        {
+                            var isActive = employee.CurrentStatus == "فعال";
+                            var isLeave = employee.CurrentStatus == "مرخصی موقت";
+                            var isTerminated = employee.CurrentStatus == "اخراج شده";
+
+                            var badgeClass = isActive
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : (isLeave
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : (isTerminated
+                                ? "bg-rose-50 text-rose-700 border-rose-200"
+                                : "bg-slate-100 text-slate-600 border-slate-200"));
+
+                            var badgeDot = isActive ? "bg-emerald-500" : (isLeave ? "bg-amber-500" : (isTerminated ? "bg-rose-500" : "bg-slate-400"));
+                            var avatarClass = isActive
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : (isLeave
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : (isTerminated
+                                ? "bg-rose-50 text-rose-700 border-rose-200"
+                                : "bg-slate-100 text-slate-600 border-slate-200"));
+
+                            var initials = string.IsNullOrWhiteSpace(employee.FullName) ? "؟" : employee.FullName.Substring(0, 1);
+                            var showOnboardingDot = !employee.OnboardingCompleted;
+
+                            <tr class="hc-data-row transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50" data-name="@employee.FullName" data-status="@employee.CurrentStatus">
+                                <!-- پرسنل -->
+                                <td class="px-3 py-2.5">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="relative">
+                                            <div class="flex h-9 w-9 items-center justify-center rounded-full border text-xs font-black @avatarClass">@initials</div>
+                                            @if (showOnboardingDot)
+                                            {
+                                                <span class="absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-400" title="پرونده ناتمام"></span>
+                                            }
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-slate-900 whitespace-nowrap">@employee.FullName</div>
+                                            <div class="text-[10px] text-slate-500 font-mono">کد پرسنلی: @employee.PersonnelCode</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- دپارتمان و عنوان شغلی -->
+                                <td class="px-3 py-2.5">
+                                    <div class="font-medium text-slate-800">@employee.PositionTitle</div>
+                                    <div class="mt-0.5 flex items-center gap-1.5">
+                                        <span class="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                                            <i class="bi bi-building ml-1"></i>@(employee.DepartmentName ?? "—")
+                                        </span>
+                                        <span class="inline-flex items-center rounded-md border border-indigo-100 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600">
+                                            @(string.IsNullOrWhiteSpace(employee.EmploymentType) ? "همکاری" : employee.EmploymentType)
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- کد ملی و شماره تماس -->
+                                <td class="px-3 py-2.5">
+                                    <div class="flex items-center gap-1.5 text-[11px] font-mono text-slate-600">
+                                        <i class="bi bi-credit-card-2-front text-slate-400"></i>@(string.IsNullOrWhiteSpace(employee.NationalCode) ? "—" : employee.NationalCode)
+                                    </div>
+                                    <div class="mt-0.5 flex items-center gap-1.5 text-[11px] font-mono text-slate-500" dir="ltr">
+                                        <i class="bi bi-telephone text-slate-400"></i>@(string.IsNullOrWhiteSpace(employee.PhoneNumber) ? "—" : employee.PhoneNumber)
+                                    </div>
+                                </td>
+
+                                <!-- تاریخ استخدام -->
+                                <td class="px-3 py-2.5">
+                                    <div class="flex items-center gap-1.5 text-slate-700 tabular-nums">
+                                        <i class="bi bi-calendar3 text-slate-400"></i>@Jalali(employee.HireDate)
+                                    </div>
+                                    <div class="mt-0.5 text-[10px] text-slate-400">آخرین رخداد: @JalaliOrDash(employee.LatestStatusDate)</div>
+                                </td>
+
+                                <!-- وضعیت شغلی -->
+                                <td class="px-3 py-2.5">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold @badgeClass">
+                                        <span class="h-1.5 w-1.5 rounded-full @badgeDot"></span>
+                                        @employee.CurrentStatus
+                                    </span>
+                                </td>
+
+                                <!-- عملیات -->
+                                <td class="px-3 py-2.5 text-center w-1">
+                                    <div class="relative inline-block hc-action-wrap">
+                                        <button type="button"
+                                                class="hc-action-toggle flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-700"
+                                                data-id="@employee.Id" data-name="@employee.FullName"
+                                                data-view-url="@Url.Action("Details", "HumanCapital", new { id = employee.Id })"
+                                                data-edit-url="@Url.Action("Edit", "HumanCapital", new { id = employee.Id })"
+                                                aria-haspopup="true" aria-expanded="false" title="عملیات">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <div class="hc-action-menu hidden absolute left-0 top-full z-30 mt-1 w-48 rounded-lg border border-black/10 bg-white p-1 shadow-xl">
+                                            <a href="@Url.Action("Details", "HumanCapital", new { id = employee.Id })"
+                                               class="hc-track-visit flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 no-underline transition hover:bg-slate-100"
+                                               data-id="@employee.Id" data-name="@employee.FullName" data-url="@Url.Action("Details", "HumanCapital", new { id = employee.Id })">
+                                                <i class="bi bi-person-bounding-box text-slate-400"></i> مشاهده پرونده
+                                            </a>
+                                            <a href="@Url.Action("Edit", "HumanCapital", new { id = employee.Id })"
+                                               class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 no-underline transition hover:bg-slate-100">
+                                                <i class="bi bi-pencil-square text-slate-400"></i> ویرایش
+                                            </a>
+                                            <a href="@Url.Action("Details", "HumanCapital", new { id = employee.Id })#salary-history"
+                                               class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 no-underline transition hover:bg-slate-100">
+                                                <i class="bi bi-cash-coin text-slate-400"></i> تاریخچه حقوق
+                                            </a>
+                                            <a href="@Url.Action("Edit", "HumanCapital", new { id = employee.Id })"
+                                               class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 no-underline transition hover:bg-slate-100">
+                                                <i class="bi bi-arrow-repeat text-slate-400"></i> تغییر وضعیت
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-3 py-10 text-center">
+                                <div class="flex flex-col items-center gap-2 text-slate-400">
+                                    <i class="bi bi-inbox text-3xl"></i>
+                                    <span class="text-xs font-semibold">موردی برای نمایش وجود ندارد.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-black/5 px-3 py-2.5">
+            <div class="text-[11px] text-slate-500" id="hc-pagination-info">نمایش ۰ تا ۰ از @Model.FilteredCount رکورد</div>
+            <div class="flex items-center gap-1" id="hc-pagination-controls"></div>
+        </div>
+    </section>
 </div>
 
 <script>
     (() => {
+        // ─────────────────────────────────────────────────────────────
+        // Constants & element refs
+        // ─────────────────────────────────────────────────────────────
         const storageKey = "rhyno.humanCapital.filters";
         const recentKey = "rhyno.humanCapital.recent";
         const preferenceEndpoint = "/table-preferences/human-capital.filters";
         const form = document.getElementById("hc-filter-form");
         const savedContainer = document.getElementById("hc-saved-filters");
-        const recentContainer = document.getElementById("hc-recent-items");
         const saveButton = document.getElementById("hc-save-filter");
         const clearButton = document.getElementById("hc-clear-filters");
+        const instantSearch = document.getElementById("hc-instant-search");
+        const rows = Array.from(document.querySelectorAll("#hc-table-body .hc-data-row"));
+        const pageSizeSelect = document.getElementById("hc-page-size");
+        const paginationInfo = document.getElementById("hc-pagination-info");
+        const paginationControls = document.getElementById("hc-pagination-controls");
+        const totalRows = rows.length;
 
+        // ─────────────────────────────────────────────────────────────
+        // Saved filters helpers (kept from original)
+        // ─────────────────────────────────────────────────────────────
         const readJson = (key, fallback) => {
-            try {
-                return JSON.parse(localStorage.getItem(key) || "null") || fallback;
-            } catch {
-                return fallback;
-            }
+            try { return JSON.parse(localStorage.getItem(key) || "null") || fallback; }
+            catch { return fallback; }
         };
-
         const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value));
 
         const loadSavedFilters = async () => {
             try {
                 const response = await fetch(preferenceEndpoint, { credentials: "same-origin" });
-                if (!response.ok) {
-                    return readJson(storageKey, []);
-                }
-
+                if (!response.ok) return readJson(storageKey, []);
                 const items = await response.json();
                 const normalized = Array.isArray(items) ? items : [];
-                if (normalized.length) {
-                    writeJson(storageKey, normalized);
-                }
-
+                if (normalized.length) writeJson(storageKey, normalized);
                 return normalized.length ? normalized : readJson(storageKey, []);
             } catch {
                 return readJson(storageKey, []);
@@ -252,71 +474,55 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(items)
                 });
-            } catch {
-            }
+            } catch { }
         };
 
-        const currentFilter = () => ({
-            searchTerm: form.querySelector('[name="SearchTerm"]')?.value?.trim() || "",
-            status: form.querySelector('[name="Status"]')?.value || "",
-            departmentId: form.querySelector('[name="DepartmentId"]')?.value || "",
-            workflowView: form.querySelector('[name="WorkflowView"]')?.value || "all"
-        });
+        const filterForm = document.getElementById("hc-filter-form");
+        const currentFilter = () => {
+            if (!filterForm) return {};
+            return {
+                searchTerm: filterForm.querySelector('[name="SearchTerm"]')?.value?.trim() || "",
+                status: filterForm.querySelector('[name="Status"]')?.value || "",
+                departmentId: filterForm.querySelector('[name="DepartmentId"]')?.value || "",
+                employmentType: filterForm.querySelector('[name="EmploymentType"]')?.value || "",
+                workflowView: filterForm.querySelector('[name="WorkflowView"]')?.value || "all"
+            };
+        };
 
         const filterLabel = (item) => {
             const parts = [];
             if (item.searchTerm) parts.push(`جستجو: ${item.searchTerm}`);
             if (item.status) parts.push(`وضعیت: ${item.status}`);
             if (item.departmentId) parts.push(`دپارتمان: ${item.departmentId}`);
+            if (item.employmentType) parts.push(`همکاری: ${item.employmentType}`);
             if (item.workflowView && item.workflowView !== "all") parts.push(`نما: ${item.workflowView}`);
             return parts.length ? parts.join(" | ") : "فیلتر بدون شرط";
         };
 
         const renderSaved = () => {
+            if (!savedContainer) return;
             const items = readJson(storageKey, []);
             savedContainer.innerHTML = "";
             if (!items.length) {
-                savedContainer.innerHTML = '<span class="text-slate-400 dark:text-slate-500 text-xs">هنوز فیلتری ذخیره نشده است.</span>';
+                savedContainer.innerHTML = '<span class="text-slate-400 text-[11px]">هنوز فیلتری ذخیره نشده است.</span>';
                 return;
             }
-
-            items.slice(0, 6).forEach((item, index) => {
+            items.slice(0, 6).forEach(item => {
                 const chip = document.createElement("button");
                 chip.type = "button";
-                chip.className = "px-3 py-1 rounded-full text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900 dark:text-slate-300 transition shadow-sm cursor-pointer";
+                chip.className = "px-3 py-1 rounded-full text-[11px] font-bold border border-black/10 bg-white hover:bg-slate-50 text-slate-700 shadow-sm cursor-pointer transition";
                 chip.textContent = item.name;
                 chip.title = filterLabel(item);
                 chip.addEventListener("click", () => {
-                    form.querySelector('[name="SearchTerm"]').value = item.searchTerm || "";
-                    form.querySelector('[name="Status"]').value = item.status || "";
-                    form.querySelector('[name="DepartmentId"]').value = item.departmentId || "";
-                    form.querySelector('[name="WorkflowView"]').value = item.workflowView || "all";
-                    form.submit();
+                    if (!filterForm) return;
+                    filterForm.querySelector('[name="SearchTerm"]').value = item.searchTerm || "";
+                    filterForm.querySelector('[name="Status"]').value = item.status || "";
+                    filterForm.querySelector('[name="DepartmentId"]').value = item.departmentId || "";
+                    filterForm.querySelector('[name="EmploymentType"]').value = item.employmentType || "";
+                    filterForm.querySelector('[name="WorkflowView"]').value = item.workflowView || "all";
+                    filterForm.submit();
                 });
-                chip.dataset.index = index;
                 savedContainer.appendChild(chip);
-            });
-        };
-
-        const renderRecent = () => {
-            const items = readJson(recentKey, []);
-            recentContainer.innerHTML = "";
-            if (!items.length) {
-                recentContainer.innerHTML = '<div class="text-slate-450 dark:text-slate-500 text-xs">هنوز موردی باز نشده است.</div>';
-                return;
-            }
-
-            items.slice(0, 6).forEach(item => {
-                const row = document.createElement("div");
-                row.className = "flex items-center justify-between p-3 border border-slate-100 dark:border-slate-800/80 rounded-xl bg-slate-50 dark:bg-slate-950/40 text-xs";
-                row.innerHTML = `
-                    <div>
-                        <div class="font-bold text-slate-800 dark:text-slate-200">${item.name}</div>
-                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">${item.when}</div>
-                    </div>
-                    <a class="flex items-center justify-center px-2.5 py-1 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 rounded-md text-[11px] font-semibold transition shadow-sm no-underline" href="${item.url}">باز کردن</a>
-                `;
-                recentContainer.appendChild(row);
             });
         };
 
@@ -330,27 +536,185 @@
         });
 
         clearButton?.addEventListener("click", () => {
-            form.querySelector('[name="SearchTerm"]').value = "";
-            form.querySelector('[name="Status"]').value = "";
-            form.querySelector('[name="DepartmentId"]').value = "";
-            form.querySelector('[name="WorkflowView"]').value = "all";
-            form.submit();
+            if (!filterForm) return;
+            filterForm.querySelector('[name="SearchTerm"]').value = "";
+            filterForm.querySelector('[name="Status"]').value = "";
+            filterForm.querySelector('[name="DepartmentId"]').value = "";
+            filterForm.querySelector('[name="EmploymentType"]').value = "";
+            filterForm.querySelector('[name="WorkflowView"]').value = "all";
+            filterForm.submit();
         });
 
+        // ─────────────────────────────────────────────────────────────
+        // Client-side pagination + instant search (single renderer)
+        // ─────────────────────────────────────────────────────────────
+        let currentPage = 1;
+        let instantTimer = null;
+        const pageSize = () => parseInt(pageSizeSelect?.value || "10", 10);
+
+        const filteredRows = () => {
+            const q = (instantSearch?.value || "").trim().toLowerCase();
+            if (!q) return rows;
+            return rows.filter(row => (row.dataset.name || "").toLowerCase().includes(q));
+        };
+
+        const renderPagination = () => {
+            const filtered = filteredRows();
+            const size = pageSize();
+            const pages = Math.max(1, Math.ceil(filtered.length / size));
+            if (currentPage > pages) currentPage = pages;
+
+            // Hide all rows, then reveal only the current page slice of the filtered set.
+            rows.forEach(row => row.style.display = "none");
+            const start = (currentPage - 1) * size;
+            filtered.slice(start, start + size).forEach(row => row.style.display = "");
+
+            const from = filtered.length === 0 ? 0 : start + 1;
+            const to = Math.min(start + size, filtered.length);
+            paginationInfo.textContent = `نمایش ${from} تا ${to} از ${filtered.length} رکورد`;
+
+            paginationControls.innerHTML = "";
+            const mkBtn = (label, page, opts = {}) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.textContent = label;
+                b.className = "min-w-[28px] h-7 px-1.5 rounded-md text-[11px] font-bold transition " +
+                    (opts.active
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "border border-black/10 bg-white text-slate-600 hover:bg-slate-50");
+                if (opts.disabled) {
+                    b.disabled = true;
+                    b.className += " opacity-40 cursor-not-allowed";
+                } else {
+                    b.addEventListener("click", () => { currentPage = page; renderPagination(); });
+                }
+                return b;
+            };
+
+            paginationControls.appendChild(mkBtn("‹", currentPage - 1, { disabled: currentPage <= 1 }));
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(pages, startPage + 4);
+            for (let p = startPage; p <= endPage; p++) {
+                paginationControls.appendChild(mkBtn(p.toLocaleString("fa-IR"), p, { active: p === currentPage }));
+            }
+            paginationControls.appendChild(mkBtn("›", currentPage + 1, { disabled: currentPage >= pages }));
+        };
+
+        instantSearch?.addEventListener("input", () => {
+            clearTimeout(instantTimer);
+            instantTimer = setTimeout(() => { currentPage = 1; renderPagination(); }, 220);
+        });
+
+        pageSizeSelect?.addEventListener("change", () => { currentPage = 1; renderPagination(); });
+        renderPagination();
+
+        // ─────────────────────────────────────────────────────────────
+        // Action dropdowns (Vanilla JS)
+        // ─────────────────────────────────────────────────────────────
+        const closeAllMenus = () => {
+            document.querySelectorAll(".hc-action-menu").forEach(m => m.classList.add("hidden"));
+            document.querySelectorAll(".hc-action-toggle").forEach(b => b.setAttribute("aria-expanded", "false"));
+        };
+
+        document.addEventListener("click", (e) => {
+            const toggle = e.target.closest(".hc-action-toggle");
+            if (toggle) {
+                e.preventDefault();
+                e.stopPropagation();
+                const menu = toggle.closest(".hc-action-wrap")?.querySelector(".hc-action-menu");
+                const isOpen = menu && !menu.classList.contains("hidden");
+                closeAllMenus();
+                if (menu && !isOpen) {
+                    menu.classList.remove("hidden");
+                    toggle.setAttribute("aria-expanded", "true");
+                }
+                return;
+            }
+            if (!e.target.closest(".hc-action-menu")) closeAllMenus();
+        });
+
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAllMenus(); });
+
+        // ─────────────────────────────────────────────────────────────
+        // Tabs (Vanilla JS)
+        // ─────────────────────────────────────────────────────────────
+        const panelTable = document.getElementById("hc-panel-table");
+        const panelStatus = document.getElementById("hc-panel-status");
+        const panelSalary = document.getElementById("hc-panel-salary");
+        const panelDirectives = document.getElementById("hc-panel-directives");
+        const tabButtons = document.querySelectorAll(".hc-tab-btn");
+        const setTabActive = (btn) => {
+            tabButtons.forEach(b => {
+                b.classList.remove("active", "bg-emerald-600", "text-white", "shadow-sm");
+                b.classList.add("text-slate-600");
+            });
+            btn.classList.add("active", "bg-emerald-600", "text-white", "shadow-sm");
+            btn.classList.remove("text-slate-600");
+        };
+        const showPanel = (target) => {
+            [panelTable, panelStatus, panelSalary, panelDirectives].forEach(p => {
+                if (p) p.classList.add("hidden");
+            });
+            if (target) target.classList.remove("hidden");
+        };
+        tabButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                setTabActive(btn);
+                const tab = btn.getAttribute("data-hc-tab");
+                if (tab === "status") showPanel(panelStatus);
+                else if (tab === "salary") showPanel(panelSalary);
+                else if (tab === "directives") showPanel(panelDirectives);
+                else showPanel(panelTable);
+            });
+        });
+
+        // Track visits (recent items persisted in localStorage)
         document.querySelectorAll(".hc-track-visit").forEach(link => {
             link.addEventListener("click", () => {
                 const items = readJson(recentKey, []).filter(x => x.id !== link.dataset.id);
-                items.unshift({
-                    id: link.dataset.id,
-                    name: link.dataset.name,
-                    url: link.dataset.url,
-                    when: new Date().toLocaleString("fa-IR")
-                });
+                items.unshift({ id: link.dataset.id, name: link.dataset.name, url: link.dataset.url, when: new Date().toLocaleString("fa-IR") });
                 writeJson(recentKey, items.slice(0, 8));
             });
         });
 
+        // ─────────────────────────────────────────────────────────────
+        // Export (Excel) — build a CSV client-side and trigger download
+        // ─────────────────────────────────────────────────────────────
+        const exportBtn = document.getElementById("hc-export-btn");
+        exportBtn?.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (!rows.length) return;
+            const header = ["کد پرسنلی", "نام", "دپارتمان", "عنوان شغلی", "کد ملی", "تلفن", "نوع همکاری", "تاریخ استخدام (شمسی)", "حقوق", "وضعیت"];
+            const lines = rows.map(row => {
+                const cells = Array.from(row.querySelectorAll("td"));
+                return [
+                    cells[0]?.querySelector(".font-mono")?.textContent?.replace("کد پرسنلی:", "").trim() || "",
+                    cells[0]?.querySelector(".font-bold")?.textContent?.trim() || "",
+                    cells[1]?.querySelector(".font-semibold")?.textContent?.trim() || "",
+                    cells[1]?.querySelector(".font-medium")?.textContent?.trim() || "",
+                    cells[2]?.querySelector(".font-mono")?.textContent?.trim() || "",
+                    cells[2]?.querySelectorAll(".font-mono")[1]?.textContent?.trim() || "",
+                    cells[3]?.textContent?.trim() || "",
+                    cells[3]?.querySelector(".tabular-nums")?.textContent?.trim() || "",
+                    cells[4]?.textContent?.trim() || "",
+                    cells[5]?.textContent?.trim() || ""
+                ].map(v => `"${(v || "").replace(/"/g, '""')}"`);
+            });
+            const csv = "\uFEFF" + [header.map(h => `"${h}"`).join(","), ...lines.map(l => l.join(","))].join("\r\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "human-capital-export.csv";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        // Init
+        // ─────────────────────────────────────────────────────────────
         loadSavedFilters().finally(renderSaved);
-        renderRecent();
     })();
 </script>

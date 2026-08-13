@@ -18,6 +18,7 @@ using OfficeAutomation.Models;
 
 namespace OfficeAutomation.Areas.Identity.Pages.Account
 {
+    [AllowAnonymous]
     public class LoginModel : PageModel
     {
         private readonly SignInManager<User> _signInManager;
@@ -92,7 +93,12 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/");
+            // Sanitize returnUrl to prevent open-redirect attacks. Only redirect to a
+            // local URL; fall back gracefully to "/" when null, empty, or non-local.
+            if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
+            {
+                returnUrl = Url.Content("~/");
+            }
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 

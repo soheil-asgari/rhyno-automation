@@ -60,6 +60,8 @@ public sealed class SecurityFieldMaskingService : ISecurityFieldMaskingService
 
         foreach (var item in model.Items)
         {
+            item.NationalCode = MaskNationalId(item.NationalCode);
+            item.PhoneNumber = MaskPhone(item.PhoneNumber);
             item.CurrentSalary = 0;
         }
     }

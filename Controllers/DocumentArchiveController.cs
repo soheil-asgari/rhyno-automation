@@ -244,6 +244,7 @@ namespace OfficeAutomation.Controllers
                 return Forbid();
             }
 
+            EnsureNotUnderLegalHold(item);
 
             var physicalPath = _tenantPathResolver.MapRelativeToPhysical(Path.Combine(_environment.ContentRootPath, "App_Data"), item.RelativePath);
             if (!System.IO.File.Exists(physicalPath))
@@ -545,6 +546,19 @@ namespace OfficeAutomation.Controllers
                 !AllowedContentTypes.Contains(file.ContentType))
             {
                 throw new InvalidOperationException("نوع محتوای فایل مجاز نیست.");
+            }
+        }
+
+        /// <summary>
+        /// جلوگیری از تغییر/حذف اسنادی که تحت نگهداری قانونی (پرونده قضایی) قرار دارند.
+        /// </summary>
+        public static void EnsureNotUnderLegalHold(DocumentArchiveItem item)
+        {
+            if (item.IsUnderLegalHold)
+            {
+                var reason = string.IsNullOrWhiteSpace(item.HoldReason) ? "دلیل ثبت نشده است" : item.HoldReason;
+                throw new InvalidOperationException(
+                    $"این سند تحت فرآیندهای قانونی قرار دارد و امکان تغییر یا حذف آن وجود ندارد. ({reason})");
             }
         }
 

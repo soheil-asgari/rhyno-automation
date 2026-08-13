@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -218,10 +219,13 @@ builder.Services.AddIdentity<User, ApplicationRole>(options =>
 })
 .AddEntityFrameworkStores<IdentityDbContext>()
 .AddDefaultTokenProviders()
+.AddDefaultUI()
 ;
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
+    // Standard ASP.NET Identity login path. The Razor Page at
+    // Areas/Identity/Pages/Account/Login.cshtml is registered under this route.
+    options.LoginPath = "/Identity/Account/Login";
     options.AccessDeniedPath = "/Home/AccessDenied";
 });
 
@@ -315,7 +319,10 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddRazorPages(options =>
 {
-    options.Conventions.AddAreaPageRoute("Identity", "/Account/Login", "/Account/Login");
+    // TEMPORARILY COMMENTED OUT to isolate whether the custom area page-route alias
+    // is breaking the default Identity UI route. The standard Identity route
+    // "/Identity/Account/Login" is used instead.
+    // options.Conventions.AddAreaPageRoute("Identity", "/Account/Login", "/Account/Login");
 });
 builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<IDocumentVersioningService, DocumentVersioningService>();
@@ -400,10 +407,12 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStaticFiles();
 
-// ── Force UTF-8 Encoding for all requests/responses ────
+// ── Force UTF-8 Encoding for all responses ──────────────
+// NOTE: We must NOT set context.Request.ContentType here. Modifying Request.ContentType
+// on incoming GET requests corrupts ASP.NET Core's internal Endpoint Routing engine and
+// can cause 404s. Only the Response.ContentType is set below.
 app.Use(async (context, next) =>
 {
-    context.Request.ContentType = "text/html; charset=utf-8";
     await next();
     if (context.Response.HasStarted)
         return;
@@ -616,6 +625,18 @@ catch (Exception ex)
 {
     logger.LogWarning(ex, "BootstrapAdmin: seed failed (DB may not be ready): {Message}", ex.Message);
 }
+
+// ── Startup Route Diagnostics ──────────────────────────
+// Outputs all active mapped routes to the console on startup so we can verify that
+// Areas/Identity/Pages/Account/Login appears in the [REGISTERED ROUTE] logs.
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var endpoints = app.Services.GetRequiredService<EndpointDataSource>().Endpoints;
+    foreach (var ep in endpoints)
+    {
+        Console.WriteLine($"[REGISTERED ROUTE] {ep.DisplayName} -> { (ep as RouteEndpoint)?.RoutePattern.RawText }");
+    }
+});
 
 app.Run();
 

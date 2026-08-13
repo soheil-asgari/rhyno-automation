@@ -53,15 +53,19 @@
 		<EmbeddedResource Remove="OfficeAutomation.Worker\**" />
 	</ItemGroup>
 
-	<!-- بیلد Tailwind CSS -->
-	<Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild">
+	<!--
+		بیلد Tailwind CSS — فقط در بیلد واقعی (Build/ReBuild) اجرا شود،
+		نه در design-time build که Visual Studio هنگام بارگذاری/IntelliSense اجرا می‌کند.
+		این کار مانع از گیر کردن VS روی «Loading project» می‌شود.
+	-->
+	<Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true'">
 		<Exec Command="npm install" Condition="!Exists('$(MSBuildProjectDirectory)\node_modules') And Exists('$(MSBuildProjectDirectory)\package.json')" />
 		<Message Importance="high" Text="Building Tailwind CSS assets..." />
 		<Exec Command="npm run build:css" />
 	</Target>
 
-	<!-- بیلد ماژول React Flow -->
-	<Target Name="BuildWorkflowUI" BeforeTargets="BeforeBuild">
+	<!-- بیلد ماژول React Flow — فقط در بیلد واقعی اجرا شود (مانند بالا) -->
+	<Target Name="BuildWorkflowUI" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true'">
 		<Message Importance="high" Text="Building Workflow UI (React Flow)..." />
 		<Exec Command="npm install" WorkingDirectory="WorkflowUI" Condition="!Exists('$(MSBuildProjectDirectory)\WorkflowUI\node_modules')" />
 		<Exec Command="npm run build" WorkingDirectory="WorkflowUI" />

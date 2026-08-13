@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,6 +16,9 @@ namespace OfficeAutomation.Controllers
         private readonly OfficeDbContext _context;
         private readonly IDataIsolationService _dataIsolationService;
         private readonly ISecurityFieldMaskingService _securityFieldMaskingService;
+        private readonly ICurrentDataAccessScope _dataAccessScope;
+        private readonly ILogger<HumanCapitalController> _logger;
+        private readonly IWebHostEnvironment _environment;
 
         private static readonly string[] DefaultEmploymentTypes =
         [
@@ -33,11 +37,37 @@ namespace OfficeAutomation.Controllers
             "اخراج شده"
         ];
 
-        public HumanCapitalController(OfficeDbContext context, IDataIsolationService dataIsolationService, ISecurityFieldMaskingService securityFieldMaskingService)
+        private static readonly Dictionary<string, string> DepartmentPersianNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Administrative"] = "اداری",
+            ["Financial"] = "مالی",
+            ["Finance"] = "مالی",
+            ["HR"] = "منابع انسانی",
+            ["Human Resources"] = "منابع انسانی",
+            ["Technical"] = "فنی و مهندسی",
+            ["IT"] = "فناوری اطلاعات",
+            ["Sales"] = "فروش",
+            ["Marketing"] = "بازاریابی",
+            ["Legal"] = "حقوقی",
+            ["Operations"] = "عملیات",
+            ["Logistics"] = "تدارکات",
+            ["Warehouse"] = "انبار"
+        };
+
+        public HumanCapitalController(
+            OfficeDbContext context,
+            IDataIsolationService dataIsolationService,
+            ISecurityFieldMaskingService securityFieldMaskingService,
+            ICurrentDataAccessScope dataAccessScope,
+            ILogger<HumanCapitalController> logger,
+            IWebHostEnvironment environment)
         {
             _context = context;
             _dataIsolationService = dataIsolationService;
             _securityFieldMaskingService = securityFieldMaskingService;
+            _dataAccessScope = dataAccessScope;
+            _logger = logger;
+            _environment = environment;
         }
 
         public async Task<IActionResult> Index(HumanCapitalIndexVM filter)
@@ -77,11 +107,21 @@ namespace OfficeAutomation.Controllers
                 query = query.Where(employee => employee.DepartmentId == filter.DepartmentId.Value);
             }
 
+            if (!string.IsNullOrWhiteSpace(filter.EmploymentType))
+            {
+                var employmentType = filter.EmploymentType.Trim();
+                query = query.Where(employee => employee.EmploymentType == employmentType);
+            }
+
             var fullListQuery = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.HumanCapitalEmployees.AsNoTracking());
 
             filter.TotalCount = await fullListQuery.CountAsync();
             filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "فعال");
             filter.SeparatedCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus != "فعال");
+            filter.PendingOnboardingCount = await fullListQuery.CountAsync(employee => !employee.OnboardingCompleted);
+            filter.OnLeaveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == DefaultStatuses[2]);
+            filter.TotalMonthlyPayroll = await fullListQuery.SumAsync(employee => employee.CurrentSalary);
+            filter.AverageSalary = filter.TotalCount > 0 ? filter.TotalMonthlyPayroll / filter.TotalCount : 0;
             filter.FilteredCount = await query.CountAsync();
             filter.WorkflowView ??= "all";
 
@@ -94,6 +134,10 @@ namespace OfficeAutomation.Controllers
                     FullName = employee.FullName,
                     DepartmentName = employee.Department != null ? employee.Department.Name : null,
                     PositionTitle = employee.PositionTitle,
+                    NationalCode = employee.NationalCode,
+                    PhoneNumber = employee.PhoneNumber,
+                    EmploymentType = employee.EmploymentType,
+                    OnboardingCompleted = employee.OnboardingCompleted,
                     HireDate = employee.HireDate,
                     CurrentSalary = employee.CurrentSalary,
                     CurrentStatus = employee.CurrentStatus,
@@ -107,6 +151,7 @@ namespace OfficeAutomation.Controllers
 
             filter.DepartmentOptions = await BuildDepartmentOptionsAsync(filter.DepartmentId);
             filter.StatusOptions = await BuildStatusOptionsAsync();
+            filter.EmploymentTypeOptions = DefaultEmploymentTypes.ToList();
             await _securityFieldMaskingService.MaskHumanCapitalIndexAsync(filter);
 
             return View(filter);
@@ -124,69 +169,142 @@ namespace OfficeAutomation.Controllers
         [PermissionAuthorize("HR.Create")]
         public async Task<IActionResult> Create(HumanCapitalCreateVM model)
         {
-            await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode);
-            ValidateEmployeeDates(model.BirthDate, model.HireDate, model.ContractEndDate);
-            ValidateInitialStatus(model.InitialStatusDate, model.HireDate, model.InitialStatusDescription);
-
-            if (!ModelState.IsValid)
+            try
             {
-                await PopulateCreateEditOptionsAsync(model);
-                return View(model);
+                if (model == null)
+                {
+                    model = new HumanCapitalCreateVM();
+                    await PopulateCreateEditOptionsAsync(model);
+                    return View(model);
+                }
+
+                BindJalaliDateFields(model);
+
+                var birthDate = ParseJalaliToGregorian(model.BirthDate);
+                var hireDate = ParseJalaliToGregorian(model.HireDate);
+                var contractEndDate = ParseJalaliToGregorian(model.ContractEndDate);
+                var initialStatusDate = ParseJalaliToGregorian(model.InitialStatusDate);
+
+                await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode);
+                ValidateEmployeeDates(birthDate, hireDate, contractEndDate);
+                ValidateInitialStatus(initialStatusDate ?? DateTime.MinValue, hireDate ?? DateTime.MinValue);
+
+                if (!ModelState.IsValid)
+                {
+                    await PopulateCreateEditOptionsAsync(model);
+                    if (IsJsonRequest())
+                    {
+                        return BadRequest(BuildValidationErrorResponse());
+                    }
+                    return View(model);
+                }
+
+                var now = DateTime.Now;
+                var effectiveDepartmentId = ResolveDepartmentId(model.DepartmentId);
+                if (!_dataAccessScope.HasGlobalAccess && !effectiveDepartmentId.HasValue)
+                {
+                    ModelState.AddModelError("DepartmentId", "دپارتمان شما مشخص نشده است. برای ثبت کارمند باید به یک دپارتمان تخصیص یافته باشید.");
+                    await PopulateCreateEditOptionsAsync(model);
+                    if (IsJsonRequest())
+                    {
+                        return BadRequest(BuildValidationErrorResponse());
+                    }
+                    return View(model);
+                }
+
+                if (!birthDate.HasValue || !hireDate.HasValue || !initialStatusDate.HasValue)
+                {
+                    if (!birthDate.HasValue) ModelState.AddModelError("BirthDate", "تاریخ تولد معتبر نیست.");
+                    if (!hireDate.HasValue) ModelState.AddModelError("HireDate", "تاریخ استخدام معتبر نیست.");
+                    if (!initialStatusDate.HasValue) ModelState.AddModelError("InitialStatusDate", "تاریخ رخداد معتبر نیست.");
+                    await PopulateCreateEditOptionsAsync(model);
+                    if (IsJsonRequest())
+                    {
+                        return BadRequest(BuildValidationErrorResponse());
+                    }
+                    return View(model);
+                }
+
+                var employee = new HumanCapitalEmployee
+                {
+                    PersonnelCode = model.PersonnelCode?.Trim() ?? string.Empty,
+                    FullName = model.FullName?.Trim() ?? string.Empty,
+                    NationalCode = model.NationalCode?.Trim() ?? string.Empty,
+                    BirthDate = birthDate.Value.Date,
+                    HireDate = hireDate.Value.Date,
+                    ContractEndDate = contractEndDate?.Date,
+                    OnboardingCompleted = model.OnboardingCompleted,
+                    DepartmentId = effectiveDepartmentId,
+                    PositionTitle = model.PositionTitle?.Trim() ?? string.Empty,
+                    EmploymentType = model.EmploymentType?.Trim() ?? string.Empty,
+                    CurrentSalary = model.CurrentSalary,
+                    CurrentStatus = "فعال",
+                    PhoneNumber = model.PhoneNumber?.Trim(),
+                    Email = model.Email?.Trim(),
+                    Address = model.Address?.Trim(),
+                    Notes = model.Notes?.Trim(),
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                try
+                {
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                    _context.HumanCapitalEmployees.Add(employee);
+                    await _context.SaveChangesAsync();
+
+                    _context.HumanCapitalSalaryHistories.Add(new HumanCapitalSalaryHistory
+                    {
+                        EmployeeId = employee.Id,
+                        EffectiveDate = employee.HireDate,
+                        PreviousSalary = 0,
+                        NewSalary = employee.CurrentSalary,
+                        PromotionTitle = "اولین حقوق",
+                        Reason = "اولیه صدور استخدام",
+                        CreatedAt = now
+                    });
+
+                    _context.HumanCapitalStatusHistories.Add(new HumanCapitalStatusHistory
+                    {
+                        EmployeeId = employee.Id,
+                        StatusType = HumanCapitalProcessTypes.Recruitment,
+                        EffectiveDate = initialStatusDate.Value.Date,
+                        ReferenceNumber = model.InitialReferenceNumber?.Trim(),
+                        Description = model.InitialStatusDescription?.Trim() ?? string.Empty,
+                        CreatedAt = now
+                    });
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    ModelState.AddModelError(string.Empty, "ذخیره‌سازی ناموفق بود. لطفاً داده‌های ورودی را بررسی و دوباره تلاش کنید.");
+                    await PopulateCreateEditOptionsAsync(model);
+                    if (IsJsonRequest())
+                    {
+                        return BadRequest(BuildValidationErrorResponse());
+                    }
+                    return View(model);
+                }
+
+                if (IsJsonRequest())
+                {
+                    return Ok(new { redirectUrl = Url.Action(nameof(Details), new { id = employee.Id }) });
+                }
+
+                return RedirectToAction(nameof(Details), new { id = employee.Id });
             }
-
-            var now = DateTime.Now;
-            var employee = new HumanCapitalEmployee
+            catch (Exception ex)
             {
-                PersonnelCode = model.PersonnelCode.Trim(),
-                FullName = model.FullName.Trim(),
-                NationalCode = model.NationalCode.Trim(),
-                BirthDate = model.BirthDate.Date,
-                HireDate = model.HireDate.Date,
-                ContractEndDate = model.ContractEndDate?.Date,
-                OnboardingCompleted = model.OnboardingCompleted,
-                DepartmentId = model.DepartmentId,
-                PositionTitle = model.PositionTitle.Trim(),
-                EmploymentType = model.EmploymentType.Trim(),
-                CurrentSalary = model.CurrentSalary,
-                CurrentStatus = "فعال",
-                PhoneNumber = model.PhoneNumber?.Trim(),
-                Email = model.Email?.Trim(),
-                Address = model.Address?.Trim(),
-                Notes = model.Notes?.Trim(),
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            _context.HumanCapitalEmployees.Add(employee);
-            await _context.SaveChangesAsync();
-
-            _context.HumanCapitalSalaryHistories.Add(new HumanCapitalSalaryHistory
-            {
-                EmployeeId = employee.Id,
-                EffectiveDate = employee.HireDate,
-                PreviousSalary = 0,
-                NewSalary = employee.CurrentSalary,
-                PromotionTitle = "اولین حقوق",
-                Reason = "اولیه صدور استخدام",
-                CreatedAt = now
-            });
-
-            _context.HumanCapitalStatusHistories.Add(new HumanCapitalStatusHistory
-            {
-                EmployeeId = employee.Id,
-                StatusType = HumanCapitalProcessTypes.Recruitment,
-                EffectiveDate = model.InitialStatusDate.Date,
-                ReferenceNumber = model.InitialReferenceNumber?.Trim(),
-                Description = model.InitialStatusDescription.Trim(),
-                CreatedAt = now
-            });
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return RedirectToAction(nameof(Details), new { id = employee.Id });
+                _logger.LogError(ex, "Error occurred while creating human capital record.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = _environment.IsDevelopment() ? ex.Message : "خطا در ذخیره‌سازی. لطفاً دوباره تلاش کنید یا صفحه را بازنشانی کنید."
+                });
+            }
         }
 
         public async Task<IActionResult> Edit(int id)
@@ -206,9 +324,9 @@ namespace OfficeAutomation.Controllers
                 PersonnelCode = employee.PersonnelCode,
                 FullName = employee.FullName,
                 NationalCode = employee.NationalCode,
-                BirthDate = employee.BirthDate,
-                HireDate = employee.HireDate,
-                ContractEndDate = employee.ContractEndDate,
+                BirthDate = employee.BirthDate.ToString("yyyy-MM-dd"),
+                HireDate = employee.HireDate.ToString("yyyy-MM-dd"),
+                ContractEndDate = employee.ContractEndDate?.ToString("yyyy-MM-dd"),
                 OnboardingCompleted = employee.OnboardingCompleted,
                 DepartmentId = employee.DepartmentId,
                 PositionTitle = employee.PositionTitle,
@@ -231,8 +349,14 @@ namespace OfficeAutomation.Controllers
         [PermissionAuthorize("HR.Edit")]
         public async Task<IActionResult> Edit(HumanCapitalEditVM model)
         {
+            BindJalaliDateFields(model);
+
+            var editBirthDate = ParseJalaliToGregorian(model.BirthDate);
+            var editHireDate = ParseJalaliToGregorian(model.HireDate);
+            var editContractEndDate = ParseJalaliToGregorian(model.ContractEndDate);
+
             await ValidateEmployeeUniquenessAsync(model.PersonnelCode, model.NationalCode, model.Id);
-            ValidateEmployeeDates(model.BirthDate, model.HireDate, model.ContractEndDate);
+            ValidateEmployeeDates(editBirthDate, editHireDate, editContractEndDate);
 
             if (!ModelState.IsValid)
             {
@@ -254,11 +378,11 @@ namespace OfficeAutomation.Controllers
             employee.PersonnelCode = model.PersonnelCode.Trim();
             employee.FullName = model.FullName.Trim();
             employee.NationalCode = model.NationalCode.Trim();
-            employee.BirthDate = model.BirthDate.Date;
-            employee.HireDate = model.HireDate.Date;
-            employee.ContractEndDate = model.ContractEndDate?.Date;
+            employee.BirthDate = ParseJalaliToGregorian(model.BirthDate) ?? employee.BirthDate;
+            employee.HireDate = ParseJalaliToGregorian(model.HireDate) ?? employee.HireDate;
+            employee.ContractEndDate = ParseJalaliToGregorian(model.ContractEndDate) ?? employee.ContractEndDate;
             employee.OnboardingCompleted = model.OnboardingCompleted;
-            employee.DepartmentId = model.DepartmentId;
+            employee.DepartmentId = ResolveDepartmentId(model.DepartmentId);
             employee.PositionTitle = model.PositionTitle.Trim();
             employee.EmploymentType = model.EmploymentType.Trim();
             employee.CurrentSalary = model.CurrentSalary;
@@ -391,7 +515,7 @@ namespace OfficeAutomation.Controllers
             var departments = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.Departments.AsNoTracking());
             model.DepartmentOptions = departments.Select(d => new SelectListItem
             {
-                Text = d.Name,
+                Text = LocalizeDepartmentName(d.Name),
                 Value = d.Id.ToString()
             }).ToList();
 
@@ -411,7 +535,7 @@ namespace OfficeAutomation.Controllers
             var departments = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.Departments.AsNoTracking());
             var options = departments.Select(d => new SelectListItem
             {
-                Text = d.Name,
+                Text = LocalizeDepartmentName(d.Name),
                 Value = d.Id.ToString(),
                 Selected = d.Id == selectedDepartmentId
             }).ToList();
@@ -419,35 +543,40 @@ namespace OfficeAutomation.Controllers
             return options;
         }
 
-        private async Task<List<SelectListItem>> BuildStatusOptionsAsync()
+        private async Task<List<string>> BuildStatusOptionsAsync()
         {
-            var statuses = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "", Text = "--- همه وضعیت‌ها ---" }
-            };
-            statuses.AddRange(DefaultStatuses.Select(s => new SelectListItem { Text = s, Value = s }).ToList());
-            return statuses;
+            return DefaultStatuses.ToList();
         }
 
-        private async Task ValidateEmployeeUniquenessAsync(string personnelCode, string nationalCode, int? excludeId = null)
+        private async Task ValidateEmployeeUniquenessAsync(string? personnelCode, string? nationalCode, int? excludeId = null)
         {
+            var normalizedPersonnelCode = personnelCode?.Trim() ?? string.Empty;
+            var normalizedNationalCode = nationalCode?.Trim() ?? string.Empty;
+
             var existingEmployee = await _context.HumanCapitalEmployees
                 .AsNoTracking()
-                .FirstOrDefaultAsync(e =>
-                    (e.PersonnelCode.Trim().Equals(personnelCode.Trim(), StringComparison.OrdinalIgnoreCase) ||
-                     e.NationalCode.Trim().Equals(nationalCode.Trim(), StringComparison.OrdinalIgnoreCase)) &&
-                    (!excludeId.HasValue || e.Id != excludeId));
+                .FirstOrDefaultAsync(e => e.Id != (excludeId ?? 0) &&
+                    (e.PersonnelCode.Trim().ToLower() == normalizedPersonnelCode.ToLower() ||
+                     e.NationalCode.Trim().ToLower() == normalizedNationalCode.ToLower()));
 
             if (existingEmployee != null)
             {
-                if (existingEmployee.PersonnelCode.Trim().Equals(personnelCode.Trim(), StringComparison.OrdinalIgnoreCase))
+                if (existingEmployee.PersonnelCode.Trim().Equals(normalizedPersonnelCode, StringComparison.OrdinalIgnoreCase))
                 {
                     ModelState.AddModelError("PersonnelCode", "کد پرسنلی تکراری است.");
                 }
-                if (existingEmployee.NationalCode.Trim().Equals(nationalCode.Trim(), StringComparison.OrdinalIgnoreCase))
+                if (existingEmployee.NationalCode.Trim().Equals(normalizedNationalCode, StringComparison.OrdinalIgnoreCase))
                 {
                     ModelState.AddModelError("NationalCode", "کد ملی تکراری است.");
                 }
+            }
+        }
+
+        private void ValidateInitialStatus(DateTime initialStatusDate, DateTime hireDate)
+        {
+            if (initialStatusDate.Date < hireDate.Date)
+            {
+                ModelState.AddModelError("InitialStatusDate", "تاریخ شروع وضعیت اولیه باید بعد از تاریخ استخدام باشد.");
             }
         }
 
@@ -464,12 +593,138 @@ namespace OfficeAutomation.Controllers
             }
         }
 
-        private void ValidateInitialStatus(DateTime initialStatusDate, DateTime hireDate, string initialStatusDescription)
+        private int? ResolveDepartmentId(int? departmentId)
         {
-            if (initialStatusDate.Date < hireDate.Date)
+            // A valid selection made in the (department-scoped) dropdown is always honoured.
+            // Otherwise fall back to the user's assigned department (data isolation).
+            return departmentId ?? _dataAccessScope.DepartmentId;
+        }
+
+        private static string LocalizeDepartmentName(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
             {
-                ModelState.AddModelError("InitialStatusDate", "تاریخ شروع وضعیت اولیه باید بعد از تاریخ استخدام باشد.");
+                return name ?? string.Empty;
             }
+
+            var normalized = name.Trim();
+            return DepartmentPersianNames.TryGetValue(normalized, out var persian)
+                ? persian
+                : normalized;
+        }
+
+        /// <summary>
+        /// Converts Persian/Arabic Unicode digits to standard ASCII English digits.
+        /// </summary>
+        private static string? NormalizePersianDigits(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return input;
+            return input.Replace('۰', '0').Replace('۱', '1').Replace('۲', '2')
+                        .Replace('۳', '3').Replace('۴', '4').Replace('۵', '5')
+                        .Replace('۶', '6').Replace('۷', '7').Replace('۸', '8')
+                        .Replace('۹', '9');
+        }
+
+        /// <summary>
+        /// Parses a Jalali (Persian calendar) date string into a nullable Gregorian <see cref="DateTime"/>.
+        /// Accepts Persian/Arabic Unicode digits and '/' or '-' separators.
+        /// </summary>
+        private static DateTime? ParseJalaliToGregorian(string? jalaliStr)
+        {
+            var normalized = NormalizePersianDigits(jalaliStr);
+            if (string.IsNullOrWhiteSpace(normalized)) return null;
+
+            // Accept ISO Gregorian as-is for compatibility.
+            if (DateTime.TryParse(normalized, CultureInfo.InvariantCulture, DateTimeStyles.None, out var isoDate))
+            {
+                return isoDate.Date;
+            }
+
+            var parts = normalized.Split('/', '-', '.');
+            if (parts.Length != 3 ||
+                !int.TryParse(parts[0], out var year) ||
+                !int.TryParse(parts[1], out var month) ||
+                !int.TryParse(parts[2], out var day))
+            {
+                return null;
+            }
+
+            if (year < 1200 || year > 1600 || month < 1 || month > 12 || day < 1 || day > 31)
+            {
+                return null;
+            }
+
+            try
+            {
+                return new PersianCalendar().ToDateTime(year, month, day, 0, 0, 0, 0).Date;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Resolves the value of a date form field and updates the corresponding model property.
+        /// Removes any model-state binding error for that field so validation can pass cleanly.
+        /// </summary>
+        private bool TryBindJalaliDate(string formFieldName, Action<string?> assign)
+        {
+            var raw = Request.Form[formFieldName].ToString();
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                assign(null);
+                ModelState.Remove(formFieldName);
+                return true;
+            }
+
+            var parsed = ParseJalaliToGregorian(raw);
+            if (parsed.HasValue)
+            {
+                assign(parsed.Value.ToString("yyyy-MM-dd"));
+                ModelState.Remove(formFieldName);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void BindJalaliDateFields(HumanCapitalCreateVM model)
+        {
+            TryBindJalaliDate(nameof(HumanCapitalCreateVM.BirthDate), d => model.BirthDate = d);
+            TryBindJalaliDate(nameof(HumanCapitalCreateVM.HireDate), d => model.HireDate = d);
+            TryBindJalaliDate(nameof(HumanCapitalCreateVM.ContractEndDate), d => model.ContractEndDate = d);
+            TryBindJalaliDate(nameof(HumanCapitalCreateVM.InitialStatusDate), d => model.InitialStatusDate = d);
+        }
+
+        private void BindJalaliDateFields(HumanCapitalEditVM model)
+        {
+            TryBindJalaliDate(nameof(HumanCapitalEditVM.BirthDate), d => model.BirthDate = d);
+            TryBindJalaliDate(nameof(HumanCapitalEditVM.HireDate), d => model.HireDate = d);
+            TryBindJalaliDate(nameof(HumanCapitalEditVM.ContractEndDate), d => model.ContractEndDate = d);
+        }
+
+        private bool IsJsonRequest()
+        {
+            var accept = HttpContext.Request.Headers["Accept"].ToString();
+            if (accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var requestedWith = HttpContext.Request.Headers["X-Requested-With"].ToString();
+            return string.Equals(requestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private object BuildValidationErrorResponse()
+        {
+            var errors = ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors.Select(error => error.ErrorMessage).ToArray());
+
+            return new { errors };
         }
     }
 }
