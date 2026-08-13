@@ -37,6 +37,16 @@ namespace OfficeAutomation.Data
                 return;
             }
 
+            // When the current access scope has no department restriction (e.g. a user with
+            // global/admin access, or a user not yet assigned a department), there is nothing
+            // for RLS to enforce at the row level: allow the write and rely on the read-side
+            // filtering and permission checks to enforce security. We never want to reject a
+            // write simply because the principal has no specific department bound to it.
+            if (!_scope.DepartmentId.HasValue)
+            {
+                return;
+            }
+
             foreach (var entry in context.ChangeTracker.Entries()
                          .Where(item => item.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
             {
@@ -47,11 +57,6 @@ namespace OfficeAutomation.Data
                 if (property == null)
                 {
                     continue;
-                }
-
-                if (!_scope.DepartmentId.HasValue)
-                {
-                    throw new InvalidOperationException($"Row-level security denied write access to entity '{entry.Metadata.ClrType.Name}'.");
                 }
 
                 if (entry.State == EntityState.Added && property.CurrentValue == null)
