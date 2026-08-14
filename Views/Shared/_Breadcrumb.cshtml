@@ -1,0 +1,53 @@
+@*
+    Rhyno Breadcrumb — Lightweight, RTL-compatible, Persian-friendly
+    Usage:
+        <partial name="_Breadcrumb" model='new[] {
+            new RhynoBreadcrumbItem("خانه", "/"),
+            new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
+            new RhynoBreadcrumbItem("جزئیات قرارداد", null)
+        }' />
+
+    Or via ViewData:
+        ViewData["Breadcrumb"] = new[] {
+            new RhynoBreadcrumbItem("خانه", "/"),
+            new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
+            new RhynoBreadcrumbItem("جزئیات قرارداد", null)
+        };
+*@
+@{
+    var items = Model as IEnumerable<RhynoBreadcrumbItem>
+        ?? ViewData["Breadcrumb"] as IEnumerable<RhynoBreadcrumbItem>
+        ?? Array.Empty<RhynoBreadcrumbItem>();
+    var list = items.ToList();
+    if (list.Count == 0) return;
+}
+<nav class="rhyno-breadcrumb" aria-label="مسیر صفحه">
+    <ol class="rhyno-breadcrumb-list">
+        @for (var i = 0; i < list.Count; i++)
+        {
+            var item = list[i];
+            var isLast = i == list.Count - 1;
+            <li class="rhyno-breadcrumb-item @(isLast ? "is-current" : "")">
+                @if (!isLast && !string.IsNullOrWhiteSpace(item.Url))
+                {
+                    <a href="@item.Url" class="rhyno-breadcrumb-link">@item.Label</a>
+                }
+                else
+                {
+                    if (isLast)
+                    {
+                        <span class="rhyno-breadcrumb-text" aria-current="page">@item.Label</span>
+                    }
+                    else
+                    {
+                        <span class="rhyno-breadcrumb-text">@item.Label</span>
+                    }
+                }
+                @if (!isLast)
+                {
+                    <span class="rhyno-breadcrumb-sep" aria-hidden="true">‹</span>
+                }
+            </li>
+        }
+    </ol>
+</nav>

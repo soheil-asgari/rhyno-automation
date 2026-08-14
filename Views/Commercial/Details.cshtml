@@ -1,0 +1,188 @@
+@model OfficeAutomation.Modules.Commercial.Application.InvoiceDetailVM
+@{
+    var isPurchase = Model.InvoiceType == "Purchase";
+    var payLabel = OfficeAutomation.Modules.Commercial.Application.CommercialPaymentStatus.Label(Model.PaymentStatus);
+    var payCss = OfficeAutomation.Modules.Commercial.Application.CommercialPaymentStatus.BadgeCss(Model.PaymentStatus);
+    var statusLabel = OfficeAutomation.Models.WorkflowStatus.Label(Model.WorkflowStatus);
+    var cancelled = Model.WorkflowStatus == OfficeAutomation.Models.WorkflowStatus.Canceled;
+}
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-emerald-50/80 text-emerald-800 border border-emerald-200/60 rounded-xl text-xs font-semibold">
+            <i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i><span class="flex-1">@successMessage</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-rose-50/80 text-rose-800 border border-rose-200/60 rounded-xl text-xs font-semibold">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i><span class="flex-1">@errorMessage</span>
+        </div>
+    }
+
+    <header class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <div>
+            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">فاکتور @Model.InvoiceNumber</h1>
+            <p class="text-xs text-slate-500 mt-0.5">@(isPurchase ? "خرید" : "فروش") · @Model.PartyName · @Model.DateShamsi</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a asp-action="@(isPurchase ? "Purchases" : "Sales")" class="px-3 py-1.5 border border-slate-200/80 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 no-underline">بازگشت</a>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 p-4">
+            <div class="text-[11px] font-bold text-slate-500 mb-3">مانده حساب</div>
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between"><span class="text-slate-500">جمع فاکتور</span><span class="font-mono font-bold" dir="ltr">@Model.GrandTotal.ToString("N0")</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">پرداخت شده</span><span class="font-mono text-emerald-600" dir="ltr">@Model.PaidAmount.ToString("N0")</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">برگشت</span><span class="font-mono text-amber-600" dir="ltr">@Model.ReturnedAmount.ToString("N0")</span></div>
+                <div class="flex justify-between border-t border-slate-100 pt-2"><span class="font-bold">مانده</span><span class="font-mono font-black text-rose-600" dir="ltr">@Model.OutstandingAmount.ToString("N0")</span></div>
+            </div>
+            <div class="mt-3 flex flex-col gap-1.5">
+                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium border @payCss">@payLabel</span>
+                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium border bg-slate-100 text-slate-600 border-slate-200/60">@statusLabel</span>
+                @if (Model.VoucherNumber != null)
+                {
+                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-200/60">
+                        سند حسابداری: @Model.VoucherNumber
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 p-4 md:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+                <div class="text-[11px] font-bold text-slate-500">ثبت تسویه (پرداخت/دریافت)</div>
+            </div>
+            <form asp-action="RegisterSettlement" method="post" class="flex flex-wrap items-end gap-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="invoiceId" value="@Model.Id" />
+                <input type="hidden" name="returnTo" value="@(isPurchase ? "Purchase" : "Sale")" />
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500">مبلغ</label>
+                    <input name="amount" type="number" step="0.01" min="0" required class="h-8 w-32 rounded-lg border border-slate-200/80 px-2 text-xs" value="@Model.OutstandingAmount" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500">روش پرداخت</label>
+                    <select name="paymentMethod" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs">
+                        <option value="Cash">نقدی</option>
+                        <option value="Bank">انتقال بانکی</option>
+                        <option value="Cheque">چک</option>
+                        <option value="Credit">اعتباری</option>
+                        <option value="Other">سایر</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500">شماره مرجع</label>
+                    <input name="referenceNumber" class="h-8 w-32 rounded-lg border border-slate-200/80 px-2 text-xs" placeholder="اختیاری" />
+                </div>
+                <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 pb-2">
+                    <input type="checkbox" name="postNow" value="true" checked class="accent-indigo-600" /> ثبت همزمان سند حسابداری
+                    <input type="hidden" name="postNow" value="false" />
+                </label>
+                <button type="submit" class="h-8 bg-indigo-600 hover:bg-indigo-700 text-white px-3 rounded-lg text-xs font-bold transition">ثبت تسویه</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 text-[11px] font-bold text-slate-500">تسویه‌ها</div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-right">
+                    <thead class="bg-slate-50/70"><tr>
+                        <th class="px-3 py-2 font-semibold text-slate-500">مرجع</th>
+                        <th class="px-3 py-2 font-semibold text-slate-500">تاریخ</th>
+                        <th class="px-3 py-2 font-semibold text-slate-500 text-right" dir="ltr">مبلغ</th>
+                        <th class="px-3 py-2 font-semibold text-slate-500">روش</th>
+                        <th class="px-3 py-2 font-semibold text-slate-500">سند</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (!Model.Settlements.Any())
+                        {
+                            <tr><td colspan="5" class="px-3 py-8 text-center text-slate-400">تسویه‌ای ثبت نشده است.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var s in Model.Settlements)
+                            {
+                                <tr>
+                                    <td class="px-3 py-2.5 font-mono">@s.ReferenceNumber</td>
+                                    <td class="px-3 py-2.5 font-mono text-slate-500">@s.DateShamsi</td>
+                                    <td class="px-3 py-2.5 font-mono tabular-nums text-emerald-600" dir="ltr">@s.Amount.ToString("N0")</td>
+                                    <td class="px-3 py-2.5">@s.PaymentMethod</td>
+                                    <td class="px-3 py-2.5 font-mono text-slate-500">@(s.VoucherNumber ?? "-")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 text-[11px] font-bold text-slate-500">پیوست‌های مالی</div>
+            <div class="p-3">
+                <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data" class="flex flex-wrap items-end gap-2 mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="invoiceId" value="@Model.Id" />
+                    <input type="hidden" name="returnTo" value="@(isPurchase ? "Purchase" : "Sale")" />
+                    <input type="file" name="file" required class="text-xs w-40" />
+                    <select name="category" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs">
+                        <option value="1">اسکن فاکتور</option>
+                        <option value="2">قرارداد</option>
+                        <option value="3">رسید</option>
+                        <option value="4">مدرک پشتیبان</option>
+                    </select>
+                    <input name="description" placeholder="توضیح (اختیاری)" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs w-36" />
+                    <button type="submit" class="h-8 bg-emerald-600 hover:bg-emerald-700 text-white px-3 rounded-lg text-xs font-bold transition">آپلود پیوست</button>
+                </form>
+                <div class="space-y-1.5">
+                    @if (!Model.Attachments.Any())
+                    {
+                        <div class="text-xs text-slate-400 text-center py-4">پیوستی ثبت نشده است.</div>
+                    }
+                    else
+                    {
+                        foreach (var a in Model.Attachments)
+                        {
+                            <div class="flex items-center gap-2 rounded-lg border border-slate-100 px-2.5 py-2 text-xs">
+                                <i class="bi bi-paperclip text-slate-400"></i>
+                                <span class="flex-1 truncate font-semibold">@a.FileName</span>
+                                <span class="text-[10px] text-slate-400">@a.CategoryLabel</span>
+                                <span class="text-[10px] font-mono text-slate-400" dir="ltr">@(a.SizeBytes) B</span>
+                                <a asp-action="DownloadAttachment" asp-route-id="@a.Id" class="text-indigo-600" title="دانلود"><i class="bi bi-download"></i></a>
+                                <form asp-action="DeleteAttachment" asp-route-id="@a.Id" asp-route-invoiceId="@Model.Id" method="post" class="inline"
+                                      onsubmit="return confirm('پیوست حذف شود؟');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="text-rose-500" title="حذف"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 p-4 text-xs">
+        <div class="text-[11px] font-bold text-slate-500 mb-2">ردیابی حسابداری</div>
+        <div class="flex flex-wrap items-center gap-2 font-mono">
+            <span class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/60">فاکتور @Model.InvoiceNumber</span>
+            <i class="bi bi-arrow-left text-slate-300"></i>
+            @if (Model.VoucherNumber != null)
+            {
+                <span class="px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200/60 text-indigo-700">سند @Model.VoucherNumber</span>
+            }
+            else
+            {
+                <span class="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200/60 text-amber-700">هنوز ثبت حسابداری نشده</span>
+            }
+            <i class="bi bi-arrow-left text-slate-300"></i>
+            <a asp-controller="Financial" asp-action="Ledger" class="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/60 text-emerald-700 no-underline hover:bg-emerald-100">دفتر کل</a>
+            <i class="bi bi-arrow-left text-slate-300"></i>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/60">مانده طرف حساب @Model.PartyName</span>
+        </div>
+    </div>
+</div>

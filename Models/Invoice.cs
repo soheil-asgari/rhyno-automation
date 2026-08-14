@@ -64,6 +64,14 @@ namespace OfficeAutomation.Models
 
         public User? CreatedByUser { get; set; }
 
+        /// <summary>Payment due date (Gregorian), used to display the "Due Date" column and overdue status.</summary>
+        public DateTime? DueDate { get; set; }
+
+        /// <summary>Optional unified commercial party reference for this document.</summary>
+        public int? CommercialPartyId { get; set; }
+
+        public OfficeAutomation.Modules.Commercial.Domain.CommercialParty? CommercialParty { get; set; }
+
         [Timestamp]
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 

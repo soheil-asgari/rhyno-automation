@@ -156,7 +156,7 @@
                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 no-underline whitespace-nowrap">
                         <i class="bi bi-plus-lg text-sm"></i> استخدام کارمند جدید
                     </a>
-                    <a href="#" id="hc-export-btn"
+                    <a href="/HumanCapital/ExportExcel" id="hc-export-btn"
                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-black/20 bg-gradient-to-b from-white to-slate-100 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white no-underline whitespace-nowrap">
                         <i class="bi bi-file-earmark-spreadsheet text-sm"></i> خروجی اکسل
                     </a>
@@ -678,38 +678,13 @@
         });
 
         // ─────────────────────────────────────────────────────────────
-        // Export (Excel) — build a CSV client-side and trigger download
+        // Export (Excel) — server-side download via /HumanCapital/ExportExcel
+        // The anchor href already points to the endpoint; no JS interception needed.
         // ─────────────────────────────────────────────────────────────
         const exportBtn = document.getElementById("hc-export-btn");
         exportBtn?.addEventListener("click", (e) => {
-            e.preventDefault();
-            if (!rows.length) return;
-            const header = ["کد پرسنلی", "نام", "دپارتمان", "عنوان شغلی", "کد ملی", "تلفن", "نوع همکاری", "تاریخ استخدام (شمسی)", "حقوق", "وضعیت"];
-            const lines = rows.map(row => {
-                const cells = Array.from(row.querySelectorAll("td"));
-                return [
-                    cells[0]?.querySelector(".font-mono")?.textContent?.replace("کد پرسنلی:", "").trim() || "",
-                    cells[0]?.querySelector(".font-bold")?.textContent?.trim() || "",
-                    cells[1]?.querySelector(".font-semibold")?.textContent?.trim() || "",
-                    cells[1]?.querySelector(".font-medium")?.textContent?.trim() || "",
-                    cells[2]?.querySelector(".font-mono")?.textContent?.trim() || "",
-                    cells[2]?.querySelectorAll(".font-mono")[1]?.textContent?.trim() || "",
-                    cells[3]?.textContent?.trim() || "",
-                    cells[3]?.querySelector(".tabular-nums")?.textContent?.trim() || "",
-                    cells[4]?.textContent?.trim() || "",
-                    cells[5]?.textContent?.trim() || ""
-                ].map(v => `"${(v || "").replace(/"/g, '""')}"`);
-            });
-            const csv = "\uFEFF" + [header.map(h => `"${h}"`).join(","), ...lines.map(l => l.join(","))].join("\r\n");
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "human-capital-export.csv";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Allow the default anchor navigation to trigger the file download.
+            // No preventDefault() — the browser will download the .xlsx file.
         });
 
         // ─────────────────────────────────────────────────────────────

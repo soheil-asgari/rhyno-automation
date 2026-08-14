@@ -1,0 +1,82 @@
+@model OfficeAutomation.Modules.Commercial.Application.InvoiceReturnIndexVM
+@{
+    var pageTitle = ViewBag.PageTitle as string ?? "برگشت";
+    var pageDescription = ViewBag.PageDescription as string ?? "";
+    var returnType = ViewBag.ReturnType as string ?? "Sale";
+    var isPurchase = returnType == "Purchase";
+}
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-emerald-50/80 text-emerald-800 border border-emerald-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i><span class="flex-1">@successMessage</span></div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-rose-50/80 text-rose-800 border border-rose-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i><span class="flex-1">@errorMessage</span></div>
+    }
+
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <div>
+            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">@pageTitle</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">@pageDescription</p>
+        </div>
+        <a asp-action="CreateReturn" asp-route-type="@returnType" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition no-underline">
+            <i class="bi bi-plus-circle-fill"></i><span>ثبت برگشت</span>
+        </a>
+    </header>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-100">
+                    <tr>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">شماره برگشت</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">فاکتور مبدأ</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">طرف حساب</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">تاریخ</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-right" dir="ltr">جمع کل</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">وضعیت</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">سند</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="8" class="px-3 py-10 text-center text-slate-400">برگشتی ثبت نشده است.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            var approved = item.Status == OfficeAutomation.Models.WorkflowStatus.Approved;
+                            var cancelled = item.Status == OfficeAutomation.Models.WorkflowStatus.Canceled;
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                                <td class="px-3 py-3 font-mono font-semibold text-slate-900">@item.ReturnNumber</td>
+                                <td class="px-3 py-3 font-mono text-slate-600">@item.InvoiceNumber</td>
+                                <td class="px-3 py-3 font-bold text-slate-800">@item.PartyName</td>
+                                <td class="px-3 py-3 font-mono text-slate-500">@item.DateShamsi</td>
+                                <td class="px-3 py-3 font-mono tabular-nums" dir="ltr">@item.GrandTotal.ToString("N0")</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium border @(approved ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" : cancelled ? "bg-rose-50 text-rose-700 border-rose-200/60" : "bg-slate-100 text-slate-600 border-slate-200/60")">
+                                        @OfficeAutomation.Models.WorkflowStatus.Label(item.Status)
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3 font-mono text-slate-500">@(item.VoucherNumber ?? "-")</td>
+                                <td class="px-3 py-3 text-center">
+                                    @if (!approved && !cancelled)
+                                    {
+                                        <form asp-action="FinalizeReturn" asp-route-id="@item.Id" asp-route-returnTo="@returnType" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="p-1.5 text-slate-400 hover:text-emerald-600 transition" title="نهایی و ثبت سند برگشتی"><i class="bi bi-check2-square text-sm"></i></button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -30,6 +30,7 @@ using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Platform.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Workflow.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Finance.Application;
+using OfficeAutomation.Modules.Commercial.Application;
 using OfficeAutomation.Modules.Platform.Application.SavedViews;
 using OfficeAutomation.Modules.Ocr;
 using OfficeAutomation.Modules.InvoiceIntake;
@@ -250,6 +251,8 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IOfficeService, OfficeService>();
 builder.Services.AddScoped<PeriodClosingService>();
 builder.Services.AddScoped<TrialBalanceService>();
+builder.Services.AddScoped<LedgerService>();
+builder.Services.AddScoped<RecurringJournalService>();
 builder.Services.AddScoped<VoucherRenumberingService>();
 builder.Services.AddSingleton<ITableSchemaRegistry, TableSchemaRegistry>();
 builder.Services.AddScoped<IDigitalSignatureService, DigitalSignatureService>();
@@ -263,6 +266,7 @@ builder.Services.AddScoped<IWorkflowAttachmentService, WorkflowAttachmentService
 builder.Services.AddScoped<IWorkflowSlaService, WorkflowSlaService>();
 builder.Services.AddScoped<WorkflowSlaEscalationNotifier>();
 builder.Services.AddScoped<FinancialAppService>();
+builder.Services.AddScoped<CommercialService>();
 builder.Services.AddScoped<IOcrEngine, TesseractOcrEngine>();
 builder.Services.AddScoped<IIntakeSessionStore, DatabaseIntakeSessionStore>();
 builder.Services.AddScoped<InvoiceIntakeService>();
@@ -364,9 +368,20 @@ builder.Services.AddRateLimiter(options =>
         var tenantResolver = context.RequestServices.GetRequiredService<ITenantResolver>();
         var tenantRegistry = context.RequestServices.GetRequiredService<ITenantRegistry>();
         var tenant = tenantRegistry.GetTenant(tenantResolver.ResolveTenantId());
+
+        // For anonymous / ambiguous requests, include the remote IP and a
+        // "resolution-failure" sentinel so misbehaving clients cannot exhaust
+        // the whole tenant budget and cause a self-inflicted DoS. Authenticated
+        // requests partition by tenant as before.
+        var identity = context.User?.Identity?.Name;
+        var isAuthenticated = context.User?.Identity?.IsAuthenticated == true;
+        var partitionKey = string.IsNullOrWhiteSpace(identity) || !isAuthenticated
+            ? $"anon:{tenant.TenantId}:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}"
+            : $"{tenant.TenantId}:user:{identity}";
+
         return
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: tenant.TenantId,
+            partitionKey: partitionKey,
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = Math.Max(1, tenant.RequestsPerMinute),
@@ -418,6 +433,12 @@ app.Use(async (context, next) =>
         return;
     context.Response.ContentType = context.Response.ContentType ?? "text/html; charset=utf-8";
 });
+
+// ── API JSON exception handling ────────────────────────
+// Registered before routing so it catches exceptions from downstream
+// middleware and controllers. API/JSON requests receive a stable JSON
+// error envelope; browser requests fall through to the HTML error page.
+app.UseApiExceptionHandling();
 
 // ── Security Headers ───────────────────────────────────
 app.UseSecurityHeaders();
@@ -515,13 +536,13 @@ app.Use(async (context, next) =>
 app.UseAuthentication();
 app.Use(async (context, next) =>
 {
-    logger.LogInformation("After authentication {Path} Authenticated={Authenticated}", context.Request.Path, context.User.Identity?.IsAuthenticated == true);
+    logger.LogDebug("After authentication {Path} Authenticated={Authenticated}", context.Request.Path, context.User.Identity?.IsAuthenticated == true);
     await next();
-    logger.LogInformation("After authentication complete {Path}", context.Request.Path);
+    logger.LogDebug("After authentication complete {Path}", context.Request.Path);
 });
 app.Use(async (context, next) =>
 {
-    logger.LogInformation("Current-user middleware enter {Path}", context.Request.Path);
+    logger.LogDebug("Current-user middleware enter {Path}", context.Request.Path);
     var currentUserContext = context.RequestServices.GetRequiredService<ICurrentUserContextAccessor>();
     var currentDataAccessScope = context.RequestServices.GetRequiredService<ICurrentDataAccessScope>();
     PermissionAccessProfile? profile = null;
@@ -534,14 +555,14 @@ app.Use(async (context, next) =>
 
     currentDataAccessScope.Initialize(currentUserContext.UserId, profile);
     await next();
-    logger.LogInformation("Current-user middleware exit {Path}", context.Request.Path);
+    logger.LogDebug("Current-user middleware exit {Path}", context.Request.Path);
 });
 app.UseAuthorization();
 app.Use(async (context, next) =>
 {
-    logger.LogInformation("After authorization {Path}", context.Request.Path);
+    logger.LogDebug("After authorization {Path}", context.Request.Path);
     await next();
-    logger.LogInformation("After authorization complete {Path}", context.Request.Path);
+    logger.LogDebug("After authorization complete {Path}", context.Request.Path);
 });
 
 // 5. نقشه مسیرها

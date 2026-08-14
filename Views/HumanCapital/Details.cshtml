@@ -34,7 +34,7 @@
                     <i class="bi bi-pencil-square"></i>
                     <span>ویرایش پرونده</span>
                 </a>
-                <a asp-action="Index" class="flex items-center justify-center px-3 h-8 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
+                <a href="/HumanCapital" onclick="event.preventDefault(); if (window.parent && window.parent.RhynoTabs) { window.parent.RhynoTabs.open('/HumanCapital', 'مدیریت سرمایه انسانی', 'bi-person-badge'); } else { window.location.href = '/HumanCapital'; }" class="flex items-center justify-center px-3 h-8 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
                     <span>بازگشت به لیست</span>
                 </a>
                 <a asp-controller="Payroll" asp-action="Index" asp-route-employeeId="@Model.Id" class="flex items-center gap-1.5 px-3 h-8 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">

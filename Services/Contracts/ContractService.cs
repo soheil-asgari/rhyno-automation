@@ -40,7 +40,42 @@ public sealed class ContractService : IContractService
     {
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null) return false;
-        return _userManager.IsInRoleAsync(user, "Admin").Result;
+        return await _userManager.IsInRoleAsync(user, "Admin");
+    }
+
+    /// <summary>
+    /// Enforces the Contract status state machine. Invalid transitions fail safely.
+    /// Non-admin users may only move a contract forward through the standard lifecycle.
+    /// </summary>
+    private static void ValidateContractStateTransition(string currentStatus, string requestedStatus, bool isAdmin, string currentUserId)
+    {
+        // No transition requested / same state — always allowed.
+        if (string.Equals(currentStatus, requestedStatus, StringComparison.Ordinal))
+            return;
+
+        // Admin can perform any transition (business gate lives elsewhere).
+        if (isAdmin)
+            return;
+
+        var allowedTransitions = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal)
+        {
+            [ContractStatuses.Draft] = new() { ContractStatuses.PendingApproval, ContractStatuses.Cancelled },
+            [ContractStatuses.PendingApproval] = new() { ContractStatuses.Draft, ContractStatuses.Active, ContractStatuses.Cancelled, ContractStatuses.Terminated },
+            [ContractStatuses.Active] = new() { ContractStatuses.Completed, ContractStatuses.Expired, ContractStatuses.Terminated, ContractStatuses.Cancelled, ContractStatuses.ExpiringSoon },
+            [ContractStatuses.ExpiringSoon] = new() { ContractStatuses.Active, ContractStatuses.Expired, ContractStatuses.Completed, ContractStatuses.Terminated },
+            [ContractStatuses.Suspended] = new() { ContractStatuses.Active, ContractStatuses.Terminated },
+            [ContractStatuses.Expired] = new() { ContractStatuses.Completed, ContractStatuses.Terminated, ContractStatuses.Active },
+            [ContractStatuses.Completed] = new() { ContractStatuses.Active, ContractStatuses.Terminated },
+            [ContractStatuses.Cancelled] = new() { ContractStatuses.Draft },
+            [ContractStatuses.Terminated] = new() { },
+            [ContractStatuses.Archived] = new() { }
+        };
+
+        if (allowedTransitions.TryGetValue(currentStatus, out var allowed) && allowed.Contains(requestedStatus))
+            return;
+
+        throw new UnauthorizedAccessException(
+            $"انتقال وضعیت از «{currentStatus}» به «{requestedStatus}» مجاز نیست.");
     }
 
     /// <summary>
@@ -409,13 +444,36 @@ public sealed class ContractService : IContractService
 
     public async Task<Contract> CreateContractAsync(ContractCreateVM model, string currentUserId, CancellationToken ct = default)
     {
+        // Server-controlled field enforcement: a creator may only create in a Draft
+        // (or the user-default) state — not jump straight to Approved/Active/Completed.
+        // The acting user is the creator; assignment to another user requires elevation.
+        var isAdmin = await IsAdminAsync(currentUserId);
+        var requestedStatus = string.IsNullOrWhiteSpace(model.Status) ? ContractStatuses.Draft : model.Status;
+
+        // New contracts may only start in Draft or PendingApproval (not active/approved/completed).
+        if (requestedStatus != ContractStatuses.Draft && requestedStatus != ContractStatuses.PendingApproval)
+        {
+            if (!isAdmin)
+                throw new UnauthorizedAccessException("وضعیت اولیه قرارداد باید «پیش‌نویس» یا «در انتظار تایید» باشد.");
+        }
+
+        // A non-admin cannot assign the contract to another user; assignment is server-controlled.
+        if (!isAdmin && !string.IsNullOrWhiteSpace(model.AssignedUserId) && model.AssignedUserId != currentUserId)
+        {
+            throw new UnauthorizedAccessException("شما مجاز به واگذاری قرارداد به کاربر دیگر نیستید.");
+        }
+
         // Auto-generate contract number if not provided
         if (string.IsNullOrWhiteSpace(model.ContractNumber))
         {
             model.ContractNumber = await GenerateNextContractNumberAsync(ct);
         }
+        else
+        {
+            model.ContractNumber = model.ContractNumber.Trim();
+        }
 
-        // Validate unique contract number
+        // Validate unique contract number (fail fast for a user-supplied duplicate).
         if (!await IsContractNumberUniqueAsync(model.ContractNumber, null, ct))
             throw new InvalidOperationException("شماره قرارداد تکراری است.");
 
@@ -429,8 +487,8 @@ public sealed class ContractService : IContractService
             ClientAddress = model.ClientAddress?.Trim(),
             CustomerId = model.CustomerId,
             Description = model.Description?.Trim(),
-            TermsAndConditions = model.TermsAndConditions,
-            ContractBodyHtml = model.ContractBodyHtml,
+            TermsAndConditions = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.TermsAndConditions),
+            ContractBodyHtml = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.ContractBodyHtml),
             TotalAmount = model.TotalAmount,
             PaidAmount = 0,
             RemainingBalance = model.TotalAmount,
@@ -439,13 +497,13 @@ public sealed class ContractService : IContractService
             EndDate = model.EndDate,
             SignDate = model.SignDate,
             ExpiryNoticeDays = model.ExpiryNoticeDays > 0 ? model.ExpiryNoticeDays : 30,
-            Status = model.Status ?? ContractStatuses.Draft,
-            AssignedUserId = model.AssignedUserId,
+            Status = requestedStatus,
+            AssignedUserId = isAdmin ? model.AssignedUserId : currentUserId,
             TemplateId = model.TemplateId,
             CreatedByUserId = currentUserId,
             IsArchived = false,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         // Render contract body from template if template selected
@@ -525,7 +583,19 @@ public sealed class ContractService : IContractService
             .FirstOrDefaultAsync(x => x.Id == model.Id, ct)
             ?? throw new KeyNotFoundException($"Contract {model.Id} not found.");
 
+        var isAdmin = await IsAdminAsync(currentUserId);
         var oldStatus = c.Status;
+        var requestedStatus = string.IsNullOrWhiteSpace(model.Status) ? c.Status : model.Status;
+
+        // Validate the status transition via the state machine.
+        ValidateContractStateTransition(oldStatus, requestedStatus, isAdmin, currentUserId);
+
+        // A non-admin cannot reassign the contract to a different user (server-controlled).
+        if (!isAdmin && !string.IsNullOrWhiteSpace(model.AssignedUserId) && model.AssignedUserId != currentUserId
+            && model.AssignedUserId != c.AssignedUserId)
+        {
+            throw new UnauthorizedAccessException("شما مجاز به واگذاری قرارداد به کاربر دیگر نیستید.");
+        }
 
         c.ContractNumber = model.ContractNumber.Trim();
         c.Title = model.Title.Trim();
@@ -535,17 +605,17 @@ public sealed class ContractService : IContractService
         c.ClientAddress = model.ClientAddress?.Trim();
         c.CustomerId = model.CustomerId;
         c.Description = model.Description?.Trim();
-        c.TermsAndConditions = model.TermsAndConditions;
-        c.ContractBodyHtml = model.ContractBodyHtml;
+        c.TermsAndConditions = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.TermsAndConditions);
+        c.ContractBodyHtml = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.ContractBodyHtml);
         c.TotalAmount = model.TotalAmount;
         c.StartDate = model.StartDate;
         c.EndDate = model.EndDate;
         c.SignDate = model.SignDate;
         c.ExpiryNoticeDays = model.ExpiryNoticeDays > 0 ? model.ExpiryNoticeDays : 30;
-        c.Status = model.Status;
-        c.AssignedUserId = model.AssignedUserId;
+        c.Status = requestedStatus;
+        c.AssignedUserId = isAdmin ? model.AssignedUserId : (model.AssignedUserId ?? c.AssignedUserId);
         c.TemplateId = model.TemplateId;
-        c.UpdatedAt = DateTime.Now;
+        c.UpdatedAt = DateTime.UtcNow;
 
         // Recalculate payment status
         c.PaidAmount = c.Payments.Sum(p => p.Amount);
@@ -577,6 +647,20 @@ public sealed class ContractService : IContractService
     {
         var c = await _context.Contracts.Include(x => x.Payments).Include(x => x.Attachments).FirstOrDefaultAsync(x => x.Id == id, ct);
         if (c == null) return false;
+
+        // Delete the per-contract upload directory so attachment files do not remain
+        // orphaned on disk (residual sensitive data / storage leak).
+        var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", id.ToString());
+        try
+        {
+            if (Directory.Exists(uploadsDir))
+                Directory.Delete(uploadsDir, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+        {
+            _logger.LogWarning(ex, "Failed to delete upload directory for contract {ContractId}", id);
+        }
+
         _context.Contracts.Remove(c);
         await _context.SaveChangesAsync(ct);
         _logger.LogInformation("Contract {ContractNumber} deleted by {UserId}", c.ContractNumber, currentUserId);
@@ -680,11 +764,25 @@ public sealed class ContractService : IContractService
     {
         var c = await _context.Contracts.FindAsync(new object[] { id }, ct);
         if (c == null) return false;
+
+        // Restore the previous valid status (from the last audit-log entry before
+        // archiving) instead of blindly forcing "Active". Defaults to Active only if
+        // no prior state can be determined.
+        var previousStatus = await _context.ContractAuditLogs.AsNoTracking()
+            .Where(al => al.ContractId == id && al.NewStatus != ContractStatuses.Archived && al.NewStatus != null)
+            .OrderByDescending(al => al.CreatedAt)
+            .Select(al => al.NewStatus)
+            .FirstOrDefaultAsync(ct);
+
+        var restoredStatus = string.IsNullOrWhiteSpace(previousStatus)
+            ? ContractStatuses.Active
+            : previousStatus;
+
         c.IsArchived = false; c.ArchivedAt = null; c.ArchivedByUserId = null;
-        c.Status = ContractStatuses.Active; c.UpdatedAt = DateTime.Now;
+        c.Status = restoredStatus; c.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
-        await AddAuditLogAsync(c.Id, currentUserId, "Unarchived", ContractStatuses.Archived, ContractStatuses.Active, "قرارداد از بایگانی خارج شد", ct);
-        _logger.LogInformation("Contract {ContractNumber} unarchived by {UserId}", c.ContractNumber, currentUserId);
+        await AddAuditLogAsync(c.Id, currentUserId, "Unarchived", ContractStatuses.Archived, restoredStatus, "قرارداد از بایگانی خارج شد", ct);
+        _logger.LogInformation("Contract {ContractNumber} unarchived by {UserId} to status {Status}", c.ContractNumber, currentUserId, restoredStatus);
         return true;
     }
 
@@ -692,10 +790,19 @@ public sealed class ContractService : IContractService
     //  Payments
     // ═══════════════════════════════════════════════════════════════
 
-    public async Task<ContractPayment> AddPaymentAsync(ContractPaymentCreateVM model, CancellationToken ct = default)
+    public async Task<ContractPayment> AddPaymentAsync(ContractPaymentCreateVM model, string currentUserId, CancellationToken ct = default)
     {
-        var contract = await _context.Contracts.FindAsync(new object[] { model.ContractId }, ct)
-            ?? throw new KeyNotFoundException($"Contract {model.ContractId} not found.");
+        // Object-level authorization: the caller must have access to the parent contract.
+        await EnforceAccessAsync(model.ContractId, currentUserId, ct);
+
+        // Persist the payment and recompute financials inside a single transaction so
+        // concurrent payment creation cannot produce inconsistent totals (lost update).
+        await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+
+        var oldTotal = await _context.Contracts.AsNoTracking()
+            .Where(x => x.Id == model.ContractId)
+            .Select(x => x.TotalAmount)
+            .FirstOrDefaultAsync(ct);
 
         var payment = new ContractPayment
         {
@@ -707,51 +814,91 @@ public sealed class ContractService : IContractService
             PaymentMethod = model.PaymentMethod?.Trim(),
             ReferenceNumber = model.ReferenceNumber?.Trim(),
             Notes = model.Notes?.Trim(),
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
         _context.ContractPayments.Add(payment);
 
-        // Update contract financials
-        contract.PaidAmount = contract.Payments.Sum(p => p.Amount) + model.Amount;
+        // Server-side aggregate: recompute from the actual payment rows rather than
+        // relying on a stale in-memory Payments collection.
+        var totalPaid = await _context.ContractPayments
+            .Where(p => p.ContractId == model.ContractId)
+            .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
+
+        var contract = await _context.Contracts.FindAsync(new object[] { model.ContractId }, ct)
+            ?? throw new KeyNotFoundException($"Contract {model.ContractId} not found.");
+
+        contract.PaidAmount = totalPaid;
         contract.RemainingBalance = contract.TotalAmount - contract.PaidAmount;
+        contract.PaymentStatus = contract.RemainingBalance <= 0 && contract.TotalAmount > 0
+            ? PaymentStatuses.FullyPaid
+            : (contract.PaidAmount > 0 ? PaymentStatuses.PartiallyPaid : PaymentStatuses.Unpaid);
+        contract.UpdatedAt = DateTime.UtcNow;
 
-        if (contract.RemainingBalance <= 0 && contract.TotalAmount > 0)
-            contract.PaymentStatus = PaymentStatuses.FullyPaid;
-        else if (contract.PaidAmount > 0)
-            contract.PaymentStatus = PaymentStatuses.PartiallyPaid;
-
-        contract.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
 
-        _logger.LogInformation("Payment {Amount} added to contract {ContractId}", model.Amount, model.ContractId);
+        // Payment audit detail: capture actor, payment ID, contract ID, operation,
+        // timestamp, and the previous/new PaidAmount for traceability.
+        await AddAuditLogAsync(
+            model.ContractId,
+            currentUserId,
+            "PaymentAdded",
+            null,
+            null,
+            $"پرداخت به مبلغ {model.Amount:N0} ثبت شد. شناسه پرداخت: {payment.Id}. مبلغ پرداخت‌شده قبلی: {oldTotal - model.Amount:N0} → جدید: {totalPaid:N0}",
+            ct);
+
+        _logger.LogInformation("Payment {Amount} added to contract {ContractId} by {UserId}", model.Amount, model.ContractId, currentUserId);
         return payment;
     }
 
-    public async Task<bool> DeletePaymentAsync(int paymentId, int contractId, CancellationToken ct = default)
+    public async Task<bool> DeletePaymentAsync(int paymentId, int contractId, string currentUserId, CancellationToken ct = default)
     {
+        // Object-level authorization: the caller must have access to the parent contract.
+        await EnforceAccessAsync(contractId, currentUserId, ct);
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+
         var payment = await _context.ContractPayments.FirstOrDefaultAsync(p => p.Id == paymentId && p.ContractId == contractId, ct);
-        if (payment == null) return false;
+        if (payment == null)
+        {
+            await transaction.RollbackAsync(ct);
+            return false;
+        }
 
         _context.ContractPayments.Remove(payment);
 
-        // Recalculate contract financials
+        // Server-side aggregate recompute.
+        var totalPaid = await _context.ContractPayments
+            .Where(p => p.ContractId == contractId && p.Id != paymentId)
+            .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
+
         var contract = await _context.Contracts.FindAsync(new object[] { contractId }, ct);
         if (contract != null)
         {
-            contract.PaidAmount = contract.Payments.Sum(p => p.Amount) - payment.Amount;
+            contract.PaidAmount = totalPaid;
             contract.RemainingBalance = contract.TotalAmount - contract.PaidAmount;
-
-            if (contract.RemainingBalance <= 0 && contract.TotalAmount > 0)
-                contract.PaymentStatus = PaymentStatuses.FullyPaid;
-            else if (contract.PaidAmount > 0)
-                contract.PaymentStatus = PaymentStatuses.PartiallyPaid;
-            else
-                contract.PaymentStatus = PaymentStatuses.Unpaid;
-
-            contract.UpdatedAt = DateTime.Now;
+            contract.PaymentStatus = contract.RemainingBalance <= 0 && contract.TotalAmount > 0
+                ? PaymentStatuses.FullyPaid
+                : (contract.PaidAmount > 0 ? PaymentStatuses.PartiallyPaid : PaymentStatuses.Unpaid);
+            contract.UpdatedAt = DateTime.UtcNow;
         }
 
         await _context.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+
+        // Payment audit detail: capture actor, payment ID, contract ID, operation,
+        // timestamp, and the previous/new PaidAmount for traceability.
+        await AddAuditLogAsync(
+            contractId,
+            currentUserId,
+            "PaymentDeleted",
+            null,
+            null,
+            $"پرداخت با شناسه {paymentId} به مبلغ {payment.Amount:N0} حذف شد. مبلغ پرداخت‌شده قبلی: {totalPaid + payment.Amount:N0} → جدید: {totalPaid:N0}",
+            ct);
+
+        _logger.LogInformation("Payment {PaymentId} deleted from contract {ContractId} by {UserId}", paymentId, contractId, currentUserId);
         return true;
     }
 
@@ -759,54 +906,240 @@ public sealed class ContractService : IContractService
     //  Attachments
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Restricts uploads to a safe set of file types (by extension, MIME and magic bytes)
+    /// and imposes a maximum size. Returns false with a reason when the upload is rejected.
+    /// </summary>
+    private static readonly string[] AllowedAttachmentExtensions =
+        [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".txt", ".zip"];
+
+    private static readonly string[] AllowedAttachmentMimeTypes =
+        ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "image/jpeg", "image/png", "image/gif", "image/webp", "text/plain", "application/zip", "application/octet-stream"];
+
+    private const long MaxAttachmentSizeBytes = 20 * 1024 * 1024; // 20 MB
+
+    public ContractAttachment? ValidateAttachmentUpload(string fileName, string contentType, long sizeBytes)
+    {
+        if (string.IsNullOrWhiteSpace(fileName)) return null;
+        if (sizeBytes <= 0 || sizeBytes > MaxAttachmentSizeBytes) return null;
+
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        if (!AllowedAttachmentExtensions.Contains(extension)) return null;
+
+        if (!string.IsNullOrWhiteSpace(contentType) &&
+            !AllowedAttachmentMimeTypes.Contains(contentType.ToLowerInvariant()))
+        {
+            return null;
+        }
+
+        return new ContractAttachment();
+    }
+
+    /// <summary>
+    /// Determines whether the extension is considered executable / dangerous.
+    /// </summary>
+    private static bool IsDangerousExtension(string extension)
+    {
+        string[] dangerous = [".exe", ".bat", ".cmd", ".com", ".sh", ".ps1", ".msi", ".dll", ".scr", ".vbs", ".js", ".jsp", ".php", ".asp", ".aspx", ".html", ".htm", ".svg"];
+        return dangerous.Contains(extension, StringComparer.OrdinalIgnoreCase);
+    }
+
     public async Task<ContractAttachment> UploadAttachmentAsync(int contractId, string fileName, Stream fileStream, string contentType, string uploadedByUserId, CancellationToken ct = default)
     {
         var contract = await _context.Contracts.FindAsync(new object[] { contractId }, ct)
             ?? throw new KeyNotFoundException($"Contract {contractId} not found.");
 
+        // Validate the upload (extension + MIME + signature + size) before writing.
+        var extension = Path.GetExtension(fileName);
+        if (IsDangerousExtension(extension) || SniffContentTypeByExtension(extension) == null)
+        {
+            throw new InvalidOperationException("نوع فایل مجاز نیست.");
+        }
+
+        // Read magic bytes to confirm the file actually matches its declared type.
+        var signature = await ReadHeaderBytesAsync(fileStream, 8, ct);
+        if (!IsSignatureValid(extension, signature))
+        {
+            throw new InvalidOperationException("محتوای فایل با نوع اعلام‌شده مطابقت ندارد.");
+        }
+
+        if (fileStream.Length > MaxAttachmentSizeBytes)
+            throw new InvalidOperationException("حجم فایل بیش از حد مجاز است.");
+
+        // Reset stream position so the full content is written below.
+        fileStream.Position = 0;
+
+        // Server-generated file name (never trust the client filename for the physical path).
+        var safeName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
         var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", contractId.ToString());
         Directory.CreateDirectory(uploadsDir);
 
-        var storedFileName = $"{Guid.NewGuid():N}_{fileName}";
-        var filePath = Path.Combine(uploadsDir, storedFileName);
-
-        await using (var fs = new FileStream(filePath, FileMode.Create))
+        // Resolve and verify the canonical path stays within the uploads root.
+        string fullPath;
+        try
         {
-            await fileStream.CopyToAsync(fs, ct);
+            var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
+            var candidate = Path.GetFullPath(Path.Combine(uploadsDir, safeName));
+            if (!candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("مسیر ذخیره‌سازی نامعتبر است.");
+            fullPath = candidate;
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            throw new InvalidOperationException("مسیر ذخیره‌سازی نامعتبر است.");
+        }
+
+        // Read the stream for magic-byte validation then write with a size cap.
+        await using (var fs = new FileStream(fullPath, FileMode.Create))
+        {
+            // Copy with a size cap to prevent unbounded writes.
+            await CopyWithLimitAsync(fileStream, fs, MaxAttachmentSizeBytes, ct);
         }
 
         var attachment = new ContractAttachment
         {
             ContractId = contractId,
-            FileName = fileName,
-            StoredFileName = storedFileName,
-            RelativePath = $"/uploads/contracts/{contractId}/{storedFileName}",
+            FileName = Path.GetFileName(fileName), // strip any path from the client name
+            StoredFileName = safeName,
+            RelativePath = $"/uploads/contracts/{contractId}/{safeName}",
             ContentType = contentType,
-            FileSize = new FileInfo(filePath).Length,
+            FileSize = new FileInfo(fullPath).Length,
             UploadedByUserId = uploadedByUserId,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.ContractAttachments.Add(attachment);
         await _context.SaveChangesAsync(ct);
-        _logger.LogInformation("Attachment {FileName} uploaded to contract {ContractId}", fileName, contractId);
+        _logger.LogInformation("Attachment {FileName} uploaded to contract {ContractId}", attachment.FileName, contractId);
         return attachment;
     }
 
-    public async Task<ContractAttachment?> GetAttachmentAsync(int attachmentId, CancellationToken ct = default)
+    private async Task<byte[]> ReadHeaderBytesAsync(Stream stream, int count, CancellationToken ct)
     {
-        return await _context.ContractAttachments.AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == attachmentId, ct);
+        var buffer = new byte[count];
+        int total = 0;
+        while (total < count)
+        {
+            int read = await stream.ReadAsync(buffer.AsMemory(total, count - total), ct);
+            if (read == 0) break;
+            total += read;
+        }
+        return buffer[..total];
     }
 
-    public async Task<bool> DeleteAttachmentAsync(int attachmentId, int contractId, CancellationToken ct = default)
+    private static string? SniffContentTypeByExtension(string extension)
     {
+        return extension.ToLowerInvariant() switch
+        {
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".txt" => "text/plain",
+            ".zip" => "application/zip",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Validates that the leading magic bytes of a file match the declared extension.
+    /// </summary>
+    private static bool IsSignatureValid(string extension, byte[] signature)
+    {
+        if (signature.Length == 0) return false;
+
+        static bool Match(byte[] data, ReadOnlySpan<byte> magic)
+        {
+            if (data.Length < magic.Length) return false;
+            for (int i = 0; i < magic.Length; i++)
+                if (data[i] != magic[i]) return false;
+            return true;
+        }
+
+        return extension.ToLowerInvariant() switch
+        {
+            ".pdf" => Match(signature, new byte[] { 0x25, 0x50, 0x44, 0x46 }),
+            ".png" => Match(signature, new byte[] { 0x89, 0x50, 0x4E, 0x47 }),
+            ".jpg" or ".jpeg" => Match(signature, new byte[] { 0xFF, 0xD8, 0xFF }),
+            ".gif" => Match(signature, new byte[] { 0x47, 0x49, 0x46, 0x38 }),
+            ".zip" => Match(signature, new byte[] { 0x50, 0x4B, 0x03, 0x04 }),
+            // Office/Text files: signature validation is best-effort.
+            ".doc" or ".docx" or ".xls" or ".xlsx" or ".webp" or ".txt" => true,
+            _ => false
+        };
+    }
+
+    private static async Task CopyWithLimitAsync(Stream source, Stream destination, long limit, CancellationToken ct)
+    {
+        var buffer = new byte[81920];
+        long total = 0;
+        int read;
+        while ((read = await source.ReadAsync(buffer, ct)) > 0)
+        {
+            total += read;
+            if (total > limit)
+                throw new InvalidOperationException("حجم فایل بیش از حد مجاز است.");
+            await destination.WriteAsync(buffer.AsMemory(0, read), ct);
+        }
+    }
+
+    public async Task<ContractAttachment?> GetAttachmentAsync(int attachmentId, string currentUserId, CancellationToken ct = default)
+    {
+        // Object-level authorization: verify the caller can access the parent contract.
+        var attachment = await _context.ContractAttachments.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == attachmentId, ct);
+        if (attachment == null) return null;
+        await EnforceAccessAsync(attachment.ContractId, currentUserId, ct);
+        return attachment;
+    }
+
+    /// <summary>
+    /// Resolves the physical path for an attachment after verifying the caller has
+    /// access to the parent contract, guarding against path traversal. Returns the
+    /// attachment record and a validated full path, or (null, null) when unauthorized/missing.
+    /// </summary>
+    public async Task<(ContractAttachment? Attachment, string? FullPath)> GetAttachmentForDownloadAsync(int attachmentId, string currentUserId, CancellationToken ct = default)
+    {
+        var attachment = await _context.ContractAttachments.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == attachmentId, ct);
+        if (attachment == null) return (null, null);
+
+        await EnforceAccessAsync(attachment.ContractId, currentUserId, ct);
+
+        var relativePath = attachment.RelativePath ?? string.Empty;
+        // Reject any path that escapes the uploads root.
+        if (relativePath.Contains("..") || relativePath.Contains(':') || relativePath.StartsWith("\\\\"))
+            return (null, null);
+
+        var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
+        var candidate = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath.TrimStart('/')));
+        if (!candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            return (null, null);
+
+        return (attachment, candidate);
+    }
+
+    public async Task<bool> DeleteAttachmentAsync(int attachmentId, int contractId, string currentUserId, CancellationToken ct = default)
+    {
+        // Object-level authorization.
+        await EnforceAccessAsync(contractId, currentUserId, ct);
+
         var attachment = await _context.ContractAttachments
             .FirstOrDefaultAsync(a => a.Id == attachmentId && a.ContractId == contractId, ct);
         if (attachment == null) return false;
 
-        var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/'));
-        if (File.Exists(fullPath)) File.Delete(fullPath);
+        // Resolve the canonical path and ensure it stays under the contracts uploads root.
+        var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
+        var fullPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
+        if (fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
+            File.Delete(fullPath);
 
         _context.ContractAttachments.Remove(attachment);
         await _context.SaveChangesAsync(ct);
@@ -873,7 +1206,7 @@ public sealed class ContractService : IContractService
             _context.ContractTemplates.Add(template);
         }
         template.Name = model.TemplateName.Trim();
-        template.HtmlContent = model.HtmlContent;
+        template.HtmlContent = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.HtmlContent);
         template.Description = model.Description?.Trim();
         template.TemplateType = "Personal";
         template.UpdatedAt = DateTime.Now;

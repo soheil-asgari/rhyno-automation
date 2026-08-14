@@ -4,6 +4,13 @@
 }
 
 <div class="container-fluid py-2 space-y-2" dir="rtl">
+    @* Breadcrumb *@
+    <partial name="_Breadcrumb" model='new[] {
+        new RhynoBreadcrumbItem("خانه", "/"),
+        new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
+        new RhynoBreadcrumbItem("ویرایش قرارداد", null)
+    }' />
+
     @* Section Header *@
     <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
@@ -274,14 +281,187 @@
 
 @section Scripts {
     <script src="~/js/persian-date.min.js"></script>
-    <script src="~/js/persian-datepicker.min.js"></script>
     <link rel="stylesheet" href="~/css/persian-datepicker.min.css" />
+    <style>
+        .vanilla-jalali-popup {
+            position: absolute;
+            z-index: 9999;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            width: 260px;
+            display: none;
+            font-family: Vazirmatn, Tahoma, sans-serif;
+            direction: rtl;
+        }
+        .vanilla-jalali-popup .vjp-nav-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #64748b;
+            padding: 2px 6px;
+            line-height: 1;
+        }
+        .vanilla-jalali-popup .vjp-nav-btn:hover {
+            color: #0f172a;
+        }
+        .vanilla-jalali-popup .vjp-day-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 11px;
+            color: #334155;
+            border-radius: 4px;
+            padding: 4px 0;
+            text-align: center;
+            line-height: 1;
+        }
+        .vanilla-jalali-popup .vjp-day-btn:hover {
+            background: #f1f5f9;
+        }
+        .vanilla-jalali-popup .vjp-day-btn.is-today {
+            background: #e0f2fe;
+            color: #0369a1;
+            font-weight: 700;
+        }
+    </style>
     <script>
         (function() {
             'use strict';
 
+            // ════════════════════════════════════════════════════════════
+            // Vanilla JS Jalali Datepicker
+            // Uses the pure-JS persian-date library (NO jQuery).
+            // ════════════════════════════════════════════════════════════
+            var PERSIAN_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+            var PERSIAN_WEEKDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']; // Sat..Fri
+
+            function toPersianDigits(str) {
+                return String(str).replace(/\d/g, function(d) {
+                    return '۰۱۲۳۴۵۶۷۸۹'[d];
+                });
+            }
+
+            function createDatepicker(input) {
+                var wrapper = input.closest('.jalali-datepicker-wrapper') || input.parentElement;
+                if (!wrapper) return null;
+
+                var popup = document.createElement('div');
+                popup.className = 'vanilla-jalali-popup';
+                wrapper.style.position = 'relative';
+                wrapper.appendChild(popup);
+
+                var viewYear = 0;
+                var viewMonth = 0;
+
+                function render() {
+                    var today = new persianDate();
+                    if (!viewYear) viewYear = today.year();
+                    if (!viewMonth) viewMonth = today.month();
+
+                    var daysInMonth = today.daysInMonth(viewYear, viewMonth);
+                    var firstWeekday = today.getFirstWeekDayOfMonth(viewYear, viewMonth); // 0 = Saturday
+
+                    var html = '';
+
+                    // Header: prev / title / next
+                    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #f1f5f9;">';
+                    html += '<button type="button" class="vjp-nav-btn" data-nav="prev" aria-label="ماه قبل">&rsaquo;</button>';
+                    html += '<span style="font-size:12px;font-weight:700;color:#334155;">' + PERSIAN_MONTHS[viewMonth - 1] + ' ' + toPersianDigits(viewYear) + '</span>';
+                    html += '<button type="button" class="vjp-nav-btn" data-nav="next" aria-label="ماه بعد">&lsaquo;</button>';
+                    html += '</div>';
+
+                    // Weekday header
+                    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:4px 6px;border-bottom:1px solid #f1f5f9;">';
+                    PERSIAN_WEEKDAYS.forEach(function(w) {
+                        html += '<div style="text-align:center;font-size:10px;font-weight:700;color:#94a3b8;padding:2px 0;">' + w + '</div>';
+                    });
+                    html += '</div>';
+
+                    // Day grid
+                    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:6px;">';
+                    for (var i = 0; i < firstWeekday; i++) {
+                        html += '<div></div>';
+                    }
+                    for (var day = 1; day <= daysInMonth; day++) {
+                        var isToday = (day === today.date() && viewMonth === today.month() && viewYear === today.year());
+                        html += '<button type="button" class="vjp-day-btn' + (isToday ? ' is-today' : '') + '" data-day="' + day + '">' + toPersianDigits(day) + '</button>';
+                    }
+                    html += '</div>';
+
+                    popup.innerHTML = html;
+
+                    // Bind navigation
+                    popup.querySelector('[data-nav="prev"]').addEventListener('click', function() {
+                        viewMonth--;
+                        if (viewMonth < 1) { viewMonth = 12; viewYear--; }
+                        render();
+                    });
+                    popup.querySelector('[data-nav="next"]').addEventListener('click', function() {
+                        viewMonth++;
+                        if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+                        render();
+                    });
+
+                    // Bind day selection
+                    popup.querySelectorAll('[data-day]').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            var day = parseInt(btn.getAttribute('data-day'), 10);
+                            var selected = new persianDate([viewYear, viewMonth, day]);
+                            input.value = selected.format('YYYY/MM/DD');
+                            popup.style.display = 'none';
+                        });
+                    });
+                }
+
+                function show() {
+                    viewYear = 0;
+                    viewMonth = 0;
+                    render();
+                    popup.style.display = 'block';
+                }
+
+                function hide() {
+                    popup.style.display = 'none';
+                }
+
+                // Open on input click
+                input.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    show();
+                });
+
+                // Open on calendar icon click
+                var icon = wrapper.querySelector('span.absolute');
+                if (icon) {
+                    icon.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        show();
+                    });
+                }
+
+                // Close on outside click
+                document.addEventListener('click', function(e) {
+                    if (!wrapper.contains(e.target)) hide();
+                });
+
+                return { show: show, hide: hide };
+            }
+
             // ── Jalali Date Picker Initialization ──────────────────────
             function initJalaliPickers() {
+                if (typeof persianDate === 'undefined') {
+                    console.warn('persian-date library not loaded — date inputs will accept manual text entry.');
+                    return;
+                }
+
                 document.querySelectorAll('.jalali-date-input').forEach(function(input) {
                     var fieldName = input.getAttribute('data-jalali');
                     if (!fieldName) return;
@@ -298,33 +478,7 @@
                         } catch(e) {}
                     }
 
-                    // Create picker instance once
-                    var picker = new persianDatepicker(input, {
-                        format: 'YYYY/MM/DD',
-                        autoClose: true,
-                        observer: true,
-                        initialValue: input.value || false,
-                        onSelect: function() {}
-                    });
-                    input.persianDatepickerInstance = picker;
-
-                    // Attach click handler to input
-                    input.addEventListener('click', function() {
-                        if (picker.show) picker.show();
-                    });
-
-                    // Attach click handler to the calendar icon (sibling span)
-                    var wrapper = input.closest('.jalali-datepicker-wrapper');
-                    if (wrapper) {
-                        var icon = wrapper.querySelector('span.absolute');
-                        if (icon) {
-                            icon.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (picker.show) picker.show();
-                            });
-                        }
-                    }
+                    createDatepicker(input);
                 });
             }
 

@@ -18,26 +18,56 @@ public class BootstrapAdminSeeder
     private readonly IConfiguration _configuration;
     private readonly ILogger<BootstrapAdminSeeder> _logger;
     private readonly IdentityDbContext _dbContext;
+    private readonly IWebHostEnvironment _env;
 
     public BootstrapAdminSeeder(
         UserManager<User> userManager,
         RoleManager<ApplicationRole> roleManager,
         IConfiguration configuration,
         ILogger<BootstrapAdminSeeder> logger,
-        IdentityDbContext dbContext)
+        IdentityDbContext dbContext,
+        IWebHostEnvironment env)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _configuration = configuration;
         _logger = logger;
         _dbContext = dbContext;
+        _env = env;
     }
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var email = _configuration.GetValue<string>("BootstrapAdmin:Email") ?? "admin";
-        var password = _configuration.GetValue<string>("BootstrapAdmin:Password") ?? "admin";
+        // ── Development-Only Guard ─────────────────────────────────────────────
+        // The bootstrap admin is intended ONLY for local development/testing.
+        // In Production it must NEVER auto-create a default super-admin, so we
+        // fail fast (throw) rather than silently seeding credentials.
+        if (!_env.IsDevelopment())
+        {
+            _logger.LogWarning("BootstrapAdmin: seeding is skipped because the environment is not Development.");
+            return;
+        }
+
+        // Bootstrap admin is enabled only when explicitly requested via configuration.
+        if (!_configuration.GetValue("BootstrapAdmin:Enabled", false))
+        {
+            _logger.LogInformation("BootstrapAdmin: disabled (BootstrapAdmin:Enabled is false).");
+            return;
+        }
+
+        var email = _configuration.GetValue<string>("BootstrapAdmin:Email");
+        var password = _configuration.GetValue<string>("BootstrapAdmin:Password");
         var fullName = _configuration.GetValue<string>("BootstrapAdmin:FullName") ?? "مدیر سیستم";
+
+        // Fail fast (never fall back to a default) when credentials are missing.
+        if (string.IsNullOrWhiteSpace(email))
+            throw new InvalidOperationException("BootstrapAdmin:Email must be configured when BootstrapAdmin is enabled.");
+        if (string.IsNullOrWhiteSpace(password))
+            throw new InvalidOperationException("BootstrapAdmin:Password must be configured (no default fallback) when BootstrapAdmin is enabled.");
+
+        // Reject weak development passwords so they cannot be promoted to production credentials.
+        if (password.Length < 12)
+            throw new InvalidOperationException("BootstrapAdmin:Password is too weak. A strong password (>= 12 characters) is required.");
 
         _logger.LogInformation("BootstrapAdmin: checking for existing '{Email}'...", email);
 
@@ -80,22 +110,13 @@ public class BootstrapAdminSeeder
 
         if (!result.Succeeded)
         {
-            // اگر پسورد ساده بود و Identity رد کرد،
-            // با پسورد موقت قوی می‌سازیم و بعد هش admin را جایگزین می‌کنیم
-            var tempPassword = Guid.NewGuid().ToString("N") + "Aa@1";
-            result = await _userManager.CreateAsync(adminUser, tempPassword);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join("; ", result.Errors.Select(e => $"[{e.Code}] {e.Description}"));
-                _logger.LogError("BootstrapAdmin: failed to create admin: {Errors}", errors);
-                throw new InvalidOperationException($"Bootstrap admin creation failed: {errors}");
-            }
-
-            var passwordHasher = new PasswordHasher<User>();
-            adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, password);
-            _dbContext.Users.Update(adminUser);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("BootstrapAdmin: password set directly (bypassed strict policy).");
+            // A valid bootstrap admin must satisfy the project's password policy.
+            // We do NOT bypass the strict policy by overwriting the PasswordHash.
+            var errors = string.Join("; ", result.Errors.Select(e => $"[{e.Code}] {e.Description}"));
+            _logger.LogError("BootstrapAdmin: failed to create admin with configured password: {Errors}", errors);
+            throw new InvalidOperationException(
+                "Bootstrap admin creation failed: the configured BootstrapAdmin:Password does not satisfy the password policy. " +
+                "Provide a strong password (>= 12 chars with upper, lower, digit, symbol).");
         }
 
         await _userManager.AddToRoleAsync(adminUser, "Admin");

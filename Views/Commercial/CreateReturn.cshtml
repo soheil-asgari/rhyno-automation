@@ -1,0 +1,90 @@
+@{
+    var returnType = ViewBag.ReturnType as string ?? "Sale";
+    var invoiceOptions = ViewBag.InvoiceOptions as List<OfficeAutomation.Controllers.InvoiceSelectionOption> ?? new List<OfficeAutomation.Controllers.InvoiceSelectionOption>();
+}
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-rose-50/80 text-rose-800 border border-rose-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i><span class="flex-1">@errorMessage</span></div>
+    }
+
+    <header class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">ثبت برگشت @(returnType == "Purchase" ? "خرید" : "فروش")</h1>
+        <p class="text-xs text-slate-500 mt-0.5">مشخص کنید برگشت به کدام فاکتور تعلق دارد؛ ردیف‌های فاکتور به‌صورت خودکار بارگذاری می‌شوند.</p>
+    </header>
+
+    <form asp-action="CreateReturn" method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 p-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnType" value="@returnType" />
+        <div class="flex flex-wrap items-end gap-3 mb-4">
+            <div class="flex flex-col gap-1 min-w-[220px] flex-1">
+                <label class="text-[11px] font-bold text-slate-500">فاکتور مبدأ</label>
+                <select id="sourceInvoice" name="invoiceId" required class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none focus:border-indigo-500">
+                    <option value="">انتخاب فاکتور...</option>
+                    @foreach (var inv in invoiceOptions)
+                    {
+                        <option value="@inv.Value">@inv.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-[11px] font-bold text-slate-500">تاریخ برگشت (شمسی)</label>
+                <input name="dateShamsi" id="dateShamsi" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs w-32 outline-none" placeholder="1404/05/24" />
+            </div>
+            <div class="flex flex-col gap-1 flex-1">
+                <label class="text-[11px] font-bold text-slate-500">دلیل</label>
+                <input name="reason" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs outline-none" placeholder="دلیل برگشت (اختیاری)" />
+            </div>
+        </div>
+
+        <div class="text-[11px] font-bold text-slate-500 mb-2">ردیف‌های برگشت</div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-right" id="linesTable">
+                <thead class="bg-slate-50/70">
+                    <tr>
+                        <th class="px-2 py-2 font-semibold text-slate-500">کالا/خدمت</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500">تعداد</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">قیمت واحد</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">مالیات</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">جمع</th>
+                    </tr>
+                </thead>
+                <tbody id="linesBody" class="divide-y divide-slate-100">
+                    <tr><td colspan="5" class="px-2 py-6 text-center text-slate-400">ابتدا فاکتور را انتخاب کنید.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 flex items-center gap-2">
+            <button type="submit" class="h-9 bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-lg text-xs font-bold transition">ثبت برگشت</button>
+            <a asp-action="@(returnType == "Purchase" ? "PurchaseReturns" : "SalesReturns")" class="px-3 py-2 border border-slate-200/80 rounded-lg text-xs font-bold text-slate-600 no-underline">انصراف</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('sourceInvoice').addEventListener('change', function () {
+        var invoiceId = this.value;
+        var tbody = document.getElementById('linesBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="px-2 py-6 text-center text-slate-400">در حال بارگذاری...</td></tr>';
+        fetch('/Commercial/GetInvoiceLines?id=' + invoiceId)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) { tbody.innerHTML = '<tr><td colspan="5" class="px-2 py-6 text-center text-rose-500">' + data.message + '</td></tr>'; return; }
+                if (data.items.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="px-2 py-6 text-center text-slate-400">فاکتور ردیفی ندارد.</td></tr>'; return; }
+                tbody.innerHTML = '';
+                data.items.forEach(function (it) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td class="px-2 py-2"><input type="hidden" name="lines[][ItemName]" value="' + it.itemName + '" /><input type="hidden" name="lines[][ProductId]" value="' + (it.productId || '') + '" /><span class="font-semibold">' + it.itemName + '</span></td>' +
+                        '<td class="px-2 py-2"><input name="lines[][Quantity]" type="number" step="0.001" min="0" value="' + it.quantity + '" class="h-7 w-20 rounded border border-slate-200/80 px-1 text-xs" /></td>' +
+                        '<td class="px-2 py-2"><input name="lines[][UnitPrice]" type="number" step="0.01" min="0" value="' + it.unitPrice + '" class="h-7 w-24 rounded border border-slate-200/80 px-1 text-xs" /></td>' +
+                        '<td class="px-2 py-2"><input name="lines[][LineVatAmount]" type="number" step="0.01" min="0" value="' + it.lineVatAmount + '" class="h-7 w-24 rounded border border-slate-200/80 px-1 text-xs" /></td>' +
+                        '<td class="px-2 py-2"><input name="lines[][LineSubTotal]" type="number" step="0.01" min="0" value="' + it.lineSubTotal + '" class="h-7 w-24 rounded border border-slate-200/80 px-1 text-xs" /><input type="hidden" name="lines[][LineGrandTotal]" value="' + it.lineGrandTotal + '" /></td>';
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(function () { tbody.innerHTML = '<tr><td colspan="5" class="px-2 py-6 text-center text-rose-500">خطا در بارگذاری ردیف‌ها.</td></tr>'; });
+    });
+</script>
+}

@@ -507,6 +507,9 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("CommercialPartyId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -522,6 +525,9 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.Property<string>("DeadlineDateShamsi")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("EmployerId")
                         .HasColumnType("int");
@@ -589,6 +595,8 @@ namespace OfficeAutomation.Migrations.FinanceDb
                         .HasDefaultValue("Draft");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CommercialPartyId");
 
                     b.HasIndex("EmployerId");
 
@@ -1085,6 +1093,463 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.ToTable("Waybills");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.CommercialParty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("EconomicCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NationalCode")
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<int>("PartyType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_CommercialParty_Name");
+
+                    b.ToTable("CommercialParties");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.CommercialQuotation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CommercialPartyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ConvertedInvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("NationalCodeOrEconomicId")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("PartyName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("QuotationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("QuotationNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("QuotationType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ValidUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ValidUntilShamsi")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("VatAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommercialPartyId");
+
+                    b.HasIndex("QuotationType", "DateShamsi")
+                        .HasDatabaseName("IX_CommercialQuotation_Type_Date");
+
+                    b.HasIndex("QuotationType", "QuotationNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CommercialQuotation_Type_Number");
+
+                    b.ToTable("CommercialQuotations");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.CommercialQuotationLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CommercialQuotationId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DiscountRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<decimal>("LineGrandTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineSubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineVatAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommercialQuotationId");
+
+                    b.ToTable("CommercialQuotationLines");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.InvoiceAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoredPath")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UploadedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId", "Category")
+                        .HasDatabaseName("IX_InvoiceAttachment_Invoice_Category");
+
+                    b.ToTable("InvoiceAttachments");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.InvoiceReturn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CommercialPartyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime>("ReturnDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReturnNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReturnType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("VatAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("VoucherDocumentNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("VoucherHeaderId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommercialPartyId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("ReturnType", "DateShamsi")
+                        .HasDatabaseName("IX_InvoiceReturn_Type_Date");
+
+                    b.HasIndex("ReturnType", "ReturnNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_InvoiceReturn_Type_Number");
+
+                    b.ToTable("InvoiceReturns");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.InvoiceReturnItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InvoiceReturnId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<decimal>("LineGrandTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineSubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineVatAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceReturnId");
+
+                    b.ToTable("InvoiceReturnItems");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.SettlementTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DateShamsi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("SettlementDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SettlementType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("VoucherDocumentNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("VoucherHeaderId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId", "SettlementDate")
+                        .HasDatabaseName("IX_Settlement_Invoice_Date");
+
+                    b.ToTable("SettlementTransactions");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AccountGroup", b =>
                 {
                     b.Property<int>("Id")
@@ -1378,6 +1843,99 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.ToTable("GeneralAccounts");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.JournalTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsRecurring")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("JournalTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("NextRunDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RecurrenceEveryMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JournalTypeId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("JournalTemplates");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.JournalTemplateLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CreditAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DebitAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("FloatingDetailAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("JournalTemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Narration")
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<int>("SubsidiaryAccountId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FloatingDetailAccountId");
+
+                    b.HasIndex("JournalTemplateId");
+
+                    b.HasIndex("SubsidiaryAccountId");
+
+                    b.ToTable("JournalTemplateLines");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.JournalType", b =>
                 {
                     b.Property<int>("Id")
@@ -1499,8 +2057,27 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.Property<int>("FiscalYearId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsMemo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("IssuedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("IssuedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<int>("JournalTypeId")
                         .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PostingStatus")
                         .IsRequired()
@@ -1508,6 +2085,10 @@ namespace OfficeAutomation.Migrations.FinanceDb
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Draft");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
 
                     b.Property<int?>("ReversalOfVoucherHeaderId")
                         .HasColumnType("int");
@@ -1716,10 +2297,17 @@ namespace OfficeAutomation.Migrations.FinanceDb
 
             modelBuilder.Entity("OfficeAutomation.Models.Invoice", b =>
                 {
+                    b.HasOne("OfficeAutomation.Modules.Commercial.Domain.CommercialParty", "CommercialParty")
+                        .WithMany()
+                        .HasForeignKey("CommercialPartyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("OfficeAutomation.Models.Employer", "Employer")
                         .WithMany("Invoices")
                         .HasForeignKey("EmployerId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CommercialParty");
 
                     b.Navigation("Employer");
                 });
@@ -1803,6 +2391,78 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.Navigation("WarehouseIssuance");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.CommercialQuotation", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Commercial.Domain.CommercialParty", "CommercialParty")
+                        .WithMany("Quotations")
+                        .HasForeignKey("CommercialPartyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CommercialParty");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.CommercialQuotationLine", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Commercial.Domain.CommercialQuotation", "CommercialQuotation")
+                        .WithMany("Lines")
+                        .HasForeignKey("CommercialQuotationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CommercialQuotation");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.InvoiceAttachment", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Invoice", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.InvoiceReturn", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Commercial.Domain.CommercialParty", "CommercialParty")
+                        .WithMany("Returns")
+                        .HasForeignKey("CommercialPartyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.Invoice", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CommercialParty");
+
+                    b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.InvoiceReturnItem", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Commercial.Domain.InvoiceReturn", "InvoiceReturn")
+                        .WithMany("Items")
+                        .HasForeignKey("InvoiceReturnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InvoiceReturn");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.SettlementTransaction", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Invoice", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.CurrencyExchangeRate", b =>
                 {
                     b.HasOne("OfficeAutomation.Modules.Finance.Domain.Currency", "Currency")
@@ -1844,6 +2504,43 @@ namespace OfficeAutomation.Migrations.FinanceDb
                         .IsRequired();
 
                     b.Navigation("AccountGroup");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.JournalTemplate", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.JournalType", "JournalType")
+                        .WithMany()
+                        .HasForeignKey("JournalTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("JournalType");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.JournalTemplateLine", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.FloatingDetailAccount", "FloatingDetailAccount")
+                        .WithMany()
+                        .HasForeignKey("FloatingDetailAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.JournalTemplate", "JournalTemplate")
+                        .WithMany("Lines")
+                        .HasForeignKey("JournalTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.SubsidiaryAccount", "SubsidiaryAccount")
+                        .WithMany()
+                        .HasForeignKey("SubsidiaryAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FloatingDetailAccount");
+
+                    b.Navigation("JournalTemplate");
+
+                    b.Navigation("SubsidiaryAccount");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.SubsidiaryAccount", b =>
@@ -1997,6 +2694,23 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.Navigation("Items");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.CommercialParty", b =>
+                {
+                    b.Navigation("Quotations");
+
+                    b.Navigation("Returns");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.CommercialQuotation", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Commercial.Domain.InvoiceReturn", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AccountGroup", b =>
                 {
                     b.Navigation("GeneralAccounts");
@@ -2031,6 +2745,11 @@ namespace OfficeAutomation.Migrations.FinanceDb
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.GeneralAccount", b =>
                 {
                     b.Navigation("SubsidiaryAccounts");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.JournalTemplate", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.JournalType", b =>

@@ -58,6 +58,7 @@ public sealed class TrialBalanceService
         var scopedLines = _context.VoucherLines
             .AsNoTracking()
             .Where(line =>
+                !line.VoucherHeader.IsMemo &&
                 line.VoucherHeader.VoucherDate < toExclusive &&
                 line.VoucherHeader.TotalDebits == line.VoucherHeader.TotalCredits &&
                 (request.IncludeMoatagh || line.VoucherHeader.Status == VoucherStatus.Permanent));

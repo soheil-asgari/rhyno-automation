@@ -510,7 +510,7 @@
             }
         });
 
-        console.log('[Rhyno] Keyboard shortcuts initialized. Press ? to see all shortcuts.');
+        // Keyboard shortcuts initialized silently (no console noise in production).
     }
 
     // Auto-init

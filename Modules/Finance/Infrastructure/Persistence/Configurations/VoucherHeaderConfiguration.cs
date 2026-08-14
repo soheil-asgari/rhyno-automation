@@ -22,6 +22,9 @@ public sealed class VoucherHeaderConfiguration : IEntityTypeConfiguration<Vouche
         builder.Property(item => item.Description)
             .HasMaxLength(600);
 
+        builder.Property(item => item.Reference)
+            .HasMaxLength(120);
+
         builder.Property(item => item.Status)
             .HasConversion<string>()
             .HasMaxLength(20)
@@ -32,6 +35,19 @@ public sealed class VoucherHeaderConfiguration : IEntityTypeConfiguration<Vouche
             .HasMaxLength(20)
             .HasDefaultValue(PostingStatus.Draft)
             .IsRequired();
+
+        builder.Property(item => item.IsMemo)
+            .HasDefaultValue(false);
+
+        builder.Property(item => item.IssuedBy)
+            .HasMaxLength(100);
+
+        builder.Property(item => item.IssuedAt);
+
+        builder.Property(item => item.LastModifiedBy)
+            .HasMaxLength(100);
+
+        builder.Property(item => item.LastModifiedAt);
 
         builder.Property(item => item.TotalDebits)
             .HasPrecision(18, 2);

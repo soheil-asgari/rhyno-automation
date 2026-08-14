@@ -166,6 +166,53 @@
     </tr>
 </template>
 
+<style>
+    /* ── Employee autocomplete dropdown: prevent table overflow clipping ── */
+    #employeeRows .employee-autocomplete {
+        position: relative;
+        z-index: 9999;
+    }
+    #employeeRows .employee-suggestions {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        z-index: 9999;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+    #employeeRows .employee-suggestion-item {
+        display: block;
+        width: 100%;
+        text-align: right;
+        padding: 8px 10px;
+        font-size: 11px;
+        color: #334155;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+    #employeeRows .employee-suggestion-item:hover {
+        background: #f0f4f8;
+    }
+    #employeeRows .employee-suggestion-item small {
+        display: block;
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+    /* Ensure the table wrapper does not clip the absolutely-positioned dropdown */
+    #employeeRows .employee-autocomplete,
+    #employeeRows td {
+        overflow: visible !important;
+    }
+</style>
+
 @section Scripts {
     <script src="~/js/persian-date.js" asp-append-version="true"></script>
     <script src="~/js/persian-datepicker.min.js" asp-append-version="true"></script>

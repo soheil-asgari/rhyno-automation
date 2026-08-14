@@ -20,13 +20,23 @@ public interface IContractService
     Task<bool> UnarchiveContractAsync(int id, string currentUserId, CancellationToken ct = default);
 
     // ── Payments ──────────────────────────────────────────────────
-    Task<ContractPayment> AddPaymentAsync(ContractPaymentCreateVM model, CancellationToken ct = default);
-    Task<bool> DeletePaymentAsync(int paymentId, int contractId, CancellationToken ct = default);
+    Task<ContractPayment> AddPaymentAsync(ContractPaymentCreateVM model, string currentUserId, CancellationToken ct = default);
+    Task<bool> DeletePaymentAsync(int paymentId, int contractId, string currentUserId, CancellationToken ct = default);
 
     // ── Attachments ───────────────────────────────────────────────
     Task<ContractAttachment> UploadAttachmentAsync(int contractId, string fileName, Stream fileStream, string contentType, string uploadedByUserId, CancellationToken ct = default);
-    Task<ContractAttachment?> GetAttachmentAsync(int attachmentId, CancellationToken ct = default);
-    Task<bool> DeleteAttachmentAsync(int attachmentId, int contractId, CancellationToken ct = default);
+    Task<ContractAttachment?> GetAttachmentAsync(int attachmentId, string currentUserId, CancellationToken ct = default);
+    Task<bool> DeleteAttachmentAsync(int attachmentId, int contractId, string currentUserId, CancellationToken ct = default);
+    /// <summary>
+    /// Resolves the physical path for an attachment after verifying the caller
+    /// has access to the parent contract. Returns null if unauthorized or missing.
+    /// </summary>
+    Task<(ContractAttachment? Attachment, string? FullPath)> GetAttachmentForDownloadAsync(int attachmentId, string currentUserId, CancellationToken ct = default);
+    /// <summary>
+    /// Validates a file upload (size, extension, MIME, magic bytes) and previews the
+    /// storage path safely.
+    /// </summary>
+    ContractAttachment? ValidateAttachmentUpload(string fileName, string contentType, long sizeBytes);
 
     // ── Templates / Settings ──────────────────────────────────────
     Task<ContractSettingsVM> GetSettingsViewModelAsync(string currentUserId, CancellationToken ct = default);

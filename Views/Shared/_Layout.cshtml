@@ -305,19 +305,34 @@
                                     <i class="bi bi-chevron-down chevron"></i>
                                 </button>
                                 <ul class="menu-list module-children"
-                                    style="max-height:@(IsExpanded("HumanCapital","Leaves","Letters") ? "500px" : "0");">
-                                    <li><a class='menu-item @(currentController == "HumanCapital" ? "active" : "")'
+                                    style="max-height:@(IsExpanded("HumanCapital","Leaves","Letters") ? "600px" : "0");">
+                                    <li><a class='menu-item @(currentController == "HumanCapital" && currentAction == "Index" ? "active" : "")'
                                            asp-controller="HumanCapital" asp-action="Index"><i
-                                        class="bi bi-person-badge menu-icon"></i> منابع انسانی</a></li>
-                                        <li><a class='menu-item @(currentController == "Leaves" ? "active" : "")'
-                                               asp-controller="Leaves" asp-action="Index"><i
-                                            class="bi bi-calendar2-week menu-icon"></i> مرخصی‌ها</a></li>
-                                            <li><a class='menu-item @(currentController == "Letters" ? "active" : "")'
-                                                   asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i>
-                                                نامه‌ها</a></li>
-                                            </ul>
-                                        </div>
-                                    }
+                                        class="bi bi-person-badge menu-icon"></i> پرونده پرسنلی</a></li>
+                                        <li><a class='menu-item @(currentController == "HumanCapital" && currentAction == "Contracts" ? "active" : "")'
+                                               asp-controller="HumanCapital" asp-action="Contracts"><i
+                                            class="bi bi-file-earmark-text menu-icon"></i> احکام کارگزینی و قراردادها</a></li>
+                                            <li><a class='menu-item @(currentController == "HumanCapital" && currentAction == "Leaves" ? "active" : "")'
+                                                   asp-controller="HumanCapital" asp-action="Leaves"><i
+                                                class="bi bi-calendar2-week menu-icon"></i> مدیریت مرخصی و مأموریت</a></li>
+                                                <li><a class='menu-item @(currentController == "HumanCapital" && currentAction == "Loans" ? "active" : "")'
+                                                       asp-controller="HumanCapital" asp-action="Loans"><i
+                                                    class="bi bi-cash-coin menu-icon"></i> وام و مساعده</a></li>
+                                                    <li><a class='menu-item @(currentController == "HumanCapital" && currentAction == "Attendance" ? "active" : "")'
+                                                           asp-controller="HumanCapital" asp-action="Attendance"><i
+                                                        class="bi bi-clock-history menu-icon"></i> کارکرد و حضور غیاب</a></li>
+                                                        <li><a class='menu-item @(currentController == "HumanCapital" && currentAction == "Reports" ? "active" : "")'
+                                                               asp-controller="HumanCapital" asp-action="Reports"><i
+                                                            class="bi bi-bar-chart-line menu-icon"></i> گزارشات جامع منابع انسانی</a></li>
+                                                            <li><a class='menu-item @(currentController == "Leaves" ? "active" : "")'
+                                                                   asp-controller="Leaves" asp-action="Index"><i
+                                                                class="bi bi-calendar2-week menu-icon"></i> مرخصی‌ها</a></li>
+                                                                <li><a class='menu-item @(currentController == "Letters" ? "active" : "")'
+                                                                       asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i>
+                                                                    نامه‌ها</a></li>
+                                                                    </ul>
+                                                                </div>
+                                                            }
 
                                     <!-- Contracts Module (Standalone) -->
                                     @if (userCanAccessContracts)
@@ -592,6 +607,9 @@
                                                                                                                                                     el.style.display = 'flex';
                                                                                                                                                     el.classList.add('open');
                                                                                                                                                     document.body.style.overflow = 'hidden';
+                                                                                                                                                    if (window.RhynoModalFocus) {
+                                                                                                                                                    RhynoModalFocus.open(el, { trigger: document.activeElement });
+                                                                                                                                                    }
                                                                                                                                                     };
 
                                                                                                                                                     const hideModal = (id) => {
@@ -600,6 +618,9 @@
                                                                                                                                                     el.style.display = 'none';
                                                                                                                                                     el.classList.remove('open');
                                                                                                                                                     document.body.style.overflow = '';
+                                                                                                                                                    if (window.RhynoModalFocus) {
+                                                                                                                                                    RhynoModalFocus.close(el);
+                                                                                                                                                    }
                                                                                                                                                     };
 
                                                                                                                                                     let _confirmCallback = null;
@@ -745,14 +766,16 @@
                                                                                                                                                     connection.on("ReceiveNewTaskNotification", function (data) {
                                                                                                                                                     Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
                                                                                                                                                     });
-                                                                                                                                                    connection.start().then(() => console.log("SignalR Connected.")).catch(err => console.error("SignalR Error:", err));
+                    connection.start().catch(err => console.error("SignalR Error:", err));
                                                                                                                                                     })();
                                                                                                                                                 </script>
 
                                                                                                                                                 @await RenderSectionAsync("Scripts", required: false)
-                                                                                                                                                <script src="~/js/app-ui.js" asp-append-version="true"></script>
-                                                                                                                                                <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
-                                                                                                                                                <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
+                <script src="~/js/app-ui.js" asp-append-version="true"></script>
+                <script src="~/js/modal-focus.js" asp-append-version="true"></script>
+                <script src="~/js/form-guard.js" asp-append-version="true"></script>
+                <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
+                <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
                                                                                                                                                 @if (User?.Identity?.IsAuthenticated == true)
                                                                                                                                                 {
                                                                                                                                                     @await Html.PartialAsync("_TaxAiAssistantWidget")

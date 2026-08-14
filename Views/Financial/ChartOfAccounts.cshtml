@@ -1,0 +1,528 @@
+@{
+    ViewData["Title"] = "سرفصل حساب‌ها";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>سرفصل حساب‌ها</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Vazirmatn', Tahoma, sans-serif; font-size: 12px; line-height: 1.5; background: #f5f6fa; color: #1a1a2e; direction: rtl; }
+
+        /* ── Shell ──────────────────────────────────────────────── */
+        .coa-shell { display: flex; height: 100vh; overflow: hidden; }
+        .coa-panel { display: flex; flex-direction: column; background: #fff; border-left: 1px solid rgba(0,0,0,.1); }
+        .coa-tree-panel { width: 55%; min-width: 380px; border-left: 1px solid rgba(0,0,0,.08); }
+        .coa-detail-panel { flex: 1; min-width: 300px; }
+
+        /* ── Toolbar ────────────────────────────────────────────── */
+        .coa-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #3e4756; color: #fff; flex-shrink: 0; }
+        .coa-toolbar h2 { font-size: 13px; font-weight: 700; flex: 1; }
+        .coa-search { position: relative; flex: 1; max-width: 260px; }
+        .coa-search input { width: 100%; height: 28px; padding: 0 28px 0 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 3px; background: rgba(255,255,255,.15); color: #fff; font-size: 11px; outline: none; }
+        .coa-search input::placeholder { color: rgba(255,255,255,.6); }
+        .coa-search input:focus { border-color: #ffc107; background: rgba(255,255,255,.25); }
+        .coa-search::after { content: "🔍"; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 12px; pointer-events: none; }
+
+        /* ── View toggle ────────────────────────────────────────── */
+        .coa-view-toggle { display: flex; gap: 2px; background: rgba(0,0,0,.2); border-radius: 3px; padding: 1px; }
+        .coa-view-btn { padding: 3px 10px; border: none; border-radius: 2px; background: transparent; color: rgba(255,255,255,.7); font-size: 11px; cursor: pointer; font-family: inherit; }
+        .coa-view-btn.active { background: #ffc107; color: #1a1a2e; font-weight: 700; }
+
+        /* ── Buttons ────────────────────────────────────────────── */
+        .coa-btn { padding: 3px 10px; border: 1px solid rgba(255,255,255,.3); border-radius: 2px; background: linear-gradient(#fff, transparent); color: #fff; font-size: 11px; cursor: pointer; font-family: inherit; box-shadow: 0 1px 1px rgba(0,0,0,.14); }
+        .coa-btn:hover { background: #fff; border-color: rgba(255,255,255,.5); }
+        .coa-btn-primary { background: #18af08; border-color: #158a06; color: #fff; }
+        .coa-btn-primary:hover { background: #158a06; }
+        .coa-btn-danger { background: #ef404d; border-color: #c62828; color: #fff; }
+        .coa-btn-danger:hover { background: #c62828; }
+        .coa-btn-sm { padding: 2px 6px; font-size: 10px; }
+
+        /* ── Tree ───────────────────────────────────────────────── */
+        .coa-tree-container { flex: 1; overflow: auto; padding: 4px; }
+        .coa-tree-node { user-select: none; }
+        .coa-tree-row { display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 2px; cursor: pointer; font-size: 11px; border: 1px solid transparent; }
+        .coa-tree-row:hover { background: #f0f4f8; }
+        .coa-tree-row.selected { background: #fff6d2; border-color: #ffc107; }
+        .coa-tree-row.inactive { opacity: .45; }
+        .coa-tree-toggle { width: 16px; text-align: center; font-size: 10px; color: #888; flex-shrink: 0; cursor: pointer; }
+        .coa-tree-toggle.expanded::before { content: "▼"; }
+        .coa-tree-toggle.collapsed::before { content: "▶"; }
+        .coa-tree-toggle.leaf::before { content: ""; }
+        .coa-tree-code { font-family: monospace; font-weight: 700; min-width: 50px; color: #3e4756; }
+        .coa-tree-name { flex: 1; }
+        .coa-tree-badge { padding: 0 4px; border-radius: 2px; font-size: 9px; font-weight: 700; }
+        .coa-badge-group { background: #e3f2fd; color: #1565c0; }
+        .coa-badge-general { background: #e8f5e9; color: #2e7d32; }
+        .coa-badge-subsidiary { background: #fff3e0; color: #e65100; }
+        .coa-badge-detailed { background: #f3e5f5; color: #7b1fa2; }
+        .coa-tree-children { padding-right: 18px; }
+
+        /* ── List view ──────────────────────────────────────────── */
+        .coa-list-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .coa-list-table th { position: sticky; top: 0; background: #f2f2f2; padding: 5px 8px; text-align: right; font-weight: 700; border-bottom: 2px solid rgba(0,0,0,.15); white-space: nowrap; }
+        .coa-list-table td { padding: 4px 8px; border-bottom: 1px solid rgba(0,0,0,.06); }
+        .coa-list-table tr:hover td { background: #f8f9fb; }
+        .coa-list-table tr.selected td { background: #fff6d2; }
+        .coa-nature-debit { color: #18af08; font-weight: 700; }
+        .coa-nature-credit { color: #ef404d; font-weight: 700; }
+
+        /* ── Detail panel ───────────────────────────────────────── */
+        .coa-detail-header { padding: 10px 14px; background: #eaeaea; border-bottom: 1px solid rgba(0,0,0,.1); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .coa-detail-header h3 { font-size: 13px; font-weight: 700; flex: 1; }
+        .coa-detail-body { flex: 1; overflow: auto; padding: 12px 14px; }
+        .coa-detail-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #aaa; font-size: 13px; }
+
+        .coa-meta-grid { display: grid; grid-template-columns: 100px 1fr; gap: 4px 8px; font-size: 11px; margin-bottom: 12px; }
+        .coa-meta-label { color: #666; font-weight: 700; }
+        .coa-meta-value { color: #1a1a2e; }
+
+        /* ── Activity table ─────────────────────────────────────── */
+        .coa-activity-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .coa-activity-table th { background: #f8f8f8; padding: 4px 6px; text-align: right; font-weight: 700; border-bottom: 1px solid rgba(0,0,0,.12); position: sticky; top: 0; }
+        .coa-activity-table td { padding: 3px 6px; border-bottom: 1px solid rgba(0,0,0,.05); }
+
+        /* ── Modal ──────────────────────────────────────────────── */
+        .coa-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+        .coa-modal-overlay.open { display: flex; }
+        .coa-modal { background: #fff; border-radius: 4px; width: 420px; max-width: 95vw; max-height: 90vh; overflow: auto; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+        .coa-modal-header { padding: 10px 14px; background: #3e4756; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+        .coa-modal-close { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; line-height: 1; }
+        .coa-modal-body { padding: 14px; }
+        .coa-form-group { margin-bottom: 10px; }
+        .coa-form-group label { display: block; font-size: 11px; font-weight: 700; color: #555; margin-bottom: 3px; }
+        .coa-form-group input, .coa-form-group select { width: 100%; height: 30px; padding: 0 8px; border: 1px solid rgba(0,0,0,.2); border-radius: 2px; font-size: 12px; font-family: inherit; outline: none; }
+        .coa-form-group input:focus, .coa-form-group select:focus { border-color: #ffc107; }
+        .coa-form-row { display: flex; gap: 10px; }
+        .coa-form-row .coa-form-group { flex: 1; }
+        .coa-modal-footer { padding: 10px 14px; background: #f8f8f8; display: flex; gap: 6px; justify-content: flex-start; border-top: 1px solid rgba(0,0,0,.1); }
+        .coa-validation-error { color: #ef404d; font-size: 10px; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div class="coa-shell">
+        <!-- Tree / List Panel -->
+        <div class="coa-panel coa-tree-panel">
+            <div class="coa-toolbar">
+                <h2>سرفصل حساب‌ها</h2>
+                <div class="coa-search">
+                    <input type="text" id="coaSearch" placeholder="جستجوی کد یا نام..." autocomplete="off" />
+                </div>
+                <div class="coa-view-toggle">
+                    <button class="coa-view-btn active" id="btnTreeView" onclick="setView('tree')">درختی</button>
+                    <button class="coa-view-btn" id="btnListView" onclick="setView('list')">لیستی</button>
+                </div>
+                <button class="coa-btn coa-btn-primary" onclick="openAddModal(null, 'group')">+ گروه</button>
+            </div>
+            <div class="coa-tree-container" id="coaTreeView"></div>
+            <div class="coa-tree-container" id="coaListView" style="display:none;"></div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="coa-panel coa-detail-panel">
+            <div class="coa-detail-header">
+                <h3 id="detailTitle">جزئیات حساب</h3>
+                <button class="coa-btn coa-btn-sm" id="btnEditAccount" style="display:none" onclick="openEditModal()">ویرایش</button>
+                <button class="coa-btn coa-btn-sm coa-btn-primary" id="btnAddChild" style="display:none" onclick="openAddChildModal()">+ زیرمجموعه</button>
+            </div>
+            <div class="coa-detail-body" id="detailBody">
+                <div class="coa-detail-empty">یک حساب را از لیست انتخاب کنید</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="coa-modal-overlay" id="accountModal">
+        <div class="coa-modal">
+            <div class="coa-modal-header">
+                <span id="modalTitle">افزودن حساب</span>
+                <button class="coa-modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="coa-modal-body">
+                <input type="hidden" id="modalAccountId" />
+                <input type="hidden" id="modalLevel" />
+                <input type="hidden" id="modalParentId" />
+                <div class="coa-form-group" id="modalCodeGroup">
+                    <label>کد حساب *</label>
+                    <input type="text" id="modalCode" maxlength="20" />
+                    <div class="coa-validation-error" id="modalCodeError"></div>
+                </div>
+                <div class="coa-form-group">
+                    <label>نام حساب *</label>
+                    <input type="text" id="modalName" maxlength="200" />
+                </div>
+                <div class="coa-form-row">
+                    <div class="coa-form-group">
+                        <label>ماهیت</label>
+                        <select id="modalNature">
+                            <option value="">انتخاب...</option>
+                            <option value="Debit">بدهکار (Debit)</option>
+                            <option value="Credit">بستانکار (Credit)</option>
+                            <option value="NoControl">بدون کنترل</option>
+                        </select>
+                    </div>
+                    <div class="coa-form-group" id="modalActiveGroup">
+                        <label>فعال</label>
+                        <select id="modalIsActive">
+                            <option value="true">فعال</option>
+                            <option value="false">غیرفعال</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="coa-form-row" id="modalSubFields" style="display:none">
+                    <div class="coa-form-group">
+                        <label>موقت</label>
+                        <select id="modalIsTemporary">
+                            <option value="false">خیر</option>
+                            <option value="true">بله</option>
+                        </select>
+                    </div>
+                    <div class="coa-form-group">
+                        <label>تفصیلی شناور</label>
+                        <select id="modalAllowsFloating">
+                            <option value="true">بله</option>
+                            <option value="false">خیر</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="coa-modal-footer">
+                <button class="coa-btn coa-btn-primary" onclick="submitAccount()">ذخیره</button>
+                <button class="coa-btn" onclick="closeModal()">انصراف</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+        const API_BASE = '/api/v1/finance/chart-of-accounts';
+        let treeData = [];
+        let flatData = [];
+        let currentView = 'tree';
+        let selectedNode = null;
+        let expandedNodes = new Set();
+
+        // ── Load data ─────────────────────────────────────────────
+        async function loadTree(search) {
+            const url = search ? `${API_BASE}/tree?search=${encodeURIComponent(search)}` : `${API_BASE}/tree`;
+            const res = await fetch(url);
+            if (!res.ok) return;
+            treeData = await res.json();
+            renderTree();
+        }
+
+        async function loadFlat(search) {
+            const url = search ? `${API_BASE}/flat?search=${encodeURIComponent(search)}` : `${API_BASE}/flat`;
+            const res = await fetch(url);
+            if (!res.ok) return;
+            flatData = await res.json();
+            renderList();
+        }
+
+        // ── Tree view ─────────────────────────────────────────────
+        function renderTree() {
+            const container = document.getElementById('coaTreeView');
+            if (!treeData.length) {
+                container.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;">حسابی یافت نشد</div>';
+                return;
+            }
+            container.innerHTML = treeData.map(node => renderTreeNode(node, 0)).join('');
+        }
+
+        function renderTreeNode(node, depth) {
+            const hasChildren = node.children && node.children.length > 0;
+            const isExpanded = expandedNodes.has(`${node.level}-${node.id}`);
+            const badgeClass = `coa-badge-${node.level.toLowerCase()}`;
+            const levelLabel = { Group: 'گروه', General: 'کل', Subsidiary: 'معین', Detailed: 'تفصیلی' }[node.level] || node.level;
+            const toggleClass = hasChildren ? (isExpanded ? 'expanded' : 'collapsed') : 'leaf';
+            const selectedClass = selectedNode && selectedNode.id === node.id && selectedNode.level === node.level ? ' selected' : '';
+            const inactiveClass = !node.isActive ? ' inactive' : '';
+
+            let html = `<div class="coa-tree-node">`;
+            html += `<div class="coa-tree-row${selectedClass}${inactiveClass}" style="padding-right:${depth * 18}px" onclick="selectNode(${JSON.stringify(node).replace(/"/g, '"')})" ondblclick="toggleExpand('${node.level}-${node.id}')">`;
+            html += `<span class="coa-tree-toggle ${toggleClass}" onclick="event.stopPropagation();toggleExpand('${node.level}-${node.id}')"></span>`;
+            html += `<span class="coa-tree-code">${escapeHtml(node.code)}</span>`;
+            html += `<span class="coa-tree-name">${escapeHtml(node.name)}</span>`;
+            html += `<span class="coa-tree-badge ${badgeClass}">${levelLabel}</span>`;
+            html += `</div>`;
+
+            if (hasChildren && isExpanded) {
+                html += `<div class="coa-tree-children">`;
+                for (const child of node.children) {
+                    html += renderTreeNode(child, depth + 1);
+                }
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        // ── List view ─────────────────────────────────────────────
+        function renderList() {
+            const container = document.getElementById('coaListView');
+            if (!flatData.length) {
+                container.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;">حسابی یافت نشد</div>';
+                return;
+            }
+
+            let html = `<table class="coa-list-table"><thead><tr>`;
+            html += `<th>کد</th><th>نام</th><th>گروه</th><th>کل</th><th>ماهیت</th><th>وضعیت</th><th>کلید سیستم</th>`;
+            html += `</tr></thead><tbody>`;
+            for (const a of flatData) {
+                const selectedClass = selectedNode && selectedNode.id === a.id && selectedNode.level === 'Subsidiary' ? ' selected' : '';
+                const natureClass = a.nature === 'Debit' ? 'coa-nature-debit' : a.nature === 'Credit' ? 'coa-nature-credit' : '';
+                html += `<tr class="${selectedClass}" onclick="selectFlatNode(${JSON.stringify(a).replace(/"/g, '"')})">`;
+                html += `<td style="font-family:monospace;font-weight:700">${escapeHtml(a.code)}</td>`;
+                html += `<td>${escapeHtml(a.name)}</td>`;
+                html += `<td>${escapeHtml(a.accountGroup)}</td>`;
+                html += `<td>${escapeHtml(a.generalAccount)}</td>`;
+                html += `<td class="${natureClass}">${a.nature}</td>`;
+                html += `<td>${a.isActive ? '✅' : '❌'}</td>`;
+                html += `<td style="font-size:10px;color:#888">${escapeHtml(a.systemKey || '')}</td>`;
+                html += `</tr>`;
+            }
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // ── Selection ──────────────────────────────────────────────
+        window.selectNode = function (node) {
+            selectedNode = node;
+            document.getElementById('btnEditAccount').style.display = '';
+            document.getElementById('btnAddChild').style.display = node.level !== 'Detailed' ? '' : 'none';
+            document.getElementById('detailTitle').textContent = `${node.name} (${node.code})`;
+            renderDetail(node);
+            renderTree();
+        };
+
+        window.selectFlatNode = function (a) {
+            selectedNode = { id: a.id, code: a.code, name: a.name, nature: a.nature, isActive: a.isActive, level: 'Subsidiary', systemKey: a.systemKey, isTemporary: a.isTemporary, allowsFloatingDetail: a.allowsFloatingDetail };
+            document.getElementById('btnEditAccount').style.display = '';
+            document.getElementById('btnAddChild').style.display = '';
+            document.getElementById('detailTitle').textContent = `${a.name} (${a.code})`;
+            renderFlatDetail(a);
+            renderList();
+        };
+
+        function renderDetail(node) {
+            const body = document.getElementById('detailBody');
+            const natureFa = { Debit: 'بدهکار', Credit: 'بستانکار', NoControl: 'بدون کنترل' }[node.nature] || node.nature;
+            const levelFa = { Group: 'گروه', General: 'کل', Subsidiary: 'معین', Detailed: 'تفصیلی' }[node.level] || node.level;
+
+            let html = `<div class="coa-meta-grid">`;
+            html += `<span class="coa-meta-label">سطح:</span><span class="coa-meta-value">${levelFa}</span>`;
+            html += `<span class="coa-meta-label">کد:</span><span class="coa-meta-value" style="font-family:monospace">${escapeHtml(node.code)}</span>`;
+            html += `<span class="coa-meta-label">نام:</span><span class="coa-meta-value">${escapeHtml(node.name)}</span>`;
+            html += `<span class="coa-meta-label">ماهیت:</span><span class="coa-meta-value">${natureFa}</span>`;
+            html += `<span class="coa-meta-label">وضعیت:</span><span class="coa-meta-value">${node.isActive ? 'فعال' : 'غیرفعال'}</span>`;
+            if (node.systemKey) html += `<span class="coa-meta-label">کلید سیستم:</span><span class="coa-meta-value">${escapeHtml(node.systemKey)}</span>`;
+            if (node.isTemporary !== undefined) html += `<span class="coa-meta-label">موقت:</span><span class="coa-meta-value">${node.isTemporary ? 'بله' : 'خیر'}</span>`;
+            if (node.allowsFloatingDetail !== undefined) html += `<span class="coa-meta-label">تفصیلی شناور:</span><span class="coa-meta-value">${node.allowsFloatingDetail ? 'بله' : 'خیر'}</span>`;
+            if (node.children) html += `<span class="coa-meta-label">تعداد زیرمجموعه:</span><span class="coa-meta-value">${node.children.length}</span>`;
+            html += `</div>`;
+
+            if (node.level === 'Subsidiary') {
+                html += `<div style="margin-top:8px"><strong style="font-size:11px">فعالیت اخیر حساب</strong></div>`;
+                html += `<div id="coaActivityArea" style="margin-top:4px"><div style="color:#aaa;font-size:10px">در حال بارگذاری...</div></div>`;
+                body.innerHTML = html;
+                loadActivity(node.id);
+            } else {
+                body.innerHTML = html;
+            }
+        }
+
+        function renderFlatDetail(a) {
+            const body = document.getElementById('detailBody');
+            const natureFa = { Debit: 'بدهکار', Credit: 'بستانکار', NoControl: 'بدون کنترل' }[a.nature] || a.nature;
+
+            let html = `<div class="coa-meta-grid">`;
+            html += `<span class="coa-meta-label">سطح:</span><span class="coa-meta-value">معین</span>`;
+            html += `<span class="coa-meta-label">کد:</span><span class="coa-meta-value" style="font-family:monospace">${escapeHtml(a.code)}</span>`;
+            html += `<span class="coa-meta-label">نام:</span><span class="coa-meta-value">${escapeHtml(a.name)}</span>`;
+            html += `<span class="coa-meta-label">ماهیت:</span><span class="coa-meta-value">${natureFa}</span>`;
+            html += `<span class="coa-meta-label">گروه:</span><span class="coa-meta-value">${escapeHtml(a.accountGroup)}</span>`;
+            html += `<span class="coa-meta-label">کل:</span><span class="coa-meta-value">${escapeHtml(a.generalAccount)}</span>`;
+            html += `<span class="coa-meta-label">وضعیت:</span><span class="coa-meta-value">${a.isActive ? 'فعال' : 'غیرفعال'}</span>`;
+            if (a.systemKey) html += `<span class="coa-meta-label">کلید سیستم:</span><span class="coa-meta-value">${escapeHtml(a.systemKey)}</span>`;
+            html += `</div>`;
+            html += `<div style="margin-top:8px"><strong style="font-size:11px">فعالیت اخیر حساب</strong></div>`;
+            html += `<div id="coaActivityArea" style="margin-top:4px"><div style="color:#aaa;font-size:10px">در حال بارگذاری...</div></div>`;
+            body.innerHTML = html;
+            loadActivity(a.id);
+        }
+
+        async function loadActivity(subsidiaryAccountId) {
+            try {
+                const res = await fetch(`${API_BASE}/activity/${subsidiaryAccountId}?limit=15`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const area = document.getElementById('coaActivityArea');
+                if (!area) return;
+                if (!data.length) {
+                    area.innerHTML = '<div style="color:#aaa;font-size:10px">فعالیتی ثبت نشده</div>';
+                    return;
+                }
+                let html = `<table class="coa-activity-table"><thead><tr><th>تاریخ</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>وضعیت</th></tr></thead><tbody>`;
+                for (const row of data) {
+                    const dt = new Date(row.date).toLocaleDateString('fa-IR');
+                    html += `<tr><td>${dt}</td><td>${escapeHtml(row.description || '')}</td><td style="color:#18af08">${row.debit.toLocaleString()}</td><td style="color:#ef404d">${row.credit.toLocaleString()}</td><td>${escapeHtml(row.status)}</td></tr>`;
+                }
+                html += `</tbody></table>`;
+                area.innerHTML = html;
+            } catch (e) { /* silent */ }
+        }
+
+        // ── View toggle ───────────────────────────────────────────
+        window.setView = function (view) {
+            currentView = view;
+            document.getElementById('btnTreeView').classList.toggle('active', view === 'tree');
+            document.getElementById('btnListView').classList.toggle('active', view === 'list');
+            document.getElementById('coaTreeView').style.display = view === 'tree' ? '' : 'none';
+            document.getElementById('coaListView').style.display = view === 'list' ? '' : 'none';
+            if (view === 'list' && flatData.length === 0) loadFlat();
+        };
+
+        // ── Expand / Collapse ─────────────────────────────────────
+        window.toggleExpand = function (key) {
+            if (expandedNodes.has(key)) expandedNodes.delete(key);
+            else expandedNodes.add(key);
+            renderTree();
+        };
+
+        // ── Search ────────────────────────────────────────────────
+        let searchTimer;
+        document.getElementById('coaSearch').addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            const val = this.value.trim();
+            searchTimer = setTimeout(() => {
+                if (currentView === 'tree') loadTree(val || undefined);
+                else loadFlat(val || undefined);
+            }, 300);
+        });
+
+        // ── Modal ─────────────────────────────────────────────────
+        window.openAddModal = function (parentId, level) {
+            document.getElementById('modalAccountId').value = '';
+            document.getElementById('modalLevel').value = level || 'group';
+            document.getElementById('modalParentId').value = parentId || '';
+            document.getElementById('modalCode').value = '';
+            document.getElementById('modalName').value = '';
+            document.getElementById('modalNature').value = '';
+            document.getElementById('modalIsActive').value = 'true';
+            document.getElementById('modalIsTemporary').value = 'false';
+            document.getElementById('modalAllowsFloating').value = 'true';
+            document.getElementById('modalCodeError').textContent = '';
+            document.getElementById('modalTitle').textContent = level === 'group' ? 'افزودن گروه حساب' : level === 'general' ? 'افزودن حساب کل' : level === 'subsidiary' ? 'افزودن حساب معین' : 'افزودن حساب تفصیلی';
+            document.getElementById('modalCodeGroup').style.display = '';
+            document.getElementById('modalActiveGroup').style.display = 'none';
+            document.getElementById('modalSubFields').style.display = level === 'subsidiary' ? '' : 'none';
+            document.getElementById('accountModal').classList.add('open');
+        };
+
+        window.openAddChildModal = function () {
+            if (!selectedNode) return;
+            const childLevel = { Group: 'general', General: 'subsidiary', Subsidiary: 'detailed' }[selectedNode.level];
+            if (!childLevel) return;
+            openAddModal(selectedNode.id, childLevel);
+        };
+
+        window.openEditModal = function () {
+            if (!selectedNode) return;
+            document.getElementById('modalAccountId').value = selectedNode.id;
+            document.getElementById('modalLevel').value = selectedNode.level.toLowerCase();
+            document.getElementById('modalCode').value = selectedNode.code || '';
+            document.getElementById('modalName').value = selectedNode.name || '';
+            document.getElementById('modalNature').value = selectedNode.nature || '';
+            document.getElementById('modalIsActive').value = selectedNode.isActive ? 'true' : 'false';
+            document.getElementById('modalIsTemporary').value = selectedNode.isTemporary ? 'true' : 'false';
+            document.getElementById('modalAllowsFloating').value = selectedNode.allowsFloatingDetail !== false ? 'true' : 'false';
+            document.getElementById('modalCodeError').textContent = '';
+            document.getElementById('modalTitle').textContent = 'ویرایش حساب';
+            document.getElementById('modalCodeGroup').style.display = selectedNode.level === 'Detailed' ? 'none' : '';
+            document.getElementById('modalActiveGroup').style.display = '';
+            document.getElementById('modalSubFields').style.display = selectedNode.level === 'Subsidiary' ? '' : 'none';
+            document.getElementById('accountModal').classList.add('open');
+        };
+
+        window.closeModal = function () {
+            document.getElementById('accountModal').classList.remove('open');
+        };
+
+        window.submitAccount = async function () {
+            const id = document.getElementById('modalAccountId').value;
+            const level = document.getElementById('modalLevel').value;
+            const code = document.getElementById('modalCode').value.trim();
+            const name = document.getElementById('modalName').value.trim();
+            const nature = document.getElementById('modalNature').value;
+            const isActive = document.getElementById('modalIsActive').value === 'true';
+            const isTemporary = document.getElementById('modalIsTemporary').value === 'true';
+            const allowsFloating = document.getElementById('modalAllowsFloating').value === 'true';
+            const parentId = document.getElementById('modalParentId').value;
+
+            document.getElementById('modalCodeError').textContent = '';
+
+            if (!name) { alert('نام حساب الزامی است.'); return; }
+            if (!id && level !== 'detailed' && !code) { alert('کد حساب الزامی است.'); return; }
+
+            try {
+                let res;
+                if (id) {
+                    res = await fetch(`${API_BASE}/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: code || undefined, name, nature: nature || undefined, isActive, isTemporary, allowsFloatingDetail: allowsFloating })
+                    });
+                } else {
+                    res = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code, name, nature: nature || undefined, level, parentId: parentId ? parseInt(parentId) : undefined, isTemporary, allowsFloatingDetail: allowsFloating })
+                    });
+                }
+
+                const result = await res.json();
+                if (!res.ok || !result.success) {
+                    document.getElementById('modalCodeError').textContent = result.message || 'خطا در ذخیره‌سازی';
+                    return;
+                }
+
+                closeModal();
+                selectedNode = null;
+                document.getElementById('detailBody').innerHTML = '<div class="coa-detail-empty">یک حساب را از لیست انتخاب کنید</div>';
+                document.getElementById('btnEditAccount').style.display = 'none';
+                document.getElementById('btnAddChild').style.display = 'none';
+                document.getElementById('detailTitle').textContent = 'جزئیات حساب';
+                expandedNodes.clear();
+                await loadTree();
+                if (currentView === 'list') await loadFlat();
+            } catch (e) {
+                alert('خطا در ارتباط با سرور: ' + e.message);
+            }
+        };
+
+        // ── Helpers ────────────────────────────────────────────────
+        function escapeHtml(text) {
+            if (!text) return '';
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        // ── Init ──────────────────────────────────────────────────
+        // Expand all groups by default
+        expandedNodes.add('Group-1');
+        expandedNodes.add('Group-2');
+        expandedNodes.add('Group-3');
+        expandedNodes.add('Group-4');
+        expandedNodes.add('Group-5');
+        loadTree();
+    })();
+    </script>
+</body>
+</html>

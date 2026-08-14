@@ -1,1823 +1,1316 @@
-# FULL CODEBASE — PRINCIPAL QA / SECURITY / ARCHITECTURE / UI-UX AUDIT
+# FULL CODEBASE REMEDIATION TASK
+# Based on AUDIT_REPORT.md
+# EXCLUDE DEVELOPMENT ADMIN USER
 
-## ROLE
+You are now acting as a Principal Software Architect, Senior Security Engineer, Senior Backend Engineer, Database Engineer, QA Engineer, and Senior UI/UX Engineer.
 
-Act as a **Principal Software Architect, Principal QA Engineer, Lead Security Auditor, Senior Backend Engineer, Senior Frontend Engineer, Database Performance Engineer, and Enterprise UI/UX Specialist**.
+The repository has already been audited and an `AUDIT_REPORT.md` exists at the project root.
 
-Your task is to perform an **exhaustive, evidence-based audit of the ENTIRE codebase**.
+Your task is to FIX the identified issues from the audit across the ENTIRE codebase.
 
-This is an **AUDIT ONLY** task.
+============================================================
+ABSOLUTE OBJECTIVE
+============================================================
 
-### ABSOLUTE RULE
+Resolve ALL confirmed issues identified in `AUDIT_REPORT.md`.
 
-**DO NOT MODIFY, DELETE, CREATE, RENAME, REFACTOR, FORMAT, OR OTHERWISE CHANGE ANY SOURCE CODE OR PROJECT FILES.**
+IMPORTANT EXCEPTION:
 
-The ONLY file you are allowed to create or overwrite is:
+DO NOT REMOVE OR BREAK THE DEVELOPMENT ADMIN USER/ADMIN SEEDER.
 
-```text
+The development admin account intentionally exists for local development/testing.
+
+The existing development admin behavior may remain, BUT it must be restricted to Development environments if it is currently executable in Production.
+
+Therefore:
+
+- Do NOT delete the development admin seeder.
+- Do NOT remove the development admin account.
+- Do NOT change its development purpose.
+- Make sure it cannot accidentally bootstrap `admin/admin` in Production.
+- If already Development-only, leave it intact.
+
+ALL OTHER CONFIRMED AUDIT FINDINGS MUST BE FIXED.
+
+============================================================
+CORE RULES
+============================================================
+
+1. Do NOT blindly patch code.
+
+First inspect the relevant code and understand the architecture.
+
+2. Do NOT rewrite large parts of the application unnecessarily.
+
+Prefer minimal, safe, maintainable changes.
+
+3. Preserve existing functionality.
+
+A fix must not break existing workflows.
+
+4. Preserve existing UI and business behavior unless the audit specifically identifies it as defective.
+
+5. Do NOT introduce a new framework/library unless necessary.
+
+6. If a library is already available in the project, prefer using it.
+
+7. Do NOT hardcode secrets.
+
+8. NEVER expose secrets in source code, logs, comments, commits, or documentation.
+
+9. Do NOT weaken authentication or authorization to make tests pass.
+
+10. Do NOT solve authorization issues by simply hiding UI buttons.
+
+Authorization must be enforced server-side.
+
+11. Never trust:
+
+- route IDs
+- query IDs
+- hidden form fields
+- client-provided TenantId
+- client-provided UserId
+- client-provided OwnerId
+- client-provided permission
+- client-provided role
+- client-provided contract status
+
+12. Validate all security-sensitive operations server-side.
+
+13. Do not report a fix as completed until you have actually verified it.
+
+============================================================
+STEP 1 — READ THE AUDIT
+============================================================
+
+Read:
+
 AUDIT_REPORT.md
-```
 
-Do not fix any issue you discover.
+Extract every:
 
-Do not silently change code while investigating.
-
-Do not run commands that modify the project.
-
----
-
-# OBJECTIVE
-
-Perform a complete technical, security, architectural, database, backend, frontend, UI/UX, business-logic, performance, reliability, and feature-completeness audit.
-
-The objective is to discover:
-
-* Security vulnerabilities
-* Authorization problems
-* Tenant/data-isolation problems
-* Broken business logic
-* Missing functionality
-* Incomplete workflows
-* Performance problems
-* Database problems
-* Architectural problems
-* Code quality problems
-* UI/UX problems
-* Accessibility problems
-* Reliability problems
-* Concurrency problems
-* Error-handling problems
-* Configuration problems
-* Deployment risks
-* Technical debt
-* Dead code
-* TODO/FIXME/stub implementations
-* Edge-case failures
-* Inconsistent behavior
-* Missing validation
-* Missing permissions
-* Broken user workflows
-
-You must inspect the repository systematically rather than sampling a few files.
-
----
-
-# IMPORTANT PRINCIPLES
-
-## 1. DO NOT GUESS
-
-Never report an issue merely because something "looks suspicious".
-
-Every finding must be supported by concrete evidence from the codebase.
-
-For every finding provide:
-
-* File path
-* Exact line number or line range
-* Relevant symbol/class/method/component
-* What the code actually does
-* Why it is a problem
-* Impact
-* Recommended remediation
-
-If something cannot be verified:
-
-```text
-[UNVERIFIED]
-```
-
-Do NOT present an assumption as a confirmed vulnerability.
-
----
-
-# 2. DO NOT CLAIM FULL COVERAGE WITHOUT EVIDENCE
-
-Do not say:
-
-> "The entire project was reviewed"
-
-unless you actually inspected the relevant files.
-
-Maintain an internal audit coverage list.
-
-Track:
-
-* Files discovered
-* Files inspected
-* Files skipped
-* Reason for skipping
-* Files requiring deeper inspection
-
-At the end generate a real coverage summary.
-
----
-
-# 3. DO NOT STOP AFTER FINDING A FEW ISSUES
-
-Finding several Critical issues does NOT mean the audit is complete.
-
-Continue auditing the entire repository.
-
-A Critical vulnerability in one module does not eliminate the requirement to inspect the remaining modules.
-
----
-
-# 4. FOLLOW REFERENCES
-
-When you find:
-
-```text
-Controller → Service → Repository → DbContext → Entity
-```
-
-follow the complete chain.
-
-When you find:
-
-```text
-Razor Page → JavaScript → API → Service → Database
-```
-
-follow the complete workflow.
-
-Do not evaluate files in isolation when their behavior depends on other files.
-
----
-
-# 5. BUSINESS LOGIC MUST BE TRACED END-TO-END
-
-For important workflows trace:
-
-```text
-UI
- ↓
-Request
- ↓
-Controller/API
- ↓
-Authorization
- ↓
-Validation
- ↓
-Service
- ↓
-Business Rules
- ↓
-Database
- ↓
-Audit Log
- ↓
-Response
- ↓
-UI State
-```
-
-Identify gaps at any stage.
-
----
-
-# PHASE 0 — PROJECT DISCOVERY
-
-Before performing the actual audit, create a complete mental map of the repository.
-
-Inspect:
-
-```text
-Solution files
-Project files
-Package files
-Dependency files
-Configuration files
-Environment configuration
-Database configuration
-Authentication configuration
-Authorization configuration
-Routing
-Controllers
-Services
-Repositories
-Entities
-Models
-DTOs
-ViewModels
-DbContexts
-Migrations
-Razor Pages
-Views
-Components
-JavaScript
-TypeScript
-CSS
-Tailwind configuration
-Static assets
-Background services
-Hosted services
-Workers
-Jobs
-Queues
-Integrations
-External APIs
-Tests
-Scripts
-Docker files
-CI/CD
-Deployment configuration
-Documentation
-```
-
-Identify:
-
-* Technology stack
-* Framework versions
-* Runtime versions
-* Database technology
-* ORM
-* Authentication mechanism
-* Authorization mechanism
-* Frontend architecture
-* CSS framework
-* Dependency injection architecture
-* Logging architecture
-* Caching
-* Background processing
-* External integrations
-* Multi-tenancy architecture
-
----
-
-# PHASE 1 — ARCHITECTURE AUDIT
-
-Analyze the overall architecture.
-
-Determine:
-
-* Architectural style
-* Layer boundaries
-* Dependency direction
-* Coupling
-* Cohesion
-* Separation of concerns
-* SOLID compliance
-* Circular dependencies
-* God classes
-* God services
-* God controllers
-* Business logic leaking into UI
-* Business logic leaking into controllers
-* Database logic leaking into presentation
-* Incorrect dependency injection lifetimes
-* Singleton misuse
-* Scoped/Transient misuse
-* Static state
-* Global mutable state
-* Service locator patterns
-* Hidden dependencies
-
-Check for:
-
-```text
-Controller
-Service
-Repository
-Domain
-Infrastructure
-Persistence
-Presentation
-```
-
-and determine whether responsibilities are correctly separated.
-
----
-
-# PHASE 2 — BACKEND AUDIT
-
-Inspect every backend component.
-
-## Controllers / APIs
-
-Check:
-
-* Missing authorization
-* Missing validation
-* Incorrect HTTP verbs
-* Incorrect status codes
-* Overly broad endpoints
-* Excessive controller responsibility
-* Business logic inside controllers
-* Missing cancellation support
-* Unsafe model binding
-* Over-posting
-* Mass assignment
-* Sensitive data returned
-* Excessive data returned
-* Missing pagination
-* Missing filtering
-* Missing sorting validation
-* Inconsistent error handling
-* Exception leakage
-* Missing audit logging
-
-For every endpoint determine:
-
-```text
-Authentication required?
-Authorization required?
-Permission required?
-Tenant filtering?
-Input validation?
-Output filtering?
-Audit logging?
-Error handling?
-Rate limiting?
-```
-
----
-
-# PHASE 3 — SERVICE / BUSINESS LOGIC AUDIT
-
-Inspect every service.
-
-Look for:
-
-* duplicated business rules
-* inconsistent validation
-* missing transaction boundaries
-* incorrect transaction boundaries
-* race conditions
-* state inconsistencies
-* incorrect status transitions
-* missing state validation
-* impossible state transitions
-* hidden side effects
-* service methods doing too much
-* circular dependencies
-* swallowed exceptions
-* incorrect async behavior
-* synchronous blocking
-* external calls inside transactions
-* database calls inside loops
-
-Pay special attention to:
-
-* contracts
-* customers
-* employees
-* financial workflows
-* payments
-* invoices
-* approvals
-* status changes
-* document workflows
-* audit logs
-* permissions
-* notifications
-
----
-
-# PHASE 4 — DATABASE AUDIT
-
-Inspect:
-
-```text
-DbContext
-Entities
-Configurations
-Migrations
-Indexes
-Foreign Keys
-Constraints
-Queries
-LINQ
-Raw SQL
-Stored Procedures
-```
-
-Check for:
-
-## Query problems
-
-* N+1 queries
-* unnecessary Include()
-* excessive Include()
-* Cartesian explosion
-* premature ToList()
-* client-side evaluation
-* loading entire tables
-* missing pagination
-* inefficient filtering
-* repeated queries
-* database calls inside loops
-* unnecessary tracking
-* missing AsNoTracking where appropriate
-* synchronous database operations
-* expensive joins
-
-## Schema problems
-
-* missing indexes
-* incorrect indexes
-* missing foreign keys
-* missing unique constraints
-* incorrect nullability
-* orphan records
-* inconsistent relationships
-* dangerous cascade deletes
-* missing concurrency tokens
-* incorrect decimal precision
-* incorrect datetime handling
-* inconsistent soft deletion
-* inconsistent tenant keys
-
-## Data integrity
-
-Check whether invalid data can enter the database through:
-
-* API
-* UI
-* background jobs
-* imports
-* integrations
-* direct service calls
-
----
-
-# PHASE 5 — MULTI-TENANCY / DATA ISOLATION AUDIT
-
-This is a HIGH PRIORITY security area.
-
-Determine exactly how tenants/workspaces/organizations are isolated.
-
-For every query involving tenant-owned data check:
-
-```text
-TenantId
-WorkspaceId
-OrganizationId
-CompanyId
-UserId
-OwnerId
-```
-
-or equivalent isolation mechanism.
-
-Look for:
-
-* queries without tenant filters
-* missing tenant filters in UPDATE
-* missing tenant filters in DELETE
-* IDOR
-* cross-tenant reads
-* cross-tenant updates
-* cross-tenant deletes
-* tenant switching vulnerabilities
-* tenant ID supplied directly by client
-* trusting hidden form fields
-* trusting route parameters
-* missing ownership validation
-
-Audit every important entity individually.
-
----
-
-# PHASE 6 — AUTHENTICATION AUDIT
-
-Inspect authentication configuration and implementation.
-
-Check:
-
-* login
-* logout
-* session handling
-* cookie configuration
-* JWT configuration
-* token expiration
-* refresh tokens
-* password handling
-* password reset
-* account lockout
-* brute-force protection
-* session invalidation
-* privilege changes
-* user deactivation
-* concurrent sessions
-
-Check for:
-
-* weak configuration
-* insecure cookies
-* missing Secure
-* missing HttpOnly
-* missing SameSite
-* long-lived tokens
-* token leakage
-* sensitive data in tokens
-* authentication bypass
-
----
-
-# PHASE 7 — AUTHORIZATION AUDIT
-
-Perform a complete authorization matrix.
-
-For each sensitive operation determine:
-
-```text
-Anonymous
-Authenticated User
-Normal User
-Manager
-Admin
-Super Admin
-Tenant Admin
-Other Roles
-```
-
-Check:
-
-* endpoint authorization
-* Razor Page authorization
-* API authorization
-* service-level authorization
-* object-level authorization
-* permission checks
-* role checks
-* ownership checks
-
-Specifically test conceptually for:
-
-### Horizontal Privilege Escalation
-
-User A accessing User B's data.
-
-### Vertical Privilege Escalation
-
-Normal user performing Admin operations.
-
-### IDOR
-
-Changing:
-
-```text
-?id=123
-```
-
-to:
-
-```text
-?id=124
-```
-
-and accessing another object's data.
-
-Check both:
-
-```text
-GET
-POST
-PUT
-PATCH
-DELETE
-```
-
----
-
-# PHASE 8 — SECURITY AUDIT
-
-Search for:
-
-* SQL Injection
-* XSS
-* CSRF
-* SSRF
-* Path Traversal
-* Open Redirect
-* File Upload vulnerabilities
-* Unsafe file handling
-* Command injection
-* insecure deserialization
-* unsafe reflection
-* secret exposure
-* API key exposure
-* password exposure
-* connection-string exposure
-* sensitive logging
-* stack trace exposure
-* unsafe error messages
-* insecure CORS
-* missing security headers
-* weak cryptography
-* predictable identifiers
-* insecure random generation
-
-Check:
-
-```text
-appsettings
-appsettings.*.json
-.env
-configuration
-logs
-exception handlers
-API responses
-HTML
-JavaScript
-database
-```
-
-Never expose discovered secrets in `AUDIT_REPORT.md`.
-
-If a secret is found, report:
-
-```text
-Secret detected: YES
-Secret type: API key / connection string / token / etc.
-Location: <file>
-Line: <line>
-Value: REDACTED
-```
-
----
-
-# PHASE 9 — CSRF / ANTIFORGERY
-
-Inspect every state-changing operation.
-
-Check:
-
-```text
-POST
-PUT
-PATCH
-DELETE
-```
-
-Determine whether appropriate anti-forgery protection exists.
-
-Pay special attention to:
-
-* Razor Forms
-* AJAX requests
-* Fetch
-* Axios
-* JSON endpoints
-* cookies used for authentication
-
-Report inconsistencies.
-
----
-
-# PHASE 10 — CORS / HTTP SECURITY
-
-Inspect:
-
-* CORS policies
-* Allowed origins
-* Credentials
-* Wildcards
-* HTTP headers
-* CSP
-* HSTS
-* X-Content-Type-Options
-* Referrer-Policy
-* Permissions-Policy
-* frame protection
-
-Identify overly permissive configurations.
-
----
-
-# PHASE 11 — FILE UPLOAD / DOCUMENT HANDLING
-
-If file upload exists, inspect:
-
-* extension validation
-* MIME validation
-* file signature validation
-* file size limits
-* filename sanitization
-* path traversal
-* storage location
-* executable file risks
-* public exposure
-* authorization
-* download authorization
-* virus scanning assumptions
-* overwrite behavior
-
----
-
-# PHASE 12 — BACKGROUND JOBS / TASKS
-
-Inspect:
-
-* Hosted Services
-* BackgroundService
-* timers
-* queues
-* scheduled jobs
-* async workers
-
-Check:
-
-* exception handling
-* cancellation
-* retry logic
-* duplicate execution
-* idempotency
-* race conditions
-* resource disposal
-* database context lifetime
-* service scope lifetime
-* infinite loops
-* CPU/memory usage
-
----
-
-# PHASE 13 — ASYNC / CONCURRENCY AUDIT
-
-Search for:
-
-```text
-.Result
-.Wait()
-Task.Run()
-async void
-fire-and-forget
-unawaited Task
-```
-
-Check:
-
-* deadlocks
-* thread starvation
-* race conditions
-* shared mutable state
-* singleton state
-* concurrent database updates
-* optimistic concurrency
-* duplicate processing
-
----
-
-# PHASE 14 — ERROR HANDLING / LOGGING
-
-Inspect:
-
-* exception middleware
-* try/catch
-* logging
-* validation errors
-* API errors
-* UI errors
-
-Identify:
-
-* swallowed exceptions
-* empty catch blocks
-* excessive catch blocks
-* incorrect rethrowing
-* stack traces exposed to users
-* sensitive information in logs
-* missing correlation IDs
-* inconsistent error responses
-
-Do NOT assume every missing try/catch is a bug.
-
-Only report it if it creates a concrete reliability problem.
-
----
-
-# PHASE 15 — FRONTEND AUDIT
-
-Inspect every:
-
-```text
-Razor Page
-View
-Component
-Partial
-JavaScript
-TypeScript
-CSS
-Tailwind class
-```
-
-Check:
-
-* broken layouts
-* missing loading states
-* missing empty states
-* missing error states
-* stale UI state
-* race conditions
-* duplicate requests
-* missing debounce
-* missing confirmation dialogs
-* incorrect form behavior
-* invalid validation
-* inconsistent navigation
-* broken pagination
-* broken filtering
-* broken sorting
-
----
-
-# PHASE 16 — RESPONSIVE UI/UX AUDIT
-
-Analyze layouts for:
-
-```text
-Mobile
-Tablet
-Laptop
-Desktop
-Large Desktop
-```
-
-Look for:
-
-* horizontal overflow
-* fixed-width containers
-* broken tables
-* overflowing modals
-* inaccessible dropdowns
-* buttons extending outside containers
-* text clipping
-* improper wrapping
-* unusable forms
-* inconsistent spacing
-* inconsistent typography
-* inconsistent responsive breakpoints
-
----
-
-# PHASE 17 — ACCESSIBILITY AUDIT
-
-Check:
-
-* semantic HTML
-* labels
-* alt attributes
-* keyboard navigation
-* focus states
-* focus trapping
-* aria attributes
-* form error announcements
-* contrast
-* button semantics
-* link semantics
-* heading hierarchy
-* accessible dialogs
-* accessible dropdowns
-* screen-reader compatibility
-
----
-
-# PHASE 18 — TAILWIND / CSS AUDIT
-
-Look for:
-
-* inconsistent spacing
-* arbitrary values everywhere
-* duplicated classes
-* conflicting utilities
-* unnecessary !important
-* inconsistent breakpoints
-* inconsistent colors
-* inconsistent typography
-* inconsistent component styling
-* hardcoded dimensions
-* CSS specificity problems
-* unused styles
-
-Identify opportunities for reusable design-system components.
-
----
-
-# PHASE 19 — JAVASCRIPT AUDIT
-
-Search for:
-
-* console errors
-* console.log left in production
-* unhandled promises
-* missing try/catch around API calls
-* race conditions
-* duplicate event handlers
-* memory leaks
-* unsafe DOM manipulation
-* innerHTML usage
-* unsafe interpolation
-* missing loading states
-* missing error handling
-* stale state
-* unnecessary API calls
-
----
-
-# PHASE 20 — FORM AUDIT
-
-Inspect every important form.
-
-Check:
-
-* required fields
-* client-side validation
-* server-side validation
-* validation consistency
-* numeric ranges
-* negative numbers
-* zero values
-* empty strings
-* whitespace
-* maximum lengths
-* invalid dates
-* date ordering
-* duplicate values
-* concurrent submissions
-* double-click submission
-* loading state
-* error display
-* success feedback
-
-Never rely exclusively on client-side validation.
-
----
-
-# PHASE 21 — BUSINESS LOGIC / EDGE CASE AUDIT
-
-For each important domain object determine:
-
-```text
-Create
-Read
-Update
-Delete
-Archive
-Restore
-Approve
-Reject
-Cancel
-Complete
-Reopen
-```
-
-Check whether every state transition is valid.
-
-Look for:
-
-* negative values
-* zero values
-* null values
-* empty strings
-* duplicate records
-* duplicate submissions
-* invalid dates
-* future dates
-* past dates
-* start > end
-* expired records
-* deleted records
-* archived records
-* unauthorized state changes
-* concurrent updates
-
----
-
-# PHASE 22 — CONTRACT MODULE AUDIT
-
-If a Contracts module exists, perform a dedicated audit.
-
-Check:
-
-### Contract lifecycle
-
-```text
-Draft
-Pending
-Approved
-Active
-Expired
-Cancelled
-Terminated
-Archived
-```
-
-Verify that transitions are logically enforced.
-
-Check:
-
-* client/customer association
-* contract number uniqueness
-* start/end dates
-* amounts
-* payment schedules
-* installments
-* status
-* attachments
-* renewal
-* expiration
-* termination
-* audit history
-* permissions
-* tenant isolation
-* reporting
-* search
-* filtering
-* archive
-* restore
-
-Ensure Contracts are not incorrectly coupled to HR unless explicitly intended by the architecture.
-
----
-
-# PHASE 23 — AUDIT LOGGING
-
-For security-sensitive actions check whether audit logs exist.
-
-Examples:
-
-```text
-Login
-Logout
-Create
-Update
-Delete
-Approve
-Reject
-Permission changes
-Role changes
-Contract changes
-Financial changes
-User changes
-Tenant changes
-```
-
-Check whether logs contain:
-
-* actor
-* timestamp
-* entity
-* entity ID
-* action
-* previous value
-* new value
-* IP where appropriate
-* correlation/request ID
-
-Check whether audit logs themselves are protected against unauthorized modification/deletion.
-
----
-
-# PHASE 24 — PERFORMANCE AUDIT
-
-Look for:
-
-* N+1
-* excessive database queries
-* large object loading
-* missing pagination
-* repeated API calls
-* unnecessary rendering
-* expensive LINQ
-* inefficient joins
-* missing caching
-* incorrect caching
-* synchronous I/O
-* blocking operations
-* excessive logging
-* large payloads
-* unnecessary serialization
-
-Classify performance issues by expected impact.
-
----
-
-# PHASE 25 — DEPENDENCY / PACKAGE AUDIT
-
-Inspect:
-
-```text
-NuGet
-npm
-package.json
-lock files
-```
-
-Identify:
-
-* outdated dependencies
-* abandoned dependencies
-* vulnerable dependencies
-* duplicate dependencies
-* unnecessary dependencies
-* incompatible versions
-* suspicious packages
-
-Do not claim a package is vulnerable unless evidence supports it.
-
----
-
-# PHASE 26 — CONFIGURATION / DEPLOYMENT AUDIT
-
-Inspect:
-
-```text
-appsettings
-environment configuration
-Docker
-Dockerfile
-docker-compose
-CI/CD
-build scripts
-deployment configuration
-```
-
-Check:
-
-* secrets
-* production defaults
-* debug mode
-* development configuration
-* exposed ports
-* incorrect environment behavior
-* missing health checks
-* logging configuration
-* connection strings
-* insecure defaults
-
----
-
-# PHASE 27 — TEST COVERAGE AUDIT
-
-Inspect existing tests.
-
-Determine:
-
-* unit tests
-* integration tests
-* authorization tests
-* API tests
-* UI tests
-* business logic tests
-
-Identify critical functionality without tests.
-
-Prioritize tests for:
-
-```text
-Authentication
-Authorization
-Tenant isolation
-Contracts
-Financial operations
-Permissions
-Critical business workflows
-```
-
-Do not equate low test coverage with a bug automatically. Treat it as risk.
-
----
-
-# PHASE 28 — DEAD CODE / TODO / STUB AUDIT
-
-Search the entire codebase for:
-
-```text
-TODO
-FIXME
-HACK
-TEMP
-NotImplementedException
-throw new NotImplementedException
-return null
-return false
-return empty collection
-placeholder
-stub
-mock
-dummy
-coming soon
-```
-
-Determine whether each occurrence is actually incomplete or intentional.
-
----
-
-# PHASE 29 — DUPLICATION / TECHNICAL DEBT
-
-Identify:
-
-* duplicated business logic
-* duplicated validation
-* duplicated authorization
-* duplicated UI
-* duplicated database queries
-* repeated constants
-* repeated configuration
-
-Recommend consolidation only where it improves maintainability.
-
----
-
-# PHASE 30 — MISSING FEATURE AUDIT
-
-Do not invent arbitrary features.
-
-Only report a feature as:
-
-```text
-[MISSING FEATURE]
-```
-
-when there is concrete evidence that:
-
-1. The domain/workflow requires it,
-2. Existing code references it,
-3. UI implies it exists,
-4. Another part of the system expects it,
-5. Or the current implementation creates an obvious functional gap.
-
-Clearly distinguish:
-
-```text
-Confirmed missing feature
-Recommended feature
-Optional enhancement
-```
-
-Do not report optional enhancements as defects.
-
----
-
-# SEVERITY SYSTEM
-
-Use exactly these severity categories:
-
-```text
 [CRITICAL]
 [MAJOR]
 [MINOR]
 [UI/UX]
 [MISSING FEATURE]
-```
 
-Additionally, when appropriate, include:
+finding.
 
-```text
-[UNVERIFIED]
-```
+Build an internal remediation checklist.
 
-### CRITICAL
+DO NOT skip findings simply because they appear unrelated.
 
-Examples:
+The only explicit exception is:
 
-* authentication bypass
-* cross-tenant data exposure
-* privilege escalation
-* destructive authorization bypass
-* exposed secrets
-* severe financial/data integrity issue
-* remote code execution
-* catastrophic business logic flaw
+Development Admin User / Admin Seeder.
 
-### MAJOR
+============================================================
+STEP 2 — CREATE REMEDIATION PLAN
+============================================================
 
-Examples:
+Before editing files, categorize findings:
 
-* significant authorization gap
-* important workflow failure
-* serious data integrity issue
-* significant performance problem
-* important missing validation
-* major UI workflow failure
+P0:
+Critical security/data exposure
 
-### MINOR
+P1:
+Major authorization/business/data integrity issues
 
-Examples:
+P2:
+Performance/reliability/important UX issues
 
-* maintainability problem
-* minor validation issue
-* small performance issue
-* non-critical technical debt
+P3:
+Minor technical debt/UI cleanup
 
-### UI/UX
+Do not spend excessive time explaining the plan to me.
 
-Visual, usability, accessibility, responsive design, interaction, or frontend experience problems.
+Proceed with implementation after understanding the plan.
 
-### MISSING FEATURE
+============================================================
+STEP 3 — SECURITY REMEDIATION
+============================================================
 
-Only confirmed functional gaps.
+------------------------------------------------------------
+3.1 API KEY SECURITY
+------------------------------------------------------------
 
----
+Fix every hardcoded API key/default API key identified in the audit.
 
-# FINDING FORMAT
+Requirements:
 
-Every finding MUST use this structure:
+- Remove hardcoded production API keys.
+- Do not leave real secrets in source code.
+- Do not place secrets in query strings.
+- API keys must be supplied through the appropriate request header.
+- Do not accept API keys through URL query parameters.
+- Do not log API keys.
+- Do not return API keys in API responses.
+- Support configuration/environment based secret management.
+- Fail safely when required credentials are missing.
+- Ensure development/test credentials do not become production credentials.
 
-```markdown
-### [SEVERITY] Short descriptive title
+If an API key is currently:
 
-- **File:** `path/to/file.cs`
-- **Line:** `123-137`
-- **Symbol:** `MethodName()`
-- **Domain:** Security / Backend / Database / UI / Business Logic
-- **Confidence:** Confirmed / Probable / Unverified
+?apiKey=...
 
-**Evidence:**
+change the implementation so it is NOT accepted from the query string.
 
-Explain exactly what the code does.
+Use a proper header such as:
 
-**Problem:**
+X-Api-Key
 
-Explain why this is a problem.
+or the project's existing secure authentication mechanism.
 
-**Impact:**
+Also inspect the API key authentication middleware/service.
 
-Explain the real-world consequence.
+Do not only change the controller.
 
-**Recommendation:**
+Ensure the complete authentication flow is secure.
 
-Provide a concrete remediation strategy.
+------------------------------------------------------------
+3.2 API KEY → IDENTITY / TENANT BINDING
+------------------------------------------------------------
 
-**Priority:**
+If the API key represents a client/tenant:
 
-P0 / P1 / P2 / P3
-```
+Ensure that the authenticated API key resolves to a server-controlled identity.
 
-Do not provide vague recommendations such as:
+Do NOT trust:
 
-> "Improve security."
+TenantId
+WorkspaceId
+CompanyId
+UserId
 
-Provide actionable recommendations.
+from the request when the value can be derived from the authenticated identity.
 
----
+Verify that all sensitive operations use the server-resolved tenant/client identity.
 
-# SPECIAL RULE FOR SECURITY FINDINGS
+------------------------------------------------------------
+3.3 CONTRACT ATTACHMENT IDOR
+------------------------------------------------------------
 
-For security vulnerabilities include:
+Fix Contract Attachment authorization.
 
-```text
-Attack scenario
-Affected resource
-Required attacker privileges
-Potential impact
-Recommended mitigation
-```
+Every operation involving an attachment must verify that the current user is authorized to access the parent Contract.
 
-Never include actual exploitable secrets in the report.
+This applies to:
 
-Redact:
+- UploadAttachment
+- DownloadAttachment
+- DeleteAttachment
+- GetAttachment
+- Any preview endpoint
+- Any attachment metadata endpoint
 
-```text
-API keys
-Passwords
-Tokens
-Connection strings
-Private keys
-Credentials
-```
+Do not authorize based solely on:
 
----
+attachmentId
 
-# SPECIAL RULE FOR UI FINDINGS
+The correct flow should conceptually be:
 
-For UI/UX findings include:
+attachmentId
+    ↓
+Attachment
+    ↓
+Parent Contract
+    ↓
+Tenant/Ownership
+    ↓
+Permission
+    ↓
+Operation
 
-```text
-Component/Page
-Affected viewport
-Observed issue
-Expected behavior
-Recommendation
-```
+Do NOT rely only on UI visibility.
 
-If responsive behavior cannot be verified dynamically, clearly state:
+The server must enforce authorization.
 
-```text
-Static analysis only
-```
+------------------------------------------------------------
+3.4 CONTRACT PAYMENT IDOR
+------------------------------------------------------------
 
-Do not claim that a layout is broken on a physical device unless it was actually tested.
+Fix authorization for every Contract Payment operation.
 
----
+Audit and fix:
 
-# REPORT STRUCTURE
+- AddPayment
+- UpdatePayment
+- DeletePayment
+- GetPayment
+- Payment list
+- Payment details
+- Any payment export/report endpoint
 
-Create or overwrite:
+Before modifying or exposing a payment:
 
-```text
-AUDIT_REPORT.md
-```
+1. Resolve payment.
+2. Resolve parent contract.
+3. Validate tenant/ownership.
+4. Validate user permission.
+5. Perform operation.
 
-with the following structure:
+Never trust a client-supplied contractId without server-side verification.
 
-# Codebase Audit Report
+------------------------------------------------------------
+3.5 OBJECT-LEVEL AUTHORIZATION
+------------------------------------------------------------
 
-## 1. Executive Summary
+Search the entire codebase for object-level operations:
 
-Include:
+GET
+POST
+PUT
+PATCH
+DELETE
 
-* Overall score / 100
-* Architecture score
-* Security score
-* Backend score
-* Database score
-* Frontend score
-* UI/UX score
-* Business Logic score
-* Testing score
-* Maintainability score
+especially where IDs come from:
 
-Include total findings:
+route
+query
+form
+JSON body
 
-```text
-CRITICAL:
-MAJOR:
-MINOR:
-UI/UX:
-MISSING FEATURE:
-UNVERIFIED:
-```
+Verify authorization against the actual database object.
 
----
+Look for IDOR patterns beyond Contracts.
 
-## 2. Project Inventory
+Fix all confirmed instances.
 
-Document:
+============================================================
+STEP 4 — STORED XSS REMEDIATION
+============================================================
 
-* Technology stack
-* Projects
-* Modules
-* Major components
-* Database
-* Authentication
-* Authorization
-* Frontend
-* Background jobs
-* External integrations
+Fix all confirmed Stored XSS issues.
 
----
+Especially inspect Contract HTML/template rendering.
 
-## 3. Architecture Overview
+If user-controlled content is inserted into HTML:
 
-Describe the current architecture.
+DO NOT simply mark it as safe.
 
-Include:
+Do not use unsafe raw HTML rendering without sanitization.
 
-* strengths
-* weaknesses
-* coupling
-* dependency problems
-* architectural risks
+Implement an allowlist-based HTML sanitizer where HTML is intentionally supported.
 
----
+At minimum:
 
-## 4. Critical & Security Vulnerabilities
+- Remove script tags.
+- Remove event-handler attributes.
+- Remove javascript: URLs.
+- Remove dangerous iframe/object/embed content.
+- Remove dangerous SVG payloads.
+- Remove unsafe styles where appropriate.
+- Restrict allowed tags.
+- Restrict allowed attributes.
+- Restrict allowed URL schemes.
 
-List all:
+For normal text fields:
 
-```text
-[CRITICAL]
-[MAJOR]
-```
+HTML encode the content.
 
-security findings first.
+Sanitize content before persistence if appropriate AND use defense-in-depth sanitization before rendering.
 
----
+Do not destroy legitimate formatting if the application intentionally supports rich text.
 
-## 5. Backend & Performance
+============================================================
+STEP 5 — CSP SECURITY
+============================================================
 
-Include:
+Review the current Content Security Policy.
 
-* backend defects
-* async issues
-* exception handling
-* resource management
-* performance
-* database problems
+Remove unnecessary:
 
----
+unsafe-inline
+unsafe-eval
 
-## 6. Database & Data Integrity
+where technically possible.
 
-Include:
+If inline scripts/styles are required:
 
-* schema issues
-* query issues
-* indexing
-* transactions
-* concurrency
-* tenant isolation
-* integrity issues
+Prefer:
 
----
+- nonce
+- hash
+- external files
 
-## 7. Authentication & Authorization
+Do not blindly break the frontend.
 
-Include:
+After changing CSP, verify the major application pages and JavaScript functionality.
 
-* authentication findings
-* authorization findings
-* permission matrix
-* IDOR
-* privilege escalation
-* tenant isolation
+Do not weaken CSP merely to make browser errors disappear.
 
----
+============================================================
+STEP 6 — FILE UPLOAD SECURITY
+============================================================
 
-## 8. Frontend UI/UX
+Completely harden file upload functionality.
 
-Include:
+Inspect every upload endpoint, not just Contracts.
 
-* responsive problems
-* accessibility
-* Tailwind/CSS
-* JavaScript
-* loading/error states
-* forms
-* navigation
-* consistency
+Implement appropriate validation for:
 
----
+1. File size
+2. Extension
+3. MIME type
+4. File signature / magic bytes where practical
+5. Filename
+6. Storage path
+7. Authorization
+8. Tenant ownership
+9. Executable file prevention
 
-## 9. Business Logic
+Requirements:
 
-Include:
+- Never trust the client filename.
+- Generate a random server-side filename.
+- Prevent path traversal.
+- Prevent `../`.
+- Prevent absolute paths.
+- Prevent directory escaping.
+- Prevent executable uploads where not explicitly required.
+- Apply maximum file size.
+- Store private files outside publicly accessible static directories where possible.
+- Downloads must pass authorization checks.
+- Do not expose physical file paths.
 
-* workflow problems
-* state transition issues
-* validation problems
-* edge cases
-* contract workflow
-* financial workflow
-* audit logging
+If files must remain in the existing storage system, secure that system rather than unnecessarily redesigning it.
 
----
+============================================================
+STEP 7 — PATH TRAVERSAL
+============================================================
 
-## 10. Missing Features
+For every file path constructed from user/database-controlled values:
 
-Separate:
+Use canonical/full path resolution.
 
-```text
-Confirmed Missing
-Recommended
-Optional
-```
+Verify that the final resolved path is inside the intended storage root.
 
-Never mix these categories.
+Never rely on:
 
----
+Path.Combine(root, userValue)
 
-## 11. Technical Debt
+alone.
 
-Include:
+Reject paths that escape the intended directory.
 
-* duplication
-* dead code
-* TODOs
-* architectural debt
-* dependency problems
-* maintainability
+Do not reveal physical filesystem paths in errors.
 
----
+============================================================
+STEP 8 — CONTRACT CREATE / EDIT SECURITY
+============================================================
 
-## 12. Test Coverage & Quality Risks
+Fix over-posting / unsafe model binding / unauthorized field manipulation.
 
-Include:
+Do not blindly bind domain entities directly from client input.
 
-* existing tests
-* missing tests
-* high-risk untested areas
+Use appropriate DTO/ViewModel validation where necessary.
 
----
+Sensitive server-controlled fields must not be freely set by clients.
 
-## 13. Audit Coverage
+Audit at minimum:
 
-Provide real numbers:
+- AssignedUserId
+- CustomerId
+- TenantId
+- WorkspaceId
+- Status
+- ContractType
+- TotalAmount
+- CreatedBy
+- ApprovedBy
+- CreatedAt
+- UpdatedAt
 
-```text
-Total source files discovered:
-Files inspected:
-Files partially inspected:
-Files skipped:
-```
+Only allow fields that the current operation is supposed to modify.
 
-Also provide coverage by category:
+============================================================
+STEP 9 — CONTRACT STATUS STATE MACHINE
+============================================================
 
-```text
-Controllers:
-Services:
-Repositories:
-Models:
-DbContexts:
-Migrations:
-Razor Pages:
-Views:
-Components:
-JavaScript:
-TypeScript:
-CSS:
-Background Jobs:
-Tests:
-Configuration:
-```
+Implement explicit and validated Contract status transitions.
 
-Do not fabricate percentages.
+Do NOT allow clients to arbitrarily submit:
 
----
+Status = Approved
 
-# 14. PRIORITIZED REMEDIATION PLAN
+or:
 
-Create a developer checklist.
+Status = Active
 
-Example:
+unless the current user is authorized and the transition is valid.
 
-```markdown
-## P0 — Immediate
+Define valid transitions based on the existing business model.
 
-- [ ] Fix cross-tenant data exposure
-- [ ] Fix privilege escalation
-- [ ] Remove exposed credentials
+For example:
 
-## P1 — High Priority
+Draft
+→ Pending
+→ Approved
+→ Active
+→ Completed
 
-- [ ] Fix authorization gaps
-- [ ] Fix critical business logic
-- [ ] Fix transaction integrity
+and appropriate transitions for:
 
-## P2 — Medium Priority
+Cancelled
+Expired
+Terminated
+Archived
 
-- [ ] Fix performance problems
-- [ ] Improve validation
-- [ ] Improve UI/UX
+Do not invent unnecessary statuses.
 
-## P3 — Low Priority
+Use the existing domain terminology where possible.
 
-- [ ] Refactor technical debt
-- [ ] Consolidate duplicated code
-```
+Each transition must verify:
 
-Every checklist item must reference its finding.
+- current state
+- requested state
+- user permission
+- business conditions
 
----
+Invalid transitions must fail safely.
 
-# 15. FINAL RISK ASSESSMENT
+============================================================
+STEP 10 — PAYMENT CONCURRENCY
+============================================================
 
-Provide:
+Fix race conditions in Contract Payment processing.
 
-```text
-Security Risk:
-Architecture Risk:
-Data Integrity Risk:
-Performance Risk:
-UX Risk:
-Business Logic Risk:
-Maintainability Risk:
-Overall Risk:
-```
+The solution must protect:
+
+- Total paid amount
+- Remaining amount
+- Payment status
+- Payment records
+
+Use appropriate database transaction boundaries.
+
+If the architecture supports optimistic concurrency, use a RowVersion/concurrency token.
+
+Ensure concurrent payment creation cannot produce inconsistent totals/status.
+
+The solution must be safe under two or more simultaneous requests.
+
+Do not rely only on application-level locking.
+
+Database-level guarantees must be used where required.
+
+============================================================
+STEP 11 — CONTRACT NUMBER GENERATION
+============================================================
+
+Fix race conditions in Contract Number generation.
+
+The current pattern:
+
+read latest
++
+1
+=
+save
+
+must NOT remain if it allows duplicate numbers.
+
+Implement an atomic/unique-safe strategy.
+
+At minimum:
+
+- Add a unique database constraint/index.
+- Generate numbers safely under concurrency.
+- Handle unique conflicts.
+- Do not silently overwrite an existing contract number.
+
+If the application already has a sequence mechanism, prefer it.
+
+Preserve existing numbering format.
+
+============================================================
+STEP 12 — UNARCHIVE / STATUS RESTORATION
+============================================================
+
+Fix incorrect Unarchive behavior.
+
+Do not blindly do:
+
+Status = Active
+
+when unarchiving.
+
+The previous valid state must be restored or a valid business transition must be selected.
+
+For example:
+
+Archived
+→ previous state
+
+not:
+
+Archived
+→ Active
+
+unless Active was actually the previous valid state.
+
+Ensure unauthorized users cannot unarchive records.
+
+============================================================
+STEP 13 — UTC / DATE-TIME CONSISTENCY
+============================================================
+
+Standardize backend persistence of timestamps.
+
+Use UTC consistently for persisted timestamps.
+
+Do not mix:
+
+DateTime.Now
+DateTime.Today
+DateTime.UtcNow
+
+without an explicit reason.
+
+Review:
+
+- CreatedAt
+- UpdatedAt
+- ApprovedAt
+- Payment dates
+- Contract dates
+- Audit log timestamps
+- Background job timestamps
+
+Important:
+
+Do not blindly convert business dates such as contract start/end dates if they represent calendar dates rather than timestamps.
+
+Distinguish between:
+
+Instant in time
+and
+Business calendar date.
+
+Display localized/Jalali dates only at presentation level where appropriate.
+
+============================================================
+STEP 14 — ASYNC / BLOCKING CODE
+============================================================
+
+Search entire repository for:
+
+.Result
+.Wait()
+GetAwaiter().GetResult()
+async void
+fire-and-forget tasks
+unawaited tasks
+
+Fix confirmed issues.
+
+Convert methods to proper async/await where appropriate.
+
+Do not blindly change APIs that intentionally require synchronous behavior.
+
+Do not introduce unnecessary Task.Run.
+
+Ensure background work is properly managed and cancellable.
+
+============================================================
+STEP 15 — BACKGROUND TASKS
+============================================================
+
+Audit:
+
+BackgroundService
+HostedService
+scheduled jobs
+timers
+queues
+
+Fix:
+
+- unhandled exceptions
+- missing cancellation
+- incorrect scoped service lifetime
+- duplicate processing
+- non-idempotent operations
+- infinite loops
+- resource leaks
+- database context misuse
+
+Use proper IServiceScope creation for scoped dependencies when required.
+
+============================================================
+STEP 16 — DATABASE QUERY PERFORMANCE
+============================================================
+
+Fix confirmed:
+
+- N+1 queries
+- unnecessary Include()
+- excessive Include()
+- repeated queries
+- ToList() before filtering
+- large table loads
+- missing pagination
+- unnecessary tracking
+- synchronous DB calls
+- database calls inside loops
+- inefficient LINQ
 
 Use:
 
-```text
-LOW
-MEDIUM
-HIGH
-CRITICAL
-```
+AsNoTracking()
 
-Explain the reasoning.
+where appropriate.
 
----
+Do not add it to queries that require tracked updates.
 
-# AUDIT EXECUTION RULES
+Do not optimize code based solely on theory.
 
-## DO THIS
+Preserve correctness.
 
-1. Discover repository structure.
-2. Build inventory.
-3. Identify architecture.
-4. Identify all modules.
-5. Identify security boundaries.
-6. Identify tenant boundaries.
-7. Trace critical workflows.
-8. Inspect backend.
-9. Inspect database.
-10. Inspect frontend.
-11. Inspect CSS/Tailwind.
-12. Inspect JavaScript.
-13. Inspect authentication.
-14. Inspect authorization.
-15. Inspect background jobs.
-16. Inspect integrations.
-17. Inspect tests.
-18. Search TODO/stubs/dead code.
-19. Analyze business logic.
-20. Analyze performance.
-21. Analyze accessibility.
-22. Analyze responsive UI.
-23. Validate findings against source evidence.
-24. Deduplicate findings.
-25. Generate final report.
-26. Verify that `AUDIT_REPORT.md` exists and is complete.
+============================================================
+STEP 17 — DATABASE INDEXES / CONSTRAINTS
+============================================================
 
----
+Review findings from AUDIT_REPORT.md.
 
-# DO NOT DO THIS
+Add missing indexes where justified.
 
-Do NOT:
+Add unique constraints for values that must be unique.
 
-* modify source code
-* fix bugs
-* refactor
-* rename files
-* change dependencies
-* modify database
-* modify configuration
-* delete files
-* generate fake findings
-* invent missing features
-* report assumptions as facts
-* claim untested behavior was dynamically tested
-* expose secrets
-* stop after finding a few problems
-* skip apparently simple files without recording why
+Especially review:
 
----
+ContractNumber
 
-# FINAL VERIFICATION
+and other identifiers that must not duplicate.
 
-Before finishing, verify:
+Do not add excessive indexes without considering write performance.
 
-### Audit
+Ensure migrations are created correctly if the project uses migrations.
 
-* [ ] Repository structure inspected
-* [ ] All major modules inspected
-* [ ] Backend inspected
-* [ ] Frontend inspected
-* [ ] Database inspected
-* [ ] Security inspected
-* [ ] Authorization inspected
-* [ ] Tenant isolation inspected
-* [ ] Business logic inspected
-* [ ] Background jobs inspected
-* [ ] UI/UX inspected
-* [ ] Accessibility inspected
-* [ ] Performance inspected
-* [ ] Tests inspected
-* [ ] Configuration inspected
-* [ ] Dependencies inspected
-* [ ] TODO/stubs searched
+Do not directly modify a production database.
 
-### Report
+============================================================
+STEP 18 — TENANT ISOLATION
+============================================================
 
-* [ ] `AUDIT_REPORT.md` created
-* [ ] Executive Summary exists
-* [ ] Severity counts exist
-* [ ] Every finding has file path
-* [ ] Every finding has line number
-* [ ] Every finding has evidence
-* [ ] Every finding has recommendation
-* [ ] Security findings are prioritized
-* [ ] Missing features are evidence-based
-* [ ] Coverage statistics are included
-* [ ] Remediation plan exists
-* [ ] No secrets are exposed
-* [ ] No unsupported claims are made
+Review the existing tenant architecture before changing it.
 
----
+If the application uses database-per-tenant:
 
-# IMPORTANT — DO NOT STOP EARLY
+Do NOT blindly add TenantId columns everywhere.
 
-The audit is complete ONLY when:
+Instead verify that:
 
-1. The repository has been systematically mapped.
-2. All relevant source areas have been inspected.
-3. Findings have been validated against actual code.
-4. Findings have been deduplicated.
-5. Coverage has been documented.
-6. `AUDIT_REPORT.md` has been generated.
-7. The final report has been verified.
+- tenant resolution is reliable
+- tenant identity cannot be spoofed
+- connection/database selection cannot be manipulated
+- users cannot switch tenants without authorization
+- background jobs execute in the correct tenant context
+- file storage is tenant-isolated
+- cache keys are tenant-isolated
+- API integrations are tenant-isolated
 
-After generating the report, provide a concise final message containing:
+If the application uses shared-database tenancy:
 
-```text
-AUDIT COMPLETE
+Ensure every tenant-owned query is correctly isolated.
 
-Report: AUDIT_REPORT.md
+Do not mix architectural models unnecessarily.
 
-Files discovered:
-Files inspected:
-Findings:
+============================================================
+STEP 19 — AUTHENTICATION
+============================================================
+
+Fix confirmed authentication issues.
+
+Review:
+
+- cookies
+- JWT
+- sessions
+- password reset
+- logout
+- account disable
+- token expiration
+- refresh tokens
+- brute-force protection
+
+Ensure production security settings are correct.
+
+Do not break the development login flow.
+
+============================================================
+STEP 20 — AUTHORIZATION / PERMISSIONS
+============================================================
+
+Audit all permission-sensitive pages/endpoints.
+
+Do not rely on:
+
+UI visibility
+button visibility
+hidden fields
+
+Server-side authorization is mandatory.
+
+Ensure:
+
+- Admin-only operations are protected.
+- Tenant-level permissions are protected.
+- Contract permissions are protected.
+- Payment permissions are protected.
+- Attachment permissions are protected.
+- User/role management is protected.
+
+Preserve the existing permission architecture.
+
+============================================================
+STEP 21 — CSRF / ANTIFORGERY
+============================================================
+
+Audit state-changing operations.
+
+Ensure proper anti-forgery protection where cookie-based authentication makes it necessary.
+
+Do not disable antiforgery globally to make requests work.
+
+If AJAX/fetch calls require tokens:
+
+Implement them correctly.
+
+Verify POST/PUT/PATCH/DELETE workflows after changes.
+
+============================================================
+STEP 22 — CORS / SECURITY HEADERS
+============================================================
+
+Review CORS.
+
+Do not use:
+
+AllowAnyOrigin
+
+together with credentials.
+
+Do not expose unnecessary origins.
+
+Review:
+
+CSP
+HSTS
+X-Content-Type-Options
+Referrer-Policy
+frame protection
+Permissions-Policy
+
+Make security headers production-safe.
+
+============================================================
+STEP 23 — ERROR HANDLING
+============================================================
+
+Fix confirmed:
+
+- swallowed exceptions
+- empty catch blocks
+- sensitive error messages
+- stack trace exposure
+- inconsistent API error responses
+
+Users must not receive:
+
+- SQL errors
+- filesystem paths
+- connection strings
+- stack traces
+- secrets
+- internal implementation details
+
+Maintain useful server-side logging.
+
+Do not log passwords/tokens/API keys.
+
+============================================================
+STEP 24 — AUDIT LOGGING
+============================================================
+
+Ensure security-sensitive operations generate appropriate audit logs where the existing architecture expects them.
+
+Review:
+
+- contract create
+- contract update
+- contract delete
+- status transitions
+- payment operations
+- attachment operations
+- permission changes
+- role changes
+- user changes
+
+Audit logs should identify:
+
+- actor
+- action
+- entity
+- entity ID
+- timestamp
+- relevant context
+
+Do not log secrets.
+
+Do not allow ordinary users to modify audit history.
+
+============================================================
+STEP 25 — FRONTEND / UI/UX
+============================================================
+
+Fix ALL confirmed [UI/UX] findings from the audit.
+
+Inspect:
+
+- mobile
+- tablet
+- desktop
+- large screens
+
+Fix:
+
+- overflow
+- broken grids
+- broken tables
+- modal overflow
+- inconsistent spacing
+- inconsistent buttons
+- inconsistent inputs
+- inconsistent typography
+- missing loading states
+- missing empty states
+- missing error states
+- broken form feedback
+- broken navigation
+
+Do not redesign the entire application.
+
+Preserve the existing design language.
+
+============================================================
+STEP 26 — ACCESSIBILITY
+============================================================
+
+Fix confirmed accessibility issues.
+
+Review:
+
+- labels
+- alt text
+- keyboard navigation
+- focus states
+- semantic HTML
+- aria labels
+- modal focus
+- contrast
+- heading hierarchy
+- error messaging
+
+Do not add unnecessary ARIA attributes where semantic HTML is sufficient.
+
+============================================================
+STEP 27 — JAVASCRIPT
+============================================================
+
+Fix confirmed:
+
+- unhandled promises
+- duplicate event listeners
+- unnecessary API calls
+- stale state
+- missing loading state
+- missing error handling
+- unsafe DOM operations
+- console errors
+- production console.log
+
+Do not remove useful error logging merely to hide problems.
+
+============================================================
+STEP 28 — FORMS / VALIDATION
+============================================================
+
+Fix confirmed validation issues.
+
+Validate on server side:
+
+- required fields
+- maximum lengths
+- numeric ranges
+- negative values
+- zero values
+- date ranges
+- duplicate values
+- invalid IDs
+- ownership
+- authorization
+
+Client-side validation is UX only and must not replace server-side validation.
+
+============================================================
+STEP 29 — BUSINESS LOGIC
+============================================================
+
+Fix all confirmed business logic findings.
+
+Pay special attention to:
+
+Contracts
+Payments
+Customers
+Users
+Permissions
+Approvals
+Statuses
+Archives
+Reports
+
+Do not invent new business rules without evidence.
+
+When business behavior is ambiguous:
+
+Preserve existing intended behavior and implement the safest interpretation supported by existing code.
+
+============================================================
+STEP 30 — MISSING FEATURES
+============================================================
+
+Implement confirmed [MISSING FEATURE] items from AUDIT_REPORT.md.
+
+DO NOT implement optional enhancements unless they are explicitly marked as required/confirmed.
+
+For every implemented missing feature:
+
+- integrate with existing architecture
+- enforce authorization
+- enforce validation
+- add appropriate UI
+- add appropriate logging
+- add tests where practical
+
+============================================================
+STEP 31 — DEVELOPMENT ADMIN USER
+============================================================
+
+SPECIAL EXCEPTION:
+
+DO NOT REMOVE:
+
+admin/admin
+
+if it is intentionally used for development.
+
+However:
+
+Ensure the bootstrap/seeder is Development-only.
+
+Production must NOT automatically create or enable:
+
+admin/admin
+
+Do not weaken this protection.
+
+============================================================
+STEP 32 — TESTS
+============================================================
+
+After implementation, create or update tests for important fixes.
+
+Prioritize:
+
+1. Authentication
+2. Authorization
+3. Tenant isolation
+4. IDOR
+5. Contract access
+6. Contract payments
+7. Attachments
+8. Contract status transitions
+9. Payment concurrency
+10. Contract number uniqueness
+11. File upload security
+
+Tests must verify both:
+
+AUTHORIZED behavior
+
+and:
+
+UNAUTHORIZED behavior.
+
+For example:
+
+User A:
+→ can access own contract
+
+User A:
+→ cannot access User B's contract
+
+Normal user:
+→ cannot perform Admin operation
+
+Tenant A:
+→ cannot access Tenant B data
+
+============================================================
+STEP 33 — BUILD
+============================================================
+
+After fixes run the project's appropriate build commands.
+
+Examples:
+
+dotnet restore
+dotnet build
+npm install
+npm run build
+
+ONLY run commands that apply to this repository.
+
+Fix all build errors caused by your changes.
+
+Do not leave compilation errors.
+
+Warnings should be reviewed.
+
+Do not blindly suppress warnings.
+
+============================================================
+STEP 34 — TEST
+============================================================
+
+Run the existing automated tests.
+
+If tests fail:
+
+1. Determine whether the failure existed before your changes.
+2. If caused by your changes, fix it.
+3. Do not delete tests merely because they fail.
+4. Do not weaken assertions to make tests pass.
+
+============================================================
+STEP 35 — SECOND AUDIT
+============================================================
+
+After all fixes, perform a second audit.
+
+Re-read:
+
+AUDIT_REPORT.md
+
+For every finding determine:
+
+FIXED
+PARTIALLY FIXED
+NOT FIXED
+NOT APPLICABLE
+
+Do not mark something FIXED without verification.
+
+Search the repository again for patterns related to the original vulnerabilities.
+
+Examples:
+
+For `.Result`:
+
+Search entire repository again.
+
+For hardcoded API keys:
+
+Search again.
+
+For IDOR:
+
+Review all related endpoints again.
+
+For path traversal:
+
+Search all file path handling.
+
+For authorization:
+
+Review all related endpoints.
+
+For XSS:
+
+Search all raw HTML rendering.
+
+============================================================
+STEP 36 — REGRESSION AUDIT
+============================================================
+
+Ensure fixes did not introduce:
+
+- compilation errors
+- broken routing
+- broken authentication
+- broken authorization
+- broken UI
+- broken contract workflows
+- broken payment workflows
+- broken attachment workflows
+- broken tenant isolation
+- broken development environment
+
+============================================================
+STEP 37 — UPDATE AUDIT_REPORT.md
+============================================================
+
+Update the existing AUDIT_REPORT.md.
+
+Do not delete historical findings.
+
+For each finding add:
+
+Status:
+FIXED / PARTIALLY FIXED / NOT FIXED / NOT APPLICABLE
+
+Add:
+
+Fix:
+- files changed
+- explanation
+- tests performed
+
+Example:
+
+### [CRITICAL] Contract Attachment IDOR
+
+Status: FIXED
+
+Files changed:
+- `Controllers/ContractsController.cs`
+- `Services/ContractService.cs`
+
+Fix:
+Server-side authorization now validates the parent Contract before attachment access.
+
+Verification:
+- Unauthorized user access test
+- Cross-tenant access test
+- Authorized access test
+
+============================================================
+FINAL REPORT
+============================================================
+
+At the end of AUDIT_REPORT.md add:
+
+# Remediation Summary
+
+## Fixed
+
+Count:
+
 CRITICAL:
 MAJOR:
 MINOR:
 UI/UX:
 MISSING FEATURE:
-UNVERIFIED:
 
-Overall Score:
-Overall Risk:
-```
+## Partially Fixed
 
-Do not modify anything else in the repository.
+List findings.
+
+## Not Fixed
+
+List findings and explain why.
+
+## Not Applicable
+
+List findings and explain why.
+
+## Verification
+
+Build:
+PASS / FAIL
+
+Tests:
+PASS / FAIL
+
+Security Regression:
+PASS / FAIL
+
+Authorization Regression:
+PASS / FAIL
+
+Tenant Isolation:
+PASS / FAIL
+
+Contract Workflow:
+PASS / FAIL
+
+Payment Workflow:
+PASS / FAIL
+
+Attachment Workflow:
+PASS / FAIL
+
+UI Regression:
+PASS / FAIL
+
+============================================================
+FINAL RESPONSE
+============================================================
+
+When finished, respond with ONLY a concise summary:
+
+REMEDIATION COMPLETE
+
+Admin Seeder:
+INTENTIONALLY PRESERVED / Development-only
+
+Findings:
+- Critical fixed: X
+- Major fixed: X
+- Minor fixed: X
+- UI/UX fixed: X
+- Missing features implemented: X
+
+Partially fixed:
+X
+
+Not fixed:
+X
+
+Build:
+PASS / FAIL
+
+Tests:
+PASS / FAIL
+
+Security Regression:
+PASS / FAIL
+
+Authorization Regression:
+PASS / FAIL
+
+Tenant Isolation:
+PASS / FAIL
+
+Contract Workflow:
+PASS / FAIL
+
+Payment Workflow:
+PASS / FAIL
+
+Attachment Security:
+PASS / FAIL
+
+Report:
+AUDIT_REPORT.md
+
+IMPORTANT:
+Do not claim PASS unless the corresponding verification was actually performed.
+
+============================================================
+END OF TASK
+============================================================

@@ -26,6 +26,12 @@ public sealed class OfficeDbContext : ModularDbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Department> Departments => Set<Department>();
 
+    // ── Human Capital Sub-Modules ─────────────────────────────────
+    public DbSet<HrContract> HrContracts => Set<HrContract>();
+    public DbSet<HrLeave> HrLeaves => Set<HrLeave>();
+    public DbSet<HrLoan> HrLoans => Set<HrLoan>();
+    public DbSet<HrAttendance> HrAttendances => Set<HrAttendance>();
+
     // ── Customers Module ──────────────────────────────────────────
     public DbSet<Customer> Customers => Set<Customer>();
 
@@ -162,6 +168,55 @@ public sealed class OfficeDbContext : ModularDbContext
         {
             entity.ToTable("ContractUserSettings");
             entity.HasIndex(s => s.UserId).IsUnique();
+        });
+
+        // ── Human Capital Sub-Modules Configuration ────────────────
+        modelBuilder.Entity<HrContract>(entity =>
+        {
+            entity.ToTable("HrContracts");
+            entity.HasIndex(c => c.EmployeeId);
+            entity.HasIndex(c => c.IsActive);
+            entity.HasQueryFilter(c => !c.IsDeleted);
+            entity.HasOne(c => c.Employee)
+                .WithMany()
+                .HasForeignKey(c => c.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<HrLeave>(entity =>
+        {
+            entity.ToTable("HrLeaves");
+            entity.HasIndex(l => l.EmployeeId);
+            entity.HasIndex(l => l.Status);
+            entity.HasQueryFilter(l => !l.IsDeleted);
+            entity.HasOne(l => l.Employee)
+                .WithMany()
+                .HasForeignKey(l => l.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<HrLoan>(entity =>
+        {
+            entity.ToTable("HrLoans");
+            entity.HasIndex(l => l.EmployeeId);
+            entity.HasIndex(l => l.Status);
+            entity.HasQueryFilter(l => !l.IsDeleted);
+            entity.HasOne(l => l.Employee)
+                .WithMany()
+                .HasForeignKey(l => l.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<HrAttendance>(entity =>
+        {
+            entity.ToTable("HrAttendances");
+            entity.HasIndex(a => a.EmployeeId);
+            entity.HasIndex(a => new { a.Year, a.Month });
+            entity.HasQueryFilter(a => !a.IsDeleted);
+            entity.HasOne(a => a.Employee)
+                .WithMany()
+                .HasForeignKey(a => a.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.ApplyConfigurationsFromAssembly(

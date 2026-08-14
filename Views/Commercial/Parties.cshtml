@@ -1,0 +1,83 @@
+@model List<OfficeAutomation.Modules.Commercial.Application.PartyRowVM>
+@{
+    var search = ViewBag.Search as string;
+}
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-emerald-50/80 text-emerald-800 border border-emerald-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i><span class="flex-1">@successMessage</span></div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-rose-50/80 text-rose-800 border border-rose-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i><span class="flex-1">@errorMessage</span></div>
+    }
+
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <div>
+            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">طرف‌های حساب</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">مشتری‌ها و تامین‌کننده‌ها در یک master داده یکتا</p>
+        </div>
+        <a asp-action="CreateParty" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition no-underline">
+            <i class="bi bi-plus-circle-fill"></i><span>طرف حساب جدید</span>
+        </a>
+    </header>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 p-4">
+        <form method="get" class="flex items-end gap-2">
+            <div class="flex-1 flex flex-col gap-1">
+                <label class="text-[11px] font-bold text-slate-500">جستجو</label>
+                <input name="search" value="@search" placeholder="نام / کد اقتصادی..." class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2.5 text-xs outline-none focus:border-indigo-500" />
+            </div>
+            <button type="submit" class="h-8 bg-indigo-600 hover:bg-indigo-700 text-white px-3 rounded-lg text-xs font-bold transition">جستجو</button>
+        </form>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-100">
+                    <tr>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">نام</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">نوع</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">کد اقتصادی</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">تلفن</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-right" dir="ltr">مانده</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">وضعیت</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="7" class="px-3 py-10 text-center text-slate-400">طرف حسابی ثبت نشده است.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var party in Model)
+                        {
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                                <td class="px-3 py-3 font-bold text-slate-800">@party.Name</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium border @(party.PartyType == OfficeAutomation.Modules.Commercial.Domain.CommercialPartyType.Customer ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" : party.PartyType == OfficeAutomation.Modules.Commercial.Domain.CommercialPartyType.Supplier ? "bg-blue-50 text-blue-700 border-blue-200/60" : "bg-violet-50 text-violet-700 border-violet-200/60")">
+                                        @party.PartyTypeLabel
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3 font-mono text-slate-500">@(party.EconomicCode ?? "-")</td>
+                                <td class="px-3 py-3 font-mono text-slate-500" dir="ltr">@(party.Phone ?? "-")</td>
+                                <td class="px-3 py-3 font-mono tabular-nums @(party.Balance > 0 ? "text-rose-600" : "text-slate-900")" dir="ltr">@party.Balance.ToString("N0")</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium border @(party.IsActive ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" : "bg-slate-100 text-slate-500 border-slate-200/60")">
+                                        @(party.IsActive ? "فعال" : "غیرفعال")
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3 text-center">
+                                    <a asp-action="EditParty" asp-route-id="@party.Id" class="p-1.5 text-slate-400 hover:text-indigo-600 transition" title="ویرایش"><i class="bi bi-pencil-square text-sm"></i></a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

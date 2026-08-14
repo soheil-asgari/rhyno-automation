@@ -1,0 +1,172 @@
+@model OfficeAutomation.Modules.Commercial.Application.CommercialInvoiceIndexVM
+@{
+    var pageTitle = ViewBag.PageTitle as string ?? "مدیریت تجاری";
+    var pageDescription = ViewBag.PageDescription as string ?? "";
+    var returnType = ViewBag.ReturnType as string ?? "Sale";
+    var isPurchase = returnType == "Purchase";
+}
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="flex items-center gap-2 p-3.5 bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200/60 rounded-xl text-xs font-semibold shadow-sm">
+            <i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i><span class="flex-1">@successMessage</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2 p-3.5 bg-rose-50/80 text-rose-800 dark:text-rose-400 border border-rose-200/60 rounded-xl text-xs font-semibold shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i><span class="flex-1">@errorMessage</span>
+        </div>
+    }
+
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <div>
+            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">@pageTitle</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">@pageDescription</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a asp-controller="Financial" asp-action="CreateInvoice" asp-route-invoiceType="@(isPurchase ? "Purchase" : "Sale")"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-sm no-underline">
+                <i class="bi bi-plus-circle-fill"></i><span>@(ViewBag.CreateLabel ?? "فاکتور جدید")</span>
+            </a>
+        </div>
+    </header>
+
+    @* ── Standard Toolbar: Refresh / Print / Excel / Row Count ── *@
+    <div class="flex flex-wrap items-center gap-1.5">
+        <a href="@Url.Action(@isPurchase ? "Purchases" : "Sales")"
+           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200/80 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-50 no-underline" title="بروزرسانی">
+            <i class="bi bi-arrow-clockwise"></i><span>بروزرسانی</span>
+        </a>
+        <button type="button" onclick="window.print()"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200/80 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-50" title="چاپ">
+            <i class="bi bi-printer"></i><span>چاپ</span>
+        </button>
+        <a asp-controller="Financial" asp-action="ExportInvoicesExcel" asp-route-invoiceType="@(isPurchase ? "Purchase" : "Sale")"
+           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-emerald-200/60 rounded-lg text-[11px] font-bold text-emerald-700 hover:bg-emerald-50 no-underline" title="خروجی اکسل">
+            <i class="bi bi-file-earmark-excel"></i><span>اکسل</span>
+        </a>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 text-[11px] font-bold text-slate-500" title="تعداد ردیف">
+            <i class="bi bi-list-ol"></i><span>تعداد: @Model.Items.Count.ToString("N0")</span>
+        </span>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 p-4">
+        <form method="get" class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[180px] flex flex-col gap-1">
+                <label asp-for="SearchTerm" class="text-[11px] font-bold text-slate-500">جستجو</label>
+                <input asp-for="SearchTerm" name="search" placeholder="شماره / طرف حساب..."
+                       class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2.5 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+            </div>
+            <div class="w-24 flex flex-col gap-1">
+                <label asp-for="Year" class="text-[11px] font-bold text-slate-500">سال</label>
+                <input asp-for="Year" name="year" type="number" min="1300" max="1700"
+                       class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none focus:border-indigo-500" />
+            </div>
+            <div class="w-36 flex flex-col gap-1">
+                <label class="text-[11px] font-bold text-slate-500">وضعیت پرداخت</label>
+                <select name="paymentStatus" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none focus:border-indigo-500">
+                    <option value="All" selected="@(Model.PaymentStatusFilter == "All" || string.IsNullOrWhiteSpace(Model.PaymentStatusFilter))">همه</option>
+                    <option value="Unpaid" selected="@(Model.PaymentStatusFilter == "Unpaid")">پرداخت نشده</option>
+                    <option value="PartiallyPaid" selected="@(Model.PaymentStatusFilter == "PartiallyPaid")">پرداخت جزئی</option>
+                    <option value="FullyPaid" selected="@(Model.PaymentStatusFilter == "FullyPaid")">پرداخت کامل</option>
+                    <option value="Overpaid" selected="@(Model.PaymentStatusFilter == "Overpaid")">اضافه پرداخت</option>
+                    <option value="Cancelled" selected="@(Model.PaymentStatusFilter == "Cancelled")">ابطال شده</option>
+                </select>
+            </div>
+            <button type="submit" class="h-8 bg-indigo-600 hover:bg-indigo-700 text-white px-3 rounded-lg text-xs font-bold transition">
+                <i class="bi bi-filter"></i><span>اعمال فیلتر</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-100">
+                    <tr>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">شماره فاکتور</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">طرف حساب</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">تاریخ</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">سررسید</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-right" dir="ltr">جمع کل</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-right" dir="ltr">VAT</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-right" dir="ltr">پرداخت شده</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-right" dir="ltr">مانده</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">وضعیت</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">پرداخت</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="11" class="px-3 py-10 text-center text-slate-400">سندی ثبت نشده است.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            var statusLabel = OfficeAutomation.Models.WorkflowStatus.Label(item.WorkflowStatus);
+                            var payLabel = OfficeAutomation.Modules.Commercial.Application.CommercialPaymentStatus.Label(item.PaymentStatus);
+                            var payCss = OfficeAutomation.Modules.Commercial.Application.CommercialPaymentStatus.BadgeCss(item.PaymentStatus);
+                            var cancelled = item.WorkflowStatus == OfficeAutomation.Models.WorkflowStatus.Canceled;
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+                                onclick="window.open('@Url.Action("Details", new { id = item.Id, _tab = true })', '_blank')" title="باز کردن در تب جدید">
+                                <td class="px-3 py-3 font-mono font-semibold text-slate-900">@item.InvoiceNumber</td>
+                                <td class="px-3 py-3 font-bold text-slate-800">@item.PartyName</td>
+                                <td class="px-3 py-3 font-mono text-slate-500">@item.DateShamsi</td>
+                                <td class="px-3 py-3 font-mono text-slate-500">@(string.IsNullOrEmpty(item.DueDateShamsi) ? "-" : item.DueDateShamsi)</td>
+                                <td class="px-3 py-3 font-mono tabular-nums text-slate-900" dir="ltr">@item.GrandTotal.ToString("N0")</td>
+                                <td class="px-3 py-3 font-mono tabular-nums text-slate-500" dir="ltr">@item.VatAmount.ToString("N0")</td>
+                                <td class="px-3 py-3 font-mono tabular-nums text-emerald-600" dir="ltr">@item.PaidAmount.ToString("N0")</td>
+                                <td class="px-3 py-3 font-mono tabular-nums font-bold @(item.OutstandingAmount > 0 ? "text-rose-600" : "text-slate-900")" dir="ltr">@item.OutstandingAmount.ToString("N0")</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium border @(cancelled ? "bg-rose-50 text-rose-700 border-rose-200/60" : "bg-slate-100 text-slate-600 border-slate-200/60")">
+                                        @statusLabel
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium border @payCss">@payLabel</span>
+                                </td>
+                                <td class="px-3 py-3 text-center">
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        <a asp-action="Details" asp-route-id="@item.Id" asp-route-_tab="true"
+                                           class="p-1.5 text-slate-400 hover:text-indigo-600 transition" title="جزئیات"><i class="bi bi-eye text-sm"></i></a>
+                                        @if (!cancelled && !OfficeAutomation.Models.WorkflowStatus.IsApproved(item.WorkflowStatus))
+                                        {
+                                            <form asp-action="PostInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnType" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="p-1.5 text-slate-400 hover:text-emerald-600 transition" title="ثبت نهایی"><i class="bi bi-check2-square text-sm"></i></button>
+                                            </form>
+                                        }
+                                        @if (!cancelled)
+                                        {
+                                            <form asp-action="CancelInvoice" asp-route-id="@item.Id" asp-route-returnTo="@returnType" method="post" class="inline"
+                                                  onsubmit="return confirm('فاکتور و سند حسابداری آن ابطال شود؟');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 transition" title="ابطال"><i class="bi bi-x-octagon text-sm"></i></button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+                <tfoot class="bg-slate-50/70 border-t border-slate-100">
+                    <tr>
+                        <td colspan="4" class="px-3 py-2.5 text-xs font-bold text-slate-600">جمع</td>
+                        <td class="px-3 py-2.5 font-mono tabular-nums font-bold text-slate-900" dir="ltr">@Model.TotalPayable.ToString("N0")</td>
+                        <td class="px-3 py-2.5"></td>
+                        <td class="px-3 py-2.5 font-mono tabular-nums text-emerald-600" dir="ltr">@Model.TotalPaid.ToString("N0")</td>
+                        <td class="px-3 py-2.5 font-mono tabular-nums font-bold text-rose-600" dir="ltr">@Model.TotalOutstanding.ToString("N0")</td>
+                        <td class="px-3 py-2.5"></td>
+                        <td class="px-3 py-2.5"></td>
+                        <td class="px-3 py-2.5"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

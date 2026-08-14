@@ -62,6 +62,7 @@ public sealed class PeriodClosingService
         var balances = await _context.VoucherLines
             .AsNoTracking()
             .Where(line =>
+                !line.VoucherHeader.IsMemo &&
                 line.VoucherHeader.FiscalYearId == period.FiscalYearId &&
                 line.VoucherHeader.VoucherDate >= period.StartDate.Date &&
                 line.VoucherHeader.VoucherDate <= period.EndDate.Date &&

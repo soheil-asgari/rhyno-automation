@@ -1,0 +1,115 @@
+@model HrReportsVM
+@{
+    ViewData["Title"] = "گزارشات جامع منابع انسانی";
+}
+
+<div class="w-full flex-1 flex flex-col gap-3 p-2.5 md:p-3" dir="rtl">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div>
+            <h1 class="text-lg font-bold text-slate-900 dark:text-white">گزارشات جامع منابع انسانی</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">نمای کلی از وضعیت پرسنل، قراردادها، مرخصی‌ها و وام‌ها</p>
+        </div>
+        <a href="/HumanCapital" onclick="event.preventDefault(); if (window.parent && window.parent.RhynoTabs) { window.parent.RhynoTabs.open('/HumanCapital', 'مدیریت سرمایه انسانی', 'bi-person-badge'); } else { window.location.href = '/HumanCapital'; }" class="inline-flex items-center gap-1.5 px-3 h-8 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition no-underline">
+            <i class="bi bi-arrow-right"></i> بازگشت
+        </a>
+    </div>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <i class="bi bi-people-fill text-lg"></i>
+            </div>
+            <div>
+                <p class="m-0 text-[11px] font-bold text-slate-500">کارمندان فعال</p>
+                <p class="m-0 text-lg font-black text-emerald-600 tabular-nums">@Model.TotalActiveEmployees</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
+                <i class="bi bi-hourglass-split text-lg"></i>
+            </div>
+            <div>
+                <p class="m-0 text-[11px] font-bold text-slate-500">مرخصی‌های در انتظار</p>
+                <p class="m-0 text-lg font-black text-amber-600 tabular-nums">@Model.PendingLeavesCount</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+                <i class="bi bi-cash-stack text-lg"></i>
+            </div>
+            <div>
+                <p class="m-0 text-[11px] font-bold text-slate-500">وام‌های فعال</p>
+                <p class="m-0 text-lg font-black text-indigo-600 tabular-nums">@Model.ActiveLoansCount</p>
+                <p class="m-0 text-[10px] text-slate-400">مجموع: @Model.TotalLoansAmount.ToString("N0") ریال</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg border border-black/10 bg-white shadow-sm p-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
+                <i class="bi bi-file-earmark-text text-lg"></i>
+            </div>
+            <div>
+                <p class="m-0 text-[11px] font-bold text-slate-500">قراردادهای فعال</p>
+                <p class="m-0 text-lg font-black text-rose-600 tabular-nums">@Model.ActiveContractsCount</p>
+                <p class="m-0 text-[10px] text-slate-400">از کل @Model.TotalContractsCount</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="rounded-lg border border-black/10 bg-white shadow-sm p-4">
+        <h2 class="m-0 text-sm font-black text-slate-800 mb-3">خلاصه حقوق و دستمزد</h2>
+        <div class="flex items-center gap-4">
+            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <i class="bi bi-wallet2 text-xl"></i>
+            </div>
+            <div>
+                <p class="m-0 text-[11px] font-bold text-slate-500">مجموع حقوق ماهانه پرسنل فعال</p>
+                <p class="m-0 text-xl font-black text-emerald-600 tabular-nums">@Model.TotalPayroll.ToString("N0") <span class="text-xs font-normal text-slate-400">ریال</span></p>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        <div class="rounded-lg border border-black/10 bg-white shadow-sm p-4">
+            <h3 class="m-0 text-xs font-black text-slate-700 mb-2">دسترسی سریع</h3>
+            <div class="flex flex-col gap-2">
+                <a href="@Url.Action("Contracts", "HumanCapital")" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-black/10 hover:bg-slate-50 transition no-underline text-slate-700">
+                    <i class="bi bi-file-earmark-text text-indigo-500"></i>
+                    <span class="text-xs font-bold">مدیریت قراردادها</span>
+                </a>
+                <a href="@Url.Action("Leaves", "HumanCapital")" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-black/10 hover:bg-slate-50 transition no-underline text-slate-700">
+                    <i class="bi bi-calendar3 text-amber-500"></i>
+                    <span class="text-xs font-bold">مدیریت مرخصی‌ها</span>
+                </a>
+                <a href="@Url.Action("Loans", "HumanCapital")" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-black/10 hover:bg-slate-50 transition no-underline text-slate-700">
+                    <i class="bi bi-cash-stack text-emerald-500"></i>
+                    <span class="text-xs font-bold">مدیریت وام‌ها</span>
+                </a>
+                <a href="@Url.Action("Attendance", "HumanCapital")" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-black/10 hover:bg-slate-50 transition no-underline text-slate-700">
+                    <i class="bi bi-clock-history text-rose-500"></i>
+                    <span class="text-xs font-bold">کارکرد و حضور غیاب</span>
+                </a>
+            </div>
+        </div>
+        <div class="rounded-lg border border-black/10 bg-white shadow-sm p-4">
+            <h3 class="m-0 text-xs font-black text-slate-700 mb-2">وضعیت سیستم</h3>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between py-1.5 border-b border-black/5">
+                    <span class="text-xs text-slate-600">کل قراردادها</span>
+                    <span class="text-xs font-black text-slate-800 tabular-nums">@Model.TotalContractsCount</span>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-black/5">
+                    <span class="text-xs text-slate-600">قراردادهای فعال</span>
+                    <span class="text-xs font-black text-emerald-600 tabular-nums">@Model.ActiveContractsCount</span>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-black/5">
+                    <span class="text-xs text-slate-600">وام‌های در جریان</span>
+                    <span class="text-xs font-black text-indigo-600 tabular-nums">@Model.ActiveLoansCount</span>
+                </div>
+                <div class="flex items-center justify-between py-1.5">
+                    <span class="text-xs text-slate-600">مرخصی‌های در انتظار</span>
+                    <span class="text-xs font-black text-amber-600 tabular-nums">@Model.PendingLeavesCount</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

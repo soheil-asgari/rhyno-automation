@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
+using OfficeAutomation.Services;
 using OfficeAutomation.Services.Security;
+using OfficeAutomation.Services.Tenancy;
 
 namespace OfficeAutomation.Controllers
 {
@@ -19,6 +21,8 @@ namespace OfficeAutomation.Controllers
         private readonly ICurrentDataAccessScope _dataAccessScope;
         private readonly ILogger<HumanCapitalController> _logger;
         private readonly IWebHostEnvironment _environment;
+        private readonly IExportService _exportService;
+        private readonly ITenantIsolationService _tenantIsolationService;
 
         private static readonly string[] DefaultEmploymentTypes =
         [
@@ -60,7 +64,9 @@ namespace OfficeAutomation.Controllers
             ISecurityFieldMaskingService securityFieldMaskingService,
             ICurrentDataAccessScope dataAccessScope,
             ILogger<HumanCapitalController> logger,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            IExportService exportService,
+            ITenantIsolationService tenantIsolationService)
         {
             _context = context;
             _dataIsolationService = dataIsolationService;
@@ -68,14 +74,21 @@ namespace OfficeAutomation.Controllers
             _dataAccessScope = dataAccessScope;
             _logger = logger;
             _environment = environment;
+            _exportService = exportService;
+            _tenantIsolationService = tenantIsolationService;
         }
 
         public async Task<IActionResult> Index(HumanCapitalIndexVM filter)
         {
-            var query = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.HumanCapitalEmployees
+            // Tenant isolation is enforced at the schema level (schema-per-tenant).
+            // Do NOT apply department scope filtering here — it causes employees
+            // created with a different (or null) DepartmentId to be hidden from
+            // users who have a specific department assigned, even though the data
+            // exists in the same tenant schema.
+            var query = _context.HumanCapitalEmployees
                 .AsNoTracking()
                 .Include(employee => employee.Department)
-                .AsQueryable());
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
             {
@@ -113,7 +126,8 @@ namespace OfficeAutomation.Controllers
                 query = query.Where(employee => employee.EmploymentType == employmentType);
             }
 
-            var fullListQuery = await _dataIsolationService.ApplyDepartmentScopeAsync(_context.HumanCapitalEmployees.AsNoTracking());
+            // Use unfiltered query for KPI summary cards — same reasoning as above.
+            var fullListQuery = _context.HumanCapitalEmployees.AsNoTracking();
 
             filter.TotalCount = await fullListQuery.CountAsync();
             filter.ActiveCount = await fullListQuery.CountAsync(employee => employee.CurrentStatus == "فعال");
@@ -490,6 +504,540 @@ namespace OfficeAutomation.Controllers
             await _securityFieldMaskingService.MaskHumanCapitalDetailsAsync(vm);
 
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchEmployees(string? q)
+        {
+            var query = _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .Where(e => e.CurrentStatus == "فعال");
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var searchTerm = q.Trim().ToLower();
+                query = query.Where(e =>
+                    e.FullName.ToLower().Contains(searchTerm) ||
+                    e.PersonnelCode.ToLower().Contains(searchTerm) ||
+                    e.NationalCode.ToLower().Contains(searchTerm));
+            }
+
+            var employees = await query
+                .OrderBy(e => e.FullName)
+                .Take(50)
+                .Select(e => new
+                {
+                    id = e.Id,
+                    personnelCode = e.PersonnelCode,
+                    fullName = e.FullName,
+                    positionTitle = e.PositionTitle,
+                    currentSalary = e.CurrentSalary,
+                    hireDate = e.HireDate
+                })
+                .ToListAsync();
+
+            return Json(employees);
+        }
+
+        // ── Human Capital Sub-Modules (enterprise workflow) ──────────
+
+        // ── Contracts ─────────────────────────────────────────────
+        public async Task<IActionResult> Contracts()
+        {
+            ViewData["Title"] = "احکام کارگزینی و قراردادها";
+            ViewData["SectionTitle"] = "احکام کارگزینی و قراردادها";
+
+            var contracts = await _context.HrContracts
+                .AsNoTracking()
+                .Include(c => c.Employee)
+                .OrderByDescending(c => c.CreatedAt)
+                .Select(c => new HrContractItemVM
+                {
+                    Id = c.Id,
+                    EmployeeId = c.EmployeeId,
+                    EmployeeName = c.Employee != null ? c.Employee.FullName : "—",
+                    PersonnelCode = c.Employee != null ? c.Employee.PersonnelCode : "—",
+                    ContractType = c.ContractType,
+                    StartDate = c.StartDate,
+                    EndDate = c.EndDate,
+                    BaseSalary = c.BaseSalary,
+                    IsActive = c.IsActive
+                })
+                .ToListAsync();
+
+            var vm = new HrContractIndexVM
+            {
+                Items = contracts,
+                TotalCount = contracts.Count,
+                ActiveCount = contracts.Count(c => c.IsActive)
+            };
+
+            return View(vm);
+        }
+
+        public async Task<IActionResult> CreateContract()
+        {
+            var model = new HrContractCreateVM();
+            await PopulateEmployeeOptionsAsync(model);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Create")]
+        public async Task<IActionResult> CreateContract(HrContractCreateVM model)
+        {
+            if (model == null)
+            {
+                model = new HrContractCreateVM();
+                await PopulateEmployeeOptionsAsync(model);
+                return View(model);
+            }
+
+            var startDate = ParseJalaliToGregorian(model.StartDate);
+            var endDate = ParseJalaliToGregorian(model.EndDate);
+
+            if (!startDate.HasValue)
+            {
+                ModelState.AddModelError("StartDate", "تاریخ شروع معتبر نیست.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateEmployeeOptionsAsync(model);
+                return View(model);
+            }
+
+            var now = DateTime.Now;
+            var contract = new HrContract
+            {
+                EmployeeId = model.EmployeeId,
+                ContractType = model.ContractType?.Trim() ?? "تمام وقت",
+                StartDate = startDate!.Value.Date,
+                EndDate = endDate?.Date,
+                BaseSalary = model.BaseSalary,
+                IsActive = model.IsActive,
+                Notes = model.Notes?.Trim(),
+                TenantId = _tenantIsolationService.GetCurrent().TenantId ?? string.Empty,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            _context.HrContracts.Add(contract);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Contracts));
+        }
+
+        // ── Leaves ────────────────────────────────────────────────
+        public async Task<IActionResult> Leaves()
+        {
+            ViewData["Title"] = "مدیریت مرخصی و مأموریت";
+            ViewData["SectionTitle"] = "مدیریت مرخصی و مأموریت";
+
+            var leaves = await _context.HrLeaves
+                .AsNoTracking()
+                .Include(l => l.Employee)
+                .OrderByDescending(l => l.CreatedAt)
+                .Select(l => new HrLeaveItemVM
+                {
+                    Id = l.Id,
+                    EmployeeId = l.EmployeeId,
+                    EmployeeName = l.Employee != null ? l.Employee.FullName : "—",
+                    PersonnelCode = l.Employee != null ? l.Employee.PersonnelCode : "—",
+                    LeaveType = l.LeaveType,
+                    StartDate = l.StartDate,
+                    EndDate = l.EndDate,
+                    Description = l.Description,
+                    Status = l.Status
+                })
+                .ToListAsync();
+
+            var vm = new HrLeaveIndexVM
+            {
+                Items = leaves,
+                TotalCount = leaves.Count,
+                PendingCount = leaves.Count(l => l.Status == "در انتظار"),
+                ApprovedCount = leaves.Count(l => l.Status == "تایید شده")
+            };
+
+            return View(vm);
+        }
+
+        public async Task<IActionResult> CreateLeave()
+        {
+            var model = new HrLeaveCreateVM();
+            await PopulateEmployeeOptionsForCreateAsync(model);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Create")]
+        public async Task<IActionResult> CreateLeave(HrLeaveCreateVM model)
+        {
+            if (model == null)
+            {
+                model = new HrLeaveCreateVM();
+                await PopulateEmployeeOptionsForCreateAsync(model);
+                return View(model);
+            }
+
+            var startDate = ParseJalaliToGregorian(model.StartDate);
+            var endDate = ParseJalaliToGregorian(model.EndDate);
+
+            if (!startDate.HasValue)
+                ModelState.AddModelError("StartDate", "تاریخ شروع معتبر نیست.");
+            if (!endDate.HasValue)
+                ModelState.AddModelError("EndDate", "تاریخ پایان معتبر نیست.");
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateEmployeeOptionsForCreateAsync(model);
+                return View(model);
+            }
+
+            var now = DateTime.Now;
+            var leave = new HrLeave
+            {
+                EmployeeId = model.EmployeeId,
+                LeaveType = model.LeaveType?.Trim() ?? "استحقاقی",
+                StartDate = startDate!.Value.Date,
+                EndDate = endDate!.Value.Date,
+                Description = model.Description?.Trim(),
+                Status = model.Status ?? "در انتظار",
+                TenantId = _tenantIsolationService.GetCurrent().TenantId ?? string.Empty,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            _context.HrLeaves.Add(leave);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Leaves));
+        }
+
+        // ── Loans ─────────────────────────────────────────────────
+        public async Task<IActionResult> Loans()
+        {
+            ViewData["Title"] = "وام و مساعده";
+            ViewData["SectionTitle"] = "وام و مساعده";
+
+            var loans = await _context.HrLoans
+                .AsNoTracking()
+                .Include(l => l.Employee)
+                .OrderByDescending(l => l.CreatedAt)
+                .Select(l => new HrLoanItemVM
+                {
+                    Id = l.Id,
+                    EmployeeId = l.EmployeeId,
+                    EmployeeName = l.Employee != null ? l.Employee.FullName : "—",
+                    PersonnelCode = l.Employee != null ? l.Employee.PersonnelCode : "—",
+                    RequestDate = l.RequestDate,
+                    Amount = l.Amount,
+                    InstallmentCount = l.InstallmentCount,
+                    Status = l.Status
+                })
+                .ToListAsync();
+
+            var vm = new HrLoanIndexVM
+            {
+                Items = loans,
+                TotalCount = loans.Count,
+                TotalAmount = loans.Sum(l => l.Amount),
+                PendingCount = loans.Count(l => l.Status == "در انتظار")
+            };
+
+            return View(vm);
+        }
+
+        public async Task<IActionResult> CreateLoan()
+        {
+            var model = new HrLoanCreateVM();
+            await PopulateEmployeeOptionsForLoanAsync(model);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Create")]
+        public async Task<IActionResult> CreateLoan(HrLoanCreateVM model)
+        {
+            if (model == null)
+            {
+                model = new HrLoanCreateVM();
+                await PopulateEmployeeOptionsForLoanAsync(model);
+                return View(model);
+            }
+
+            var requestDate = ParseJalaliToGregorian(model.RequestDate);
+            if (!requestDate.HasValue)
+                ModelState.AddModelError("RequestDate", "تاریخ درخواست معتبر نیست.");
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateEmployeeOptionsForLoanAsync(model);
+                return View(model);
+            }
+
+            var now = DateTime.Now;
+            var loan = new HrLoan
+            {
+                EmployeeId = model.EmployeeId,
+                RequestDate = requestDate!.Value.Date,
+                Amount = model.Amount,
+                InstallmentCount = model.InstallmentCount,
+                Status = model.Status ?? "در انتظار",
+                Description = model.Description?.Trim(),
+                TenantId = _tenantIsolationService.GetCurrent().TenantId ?? string.Empty,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            _context.HrLoans.Add(loan);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Loans));
+        }
+
+        // ── Attendance ────────────────────────────────────────────
+        public async Task<IActionResult> Attendance()
+        {
+            ViewData["Title"] = "کارکرد و حضور غیاب";
+            ViewData["SectionTitle"] = "کارکرد و حضور غیاب";
+
+            var attendances = await _context.HrAttendances
+                .AsNoTracking()
+                .Include(a => a.Employee)
+                .OrderByDescending(a => a.Year)
+                .ThenByDescending(a => a.Month)
+                .Select(a => new HrAttendanceItemVM
+                {
+                    Id = a.Id,
+                    EmployeeId = a.EmployeeId,
+                    EmployeeName = a.Employee != null ? a.Employee.FullName : "—",
+                    PersonnelCode = a.Employee != null ? a.Employee.PersonnelCode : "—",
+                    Year = a.Year,
+                    Month = a.Month,
+                    PresentDays = a.PresentDays,
+                    AbsentDays = a.AbsentDays,
+                    OvertimeHours = a.OvertimeHours
+                })
+                .ToListAsync();
+
+            var vm = new HrAttendanceIndexVM
+            {
+                Items = attendances,
+                TotalCount = attendances.Count
+            };
+
+            return View(vm);
+        }
+
+        public async Task<IActionResult> CreateAttendance()
+        {
+            var model = new HrAttendanceCreateVM();
+            await PopulateEmployeeOptionsForAttendanceAsync(model);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("HR.Create")]
+        public async Task<IActionResult> CreateAttendance(HrAttendanceCreateVM model)
+        {
+            if (model == null)
+            {
+                model = new HrAttendanceCreateVM();
+                await PopulateEmployeeOptionsForAttendanceAsync(model);
+                return View(model);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateEmployeeOptionsForAttendanceAsync(model);
+                return View(model);
+            }
+
+            var now = DateTime.Now;
+            var attendance = new HrAttendance
+            {
+                EmployeeId = model.EmployeeId,
+                Year = model.Year,
+                Month = model.Month,
+                PresentDays = model.PresentDays,
+                AbsentDays = model.AbsentDays,
+                OvertimeHours = model.OvertimeHours,
+                Notes = model.Notes?.Trim(),
+                TenantId = _tenantIsolationService.GetCurrent().TenantId ?? string.Empty,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            _context.HrAttendances.Add(attendance);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Attendance));
+        }
+
+        // ── Reports ───────────────────────────────────────────────
+        public async Task<IActionResult> Reports()
+        {
+            ViewData["Title"] = "گزارشات جامع منابع انسانی";
+            ViewData["SectionTitle"] = "گزارشات جامع منابع انسانی";
+
+            var totalActiveEmployees = await _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .CountAsync(e => e.CurrentStatus == "فعال");
+
+            var pendingLeavesCount = await _context.HrLeaves
+                .AsNoTracking()
+                .CountAsync(l => l.Status == "در انتظار");
+
+            var activeLoans = await _context.HrLoans
+                .AsNoTracking()
+                .Where(l => l.Status == "تایید شده" || l.Status == "پرداخت شده")
+                .ToListAsync();
+
+            var totalContracts = await _context.HrContracts.AsNoTracking().CountAsync();
+            var activeContracts = await _context.HrContracts.AsNoTracking().CountAsync(c => c.IsActive);
+
+            var totalPayroll = await _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .Where(e => e.CurrentStatus == "فعال")
+                .SumAsync(e => e.CurrentSalary);
+
+            var vm = new HrReportsVM
+            {
+                TotalActiveEmployees = totalActiveEmployees,
+                PendingLeavesCount = pendingLeavesCount,
+                ActiveLoansCount = activeLoans.Count,
+                TotalLoansAmount = activeLoans.Sum(l => l.Amount),
+                TotalContractsCount = totalContracts,
+                ActiveContractsCount = activeContracts,
+                TotalPayroll = totalPayroll
+            };
+
+            return View(vm);
+        }
+
+        // ── Helper methods for sub-module employee dropdowns ──────
+        private async Task PopulateEmployeeOptionsAsync(HrContractCreateVM model)
+        {
+            var employees = await _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .Where(e => e.CurrentStatus == "فعال")
+                .OrderBy(e => e.FullName)
+                .ToListAsync();
+
+            model.EmployeeOptions = employees.Select(e => new SelectListItem
+            {
+                Text = $"{e.FullName} ({e.PersonnelCode})",
+                Value = e.Id.ToString()
+            }).ToList();
+        }
+
+        private async Task PopulateEmployeeOptionsForCreateAsync(HrLeaveCreateVM model)
+        {
+            var employees = await _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .Where(e => e.CurrentStatus == "فعال")
+                .OrderBy(e => e.FullName)
+                .ToListAsync();
+
+            model.EmployeeOptions = employees.Select(e => new SelectListItem
+            {
+                Text = $"{e.FullName} ({e.PersonnelCode})",
+                Value = e.Id.ToString()
+            }).ToList();
+        }
+
+        private async Task PopulateEmployeeOptionsForLoanAsync(HrLoanCreateVM model)
+        {
+            var employees = await _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .Where(e => e.CurrentStatus == "فعال")
+                .OrderBy(e => e.FullName)
+                .ToListAsync();
+
+            model.EmployeeOptions = employees.Select(e => new SelectListItem
+            {
+                Text = $"{e.FullName} ({e.PersonnelCode})",
+                Value = e.Id.ToString()
+            }).ToList();
+        }
+
+        private async Task PopulateEmployeeOptionsForAttendanceAsync(HrAttendanceCreateVM model)
+        {
+            var employees = await _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .Where(e => e.CurrentStatus == "فعال")
+                .OrderBy(e => e.FullName)
+                .ToListAsync();
+
+            model.EmployeeOptions = employees.Select(e => new SelectListItem
+            {
+                Text = $"{e.FullName} ({e.PersonnelCode})",
+                Value = e.Id.ToString()
+            }).ToList();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel()
+        {
+            // Tenant isolation is enforced at the schema level (schema-per-tenant).
+            // Do NOT apply department scope filtering — export should include all employees.
+            var query = _context.HumanCapitalEmployees
+                .AsNoTracking()
+                .Include(employee => employee.Department)
+                .AsQueryable();
+
+            var employees = await query
+                .OrderBy(employee => employee.FullName)
+                .Select(employee => new
+                {
+                    employee.PersonnelCode,
+                    employee.FullName,
+                    DepartmentName = employee.Department != null ? employee.Department.Name : null,
+                    employee.PositionTitle,
+                    employee.NationalCode,
+                    employee.PhoneNumber,
+                    employee.EmploymentType,
+                    employee.HireDate,
+                    employee.CurrentSalary,
+                    employee.CurrentStatus
+                })
+                .ToListAsync();
+
+            var table = new System.Data.DataTable("Employees");
+            table.Columns.Add("کد پرسنلی", typeof(string));
+            table.Columns.Add("نام و نام خانوادگی", typeof(string));
+            table.Columns.Add("دپارتمان", typeof(string));
+            table.Columns.Add("عنوان شغلی", typeof(string));
+            table.Columns.Add("کد ملی", typeof(string));
+            table.Columns.Add("شماره تماس", typeof(string));
+            table.Columns.Add("نوع همکاری", typeof(string));
+            table.Columns.Add("تاریخ استخدام", typeof(string));
+            table.Columns.Add("حقوق پایه", typeof(decimal));
+            table.Columns.Add("وضعیت", typeof(string));
+
+            foreach (var employee in employees)
+            {
+                table.Rows.Add(
+                    employee.PersonnelCode,
+                    employee.FullName,
+                    employee.DepartmentName ?? string.Empty,
+                    employee.PositionTitle,
+                    employee.NationalCode,
+                    employee.PhoneNumber ?? string.Empty,
+                    employee.EmploymentType,
+                    employee.HireDate.ToString("yyyy/MM/dd"),
+                    employee.CurrentSalary,
+                    employee.CurrentStatus);
+            }
+
+            var bytes = _exportService.ExportToExcel(table, "پرسنل");
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"human-capital-{DateTime.Now:yyyyMMdd-HHmm}.xlsx");
         }
 
         [HttpPost]

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using OfficeAutomation.Data;
 using OfficeAutomation.Models;
+using OfficeAutomation.Modules.Commercial.Domain;
 using OfficeAutomation.Modules.Finance.Domain;
 using OfficeAutomation.Services.Tenancy;
 
@@ -19,6 +20,13 @@ public sealed class FinanceDbContext : ModularDbContext
 
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+    public DbSet<CommercialParty> CommercialParties => Set<CommercialParty>();
+    public DbSet<InvoiceReturn> InvoiceReturns => Set<InvoiceReturn>();
+    public DbSet<InvoiceReturnItem> InvoiceReturnItems => Set<InvoiceReturnItem>();
+    public DbSet<CommercialQuotation> CommercialQuotations => Set<CommercialQuotation>();
+    public DbSet<CommercialQuotationLine> CommercialQuotationLines => Set<CommercialQuotationLine>();
+    public DbSet<SettlementTransaction> SettlementTransactions => Set<SettlementTransaction>();
+    public DbSet<InvoiceAttachment> InvoiceAttachments => Set<InvoiceAttachment>();
     public DbSet<Waybill> Waybills => Set<Waybill>();
     public DbSet<Vendor> Vendors => Set<Vendor>();
     public DbSet<Employer> Employers => Set<Employer>();
@@ -39,6 +47,11 @@ public sealed class FinanceDbContext : ModularDbContext
     public DbSet<CurrencyExchangeRate> CurrencyExchangeRates => Set<CurrencyExchangeRate>();
     public DbSet<VoucherHeader> VoucherHeaders => Set<VoucherHeader>();
     public DbSet<VoucherLine> VoucherLines => Set<VoucherLine>();
+    public DbSet<JournalTemplate> JournalTemplates => Set<JournalTemplate>();
+    public DbSet<JournalTemplateLine> JournalTemplateLines => Set<JournalTemplateLine>();
+    public DbSet<FiscalPeriodAuditLog> FiscalPeriodAuditLogs => Set<FiscalPeriodAuditLog>();
+    public DbSet<AllocationJournalTemplate> AllocationJournalTemplates => Set<AllocationJournalTemplate>();
+    public DbSet<AllocationJournalTemplateLine> AllocationJournalTemplateLines => Set<AllocationJournalTemplateLine>();
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         AssignSequenceNumbers();
@@ -82,7 +95,9 @@ public sealed class FinanceDbContext : ModularDbContext
 
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(FinanceDbContext).Assembly,
-            type => type.Namespace?.StartsWith("OfficeAutomation.Modules.Finance.", StringComparison.Ordinal) == true);
+            type =>
+                (type.Namespace?.StartsWith("OfficeAutomation.Modules.Finance.", StringComparison.Ordinal) == true) ||
+                (type.Namespace?.StartsWith("OfficeAutomation.Modules.Commercial.", StringComparison.Ordinal) == true));
     }
 
     private async Task EnsureOpenFiscalYearsAsync(CancellationToken cancellationToken)

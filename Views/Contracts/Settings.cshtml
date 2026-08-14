@@ -19,6 +19,13 @@
         </div>
     }
 
+    @* Breadcrumb *@
+    <partial name="_Breadcrumb" model='new[] {
+        new RhynoBreadcrumbItem("خانه", "/"),
+        new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
+        new RhynoBreadcrumbItem("تنظیمات قراردادها", null)
+    }' />
+
     @* Section Header *@
     <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
@@ -266,23 +273,33 @@
         (function() {
             'use strict';
 
-            // ── Modal helpers ──────────────────────────────────────────
+            // ── Modal helpers (with focus trap) ────────────────────────
             window.openModal = window.openModal || function(modalId) {
                 var el = document.getElementById(modalId);
                 if (!el) return;
                 el.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
+                if (window.RhynoModalFocus) {
+                    var trigger = document.querySelector('[data-modal-target="' + modalId + '"]');
+                    RhynoModalFocus.open(el, { trigger: trigger });
+                }
             };
             window.closeModal = window.closeModal || function(modalId) {
                 var el = document.getElementById(modalId);
                 if (!el) return;
                 el.style.display = 'none';
                 document.body.style.overflow = '';
+                if (window.RhynoModalFocus) {
+                    RhynoModalFocus.close(el);
+                }
             };
             document.addEventListener('click', function(e) {
                 if (e.target.classList.contains('rhyno-modal-overlay') && e.target.style.display === 'flex') {
                     e.target.style.display = 'none';
                     document.body.style.overflow = '';
+                    if (window.RhynoModalFocus) {
+                        RhynoModalFocus.close(e.target);
+                    }
                 }
             });
             document.addEventListener('keydown', function(e) {
@@ -291,6 +308,9 @@
                         if (el.style.display === 'flex') {
                             el.style.display = 'none';
                             document.body.style.overflow = '';
+                            if (window.RhynoModalFocus) {
+                                RhynoModalFocus.close(el);
+                            }
                         }
                     });
                 }

@@ -10,6 +10,26 @@
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => document.querySelectorAll(sel);
 
+    function showLoading() {
+        const tbody = $('#invTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6"><div class="inline-flex items-center gap-2 text-slate-400"><span class="rhyno-spinner" style="width:18px;height:18px;border-width:2px;"></span><span>در حال بارگذاری...</span></div></td></tr>';
+    }
+
+    function showError(message) {
+        const tbody = $('#invTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6">
+            <div class="flex flex-col items-center gap-2 text-rose-500">
+                <i class="bi bi-exclamation-triangle text-lg"></i>
+                <span>${message || 'دریافت اطلاعات با خطا مواجه شد.'}</span>
+                <button type="button" class="mt-1 inline-flex items-center gap-1 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition" onclick="window.invRetrySearch && invRetrySearch()">
+                    <i class="bi bi-arrow-clockwise"></i> تلاش مجدد
+                </button>
+            </div>
+        </td></tr>`;
+    }
+
     function doSearch(page = 1) {
         currentPage = page;
         const params = new URLSearchParams({
@@ -21,16 +41,23 @@
             pageSize: 25
         });
 
+        showLoading();
+
         fetch(`/InvoiceDashboard/Search?${params}`)
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     renderTable(data.items);
                     updatePagination(data.page, data.totalPages);
+                } else {
+                    showError(data.message || 'دریافت اطلاعات با خطا مواجه شد.');
                 }
             })
-            .catch(err => console.error('Search failed:', err));
+            .catch(() => showError('ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.'));
     }
+
+    // Expose retry for the error state button
+    window.invRetrySearch = () => doSearch(currentPage);
 
     function renderTable(items) {
         const tbody = $('#invTableBody');

@@ -20,6 +20,13 @@
         </div>
     }
 
+    @* Breadcrumb *@
+    <partial name="_Breadcrumb" model='new[] {
+        new RhynoBreadcrumbItem("خانه", "/"),
+        new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
+        new RhynoBreadcrumbItem("جزئیات قرارداد", null)
+    }' />
+
     @* Section Header *@
     <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
@@ -32,13 +39,13 @@
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
                     <i class="bi bi-pencil ml-1"></i>ویرایش
                 </a>
-                <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="inline">
+                <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit>
                     @Html.AntiForgeryToken()
                     <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
                         <i class="bi bi-archive ml-1"></i>بایگانی
                     </button>
                 </form>
-                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" onsubmit="return confirm('آیتم حذف شود؟');">
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیتم حذف شود؟');">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
                         <i class="bi bi-trash ml-1"></i>حذف
@@ -294,7 +301,7 @@
                                             @if (Model.CanEdit)
                                             {
                                                 <td class="px-3 py-2 text-center">
-                                                    <form asp-action="DeletePayment" asp-route-paymentId="@payment.Id" asp-route-contractId="@Model.Id" method="post" class="inline" onsubmit="return confirm('پرداخت حذف شود؟');">
+                                                    <form asp-action="DeletePayment" asp-route-paymentId="@payment.Id" asp-route-contractId="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('پرداخت حذف شود؟');">
                                                         @Html.AntiForgeryToken()
                                                         <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
                                                             <i class="bi bi-trash"></i>
@@ -368,7 +375,7 @@
                                                 </a>
                                                 @if (Model.CanEdit)
                                                 {
-                                                    <form asp-action="DeleteAttachment" asp-route-attachmentId="@att.Id" asp-route-contractId="@Model.Id" method="post" class="inline" onsubmit="return confirm('فایل حذف شود؟');">
+                                                    <form asp-action="DeleteAttachment" asp-route-attachmentId="@att.Id" asp-route-contractId="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('فایل حذف شود؟');">
                                                         @Html.AntiForgeryToken()
                                                         <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
                                                             <i class="bi bi-trash"></i>
@@ -465,7 +472,7 @@
                 </div>
                 <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('addPaymentModal')">&times;</button>
             </div>
-            <form asp-action="AddPayment" method="post">
+            <form asp-action="AddPayment" method="post" data-guard-submit>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="ContractId" value="@Model.Id" />
                 <div class="p-3 space-y-2">
@@ -527,7 +534,7 @@
                 </div>
                 <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('uploadAttachmentModal')">&times;</button>
             </div>
-            <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+            <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data" data-guard-submit>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="contractId" value="@Model.Id" />
                 <div class="p-3">
@@ -599,12 +606,17 @@
                 });
             }
 
-            // ── Vanilla JS Modal helpers ────────────────────────────────
+            // ── Vanilla JS Modal helpers (with focus trap) ──────────────
             window.openModal = function(modalId) {
                 var el = document.getElementById(modalId);
                 if (!el) return;
                 el.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
+                // Focus trap: move focus into the modal, trap Tab, restore on close
+                if (window.RhynoModalFocus) {
+                    var trigger = document.querySelector('[data-modal-target="' + modalId + '"]');
+                    RhynoModalFocus.open(el, { trigger: trigger });
+                }
             };
 
             window.closeModal = function(modalId) {
@@ -612,23 +624,32 @@
                 if (!el) return;
                 el.style.display = 'none';
                 document.body.style.overflow = '';
+                if (window.RhynoModalFocus) {
+                    RhynoModalFocus.close(el);
+                }
             };
 
-            // Close modal on backdrop click
+            // Close modal on backdrop click (handled by focus trap utility)
             document.addEventListener('click', function(e) {
                 if (e.target.classList.contains('rhyno-modal-overlay') && e.target.style.display === 'flex') {
                     e.target.style.display = 'none';
                     document.body.style.overflow = '';
+                    if (window.RhynoModalFocus) {
+                        RhynoModalFocus.close(e.target);
+                    }
                 }
             });
 
-            // Escape key to close modals
+            // Escape key to close modals (handled by focus trap utility)
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     document.querySelectorAll('.rhyno-modal-overlay').forEach(function(el) {
                         if (el.style.display === 'flex') {
                             el.style.display = 'none';
                             document.body.style.overflow = '';
+                            if (window.RhynoModalFocus) {
+                                RhynoModalFocus.close(el);
+                            }
                         }
                     });
                 }

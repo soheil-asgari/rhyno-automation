@@ -689,6 +689,115 @@ body.rahkaran-theme {
 }
 
 /* ═══════════════════════════════════════════════════════════
+    BREADCRUMB — Lightweight RTL component
+    Subtle, compact, does not increase header height.
+    ═══════════════════════════════════════════════════════════ */
+.rhyno-breadcrumb {
+  display: flex;
+  align-items: center;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rhyno-breadcrumb-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.rhyno-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.rhyno-breadcrumb-link {
+  color: #2b7cb3;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.rhyno-breadcrumb-link:hover {
+  color: #1f5f8a;
+  text-decoration: underline;
+}
+
+.rhyno-breadcrumb-text {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.rhyno-breadcrumb-item.is-current .rhyno-breadcrumb-text {
+  color: #334155;
+}
+
+.rhyno-breadcrumb-sep {
+  color: #94a3b8;
+  font-size: 12px;
+  margin: 0 2px;
+  user-select: none;
+}
+
+/* On very narrow screens, allow the breadcrumb to truncate gracefully */
+@media (max-width: 480px) {
+  .rhyno-breadcrumb {
+    font-size: 10px;
+  }
+
+  .rhyno-breadcrumb-item:not(.is-current):not(:first-child) {
+    display: none;
+  }
+
+  .rhyno-breadcrumb-item.is-current {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+    BUTTON LOADING SPINNER (form-guard.js)
+    ═══════════════════════════════════════════════════════════ */
+.rhyno-btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: rhyno-spin 0.6s linear infinite;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+button.is-loading,
+input[type="submit"].is-loading {
+  opacity: 0.75;
+  cursor: progress;
+  pointer-events: none;
+}
+
+button.is-loading.has-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
     ANIMATIONS
     ═══════════════════════════════════════════════════════════ */
 @keyframes rk-fade-in {

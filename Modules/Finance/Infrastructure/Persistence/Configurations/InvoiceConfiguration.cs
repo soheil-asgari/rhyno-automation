@@ -72,6 +72,12 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
                             .OnDelete(DeleteBehavior.SetNull);
 
             builder
+                            .HasOne(i => i.CommercialParty)
+                            .WithMany()
+                            .HasForeignKey(i => i.CommercialPartyId)
+                            .OnDelete(DeleteBehavior.SetNull);
+
+            builder
                             .Property(item => item.CreatedByUserId)
                             .HasMaxLength(450);
 

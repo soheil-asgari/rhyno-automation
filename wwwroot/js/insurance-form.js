@@ -99,9 +99,13 @@
         }
 
         function attachEmployeeAutocomplete(tr) {
-            const searchInput = tr.querySelector('.employee-search');
+            const searchInput = tr.querySelector('[data-field="FullName"]');
             const suggestionsDiv = tr.querySelector('.employee-suggestions');
             const hiddenIdField = tr.querySelector('[data-field="HumanCapitalEmployeeId"]');
+
+            if (!searchInput || !suggestionsDiv || !hiddenIdField) {
+                return;
+            }
 
             searchInput.addEventListener('input', (event) => {
                 clearTimeout(debounceTimer);

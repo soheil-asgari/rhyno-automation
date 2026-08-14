@@ -19,6 +19,12 @@
         </div>
     }
 
+    @* Breadcrumb *@
+    <partial name="_Breadcrumb" model='new[] {
+        new RhynoBreadcrumbItem("خانه", "/"),
+        new RhynoBreadcrumbItem("قراردادها", null)
+    }' />
+
     @* Section Header *@
     <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
@@ -180,13 +186,13 @@
                                             <a asp-action="Edit" asp-route-id="@item.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="ویرایش">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline" onsubmit="return confirm('آیتم حذف شود؟');">
+                                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیتم حذف شود؟');">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
-                                            <form asp-action="ArchiveContract" asp-route-id="@item.Id" method="post" class="inline">
+                                            <form asp-action="ArchiveContract" asp-route-id="@item.Id" method="post" class="inline" data-guard-submit>
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 transition" title="بایگانی">
                                                     <i class="bi bi-archive"></i>

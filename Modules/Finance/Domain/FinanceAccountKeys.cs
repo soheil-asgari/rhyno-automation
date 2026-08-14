@@ -9,4 +9,5 @@ public static class FinanceAccountKeys
     public const string VatPayable = "VAT_PAYABLE";
     public const string VatReceivable = "VAT_RECEIVABLE";
     public const string RetainedEarnings = "RETAINED_EARNINGS";
+    public const string CashOnHand = "CASH_ON_HAND";
 }

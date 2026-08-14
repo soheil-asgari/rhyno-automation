@@ -1,0 +1,113 @@
+@{
+    var quotationType = ViewBag.QuotationType as string ?? "Sale";
+    var partyOptions = ViewBag.PartyOptions as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var quotationNumber = ViewBag.QuotationNumber as string ?? "";
+    var todayShamsi = ViewBag.TodayShamsi as string ?? "";
+    var isPurchase = quotationType == "Purchase";
+}
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-rose-50/80 text-rose-800 border border-rose-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i><span class="flex-1">@errorMessage</span></div>
+    }
+
+    <header class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">پیش‌فاکتور @(isPurchase ? "خرید" : "فروش")</h1>
+        <p class="text-xs text-slate-500 mt-0.5">پیش‌فاکتور را تکمیل کنید؛ پس از تایید مشتری به فاکتور تبدیل می‌شود.</p>
+    </header>
+
+    <form asp-action="SaveQuotation" method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 p-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="QuotationType" value="@quotationType" />
+        <div class="flex flex-wrap items-end gap-3 mb-4">
+            <div class="flex flex-col gap-1">
+                <label class="text-[11px] font-bold text-slate-500">شماره</label>
+                <input name="QuotationNumber" value="@quotationNumber" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs font-mono w-40 outline-none" readonly />
+            </div>
+            <div class="flex flex-col gap-1 min-w-[200px] flex-1">
+                <label class="text-[11px] font-bold text-slate-500">طرف حساب</label>
+                <select id="partySelect" name="CommercialPartyId" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none focus:border-indigo-500">
+                    <option value="">— انتخاب —</option>
+                    @foreach (var opt in partyOptions)
+                    {
+                        <option value="@opt.Value">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="flex flex-col gap-1 flex-1">
+                <label class="text-[11px] font-bold text-slate-500">نام طرف حساب (دستی)</label>
+                <input name="PartyName" id="partyName" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs outline-none" placeholder="در صورت عدم انتخاب" />
+            </div>
+        </div>
+        <div class="flex flex-wrap items-end gap-3 mb-4">
+            <div class="flex flex-col gap-1">
+                <label class="text-[11px] font-bold text-slate-500">تاریخ (شمسی)</label>
+                <input name="DateShamsi" value="@todayShamsi" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs w-32 outline-none" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-[11px] font-bold text-slate-500">اعتبار تا (شمسی)</label>
+                <input name="ValidUntilShamsi" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs w-32 outline-none" placeholder="اختیاری" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-[11px] font-bold text-slate-500">شناسه ملی/اقتصادی</label>
+                <input name="NationalCodeOrEconomicId" class="h-8 rounded-lg border border-slate-200/80 px-2 text-xs w-40 outline-none" />
+            </div>
+        </div>
+
+        <div class="text-[11px] font-bold text-slate-500 mb-2">ردیف‌ها</div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-right" id="quotationLines">
+                <thead class="bg-slate-50/70">
+                    <tr>
+                        <th class="px-2 py-2 font-semibold text-slate-500">کالا/خدمت</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500">تعداد</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">قیمت واحد</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">تخفیف %</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">جمع جزء</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">VAT</th>
+                        <th class="px-2 py-2 font-semibold text-slate-500 text-right" dir="ltr">جمع</th>
+                        <th class="px-2 py-2"></th>
+                    </tr>
+                </thead>
+                <tbody id="quotationLinesBody">
+                    <tr class="line-row">
+                        <td class="px-2 py-1.5"><input name="Lines[][ItemName]" placeholder="شرح کالا/خدمت" class="h-7 w-40 rounded border border-slate-200/80 px-1 text-xs" /></td>
+                        <td class="px-2 py-1.5"><input name="Lines[][Quantity]" type="number" step="0.001" min="0" value="1" class="h-7 w-16 rounded border border-slate-200/80 px-1 text-xs" /></td>
+                        <td class="px-2 py-1.5"><input name="Lines[][UnitPrice]" type="number" step="0.01" min="0" class="h-7 w-24 rounded border border-slate-200/80 px-1 text-xs" /></td>
+                        <td class="px-2 py-1.5"><input name="Lines[][DiscountRate]" type="number" step="0.01" min="0" value="0" class="h-7 w-14 rounded border border-slate-200/80 px-1 text-xs" /></td>
+                        <td class="px-2 py-1.5"><input name="Lines[][LineSubTotal]" type="number" step="0.01" min="0" class="h-7 w-24 rounded border border-slate-200/80 px-1 text-xs" /></td>
+                        <td class="px-2 py-1.5"><input name="Lines[][LineVatAmount]" type="number" step="0.01" min="0" class="h-7 w-24 rounded border border-slate-200/80 px-1 text-xs" /></td>
+                        <td class="px-2 py-1.5"><input name="Lines[][LineGrandTotal]" type="number" step="0.01" min="0" class="h-7 w-24 rounded border border-slate-200/80 px-1 text-xs" /></td>
+                        <td class="px-2 py-1.5"><button type="button" class="add-line text-indigo-600 text-sm"><i class="bi bi-plus-circle"></i></button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 flex items-center gap-2">
+            <input type="hidden" name="Status" value="Draft" />
+            <button type="submit" class="h-9 bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-lg text-xs font-bold transition">ذخیره پیش‌فاکتور</button>
+            <a asp-action="Quotations" asp-route-type="@quotationType" class="px-3 py-2 border border-slate-200/80 rounded-lg text-xs font-bold text-slate-600 no-underline">انصراف</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('partySelect').addEventListener('change', function () {
+        if (this.value) {
+            var text = this.options[this.selectedIndex].text;
+            document.getElementById('partyName').value = text.replace(/\s*\(.*\)\s*$/, '');
+        }
+    });
+    var addLine = document.querySelector('.add-line');
+    if (addLine) {
+        addLine.addEventListener('click', function () {
+            var prototype = document.querySelector('#quotationLinesBody').children[0];
+            var clone = prototype.cloneNode(true);
+            clone.querySelectorAll('input').forEach(function (inp) { inp.value = ''; });
+            clone.querySelector('[name*="Quantity"]').value = '1';
+            prototype.parentNode.appendChild(clone);
+        });
+    }
+</script>
+}

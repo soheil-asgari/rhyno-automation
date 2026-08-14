@@ -23,6 +23,7 @@ namespace OfficeAutomation.Controllers
         private readonly FinanceLedgerService _ledgerService;
         private readonly PeriodClosingService _periodClosingService;
         private readonly VoucherRenumberingService _voucherRenumberingService;
+        private readonly LedgerService _ledgerReportService;
         private readonly FinancialAppService _appService;
 
         public FinancialController(
@@ -32,6 +33,7 @@ namespace OfficeAutomation.Controllers
             FinanceLedgerService ledgerService,
             PeriodClosingService periodClosingService,
             VoucherRenumberingService voucherRenumberingService,
+            LedgerService ledgerReportService,
             FinancialAppService appService)
         {
             _context = context;
@@ -40,6 +42,7 @@ namespace OfficeAutomation.Controllers
             _ledgerService = ledgerService;
             _periodClosingService = periodClosingService;
             _voucherRenumberingService = voucherRenumberingService;
+            _ledgerReportService = ledgerReportService;
             _appService = appService;
         }
 
@@ -334,6 +337,13 @@ namespace OfficeAutomation.Controllers
 
         [HttpGet]
         [PermissionAuthorize("Finance.View")]
+        public IActionResult ChartOfAccounts()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        [PermissionAuthorize("Finance.View")]
         public async Task<IActionResult> LedgerOperations(CancellationToken cancellationToken)
         {
             await _appService.EnsureCurrentFiscalYearAsync(cancellationToken);
@@ -532,6 +542,126 @@ namespace OfficeAutomation.Controllers
                     message = ex.Message
                 });
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> CopyVoucher(int id, DateTime? newDate, string? newDescription, string? newReference, bool swapDebitCredit, CancellationToken cancellationToken)
+        {
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            try
+            {
+                var voucher = await _ledgerService.CopyVoucherAsync(
+                    id,
+                    newDate,
+                    newDescription,
+                    newReference,
+                    swapDebitCredit,
+                    currentUserId,
+                    cancellationToken);
+                TempData["SuccessMessage"] = $"سند کپی شد. سند جدید: {voucher.DocumentNumber}";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> PostVoucher(int id, CancellationToken cancellationToken)
+        {
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            try
+            {
+                var voucher = await _ledgerService.PostVoucherAsync(id, currentUserId, cancellationToken);
+                TempData["SuccessMessage"] = $"سند {voucher.VoucherNumber} با موفقیت ثبت قطعی شد.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> ReverseVoucher(int id, string? reason, DateTime? reversalDate, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var voucher = await _ledgerService.ReverseVoucherAsync(id, reason, reversalDate, cancellationToken);
+                TempData["SuccessMessage"] = $"سند برگشتی ایجاد شد: {voucher.DocumentNumber}";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize("Finance.Edit")]
+        public async Task<IActionResult> VoidVoucher(int id, string? reason, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var voucher = await _ledgerService.VoidVoucherAsync(id, reason, cancellationToken);
+                TempData["SuccessMessage"] = $"سند {voucher.DocumentNumber} ابطال شد.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(LedgerOperations));
+        }
+
+        [HttpGet]
+        [PermissionAuthorize("Finance.View")]
+        public async Task<IActionResult> Ledger(
+            DateTime? from,
+            DateTime? to,
+            int? subsidiaryAccountId,
+            int? generalAccountId,
+            int? detailedAccountId,
+            Guid? floatingDetailAccountId,
+            bool includeDraft = false,
+            string? format = null,
+            CancellationToken cancellationToken = default)
+        {
+            var report = await _ledgerReportService.GetLedgerAsync(new LedgerRequest
+            {
+                From = from,
+                To = to,
+                SubsidiaryAccountId = subsidiaryAccountId,
+                GeneralAccountId = generalAccountId,
+                DetailedAccountId = detailedAccountId,
+                FloatingDetailAccountId = floatingDetailAccountId,
+                IncludeDraft = includeDraft
+            }, cancellationToken);
+
+            if (string.Equals(format, "json", StringComparison.OrdinalIgnoreCase))
+            {
+                return Json(report);
+            }
+
+            ViewBag.From = from?.Date;
+            ViewBag.To = to?.Date;
+            ViewBag.SubsidiaryAccountId = subsidiaryAccountId;
+            ViewBag.GeneralAccountId = generalAccountId;
+            ViewBag.DetailedAccountId = detailedAccountId;
+            ViewBag.FloatingDetailAccountId = floatingDetailAccountId;
+            ViewBag.IncludeDraft = includeDraft;
+            return View("Ledger", report);
         }
 
         private async Task<IActionResult> VatDashboardInternal(int? year, CancellationToken cancellationToken)

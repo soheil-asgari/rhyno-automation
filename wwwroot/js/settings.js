@@ -223,8 +223,6 @@ window.deleteUser = function (id) {
             return res.json();
         })
         .then(user => {
-            console.log("Full User Data:", user);
-
             // پر کردن مقادیر در فیلدهای مودال ویرایش
             document.getElementById('edit_userId').value = user.id || "";
             document.getElementById('edit_name').value = user.fullName || "";

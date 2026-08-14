@@ -21,6 +21,16 @@ public class ContractsController : Controller
         _logger = logger;
     }
 
+    private string GetCurrentUserId()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("کاربر احراز هویت نشده است.");
+        }
+        return userId;
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  Index
     // ═══════════════════════════════════════════════════════════════
@@ -28,7 +38,7 @@ public class ContractsController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(ContractIndexVM filter, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var vm = await _contractService.GetIndexViewModelAsync(filter, currentUserId, ct);
         return View(vm);
     }
@@ -40,7 +50,7 @@ public class ContractsController : Controller
     [HttpGet("Contracts/Dashboard")]
     public async Task<IActionResult> Dashboard(CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var vm = await _contractService.GetDashboardAsync(currentUserId, ct);
         return View(vm);
     }
@@ -53,7 +63,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Create")]
     public async Task<IActionResult> Create(CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var vm = await _contractService.BuildCreateViewModelAsync(currentUserId, ct);
         return View(vm);
     }
@@ -65,7 +75,7 @@ public class ContractsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             var vm = await _contractService.BuildCreateViewModelAsync(currentUserId, ct);
             vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
             vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
@@ -78,7 +88,7 @@ public class ContractsController : Controller
         }
         try
         {
-            var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUser = GetCurrentUserId();
             var contract = await _contractService.CreateContractAsync(model, currentUser, ct);
             TempData["SuccessMessage"] = "قرارداد با موفقیت ایجاد شد.";
             return RedirectToAction(nameof(Details), new { id = contract.Id });
@@ -86,7 +96,7 @@ public class ContractsController : Controller
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError("ContractNumber", ex.Message);
-            var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUser = GetCurrentUserId();
             var vm = await _contractService.BuildCreateViewModelAsync(currentUser, ct);
             vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
             vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
@@ -110,7 +120,7 @@ public class ContractsController : Controller
         try
         {
             // Enforce RLS - will throw if user cannot access
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             await _contractService.EnforceAccessAsync(id, currentUserId, ct);
             var vm = await _contractService.BuildEditViewModelAsync(id, currentUserId, ct);
             return View(vm);
@@ -126,7 +136,7 @@ public class ContractsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             try
             {
                 var vm = await _contractService.BuildEditViewModelAsync(model.Id, currentUserId, ct);
@@ -144,7 +154,7 @@ public class ContractsController : Controller
         }
         try
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             await _contractService.EnforceAccessAsync(model.Id, currentUserId, ct);
             await _contractService.UpdateContractAsync(model, currentUserId, ct);
             TempData["SuccessMessage"] = "قرارداد با موفقیت ویرایش شد.";
@@ -155,7 +165,7 @@ public class ContractsController : Controller
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError("ContractNumber", ex.Message);
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             var vm = await _contractService.BuildEditViewModelAsync(model.Id, currentUserId, ct);
             return View(vm);
         }
@@ -170,7 +180,7 @@ public class ContractsController : Controller
     {
         try
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             var vm = await _contractService.GetDetailsViewModelAsync(id, currentUserId, ct);
             return View(vm);
         }
@@ -186,7 +196,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Delete")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         try
         {
             await _contractService.EnforceAccessAsync(id, currentUserId, ct);
@@ -207,7 +217,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Archive")]
     public async Task<IActionResult> Archive(ContractArchiveVM filter, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var vm = await _contractService.GetArchiveViewModelAsync(filter, currentUserId, ct);
         return View(vm);
     }
@@ -217,7 +227,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Archive")]
     public async Task<IActionResult> ArchiveContract(int id, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         try
         {
             await _contractService.EnforceAccessAsync(id, currentUserId, ct);
@@ -235,7 +245,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Archive")]
     public async Task<IActionResult> UnarchiveContract(int id, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         try
         {
             await _contractService.EnforceAccessAsync(id, currentUserId, ct);
@@ -264,10 +274,12 @@ public class ContractsController : Controller
         }
         try
         {
-            await _contractService.AddPaymentAsync(model, ct);
+            var currentUser = GetCurrentUserId();
+            await _contractService.AddPaymentAsync(model, currentUser, ct);
             TempData["SuccessMessage"] = "پرداخت با موفقیت ثبت شد.";
         }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
         return RedirectToAction(nameof(Details), new { id = model.ContractId });
     }
 
@@ -276,10 +288,15 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Payment")]
     public async Task<IActionResult> DeletePayment(int paymentId, int contractId, CancellationToken ct)
     {
-        var deleted = await _contractService.DeletePaymentAsync(paymentId, contractId, ct);
-        if (!deleted) return NotFound();
-        TempData["SuccessMessage"] = "پرداخت با موفقیت حذف شد.";
-        return RedirectToAction(nameof(Details), new { id = contractId });
+        try
+        {
+            var currentUser = GetCurrentUserId();
+            var deleted = await _contractService.DeletePaymentAsync(paymentId, contractId, currentUser, ct);
+            if (!deleted) return NotFound();
+            TempData["SuccessMessage"] = "پرداخت با موفقیت حذف شد.";
+            return RedirectToAction(nameof(Details), new { id = contractId });
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -299,7 +316,7 @@ public class ContractsController : Controller
 
         try
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             await using var stream = file.OpenReadStream();
             await _contractService.UploadAttachmentAsync(contractId, file.FileName, stream, file.ContentType, currentUserId, ct);
             TempData["SuccessMessage"] = "فایل با موفقیت بارگذاری شد.";
@@ -311,10 +328,9 @@ public class ContractsController : Controller
     [HttpGet("Contracts/DownloadAttachment/{attachmentId}")]
     public async Task<IActionResult> DownloadAttachment(int attachmentId, CancellationToken ct)
     {
-        var attachment = await _contractService.GetAttachmentAsync(attachmentId, ct);
-        if (attachment == null) return NotFound();
-
-        var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/'));
+        var currentUser = GetCurrentUserId();
+        var (attachment, fullPath) = await _contractService.GetAttachmentForDownloadAsync(attachmentId, currentUser, ct);
+        if (attachment == null || fullPath == null) return NotFound();
         if (!System.IO.File.Exists(fullPath)) return NotFound();
 
         return PhysicalFile(fullPath, attachment.ContentType ?? "application/octet-stream", attachment.FileName);
@@ -325,10 +341,15 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Edit")]
     public async Task<IActionResult> DeleteAttachment(int attachmentId, int contractId, CancellationToken ct)
     {
-        var deleted = await _contractService.DeleteAttachmentAsync(attachmentId, contractId, ct);
-        if (!deleted) return NotFound();
-        TempData["SuccessMessage"] = "فایل پیوست حذف شد.";
-        return RedirectToAction(nameof(Details), new { id = contractId });
+        try
+        {
+            var currentUser = GetCurrentUserId();
+            var deleted = await _contractService.DeleteAttachmentAsync(attachmentId, contractId, currentUser, ct);
+            if (!deleted) return NotFound();
+            TempData["SuccessMessage"] = "فایل پیوست حذف شد.";
+            return RedirectToAction(nameof(Details), new { id = contractId });
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -341,7 +362,7 @@ public class ContractsController : Controller
     {
         try
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             var html = await _contractService.GenerateContractDocumentAsync(id, templateId, currentUserId, ct);
             return Content(html, "text/html", System.Text.Encoding.UTF8);
         }
@@ -356,7 +377,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Settings")]
     public async Task<IActionResult> Settings(CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var vm = await _contractService.GetSettingsViewModelAsync(currentUserId, ct);
         return View(vm);
     }
@@ -368,7 +389,7 @@ public class ContractsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             var vm = await _contractService.GetSettingsViewModelAsync(currentUserId, ct);
             vm.DefaultStatus = model.DefaultStatus;
             vm.DefaultResponsibleUserId = model.DefaultResponsibleUserId;
@@ -376,7 +397,7 @@ public class ContractsController : Controller
             return View(vm);
         }
 
-        var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUser = GetCurrentUserId();
         model.UserId = currentUser;
         await _contractService.SaveSettingsAsync(model, currentUser, ct);
         TempData["SuccessMessage"] = "تنظیمات با موفقیت ذخیره شد.";
@@ -390,13 +411,13 @@ public class ContractsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = GetCurrentUserId();
             var vm = await _contractService.GetSettingsViewModelAsync(currentUserId, ct);
             vm.TemplateName = model.TemplateName; vm.HtmlContent = model.HtmlContent;
             vm.IsDefault = model.IsDefault;
             return View(nameof(Settings), vm);
         }
-        var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUser = GetCurrentUserId();
         await _contractService.SaveTemplateAsync(model, currentUser, ct);
         TempData["SuccessMessage"] = "قالب با موفقیت ذخیره شد.";
         return RedirectToAction(nameof(Settings));
@@ -407,7 +428,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Settings")]
     public async Task<IActionResult> DeleteTemplate(int templateId, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var deleted = await _contractService.DeleteTemplateAsync(templateId, currentUserId, ct);
         if (!deleted) return NotFound();
         TempData["SuccessMessage"] = "قالب با موفقیت حذف شد.";
@@ -419,7 +440,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Settings")]
     public async Task<IActionResult> SetDefaultTemplate(int templateId, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var set = await _contractService.SetDefaultTemplateAsync(templateId, currentUserId, ct);
         if (!set) return NotFound();
         TempData["SuccessMessage"] = "قالب پیش‌فرض با موفقیت تنظیم شد.";
@@ -434,7 +455,7 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.View")]
     public async Task<IActionResult> PreviewTemplate(int id, bool raw = false, CancellationToken ct = default)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = GetCurrentUserId();
         var template = await _contractService.GetUserTemplatesAsync(currentUserId, ct);
         var t = template.FirstOrDefault(x => x.Id == id);
         if (t == null) return NotFound();

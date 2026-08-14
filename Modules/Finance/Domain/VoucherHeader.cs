@@ -14,9 +14,33 @@ public sealed class VoucherHeader
 
     public string? Description { get; set; }
 
+    /// <summary>
+    /// Optional external reference for the voucher (e.g. source document number).
+    /// </summary>
+    public string? Reference { get; set; }
+
     public VoucherStatus Status { get; set; } = VoucherStatus.Draft;
 
     public string PostingStatus { get; set; } = Domain.PostingStatus.Draft;
+
+    /// <summary>
+    /// When true the voucher is a memo / draft that must NOT affect general ledger,
+    /// subsidiary ledger, party balances, trial balance, or closing calculations.
+    /// Memo vouchers remain searchable and auditable.
+    /// </summary>
+    public bool IsMemo { get; set; }
+
+    /// <summary>User that created the voucher.</summary>
+    public string? IssuedBy { get; set; }
+
+    /// <summary>Creation timestamp of the voucher.</summary>
+    public DateTimeOffset IssuedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>User that last modified the voucher.</summary>
+    public string? LastModifiedBy { get; set; }
+
+    /// <summary>Last modification timestamp of the voucher.</summary>
+    public DateTimeOffset? LastModifiedAt { get; set; }
 
     public decimal TotalDebits { get; set; }
 
@@ -61,9 +85,11 @@ public sealed class VoucherHeader
         }
 
         var isValidTransition =
-            (Status == VoucherStatus.Draft && newStatus == VoucherStatus.Reviewed) ||
+            (Status == VoucherStatus.Draft && newStatus is VoucherStatus.Reviewed or VoucherStatus.Posted) ||
             (Status == VoucherStatus.Reviewed && newStatus == VoucherStatus.Approved) ||
-            (Status == VoucherStatus.Approved && newStatus == VoucherStatus.Permanent);
+            (Status == VoucherStatus.Approved && newStatus is VoucherStatus.Permanent or VoucherStatus.Posted) ||
+            (Status == VoucherStatus.Posted && newStatus is VoucherStatus.Permanent or VoucherStatus.Approved) ||
+            (Status == VoucherStatus.Posted && newStatus == VoucherStatus.Reversed);
 
         if (!isValidTransition)
         {
@@ -71,6 +97,28 @@ public sealed class VoucherHeader
         }
 
         Status = newStatus;
+    }
+
+    /// <summary>
+    /// Marks progress on the voucher lifecycle. Progressing towards the posted state
+    /// (Reviewed / Approved / Posted / Permanent) sets the posting status accordingly.
+    /// </summary>
+    public void Progress(VoucherStatus newStatus)
+    {
+        ChangeStatus(newStatus);
+
+        if (newStatus == VoucherStatus.Reversed)
+        {
+            PostingStatus = Domain.PostingStatus.Reversed;
+            return;
+        }
+
+        if (newStatus is VoucherStatus.Approved or VoucherStatus.Posted or VoucherStatus.Permanent)
+        {
+            PostingStatus = newStatus == VoucherStatus.Permanent
+                ? Domain.PostingStatus.Posted
+                : Domain.PostingStatus.Approved;
+        }
     }
 
     public bool IsBalanced()

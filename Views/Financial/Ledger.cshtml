@@ -1,0 +1,74 @@
+@model OfficeAutomation.Modules.Finance.Application.LedgerDto
+@{
+    ViewData["Title"] = "دفتر کل";
+    var from = ViewBag.From as DateTime?;
+    var to = ViewBag.To as DateTime?;
+}
+
+<div class="bg-gray-50 min-h-screen p-3" dir="rtl">
+    <div class="bg-white border border-black/20 rounded-sm shadow-sm p-3">
+        <div class="flex items-center justify-between border-b border-black/20 pb-2 mb-3">
+            <div>
+                <h1 class="text-[14px] font-bold text-[#2d3446]">دفتر کل / معین / تفصیلی</h1>
+                <p class="text-[11px] text-gray-600 mt-0.5">
+                    @if (from.HasValue) { <text>از @from.Value.ToString("yyyy/MM/dd")</text> }
+                    @if (to.HasValue) { <text>تا @to.Value.ToString("yyyy/MM/dd")</text> }
+                    (@Model.Entries.Count ردیف)
+                </p>
+            </div>
+            <a href="@Url.Action("LedgerOperations")" class="px-3 py-1 text-[11px] bg-gradient-to-b from-white to-gray-200 border border-black/30 shadow-sm rounded-sm hover:bg-white">بازگشت به عملیات حسابداری</a>
+        </div>
+
+        @if (Model.Entries.Count == 0)
+        {
+            <div class="text-center text-[12px] text-gray-500 py-8">هیچ ردیفی یافت نشد.</div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-[11px] border-collapse">
+                    <thead>
+                        <tr class="bg-[#3e4756] text-white">
+                            <th class="px-2 py-1.5 border border-black/30 text-right">تاریخ</th>
+                            <th class="px-2 py-1.5 border border-black/30 text-right">شماره</th>
+                            <th class="px-2 py-1.5 border border-black/30 text-right">شرح</th>
+                            <th class="px-2 py-1.5 border border-black/30 text-right">حساب معین</th>
+                            <th class="px-2 py-1.5 border border-black/30 text-right">تفصیلی</th>
+                            <th class="px-2 py-1.5 border border-black/30">بدهکار</th>
+                            <th class="px-2 py-1.5 border border-black/30">بستانکار</th>
+                            <th class="px-2 py-1.5 border border-black/30">مانده</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-[#fff6d2] font-bold">
+                            <td colspan="5" class="px-2 py-1.5 border border-black/20">مانده ابتدای دوره</td>
+                            <td class="px-2 py-1.5 border border-black/20 text-center">@Model.OpeningBalance.ToString("N2")</td>
+                            <td class="px-2 py-1.5 border border-black/20"></td>
+                            <td class="px-2 py-1.5 border border-black/20 text-center">@Model.OpeningBalance.ToString("N2")</td>
+                        </tr>
+                        @foreach (var entry in Model.Entries)
+                        {
+                            var code = (entry.SubsidiaryAccountCode ?? entry.GeneralAccountCode ?? string.Empty) + (entry.FloatingDetailCode != null ? $"-{entry.FloatingDetailCode}" : "");
+                            <tr class="odd:bg-white even:bg-[#f7f9fb]">
+                                <td class="px-2 py-1 border border-black/10">@entry.VoucherDate.ToString("yyyy/MM/dd")</td>
+                                <td class="px-2 py-1 border border-black/10">@entry.VoucherNumber</td>
+                                <td class="px-2 py-1 border border-black/10">@entry.Description</td>
+                                <td class="px-2 py-1 border border-black/10">@entry.SubsidiaryAccountCode - @entry.SubsidiaryAccountName</td>
+                                <td class="px-2 py-1 border border-black/10">@(entry.DetailedAccountName ?? entry.FloatingDetailName ?? "-")</td>
+                                <td class="px-2 py-1 border border-black/10 text-center">@(entry.Debit > 0 ? entry.Debit.ToString("N2") : "")</td>
+                                <td class="px-2 py-1 border border-black/10 text-center">@(entry.Credit > 0 ? entry.Credit.ToString("N2") : "")</td>
+                                <td class="px-2 py-1 border border-black/10 text-center font-bold">@entry.RunningBalance.ToString("N2")</td>
+                            </tr>
+                        }
+                        <tr class="bg-[#fff6d2] font-bold">
+                            <td colspan="5" class="px-2 py-1.5 border border-black/20">جمع کل</td>
+                            <td class="px-2 py-1.5 border border-black/20 text-center">@Model.TotalDebits.ToString("N2")</td>
+                            <td class="px-2 py-1.5 border border-black/20 text-center">@Model.TotalCredits.ToString("N2")</td>
+                            <td class="px-2 py-1.5 border border-black/20 text-center">@Model.ClosingBalance.ToString("N2")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

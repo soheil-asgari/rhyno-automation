@@ -58,9 +58,6 @@
     });
 
     applyFilter();
-
-    // اگر Chart.js داری، اینجا میشه مقداردهی کرد.
-    // اگر نداری، همین canvas خالی می‌مونه و UI نمی‌شکنه.
 })();
 let m = moment();
 
@@ -68,27 +65,22 @@ async function updateEventDisplay(year, month, day, label = "امروز") {
     const loader = document.getElementById('eventLoader');
     const content = document.getElementById('eventContent');
     const display = document.getElementById('eventDisplay');
-
-    console.log("updateEventDisplay called with:", year, month, day, label); // لاگ اول
+    const retryBtn = document.getElementById('eventRetry');
 
     if (loader) loader.style.display = 'flex';
     if (content) content.style.opacity = '0.4';
-    if (display) display.innerText = "در حال دریافت..."; // اطمینان از وجود display
+    if (display) display.innerText = "در حال دریافت...";
+    if (retryBtn) retryBtn.style.display = 'none';
 
     try {
         const apiUrl = `https://pnldev.com/api/calender?year=${year}&month=${month}&day=${day}&holiday=true`;
-        //console.log("Fetching URL:", apiUrl); // لاگ URL
 
         const response = await fetch(apiUrl);
-        if (!response.ok) { // بررسی خطای شبکه
+        if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         await new Promise(r => setTimeout(r, 600));
-
-        //console.log("API Response Data:", data);
-        //console.log("Holiday Status:", data?.result?.holiday);
-        //console.log("Events Array:", data?.result?.event);
 
         let eventText = "مناسبت خاصی نیست";
         let holidayInfo = "";
@@ -99,28 +91,23 @@ async function updateEventDisplay(year, month, day, label = "امروز") {
 
         if (data && data.result && Array.isArray(data.result.event) && data.result.event.length > 0) {
             eventText = data.result.event.join(" - ");
-        } else {
-            console.log("No events found or event array is empty/malformed.");
         }
 
-        if (display) { // اطمینان از وجود display قبل از تغییر متن
+        if (display) {
             display.innerText = `${label}: ${eventText}${holidayInfo}`;
         }
 
     } catch (e) {
-        console.error("Error in updateEventDisplay:", e); // لاگ خطا
-        if (display) { // نمایش خطا در صورت وجود display
-            display.innerText = `خطا: ${e.message}`;
+        if (display) {
+            display.innerText = "دریافت اطلاعات مناسبت‌ها با خطا مواجه شد.";
         }
+        // Show a retry action
+        if (retryBtn) retryBtn.style.display = 'inline-flex';
     } finally {
         if (loader) loader.style.display = 'none';
         if (content) content.style.opacity = '1';
     }
-
 }
-
-
-
 
 function renderCalendar() {
     const container = document.getElementById('daysContainer');
@@ -164,8 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCalendar();
     updateEventDisplay(m.jYear(), m.jMonth() + 1, m.jDate());
 
-    // ست کردن رویداد دکمه‌ها
     document.getElementById('prevMonth').onclick = () => { m.add(1, 'jMonth'); renderCalendar(); };
     document.getElementById('nextMonth').onclick = () => { m.subtract(1, 'jMonth'); renderCalendar(); };
     document.querySelector('.btn-today').onclick = () => { m = moment(); renderCalendar(); updateEventDisplay(m.jYear(), m.jMonth() + 1, m.jDate()); };
+
+    // Retry button for the calendar widget
+    const retryBtn = document.getElementById('eventRetry');
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => updateEventDisplay(m.jYear(), m.jMonth() + 1, m.jDate()));
+    }
 });

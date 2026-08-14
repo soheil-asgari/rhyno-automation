@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
+using OfficeAutomation.Modules.Commercial.Domain;
 using OfficeAutomation.Modules.Finance.Domain;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
 
@@ -29,9 +30,9 @@ public class FinanceLedgerService
             .FirstOrDefaultAsync(item => item.Id == voucherId, cancellationToken)
             ?? throw new InvalidOperationException($"Voucher '{voucherId}' was not found.");
 
-        if (targetStatus == VoucherStatus.Reviewed && !voucher.IsBalanced())
+        if (targetStatus is VoucherStatus.Reviewed or VoucherStatus.Posted and not VoucherStatus.Draft && !voucher.IsBalanced())
         {
-            throw new InvalidOperationException("Unbalanced vouchers cannot move to Reviewed status.");
+            throw new InvalidOperationException("Unbalanced vouchers cannot progress.");
         }
 
         if (targetStatus != VoucherStatus.Draft)
@@ -39,7 +40,149 @@ public class FinanceLedgerService
             await _voucherValidationGuard.ValidateAsync(voucher, cancellationToken);
         }
 
-        voucher.ChangeStatus(targetStatus);
+        voucher.Progress(targetStatus);
+        voucher.LastModifiedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+        return voucher;
+    }
+
+    /// <summary>
+    /// Creates a balanced Draft copy of an existing voucher. The original is never modified.
+    /// Supports changing the date, description, reference, and optionally swapping debit/credit
+    /// (used to build a reversal-style draft without posting it).
+    /// </summary>
+    public async Task<VoucherHeader> CopyVoucherAsync(
+        int sourceVoucherId,
+        DateTime? newDate = null,
+        string? newDescription = null,
+        string? newReference = null,
+        bool swapDebitCredit = false,
+        string? issuedBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var source = await _context.VoucherHeaders
+            .Include(item => item.Lines)
+            .ThenInclude(line => line.SubsidiaryAccount)
+            .FirstOrDefaultAsync(item => item.Id == sourceVoucherId, cancellationToken)
+            ?? throw new InvalidOperationException($"Voucher '{sourceVoucherId}' was not found.");
+
+        var voucherDate = (newDate ?? DateTime.Today).Date;
+        var fiscalYear = await _context.FiscalYears
+            .Where(item => item.StartDate <= voucherDate && item.EndDate >= voucherDate && !item.IsClosed)
+            .OrderByDescending(item => item.StartDate)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException("سال مالی باز برای تاریخ سند یافت نشد.");
+
+        var journalType = await ResolveJournalTypeAsync(
+            source.JournalType?.Code ?? JournalTypeCodes.General,
+            cancellationToken);
+
+        var copiedLines = source.Lines
+            .OrderBy(line => line.DisplayOrder)
+            .Select(line => new VoucherLine
+            {
+                SubsidiaryAccountId = line.SubsidiaryAccountId,
+                DetailedAccountId = line.DetailedAccountId,
+                FloatingDetailAccountId = line.FloatingDetailAccountId,
+                CostCenterId = line.CostCenterId,
+                CurrencyId = line.CurrencyId,
+                ExchangeRate = line.ExchangeRate,
+                ForeignAmount = line.ForeignAmount,
+                DebitAmount = swapDebitCredit ? line.CreditAmount : line.DebitAmount,
+                CreditAmount = swapDebitCredit ? line.DebitAmount : line.CreditAmount,
+                Narration = line.Narration,
+                DisplayOrder = line.DisplayOrder
+            })
+            .ToList();
+
+        var voucher = new VoucherHeader
+        {
+            DocumentNumber = $"COPY-{source.Id}-{Guid.NewGuid():N}"[..32],
+            VoucherDate = voucherDate,
+            Description = string.IsNullOrWhiteSpace(newDescription)
+                ? $"Copy of voucher {source.VoucherNumber ?? source.SequenceNumber}"
+                : newDescription.Trim(),
+            Reference = newReference,
+            Status = VoucherStatus.Draft,
+            PostingStatus = PostingStatus.Draft,
+            FiscalYearId = fiscalYear.Id,
+            JournalTypeId = journalType.Id,
+            IssuedBy = issuedBy,
+            IssuedAt = DateTimeOffset.UtcNow,
+            Lines = copiedLines
+        };
+
+        SetTotalsAndValidate(voucher);
+
+        if (swapDebitCredit)
+        {
+            await _voucherValidationGuard.ValidateAsync(voucher, cancellationToken);
+        }
+
+        _context.VoucherHeaders.Add(voucher);
+        await _context.SaveChangesAsync(cancellationToken);
+        return voucher;
+    }
+
+    /// <summary>
+    /// Formally posts a voucher, moving it through the lifecycle to the Permanent posted state.
+    /// Posted vouchers are immutable thereafter.
+    /// </summary>
+    public async Task<VoucherHeader> PostVoucherAsync(
+        int voucherId,
+        string? issuedBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var voucher = await _context.VoucherHeaders
+            .Include(item => item.Lines)
+            .FirstOrDefaultAsync(item => item.Id == voucherId, cancellationToken)
+            ?? throw new InvalidOperationException($"Voucher '{voucherId}' was not found.");
+
+        if (!voucher.IsBalanced())
+        {
+            throw new InvalidOperationException("Cannot post an unbalanced voucher.");
+        }
+
+        if (voucher.IsMemo)
+        {
+            throw new InvalidOperationException("Memo vouchers cannot be posted. Convert the memo to a regular draft first.");
+        }
+
+        await _voucherValidationGuard.ValidateAsync(voucher, cancellationToken);
+
+        voucher.Status = VoucherStatus.Permanent;
+        voucher.PostingStatus = PostingStatus.Posted;
+        voucher.LastModifiedAt = DateTimeOffset.UtcNow;
+        if (!string.IsNullOrWhiteSpace(issuedBy))
+        {
+            voucher.IssuedBy = issuedBy;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return voucher;
+    }
+
+    /// <summary>
+    /// Soft deletes a voucher by marking it as void/cancelled. Posted history is never physically deleted.
+    /// </summary>
+    public async Task<VoucherHeader> VoidVoucherAsync(
+        int voucherId,
+        string? reason = null,
+        CancellationToken cancellationToken = default)
+    {
+        var voucher = await _context.VoucherHeaders
+            .Include(item => item.Lines)
+            .FirstOrDefaultAsync(item => item.Id == voucherId, cancellationToken)
+            ?? throw new InvalidOperationException($"Voucher '{voucherId}' was not found.");
+
+        if (voucher.Status == VoucherStatus.Permanent || voucher.PostingStatus == PostingStatus.Posted)
+        {
+            throw new InvalidOperationException("Posted vouchers cannot be voided. Create a reversal voucher instead.");
+        }
+
+        voucher.Status = VoucherStatus.Cancelled;
+        voucher.PostingStatus = PostingStatus.Draft;
+        voucher.LastModifiedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
         return voucher;
     }
@@ -195,6 +338,146 @@ public class FinanceLedgerService
         }
 
         voucher.Lines = await BuildLinesAsync(invoice, cancellationToken);
+        NormalizeLines(voucher.Lines);
+        SetTotalsAndValidate(voucher);
+
+        if (existingVoucher == null)
+        {
+            _context.VoucherHeaders.Add(voucher);
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return voucher;
+    }
+
+    /// <summary>
+    /// Posts a balanced, reversal-style voucher for a sales or purchase return.
+    /// The return reduces the original invoice's receivable/payable balance and reverses
+    /// the corresponding revenue/expense and VAT. The accounting logic lives here in the
+    /// shared engine — the commercial module only orchestrates the return document.
+    /// </summary>
+    public async Task<VoucherHeader> PostReturnAsync(
+        InvoiceReturn invoiceReturn,
+        CancellationToken cancellationToken = default)
+    {
+        if (invoiceReturn.Id <= 0)
+        {
+            throw new InvalidOperationException("Return must be persisted before posting an accounting voucher.");
+        }
+
+        var isSaleReturn = string.Equals(invoiceReturn.ReturnType, "Sale", StringComparison.OrdinalIgnoreCase);
+        var fiscalYear = await ResolveFiscalYearAsync(invoiceReturn.ReturnDate, cancellationToken);
+        if (fiscalYear.IsClosed)
+        {
+            throw new InvalidOperationException($"Fiscal year '{fiscalYear.YearName}' is closed.");
+        }
+
+        await EnsureLedgerDefaultsAsync(cancellationToken);
+
+        var documentNumber = $"{(isSaleReturn ? "RET-SAL" : "RET-PUR")}-{invoiceReturn.Id}";
+        var existingVoucher = await _context.VoucherHeaders
+            .Include(item => item.Lines)
+            .FirstOrDefaultAsync(item => item.DocumentNumber == documentNumber, cancellationToken);
+
+        if (existingVoucher?.PostingStatus == PostingStatus.Posted)
+        {
+            return existingVoucher;
+        }
+
+        var journalType = await ResolveJournalTypeAsync(
+            isSaleReturn ? JournalTypeCodes.Sales : JournalTypeCodes.Purchase,
+            cancellationToken);
+
+        var voucher = existingVoucher ?? new VoucherHeader
+        {
+            DocumentNumber = documentNumber
+        };
+
+        voucher.VoucherDate = invoiceReturn.ReturnDate.Date;
+        voucher.Description = $"{(isSaleReturn ? "Sales return" : "Purchase return")} {invoiceReturn.ReturnNumber} for invoice {invoiceReturn.Invoice?.InvoiceNumber}";
+        voucher.Status = VoucherStatus.Permanent;
+        voucher.PostingStatus = PostingStatus.Posted;
+        voucher.FiscalYearId = fiscalYear.Id;
+        voucher.JournalTypeId = journalType.Id;
+
+        if (existingVoucher != null && existingVoucher.Lines.Count > 0)
+        {
+            _context.VoucherLines.RemoveRange(existingVoucher.Lines);
+            existingVoucher.Lines.Clear();
+        }
+
+        voucher.Lines = isSaleReturn
+            ? await BuildSalesReturnLinesAsync(invoiceReturn, cancellationToken)
+            : await BuildPurchaseReturnLinesAsync(invoiceReturn, cancellationToken);
+        NormalizeLines(voucher.Lines);
+        SetTotalsAndValidate(voucher);
+
+        if (existingVoucher == null)
+        {
+            _context.VoucherHeaders.Add(voucher);
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return voucher;
+    }
+
+    /// <summary>
+    /// Posts a treasury voucher for an actual settlement (cash/bank movement) against an
+    /// invoice. For a sales invoice it debits cash/bank and credits accounts receivable
+    /// (against the customer floating detail); for a purchase invoice it debits accounts
+    /// payable and credits cash/bank.
+    /// </summary>
+    public async Task<VoucherHeader> PostSettlementAsync(
+        SettlementTransaction settlement,
+        CancellationToken cancellationToken = default)
+    {
+        if (settlement.Id <= 0)
+        {
+            throw new InvalidOperationException("Settlement must be persisted before posting an accounting voucher.");
+        }
+
+        var isSaleSettlement = string.Equals(settlement.SettlementType, "Sale", StringComparison.OrdinalIgnoreCase);
+        var fiscalYear = await ResolveFiscalYearAsync(settlement.SettlementDate, cancellationToken);
+        if (fiscalYear.IsClosed)
+        {
+            throw new InvalidOperationException($"Fiscal year '{fiscalYear.YearName}' is closed.");
+        }
+
+        await EnsureLedgerDefaultsAsync(cancellationToken);
+
+        var documentNumber = $"{(isSaleSettlement ? "REC" : "PAY")}-{settlement.Id}";
+        var existingVoucher = await _context.VoucherHeaders
+            .Include(item => item.Lines)
+            .FirstOrDefaultAsync(item => item.DocumentNumber == documentNumber, cancellationToken);
+
+        if (existingVoucher?.PostingStatus == PostingStatus.Posted)
+        {
+            return existingVoucher;
+        }
+
+        var journalType = await ResolveJournalTypeAsync(JournalTypeCodes.Treasury, cancellationToken);
+
+        var voucher = existingVoucher ?? new VoucherHeader
+        {
+            DocumentNumber = documentNumber
+        };
+
+        voucher.VoucherDate = settlement.SettlementDate.Date;
+        voucher.Description = $"{(isSaleSettlement ? "Receipt" : "Payment")} {settlement.ReferenceNumber} for invoice {settlement.Invoice?.InvoiceNumber}";
+        voucher.Status = VoucherStatus.Permanent;
+        voucher.PostingStatus = PostingStatus.Posted;
+        voucher.FiscalYearId = fiscalYear.Id;
+        voucher.JournalTypeId = journalType.Id;
+
+        if (existingVoucher != null && existingVoucher.Lines.Count > 0)
+        {
+            _context.VoucherLines.RemoveRange(existingVoucher.Lines);
+            existingVoucher.Lines.Clear();
+        }
+
+        voucher.Lines = isSaleSettlement
+            ? await BuildReceiptLinesAsync(settlement, cancellationToken)
+            : await BuildPaymentLinesAsync(settlement, cancellationToken);
         NormalizeLines(voucher.Lines);
         SetTotalsAndValidate(voucher);
 
@@ -481,6 +764,64 @@ public class FinanceLedgerService
             CreateLine(expense, null, invoice.SubTotal, 0, $"Purchase expense for invoice {invoice.InvoiceNumber}"),
             CreateLine(vat, null, invoice.VatAmount, 0, $"Input VAT for invoice {invoice.InvoiceNumber}"),
             CreateLine(payable, vendor, 0, invoice.GrandTotal, $"Payable for invoice {invoice.InvoiceNumber}")
+        ];
+    }
+
+    private async Task<List<VoucherLine>> BuildSalesReturnLinesAsync(InvoiceReturn invoiceReturn, CancellationToken cancellationToken)
+    {
+        var receivable = await ResolveSubsidiaryAsync(FinanceAccountKeys.AccountsReceivable, cancellationToken);
+        var revenue = await ResolveSubsidiaryAsync(FinanceAccountKeys.SalesRevenue, cancellationToken);
+        var vat = await ResolveSubsidiaryAsync(FinanceAccountKeys.VatPayable, cancellationToken);
+        var customer = await ResolveFloatingDetailAsync(receivable, FloatingDetailAccountType.Person, invoiceReturn.Invoice?.PartyName ?? invoiceReturn.ReturnNumber, invoiceReturn.Invoice?.PartyName ?? invoiceReturn.ReturnNumber, cancellationToken);
+
+        // Sales return reduces receivable and reverses revenue + output VAT.
+        return
+        [
+            CreateLine(receivable, customer, 0, invoiceReturn.GrandTotal, $"Return receivable for {invoiceReturn.ReturnNumber}"),
+            CreateLine(revenue, null, invoiceReturn.SubTotal, 0, $"Return revenue for {invoiceReturn.ReturnNumber}"),
+            CreateLine(vat, null, invoiceReturn.VatAmount, 0, $"Return output VAT for {invoiceReturn.ReturnNumber}")
+        ];
+    }
+
+    private async Task<List<VoucherLine>> BuildPurchaseReturnLinesAsync(InvoiceReturn invoiceReturn, CancellationToken cancellationToken)
+    {
+        var expense = await ResolveSubsidiaryAsync(FinanceAccountKeys.PurchaseExpense, cancellationToken);
+        var vat = await ResolveSubsidiaryAsync(FinanceAccountKeys.VatReceivable, cancellationToken);
+        var payable = await ResolveSubsidiaryAsync(FinanceAccountKeys.AccountsPayable, cancellationToken);
+        var vendor = await ResolveFloatingDetailAsync(payable, FloatingDetailAccountType.Person, invoiceReturn.Invoice?.PartyName ?? invoiceReturn.ReturnNumber, invoiceReturn.Invoice?.PartyName ?? invoiceReturn.ReturnNumber, cancellationToken);
+
+        // Purchase return reduces payable and reverses expense + input VAT.
+        return
+        [
+            CreateLine(payable, vendor, invoiceReturn.GrandTotal, 0, $"Return payable for {invoiceReturn.ReturnNumber}"),
+            CreateLine(expense, null, 0, invoiceReturn.SubTotal, $"Return expense for {invoiceReturn.ReturnNumber}"),
+            CreateLine(vat, null, 0, invoiceReturn.VatAmount, $"Return input VAT for {invoiceReturn.ReturnNumber}")
+        ];
+    }
+
+    private async Task<List<VoucherLine>> BuildReceiptLinesAsync(SettlementTransaction settlement, CancellationToken cancellationToken)
+    {
+        var cash = await ResolveSubsidiaryAsync(FinanceAccountKeys.CashOnHand, cancellationToken);
+        var receivable = await ResolveSubsidiaryAsync(FinanceAccountKeys.AccountsReceivable, cancellationToken);
+        var customer = await ResolveFloatingDetailAsync(receivable, FloatingDetailAccountType.Person, settlement.Invoice?.PartyName ?? settlement.ReferenceNumber, settlement.Invoice?.PartyName ?? settlement.ReferenceNumber, cancellationToken);
+
+        return
+        [
+            CreateLine(receivable, customer, 0, settlement.Amount, $"Receipt {settlement.ReferenceNumber} against invoice {settlement.Invoice?.InvoiceNumber}"),
+            CreateLine(cash, null, settlement.Amount, 0, $"Cash receipt {settlement.ReferenceNumber}")
+        ];
+    }
+
+    private async Task<List<VoucherLine>> BuildPaymentLinesAsync(SettlementTransaction settlement, CancellationToken cancellationToken)
+    {
+        var cash = await ResolveSubsidiaryAsync(FinanceAccountKeys.CashOnHand, cancellationToken);
+        var payable = await ResolveSubsidiaryAsync(FinanceAccountKeys.AccountsPayable, cancellationToken);
+        var vendor = await ResolveFloatingDetailAsync(payable, FloatingDetailAccountType.Person, settlement.Invoice?.PartyName ?? settlement.ReferenceNumber, settlement.Invoice?.PartyName ?? settlement.ReferenceNumber, cancellationToken);
+
+        return
+        [
+            CreateLine(payable, vendor, settlement.Amount, 0, $"Payment {settlement.ReferenceNumber} against invoice {settlement.Invoice?.InvoiceNumber}"),
+            CreateLine(cash, null, 0, settlement.Amount, $"Cash payment {settlement.ReferenceNumber}")
         ];
     }
 
@@ -815,6 +1156,7 @@ public class FinanceLedgerService
         return await _context.VoucherLines
             .AsNoTracking()
             .Where(line =>
+                !line.VoucherHeader.IsMemo &&
                 line.VoucherHeader.VoucherDate >= from &&
                 line.VoucherHeader.VoucherDate <= to &&
                 line.VoucherHeader.PostingStatus == PostingStatus.Posted &&
@@ -842,6 +1184,7 @@ public class FinanceLedgerService
         return await _context.VoucherLines
             .AsNoTracking()
             .Where(line =>
+                !line.VoucherHeader.IsMemo &&
                 line.CurrencyId == currencyId &&
                 line.ForeignAmount.HasValue &&
                 line.VoucherHeader.VoucherDate <= to &&

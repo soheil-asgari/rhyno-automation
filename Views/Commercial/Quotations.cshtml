@@ -1,0 +1,91 @@
+@model OfficeAutomation.Modules.Commercial.Application.QuotationIndexVM
+@{
+    var pageTitle = ViewBag.PageTitle as string ?? "پیش‌فاکتور";
+    var pageDescription = ViewBag.PageDescription as string ?? "";
+    var quotationType = ViewBag.QuotationType as string ?? "Sale";
+    var isPurchase = quotationType == "Purchase";
+}
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-emerald-50/80 text-emerald-800 border border-emerald-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i><span class="flex-1">@successMessage</span></div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2 p-3 bg-rose-50/80 text-rose-800 border border-rose-200/60 rounded-xl text-xs font-semibold"><i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i><span class="flex-1">@errorMessage</span></div>
+    }
+
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <div>
+            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">@pageTitle</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">@pageDescription</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="flex rounded-lg border border-slate-200/80 overflow-hidden">
+                <a asp-action="Quotations" asp-route-type="Sale" class="px-3 py-1.5 text-xs font-bold @(!isPurchase ? "bg-indigo-600 text-white" : "text-slate-600") no-underline">فروش</a>
+                <a asp-action="Quotations" asp-route-type="Purchase" class="px-3 py-1.5 text-xs font-bold @(isPurchase ? "bg-indigo-600 text-white" : "text-slate-600") no-underline">خرید</a>
+            </div>
+            <a asp-action="CreateQuotation" asp-route-type="@quotationType" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition no-underline">
+                <i class="bi bi-plus-circle-fill"></i><span>پیش‌فاکتور جدید</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-xs text-right border-collapse">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-100">
+                    <tr>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">شماره</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">طرف حساب</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">تاریخ</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">اعتبار تا</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-right" dir="ltr">جمع کل</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500">وضعیت</th>
+                        <th class="px-3 py-2.5 font-semibold text-slate-500 text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="7" class="px-3 py-10 text-center text-slate-400">پیش‌فاکتوری ثبت نشده است.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            var converted = item.Status == OfficeAutomation.Modules.Commercial.Domain.CommercialQuotationStatus.Converted;
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                                <td class="px-3 py-3 font-mono font-semibold text-slate-900">@item.QuotationNumber</td>
+                                <td class="px-3 py-3 font-bold text-slate-800">@item.PartyName</td>
+                                <td class="px-3 py-3 font-mono text-slate-500">@item.DateShamsi</td>
+                                <td class="px-3 py-3 font-mono text-slate-500">@(item.ValidUntilShamsi ?? "-")</td>
+                                <td class="px-3 py-3 font-mono tabular-nums" dir="ltr">@item.GrandTotal.ToString("N0")</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium border @OfficeAutomation.Modules.Commercial.Domain.CommercialQuotationStatus.BadgeCss(item.Status)">
+                                        @OfficeAutomation.Modules.Commercial.Domain.CommercialQuotationStatus.Label(item.Status)
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3 text-center">
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        @if (!converted)
+                                        {
+                                            <form asp-action="ConvertQuotation" asp-route-id="@item.Id" asp-route-type="@quotationType" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="p-1.5 text-slate-400 hover:text-emerald-600 transition" title="تبدیل به فاکتور"><i class="bi bi-arrow-right-square text-sm"></i></button>
+                                            </form>
+                                        }
+                                        @if (item.ConvertedInvoiceId.HasValue)
+                                        {
+                                            <a asp-action="Details" asp-route-id="@item.ConvertedInvoiceId.Value" asp-route-_tab="true" class="p-1.5 text-slate-400 hover:text-indigo-600 transition" title="مشاهده فاکتور"><i class="bi bi-eye text-sm"></i></a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

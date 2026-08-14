@@ -1,0 +1,59 @@
+@model OfficeAutomation.Modules.Commercial.Application.PartyUpsertVM
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    <header class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 rounded-2xl shadow-sm">
+        <h1 class="m-0 text-base font-black text-slate-900 dark:text-white">@(Model.Id > 0 ? "ویرایش طرف حساب" : "طرف حساب جدید")</h1>
+        <p class="text-xs text-slate-500 mt-0.5">مشتری و تامین‌کننده به‌صورت یکتا مدیریت می‌شوند.</p>
+    </header>
+
+    <form asp-action="SaveParty" method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 p-4">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="text-rose-600 text-xs mb-3"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1">
+                <label asp-for="Name" class="text-[11px] font-bold text-slate-500">نام *</label>
+                <input asp-for="Name" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none focus:border-indigo-500" />
+                <span asp-validation-for="Name" class="text-rose-600 text-[10px]"></span>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label asp-for="PartyType" class="text-[11px] font-bold text-slate-500">نوع</label>
+                <select asp-for="PartyType" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none">
+                    <option value="1">مشتری</option>
+                    <option value="2">تامین‌کننده</option>
+                    <option value="3">مشتری/تامین‌کننده</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label asp-for="NationalCode" class="text-[11px] font-bold text-slate-500">کد ملی</label>
+                <input asp-for="NationalCode" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label asp-for="EconomicCode" class="text-[11px] font-bold text-slate-500">کد اقتصادی</label>
+                <input asp-for="EconomicCode" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label asp-for="Phone" class="text-[11px] font-bold text-slate-500">تلفن</label>
+                <input asp-for="Phone" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label asp-for="Email" class="text-[11px] font-bold text-slate-500">ایمیل</label>
+                <input asp-for="Email" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none" />
+            </div>
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label asp-for="Address" class="text-[11px] font-bold text-slate-500">آدرس</label>
+                <input asp-for="Address" class="h-8 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 text-xs outline-none" />
+            </div>
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label asp-for="Notes" class="text-[11px] font-bold text-slate-500">یادداشت</label>
+                <textarea asp-for="Notes" class="rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 py-1.5 text-xs outline-none" rows="2"></textarea>
+            </div>
+        </div>
+        <label class="flex items-center gap-2 mt-3 text-xs font-bold text-slate-600">
+            <input asp-for="IsActive" class="accent-indigo-600" /> فعال
+        </label>
+        <div class="mt-4 flex items-center gap-2">
+            <button type="submit" class="h-9 bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-lg text-xs font-bold transition">ذخیره</button>
+            <a asp-action="Parties" class="px-3 py-2 border border-slate-200/80 rounded-lg text-xs font-bold text-slate-600 no-underline">انصراف</a>
+        </div>
+    </form>
+</div>
