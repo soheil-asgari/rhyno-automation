@@ -1074,34 +1074,43 @@ public sealed class TaxExporterService : ITaxExporterService
 
     /// <summary>
     /// True when the authenticated state is confirmed on the CURRENT page: either we are
-    /// directly on the business portal (tp.tax.gov.ir), or we are on the SSO domain
-    /// (my.tax.gov.ir) and the page clearly shows the post-login dashboard (کارپوشه /
-    /// خروج / «ورود به کارپوشه تجاری») or a portal /Page/ route. A blank or unrelated
-    /// URL is never treated as authenticated.
+    /// directly on the business portal (tp.tax.gov.ir), or we are on the SSO dashboard
+    /// (my.tax.gov.ir, incl. /Page/ routes) and the page clearly shows the post-login
+    /// dashboard (کارپوشه / خروج / «ورود به کارپوشه تجاری»). Before deciding, the current
+    /// URL is inspected and — when the DOM is still loading — we wait a short moment so a
+    /// just-navigated page (e.g. an OTP redirect that is mid-render) isn't misjudged as
+    /// logged-out. A blank or unrelated URL is never treated as authenticated.
     /// </summary>
     private static async Task<bool> IsLoggedInOrOnPortalAsync(IPage page)
     {
+        const StringComparison ignoreCase = StringComparison.OrdinalIgnoreCase;
+
+        // Inspect the current URL first.
         var url = GetPageUrl(page);
 
-        // Directly on tp.tax.gov.ir — authenticated.
+        // If the DOM is still loading (page navigation in-flight), give it a brief moment
+        // so the redirected screen (portal / logged-in dashboard) has time to render before
+        // we decide. Best-effort: never throws.
+        await SafeWaitForLoadAsync(page);
+
+        // Re-read the URL after the load wait — the navigation may have finished.
+        url = GetPageUrl(page);
+
+        // ۱. Directly on the portal tp.tax.gov.ir — authenticated.
         if (IsUrlOnPortal(url))
         {
             return true;
         }
 
-        // On the SSO domain (my.tax.gov.ir): the OTP success often parks the user on the
-        // authenticated dashboard instead of redirecting to tp.tax.gov.ir. Detect the
+        // ۲. On the SSO dashboard my.tax.gov.ir: the OTP success often parks the user on
+        // the authenticated dashboard instead of redirecting to tp.tax.gov.ir. Detect the
         // dashboard by its distinctive post-login route (/Page/, incl. /Page/Dashboard)
         // or its post-login text.
-        if (IsOnSsoOrPortalDomain(url))
+        if (url.Contains("my.tax.gov.ir", ignoreCase))
         {
-            const StringComparison ignoreCase = StringComparison.OrdinalIgnoreCase;
-
             // The authenticated SSO dashboard route (from valid cookies / an already
             // established session). Explicitly includes my.tax.gov.ir/Page/Dashboard.
-            if (url.Contains("/Page/", ignoreCase)
-                || url.EndsWith("/Page/Dashboard", ignoreCase)
-                || url.Contains("/Page/Dashboard", ignoreCase))
+            if (url.Contains("/Page/", ignoreCase))
             {
                 return true;
             }
@@ -1116,6 +1125,33 @@ public sealed class TaxExporterService : ITaxExporterService
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Best-effort: wait a short moment for a still-loading page DOM before judging the
+    /// login state. The wait only triggers while an in-flight navigation is present; when
+    /// the DOM is already loaded it returns immediately. Never throws.
+    /// </summary>
+    private static async Task SafeWaitForLoadAsync(IPage page)
+    {
+        try
+        {
+            var state = page.IsClosed ? string.Empty : page.Url;
+            if (string.IsNullOrEmpty(state))
+            {
+                return;
+            }
+
+            try
+            {
+                await page.WaitForLoadStateAsync(
+                    LoadState.DOMContentLoaded,
+                    new PageWaitForLoadStateOptions { Timeout = 4000 });
+            }
+            catch (TimeoutException) { /* DOM still loading — proceed with current snapshot */ }
+            catch { /* best-effort */ }
+        }
+        catch { /* page may be closed/disposed — best-effort */ }
     }
 
     /// <summary>Wait up to 30s for the SSO redirect onto the authenticated area — either
