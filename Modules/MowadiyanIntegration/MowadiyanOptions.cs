@@ -42,20 +42,34 @@ public sealed class MowadiyanOptions
     public int MaxBackoffSeconds { get; set; } = 600;
 
     /// <summary>
-    /// Executable used to run the Python Playwright exporter
-    /// (<c>scripts/tax_exporter.py</c>). Defaults to <c>python</c>.
+    /// Launch the Chromium browser in headed (visible) mode so the operator can
+    /// inspect and respond to the CAPTCHA manually. When false the browser runs
+    /// headless. Defaults to <c>true</c> in development for visible CAPTCHA interaction.
     /// </summary>
-    public string PythonExecutable { get; set; } = "python";
+    public bool Headless { get; set; } = true;
 
     /// <summary>
-    /// Absolute path to <c>tax_exporter.py</c>. When empty the script is resolved
-    /// relative to the content root (<c>{ContentRoot}/scripts/tax_exporter.py</c>).
+    /// When true Playwright initializes (and installs) the Chromium browser binaries
+    /// on first use if they are missing. Defaults to <c>true</c>.
     /// </summary>
-    public string? PythonScriptPath { get; set; }
+    public bool AutoInstallBrowser { get; set; } = true;
 
     /// <summary>
-    /// Directory where the Python exporter writes downloaded .xlsx/.zip files.
+    /// Lifetime (in seconds) of an authenticated Tax Portal browser session before the
+    /// background cleanup disposes it. Defaults to 300 seconds (5 minutes).
+    /// </summary>
+    public int SessionTimeoutSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Directory where downloaded .xlsx/.zip export files are written.
     /// Defaults to <c>{ContentRoot}/wwwroot/uploads/mowadiyan</c>.
     /// </summary>
     public string? ExportOutDir { get; set; }
+
+    /// <summary>
+    /// Absolute path to the ddddocr <c>common_old.onnx</c> CAPTCHA classification model used for
+    /// automated CAPTCHA recognition via <c>Microsoft.ML.OnnxRuntime</c> + <c>SixLabors.ImageSharp</c>.
+    /// When unset or missing, the login loop falls back to manual (human) CAPTCHA solving.
+    /// </summary>
+    public string? CaptchaModelPath { get; set; }
 }

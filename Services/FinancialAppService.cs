@@ -543,6 +543,8 @@ public sealed class FinancialAppService
                 new FinancialQuickActionVM { Title = "خرید", Description = "ثبت و پیگیری فاکتورهای خرید", Url = urlHelper("Purchases") ?? "#", Icon = "bi-cart", Tone = "primary" },
                 new FinancialQuickActionVM { Title = "مالیات بر ارزش افزوده", Description = "کنترل مالیات بر ارزش افزوده و مغایرت‌ها", Url = urlHelper("VatDashboard") ?? "#", Icon = "bi-percent", Tone = "warning" },
                 new FinancialQuickActionVM { Title = "معاملات فصلی", Description = "گزارش ماده 169 و خروجی‌ها", Url = urlHelper("SeasonalTax") ?? "#", Icon = "bi-journal-text", Tone = "info" },
+                new FinancialQuickActionVM { Title = "کدینگ حساب‌ها", Description = "مدیریت سرفصل، معین و تفصیلی حساب‌ها", Url = urlHelper("ChartOfAccounts") ?? "#", Icon = "bi-diagram-2", Tone = "info" },
+                new FinancialQuickActionVM { Title = "دفاتر حسابداری", Description = "دفتر کل، معین و تفصیلی", Url = urlHelper("Ledger") ?? "#", Icon = "bi-journal-arrow-down", Tone = "dark" },
                 new FinancialQuickActionVM { Title = "حقوق", Description = "ورود به مدیریت حقوق و دستمزد", Url = "/Payroll/Index", Icon = "bi-cash-stack", Tone = "secondary" },
                 new FinancialQuickActionVM { Title = "بیمه", Description = "ورود به مدیریت بیمه و لیست‌ها", Url = "/Bimeh/Index", Icon = "bi-shield-lock", Tone = "dark" }
             ],
@@ -567,7 +569,14 @@ public sealed class FinancialAppService
             OverdueInvoices = invoices.Count(item => !string.IsNullOrWhiteSpace(item.DeadlineDateShamsi) && item.WorkflowStatus != WorkflowStatus.Approved && item.WorkflowStatus != WorkflowStatus.Archived),
             VatRows = invoices.OrderByDescending(item => item.DateShamsi).ThenByDescending(item => item.CreatedAt).Select(item => new VatInvoiceRowVM
             {
-                Id = item.Id, InvoiceNumber = item.InvoiceNumber, InvoiceType = item.InvoiceType, DateShamsi = item.DateShamsi, PartyName = item.PartyName, SubTotal = item.SubTotal, VatAmount = item.VatAmount, GrandTotal = item.GrandTotal
+                Id = item.Id,
+                InvoiceNumber = item.InvoiceNumber,
+                InvoiceType = item.InvoiceType,
+                DateShamsi = item.DateShamsi,
+                PartyName = item.PartyName,
+                SubTotal = item.SubTotal,
+                VatAmount = item.VatAmount,
+                GrandTotal = item.GrandTotal
             }).ToList(),
             RecentActivities = invoices.OrderByDescending(item => item.CreatedAt).Take(8).Select(item => new FinancialActivityVM
             {

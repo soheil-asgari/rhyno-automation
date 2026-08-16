@@ -1,0 +1,740 @@
+﻿$(document).on('click', '.WebAccessibilityButton', function (e) {
+    $('.WebAccessibilityControl').toggleClass('active');
+    e.stopPropagation();
+});
+$(document).on('click', '.CloseBtn', function (e) {
+    $('.WebAccessibilityControl').removeClass('active');
+});
+$(document).on("mouseup", function (e) {
+    if (
+        $('.WebAccessibilityControl').hasClass('active') &&
+        !$(e.target).closest('.WebAccessibilityButton, .WebAccessibilityControl').length
+    ) {
+        $('.WebAccessibilityControl').removeClass("active");
+    }
+});
+const textSteps = {
+    Contrast: ["کنتراست +", "رنگ های معکوس", "تضاد کنتراست", "کنتراست روشن"],
+    Links: ["پیوندهای برجسته", "پیوندهای برجسته"],
+    FontSize: ["متن بزرگتر", "متن بزرگ", "متن خیلی بزرگ", "بزرگترین متن"],
+    LetterSpace:["فاصله متن","با فاصله","فاصله متوسط","فاصله زیاد"]
+
+};
+const initFontSize ="12px";
+$(document).ready(function () {
+    $(".Control-Item").each(function () {
+        var item = $(this);
+        var type = item.attr("class").split(" ")[1]; // گرفتن نام نوع (Contrast, Links, FontSize)
+        var maxStep = parseInt(item.attr("max-step"), 10); // دریافت مقدار max-step
+        var currentStep = parseInt(item.attr("data-default"), 10); // مقدار اولیه
+
+        // تابع تغییر متن
+        function updateText(step) {
+            if (textSteps[type] && textSteps[type][step]) {
+                item.find(".text").text(textSteps[type][step]);
+            }
+        }
+
+        // مقداردهی اولیه
+        updateText(currentStep);
+
+        // تغییر استپ با کلیک (یا هر رویداد دیگر)
+        item.on("click", function () {
+            currentStep = (currentStep + 1) % (maxStep + 1); // چرخش بین استپ‌ها
+            updateText(currentStep);
+        });
+    });
+});
+
+const run = {
+    "Contrast": function (element) {
+        runContrast(element);
+    },
+    "Links": function (element) {
+        showlinks(element);
+    },
+    "FontSize": function (element) {
+        runFontSize(element);
+    },
+    "LetterSpace": function (element) {
+        runLetterSpace(element)
+    },
+    "LineHeight": function (element) {
+        runLineHeight(element)
+    },
+    "Anim": function (element) {
+        runAnim(element);
+    },
+    "Images": function (element) {
+        runImages(element)
+    },
+    "Mouse": function (element) {
+        runMouse(element)
+    },
+    "Zoom": function (element) {
+        runZoom(element)
+    },
+    "Saturate": function (element) {
+        runSaturate(element)
+    },
+    "BlackWhite": function (element) {
+        runBlackWhite(element)
+    },
+    "Fonts": function (element) {
+        runFonts(element)
+    }
+};
+
+$(document).ready(function () {
+    loadColors()
+    var WebAccessibility = $('.WebAccessibility')[0];
+
+    if (WebAccessibility) {
+        document.documentElement.insertBefore(WebAccessibility, document.body);
+    }
+    restoreState();
+    $(".Control-Item").each(function () {
+        var maxStep = $(this).attr("max-step");
+        var progressStatus = $(this).find(".ProgressStatus");
+        for (var i = 1; i <= maxStep; i++) {
+            progressStatus.append(`<span class="status${i}"></span>`);
+        }
+    });
+
+});
+
+$(document).on('click', '.Control-Item.Links', function (e) {
+    var element = this;
+    var dataid = $(element).attr('data-default');
+    var datamax = $(element).attr('max-step');
+    if (dataid == datamax) {
+        dataid = 0;
+    } else {
+        dataid = Number(dataid) + 1;
+    }
+    element.setAttribute("data-default", dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.Contrast', function (e) {
+    var element = this;
+    var dataid = $(element).attr('data-default');
+    var datamax = $(element).attr('max-step');
+
+    if (dataid == datamax) {
+        dataid = 0;
+    } else {
+        dataid = Number(dataid) + 1;
+    }
+    element.setAttribute("data-default", dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.LetterSpace', function (e) {
+    var element = this;
+    var dataid = $(element).attr('data-default');
+    var datamax = $(element).attr('max-step');
+    if (dataid == datamax) {
+        dataid = 0;
+    } else {
+        dataid = Number(dataid) + 1;
+    }
+    element.setAttribute("data-default", dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.LineHeight', function (e) {
+    var element = this;
+    var dataid = $(element).attr('data-default');
+    var datamax = $(element).attr('max-step');
+    if (dataid == datamax) {
+        dataid = 0;
+    } else {
+        dataid = Number(dataid) + 1;
+    }
+    element.setAttribute("data-default", dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.FontSize', function (e) {
+    var element = this;
+    var dataid = $(element).attr('data-default');
+    var datamax = $(element).attr('max-step');
+    if (dataid == datamax) {
+        dataid = 0;
+    } else {
+        dataid = Number(dataid) + 1;
+    }
+    element.setAttribute("data-default", dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.Anim', function (e) {
+    var element = this;
+    var dataid = $(element).attr('data-default');
+    var datamax = $(element).attr('max-step');
+
+    if (dataid == datamax) {
+        dataid = 0;
+    } else {
+        dataid = Number(dataid) + 1;
+    }
+    element.setAttribute("data-default", dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.Images', function (e) {
+    var element = this;
+    var dataid = $(element).attr('data-default');
+    var datamax = $(element).attr('max-step');
+
+    if (dataid == datamax) {
+        dataid = 0;
+    } else {
+        dataid = Number(dataid) + 1;
+    }
+    element.setAttribute("data-default", dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.Mouse', function (e) {
+    var element = this;
+    var dataid = parseInt(element.getAttribute('data-default'));
+    var datamax = $(element).attr('max-step');
+    if (dataid >= datamax) {
+        dataid = 0;
+    } else {
+        dataid += 1;
+    }
+    element.setAttribute('data-default', dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.Zoom', function (e) {
+    var element = this;
+    var dataid = parseInt(element.getAttribute('data-default'));
+    var datamax = $(element).attr('max-step');
+    if (dataid >= datamax) {
+        dataid = 0;
+    } else {
+        dataid += 1;
+    }
+    element.setAttribute('data-default', dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.Saturate', function (e) {
+    var element = this;
+    var dataid = parseInt(element.getAttribute('data-default'));
+    var datamax = $(element).attr('max-step');
+    if (dataid >= datamax) {
+        dataid = 0;
+    } else {
+        dataid += 1;
+    }
+    element.setAttribute('data-default', dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.BlackWhite', function (e) {
+    var element = this;
+    var dataid = parseInt(element.getAttribute('data-default'));
+    var datamax = $(element).attr('max-step');
+
+    if (dataid >= datamax) {
+        dataid = 0;
+    } else {
+        dataid += 1;
+    }
+    element.setAttribute('data-default', dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+$(document).on('click', '.Control-Item.Fonts', function (e) {
+    var element = this;
+    var dataid = parseInt(element.getAttribute('data-default'));
+    var datamax = $(element).attr('max-step');
+
+    if (dataid >= datamax) {
+        dataid = 0;
+    } else {
+        dataid += 1;
+    }
+    element.setAttribute('data-default', dataid);
+    activeControl(element);
+    run[element.classList[1]](element);
+    saveState();
+});
+function activeControl(element) {
+
+    var isactive = element.getAttribute('data-default') > 0;
+    if (!isactive) {
+        $(element).removeClass('active');
+        $(element).find('.activeated').remove();
+    } else {
+        $(element).addClass('active');
+        $(element).find('.activeated').remove();
+        $(element).append(`
+            <span class="activeated">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 8" width="100%" height="100%">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="m1.5 4.5 2 2 5-5"></path>
+                </svg>
+            </span>
+        `);
+    }
+}
+function saveState() {
+    var states = {};
+    $('.Control-Item').each(function () {
+        var className = $(this).attr('class').split(' ')
+            .filter(cls => cls !== 'Control-Item' && cls !== 'active' && cls !== 'step1' && cls !== 'step2' && cls !== 'step3')
+            .join(' ');
+        var dataDefault = $(this).attr('data-default');
+        var isActive = $(this).attr('data-default') > 0;
+        states[className] = { dataDefault, isActive };
+    });
+    localStorage.setItem('controlStates', JSON.stringify(states));
+}
+function restoreState() {
+    var savedStates = JSON.parse(localStorage.getItem('controlStates')) || {};
+
+    $('.Control-Item').each(function () {
+        var className = $(this).attr('class').split(' ')
+            .filter(cls => cls !== 'Control-Item' && cls !== 'active' && cls !== 'step1' && cls !== 'step2' && cls !== 'step3')
+            .join(' ');
+
+        if (savedStates[className]) {
+            $(this).attr('data-default', savedStates[className].dataDefault);
+
+            if (savedStates[className].isActive) {
+                activeControl(this)
+            } else {
+                $(this).removeClass('active');
+            }
+
+            if (savedStates[className].isActive && run[className]) {
+                run[className](this);
+            }
+        }
+    });
+    if (savedStates["Color"] && savedStates["Color"].selectedColor) {
+        var colorClass = "color-" + savedStates["Color"].selectedColor
+        //$("body").addClass(colorClass);
+        $(".ColorChange").addClass(colorClass);
+    }
+}
+
+function showlinks(element) {
+    var dataid = $(element).attr('data-default');
+    if (dataid == 0) {
+       // $('a, a *').css({
+        //    "color": "",
+        //    "background-color": ""
+        //})
+        $.each($('a'), function (index, value) { $('a')[index].style.setProperty('color', '') });
+        $.each($('a'), function (index, value) { $('a')[index].style.setProperty('background-color', '') });
+    } else {
+        dataid = Number(dataid) + 1;
+        //$('a, a *').css({
+        //    "color": "#ff0",
+         //   "background-color": "#333"
+        //})
+         $.each($('a'), function (index, value) { $('a')[index].style.setProperty('color', '#ff0') });
+        $.each($('a'), function (index, value) { $('a')[index].style.setProperty('background-color', '#333') });
+    }
+}
+
+function runContrast(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "Contrast", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+    $(element).removeClass(classesToRemove.join(' '));
+    if (dataid == 0) {
+        $('body').css({
+            "filter": "",
+            "-webkit-filter": ""
+        });
+    } else if (dataid == 1) {
+        $('body').css({
+            "filter": "invert(100%)",
+            "-webkit-filter": "invert(100%)"
+        });
+        $(element).addClass('step1');
+    } else if (dataid == 2) {
+        $('body').css({
+            "filter": "invert(100%) brightness(1.5)",
+            "-webkit-filter": "invert(100%) brightness(1.5)"
+        });
+        $(element).addClass('step2');
+    } else if (dataid == 3) {
+        $('body').css({
+            "filter": "invert(100%) contrast(1.5)",
+            "-webkit-filter": "invert(100%) contrast(1.5)"
+        });
+        $(element).addClass('step3');
+    }
+}
+function runLetterSpace(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "LetterSpace", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+    $(element).removeClass(classesToRemove.join(' '));
+
+    if (dataid == 0) {
+        $('body').css({
+            "letter-spacing": "",
+        });
+        $('div').css({
+            "letter-spacing": "",
+        });
+        $('p').css({
+            "letter-spacing": "",
+        });
+        $('span').css({
+            "letter-spacing": "",
+        });
+    } else if (dataid == 1) {
+        $('body').css({
+            "letter-spacing": "1px",
+        });
+        $('div').css({
+            "letter-spacing": "1px",
+        });
+        $('p').css({
+            "letter-spacing": "1px",
+        });
+        $('span').css({
+            "letter-spacing": "1px",
+        });
+        $(element).addClass('step1');
+    } else if (dataid == 2) {
+        $('body').css({
+            "letter-spacing": "2px",
+        });
+        $('div').css({
+            "letter-spacing": "2px",
+        });
+        $('p').css({
+            "letter-spacing": "2px",
+        });
+        $('span').css({
+            "letter-spacing": "2px",
+        });
+        $(element).addClass('step2');
+    } else if (dataid == 3) {
+        $('body').css({
+            "letter-spacing": "3px",
+        });
+        $('div').css({
+            "letter-spacing": "3px",
+        });
+        $('p').css({
+            "letter-spacing": "3px",
+        });
+        $('span').css({
+            "letter-spacing": "3px",
+        });
+        $(element).addClass('step3');
+    }
+}
+function runFontSize(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "FontSize", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+
+    $(element).removeClass(classesToRemove.join(' '));
+
+    if (dataid == 0) {
+        $('body *').css('font-size', initFontSize);
+    } else if (dataid == 1) {
+        $('body *').animate({ 'font-size': '+=2' });
+        $(element).addClass('step1');
+    } else if (dataid == 2) {
+        $('body *').animate({ 'font-size': '+=3' });
+
+        $(element).addClass('step2');
+    } else if (dataid == 3) {
+        $('body *').animate({ 'font-size': '+=4' });
+
+        $(element).addClass('step3');
+    }
+}
+function runAnim(element) {
+    var dataid = $(element).attr('data-default');
+    if (dataid == 0) {
+        $('body *').css({
+            "transition": "",
+            "Anim": ""
+        })
+    } else {
+        dataid = Number(dataid) + 1;
+        $('body *').css({
+            "transition": "unset",
+            "Anim": "unset"
+        })
+    }
+}
+
+function runImages(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "Images", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+
+    $(element).removeClass(classesToRemove.join(' '));
+
+
+    if (dataid == 0) {
+        $('img').css('opacity', '1');
+        $('*[style*="background-image"]').css('opacity', '1');
+    } else {
+        $('img').css('opacity', '0');
+        $('*[style*="background-image"]').css('opacity', '0');
+    }
+}
+function runMouse(element) {
+    var el=$(element).attr('data-default')
+    var dataid =parseInt(el===null?0:el);
+    var allowedClasses = ["Control-Item", "Mouse", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+    $(element).removeClass(classesToRemove.join(' '));
+
+    $('body').removeClass('big-cursor');
+    $('.reading-mask, .reading-guide').remove();
+    $(document).off('mousemove', moveReadingMask);
+
+    if (dataid == 1) {
+        $('body').addClass('big-cursor');
+        $(element).addClass('step1');
+    } else if (dataid == 2) {
+        if (!$('.reading-guide').length) {
+            $('body').append(`
+                <div class="reading-guide">
+                    <div class="ruler-pointer"></div>
+                </div>
+            `);
+        }
+        $(element).addClass('step2');
+        $(document).on('mousemove', moveReadingGuide);
+    } else if (dataid == 3) {
+        if (!$('.reading-mask').length) {
+            $('body').append('<div class="reading-mask"></div>');
+        }
+        $(element).addClass('step3');
+        $(document).on('mousemove', moveReadingMask);
+    }
+}
+function moveReadingMask(e) {
+    $('.reading-mask').css('top', e.clientY + 'px');
+}
+function moveReadingGuide(e) {
+    var guide = $('.reading-guide');
+    var guideWidth = guide.outerWidth();
+    var newX = e.clientX - guideWidth / 2;
+    var newY = e.clientY;
+
+    guide.css({
+        top: newY + 'px',
+        left: newX + 'px'
+    });
+}
+
+function runLineHeight(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "LineHeight", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+
+    // حذف تمام کلاس‌های غیرمجاز از المان
+    $(element).removeClass(classesToRemove.join(' '));
+
+    if (dataid == 0) {
+        $('body *').animate({ 'line-height': '-=1' });
+    } else if (dataid == 1) {
+        $('body *').animate({ 'line-height': '+=0.5' });
+        $(element).addClass('step1');
+    } else if (dataid == 2) {
+        $('body *').animate({ 'line-height': '+=0.7' });
+        $(element).addClass('step2');
+    } else if (dataid == 3) {
+        $('body *').animate({ 'line-height': '+=0.8' });
+        $(element).addClass('step3');
+    }
+}
+function runZoom(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "Zoom", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+    $(element).removeClass(classesToRemove.join(' '));
+
+    //$('body').css('transform', '');
+    $('body').css('zoom', '');
+    $('body').css('transform-origin', '');
+    if (dataid == 0) {
+        $(element).removeClass('step1 step2 step3');
+    } else if (dataid == 1) {
+        //$('body').css({
+        //    'transform': 'scale(1.2)',
+         //   'transform-origin': 'center center'
+        //});
+        $('body').css("zoom", "1.2");
+        $(element).addClass('step1');
+    } else if (dataid == 2) {
+        //$('body').css({
+        //    'transform': 'scale(1.3)',
+        //    'transform-origin': 'center center'
+        //});
+        $('body').css("zoom", "1.3");
+        $(element).addClass('step2');
+    } else if (dataid == 3) {
+        //$('body').css({
+        //    'transform': 'scale(1.4)',
+        //    'transform-origin': 'center center'
+        //});
+        $('body').css("zoom", "1.4");
+        $(element).addClass('step3');
+    }
+}
+function runSaturate(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "Saturate", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+
+    $(element).removeClass(classesToRemove.join(' '));
+
+    if (dataid == 0) {
+        $('body').css({
+            "filter": "",
+            "-webkit-filter": ""
+        });
+    } else if (dataid == 1) {
+        $('body').css({
+            "filter": "saturate(0.5)",
+            "-webkit-filter": "saturate(0.5)"
+        });
+        $(element).addClass('step1');
+    } else if (dataid == 2) {
+        $('body').css({
+            "filter": "saturate(1)",
+            "-webkit-filter": "saturate(1)"
+        });
+        $(element).addClass('step2');
+    }
+}
+function runBlackWhite(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "BlackWhite", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+    $(element).removeClass(classesToRemove.join(' '));
+    $(element).removeClass('step1');
+    if (dataid == 0) {
+        var currentFilter = $('body').css('filter');
+        if (currentFilter !== 'none' && currentFilter !== '') {
+            currentFilter = currentFilter.replace(/grayscale\(1\)/g, '').trim();
+        }
+        if (currentFilter === '') {
+            currentFilter = 'none';
+        }
+        $('body').css({
+            "filter": currentFilter,
+            "-webkit-filter": currentFilter
+        });
+    } else {
+        var currentFilter = $('body').css('filter');
+        if (currentFilter === 'none') currentFilter = '';
+        $('body').css({
+            "filter": currentFilter + " grayscale(1)",
+            "-webkit-filter": currentFilter + " grayscale(1)"
+        });
+        $(element).addClass('step1');
+    }
+}
+function runFonts(element) {
+    var dataid = $(element).attr('data-default');
+    var allowedClasses = ["Control-Item", "Fonts", "active"];
+    var currentClasses = $(element).attr('class').split(' ');
+    var classesToRemove = currentClasses.filter(cls => !allowedClasses.includes(cls));
+    $(element).removeClass(classesToRemove.join(' '));
+    if (dataid == 0) {
+        $('body *').css({
+            "font-family": "",
+        });
+    } else if (dataid == 1) {
+        $('body *').css({
+            "font-family": "tahoma",
+        });
+    }
+}
+function loadColors() {
+    //$.get("https://www.intamedia.ir/DesktopModules/Benvis/WebAccessibility/API/ColorSettings/GetColors", function (data) {
+        //$(".Control-Item.Color").empty();
+        var data=[{ColorCode:"#030E1D",EnglishName:"black"}]
+        data.forEach(function (item) {
+            var colorDiv = $('<div class="color-option" style="background-color: ' + item.ColorCode + ';" data-color="' + item.EnglishName + '"></div>');
+            $(".Control-Item.Color").append(colorDiv);
+        });
+
+        $(".color-option").on("click", function () {
+            var colorClass = $(this).data("color");
+            $("body").removeClass(function (index, className) {
+                return (className.match(/(^|\s)color-\S+/g) || []).join(" ");
+            });
+            $(".ColorChange").removeClass(function (index, className) {
+                return (className.match(/(^|\s)color-\S+/g) || []).join(" ");
+            });
+            $(".color-option").removeClass("selected");
+            //$("body").addClass("color-" + colorClass);
+            $(".ColorChange").addClass("color-" + colorClass);
+
+            $(this).addClass("selected");
+            var state = JSON.parse(localStorage.getItem("controlStates")) || {};
+            if (!state["Color"]) state["Color"] = {};
+
+            state["Color"].selectedColor = colorClass;
+            state["Color"].isActive = true;
+
+            localStorage.setItem("controlStates", JSON.stringify(state));
+        });
+   // });
+}
+
+$(document).on('click', '.ResetButton', function (e) {
+    runAll();
+})
+
+function runAll() {
+    $(".ColorChange").removeClass('color-blue');
+    $(".ColorChange").removeClass('color-pink');
+    $(".ColorChange").removeClass('color-orange');
+    $(".ColorChange").removeClass('color-green');
+    $(".ColorChange").removeClass('color-black');
+    localStorage.setItem('controlStates', JSON.stringify(''));
+    $(".Control-Item.active").each(function () {
+        var item = $(this);
+        var type = item.attr("class").split(" ")[1]; 
+        item.attr("data-default", 0);
+        if (run[type]) {
+            run[type](item);
+        }
+        $(item).removeClass('active');
+        $(item).find('.activeated').remove()
+    });
+}

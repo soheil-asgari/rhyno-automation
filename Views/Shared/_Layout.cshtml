@@ -372,10 +372,16 @@
                                                 <i class="bi bi-chevron-down chevron"></i>
                                             </button>
                                             <ul class="menu-list module-children"
-                                                style="max-height:@(IsExpanded("Financial","Payroll","Bimeh","InvoiceIntake","InvoiceDashboard","Mowadiyan","TaxAnalytics") ? "800px" : "0");">
+                                                style="max-height:@(IsExpanded("Financial","Payroll","Bimeh","InvoiceIntake","InvoiceDashboard","Mowadiyan","TaxAnalytics") ? "1000px" : "0");">
                                                 <li><a class='menu-item @(currentController == "Financial" && currentAction == "Dashboard" ? "active" : "")'
                                                        asp-controller="Financial" asp-action="Dashboard"><i
                                                     class="bi bi-grid-3x3-gap menu-icon"></i> داشبورد مالی</a></li>
+                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "ChartOfAccounts" ? "active" : "")'
+                                                           asp-controller="Financial" asp-action="ChartOfAccounts"><i
+                                                        class="bi bi-diagram-2 menu-icon"></i> کدینگ حساب‌ها</a></li>
+                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "Ledger" ? "active" : "")'
+                                                               asp-controller="Financial" asp-action="Ledger"><i
+                                                            class="bi bi-journal-arrow-down menu-icon"></i> دفاتر حسابداری</a></li>
                                                     <li><a class='menu-item @(currentController == "Financial" && currentAction == "Invoices" ? "active" : "")'
                                                            asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt menu-icon"></i>
                                                         فاکتورها</a></li>

@@ -287,9 +287,45 @@ builder.Services.AddScoped<SandboxMowadiyanApiClient>();
 builder.Services.AddSingleton<IMowadiyanSubmissionService, MowadiyanSubmissionService>();
 builder.Services.AddHostedService<MowadiyanSubmissionQueueHostedService>();
 builder.Services.AddScoped<IInvoiceReconciliationService, InvoiceReconciliationService>();
-// The portal session / output-file interaction is delegated to the Python Playwright
-// exporter (scripts/tax_exporter.py); C# only orchestrates the database import.
-builder.Services.AddSingleton<IMowadiyanPortalSyncService, MowadiyanPortalSyncService>();
+// Refactored modular Tax Portal exporter (TaxExporterService): persistent-profile
+// Chromium (LaunchPersistentContextAsync against ./tax_browser_profile), strict
+// SSO navigation order, glyph-normalized Persian selectors and an HttpClient-backed
+// CAPTCHA OCR wrapper with retry/refresh. Registered against a scoped HTTP client so
+// the orchestrator and its OCR dependency both get a managed HttpClient.
+builder.Services.Configure<CaptchaOcrOptions>(builder.Configuration.GetSection(CaptchaOcrOptions.SectionName));
+// ddddocr (in-process, Microsoft.ML.OnnxRuntime) is the primary CAPTCHA solver. The
+// typed ExternalCaptchaOcrClient is kept as the fallback (used only when OcrBaseUrl is
+// configured and the local model yields nothing), so no external OCR service is required.
+builder.Services.AddHttpClient<ExternalCaptchaOcrClient>();
+// ICaptchaOcrClient must be a SINGLETON (not scoped): TaxExporterService is a
+// singleton that owns the long-lived persistent Chromium session across the
+// two-step initiate -> complete flow, so its OCR dependency must live just as
+// long. All of its transitive dependencies (IOptions, IHostEnvironment,
+// ILoggerFactory, IHttpClientFactory) are singletons, so this is safe.
+builder.Services.AddSingleton<ICaptchaOcrClient>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<CaptchaOcrOptions>>();
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    var external = new ExternalCaptchaOcrClient(
+        sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(ExternalCaptchaOcrClient)),
+        options,
+        loggerFactory.CreateLogger<ExternalCaptchaOcrClient>());
+    return new DdddCaptchaOcrClient(
+        sp.GetRequiredService<IOptions<MowadiyanOptions>>(),
+        sp.GetRequiredService<IHostEnvironment>(),
+        loggerFactory.CreateLogger<DdddCaptchaOcrClient>(),
+        external);
+});
+// CRITICAL: TaxExporterService MUST be a singleton. It stores the live persistent
+// Chromium browser session (parked on the OTP screen) in its instance `_sessions`
+// dictionary during InitiateAsync, and CompleteAsync must resolve that SAME context
+// via ResolveContext(sessionToken). The initiate and complete steps run in TWO
+// SEPARATE HTTP requests (InitiatePortalLogin then CreatePortalExport); a scoped
+// lifetime would hand each request a fresh instance with an empty `_sessions`,
+// forcing a self-healing relaunch that loses the OTP-pending SSO state and throws
+// "کادر ورود کد تأیید (OTP) در صفحه پیدا نشد".
+builder.Services.AddSingleton<ITaxExporterService, TaxExporterService>();
+
 builder.Services.AddScoped<ZipArchiveProcessor>();
 builder.Services.AddScoped<TelegramBotWebhookHandler>();
 builder.Services.AddScoped<ISemanticDisambiguationService, SemanticDisambiguationService>();
@@ -655,7 +691,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     var endpoints = app.Services.GetRequiredService<EndpointDataSource>().Endpoints;
     foreach (var ep in endpoints)
     {
-        Console.WriteLine($"[REGISTERED ROUTE] {ep.DisplayName} -> { (ep as RouteEndpoint)?.RoutePattern.RawText }");
+        Console.WriteLine($"[REGISTERED ROUTE] {ep.DisplayName} -> {(ep as RouteEndpoint)?.RoutePattern.RawText}");
     }
 });
 

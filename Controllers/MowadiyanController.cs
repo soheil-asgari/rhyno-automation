@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,20 +21,29 @@ public class MowadiyanController : Controller
     private readonly IDbContextFactory<TaxDbContext> _dbFactory;
     private readonly IMowadiyanSubmissionService _submissionService;
     private readonly IInvoiceReconciliationService _reconciliationService;
-    private readonly IMowadiyanPortalSyncService _portalSyncService;
+    private readonly ITaxExporterService _taxExporterService;
     private readonly ILogger<MowadiyanController> _logger;
+
+    // In-memory correlation of portal-export jobs so the existing front-end progress
+    // polling (ExportProgress) keeps working now that the refactored TaxExporterService
+    // runs each CompleteAsync step synchronously within the OTP/export request.
+    private static readonly ConcurrentDictionary<Guid, PortalExportJob> Jobs = new();
+
+    /// <summary>Most recent portal session token so the OTP/export step can complete
+    /// the session started by InitiatePortalLogin even when the browser never echoes it.</summary>
+    private static string? LastSessionToken;
 
     public MowadiyanController(
         IDbContextFactory<TaxDbContext> dbFactory,
         IMowadiyanSubmissionService submissionService,
         IInvoiceReconciliationService reconciliationService,
-        IMowadiyanPortalSyncService portalSyncService,
+        ITaxExporterService taxExporterService,
         ILogger<MowadiyanController> logger)
     {
         _dbFactory = dbFactory;
         _submissionService = submissionService;
         _reconciliationService = reconciliationService;
-        _portalSyncService = portalSyncService;
+        _taxExporterService = taxExporterService;
         _logger = logger;
     }
 
@@ -125,38 +135,89 @@ public class MowadiyanController : Controller
             return Json(new { ok = false, message = "سال مالیاتی یا دوره انتخاب‌شده نامعتبر است." });
         }
 
+        var job = new PortalExportJob();
+        Jobs[job.JobId] = job;
+
         try
         {
-            var jobId = await _portalSyncService.StartExportAsync(request, Request.HttpContext.RequestAborted);
-            return Json(new { ok = true, jobId });
+            // The refactored exporter completes the entire OTP + export + download in one
+            // call, keyed by the session token produced by InitiatePortalLogin (the request
+            // echoes it back, otherwise we fall back to the most recent initiated session).
+            try
+            {
+                job.SetStage(PortalExportStage.Authenticating, "ورود به پرتال با کد پیامکی...");
+                var result = await _taxExporterService.CompleteAsync(
+                    sessionToken: LastSessionToken ?? string.Empty,
+                    otpCode: request.OtpCode,
+                    taxYear: request.TaxYear,
+                    taxPeriod: request.TaxPeriod,
+                    cancellationToken: Request.HttpContext.RequestAborted);
+
+                if (result.Success)
+                {
+                    job.StageText = "Completed";
+                    job.Message = result.Message ?? "دانلود فایل خروجی با موفقیت انجام شد.";
+                    job.DownloadUrl = result.OutputPath ?? string.Empty;
+                    job.IsComplete = true;
+                }
+                else
+                {
+                    job.StageText = "Failed";
+                    job.Message = result.Message ?? "تکمیل عملیات خروجی ناموفق بود.";
+                    job.Error = result.Message ?? string.Empty;
+                    job.IsFailed = true;
+                }
+            }
+            catch (Exception innerEx)
+            {
+                _logger.LogError(innerEx, "Failed to complete Mowadiyan portal export.");
+                job.StageText = "Failed";
+                job.Message = innerEx.Message;
+                job.Error = innerEx.Message;
+                job.IsFailed = true;
+            }
+
+            return Json(new { ok = true, jobId = job.JobId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to start Mowadiyan portal export.");
-            return Json(new { ok = false, message = ex.Message });
+            job.StageText = "Failed";
+            job.Message = ex.Message;
+            job.Error = ex.Message;
+            job.IsFailed = true;
+            return Json(new { ok = true, jobId = job.JobId });
         }
     }
 
     /// <summary>
     /// Submits the saved portal username/password to tp.tax.gov.ir, which triggers the SMS OTP to
-    /// the user's phone, and returns the active session/challenge token for the next step.
+    /// the user's phone, and returns the correlation session token for the next step. The new
+    /// refactored exporter keeps the SSO session alive in a persistent Chromium profile so the
+    /// OTP/export step (<see cref="CreatePortalExport"/>) can complete the same session.
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> InitiatePortalLogin(CancellationToken cancellationToken)
+    public async Task<IActionResult> InitiatePortalLogin([FromBody] MowadiyanPortalExportRequest? request, CancellationToken cancellationToken)
     {
         try
         {
-            var result = await _portalSyncService.InitiatePortalLoginAsync(cancellationToken);
+            var parameters = await BuildExportParametersAsync(request ?? new MowadiyanPortalExportRequest(), cancellationToken);
+            var result = await _taxExporterService.InitiateAsync(parameters, cancellationToken);
+
+            LastSessionToken = result.SessionToken;
+
             return Json(new
             {
                 ok = result.Success,
                 message = result.Message,
-                challengeToken = result.ChallengeToken,
-                isSandbox = result.IsSandbox,
+                challengeToken = result.SessionToken,
+                isSandbox = false,
                 maskedPhone = result.MaskedPhone,
-                status = result.Status,
-                alreadyLoggedIn = result.AlreadyLoggedIn
+                status = result.Status.ToString(),
+                alreadyLoggedIn = result.Status == TaxExportInitiationStatus.AlreadyLoggedIn,
+                awaitingOtp = result.Status == TaxExportInitiationStatus.AwaitingOtp,
+                requiresOtp = result.RequiresOtp
             });
         }
         catch (Exception ex)
@@ -169,8 +230,7 @@ public class MowadiyanController : Controller
     [HttpGet]
     public IActionResult ExportProgress(Guid jobId)
     {
-        var progress = _portalSyncService.GetProgress(jobId);
-        if (progress is null)
+        if (!Jobs.TryGetValue(jobId, out var progress))
         {
             return Json(new { ok = false, message = "وضعیت جاب یافت نشد." });
         }
@@ -179,12 +239,12 @@ public class MowadiyanController : Controller
         {
             ok = true,
             jobId = progress.JobId,
-            stage = progress.Stage.ToString(),
+            stage = progress.Stage,
             stageText = progress.StageText,
             message = progress.Message,
             pollElapsedSeconds = progress.PollElapsedSeconds,
-            totalRows = progress.TotalRows,
-            importedRows = progress.ImportedRows,
+            totalRows = (int?)0,
+            importedRows = 0,
             downloadUrl = progress.DownloadUrl,
             error = progress.Error,
             isComplete = progress.IsComplete,
@@ -283,5 +343,61 @@ public class MowadiyanController : Controller
         }
 
         return value.Length <= maxLength ? value : value[..maxLength];
+    }
+
+    private async Task<TaxExportParameters> BuildExportParametersAsync(
+        MowadiyanPortalExportRequest request, CancellationToken cancellationToken)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var settings = await db.MowadiyanSettings
+            .OrderByDescending(s => s.UpdatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var username = !string.IsNullOrWhiteSpace(settings?.PortalUsername)
+            ? settings!.PortalUsername
+            : settings?.NationalId ?? string.Empty;
+
+        return new TaxExportParameters
+        {
+            Username = username,
+            Password = settings?.PortalPassword ?? string.Empty,
+            OtpCode = request?.OtpCode ?? string.Empty,
+            TaxYear = request?.TaxYear ?? 0,
+            TaxPeriod = request?.TaxPeriod ?? 0,
+            // Let TaxExporterService resolve its default output directory.
+            OutputDirectory = string.Empty
+        };
+    }
+}
+
+/// <summary>Mid-stage label surfaced to the front-end progress polling.</summary>
+internal enum PortalExportStage
+{
+    Authenticating = 1,
+    Submitting = 2,
+    Completed = 6,
+    Failed = 7
+}
+
+/// <summary>In-memory progress record for a single portal-export job, kept compatible
+/// with the front-end <c>ExportProgress</c> polling contract.</summary>
+internal sealed class PortalExportJob
+{
+    public Guid JobId { get; } = Guid.NewGuid();
+    public PortalExportStage Stage { get; set; } = PortalExportStage.Submitting;
+    public string StageText { get; set; } = "Submitting";
+    public string Message { get; set; } = "در حال تکمیل عملیات خروجی...";
+    public string Error { get; set; } = string.Empty;
+    public string DownloadUrl { get; set; } = string.Empty;
+    public bool IsComplete { get; set; }
+    public bool IsFailed { get; set; }
+    public DateTime StartedAt { get; } = DateTime.UtcNow;
+    public int PollElapsedSeconds => (int)(DateTime.UtcNow - StartedAt).TotalSeconds;
+
+    public void SetStage(PortalExportStage stage, string message)
+    {
+        Stage = stage;
+        StageText = stage.ToString();
+        Message = message;
     }
 }
