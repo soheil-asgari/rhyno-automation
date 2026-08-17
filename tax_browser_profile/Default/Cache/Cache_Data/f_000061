@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>درگاه ملی خدمات الکترونیک سازمان امور مالیاتی کشور</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/css/fontiran.css" rel="stylesheet" />
+    <link href="/css/jquery.Bootstrap-PersianDateTimePicker.min.css" rel="stylesheet" />
+    <link href="/css/jquery-confirm.min.css" rel="stylesheet" />
+    <link href="/css/font-awesome.min.css?v=rsxJuL5PyuLH-EgJNRhnZlG_E9Qm2CIyAt-GIiGvITU" rel="stylesheet" />
+    <link href="/css/Login.css?v=kA0WPIXjErj7T9ccPtAPWEhSpRpc4FRJGy-nGo8V7Tc" rel="stylesheet" />
+    <link href="/css/site.css?v=4QBJi0Z_ZTOXuHkv9WRdytXEj4mw9n2hv4cKa6xJ8qQ" rel="stylesheet" />
+    <link href="/lib/JalaliDatepicker/dist/jalalidatepicker.min.css" type="text/css" rel="stylesheet" />
+</head>
+<body style="background-image: url('/img/Back.jpg');">
+    <div class="container">
+        <style>
+    .smallloading {
+        position: relative;
+        top: 2px;
+        margin-left: 3px;
+        display: block;
+        float: right;
+        border: 2px solid #000;
+        border-top: 2px solid #ead704;
+        border-radius: 50%;
+        width: 15px;
+        height: 15px;
+        animation: fastspin 0.3s linear infinite;
+        box-shadow: 0px 0px 1px 1px #101010;
+    }
+    .bannerLogin {
+        width: 35%;
+    }
+
+    .hrBanner {
+        margin-top: 2px;
+        margin-bottom: 13px;
+        opacity: 0.4 !important;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        /*background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgb(255 255 255 / 75%), rgba(0, 0, 0, 0));*/
+        background-color: white;
+        margin: unset;
+    }
+
+    .disable {
+        background-color: #b2b4b5bf !important;
+    }
+
+        .disable::placeholder {
+            color: #123;
+        }
+
+    .ntr {
+        background: red;
+        border-radius: 6px;
+        padding: 2px 15px;
+        color: #fff;
+        display: block;
+    }
+
+        .ntr:hover {
+            color: #000;
+            text-decoration: none;
+        }
+</style>
+<div class="row justify-content-center" style="padding-top:2%;">
+    <div class="row bannerLoginContainer"><img srcset="/img/LoginBanner.png  1x" class="img-responsive bannerLogin" /></div>
+    <div class="col-md-3 col-sm-3 col-xs-12 hidden-xs">
+        <div class="Row loginBoxInfo rightSide">
+            <div class="row HeaderTitle"><span>دسترسی سریع</span><span class="hr-lines" style="width:53%"></span></div>
+            <ul>
+                <li><a href="https://payments.tax.gov.ir" target="_blank">پرداخت الکترونیک</a></li>
+                <li><a href="https://tax.gov.ir/Pages/HomePage" target="_blank">میز خدمت عملیات الکترونیک مالیاتی</a></li>
+                <li><a href="https://www.intamedia.ir/" target="_blank">پایگاه خبری سازمان امور مالیاتی کشور</a></li>
+                <li><a href="https://www.intamedia.ir/complaint" target="_blank">ثبت شکایت و ارتباط با سازمان</a></li>
+                <li><a href="https://my.gov.ir" target="_blank">پنجره ملی خدمات دولت هوشمند</a></li>
+                <li><a href="https://tax.gov.ir/action/do/show/433" target="_blank">سوالات متداول</a></li>
+
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-5 col-sm-5 col-xs-12">
+        <div class="Row loginBoxInfo leftSide">
+            <div class="row HeaderTitle"><span>ملاحظات</span><span class="hr-lines" style="width:80%"></span></div>
+<div></div><div>•	هر ایرانی امکان مراجعه به این درگاه و دسترسی به اطلاعات مالیاتی (حتی اگر مودی نباشد) را دارد.<br />
+</div><div>•	دریافت اطلاعات کاربری برای تمامی افراد از طریق شماره/شناسه ملی (و برای اتباع غیر ایرانی از طریق شماره فیدا) می باشد.<br />
+</div><div>•	از در اختیار قرار دادن کلمه عبور به شخص ثالث جدا پرهیز نمایید. مسئولیت ناشی از این موضوع بر عهده شما می باشد.<br />
+</div><div>•	دسترسی به تمامی خدمات الکترونیک از طریق همین پنجره می باشد.</div>        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12" style="direction:rtl;">
+        <div class="loginBoxContainer">
+            <div class="loginBox">
+                <div class="row HeaderTitle" style="padding-top:15px;"><span style="color:white;">احراز هویت</span><span class="hr-lines" style="width:60%"></span></div>
+                <div class="flex-wrap" dir="ltr">
+                    <fieldset>
+                        <form action="/" method="post">
+                            <input type="radio" value="sign-in" name="rg" id="sign-in" checked onchange="changeNationalCodePlaceholder()" />
+                            <input type="radio" value="sign-up" name="rg" id="sign-up"  onchange="changeNationalCodePlaceholder()" />
+                            <input type="radio" value="reset" name="rg" id="reset"  onchange="changeNationalCodePlaceholder()" />
+                            <input type="radio" value="change" name="rg" id="change"  onchange="changeNationalCodePlaceholder()" />
+                            <label for="sign-in" class="tabLabel">ورود به درگاه ملی</label>
+                            <label for="sign-up" class="tabLabel">دریافت اطلاعات کاربری</label>
+                            <label for="reset" class="tabLabel">فراموشی کلمه عبور</label>
+                            <label for="change" class="tabLabel">تغییر شماره همراه</label>
+
+                            <input class="sign-in sign-up reset change" type="text" name="nationalcode" id="nationalcode" value="10861156384032" placeholder="شماره ملی/شناسه ملی/شماره فیدا" />
+                            <input data-jdp data-jdp-min-date="1300/01/01" data-jdp-max-date="today" class="sign-up hideTimer" type="text" id="BirthDate" name="BirthDate" placeholder="تاریخ تولد 1364/01/01" autocomplete="off" />
+                            <select class="sign-up" name="contacttype" id="contacttype" style="direction: rtl;font-size: 14px;">
+                                <option value="0">شخص ایرانی</option>
+                                <option value="1">اتباع غیر ایرانی</option>
+                                <option value="2">اشخاص حقوقی و شرکتها</option>
+                            </select>
+                            <input class="sign-in" type="password" name="pass" id="pass" autocomplete="off" placeholder="کلمه عبور" value="wf8sa1ja"/>
+                            <span class="sign-in" onclick="ShowPassword()"><i class="fa fa-eye fa-eye-slash" id="eyePass"></i></span>
+
+                            <input class="sign-up change" type="text" name="mobile" placeholder="شماره همراه" />
+                            <div class="captcha-group reset change">
+                                  <img id="img-captcha" srcset="/get-captcha-image/ 1x">
+                                <img class="reset" onclick="captchaReset()" srcset="/img/reset.png  1x" />
+                                <input class="nasim bill" id="CaptchaCode" autocomplete="off" name="CaptchaCode" type="text" placeholder="تصویر امنیتی" maxlength="6" />
+                            </div>
+                            <a class="text-danger rtl text-bold" style="display:grid">کلمه امنیتی معتبر نیست.</a>
+                            <input id="submit" type="submit" />
+                            <label for="submit" class="button doubleresist" style="margin-top:5px;margin-left:8%;" data-Text="دریافت اطلاعات کاربری"></label>
+                            <div class="row" style="margin-left:8%;">
+                                <a class="button LoginByGOV" href="https://sso.my.gov.ir/oauth2/authorize?response_type=code&scope=openid profile&client_id=my.tax&state=state1&redirect_uri=https://my.tax.gov.ir/myiran/sso">
+                                    ورود از طریق دولت من ویژه اشخاص حقیقی
+                                </a>
+                                <a class="button LoginByGOV" href="https://sso.my.gov.ir/oauth2/authorize?response_type=code&scope=openid profile&client_id=legalmy.tax&state=state1&redirect_uri=https://my.tax.gov.ir/myiran/legalsso">
+                                    ورود از طریق دولت من ویژه اشخاص حقوقی
+                                </a>
+                            </div>
+
+                        </form>
+
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-xs-12  visible-xs">
+        <div class="Row loginBoxInfo rightSide">
+            <div class="row HeaderTitle"><span style="width:40%;">دسترسی سریع</span><span class="hr-lines"></span></div>
+            <ul>
+                <li><a href="https://payments.tax.gov.ir" target="_blank">پرداخت الکترونیک</a></li>
+                <li><a href="https://tax.gov.ir/Pages/HomePage" target="_blank">میز خدمت عملیات الکترونیک مالیاتی</a></li>
+                <li><a href="https://www.intamedia.ir/" target="_blank">پایگاه خبری سازمان امور مالیاتی کشور</a></li>
+                <li><a href="https://www.intamedia.ir/complaint" target="_blank">ثبت شکایت و ارتباط با سازمان</a></li>
+                <li><a href="https://my.gov.ir" target="_blank">پنجره ملی خدمات دولت هوشمند</a></li>
+                <li><a href="https://tax.gov.ir/action/do/show/433" target="_blank">سوالات متداول</a></li>
+
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+
+    </div>
+    <footer class="footer">
+        <div class="container">
+            <p>کليه حقوق اين سامانه متعلق به سازمان امور مالياتی کشور می باشد</p>
+            Copyright © 2026 Iranian National Tax Administration (INTA). All rights reserved.  IP: [37.148.73.141] Browser: Country:Iran. SID:58
+        </div>
+    </footer>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/persianumber.min.js"></script>
+    <script src="/js/jquery-confirm.min.js"></script>
+    <script src="/lib/JalaliDatepicker/dist/jalalidatepicker.min.js"></script>
+    <script src="/js/jquery-ui.js"></script>
+    <script src="/js/number.js"></script>
+    <script>
+        function captchaReset() {
+            d = new Date();
+                $("#img-captcha").attr("srcset", "/get-captcha-image?/?" + d.getTime());
+        }
+    </script>
+    
+    <script>
+        function ShowPassword() {
+            var type = $("#pass")[0].type;
+            var toggleType = 'password';
+            var icon = 'fa-eye-slash';
+            if (type == 'password') { 
+                toggleType = 'text';
+                icon = 'fa-eye';
+            }
+            $("#pass")[0].type = toggleType;
+            $("#eyePass").removeClass('fa-eye-slash').addClass(icon)
+        }
+    </script>
+    <script>
+        function showAlert(title, text, typeColor) {
+            $.alert({
+                title: '',
+                columnClass: 'col-md-6 col-md-offset-3',
+                type: typeColor,
+                content: ('<div style="padding-left:1%;padding-right:2%;"><span style="font-size:15px;font-weight:bold;color:#1e6a28;">' + title + '</span>' + '<br/>' + '<span style="font-size:14px;font-weight:bold;line-height: 0px;">' + text + '</span></div>'),
+                buttons: { cancel: { text: 'بستن', action: function () { } } },
+                rtl: true
+            });
+        }
+        $('[name="nationalcode"]').focus();
+        $(document).on('keydown', ':tabbable', function (e) {
+            if (e.which == 13 || e.keyCode == 13) {
+                console.log(document.activeElement)
+                if ($(this).attr('name') == 'nationalcode' | $(this).attr('name') == 'pass') {
+                    e.preventDefault();
+                    var $canfocus = $(':tabbable:visible')
+                    var index = $canfocus.index(document.activeElement) + 1;
+                    if ($(this).attr('name') == 'pass')
+                        index = $canfocus.index(document.activeElement) + 1;
+                    if (index >= $canfocus.length) index = 0;
+                    $canfocus.eq(index).focus();
+                }
+            }
+        });
+        $('form').submit(function () {
+            $('#submit').prop("disabled", "disabled");
+        });
+        function changeNationalCodePlaceholder() {
+            if (document.getElementById('change').checked || (document.getElementById('sign-up').checked))// && $("#contacttype").val() != '2'
+                $("[name='mobile']").css('display', 'block');
+            else
+                $("[name='mobile']").css('display', 'none');
+
+            if (document.getElementById('change').checked)
+                $("[name='nationalcode']")[0].placeholder = 'شماره ملی/شماره فیدا';
+                else
+                $("[name='nationalcode']")[0].placeholder = 'شماره ملی/شناسه ملی/شماره فیدا';
+
+            if(!document.getElementById('sign-up').checked)  $("[name='mobile']")[0].placeholder='شماره همراه'
+            else if($("#contacttype").val()=="2") {
+                $("[name='mobile']")[0].placeholder='شماره پستی';
+                $("[id='sign-up']:checked ~ .button").attr('data-text','ادامه عملیات');
+            }
+            if (document.getElementById('sign-up').checked) {               
+                $("#BirthDate").attr('style', 'display: inline-block !important');
+                $("#contacttype").attr('style', 'display: inline-block !important');
+                var contacttype = $("#contacttype").val();
+                if (contacttype == 0) {
+                    $("#BirthDate").css('visibility', 'visible');
+                } else {
+                    $("#BirthDate").css('visibility', 'hidden');
+                }
+            } else {
+                $("#BirthDate").attr('style', 'display: none !important');
+                $("#contacttype").attr('style', 'display: none !important');
+            }
+            if (document.getElementById('sign-in').checked) {
+                $("#eyePass").attr('style', 'display:inline-block;');
+            } else {
+                $("#eyePass").attr('style', 'display:none;');
+            }
+
+        }
+    </script>
+    <script>
+        $("#contacttype").on("change", function () {
+            $("[name='mobile']").css('display', 'block');
+            $("[name='mobile']")[0].placeholder='شماره همراه'
+             $("[id='sign-up']:checked ~ .button").attr('data-text','دریافت اطلاعات کاربری');
+            if ($(this).val() == 0) {
+                $("#BirthDate").css('visibility', 'visible');
+            } else {
+                $("#BirthDate").css('visibility', 'hidden');
+            }
+            if ($(this).val() == 2) {
+               //$("[name='mobile']").css('display', 'none');
+               $("[name='mobile']")[0].placeholder='شماره پستی';
+               $("[id='sign-up']:checked ~ .button").attr('data-text','ادامه عملیات');
+
+            }
+        });
+        $(document).on('ready', function () {
+            if (performance.navigation.type == 2) {
+                $("#sign-in").checked = true;
+            }
+
+            changeNationalCodePlaceholder();
+        });
+        jalaliDatepicker.startWatch({
+            minDate: "attr",
+            maxDate: "attr"
+        });
+    </script>
+    <script src="/js/site.js"></script>
+
+</body>
+</html>

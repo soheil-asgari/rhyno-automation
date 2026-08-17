@@ -71,7 +71,8 @@ public sealed class DdddCaptchaOcrClient : ICaptchaOcrClient
 
         try
         {
-            using var session = GetOrCreateSession();
+            // برداشتن using - نباید _session اصلی را Dispose کنیم!
+            var session = _session;
             if (session is null || _charset is null)
             {
                 return await FallbackAsync(imageBytes, cancellationToken);
@@ -84,9 +85,11 @@ public sealed class DdddCaptchaOcrClient : ICaptchaOcrClient
             }
 
             var inputs = new List<NamedOnnxValue>
-            {
-                NamedOnnxValue.CreateFromTensor("input1", tensor)
-            };
+        {
+            NamedOnnxValue.CreateFromTensor("input1", tensor)
+        };
+
+            // استفاده از using فقط برای results که خروجی انحصاری همین اجرای جاری است
             using var results = session.Run(inputs);
             var output = results.First().AsTensor<long>();
             if (output is null)

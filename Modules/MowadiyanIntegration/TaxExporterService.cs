@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using OfficeAutomation.Utilities;
+using System.Text.RegularExpressions;
 
 namespace OfficeAutomation.Modules.MowadiyanIntegration;
 
@@ -47,6 +48,13 @@ public sealed class MowadiyanPortalExportRequest
     /// true, <see cref="OtpCode"/> may be empty.
     /// </summary>
     public bool AlreadyLoggedIn { get; set; }
+
+    /// <summary>
+    /// Session token issued by <c>InitiatePortalLogin</c> (<c>InitiateAsync</c>). When
+    /// present it is used to complete the SAME live parked browser session; otherwise
+    /// <c>CreatePortalExport</c> falls back to the most recently initiated session.
+    /// </summary>
+    public string SessionToken { get; set; } = string.Empty;
 }
 
 // ============================================================================
@@ -324,10 +332,16 @@ public sealed class TaxExporterService : ITaxExporterService
 {
     private const string PortalBase = "https://tp.tax.gov.ir";
     private const string LoginBase = "https://my.tax.gov.ir";
+    private const string DashboardUrl = "https://my.tax.gov.ir/Page/Dashboard";
+    private const string CounterUrl = "https://tp.tax.gov.ir/counter";
     private const string OutputFilesUrl = "https://tp.tax.gov.ir/invoice/outputFiles";
     private const string SuccessStatus = "موفق";
     private const string RequestOutputButton = "درخواست فایل خروجی";
     private const string DomesticPurchase = "خرید داخلی";
+    private const string EnterCommercialPortfolioButton = "ورود به کارپوشه تجاری";
+    private const string EnterCaseFileButton = "ورود به پرونده";
+    private const string InvoicesMenuText = "صورتحساب‌ها";
+    private const string OutputFilesMenuText = "فایل خروجی";
 
     private const int MaxCaptchaAttempts = 3;
     private const int OtpRedirectTimeoutSeconds = 30;
@@ -433,41 +447,111 @@ public sealed class TaxExporterService : ITaxExporterService
         }
 
         var playwright = await PreparePlaywrightAsync(cancellationToken);
+
         var context = await playwright.Chromium.LaunchPersistentContextAsync(_profileDir, new BrowserTypeLaunchPersistentContextOptions
         {
-            Headless = _options?.Value?.Headless ?? false,
+            Headless = false,
+            SlowMo = 800,
             Locale = "fa-IR",
+            RecordVideoDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "mowadiyan", "videos"),
+            RecordVideoSize = new RecordVideoSize { Width = 1280, Height = 720 },
             Args = new[] { "--disable-blink-features=AutomationControlled" },
             IgnoreDefaultArgs = new[] { "--enable-automation" }
         });
 
+        // تزریق اسکریپت نشانگر قرمز موس روی کل Context (شامل تمام تب‌ها و صفحات)
+        await context.AddInitScriptAsync(@"() => {
+    window.addEventListener('DOMContentLoaded', () => {
+        const box = document.createElement('div');
+        box.style.width = '20px';
+        box.style.height = '20px';
+        box.style.borderRadius = '50%';
+        box.style.border = '2px solid red';
+        box.style.backgroundColor = 'rgba(255, 0, 0, 0.4)';
+        box.style.position = 'fixed';
+        box.style.pointerEvents = 'none';
+        box.style.zIndex = '999999';
+        box.style.transition = 'transform 0.1s ease';
+        document.body.appendChild(box);
+
+        document.addEventListener('mousemove', e => {
+            box.style.left = `${e.clientX - 10}px`;
+            box.style.top = `${e.clientY - 10}px`;
+        });
+
+        document.addEventListener('mousedown', () => {
+            box.style.transform = 'scale(1.8)';
+            box.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+        });
+
+        document.addEventListener('mouseup', () => {
+            box.style.transform = 'scale(1)';
+            box.style.backgroundColor = 'rgba(255, 0, 0, 0.4)';
+        });
+    });
+}");
+
+
         try
         {
-            // Reuse the existing active page if one exists — never create a second context.
-            // Prefer a Tax-domain tab (portal / login) over stray about:blank tabs restored
-            // by the persistent profile.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // ۱. بازگردانی تب فعال موجود یا ساخت صفحه جدید در صورت عدم وجود
             var page = await SelectSessionPageAsync(context, cancellationToken) ?? await context.NewPageAsync();
 
-            // Step 1 — navigate to the SSO login page.
-            await page.GotoAsync($"{LoginBase}/Login",
-                new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 45000 });
-            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded,
-                new PageWaitForLoadStateOptions { Timeout = 30000 });
-
-            // If the cached profile is already authenticated, SSO redirects to the portal.
-            // Use the broad IsLoggedInOrOnPortalAsync so a direct login onto the authenticated
-            // my.tax.gov.ir dashboard (/Page/...) is recognized, not just tp.tax.gov.ir.
+            // ۲. بررسی اولیه: اگر تب جاری از قبل روی داشبورد مودیان لاگین شده است، مستقیماً عبور کن
             if (await IsLoggedInOrOnPortalAsync(page))
             {
-                _sessions.TryAdd(Guid.NewGuid().ToString("N"), (context, playwright));
+                _logger.LogInformation("نشست فعال در تب جاری شناسایی شد (بدون نیاز به ریکوئست مجدد).");
+                var alreadyLoggedInToken = "persistent-challenge-" + Guid.NewGuid().ToString("N");
+                _sessions.TryAdd(alreadyLoggedInToken, (context, playwright));
+
                 return new TaxExportInitiationResult
                 {
                     Success = true,
                     Status = TaxExportInitiationStatus.AlreadyLoggedIn,
+                    SessionToken = alreadyLoggedInToken,
                     Message = "نشست از قبل فعال است، نیازی به دریافت کد SMS نیست.",
                     RequiresOtp = false
                 };
             }
+
+            _logger.LogInformation("در حال هدایت به صفحه ورود سامانه (SSO)...");
+
+            // ۳. هدایت به صفحه SSO با مدیریت هدررفت زمان در کندی سامانه
+            try
+            {
+                await page.GotoAsync($"{LoginBase}/Login", new PageGotoOptions
+                {
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 45000
+                });
+            }
+            catch (TimeoutException)
+            {
+                _logger.LogWarning("صفحه SSO در زمان مقرر به طور کامل بارگذاری نشد؛ در حال بررسی وضعیت ری‌دایرکت احتمالی...");
+            }
+
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 30000 });
+
+            // ۴. بررسی لاگین بودن پس از ری‌دایرکت خودکار کوکی‌های پروفایل پایداری (Persistent Profile)
+            if (await IsLoggedInOrOnPortalAsync(page))
+            {
+                _logger.LogInformation("نشست از طریق کوکی‌های معتبر پروفایل احراز شد (Re-used Session).");
+                var alreadyLoggedInToken = "persistent-challenge-" + Guid.NewGuid().ToString("N");
+                _sessions.TryAdd(alreadyLoggedInToken, (context, playwright));
+
+                return new TaxExportInitiationResult
+                {
+                    Success = true,
+                    Status = TaxExportInitiationStatus.AlreadyLoggedIn,
+                    SessionToken = alreadyLoggedInToken,
+                    Message = "نشست از قبل فعال است، نیازی به دریافت کد SMS نیست.",
+                    RequiresOtp = false
+                };
+            }
+
+            _logger.LogInformation("نشست فعال یافت نشد؛ در حال آماده‌سازی برای مرحله ورود و دریافت کد پیامکی...");
 
             // Step 2 — fill credentials + CAPTCHA and submit to trigger the SMS OTP.
             var otpTriggered = await FillLoginAndTriggerOtpAsync(page, parameters, cancellationToken);
@@ -482,11 +566,13 @@ public sealed class TaxExporterService : ITaxExporterService
                     GetPageUrl(page));
                 if (await IsLoggedInOrOnPortalAsync(page))
                 {
-                    _sessions.TryAdd(Guid.NewGuid().ToString("N"), (context, playwright));
+                    var autoLoginToken = "persistent-challenge-" + Guid.NewGuid().ToString("N");
+                    _sessions.TryAdd(autoLoginToken, (context, playwright));
                     return new TaxExportInitiationResult
                     {
                         Success = true,
                         Status = TaxExportInitiationStatus.AlreadyLoggedIn,
+                        SessionToken = autoLoginToken,
                         Message = "ورود بدون نیاز به کد پیامک انجام شد؛ نشست فعال است.",
                         RequiresOtp = false
                     };
@@ -646,17 +732,17 @@ public sealed class TaxExporterService : ITaxExporterService
                 await TryOpenBusinessDashboardAsync(page, cancellationToken);
             }
 
-            _logger.LogInformation("در حال هدایت به صفحه خروجی صورتحساب‌ها ({Url})...", OutputFilesUrl);
+            // Step 6 - navigate to my.tax.gov.ir/Page/Dashboard, then drive the new flow:
+            //   Dashboard -> ورود به کارپوشه تجاری -> ورود به پرونده -> صورتحساب‌ها -> فایل خروجی -> درخواست فایل خروجی
+            _logger.LogInformation("در حال هدایت به داشبورد ({Url})...", DashboardUrl);
+            page = await NavigateToDashboardAndEnterCommercialPortfolioAsync(page, context, cancellationToken);
 
-            // Step 6 — ONLY after authentication is confirmed, navigate strictly to outputFiles.
-            // We navigate in the SAME tab the operator is watching, never in a new tab — they
-            // explicitly asked to keep the visible browser on the right page.
-            await page.GotoAsync(OutputFilesUrl,
-                new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 });
-            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded,
-                new PageWaitForLoadStateOptions { Timeout = 30000 });
+            await ClickEnterCaseFileAsync(page, cancellationToken);
+            await ClickInvoicesMenuAsync(page, cancellationToken);
+            await ClickOutputFilesMenuAsync(page, cancellationToken);
 
-            // Step 7 — modal automation: open, select خرید داخلی, select-all checkboxes, fiscal period.
+            // Step 7 - modal automation: open, select buy domestic, select ALL checkboxes for invoice status & pattern
+            // (excluding rejected/voided/automatic-rejected statuses), set fiscal period and year.
             await EnsureExportModalAsync(page, cancellationToken);
             await SelectDomesticPurchaseRadioAsync(page, cancellationToken);
             await SelectAllCheckboxesAsync(page, cancellationToken);
@@ -1223,6 +1309,82 @@ public sealed class TaxExporterService : ITaxExporterService
         }
     }
 
+    /// <summary>
+    /// Navigate to the SSO dashboard (my.tax.gov.ir/Page/Dashboard), then click
+    /// the «ورود به کارپوشه تجاری» button to enter the commercial portfolio workspace.
+    /// This replaces the old flow that opened tp.tax.gov.ir/counter in a new tab.
+    /// Best-effort: retries once if the initial navigation fails.
+    /// </summary>
+    private async Task<IPage> NavigateToDashboardAndEnterCommercialPortfolioAsync(IPage currentPage, IBrowserContext context, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        // Navigate to the SSO dashboard
+        try
+        {
+            await currentPage.GotoAsync(DashboardUrl, new PageGotoOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 60000
+            });
+            await Task.Delay(3000, ct);
+        }
+        catch
+        {
+            // Retry once from the login base
+            _logger.LogWarning("Dashboard navigation failed; retrying from login base.");
+            try
+            {
+                await currentPage.GotoAsync(LoginBase, new PageGotoOptions
+                {
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 30000
+                });
+                await Task.Delay(2000, ct);
+                await currentPage.GotoAsync(DashboardUrl, new PageGotoOptions
+                {
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 60000
+                });
+                await Task.Delay(3000, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to navigate to dashboard after retry.");
+                throw new InvalidOperationException(" navegation to the SSO dashboard failed.");
+            }
+        }
+
+        var url = GetPageUrl(currentPage);
+        _logger.LogInformation("Dashboard loaded (URL: {Url}).", url);
+
+        // Click «ورود به کارپوشه تجاری» to enter the commercial portfolio
+        var portfolioSelectors = new[]
+        {
+            "a:has-text(\"ورود به کارپوشه تجاری\")",
+            "button:has-text(\"ورود به کارپوشه تجاری\")",
+            "a:has-text(\"کارپوشه تجاری\")",
+            "button:has-text(\"کارپوشه تجاری\")",
+            "a:has-text(\"کارپوشه\")",
+            "button:has-text(\"کارپوشه\")"
+        };
+
+        var clicked = await ClickByTextAsync(currentPage, portfolioSelectors, EnterCommercialPortfolioButton, ct);
+        if (clicked)
+        {
+            _logger.LogInformation("Clicked: ورود به کارپوشه تجاری");
+            await Task.Delay(5000, ct);
+        }
+        else
+        {
+            _logger.LogWarning("Button not found: ورود به کارپوشه تجاری; trying direct counter navigation as fallback.");
+            // Fallback: navigate directly to counter in a new tab (old flow)
+            return await NavigateToCounterInNewTabAsync(context, ct);
+        }
+
+        return currentPage;
+    }
+
     /// <summary>Returns the first visible element matching any selector, or null.</summary>
     private static async Task<IElementHandle?> FirstVisibleAsync(IPage page, IReadOnlyList<string> selectors)
     {
@@ -1339,68 +1501,202 @@ public sealed class TaxExporterService : ITaxExporterService
     /// <summary>Locate the درخواست فایل خروجی trigger and open the export modal if not open.</summary>
     private async Task EnsureExportModalAsync(IPage page, CancellationToken ct)
     {
-        var existingModal = await FindModalAsync(page);
-        if (existingModal is not null)
+        _logger.LogInformation("در حال بررسی وضعیت مودال درخواست فایل خروجی...");
+
+        // ۱. انتخاب انعطاف‌پذیرتر بدون وابستگی زنجیره‌ای به کلاس‌های MUI
+        var modalLocator = page.Locator("div[role='dialog']")
+            .Filter(new LocatorFilterOptions { HasText = "درخواست فایل خروجی" })
+            .Last;
+
+        // ۲. اگر مودال همین الان باز است، بلافاصله عبور کن و کلیک مجدد نکن
+        if (await modalLocator.IsVisibleAsync())
         {
-            var text = await SafeElementTextAsync(existingModal);
-            await existingModal.DisposeAsync();
-            if (PersianTextNormalizer.NormalizeText(text).Contains(PersianTextNormalizer.NormalizeText(RequestOutputButton)))
-            {
-                return;
-            }
+            _logger.LogInformation("مودال از قبل باز و فعال است؛ نیازی به کلیک مجدد نیست.");
+            return;
         }
 
-        var clicked = await ClickByTextAsync(page,
-            new[] { "button", "input[type='submit']", "a", ".btn-success" }, RequestOutputButton, ct);
-        if (!clicked)
-        {
-            throw new InvalidOperationException("دکمه «درخواست فایل خروجی» پیدا نشد یا قابل کلیک نبود.");
-        }
+        // ۳. اگر باز نیست، دکمه سبز را کلیک کن
+        var openBtn = page.Locator("button")
+            .Filter(new LocatorFilterOptions { HasTextRegex = new Regex(@"درخواست.*فایل.*خروجی", RegexOptions.IgnoreCase) })
+            .First;
 
-        await WaitUntilModalAsync(page, TimeSpan.FromSeconds(10), ct);
+        await openBtn.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        await openBtn.ClickAsync(new LocatorClickOptions { Force = true });
+
+        // ۴. انتظار برای ظهور و تثبیت انیمیشن مودال
+        await modalLocator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        await page.WaitForTimeoutAsync(500);
+
+        _logger.LogInformation("مودال با موفقیت باز و آماده تعامل شد.");
     }
-
     /// <summary>Select the «خرید داخلی» radio within the export modal.</summary>
     private async Task SelectDomesticPurchaseRadioAsync(IPage page, CancellationToken ct)
     {
-        var modal = await FindModalAsync(page);
+        _logger.LogInformation("در حال انتخاب گزینه خرید داخلی...");
+
         try
         {
-            var candidates = await QueryAllAsync(page, modal, "label, input[type='radio'], [role='radio']");
-            foreach (var candidate in candidates)
+            // ۱. هدف‌گیری لیبل یا کانتینر متنی به جای input پنهان MUI
+            var radioLabel = page.Locator("label, .MuiFormControlLabel-root, span")
+                .Filter(new LocatorFilterOptions
+                {
+                    HasTextRegex = new System.Text.RegularExpressions.Regex(@"خرید.*داخلی")
+                })
+                .First;
+
+            await radioLabel.WaitForAsync(new LocatorWaitForOptions
             {
-                try
-                {
-                    var text = await SafeElementTextAsync(candidate);
-                    if (!string.IsNullOrWhiteSpace(text)
-                        && PersianTextNormalizer.NormalizeText(text).Contains(PersianTextNormalizer.NormalizeText(DomesticPurchase)))
-                    {
-                        var input = await candidate.QuerySelectorAsync("input[type='radio']");
-                        if (input is not null)
-                        {
-                            await input.CheckAsync(new ElementHandleCheckOptions { Force = true, Timeout = 5000 });
-                            await input.DisposeAsync();
-                        }
-                        else
-                        {
-                            await candidate.ClickAsync(new ElementHandleClickOptions { Timeout = 5000 });
-                        }
-                        return;
-                    }
-                }
-                finally
-                {
-                    await candidate.DisposeAsync();
+                State = WaitForSelectorState.Attached,
+                Timeout = 5000
+            });
+
+            // کلیک روی لیبل اصلی برای تریگر شدن ایونت React
+            await radioLabel.ClickAsync(new LocatorClickOptions
+            {
+                Force = true,
+                Timeout = 5000
+            });
+
+            _logger.LogInformation("گزینه خرید داخلی با موفقیت انتخاب شد.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "کلیک Playwright روی رادیو دکمه ناموفق بود. استفاده از JS Fallback...");
+
+            // ۲. راهکار پشتیبان فوق‌العاده مطمئن: کلیک مستقیم از طریق DOM/JS برای بای‌پاس کردن چک Playwright
+            await page.EvaluateAsync(@"() => {
+            const elements = Array.from(document.querySelectorAll('label, span, div'));
+            const target = elements.find(el => el.textContent && el.textContent.includes('خرید داخلی'));
+            if (target) {
+                target.click();
+                const input = target.querySelector('input') || target.closest('label')?.querySelector('input');
+                if (input) {
+                    input.checked = true;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
-        }
-        finally
-        {
-            if (modal is not null) await modal.DisposeAsync();
+        }");
         }
     }
 
-    /// <summary>Select ALL visible checkboxes on the export modal (invoice statuses &amp; patterns).</summary>
+    /// <summary>
+    /// Opens the /counter page directly in a NEW tab. The URL is always constructed
+    /// without a trailing dot to avoid DNS/HTTP errors.
+    /// </summary>
+    private async Task<IPage> NavigateToCounterInNewTabAsync(IBrowserContext context, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var newPage = await context.NewPageAsync();
+        try
+        {
+            await newPage.GotoAsync(CounterUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60000 });
+            await Task.Delay(3000, ct);
+            var url = GetPageUrl(newPage);
+            if (IsUrlOnPortal(url) && !url.Contains("/403") && !url.Contains("/error"))
+            {
+                _logger.LogInformation("Counter page loaded OK (URL: {Url}).", url);
+                return newPage;
+            }
+            _logger.LogWarning("Counter page load failed (URL: {Url}). Retrying via homepage...", url);
+            try { await newPage.GotoAsync(PortalBase, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 30000 }); await Task.Delay(3000, ct); } catch { }
+            await newPage.GotoAsync(CounterUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60000 });
+            await Task.Delay(3000, ct);
+            return newPage;
+        }
+        catch { try { await newPage.CloseAsync(); } catch { } throw; }
+    }
+
+    /// <summary>Click the «ورود به پرونده» button on the /counter page to enter the case file workspace.</summary>
+    private async Task ClickEnterCaseFileAsync(IPage page, CancellationToken ct)
+    {
+        try
+        {
+            // ۱. انتظار برای لود کامل DOM بعد از انتقال به کارپوشه تجاری
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new() { Timeout = 15000 });
+
+            // ۲. اگر منوی «صورتحساب‌ها» از قبل در صفحه باشد، یعنی مستقیماً وارد پرونده شده‌اید
+            var isMenuVisible = await page.Locator("text=صورتحساب‌ها").IsVisibleAsync(new() { Timeout = 3000 });
+            if (isMenuVisible)
+            {
+                _logger.LogInformation("کاربر مستقیماً وارد پرونده شده است؛ عبور از کلیک «ورود به پرونده».");
+                return;
+            }
+
+            // ۳. در غیر این صورت، جستجوی دکمه «ورود به پرونده»
+            var enterCaseBtn = page.Locator("a, button, [role='button']")
+                .Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex(@"ورود.*پرونده|پرونده") })
+                .First;
+
+            await enterCaseBtn.WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 15000
+            });
+
+            await enterCaseBtn.ClickAsync(new() { Timeout = 5000 });
+            _logger.LogInformation("Clicked: ورود به پرونده");
+            await Task.Delay(3000, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "دکمه «ورود به پرونده» یافت نشد یا کاربر مستقیماً در پرونده حضور دارد.");
+        }
+    }
+
+    /// <summary>Click the «صورتحساب‌ها» menu item to expand/show the invoices list.</summary>
+    private async Task ClickInvoicesMenuAsync(IPage page, CancellationToken ct)
+    {
+        var sels = new[] { "a:has-text(\"صورتحساب\")", "button:has-text(\"صورتحساب\")", "li:has-text(\"صورتحساب\")", "[role='menuitem']:has-text(\"صورتحساب\")", ".nav-item:has-text(\"صورتحساب\")" };
+        var clicked = await ClickByTextAsync(page, sels, InvoicesMenuText, ct);
+        if (clicked) { _logger.LogInformation("Clicked menu: صورتحساب‌ها"); await Task.Delay(2000, ct); }
+        else _logger.LogWarning("Menu not found: صورتحساب‌ها");
+    }
+
+    /// <summary>Click the «فایل‌های خروجی» menu item to navigate to the output files section.</summary>
+    private async Task ClickOutputFilesMenuAsync(IPage page, CancellationToken ct)
+    {
+        try
+        {
+            // ۱. استفاده از ID دقیق افشافشده در لاگ به همراه لینک href
+            var exportMenuLocator = page.Locator("#aa-sidebar\\.invoice\\.outputFiles, a[href*='outputFiles']").First;
+
+            // ۲. انتظار برای وجود عنصر در DOM (نه الزاماً Visible بودن به خاطر بسته بودن آکاردئون)
+            await exportMenuLocator.WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Attached,
+                Timeout = 5000
+            });
+
+            // ۳. کلیک اجباری (Force = true) جهت بای‌پاس کردن حالت Hidden منو
+            await exportMenuLocator.ClickAsync(new LocatorClickOptions
+            {
+                Force = true,
+                Timeout = 3000
+            });
+
+            _logger.LogInformation("Clicked menu: فایل‌های خروجی");
+
+            // ۴. انتظار برای اطمینان از تغییر URL به صفحه فایل‌های خروجی
+            await page.WaitForURLAsync(
+                new System.Text.RegularExpressions.Regex(@"/invoice/outputFiles"),
+                new PageWaitForURLOptions { Timeout = 5000 }
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "کلیک روی منوی فایل‌های خروجی ناموفق بود. هدایت مستقیم به URL...");
+
+            // ۵. راهکار پشتیبان فوق‌العاده مطمئن: انتقال مستقیم مرورگر به صفحه مقصد
+            await page.GotoAsync("https://tp.tax.gov.ir/invoice/outputFiles", new PageGotoOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 10000
+            });
+        }
+    }
+
+    /// <summary>Select ALL visible checkboxes on the export modal (invoice statuses &amp; patterns),
+    /// excluding rejected/voided/automatic-rejected statuses.</summary>
     private async Task SelectAllCheckboxesAsync(IPage page, CancellationToken ct)
     {
         var modal = await FindModalAsync(page);
@@ -1415,6 +1711,24 @@ public sealed class TaxExporterService : ITaxExporterService
                     {
                         continue;
                     }
+
+                    // Check if this checkbox belongs to an excluded status by inspecting
+                    // the nearest label/sibling text via JavaScript evaluation.
+                    var excluded = await IsExcludedStatusCheckboxAsync(checkbox);
+                    if (excluded)
+                    {
+                        // Ensure the checkbox is UNCHECKED — some UIs pre-check all boxes.
+                        try
+                        {
+                            if (await checkbox.IsCheckedAsync())
+                            {
+                                await checkbox.UncheckAsync();
+                            }
+                        }
+                        catch { /* best-effort uncheck */ }
+                        continue;
+                    }
+
                     await checkbox.CheckAsync(new ElementHandleCheckOptions { Force = true, Timeout = 4000 });
                 }
                 catch { /* skip uncheckable */ }
@@ -1427,6 +1741,34 @@ public sealed class TaxExporterService : ITaxExporterService
         finally
         {
             if (modal is not null) await modal.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Returns true when a checkbox's parent/ancestor label text matches any of the
+    /// excluded invoice statuses (رد شده, باطل شده, رد خودکار).
+    /// Uses JavaScript evaluation on the owning frame to walk up the DOM.
+    /// </summary>
+    private static async Task<bool> IsExcludedStatusCheckboxAsync(IElementHandle checkbox)
+    {
+        try
+        {
+            var ownerFrame = await checkbox.OwnerFrameAsync();
+            var result = await ownerFrame.EvaluateAsync<bool>(
+                @"el => {
+                    let p = el.closest('label') || el.parentElement;
+                    if (!p) return false;
+                    let clone = p.cloneNode(true);
+                    clone.querySelectorAll('input[type=checkbox]').forEach(c => c.remove());
+                    let text = (clone.textContent || '').trim();
+                    return text.includes('رد شده') || text.includes('باطل شده') || text.includes('رد خودکار');
+                }",
+                checkbox);
+            return result;
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -1524,47 +1866,87 @@ public sealed class TaxExporterService : ITaxExporterService
     /// <summary>Click the green submit button (درخواست فایل خروجی) inside the modal.</summary>
     private async Task ClickSubmitExportRequestAsync(IPage page, CancellationToken ct)
     {
-        var modal = await FindModalAsync(page);
+        _logger.LogInformation("در حال تکمیل فرم و کلیک روی دکمه ارسال...");
+
+        // ۱. دسترسی به دیالوگ فعال جاری
+        var activeDialog = page.Locator("div[role='dialog']").Last;
+
+        // ۲. انتخاب اجباری گزینه «خرید داخلی» (حل مشکل عدم ارسال فرم)
+        var kharidRadio = activeDialog.Locator("label, span, input")
+            .Filter(new LocatorFilterOptions { HasText = "خرید داخلی" })
+            .First;
+
+        if (await kharidRadio.IsVisibleAsync())
+        {
+            await kharidRadio.ClickAsync(new LocatorClickOptions { Force = true });
+            _logger.LogInformation("گزینه «خرید داخلی» با موفقیت انتخاب شد.");
+            await page.WaitForTimeoutAsync(500); // مکث کوتاه برای اعمال وضعیت فرم
+        }
+
+
+        // ۳. کلیک روی دکمه اول (ثبت فرم)
+        var primarySubmitBtn = activeDialog.Locator("button")
+            .Filter(new LocatorFilterOptions { HasText = "درخواست فایل خروجی" })
+            .First;
+
+        await primarySubmitBtn.ClickAsync(new LocatorClickOptions { Force = true, Timeout = 5000 });
+        _logger.LogInformation("دکمه ثبت اول (داخل فرم) کلیک شد.");
+
+        // ۴. انتظار برای ظهور دکمه مشکی تأیید نهایی (با مدیریت تایم‌اوت)
+        var confirmBlackBtn = page.Locator("button.MuiButton-containedInherit, button.MuiButton-colorInherit, div[role='dialog'] button")
+            .Filter(new LocatorFilterOptions { HasText = "درخواست فایل خروجی" })
+            .Last;
+
         try
         {
-            var clicked = await ClickByTextAsync(page,
-                new[] { "button", "input[type='submit']", "a" }, RequestOutputButton, ct);
-            if (!clicked)
+            await confirmBlackBtn.WaitForAsync(new LocatorWaitForOptions
             {
-                throw new InvalidOperationException("دکمه ارسال درخواست فایل خروجی داخل مودال پیدا نشد.");
-            }
+                State = WaitForSelectorState.Visible,
+                Timeout = 8000
+            });
 
-            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded,
-                new PageWaitForLoadStateOptions { Timeout = 30000 });
+            await confirmBlackBtn.ClickAsync(new LocatorClickOptions { Force = true, Timeout = 5000 });
+            _logger.LogInformation("دکمه تأیید نهایی (مشکی) با موفقیت کلیک شد.");
         }
-        finally
+        catch (TimeoutException)
         {
-            if (modal is not null) await modal.DisposeAsync();
+            _logger.LogWarning("پنجره تأیید دوم (دکمه مشکی) ظاهر نشد؛ احتمالاً درخواست در مرحله اول نهایی شده است.");
         }
     }
-
     /// <summary>Poll the 1st table row every 10s (up to 5 minutes) until the status is «موفق».</summary>
     private async Task PollUntilSuccessAsync(IPage page, CancellationToken ct)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(PollDeadlineSeconds);
-        while (DateTime.UtcNow < deadline)
+        _logger.LogInformation("در حال پایش وضعیت آماده‌سازی فایل خروجی...");
+
+        var maxAttempts = 20;
+        var delayMs = 10000; // ۱۰ ثانیه فاصله بین بررسی‌ها
+
+        for (int i = 0; i < maxAttempts; i++)
         {
             ct.ThrowIfCancellationRequested();
 
-            try
-            {
-                await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-            }
-            catch { /* ignore reload failures, keep polling */ }
+            // بررسی وجود دکمه دانلود در اولین سطر جدول
+            var downloadBtn = page.Locator("table tbody tr").First.Locator("a[href*='download'], button:has-text('دانلود')");
 
-            var topRow = await GetTopRowTextAsync(page);
-            if (PersianTextNormalizer.NormalizeText(topRow).Contains(PersianTextNormalizer.NormalizeText(SuccessStatus)))
+            if (await downloadBtn.CountAsync() > 0 && await downloadBtn.First.IsVisibleAsync())
             {
-                _logger.LogInformation("Export queue status is «موفق» (Successful); proceeding to download.");
+                _logger.LogInformation("فایل خروجی آماده دانلود شد.");
                 return;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(PollIntervalSeconds), ct);
+            // در صورت عدم تغییر وضعیت، هر ۳ تلاش یک بار جدول یا صفحه رفرش شود
+            if (i > 0 && i % 3 == 0)
+            {
+                _logger.LogInformation("بازخوانی جدول جهت به‌روزرسانی وضعیت فایل...");
+                var refreshBtn = page.Locator("button:has-text('به‌روزرسانی'), button[title*='به‌روزرسانی']").First;
+
+                if (await refreshBtn.CountAsync() > 0)
+                    await refreshBtn.ClickAsync(new() { Force = true });
+                else
+                    await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            }
+
+            await Task.Delay(delayMs, ct);
         }
 
         throw new TimeoutException("زمان‌بندی تولید فایل خروجی به پایان رسید؛ لطفاً بعداً دوباره تلاش کنید.");
@@ -1646,38 +2028,48 @@ public sealed class TaxExporterService : ITaxExporterService
     /// <summary>Click the first visible element whose normalized text contains the target
     /// Persian label. Glyph-insensitive via PersianTextNormalizer.</summary>
     private static async Task<bool> ClickByTextAsync(
-        IPage page, IReadOnlyList<string> selectors, string text, CancellationToken ct)
+     IPage page, IReadOnlyList<string> selectors, string text, CancellationToken ct)
     {
-        var needle = PersianTextNormalizer.NormalizeText(text);
-        foreach (var tag in selectors)
+        try
         {
-            var elements = await page.QuerySelectorAllAsync(tag);
-            foreach (var element in elements)
+            // ۱. ترکیب سلکتورها
+            var combinedSelector = (selectors != null && selectors.Count > 0)
+                ? string.Join(", ", selectors)
+                : "a, button, [role='button'], div, span";
+
+            // ۲. نرمال‌سازی و جداسازی خطوط برای جلوگیری از CS0023
+            var normalizedText = PersianTextNormalizer.NormalizeText(text) ?? text;
+
+            var escapedText = System.Text.RegularExpressions.Regex.Escape(normalizedText);
+            var pattern = escapedText.Replace("ی", "[یي]").Replace("ک", "[کك]");
+
+            var regex = new System.Text.RegularExpressions.Regex(
+                pattern,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            // ۳. ساخت Locator
+            var locator = page.Locator(combinedSelector)
+                .Filter(new LocatorFilterOptions { HasTextRegex = regex })
+                .First;
+
+            // ۴. اجرای جداگانه دستورات async (بدون زنجیره‌سازی روی Task/void)
+            await locator.WaitForAsync(new LocatorWaitForOptions
             {
-                try
-                {
-                    if (!await element.IsVisibleAsync())
-                    {
-                        continue;
-                    }
+                State = WaitForSelectorState.Visible,
+                Timeout = 5000
+            });
 
-                    var inner = await SafeElementTextAsync(element);
-                    if (!string.IsNullOrWhiteSpace(inner)
-                        && PersianTextNormalizer.NormalizeText(inner).Contains(needle))
-                    {
-                        await element.ClickAsync(new ElementHandleClickOptions { Timeout = 6000 });
-                        return true;
-                    }
-                }
-                catch { /* next */ }
-                finally
-                {
-                    await element.DisposeAsync();
-                }
-            }
+            await locator.ClickAsync(new LocatorClickOptions
+            {
+                Timeout = 5000
+            });
+
+            return true;
         }
-
-        return false;
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>Get the inner text of the first table row on the requests table.</summary>

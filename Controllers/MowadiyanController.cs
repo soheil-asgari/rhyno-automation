@@ -146,8 +146,13 @@ public class MowadiyanController : Controller
             try
             {
                 job.SetStage(PortalExportStage.Authenticating, "ورود به پرتال با کد پیامکی...");
+                // Prefer the session token the client echoes from InitiatePortalLogin; otherwise
+                // fall back to the most recently initiated session token captured in this process.
+                var sessionToken = !string.IsNullOrWhiteSpace(request.SessionToken)
+                    ? request.SessionToken
+                    : (LastSessionToken ?? string.Empty);
                 var result = await _taxExporterService.CompleteAsync(
-                    sessionToken: LastSessionToken ?? string.Empty,
+                    sessionToken: sessionToken,
                     otpCode: request.OtpCode,
                     taxYear: request.TaxYear,
                     taxPeriod: request.TaxPeriod,
@@ -159,6 +164,9 @@ public class MowadiyanController : Controller
                     job.Message = result.Message ?? "دانلود فایل خروجی با موفقیت انجام شد.";
                     job.DownloadUrl = result.OutputPath ?? string.Empty;
                     job.IsComplete = true;
+                    // The session has been fully used; drop the remembered token so a later
+                    // unrelated operation never reuses this stale session.
+                    LastSessionToken = null;
                 }
                 else
                 {

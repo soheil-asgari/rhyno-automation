@@ -222,6 +222,7 @@
             var cancelBtn = document.getElementById('btnCancelExport');
             var otpInput = document.getElementById('mowOtpCode');
             window.mowAlreadyLoggedIn = false;
+            window.mowSessionToken = '';
             closeProgressState();
             if (formBody) formBody.style.display = '';
             if (progressBody) progressBody.style.display = 'none';
@@ -313,6 +314,7 @@
                 }
 
                 window.mowAlreadyLoggedIn = !!data.alreadyLoggedIn;
+                window.mowSessionToken = data.challengeToken || '';
                 if (window.mowAlreadyLoggedIn) {
                     // Session already active — auto-advance directly to the download
                     // (دریافت فاکتورها) step without asking for an SMS OTP code.
@@ -365,7 +367,7 @@
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': afToken
                 },
-                body: JSON.stringify({ taxYear: year, taxPeriod: period, otpCode: otp, alreadyLoggedIn: alreadyLoggedIn })
+                body: JSON.stringify({ taxYear: year, taxPeriod: period, otpCode: otp, alreadyLoggedIn: alreadyLoggedIn, sessionToken: window.mowSessionToken || '' })
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
