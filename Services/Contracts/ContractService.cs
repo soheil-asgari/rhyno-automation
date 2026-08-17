@@ -366,7 +366,9 @@ public sealed class ContractService : IContractService
             .Include(x => x.ContractTemplate)
             .Include(x => x.Payments)
             .Include(x => x.Attachments)
-            .Include(x => x.AuditLogs).ThenInclude(al => al.User);
+            .Include(x => x.AuditLogs).ThenInclude(al => al.User)
+            .Include(x => x.ArchivedByUser)
+            .Include(x => x.Attachments).ThenInclude(a => a.UploadedByUser);
 
         query = ApplyVisibilityFilter(query, currentUserId, isAdmin);
 
@@ -387,6 +389,7 @@ public sealed class ContractService : IContractService
             CustomerId = c.CustomerId,
             CustomerName = c.Customer?.Name,
             Description = c.Description,
+            Notes = c.Notes,
             TermsAndConditions = c.TermsAndConditions,
             ContractBodyHtml = c.ContractBodyHtml,
             TotalAmount = c.TotalAmount,
@@ -403,6 +406,7 @@ public sealed class ContractService : IContractService
             TemplateName = c.ContractTemplate?.Name,
             IsArchived = c.IsArchived,
             ArchivedAt = c.ArchivedAt,
+            ArchivedByUserName = c.ArchivedByUser?.FullName ?? c.ArchivedByUser?.UserName,
             CreatedByUserName = c.CreatedByUser?.FullName ?? c.CreatedByUser?.UserName ?? "نامشخص",
             CreatedAt = c.CreatedAt,
             UpdatedAt = c.UpdatedAt,
@@ -417,7 +421,8 @@ public sealed class ContractService : IContractService
             }).ToList(),
             Attachments = c.Attachments.OrderByDescending(a => a.CreatedAt).Select(a => new ContractAttachmentVM
             {
-                Id = a.Id, FileName = a.FileName, ContentType = a.ContentType, FileSize = a.FileSize, CreatedAt = a.CreatedAt
+                Id = a.Id, FileName = a.FileName, ContentType = a.ContentType, FileSize = a.FileSize, CreatedAt = a.CreatedAt,
+                UploadedByUserName = a.UploadedByUser != null ? a.UploadedByUser.FullName ?? a.UploadedByUser.UserName : null
             }).ToList(),
             AuditLogs = c.AuditLogs.OrderByDescending(al => al.CreatedAt).Select(al => new ContractAuditLogVM
             {
@@ -487,6 +492,7 @@ public sealed class ContractService : IContractService
             ClientAddress = model.ClientAddress?.Trim(),
             CustomerId = model.CustomerId,
             Description = model.Description?.Trim(),
+            Notes = model.Notes?.Trim(),
             TermsAndConditions = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.TermsAndConditions),
             ContractBodyHtml = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.ContractBodyHtml),
             TotalAmount = model.TotalAmount,
@@ -551,6 +557,7 @@ public sealed class ContractService : IContractService
             ClientAddress = c.ClientAddress,
             CustomerId = c.CustomerId,
             Description = c.Description,
+            Notes = c.Notes,
             TermsAndConditions = c.TermsAndConditions,
             ContractBodyHtml = c.ContractBodyHtml,
             TotalAmount = c.TotalAmount,
@@ -605,6 +612,7 @@ public sealed class ContractService : IContractService
         c.ClientAddress = model.ClientAddress?.Trim();
         c.CustomerId = model.CustomerId;
         c.Description = model.Description?.Trim();
+        c.Notes = model.Notes?.Trim();
         c.TermsAndConditions = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.TermsAndConditions);
         c.ContractBodyHtml = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.ContractBodyHtml);
         c.TotalAmount = model.TotalAmount;

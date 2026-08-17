@@ -142,6 +142,9 @@ namespace OfficeAutomation.Models
         [Display(Name = "توضیحات")]
         public string? Description { get; set; }
 
+        [Display(Name = "یادداشت‌ها")]
+        public string? Notes { get; set; }
+
         [Display(Name = "شرایط و ضوابط")]
         public string? TermsAndConditions { get; set; }
 
@@ -225,6 +228,9 @@ namespace OfficeAutomation.Models
         [Display(Name = "توضیحات")]
         public string? Description { get; set; }
 
+        [Display(Name = "یادداشت‌ها")]
+        public string? Notes { get; set; }
+
         [Display(Name = "شرایط و ضوابط")]
         public string? TermsAndConditions { get; set; }
 
@@ -293,6 +299,7 @@ namespace OfficeAutomation.Models
         public int? CustomerId { get; set; }
         public string? CustomerName { get; set; }
         public string? Description { get; set; }
+        public string? Notes { get; set; }
         public string? TermsAndConditions { get; set; }
         public string? ContractBodyHtml { get; set; }
         public decimal TotalAmount { get; set; }
@@ -309,6 +316,7 @@ namespace OfficeAutomation.Models
         public string? TemplateName { get; set; }
         public bool IsArchived { get; set; }
         public DateTime? ArchivedAt { get; set; }
+        public string? ArchivedByUserName { get; set; }
         public string CreatedByUserName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -341,6 +349,7 @@ namespace OfficeAutomation.Models
         public string? ContentType { get; set; }
         public long FileSize { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? UploadedByUserName { get; set; }
     }
 
     public class ContractAuditLogVM

@@ -36,5 +36,7 @@ namespace OfficeAutomation.Models
         [Required]
         [MaxLength(450)]
         public string UploadedByUserId { get; set; } = string.Empty;
+
+        public User? UploadedByUser { get; set; }
     }
 }

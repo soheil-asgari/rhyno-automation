@@ -79,6 +79,7 @@ public class ContractsController : Controller
             var vm = await _contractService.BuildCreateViewModelAsync(currentUserId, ct);
             vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
             vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
+            vm.Notes = model.Notes;
             vm.TermsAndConditions = model.TermsAndConditions; vm.ContractBodyHtml = model.ContractBodyHtml;
             vm.TotalAmount = model.TotalAmount; vm.StartDate = model.StartDate; vm.EndDate = model.EndDate;
             vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
@@ -100,6 +101,7 @@ public class ContractsController : Controller
             var vm = await _contractService.BuildCreateViewModelAsync(currentUser, ct);
             vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
             vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
+            vm.Notes = model.Notes;
             vm.TermsAndConditions = model.TermsAndConditions; vm.ContractBodyHtml = model.ContractBodyHtml;
             vm.TotalAmount = model.TotalAmount; vm.StartDate = model.StartDate; vm.EndDate = model.EndDate;
             vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
@@ -142,6 +144,7 @@ public class ContractsController : Controller
                 var vm = await _contractService.BuildEditViewModelAsync(model.Id, currentUserId, ct);
                 vm.Title = model.Title; vm.ContractNumber = model.ContractNumber; vm.ClientName = model.ClientName;
                 vm.ClientPhone = model.ClientPhone; vm.ClientAddress = model.ClientAddress; vm.Description = model.Description;
+                vm.Notes = model.Notes;
                 vm.TermsAndConditions = model.TermsAndConditions; vm.ContractBodyHtml = model.ContractBodyHtml;
                 vm.TotalAmount = model.TotalAmount; vm.PaidAmount = model.PaidAmount;
                 vm.StartDate = model.StartDate; vm.EndDate = model.EndDate; vm.Status = model.Status;
