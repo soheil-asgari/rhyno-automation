@@ -1,0 +1,27 @@
+html.is-inside-tab-iframe .rahkaran-header,
+            html.is-inside-tab-iframe .rahkaran-sidebar,
+            html.is-inside-tab-iframe .rahkaran-sidebar-overlay,
+            html.is-inside-tab-iframe .rhyno-tab-bar-host,
+            html.is-inside-tab-iframe #rhynoTabBarHost,
+            html.is-inside-tab-iframe .rhyno-tab-column {
+                display: none !important;
+            }
+
+            html.is-inside-tab-iframe .rahkaran-app-body {
+                display: block !important;
+            }
+
+            html.is-inside-tab-iframe body {
+                padding-top: 0 !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+            }
+
+            /* Higher specificity to override body.rahkaran-is-desktop #mainContentArea */
+            html.is-inside-tab-iframe body.rahkaran-is-desktop #mainContentArea,
+            html.is-inside-tab-iframe body #mainContentArea {
+                display: flex !important;
+                background: #ffffff;
+            }
+
+            /* Fallback default gradient is defined in rahkaran-theme.css */

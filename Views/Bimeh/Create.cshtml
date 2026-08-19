@@ -166,90 +166,12 @@
     </tr>
 </template>
 
-<style>
-    /* ── Employee autocomplete dropdown: prevent table overflow clipping ── */
-    #employeeRows .employee-autocomplete {
-        position: relative;
-        z-index: 9999;
-    }
-    #employeeRows .employee-suggestions {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        left: 0;
-        z-index: 9999;
-        max-height: 220px;
-        overflow-y: auto;
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        border-radius: 4px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-    }
-    #employeeRows .employee-suggestion-item {
-        display: block;
-        width: 100%;
-        text-align: right;
-        padding: 8px 10px;
-        font-size: 11px;
-        color: #334155;
-        background: transparent;
-        border: 0;
-        cursor: pointer;
-        transition: background 0.15s ease;
-    }
-    #employeeRows .employee-suggestion-item:hover {
-        background: #f0f4f8;
-    }
-    #employeeRows .employee-suggestion-item small {
-        display: block;
-        font-size: 10px;
-        color: #64748b;
-        margin-top: 2px;
-    }
-    /* Ensure the table wrapper does not clip the absolutely-positioned dropdown */
-    #employeeRows .employee-autocomplete,
-    #employeeRows td {
-        overflow: visible !important;
-    }
-</style>
+<link rel="stylesheet" href="~/css/bimeh-create-style.css" asp-append-version="true" />
 
 @section Scripts {
+    <script id="bimehData" type="application/json">@Html.Raw(Json.Serialize(Model.Employees ?? new List<InsuranceEmployeeRowViewModel>()))</script>
     <script src="~/js/persian-date.js" asp-append-version="true"></script>
     <script src="~/js/persian-datepicker.min.js" asp-append-version="true"></script>
     <script src="~/js/insurance-form.js" asp-append-version="true"></script>
-    <script>
-        (() => {
-            const initialEmployees = @Html.Raw(Json.Serialize((Model.Employees ?? new List<InsuranceEmployeeRowViewModel>()).Select(e => new {
-                humanCapitalEmployeeId = e.HumanCapitalEmployeeId,
-                fullName = e.FullName,
-                jobTitle = e.JobTitle,
-                startWorkSolar = e.StartWorkSolar,
-                endWorkSolar = e.EndWorkSolar,
-                workDays = e.WorkDays,
-                salary = e.Salary
-            })));
-
-            window.initInsuranceForm({
-                mode: 'create',
-                formId: 'bimehCreateForm',
-                rowsContainerId: 'employeeRows',
-                rowTemplateId: 'employeeRowTemplate',
-                addRowButtonId: 'addRow',
-                employeeCountLabelId: 'employeeCountLabel',
-                copyPreviousMonthButtonId: 'copyPreviousMonth',
-                projectNameFieldId: 'projectNameField',
-                managerNameFieldId: 'managerNameField',
-                monthFieldId: 'monthField',
-                yearFieldId: 'yearField',
-                initialEmployees
-            });
-
-            document.getElementById('employeeRows').addEventListener('input', event => {
-                if (!event.target.classList.contains('salary-input')) return;
-                const row = event.target.closest('tr');
-                const salary = Number(event.target.value || 0);
-                row.querySelector('[data-insurance-cell]').textContent = `${(salary * 0.07).toLocaleString('fa-IR')} ریال`;
-            });
-        })();
-    </script>
+    <script src="~/js/bimeh-create-script.js" asp-append-version="true"></script>
 }

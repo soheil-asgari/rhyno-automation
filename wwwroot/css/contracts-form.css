@@ -1,0 +1,883 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Redesigned Single-Column Layout (Compact)
+   ───────────────────────────────────────────────────────────────────────────── */
+.contract-create-layout-redesigned {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.contract-create-layout-redesigned .form-section {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    margin-bottom: 0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s ease !important;
+}
+
+.contract-create-layout-redesigned .form-section:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    border-color: #d1d5db !important;
+}
+
+.contract-create-layout-redesigned .form-section-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.contract-create-layout-redesigned .form-section-icon {
+    width: 28px !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%) !important;
+    color: white !important;
+    border-radius: 6px !important;
+    font-size: 0.85rem !important;
+    flex-shrink: 0 !important;
+}
+
+.contract-create-layout-redesigned .form-section-header h2 {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin: 0 !important;
+}
+
+.contract-create-layout-redesigned .form-section-header .form-section-desc {
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+    margin: 1px 0 0 0 !important;
+}
+
+.contract-create-layout-redesigned .form-fields-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 10px !important;
+}
+
+/* Compact sections inside the main card */
+.contract-create-layout-redesigned .compact-section {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.contract-create-layout-redesigned .compact-section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title {
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin: 0 0 8px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title i {
+    font-size: 0.85rem !important;
+    color: #0d9488 !important;
+}
+
+/* Compact Sections inside single card */
+.contract-create-layout-redesigned .compact-section {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.contract-create-layout-redesigned .compact-section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin: 0 0 8px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title i {
+    font-size: 0.9rem !important;
+    color: #0d9488 !important;
+}
+
+/* Compact sections inside the main card */
+.contract-create-layout-redesigned .compact-section {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.contract-create-layout-redesigned .compact-section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title {
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin: 0 0 8px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title i {
+    font-size: 0.85rem !important;
+    color: #0d9488 !important;
+}
+
+/* Compact Sections inside single card */
+.contract-create-layout-redesigned .compact-section {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.contract-create-layout-redesigned .compact-section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin: 0 0 8px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.contract-create-layout-redesigned .compact-section-title i {
+    font-size: 0.9rem !important;
+    color: #0d9488 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Contracts Module — Create/Edit Contract Form
+   Clean Enterprise Input Style (no inside-input icons → no icon collisions)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Clean Enterprise Input Style */
+.form-control,
+.form-select {
+    width: 100% !important;
+    height: 36px !important; /* Compact ERP height */
+    padding: 6px 12px !important; /* Standard padding without icon collisions */
+    font-size: 0.82rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    background-color: #ffffff !important;
+    direction: rtl !important;
+    text-align: right !important;
+    box-shadow: none !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #4f46e5 !important;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15) !important;
+    outline: none !important;
+}
+
+/* Textareas: stay compact but roomy so the form fits on screen */
+textarea.form-control {
+    height: auto !important;
+    min-height: 56px !important;
+    resize: vertical !important;
+    padding: 8px 12px !important;
+    line-height: 1.45 !important;
+    font-family: inherit !important;
+}
+
+/* Datepicker Specific Input Fix
+   The Jalali date trigger (calendar icon) is intentionally kept. It is placed
+   absolutely on the LEFT so it never collides with RTL text. */
+.datepicker-wrapper,
+.jalali-datepicker-wrapper {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.datepicker-wrapper input,
+.jalali-datepicker-wrapper .jalali-date-input {
+    padding-left: 40px !important; /* Extra room so the left calendar icon never overlaps the RTL placeholder text */
+}
+
+.datepicker-wrapper .calendar-icon,
+.jalali-datepicker-wrapper .form-icon-left {
+    position: absolute !important;
+    left: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #6b7280 !important;
+    pointer-events: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2 !important;
+}
+
+.jalali-date-input { cursor: pointer !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Compact Card & Grid System
+   ───────────────────────────────────────────────────────────────────────────── */
+.form-section {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 12px 14px !important;
+    margin-bottom: 10px !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Create-contract ONLY layout tweak (scope-safe: does NOT touch Edit or any
+   other page). Two independent flex columns so each column's cards stack
+   tightly under each other — no CSS-Grid row-height locking between columns.
+   ───────────────────────────────────────────────────────────────────────────── */
+.contract-create-layout {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    flex-direction: row !important;
+    align-items: start !important;
+    gap: 16px !important;
+}
+
+.contract-create-layout > .form-col {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+}
+
+.contract-create-layout > .form-col > .form-section {
+    margin-bottom: 0 !important;
+    width: 100% !important;
+    flex: 0 0 auto !important;
+}
+
+/* Card 5 (the WYSIWYG / content card) is no longer a grid child — it is placed
+   full-width below the two flex columns in the markup, so it just needs to
+   start on a new line. */
+.contract-create-layout .form-section--wide {
+    flex-basis: 100% !important;
+    width: 100% !important;
+}
+
+/* Inside the two-column create view, 2-col grids fit each column comfortably
+   while the 3-col textarea row inside card 5 stays intact. */
+.contract-create-layout .form-fields-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+}
+.contract-create-layout .form-fields-grid > [style*="grid-column: span 2"] {
+    grid-column: span 2 !important;
+}
+
+.form-fields-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 10px !important;
+}
+
+/* Dense 5-column variant for the combined Dates + Financial section on Edit */
+.form-fields-grid-5 {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 10px !important;
+}
+
+@media (max-width: 1100px) {
+    .form-fields-grid,
+    .form-fields-grid-5 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 640px) {
+    .form-fields-grid,
+    .form-fields-grid-5 { grid-template-columns: 1fr !important; }
+}
+
+.form-label {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+}
+
+.form-validation { display: block; margin-top: 2px; font-size: 0.7rem; color: #f43f5e; line-height: 1.2; }
+.form-validation:empty { display: none; }
+
+/* ── Card section headers (compact) ──────────────────────────────────────── */
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eef0f4;
+}
+
+/* Compact the create-form section cards so they occupy less vertical space */
+.contract-create-layout .form-section {
+    padding-top: 8px !important;
+    padding-bottom: 9px !important;
+}
+.contract-create-layout .form-section-header {
+    margin-bottom: 6px !important;
+    padding-bottom: 4px !important;
+}
+
+.form-section-header .form-section-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background-color: #eef2ff;
+    color: #4f46e5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.form-section-header h2 { margin: 0; font-size: 0.85rem; font-weight: 700; color: #111827; line-height: 1.3; }
+.form-section-header .form-section-desc { margin: 1px 0 0; font-size: 0.68rem; color: #9ca3af; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Dark mode overrides (aligned with the slate Tailwind dark palette)
+   ───────────────────────────────────────────────────────────────────────────── */
+html.dark .form-section,
+html.theme-dark .form-section {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
+}
+
+html.dark .form-control,
+html.theme-dark .form-control {
+    color: #e2e8f0 !important;
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html.dark .form-control::placeholder,
+html.theme-dark .form-control::placeholder { color: #64748b; }
+
+html.dark .form-control:focus,
+html.theme-dark .form-control:focus {
+    background-color: #1e293b !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
+
+html.dark .form-control:disabled,
+html.theme-dark .form-control:disabled,
+html.dark .form-control[readonly],
+html.theme-dark .form-control[readonly] { background-color: #111827 !important; color: #94a3b8 !important; }
+
+html.dark .form-label,
+html.theme-dark .form-label { color: #cbd5e1 !important; }
+
+html.dark .form-section-header h2,
+html.theme-dark .form-section-header h2 { color: #f1f5f9 !important; }
+
+html.dark .form-section-header .form-section-icon,
+html.theme-dark .form-section-header .form-section-icon { background-color: #312e81 !important; color: #c7d2fe !important; }
+
+html.dark .form-section-header,
+html.theme-dark .form-section-header { border-bottom-color: #1e293b !important; }
+
+html.dark .jalali-datepicker-wrapper .form-icon-left,
+html.theme-dark .jalali-datepicker-wrapper .form-icon-left,
+html.dark .datepicker-wrapper .calendar-icon,
+html.theme-dark .datepicker-wrapper .calendar-icon { color: #64748b !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Professional page-header card for Create/Edit contract
+   ───────────────────────────────────────────────────────────────────────────── */
+.contracts-header-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 10px 16px 12px !important;
+    margin-bottom: 12px !important;
+}
+
+.contracts-header-card .rhyno-breadcrumb {
+    padding: 0 0 10px;
+    margin: 0 0 10px;
+    border-bottom: 1px dashed #eef0f4;
+}
+
+html.dark .contracts-header-card,
+html.theme-dark .contracts-header-card {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
+}
+html.dark .contracts-header-card .rhyno-breadcrumb,
+html.theme-dark .contracts-header-card .rhyno-breadcrumb { border-bottom-color: #1e293b !important; }
+
+.contracts-header-main {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+.contracts-header-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background-color: #eef2ff;
+    color: #4f46e5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+html.dark .contracts-header-icon,
+html.theme-dark .contracts-header-icon {
+    background-color: #312e81 !important;
+    color: #c7d2fe !important;
+}
+
+.contracts-header-main h1 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.3;
+}
+
+html.dark .contracts-header-main h1,
+html.theme-dark .contracts-header-main h1 { color: #f1f5f9 !important; }
+
+.contracts-header-main p {
+    margin: 2px 0 0;
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.contracts-header-actions {
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.contracts-header-btn {
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #374151;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.contracts-header-btn:hover {
+    background: #f9fafb;
+    color: #111827;
+    text-decoration: none;
+}
+
+html.dark .contracts-header-btn,
+html.theme-dark .contracts-header-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+html.dark .contracts-header-btn:hover,
+html.theme-dark .contracts-header-btn:hover {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+@media (max-width: 480px) {
+    .contracts-header-actions .contracts-header-btn { font-size: 0.68rem; padding: 5px 9px; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Create-form WYSIWYG editor — reduce height so the form fits one screen.
+   Scoped to the create form's editor id only (safe: no effect on Edit/page css).
+   ───────────────────────────────────────────────────────────────────────────── */
+#createContractEditor {
+    min-height: 64px !important;
+    max-height: 150px !important;
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+}
+.contract-create-layout .wysiwyg-editor {
+    min-height: 64px !important;
+    max-height: 150px !important;
+}
+
+/* Responsive: collapse the two flex columns to a single column on narrow viewports */
+@media (max-width: 1100px) {
+    .contract-create-layout {
+        flex-direction: column !important;
+    }
+    .contract-create-layout > .form-col {
+        flex-basis: auto !important;
+        flex: 1 1 auto !important;
+        width: 100% !important;
+    }
+    .contract-create-layout .form-fields-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+@media (max-width: 640px) {
+    .contract-create-layout .form-fields-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+/* ─────────────────────────────────────────────────────────────────────────────
+   CREATE page: fit the whole form on a single screen (no page scroll).
+   Scoped strictly to `.contracts-create-page` (added to Create.cshtml only).
+   Edit and any other page that loads contracts-form.css are NOT affected.
+   ───────────────────────────────────────────────────────────────────────────── */
+.contracts-create-page { font-size: 0.82rem !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Modern Create Contract Wizard Styles (2026 redesign)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Wizard page header */
+.contracts-wizard-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%) !important;
+    border-radius: 16px !important;
+    padding: 20px 24px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 10px 30px rgba(13, 148, 136, 0.25) !important;
+    color: #fff !important;
+}
+.contracts-wizard-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+}
+.contracts-wizard-icon {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(4px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.5rem !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+.contracts-wizard-title h1 {
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    color: #fff !important;
+}
+.contracts-wizard-title p {
+    font-size: 0.85rem !important;
+    margin: 4px 0 0 0 !important;
+    opacity: 0.9 !important;
+}
+.contracts-wizard-back {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #fff !important;
+    padding: 8px 16px !important;
+    border-radius: 10px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+}
+.contracts-wizard-back:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+/* Wizard progress bar */
+.contract-wizard-progress {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    background: #fff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 18px 24px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+.wizard-step-nav {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 8px 14px !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    color: #64748b !important;
+    font-family: inherit !important;
+}
+.wizard-step-nav:hover {
+    background: #f1f5f9 !important;
+    color: #0f766e !important;
+}
+.wizard-step-nav.active {
+    color: #0f766e !important;
+    background: #f0fdfa !important;
+}
+.wizard-step-nav.active .wizard-step-badge {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3) !important;
+}
+.wizard-step-nav.completed .wizard-step-badge {
+    background: #0d9488 !important;
+    color: #fff !important;
+}
+.wizard-step-nav.completed .wizard-step-label {
+    color: #0f766e !important;
+}
+.wizard-step-badge {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    transition: all 0.25s ease !important;
+}
+.wizard-step-label {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+}
+.wizard-step-line {
+    flex: 1 !important;
+    height: 3px !important;
+    max-width: 80px !important;
+    background: #e2e8f0 !important;
+    margin: 0 6px !important;
+    border-radius: 3px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+.wizard-step-line::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(90deg, #14b8a6, #0d9488) !important;
+    width: 0 !important;
+    transition: width 0.4s ease !important;
+    border-radius: 3px !important;
+}
+.wizard-step-line.filled::after {
+    width: 100% !important;
+}
+
+/* Form section redesign */
+.contracts-create-page .form-section {
+    background: #fff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04) !important;
+    transition: box-shadow 0.3s ease, transform 0.3s ease !important;
+}
+.contracts-create-page .form-section:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07) !important;
+}
+.contracts-create-page .form-section.active {
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2), 0 8px 32px rgba(0, 0, 0, 0.07) !important;
+}
+.contracts-create-page .form-section-header {
+    border-bottom: 2px solid #f1f5f9 !important;
+    padding-bottom: 16px !important;
+    margin-bottom: 20px !important;
+}
+.contracts-create-page .form-section-icon {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%) !important;
+    font-size: 1.1rem !important;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25) !important;
+}
+.contracts-create-page .form-section-header h2 {
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+}
+.contracts-create-page .form-section-header .form-section-desc {
+    font-size: 0.8rem !important;
+    color: #64748b !important;
+}
+
+/* Compact sections */
+.contracts-create-page .compact-section {
+    margin-bottom: 24px !important;
+    padding-bottom: 24px !important;
+    border-bottom: 1px dashed #e2e8f0 !important;
+    position: relative !important;
+    transition: all 0.3s ease !important;
+}
+.contracts-create-page .compact-section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+}
+.contracts-create-page .compact-section.active {
+    background: #f8fafc !important;
+    border-radius: 12px !important;
+    border-bottom: none !important;
+    box-shadow: inset 0 0 0 1px #e0f2fe !important;
+}
+.contracts-create-page .compact-section-title {
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
+    color: #334155 !important;
+    margin-bottom: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+.contracts-create-page .compact-section-title i {
+    color: #0d9488 !important;
+    font-size: 0.95rem !important;
+}
+
+/* Inputs */
+.contracts-create-page .form-control,
+.contracts-create-page .form-select {
+    height: 42px !important;
+    padding: 8px 14px !important;
+    font-size: 0.85rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.2s ease !important;
+}
+.contracts-create-page .form-control:focus,
+.contracts-create-page .form-select:focus {
+    border-color: #0d9488 !important;
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1) !important;
+    outline: none !important;
+}
+.contracts-create-page textarea.form-control {
+    height: auto !important;
+    min-height: 80px !important;
+    padding: 10px 14px !important;
+    line-height: 1.7 !important;
+}
+.contracts-create-page .form-label {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin-bottom: 6px !important;
+    display: block !important;
+}
+.contracts-create-page .form-validation {
+    font-size: 0.72rem !important;
+    margin-top: 4px !important;
+    color: #dc2626 !important;
+}
+
+/* Action buttons */
+.contracts-create-page .form-actions-row {
+    position: sticky !important;
+    bottom: 16px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 16px 20px !important;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06) !important;
+    z-index: 10 !important;
+    margin-top: 24px !important;
+}
+.contracts-create-page .form-actions-row button,
+.contracts-create-page .form-actions-row a {
+    padding: 10px 22px !important;
+    font-size: 0.82rem !important;
+    border-radius: 10px !important;
+    transition: all 0.2s ease !important;
+}
+.contracts-create-page .form-actions-row button[type=submit] {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3) !important;
+}
+.contracts-create-page .form-actions-row button[type=submit]:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4) !important;
+}
+
+@media (max-width: 768px) {
+    .contracts-wizard-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 16px !important;
+    }
+    .contracts-wizard-title h1 {
+        font-size: 1rem !important;
+    }
+    .contract-wizard-progress {
+        padding: 12px !important;
+        overflow-x: auto !important;
+    }
+    .wizard-step-label {
+        display: none !important;
+    }
+    .wizard-step-line {
+        max-width: 30px !important;
+    }
+}

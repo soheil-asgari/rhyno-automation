@@ -1,0 +1,100 @@
+/* ═══ Letter Details — Screen ═══ */
+        .letter-paper {
+            background: linear-gradient(180deg, #ffffff 0%, #fdfdfc 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+
+        .letter-paper .letter-body-content {
+            line-height: 2.2;
+            text-align: justify;
+            overflow-wrap: anywhere;
+            font-size: 13.5px;
+        }
+
+        .letter-paper .letter-body-content p {
+            margin: 0 0 8px;
+        }
+
+        .letter-paper .letter-body-content a {
+            color: #2b7cb3;
+            text-decoration: underline;
+        }
+
+        .letter-paper .letter-body-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+        }
+
+        .letter-paper .letter-body-content table td,
+        .letter-paper .letter-body-content table th {
+            border: 1px solid #cbd5e1;
+            padding: 6px 10px;
+        }
+
+        /* ═══ Dark Mode — Paper stays light for print-like feel ═══ */
+        html.theme-dark .letter-paper,
+        html[data-theme="dark"] .letter-paper {
+            background: linear-gradient(180deg, #ffffff 0%, #fefefe 100%);
+            border-color: #e2e8f0 !important;
+            box-shadow: 0 16px 40px rgba(2, 6, 23, 0.5);
+        }
+
+        html.theme-dark .letter-paper .letter-body-content,
+        html[data-theme="dark"] .letter-paper .letter-body-content {
+            color: #1e293b;
+        }
+
+        html.theme-dark .letter-paper .letter-meta,
+        html[data-theme="dark"] .letter-paper .letter-meta {
+            color: #475569;
+        }
+
+        html.theme-dark .letter-paper .letter-meta strong,
+        html[data-theme="dark"] .letter-paper .letter-meta strong {
+            color: #334155;
+        }
+
+        html.theme-dark .letter-paper .letter-title,
+        html[data-theme="dark"] .letter-paper .letter-title {
+            color: #0f172a;
+        }
+
+        html.theme-dark .letter-paper .letter-receiver,
+        html[data-theme="dark"] .letter-paper .letter-receiver,
+        html.theme-dark .letter-paper .letter-signature,
+        html[data-theme="dark"] .letter-paper .letter-signature {
+            color: #334155;
+        }
+
+        /* ═══ Print — Only letter paper ═══ */
+        @@media print {
+            body * {
+                visibility: hidden;
+            }
+
+            .letter-paper,
+            .letter-paper * {
+                visibility: visible;
+            }
+
+            .letter-paper {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                max-width: 100%;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 12mm 15mm !important;
+            }
+
+            @@page {
+                size: A4;
+                margin: 10mm;
+            }
+        }

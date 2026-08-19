@@ -1,0 +1,40 @@
+/* ── Employee autocomplete dropdown: prevent table overflow clipping ── */
+    #payrollRows .employee-suggestions {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        z-index: 9999;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+    #payrollRows td {
+        overflow: visible !important;
+    }
+    #payrollRows .employee-suggestions button {
+        display: block;
+        width: 100%;
+        text-align: right;
+        padding: 8px 10px;
+        font-size: 11px;
+        color: #334155;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+    #payrollRows .employee-suggestions button:hover {
+        background: #f0f4f8;
+    }
+    #payrollRows .employee-suggestions button span {
+        display: block;
+    }
+    #payrollRows .employee-suggestions button span.block {
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 2px;
+    }

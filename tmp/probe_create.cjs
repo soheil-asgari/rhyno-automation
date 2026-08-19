@@ -1,0 +1,11 @@
+const fs = require('fs');
+const L = fs.readFileSync('Views/Contracts/Create.cshtml', 'utf8').split(/\r?\n/);
+const gis = (s) => { const r = []; L.forEach((l, i) => { if (l.includes(s)) r.push(i); }); return r; };
+const gi = (s) => L.findIndex(l => l.includes(s));
+console.log('contract-create-layout@', gis('contract-create-layout'));
+console.log('form-col@', gis('form-col'));
+console.log('Card n@', [1, 2, 3, 4, 5].map(n => gi('@* Card ' + n)));
+console.log('actions@', gi('form-actions-row'));
+console.log('form@', gis('asp-action='), 'formClose@', gis('</form>'));
+console.log('editorRefs', gis('ContractEditor'), gis('editEditor'), gis('syncContractEditor'));
+console.log('total', L.length);

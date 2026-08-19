@@ -1,0 +1,419 @@
+.audit-page {
+            direction: rtl;
+            color: #0f172a;
+        }
+
+        .audit-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #2563eb 100%);
+            border-radius: 8px;
+            color: #fff;
+            padding: 22px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+        }
+
+        .audit-hero .eyebrow {
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .audit-metric-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+            min-height: 116px;
+        }
+
+        .audit-metric-card .metric-value {
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .audit-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+        }
+
+        .audit-table {
+            margin-bottom: 0;
+        }
+
+        .audit-table thead th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.78rem;
+            font-weight: 800;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .audit-table tbody td {
+            font-size: 0.86rem;
+            vertical-align: middle;
+        }
+
+        .audit-row {
+            cursor: pointer;
+        }
+
+        .audit-row:hover td {
+            background: #f8fafc;
+        }
+
+        .text-ltr {
+            direction: ltr;
+            unicode-bidi: plaintext;
+        }
+
+        .audit-empty {
+            padding: 46px 16px;
+            color: #64748b;
+        }
+
+        .audit-loader {
+            min-height: 240px;
+        }
+
+        .audit-filter-label {
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .diff-table th {
+            width: 20%;
+            color: #475569;
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+
+        .diff-value {
+            direction: ltr;
+            unicode-bidi: plaintext;
+            text-align: left;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.78rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-width: 420px;
+        }
+
+        .diff-changed {
+            background: #fff7ed;
+        }
+
+        .diff-added {
+            background: #ecfdf5;
+        }
+
+        .diff-removed {
+            background: #fef2f2;
+        }
+
+        .pagination .page-link {
+            border-radius: 8px;
+            margin: 0 2px;
+        }
+
+        html.theme-dark .audit-page,
+        html.theme-dark .audit-card,
+        html.theme-dark .audit-metric-card {
+            color: #e5e7eb;
+        }
+
+        html.theme-dark .audit-card,
+        html.theme-dark .audit-metric-card {
+            background: #111827;
+            border-color: #334155;
+        }
+
+        html.theme-dark .audit-table thead th {
+            background: #1f2937;
+            color: #e5e7eb;
+            border-color: #334155;
+        }
+
+        html.theme-dark .audit-table tbody td,
+        html.theme-dark .audit-table tbody th {
+            background: #111827;
+            color: #e5e7eb;
+            border-color: #334155;
+        }
+
+        html.theme-dark .audit-row:hover td {
+            background: #1f2937;
+        }
+
+        .audit-page,
+        .audit-page .card,
+        .audit-page .btn,
+        .audit-page .badge,
+        .audit-page .form-control,
+        .audit-page .form-select,
+        .audit-page .page-link,
+        .audit-page .modal-content,
+        .audit-page .modal-header,
+        .audit-page .modal-footer,
+        .audit-page .table,
+        .audit-page .border,
+        #auditDiffModal .modal-content,
+        #auditDiffModal .btn,
+        #auditDiffModal .badge,
+        #auditDiffModal .border {
+            border-radius: 0 !important;
+        }
+
+        .audit-page {
+            font-size: 0.84rem;
+        }
+
+        .audit-page.container-fluid {
+            padding-top: 0.75rem !important;
+            padding-bottom: 0.75rem !important;
+        }
+
+        .audit-hero {
+            border-radius: 0;
+            padding: 14px 16px;
+            box-shadow: none;
+        }
+
+        .audit-metric-card {
+            border-radius: 0;
+            min-height: 78px;
+            box-shadow: none;
+        }
+
+        .audit-metric-card .metric-value {
+            font-size: 1.25rem;
+            margin-top: 0.25rem !important;
+        }
+
+        .audit-card {
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .audit-card .card-header,
+        .audit-card .card-body,
+        .audit-card .card-footer {
+            padding: 0.65rem 0.85rem;
+        }
+
+        .audit-table thead th,
+        .audit-table tbody td {
+            padding: 0.45rem 0.65rem;
+            font-size: 0.78rem;
+        }
+
+        .audit-filter-label {
+            margin-bottom: 3px;
+            font-size: 0.72rem;
+        }
+
+        .audit-page .form-control,
+        .audit-page .form-select,
+        .audit-page .btn {
+            min-height: 34px;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+            font-size: 0.78rem;
+        }
+
+        .audit-page .row {
+            --bs-gutter-y: 0.65rem;
+        }
+
+        .pagination .page-link {
+            margin: 0;
+            padding: 0.25rem 0.55rem;
+        }
+
+        .audit-page .audit-metric-card i,
+        .audit-page .audit-metric-card .bi,
+        .audit-page .audit-metric-card .badge,
+        .audit-page .audit-metric-card [class*="bg-"],
+        .audit-page .btn i,
+        .audit-page .btn .bi {
+            background-color: transparent !important;
+            background-image: none !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
+        .audit-page .audit-metric-card .badge {
+            color: #475569 !important;
+            font-size: 0.68rem;
+            line-height: 1.2;
+        }
+
+        .audit-page .audit-metric-card,
+        .audit-page .audit-card,
+        .audit-page .card,
+        .audit-page .card-header,
+        .audit-page .card-body,
+        .audit-page .card-footer,
+        .audit-page .modal-content,
+        .audit-page .modal-header,
+        .audit-page .modal-footer,
+        .audit-page .form-control,
+        .audit-page .form-select,
+        .audit-page .btn,
+        .audit-page .badge,
+        .audit-page .page-link,
+        .audit-page .table,
+        .audit-page .table *,
+        #auditDiffModal .modal-content,
+        #auditDiffModal .modal-header,
+        #auditDiffModal .modal-body,
+        #auditDiffModal .modal-footer,
+        #auditDiffModal .btn,
+        #auditDiffModal .badge,
+        #auditDiffModal .table,
+        #auditDiffModal .table * {
+            border-radius: 0 !important;
+        }
+
+        html.theme-dark .audit-page,
+        html.theme-dark .audit-page *,
+        html[data-theme="dark"] .audit-page,
+        html[data-theme="dark"] .audit-page *,
+        body[data-theme="dark"] .audit-page,
+        body[data-theme="dark"] .audit-page *,
+        html.theme-dark #auditDiffModal,
+        html.theme-dark #auditDiffModal *,
+        html[data-theme="dark"] #auditDiffModal,
+        html[data-theme="dark"] #auditDiffModal *,
+        body[data-theme="dark"] #auditDiffModal,
+        body[data-theme="dark"] #auditDiffModal * {
+            color: #f1f5f9 !important;
+        }
+
+        html.theme-dark .audit-page .text-muted,
+        html[data-theme="dark"] .audit-page .text-muted,
+        body[data-theme="dark"] .audit-page .text-muted,
+        html.theme-dark #auditDiffModal .text-muted,
+        html[data-theme="dark"] #auditDiffModal .text-muted,
+        body[data-theme="dark"] #auditDiffModal .text-muted {
+            color: #cbd5e1 !important;
+        }
+
+        html.theme-dark .audit-page .audit-metric-card,
+        html.theme-dark .audit-page .audit-card,
+        html.theme-dark .audit-page .card,
+        html.theme-dark .audit-page .card-header,
+        html.theme-dark .audit-page .card-body,
+        html.theme-dark .audit-page .card-footer,
+        html.theme-dark #auditDiffModal .modal-content,
+        html.theme-dark #auditDiffModal .modal-header,
+        html.theme-dark #auditDiffModal .modal-body,
+        html.theme-dark #auditDiffModal .modal-footer,
+        html[data-theme="dark"] .audit-page .audit-metric-card,
+        html[data-theme="dark"] .audit-page .audit-card,
+        html[data-theme="dark"] .audit-page .card,
+        html[data-theme="dark"] .audit-page .card-header,
+        html[data-theme="dark"] .audit-page .card-body,
+        html[data-theme="dark"] .audit-page .card-footer,
+        html[data-theme="dark"] #auditDiffModal .modal-content,
+        html[data-theme="dark"] #auditDiffModal .modal-header,
+        html[data-theme="dark"] #auditDiffModal .modal-body,
+        html[data-theme="dark"] #auditDiffModal .modal-footer,
+        body[data-theme="dark"] .audit-page .audit-metric-card,
+        body[data-theme="dark"] .audit-page .audit-card,
+        body[data-theme="dark"] .audit-page .card,
+        body[data-theme="dark"] .audit-page .card-header,
+        body[data-theme="dark"] .audit-page .card-body,
+        body[data-theme="dark"] .audit-page .card-footer,
+        body[data-theme="dark"] #auditDiffModal .modal-content,
+        body[data-theme="dark"] #auditDiffModal .modal-header,
+        body[data-theme="dark"] #auditDiffModal .modal-body,
+        body[data-theme="dark"] #auditDiffModal .modal-footer {
+            background: #111827 !important;
+            border-color: #334155 !important;
+            box-shadow: none !important;
+        }
+
+        html.theme-dark .audit-page .audit-metric-card .metric-value,
+        html.theme-dark .audit-page .audit-metric-card .small,
+        html.theme-dark .audit-page .audit-filter-label,
+        html.theme-dark .audit-page h1,
+        html.theme-dark .audit-page h2,
+        html.theme-dark .audit-page h3,
+        html.theme-dark .audit-page h4,
+        html.theme-dark .audit-page h5,
+        html[data-theme="dark"] .audit-page .audit-metric-card .metric-value,
+        html[data-theme="dark"] .audit-page .audit-metric-card .small,
+        html[data-theme="dark"] .audit-page .audit-filter-label,
+        html[data-theme="dark"] .audit-page h1,
+        html[data-theme="dark"] .audit-page h2,
+        html[data-theme="dark"] .audit-page h3,
+        html[data-theme="dark"] .audit-page h4,
+        html[data-theme="dark"] .audit-page h5,
+        body[data-theme="dark"] .audit-page .audit-metric-card .metric-value,
+        body[data-theme="dark"] .audit-page .audit-metric-card .small,
+        body[data-theme="dark"] .audit-page .audit-filter-label,
+        body[data-theme="dark"] .audit-page h1,
+        body[data-theme="dark"] .audit-page h2,
+        body[data-theme="dark"] .audit-page h3,
+        body[data-theme="dark"] .audit-page h4,
+        body[data-theme="dark"] .audit-page h5 {
+            color: #f1f5f9 !important;
+        }
+
+        html.theme-dark .audit-page .audit-table thead th,
+        html[data-theme="dark"] .audit-page .audit-table thead th,
+        body[data-theme="dark"] .audit-page .audit-table thead th {
+            background: #1f2937 !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
+
+        html.theme-dark .audit-page .audit-table tbody td,
+        html.theme-dark .audit-page .audit-table tbody th,
+        html[data-theme="dark"] .audit-page .audit-table tbody td,
+        html[data-theme="dark"] .audit-page .audit-table tbody th,
+        body[data-theme="dark"] .audit-page .audit-table tbody td,
+        body[data-theme="dark"] .audit-page .audit-table tbody th {
+            background: #111827 !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
+
+        html.theme-dark .audit-page .audit-row:hover td,
+        html[data-theme="dark"] .audit-page .audit-row:hover td,
+        body[data-theme="dark"] .audit-page .audit-row:hover td {
+            background: #1f2937 !important;
+        }
+
+        html.theme-dark .audit-page .form-control,
+        html.theme-dark .audit-page .form-select,
+        html.theme-dark .audit-page .page-link,
+        html[data-theme="dark"] .audit-page .form-control,
+        html[data-theme="dark"] .audit-page .form-select,
+        html[data-theme="dark"] .audit-page .page-link,
+        body[data-theme="dark"] .audit-page .form-control,
+        body[data-theme="dark"] .audit-page .form-select,
+        body[data-theme="dark"] .audit-page .page-link {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+
+        html.theme-dark .audit-page .audit-metric-card i,
+        html.theme-dark .audit-page .audit-metric-card .bi,
+        html.theme-dark .audit-page .audit-metric-card .badge,
+        html[data-theme="dark"] .audit-page .audit-metric-card i,
+        html[data-theme="dark"] .audit-page .audit-metric-card .bi,
+        html[data-theme="dark"] .audit-page .audit-metric-card .badge,
+        body[data-theme="dark"] .audit-page .audit-metric-card i,
+        body[data-theme="dark"] .audit-page .audit-metric-card .bi,
+        body[data-theme="dark"] .audit-page .audit-metric-card .badge {
+            background-color: transparent !important;
+            border-color: transparent !important;
+            color: #cbd5e1 !important;
+        }

@@ -91,11 +91,5 @@
     <script src="~/js/persian-date.js"></script>
     <script src="~/js/persian-datepicker.min.js"></script>
     <script src="~/js/leave-create-handler.js"></script>
-    <script>
-        $(document).ready(function() {
-            if (typeof $.fn.persianDatepicker === 'undefined') {
-                console.error("خطا: کتابخانه تقویم فارسی بارگذاری نشده است!");
-            }
-        });
-    </script>
+    <script src="~/js/leaves-create-script.js" asp-append-version="true"></script>
 }

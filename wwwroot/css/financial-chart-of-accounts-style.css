@@ -1,0 +1,91 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Vazirmatn', Tahoma, sans-serif; font-size: 12px; line-height: 1.5; background: #f5f6fa; color: #1a1a2e; direction: rtl; }
+
+        /* ── Shell ──────────────────────────────────────────────── */
+        .coa-shell { display: flex; height: 100vh; overflow: hidden; }
+        .coa-panel { display: flex; flex-direction: column; background: #fff; border-left: 1px solid rgba(0,0,0,.1); }
+        .coa-tree-panel { width: 55%; min-width: 380px; border-left: 1px solid rgba(0,0,0,.08); }
+        .coa-detail-panel { flex: 1; min-width: 300px; }
+
+        /* ── Toolbar ────────────────────────────────────────────── */
+        .coa-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #3e4756; color: #fff; flex-shrink: 0; }
+        .coa-toolbar h2 { font-size: 13px; font-weight: 700; flex: 1; }
+        .coa-search { position: relative; flex: 1; max-width: 260px; }
+        .coa-search input { width: 100%; height: 28px; padding: 0 28px 0 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 3px; background: rgba(255,255,255,.15); color: #fff; font-size: 11px; outline: none; }
+        .coa-search input::placeholder { color: rgba(255,255,255,.6); }
+        .coa-search input:focus { border-color: #ffc107; background: rgba(255,255,255,.25); }
+        .coa-search::after { content: "🔍"; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 12px; pointer-events: none; }
+
+        /* ── View toggle ────────────────────────────────────────── */
+        .coa-view-toggle { display: flex; gap: 2px; background: rgba(0,0,0,.2); border-radius: 3px; padding: 1px; }
+        .coa-view-btn { padding: 3px 10px; border: none; border-radius: 2px; background: transparent; color: rgba(255,255,255,.7); font-size: 11px; cursor: pointer; font-family: inherit; }
+        .coa-view-btn.active { background: #ffc107; color: #1a1a2e; font-weight: 700; }
+
+        /* ── Buttons ────────────────────────────────────────────── */
+        .coa-btn { padding: 3px 10px; border: 1px solid rgba(255,255,255,.3); border-radius: 2px; background: linear-gradient(#fff, transparent); color: #fff; font-size: 11px; cursor: pointer; font-family: inherit; box-shadow: 0 1px 1px rgba(0,0,0,.14); }
+        .coa-btn:hover { background: #fff; border-color: rgba(255,255,255,.5); }
+        .coa-btn-primary { background: #18af08; border-color: #158a06; color: #fff; }
+        .coa-btn-primary:hover { background: #158a06; }
+        .coa-btn-danger { background: #ef404d; border-color: #c62828; color: #fff; }
+        .coa-btn-danger:hover { background: #c62828; }
+        .coa-btn-sm { padding: 2px 6px; font-size: 10px; }
+
+        /* ── Tree ───────────────────────────────────────────────── */
+        .coa-tree-container { flex: 1; overflow: auto; padding: 4px; }
+        .coa-tree-node { user-select: none; }
+        .coa-tree-row { display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 2px; cursor: pointer; font-size: 11px; border: 1px solid transparent; }
+        .coa-tree-row:hover { background: #f0f4f8; }
+        .coa-tree-row.selected { background: #fff6d2; border-color: #ffc107; }
+        .coa-tree-row.inactive { opacity: .45; }
+        .coa-tree-toggle { width: 16px; text-align: center; font-size: 10px; color: #888; flex-shrink: 0; cursor: pointer; }
+        .coa-tree-toggle.expanded::before { content: "▼"; }
+        .coa-tree-toggle.collapsed::before { content: "▶"; }
+        .coa-tree-toggle.leaf::before { content: ""; }
+        .coa-tree-code { font-family: monospace; font-weight: 700; min-width: 50px; color: #3e4756; }
+        .coa-tree-name { flex: 1; }
+        .coa-tree-badge { padding: 0 4px; border-radius: 2px; font-size: 9px; font-weight: 700; }
+        .coa-badge-group { background: #e3f2fd; color: #1565c0; }
+        .coa-badge-general { background: #e8f5e9; color: #2e7d32; }
+        .coa-badge-subsidiary { background: #fff3e0; color: #e65100; }
+        .coa-badge-detailed { background: #f3e5f5; color: #7b1fa2; }
+        .coa-tree-children { padding-right: 18px; }
+
+        /* ── List view ──────────────────────────────────────────── */
+        .coa-list-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .coa-list-table th { position: sticky; top: 0; background: #f2f2f2; padding: 5px 8px; text-align: right; font-weight: 700; border-bottom: 2px solid rgba(0,0,0,.15); white-space: nowrap; }
+        .coa-list-table td { padding: 4px 8px; border-bottom: 1px solid rgba(0,0,0,.06); }
+        .coa-list-table tr:hover td { background: #f8f9fb; }
+        .coa-list-table tr.selected td { background: #fff6d2; }
+        .coa-nature-debit { color: #18af08; font-weight: 700; }
+        .coa-nature-credit { color: #ef404d; font-weight: 700; }
+
+        /* ── Detail panel ───────────────────────────────────────── */
+        .coa-detail-header { padding: 10px 14px; background: #eaeaea; border-bottom: 1px solid rgba(0,0,0,.1); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .coa-detail-header h3 { font-size: 13px; font-weight: 700; flex: 1; }
+        .coa-detail-body { flex: 1; overflow: auto; padding: 12px 14px; }
+        .coa-detail-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #aaa; font-size: 13px; }
+
+        .coa-meta-grid { display: grid; grid-template-columns: 100px 1fr; gap: 4px 8px; font-size: 11px; margin-bottom: 12px; }
+        .coa-meta-label { color: #666; font-weight: 700; }
+        .coa-meta-value { color: #1a1a2e; }
+
+        /* ── Activity table ─────────────────────────────────────── */
+        .coa-activity-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .coa-activity-table th { background: #f8f8f8; padding: 4px 6px; text-align: right; font-weight: 700; border-bottom: 1px solid rgba(0,0,0,.12); position: sticky; top: 0; }
+        .coa-activity-table td { padding: 3px 6px; border-bottom: 1px solid rgba(0,0,0,.05); }
+
+        /* ── Modal ──────────────────────────────────────────────── */
+        .coa-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+        .coa-modal-overlay.open { display: flex; }
+        .coa-modal { background: #fff; border-radius: 4px; width: 420px; max-width: 95vw; max-height: 90vh; overflow: auto; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+        .coa-modal-header { padding: 10px 14px; background: #3e4756; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+        .coa-modal-close { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; line-height: 1; }
+        .coa-modal-body { padding: 14px; }
+        .coa-form-group { margin-bottom: 10px; }
+        .coa-form-group label { display: block; font-size: 11px; font-weight: 700; color: #555; margin-bottom: 3px; }
+        .coa-form-group input, .coa-form-group select { width: 100%; height: 30px; padding: 0 8px; border: 1px solid rgba(0,0,0,.2); border-radius: 2px; font-size: 12px; font-family: inherit; outline: none; }
+        .coa-form-group input:focus, .coa-form-group select:focus { border-color: #ffc107; }
+        .coa-form-row { display: flex; gap: 10px; }
+        .coa-form-row .coa-form-group { flex: 1; }
+        .coa-modal-footer { padding: 10px 14px; background: #f8f8f8; display: flex; gap: 6px; justify-content: flex-start; border-top: 1px solid rgba(0,0,0,.1); }
+        .coa-validation-error { color: #ef404d; font-size: 10px; margin-top: 2px; }

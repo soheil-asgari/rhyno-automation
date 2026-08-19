@@ -12,7 +12,7 @@
     string replyReceiverId = (ViewBag.ReplyToReceiverId as string) ?? string.Empty;
 }
 
-<script src="https://lib.arvancloud.ir/ckeditor5/36.0.1/ckeditor.js" crossorigin="anonymous"></script>
+<script src="~/lib/ckeditor/ckeditor.js" asp-append-version="true"></script>
 
 <div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
     <!-- Header/Toolbar Card -->
@@ -162,14 +162,13 @@
     @Html.AntiForgeryToken()
 </form>
 
-<script>
-    window.usersList = @Html.Raw(ViewBag.UsersData ?? "[]");
-    window.letterReplyConfig = {
-        isReplyMode: @((isReplyMode).ToString().ToLowerInvariant()),
-        replyToLetterId: @Html.Raw((ViewBag.ReplyToLetterId == null ? "null" : ViewBag.ReplyToLetterId.ToString())),
-        defaultSubject: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replySubject ?? string.Empty)),
-        defaultReceiverId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(replyReceiverId ?? string.Empty))
-    };
-</script>
+<script id="letterUsersData" type="application/json">@Html.Raw(ViewBag.UsersData ?? "[]")</script>
+<script id="letterReplyConfig" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+        isReplyMode = isReplyMode,
+        replyToLetterId = ViewBag.ReplyToLetterId,
+        defaultSubject = replySubject,
+        defaultReceiverId = replyReceiverId
+    }))</script>
+<script src="~/js/letters-create-script.js" asp-append-version="true"></script>
 <script src="~/js/letter.js" asp-append-version="true"></script>
 <script src="~/js/letters-ai.js" asp-append-version="true"></script>

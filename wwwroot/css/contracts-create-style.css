@@ -1,0 +1,57 @@
+.vanilla-jalali-popup {
+            position: absolute;
+            z-index: 9999;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 260px;
+            display: none;
+            font-family: inherit;
+            direction: rtl;
+        }
+
+        .vanilla-jalali-popup .vjp-nav-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #64748b;
+            padding: 2px 6px;
+        }
+
+        .vanilla-jalali-popup .vjp-nav-btn:hover {
+            color: #0f172a;
+        }
+
+        .vanilla-jalali-popup .vjp-day-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 11px;
+            color: #334155;
+            border-radius: 4px;
+            padding: 6px 0;
+            text-align: center;
+        }
+
+        .vanilla-jalali-popup .vjp-day-btn:hover {
+            background: #f1f5f9;
+        }
+
+        .vanilla-jalali-popup .vjp-day-btn.is-today {
+            background: #e0f2fe;
+            color: #0369a1;
+            font-weight: 700;
+        }
+
+        .wizard-step-content {
+            display: none;
+        }
+
+        .wizard-step-content.active {
+            display: block;
+        }

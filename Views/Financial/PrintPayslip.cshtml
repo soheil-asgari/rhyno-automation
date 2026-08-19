@@ -7,14 +7,7 @@
 <head>
     <meta charset="utf-8" />
     <title>Pay Slip Print</title>
-    <style>
-        body { font-family: Tahoma, sans-serif; margin: 24px; color: #111827; direction: rtl; font-size: 13px; }
-        .print-title-md { font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #374151; padding-bottom: 8px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 8px; max-width: 400px; }
-        .label { color: #4b5563; }
-        .value { font-weight: bold; }
-        hr { border: 0; border-top: 1px solid #d1d5db; margin: 12px 0; max-width: 400px; }
-    </style>
+    <link rel="stylesheet" href="~/css/financial-print-payslip-style.css" asp-append-version="true" />
 </head>
 <body>
     <h3 class="print-title-md">فیش حقوقی</h3>
@@ -28,13 +21,6 @@
     <div class="row"><span class="label">مالیات</span><span class="value">@Model.Tax.ToString("N0")</span></div>
     <hr />
     <div class="row"><span class="label">خالص پرداختی</span><span class="value">@Model.NetPayable.ToString("N0")</span></div>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                window.print();
-                window.close();
-            }, 250);
-        });
-    </script>
+    <script src="~/js/financial-print-payslip-script.js" asp-append-version="true"></script>
 </body>
 </html>

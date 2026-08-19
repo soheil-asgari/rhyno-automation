@@ -88,20 +88,7 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const qrContainer = document.getElementById('qrCode');
-            if (qrContainer && typeof QRCode !== 'undefined') {
-                new QRCode(qrContainer, {
-                    text: '@Html.Raw(Model.QrCodeUri)',
-                    width: 200,
-                    height: 200,
-                    colorDark: '#1e293b',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.M
-                });
-            }
-        });
-    </script>
+    <script id="qrData" type="application/json">@Model.QrCodeUri</script>
+    <script src="~/lib/qrcodejs/qrcode.min.js" asp-append-version="true"></script>
+    <script src="~/js/settings-two-factor-setup-script.js" asp-append-version="true"></script>
 }

@@ -50,7 +50,7 @@
     }
 }
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl"@(string.IsNullOrWhiteSpace(brandPrimary) ? "" : $" style=\"--rk-accent:{brandPrimary};--rk-accent-light:{brandAccent};\"")>
 
 <head>
     <meta charset="utf-8" />
@@ -64,44 +64,13 @@
          a nested shell. This is belt-and-suspenders together with
          _ViewStart.cshtml routing _tab=1 → _TabLayout.cshtml.
          ══════════════════════════════════════════════════════════ -->
-    <script>
-            if (window.top !== window.self) {
-                document.documentElement.classList.add('is-inside-tab-iframe');
-            }
-    </script>
-    <style>
-            html.is-inside-tab-iframe .rahkaran-header,
-            html.is-inside-tab-iframe .rahkaran-sidebar,
-            html.is-inside-tab-iframe .rahkaran-sidebar-overlay,
-            html.is-inside-tab-iframe .rhyno-tab-bar-host,
-            html.is-inside-tab-iframe #rhynoTabBarHost,
-            html.is-inside-tab-iframe .rhyno-tab-column {
-                display: none !important;
-            }
-
-            html.is-inside-tab-iframe .rahkaran-app-body {
-                display: block !important;
-            }
-
-            html.is-inside-tab-iframe body {
-                padding-top: 0 !important;
-                margin: 0 !important;
-                background: #ffffff !important;
-            }
-
-            /* Higher specificity to override body.rahkaran-is-desktop #mainContentArea */
-            html.is-inside-tab-iframe body.rahkaran-is-desktop #mainContentArea,
-            html.is-inside-tab-iframe body #mainContentArea {
-                display: flex !important;
-                background: #ffffff;
-            }
-    </style>
+    <script src="~/js/shared-layout-script-1.js" asp-append-version="true"></script>
+    <link rel="stylesheet" href="~/css/shared-layout-style-1.css" asp-append-version="true" />
 
     <title>@ViewData["Title"] - @appTitle</title>
 
-    <!-- Vazirmatn Font -->
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"
-          type="text/css" />
+    <!-- Vazirmatn Font (local) -->
+    <link href="~/lib/vazirmatn/Vazirmatn-font-face.css" asp-append-version="true" rel="stylesheet" type="text/css" />
 
     <!-- Icons -->
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true">
@@ -117,48 +86,10 @@
         <link rel="icon" href="@brandFavicon" />
     }
 
-    @if (!string.IsNullOrWhiteSpace(brandPrimary))
-    {
-        <style>
-                :root {
-                    --rk-accent:
-                        @brandPrimary
-                    ;
-                    --rk-accent-light:
-                        @brandAccent
-                    ;
-                }
-        </style>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(brandBgUrl))
-    {
-        <style>
-                body.rahkaran-theme {
-                    background-color: #7baed1;
-                    /* fallback if image fails to load */
-                    background: url('@brandBgUrl') no-repeat center center fixed;
-                    background-size: cover;
-                }
-        </style>
-    }
-    else
-    {
-        @* Ensure the default gradient background is always present so a reset
-           never leaves a white/blank page. The gradient is defined in
-           rahkaran-theme.css; this just guards against it being overridden. *@
-        <style>
-                body.rahkaran-theme {
-                    background: linear-gradient(180deg, #3289c7 0%, #7baed1 45%, #e8d4d4 100%) no-repeat fixed;
-                    background-size: cover;
-                }
-        </style>
-    }
-
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
-<body class="rahkaran-theme rahkaran-is-desktop">
+<body class="rahkaran-theme rahkaran-is-desktop"@(!string.IsNullOrWhiteSpace(brandBgUrl) ? $" style=\"background-color:#7baed1;background:url('{brandBgUrl}') no-repeat center center fixed;background-size:cover;\"" : "")>
 
     <!-- ═══════════════════════════════════════════════════
     ۱. HEADER — Transparent glass bar
@@ -584,197 +515,7 @@
                                                                                                                                                 <script src="~/js/layout.js" asp-append-version="true"></script>
                                                                                                                                                 <script src="~/js/tab-manager.js" asp-append-version="true"></script>
                                                                                                                                                 <script src="~/js/professional-table.js" asp-append-version="true"></script>
-                                                                                                                                                <script>
-                                                                                                                                                    // ── Rhyno Core Utilities ──────────────────────────────────
-                                                                                                                                                    window.Rhyno = (() => {
-                                                                                                                                                    const toggleDropdown = (btn) => {
-                                                                                                                                                    const container = btn.closest('.rhyno-dropdown-trigger');
-                                                                                                                                                    if (!container) return;
-                                                                                                                                                    const dropdown = container.querySelector('.rhyno-dropdown');
-                                                                                                                                                    if (!dropdown) return;
-                                                                                                                                                    const isOpen = dropdown.classList.contains('open');
-                                                                                                                                                    closeAllDropdowns();
-                                                                                                                                                    if (!isOpen) {
-                                                                                                                                                    dropdown.classList.add('open');
-                                                                                                                                                    btn.setAttribute('aria-expanded', 'true');
-                                                                                                                                                    }
-                                                                                                                                                    };
-
-                                                                                                                                                    const closeAllDropdowns = () => {
-                                                                                                                                                    document.querySelectorAll('.rhyno-dropdown.open').forEach(d => {
-                                                                                                                                                    d.classList.remove('open');
-                                                                                                                                                    d.closest('.rhyno-dropdown-trigger')?.querySelector('button')?.setAttribute('aria-expanded', 'false');
-                                                                                                                                                    });
-                                                                                                                                                    };
-
-                                                                                                                                                    const showModal = (id) => {
-                                                                                                                                                    const el = document.getElementById(id);
-                                                                                                                                                    if (!el) return;
-                                                                                                                                                    el.style.display = 'flex';
-                                                                                                                                                    el.classList.add('open');
-                                                                                                                                                    document.body.style.overflow = 'hidden';
-                                                                                                                                                    if (window.RhynoModalFocus) {
-                                                                                                                                                    RhynoModalFocus.open(el, { trigger: document.activeElement });
-                                                                                                                                                    }
-                                                                                                                                                    };
-
-                                                                                                                                                    const hideModal = (id) => {
-                                                                                                                                                    const el = document.getElementById(id);
-                                                                                                                                                    if (!el) return;
-                                                                                                                                                    el.style.display = 'none';
-                                                                                                                                                    el.classList.remove('open');
-                                                                                                                                                    document.body.style.overflow = '';
-                                                                                                                                                    if (window.RhynoModalFocus) {
-                                                                                                                                                    RhynoModalFocus.close(el);
-                                                                                                                                                    }
-                                                                                                                                                    };
-
-                                                                                                                                                    let _confirmCallback = null;
-                                                                                                                                                    const confirm = (message, callback) => {
-                                                                                                                                                    document.getElementById('appConfirmMessage').textContent = message || 'آیا مطمئن هستید؟';
-                                                                                                                                                    _confirmCallback = callback;
-                                                                                                                                                    showModal('appConfirmDialog');
-                                                                                                                                                    };
-
-                                                                                                                                                    const toast = (message, type = 'info') => {
-                                                                                                                                                    const colors = { success: '#10b981', error: '#e11d48', warning: '#f59e0b', info: '#2b7cb3' };
-                                                                                                                                                    const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
-                                                                                                                                                    const toast = document.createElement('div');
-                                                                                                                                                    toast.style.cssText = `position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;align-items:center;gap:8px;background:${colors[type] || colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(16px);opacity:0;transition:all 0.3s ease;`;
-                                                                                                                                                    toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i> ${message}`;
-                                                                                                                                                    document.body.appendChild(toast);
-                                                                                                                                                    requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; });
-                                                                                                                                                    setTimeout(() => {
-                                                                                                                                                    toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
-                                                                                                                                                    setTimeout(() => toast.remove(), 300);
-                                                                                                                                                    }, 3500);
-                                                                                                                                                    };
-
-                                                                                                                                                    // Sidebar toggle
-                                                                                                                                                    const toggleSidebar = () => {
-                                                                                                                                                    const sidebar = document.getElementById('appSidebar');
-                                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
-                                                                                                                                                    if (!sidebar) return;
-                                                                                                                                                    if (window.innerWidth <= 768) {
-                                                                                                                                                    sidebar.classList.toggle('mobile-open');
-                                                                                                                                                    if (overlay) overlay.classList.toggle('active');
-                                                                                                                                                    } else {
-                                                                                                                                                    sidebar.classList.toggle('collapsed');
-                                                                                                                                                    }
-                                                                                                                                                    };
-
-                                                                                                                                                    const closeSidebar = () => {
-                                                                                                                                                    const sidebar = document.getElementById('appSidebar');
-                                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
-                                                                                                                                                    if (sidebar) sidebar.classList.remove('mobile-open');
-                                                                                                                                                    if (overlay) overlay.classList.remove('active');
-                                                                                                                                                    };
-
-                                                                                                                                                    // Module accordion toggle
-                                                                                                                                                    const toggleModule = (btn) => {
-                                                                                                                                                    const module = btn.closest('.sidebar-module');
-                                                                                                                                                    const children = module?.querySelector('.module-children');
-                                                                                                                                                    if (!children) return;
-                                                                                                                                                    const isOpen = children.style.maxHeight && children.style.maxHeight !== '0px';
-                                                                                                                                                    if (isOpen) {
-                                                                                                                                                    children.style.maxHeight = '0px';
-                                                                                                                                                    btn.classList.remove('expanded');
-                                                                                                                                                    } else {
-                                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
-                                                                                                                                                    btn.classList.add('expanded');
-                                                                                                                                                    }
-                                                                                                                                                    };
-
-                                                                                                                                                    return { toggleDropdown, closeAllDropdowns, showModal, hideModal, confirm, toast, toggleSidebar, closeSidebar, toggleModule };
-                                                                                                                                                    })();
-
-                                                                                                                                                    // ── Clock & Persian Date ────────────────────────────────
-                                                                                                                                                    (() => {
-                                                                                                                                                    const dateElem = document.getElementById('headerDate');
-                                                                                                                                                    if (!dateElem) return;
-                                                                                                                                                    const update = () => {
-                                                                                                                                                    const now = new Date();
-                                                                                                                                                    try {
-                                                                                                                                                    dateElem.textContent = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-                                                                                                                                                    } catch (e) {
-                                                                                                                                                    dateElem.textContent = now.toLocaleDateString('fa-IR');
-                                                                                                                                                    }
-                                                                                                                                                    };
-                                                                                                                                                    update();
-                                                                                                                                                    setInterval(update, 60000);
-                                                                                                                                                    })();
-
-                                                                                                                                                    // ── Sidebar Search ──────────────────────────────────────
-                                                                                                                                                    (() => {
-                                                                                                                                                    const input = document.getElementById('sidebarMenuSearch');
-                                                                                                                                                    if (!input) return;
-                                                                                                                                                    input.addEventListener('input', () => {
-                                                                                                                                                    const query = input.value.trim().toLowerCase();
-                                                                                                                                                    const items = document.querySelectorAll('#appSidebar .menu-item');
-                                                                                                                                                    const modules = document.querySelectorAll('#appSidebar .sidebar-module');
-                                                                                                                                                    items.forEach(item => {
-                                                                                                                                                    const text = (item.textContent || '').toLowerCase();
-                                                                                                                                                    item.style.display = (!query || text.includes(query)) ? '' : 'none';
-                                                                                                                                                    });
-                                                                                                                                                    modules.forEach(mod => {
-                                                                                                                                                    const visibleItems = Array.from(mod.querySelectorAll('.menu-item')).some(i => i.style.display !== 'none');
-                                                                                                                                                    const headerMatch = query && (mod.querySelector('.module-toggle span')?.textContent || '').toLowerCase().includes(query);
-                                                                                                                                                    mod.style.display = (visibleItems || headerMatch || !query) ? '' : 'none';
-                                                                                                                                                    const children = mod.querySelector('.module-children');
-                                                                                                                                                    const btn = mod.querySelector('.module-toggle');
-                                                                                                                                                    if (query && (visibleItems || headerMatch)) {
-                                                                                                                                                    children.style.maxHeight = children.scrollHeight + 'px';
-                                                                                                                                                    btn.classList.add('expanded');
-                                                                                                                                                    } else if (!query) {
-                                                                                                                                                    // keep server-rendered state untouched when query cleared
-                                                                                                                                                    }
-                                                                                                                                                    });
-                                                                                                                                                    });
-                                                                                                                                                    })();
-
-                                                                                                                                                    // ── Event Delegation ────────────────────────────────────
-                                                                                                                                                    document.addEventListener('click', (e) => {
-                                                                                                                                                    if (!e.target.closest('.rhyno-dropdown-trigger')) Rhyno.closeAllDropdowns();
-                                                                                                                                                    const overlay = document.getElementById('sidebarOverlay');
-                                                                                                                                                    if (e.target === overlay) Rhyno.closeSidebar();
-                                                                                                                                                    });
-
-                                                                                                                                                    document.addEventListener('keydown', (e) => {
-                                                                                                                                                    if (e.key === 'Escape') {
-                                                                                                                                                    Rhyno.closeAllDropdowns();
-                                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
-                                                                                                                                                    Rhyno.closeSidebar();
-                                                                                                                                                    }
-                                                                                                                                                    });
-
-                                                                                                                                                    // ── Sidebar Toggle Button ───────────────────────────────
-                                                                                                                                                    document.getElementById('btnToggleSidebar')?.addEventListener('click', (e) => {
-                                                                                                                                                    e.preventDefault();
-                                                                                                                                                    Rhyno.toggleSidebar();
-                                                                                                                                                    });
-
-                                                                                                                                                    // ── Confirm Dialog Bind ─────────────────────────────────
-                                                                                                                                                    document.getElementById('appConfirmOk')?.addEventListener('click', () => {
-                                                                                                                                                    if (window.Rhyno._confirmCallback) {
-                                                                                                                                                    window.Rhyno._confirmCallback();
-                                                                                                                                                    window.Rhyno._confirmCallback = null;
-                                                                                                                                                    }
-                                                                                                                                                    Rhyno.hideModal('appConfirmDialog');
-                                                                                                                                                    });
-
-                                                                                                                                                    // ── SignalR ────────────────────────────────────────────
-                                                                                                                                                    (function () {
-                                                                                                                                                    if (typeof signalR === 'undefined') return;
-                                                                                                                                                    const connection = new signalR.HubConnectionBuilder()
-                                                                                                                                                    .withUrl("/automationHub")
-                                                                                                                                                    .withAutomaticReconnect()
-                                                                                                                                                    .build();
-                                                                                                                                                    connection.on("ReceiveNewTaskNotification", function (data) {
-                                                                                                                                                    Rhyno.toast(`[کار جدید] ${data.message}`, 'info');
-                                                                                                                                                    });
-                    connection.start().catch(err => console.error("SignalR Error:", err));
-                                                                                                                                                    })();
-                                                                                                                                                </script>
+                                                                                                                                                <script src="~/js/shared-layout-script-2.js" asp-append-version="true"></script>
 
                                                                                                                                                 @await RenderSectionAsync("Scripts", required: false)
                 <script src="~/js/app-ui.js" asp-append-version="true"></script>

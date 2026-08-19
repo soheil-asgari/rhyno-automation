@@ -1,0 +1,73 @@
+/* ── Custom Scrollbar (Webkit) ── */
+                                                                                                                                                                                                            #sidebarScrollContainerReusable.custom-sidebar-scroll::-webkit-scrollbar {
+                                                                                                                                                                                                                width: 4px;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            #sidebarScrollContainerReusable.custom-sidebar-scroll::-webkit-scrollbar-track {
+                                                                                                                                                                                                                background: transparent;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            #sidebarScrollContainerReusable.custom-sidebar-scroll::-webkit-scrollbar-thumb {
+                                                                                                                                                                                                                background: #cbd5e1;
+                                                                                                                                                                                                                border-radius: 4px;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            .dark #sidebarScrollContainerReusable.custom-sidebar-scroll::-webkit-scrollbar-thumb {
+                                                                                                                                                                                                                background: #475569;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            /* ── Firefox ── */
+                                                                                                                                                                                                            #sidebarScrollContainerReusable.custom-sidebar-scroll {
+                                                                                                                                                                                                                scrollbar-width: thin;
+                                                                                                                                                                                                                scrollbar-color: #cbd5e1 transparent;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            .dark #sidebarScrollContainerReusable.custom-sidebar-scroll {
+                                                                                                                                                                                                                scrollbar-color: #475569 transparent;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            /* ── Collapse transition ── */
+                                                                                                                                                                                                            .sidebar-collapse-reusable {
+                                                                                                                                                                                                                transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            .sidebar-collapse-reusable.max-h-0 {
+                                                                                                                                                                                                                max-height: 0 !important;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            .sidebar-collapse-reusable[class*="max-h-["] {
+                                                                                                                                                                                                                /* handled by Tailwind utility */
+                                                                                                                                                                                                                ;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            /* ── Chevron rotation (RTL-corrected) ── */
+                                                                                                                                                                                                            .sidebar-chevron {
+                                                                                                                                                                                                                transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            .sidebar-module-btn.expanded .sidebar-chevron {
+                                                                                                                                                                                                                transform: rotate(180deg);
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            /* ── Active link indicator bar (right side in RTL) ── */
+                                                                                                                                                                                                            .sidebar-link.bg-indigo-600\/5::before,
+                                                                                                                                                                                                            .sidebar-link.dark\:bg-indigo-500\/15::before {
+                                                                                                                                                                                                                content: '';
+                                                                                                                                                                                                                position: absolute;
+                                                                                                                                                                                                                right: 0;
+                                                                                                                                                                                                                top: 50%;
+                                                                                                                                                                                                                transform: translateY(-50%);
+                                                                                                                                                                                                                width: 3px;
+                                                                                                                                                                                                                height: 60%;
+                                                                                                                                                                                                                border-radius: 0 3px 3px 0;
+                                                                                                                                                                                                                background-color: #4f46e5;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            .dark .sidebar-link.dark\:bg-indigo-500\/15::before {
+                                                                                                                                                                                                                background-color: #818cf8;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                            /* ── Shadow glow for active items ── */
+                                                                                                                                                                                                            .shadow-glow-sm {
+                                                                                                                                                                                                                box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.08);
+                                                                                                                                                                                                            }

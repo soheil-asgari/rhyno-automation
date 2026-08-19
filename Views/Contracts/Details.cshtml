@@ -27,37 +27,44 @@
         new RhynoBreadcrumbItem("جزئیات قرارداد", null)
     }' />
 
-    @* Section Header *@
-    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
-        <div>
-            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">جزئیات قرارداد - @Model.Title</h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">@Model.ContractNumber</p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-            @if (Model.CanEdit)
-            {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
-                    <i class="bi bi-pencil ml-1"></i>ویرایش
+    @* Section Header Card *@
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                    <i class="bi bi-file-earmark-text text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-slate-900 dark:text-white">@Model.Title</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">@Model.ContractNumber</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                @if (Model.CanEdit)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                        <i class="bi bi-pencil ml-1"></i>ویرایش
+                    </a>
+                    <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit>
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
+                            <i class="bi bi-archive ml-1"></i>بایگانی
+                        </button>
+                    </form>
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیتم حذف شود؟');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
+                            <i class="bi bi-trash ml-1"></i>حذف
+                        </button>
+                    </form>
+                }
+                <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                    <i class="bi bi-printer ml-1"></i>چاپ/PDF
                 </a>
-                <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit>
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
-                        <i class="bi bi-archive ml-1"></i>بایگانی
-                    </button>
-                </form>
-                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیتم حذف شود؟');">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
-                        <i class="bi bi-trash ml-1"></i>حذف
-                    </button>
-                </form>
-            }
-            <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
-                <i class="bi bi-printer ml-1"></i>چاپ/PDF
-            </a>
-            <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
-                <i class="bi bi-arrow-right ml-1"></i>بازگشت به فهرست
-            </a>
+                <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                    <i class="bi bi-arrow-right ml-1"></i>بازگشت
+                </a>
+            </div>
         </div>
     </div>
 
@@ -240,10 +247,10 @@
                 @if (Model.CanViewFinancials)
                 {
                     <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-[11px] font-black text-slate-900 dark:text-white">پرداخت‌ها</h3>
+                        <h3 class="text-xs font-black text-slate-900 dark:text-white">پرداخت‌ها</h3>
                         @if (Model.CanEdit)
                         {
-                            <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline" data-modal-target="addPaymentModal" onclick="openModal('addPaymentModal')">
+                            <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="addPaymentModal" onclick="openModal('addPaymentModal')">
                                 <i class="bi bi-plus-circle ml-1"></i>پرداخت جدید
                             </button>
                         }
@@ -350,10 +357,10 @@
             @* Tab 4: Attachments *@
             <div class="tab-panel @(activeTab == "attachments" ? "" : "hidden")" id="tab-attachments">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-[11px] font-black text-slate-900 dark:text-white">ضمیمه‌ها</h3>
+                    <h3 class="text-xs font-black text-slate-900 dark:text-white">ضمیمه‌ها</h3>
                     @if (Model.CanEdit)
                     {
-                        <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline" data-modal-target="uploadAttachmentModal" onclick="openModal('uploadAttachmentModal')">
+                        <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="uploadAttachmentModal" onclick="openModal('uploadAttachmentModal')">
                             <i class="bi bi-cloud-upload ml-1"></i>بارگذاری فایل
                         </button>
                     }
@@ -572,120 +579,9 @@
 }
 
 @section Styles {
-    <style>
-        .font-mono { font-variant-numeric: tabular-nums; }
-        .tab-panel { min-height: 200px; }
-        .tab-panel.hidden { display: none; }
-    </style>
+    <link rel="stylesheet" href="~/css/contracts-details-style.css" asp-append-version="true" />
 }
 
 @section Scripts {
-    <script>
-        (function() {
-            'use strict';
-
-            // ── Vanilla JS Tab Switcher ────────────────────────────────
-            function initTabs() {
-                var container = document.querySelector('[data-contract-tabs]');
-                if (!container) return;
-                var buttons = container.querySelectorAll('.tab-btn');
-                var panels = container.querySelectorAll('.tab-panel');
-
-                function activateTab(tabId) {
-                    // Update button states
-                    buttons.forEach(function(btn) {
-                        var isActive = btn.getAttribute('data-tab') === tabId;
-                        btn.className = 'tab-btn px-4 py-2.5 border-b-2 transition ' +
-                            (isActive
-                                ? 'border-teal-500 text-teal-600 dark:text-teal-400'
-                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300');
-                    });
-
-                    // Show/hide panels
-                    panels.forEach(function(panel) {
-                        var isTarget = panel.id === 'tab-' + tabId;
-                        if (isTarget) {
-                            panel.classList.remove('hidden');
-                        } else {
-                            panel.classList.add('hidden');
-                        }
-                    });
-                }
-
-                buttons.forEach(function(btn) {
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        var tabId = btn.getAttribute('data-tab');
-                        if (tabId) activateTab(tabId);
-                    });
-                });
-            }
-
-            // ── Vanilla JS Modal helpers (with focus trap) ──────────────
-            window.openModal = function(modalId) {
-                var el = document.getElementById(modalId);
-                if (!el) return;
-                el.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-                // Focus trap: move focus into the modal, trap Tab, restore on close
-                if (window.RhynoModalFocus) {
-                    var trigger = document.querySelector('[data-modal-target="' + modalId + '"]');
-                    RhynoModalFocus.open(el, { trigger: trigger });
-                }
-            };
-
-            window.closeModal = function(modalId) {
-                var el = document.getElementById(modalId);
-                if (!el) return;
-                el.style.display = 'none';
-                document.body.style.overflow = '';
-                if (window.RhynoModalFocus) {
-                    RhynoModalFocus.close(el);
-                }
-            };
-
-            // Close modal on backdrop click (handled by focus trap utility)
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('rhyno-modal-overlay') && e.target.style.display === 'flex') {
-                    e.target.style.display = 'none';
-                    document.body.style.overflow = '';
-                    if (window.RhynoModalFocus) {
-                        RhynoModalFocus.close(e.target);
-                    }
-                }
-            });
-
-            // Escape key to close modals (handled by focus trap utility)
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    document.querySelectorAll('.rhyno-modal-overlay').forEach(function(el) {
-                        if (el.style.display === 'flex') {
-                            el.style.display = 'none';
-                            document.body.style.overflow = '';
-                            if (window.RhynoModalFocus) {
-                                RhynoModalFocus.close(el);
-                            }
-                        }
-                    });
-                }
-            });
-
-            // ── Wire up Bootstrap-free modal triggers ──────────────────
-            document.addEventListener('DOMContentLoaded', function() {
-                initTabs();
-
-                // Payment modal trigger
-                var payBtn = document.querySelector('[data-modal-target="addPaymentModal"]');
-                if (payBtn) {
-                    payBtn.addEventListener('click', function() { openModal('addPaymentModal'); });
-                }
-
-                // Upload modal trigger
-                var uploadBtn = document.querySelector('[data-modal-target="uploadAttachmentModal"]');
-                if (uploadBtn) {
-                    uploadBtn.addEventListener('click', function() { openModal('uploadAttachmentModal'); });
-                }
-            });
-        })();
-    </script>
+    <script src="~/js/contracts-details-script.js" asp-append-version="true"></script>
 }

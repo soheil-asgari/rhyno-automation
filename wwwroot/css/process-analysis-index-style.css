@@ -1,0 +1,143 @@
+.تحلیل-صفحه {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .تحلیل-قهرمان,
+        .تحلیل-فیلترها,
+        .تحلیل-کارت,
+        .تحلیل-جدول {
+            border: 1px solid var(--border-color, #ddd);
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fffdf8 0%, #fff 100%);
+            box-shadow: 0 12px 32px rgba(44, 33, 16, .06);
+        }
+
+        .تحلیل-قهرمان,
+        .تحلیل-فیلترها,
+        .تحلیل-کارت,
+        .تحلیل-جدول {
+            padding: 1rem 1.15rem;
+        }
+
+        .تحلیل-قهرمان {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .تحلیل-قهرمان h1 {
+            margin: 0 0 .35rem;
+            font-size: 1.6rem;
+            font-weight: 900;
+        }
+
+        .تحلیل-قهرمان p {
+            margin: 0;
+            color: var(--text-muted, #6b7280);
+        }
+
+        .تحلیل-فیلترها {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .75rem;
+            align-items: end;
+        }
+
+        .تحلیل-فیلد {
+            display: grid;
+            gap: .35rem;
+        }
+
+        .تحلیل-فیلد label {
+            font-size: .8rem;
+            font-weight: 800;
+            color: #6b7280;
+        }
+
+        .تحلیل-چکیده {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .85rem;
+        }
+
+        .تحلیل-کارت strong {
+            display: block;
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin-bottom: .2rem;
+        }
+
+        .تحلیل-کارت span {
+            color: #6b7280;
+            font-size: .82rem;
+        }
+
+        .تحلیل-شبکه {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .تحلیل-باکس-نمودار {
+            display: grid;
+            gap: .75rem;
+        }
+
+        .تحلیل-باکس-نمودار h2,
+        .تحلیل-جدول h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 900;
+        }
+
+        .تحلیل-باکس-نمودار p,
+        .تحلیل-جدول p {
+            margin: 0;
+            color: #6b7280;
+            font-size: .82rem;
+        }
+
+        .تحلیل-نمودار {
+            min-height: 280px;
+        }
+
+        .تحلیل-جدول {
+            overflow: hidden;
+        }
+
+        .تحلیل-جدول table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .86rem;
+        }
+
+        .تحلیل-جدول th,
+        .تحلیل-جدول td {
+            padding: .75rem .5rem;
+            border-bottom: 1px solid #eee4d7;
+            text-align: right;
+        }
+
+        .تحلیل-جدول th {
+            color: #7c6b56;
+            font-size: .78rem;
+        }
+
+        .تحلیل-بارگذاری {
+            color: #6b7280;
+            font-size: .85rem;
+        }
+
+        @@media (max-width: 980px) {
+            .تحلیل-فیلترها,
+            .تحلیل-چکیده,
+            .تحلیل-شبکه {
+                grid-template-columns: 1fr;
+            }
+
+            .تحلیل-قهرمان {
+                display: grid;
+            }
+        }

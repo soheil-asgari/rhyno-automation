@@ -182,70 +182,12 @@
 }
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        (() => {
-            const context = document.getElementById('finHubChart');
-            if (!context || typeof Chart === 'undefined') return;
-
-            const labels = @Html.Raw(Json.Serialize(Model.MonthLabels));
-            const revenue = @Html.Raw(Json.Serialize(Model.RevenueSeries));
-            const costs = @Html.Raw(Json.Serialize(Model.CostSeries));
-            const profit = @Html.Raw(Json.Serialize(Model.ProfitSeries));
-            let chart;
-
-            function buildDatasets(areaMode) {
-                return [
-                    { label: 'درآمد', data: revenue, borderColor: '#10b981', backgroundColor: areaMode ? 'rgba(16,185,129,0.18)' : '#10b981', fill: areaMode, tension: 0.28 },
-                    { label: 'هزینه', data: costs, borderColor: '#ef4444', backgroundColor: areaMode ? 'rgba(239,68,68,0.18)' : '#ef4444', fill: areaMode, tension: 0.28 },
-                    { label: 'سود یا زیان', data: profit, borderColor: '#3b82f6', backgroundColor: areaMode ? 'rgba(59,130,246,0.18)' : '#3b82f6', fill: areaMode, tension: 0.28 }
-                ];
-            }
-
-            function setActiveButton(mode) {
-                document.querySelectorAll('.chart-mode').forEach(button => {
-                    button.classList.toggle('is-active', button.getAttribute('data-mode') === mode);
-                });
-            }
-
-            function renderChart(mode) {
-                const areaMode = mode === 'area';
-                const chartType = areaMode ? 'line' : mode;
-                if (chart) chart.destroy();
-
-                chart = new Chart(context, {
-                    type: chartType,
-                    data: {
-                        labels,
-                        datasets: buildDatasets(areaMode)
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        resizeDelay: 120,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        },
-                        scales: {
-                            y: {
-                                ticks: {
-                                    callback: (value) => Number(value).toLocaleString('fa-IR')
-                                }
-                            }
-                        }
-                    }
-                });
-
-                setActiveButton(mode);
-            }
-
-            document.querySelectorAll('.chart-mode').forEach(button => {
-                button.addEventListener('click', () => renderChart(button.getAttribute('data-mode') || 'bar'));
-            });
-
-            renderChart('bar');
-        })();
-    </script>
+    <script id="finDashboardData" type="application/json">@Html.Raw(Json.Serialize(new {
+            labels = Model.MonthLabels,
+            revenue = Model.RevenueSeries,
+            costs = Model.CostSeries,
+            profit = Model.ProfitSeries
+        }))</script>
+    <script src="~/lib/chartjs/chart.umd.min.js" asp-append-version="true"></script>
+    <script src="~/js/financial-dashboard-script.js" asp-append-version="true"></script>
 }

@@ -8,7 +8,7 @@
         ?.GetAndStoreTokens(Context)?.RequestToken;
 }
 <link rel="stylesheet" href="~/css/tax-analytics.css" asp-append-version="true" />
-<div id="taxAiLauncher" title="دستیار هوشمند مالیات">
+<div id="taxAiLauncher" title="دستیار هوشمند مالیات" @(!string.IsNullOrWhiteSpace(taxWidgetToken) ? $"data-af-token=\"{taxWidgetToken}\"" : "")>
     <i class="bi bi-robot"></i>
     <span class="tax-widget-launcher-badge"></span>
 </div>
@@ -36,8 +36,6 @@
 
 @if (!string.IsNullOrWhiteSpace(taxWidgetToken))
 {
-    <script>
-        window.__taxAntiForgeryToken = '@taxWidgetToken';
-    </script>
+    <script src="~/js/shared-tax-ai-assistant-widget-script.js" asp-append-version="true"></script>
 }
 <script src="~/js/tax-widget.js" asp-append-version="true"></script>

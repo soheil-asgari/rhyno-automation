@@ -4,252 +4,238 @@
 }
 
 <div class="container-fluid py-2 space-y-2" dir="rtl">
-    @* Breadcrumb *@
-    <partial name="_Breadcrumb" model='new[] {
-        new RhynoBreadcrumbItem("خانه", "/"),
-        new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
-        new RhynoBreadcrumbItem("ویرایش قرارداد", null)
-    }' />
+    @* Page Header Card *@
+    <div class="contracts-header-card">
+        <partial name="_Breadcrumb" model='new[] {
+            new RhynoBreadcrumbItem("خانه", "/"),
+            new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
+            new RhynoBreadcrumbItem("ویرایش قرارداد", null)
+        }' />
 
-    @* Section Header *@
-    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
-        <div>
-            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">ویرایش قرارداد</h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">ویرایش اطلاعات قرارداد</p>
+        <div class="contracts-header-main">
+            <div class="contracts-header-icon"><i class="bi bi-file-earmark-text"></i></div>
+            <div>
+                <h1>ویرایش قرارداد</h1>
+                <p>ویرایش اطلاعات قرارداد</p>
+            </div>
+            <div class="contracts-header-actions">
+                <a asp-action="Index" class="contracts-header-btn">
+                    <i class="bi bi-arrow-right"></i>بازگشت
+                </a>
+            </div>
         </div>
-        <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
-            <i class="bi bi-arrow-right ml-1"></i>بازگشت
-        </a>
     </div>
+
+    @section Styles {
+        <link rel="stylesheet" href="~/css/contracts-form.css" asp-append-version="true" />
+    }
 
     <form asp-action="Edit" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
-        <div asp-validation-summary="ModelOnly" class="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20 px-3.5 py-2.5 text-[11px] text-rose-700 dark:text-rose-400 mb-3"></div>
+        <div asp-validation-summary="All" class="text-danger alert alert-danger mb-3" style="font-size:0.85rem;"></div>
 
+        @* Redesigned Single-Column Layout - No Gaps *@
+        <div class="contract-create-layout-redesigned">
         @* Card 1: General Information *@
-        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 mb-3">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="h-7 w-7 rounded-lg bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
-                    <i class="bi bi-info-circle text-xs"></i>
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon"><i class="bi bi-info-circle"></i></div>
+                <div>
+                    <h2>اطلاعات عمومی</h2>
+                    <p class="form-section-desc">اطلاعات پایه قرارداد</p>
                 </div>
-                <h2 class="text-xs font-black text-slate-900 dark:text-white">اطلاعات عمومی</h2>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="form-fields-grid">
                 <div>
-                    <label asp-for="ContractNumber" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-hash text-xs"></i>
-                        </span>
-                        <input asp-for="ContractNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <label asp-for="ContractNumber" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="ContractNumber" class="form-control" />
                     </div>
-                    <span asp-validation-for="ContractNumber" class="text-[9px] text-rose-500 mt-0.5 block"></span>
+                    <span asp-validation-for="ContractNumber" class="form-validation"></span>
                 </div>
-                <div class="lg:col-span-2">
-                    <label asp-for="Title" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-type text-xs"></i>
-                        </span>
-                        <input asp-for="Title" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <div style="grid-column: span 2;">
+                    <label asp-for="Title" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="Title" class="form-control" />
                     </div>
-                    <span asp-validation-for="Title" class="text-[9px] text-rose-500 mt-0.5 block"></span>
+                    <span asp-validation-for="Title" class="form-validation"></span>
                 </div>
                 <div>
-                    <label asp-for="ContractType" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-tag text-xs"></i>
-                        </span>
-                        <select asp-for="ContractType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none appearance-none" asp-items="Model.ContractTypeOptions">
+                    <label asp-for="ContractType" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <select asp-for="ContractType" class="form-control" asp-items="Model.ContractTypeOptions">
                             <option value="">انتخاب کنید</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label asp-for="Status" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-flag text-xs"></i>
-                        </span>
-                        <select asp-for="Status" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none appearance-none" asp-items="Model.StatusOptions"></select>
+                    <label asp-for="Status" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <select asp-for="Status" class="form-control" asp-items="Model.StatusOptions"></select>
                     </div>
                 </div>
                 <div>
-                    <label asp-for="ExpiryNoticeDays" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-bell text-xs"></i>
-                        </span>
-                        <input asp-for="ExpiryNoticeDays" type="number" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <label asp-for="ExpiryNoticeDays" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="ExpiryNoticeDays" type="number" class="form-control" />
                     </div>
                 </div>
             </div>
         </div>
 
         @* Card 2: Client & Party Info *@
-        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 mb-3">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <i class="bi bi-people text-xs"></i>
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon"><i class="bi bi-people"></i></div>
+                <div>
+                    <h2>مشتری / طرف قرارداد</h2>
+                    <p class="form-section-desc">مشخصات طرف دیگر قرارداد</p>
                 </div>
-                <h2 class="text-xs font-black text-slate-900 dark:text-white">مشتری / طرف قرارداد</h2>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="form-fields-grid">
                 <div>
-                    <label asp-for="CustomerId" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <select asp-for="CustomerId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none appearance-none" asp-items="Model.CustomerOptions">
-                        <option value="">بدون مشتری (ثبت دستی)</option>
-                    </select>
-                </div>
-                <div>
-                    <label asp-for="ClientName" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-person text-xs"></i>
-                        </span>
-                        <input asp-for="ClientName" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
-                    </div>
-                    <span asp-validation-for="ClientName" class="text-[9px] text-rose-500 mt-0.5 block"></span>
-                </div>
-                <div>
-                    <label asp-for="ClientPhone" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-telephone text-xs"></i>
-                        </span>
-                        <input asp-for="ClientPhone" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <label asp-for="CustomerId" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <select asp-for="CustomerId" class="form-control" asp-items="Model.CustomerOptions">
+                            <option value="">بدون مشتری (ثبت دستی)</option>
+                        </select>
                     </div>
                 </div>
                 <div>
-                    <label asp-for="ClientAddress" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <i class="bi bi-geo-alt text-xs"></i>
-                        </span>
-                        <input asp-for="ClientAddress" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                    <label asp-for="ClientName" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="ClientName" class="form-control" />
+                    </div>
+                    <span asp-validation-for="ClientName" class="form-validation"></span>
+                </div>
+                <div>
+                    <label asp-for="ClientPhone" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="ClientPhone" class="form-control" />
+                    </div>
+                </div>
+                <div>
+                    <label asp-for="ClientAddress" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="ClientAddress" class="form-control" />
                     </div>
                 </div>
             </div>
         </div>
 
         @* Card 3: Dates & Financials *@
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
-            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="h-7 w-7 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                        <i class="bi bi-calendar3 text-xs"></i>
-                    </div>
-                    <h2 class="text-xs font-black text-slate-900 dark:text-white">تاریخ‌ها</h2>
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon"><i class="bi bi-calendar3"></i></div>
+                <div>
+                    <h2>تاریخ‌ها و مالی</h2>
+                    <p class="form-section-desc">تاریخ‌های کلیدی و مبالغ قرارداد</p>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div>
-                        <label asp-for="StartDate" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                        <div class="jalali-datepicker-wrapper relative">
-                            <input asp-for="StartDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-10 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="StartDate" placeholder="تاریخ را انتخاب کنید" readonly />
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
-                        </div>
-                        <span asp-validation-for="StartDate" class="text-[9px] text-rose-500 mt-0.5 block"></span>
+            </div>
+            <div class="form-fields-grid-5">
+                <div>
+                    <label asp-for="StartDate" class="form-label"></label>
+                    <div class="input-wrapper icon-left jalali-datepicker-wrapper">
+                        <span class="form-icon-left"><i class="bi bi-calendar3"></i></span>
+                        <input asp-for="StartDateDisplay" type="text" class="form-control jalali-date-input" data-jalali="StartDate" data-target="StartDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <input asp-for="StartDate" type="hidden" class="jalali-date-hidden" />
                     </div>
-                    <div>
-                        <label asp-for="EndDate" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                        <div class="jalali-datepicker-wrapper relative">
-                            <input asp-for="EndDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-10 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="EndDate" placeholder="تاریخ را انتخاب کنید" readonly />
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
-                        </div>
+                    <span asp-validation-for="StartDate" class="form-validation"></span>
+                </div>
+                <div>
+                    <label asp-for="EndDate" class="form-label"></label>
+                    <div class="input-wrapper icon-left jalali-datepicker-wrapper">
+                        <span class="form-icon-left"><i class="bi bi-calendar3"></i></span>
+                        <input asp-for="EndDateDisplay" type="text" class="form-control jalali-date-input" data-jalali="EndDate" data-target="EndDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <input asp-for="EndDate" type="hidden" class="jalali-date-hidden" />
                     </div>
-                    <div>
-                        <label asp-for="SignDate" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                        <div class="jalali-datepicker-wrapper relative">
-                            <input asp-for="SignDate" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-10 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-date-input" data-jalali="SignDate" placeholder="تاریخ را انتخاب کنید" readonly />
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 pointer-events-none cursor-pointer"><i class="bi bi-calendar3 text-xs"></i></span>
-                        </div>
+                    <span asp-validation-for="EndDate" class="form-validation"></span>
+                </div>
+                <div>
+                    <label asp-for="SignDate" class="form-label"></label>
+                    <div class="input-wrapper icon-left jalali-datepicker-wrapper">
+                        <span class="form-icon-left"><i class="bi bi-calendar3"></i></span>
+                        <input asp-for="SignDateDisplay" type="text" class="form-control jalali-date-input" data-jalali="SignDate" data-target="SignDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <input asp-for="SignDate" type="hidden" class="jalali-date-hidden" />
+                    </div>
+                    <span asp-validation-for="SignDate" class="form-validation"></span>
+                </div>
+                <div>
+                    <label asp-for="TotalAmount" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="TotalAmount" class="form-control" />
+                    </div>
+                    <span asp-validation-for="TotalAmount" class="form-validation"></span>
+                </div>
+                <div>
+                    <label asp-for="PaidAmount" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="PaidAmount" class="form-control" />
                     </div>
                 </div>
             </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                        <i class="bi bi-cash-coin text-xs"></i>
-                    </div>
-                    <h2 class="text-xs font-black text-slate-900 dark:text-white">مالی</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <label asp-for="TotalAmount" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                                <i class="bi bi-currency-dollar text-xs"></i>
-                            </span>
-                            <input asp-for="TotalAmount" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
-                        </div>
-                        <span asp-validation-for="TotalAmount" class="text-[9px] text-rose-500 mt-0.5 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="PaidAmount" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                                <i class="bi bi-wallet2 text-xs"></i>
-                            </span>
-                            <input asp-for="PaidAmount" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pr-8 px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <span class="text-[9px] text-slate-400">وضعیت پرداخت: @Model.PaymentStatus</span>
-                </div>
+            <div class="mt-2">
+                <span class="form-validation" style="color:#6b7280;">وضعیت پرداخت: @Model.PaymentStatus</span>
             </div>
         </div>
 
         @* Card 4: Assignment *@
-        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 mb-3">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="h-7 w-7 rounded-lg bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                    <i class="bi bi-person-badge text-xs"></i>
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon"><i class="bi bi-person-badge"></i></div>
+                <div>
+                    <h2>اختصاص</h2>
+                    <p class="form-section-desc">مسئول و قالب قرارداد</p>
                 </div>
-                <h2 class="text-xs font-black text-slate-900 dark:text-white">اختصاص</h2>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="form-fields-grid">
                 <div>
-                    <label asp-for="AssignedUserId" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <select asp-for="AssignedUserId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none appearance-none" asp-items="Model.UserOptions">
-                        <option value="">انتخاب کنید</option>
-                    </select>
+                    <label asp-for="AssignedUserId" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <select asp-for="AssignedUserId" class="form-control" asp-items="Model.UserOptions">
+                            <option value="">انتخاب کنید</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
-                    <label asp-for="TemplateId" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <select asp-for="TemplateId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none appearance-none" asp-items="Model.TemplateOptions">
-                        <option value="">بدون قالب</option>
-                    </select>
+                    <label asp-for="TemplateId" class="form-label"></label>
+                    <div class="input-wrapper">
+                        <select asp-for="TemplateId" class="form-control" asp-items="Model.TemplateOptions">
+                            <option value="">بدون قالب</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
 
         @* Card 5: Content & Terms *@
-        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 mb-3">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="h-7 w-7 rounded-lg bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center text-sky-600 dark:text-sky-400">
-                    <i class="bi bi-file-text text-xs"></i>
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon"><i class="bi bi-file-text"></i></div>
+                <div>
+                    <h2>متن قرارداد</h2>
+                    <p class="form-section-desc">شرح، یادداشت‌ها و متن قرارداد</p>
                 </div>
-                <h2 class="text-xs font-black text-slate-900 dark:text-white">متن قرارداد</h2>
             </div>
-            <div class="space-y-3">
-                <div>
-                    <label asp-for="Description" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <textarea asp-for="Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="3"></textarea>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+                    <div>
+                        <label class="form-label">توضیحات</label>
+                        <textarea asp-for="Description" class="form-control" style="height: 56px !important; resize: vertical;"></textarea>
+                        <span asp-validation-for="Description" class="form-validation"></span>
+                    </div>
+                    <div>
+                        <label class="form-label">یادداشت‌ها</label>
+                        <textarea asp-for="Notes" class="form-control" style="height: 56px !important; resize: vertical;"></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">شرایط و ضوابط</label>
+                        <textarea asp-for="TermsAndConditions" class="form-control" style="height: 56px !important; resize: vertical;"></textarea>
+                    </div>
                 </div>
+            <div class="form-fields-grid" style="margin-bottom:20px;">
                 <div>
-                    <label asp-for="Notes" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <textarea asp-for="Notes" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2"></textarea>
-                </div>
-                <div>
-                    <label asp-for="TermsAndConditions" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1"></label>
-                    <textarea asp-for="TermsAndConditions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="4"></textarea>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">متن قرارداد (ویرایشگر بصری)</label>
+                    <label class="form-label">متن قرارداد (ویرایشگر بصری)</label>
                     @* Toolbar *@
                     <div class="flex flex-wrap items-center gap-1 mb-1.5 px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
                         <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="bold" title="ضخیم"><b>B</b></button>
@@ -264,21 +250,26 @@
                         <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyLeft" title="چپ‌چین"><i class="bi bi-text-left"></i></button>
                     </div>
                     <div id="editContractEditor" class="wysiwyg-editor" contenteditable="true"
-                         style="min-height:200px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:right;overflow-y:auto;"
+                         style="min-height:140px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:right;overflow-y:auto;"
                          data-placeholder="متن قرارداد را اینجا بنویسید..."></div>
                     <textarea asp-for="ContractBodyHtml" class="hidden" id="ContractBodyHtml"></textarea>
                 </div>
             </div>
-        </div>
+        </div><!-- /contract-create-layout-redesigned -->
 
         @* Action Buttons *@
-        <div class="flex items-center gap-2 py-3">
-            <button type="submit" class="rounded-lg bg-teal-600 px-4 py-2 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">
-                <i class="bi bi-check-lg ml-1"></i>ذخیره تغییرات
-            </button>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-4 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
-                <i class="bi bi-x-lg ml-1"></i>انصراف
-            </a>
+        <div class="form-section form-actions-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0;">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                <i class="bi bi-info-circle me-1"></i>تغییرات اعمال‌شده بلافاصله در سوابق قرارداد ثبت می‌شود.
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="submit" class="rounded-lg bg-teal-600 px-4 py-2 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                    <i class="bi bi-check-lg ml-1"></i>ذخیره تغییرات
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-4 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                    انصراف
+                </a>
+            </div>
         </div>
     </form>
 </div>
@@ -286,297 +277,6 @@
 @section Scripts {
     <script src="~/js/persian-date.min.js"></script>
     <link rel="stylesheet" href="~/css/persian-datepicker.min.css" />
-    <style>
-        .vanilla-jalali-popup {
-            position: absolute;
-            z-index: 9999;
-            top: 100%;
-            right: 0;
-            margin-top: 4px;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            width: 260px;
-            display: none;
-            font-family: Vazirmatn, Tahoma, sans-serif;
-            direction: rtl;
-        }
-        .vanilla-jalali-popup .vjp-nav-btn {
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 14px;
-            color: #64748b;
-            padding: 2px 6px;
-            line-height: 1;
-        }
-        .vanilla-jalali-popup .vjp-nav-btn:hover {
-            color: #0f172a;
-        }
-        .vanilla-jalali-popup .vjp-day-btn {
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 11px;
-            color: #334155;
-            border-radius: 4px;
-            padding: 4px 0;
-            text-align: center;
-            line-height: 1;
-        }
-        .vanilla-jalali-popup .vjp-day-btn:hover {
-            background: #f1f5f9;
-        }
-        .vanilla-jalali-popup .vjp-day-btn.is-today {
-            background: #e0f2fe;
-            color: #0369a1;
-            font-weight: 700;
-        }
-    </style>
-    <script>
-        (function() {
-            'use strict';
-
-            // ════════════════════════════════════════════════════════════
-            // Vanilla JS Jalali Datepicker
-            // Uses the pure-JS persian-date library (NO jQuery).
-            // ════════════════════════════════════════════════════════════
-            var PERSIAN_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
-            var PERSIAN_WEEKDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']; // Sat..Fri
-
-            function toPersianDigits(str) {
-                return String(str).replace(/\d/g, function(d) {
-                    return '۰۱۲۳۴۵۶۷۸۹'[d];
-                });
-            }
-
-            function createDatepicker(input) {
-                var wrapper = input.closest('.jalali-datepicker-wrapper') || input.parentElement;
-                if (!wrapper) return null;
-
-                var popup = document.createElement('div');
-                popup.className = 'vanilla-jalali-popup';
-                wrapper.style.position = 'relative';
-                wrapper.appendChild(popup);
-
-                var viewYear = 0;
-                var viewMonth = 0;
-
-                function render() {
-                    var today = new persianDate();
-                    if (!viewYear) viewYear = today.year();
-                    if (!viewMonth) viewMonth = today.month();
-
-                    var daysInMonth = today.daysInMonth(viewYear, viewMonth);
-                    var firstWeekday = today.getFirstWeekDayOfMonth(viewYear, viewMonth); // 0 = Saturday
-
-                    var html = '';
-
-                    // Header: prev / title / next
-                    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #f1f5f9;">';
-                    html += '<button type="button" class="vjp-nav-btn" data-nav="prev" aria-label="ماه قبل">&rsaquo;</button>';
-                    html += '<span style="font-size:12px;font-weight:700;color:#334155;">' + PERSIAN_MONTHS[viewMonth - 1] + ' ' + toPersianDigits(viewYear) + '</span>';
-                    html += '<button type="button" class="vjp-nav-btn" data-nav="next" aria-label="ماه بعد">&lsaquo;</button>';
-                    html += '</div>';
-
-                    // Weekday header
-                    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:4px 6px;border-bottom:1px solid #f1f5f9;">';
-                    PERSIAN_WEEKDAYS.forEach(function(w) {
-                        html += '<div style="text-align:center;font-size:10px;font-weight:700;color:#94a3b8;padding:2px 0;">' + w + '</div>';
-                    });
-                    html += '</div>';
-
-                    // Day grid
-                    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:6px;">';
-                    for (var i = 0; i < firstWeekday; i++) {
-                        html += '<div></div>';
-                    }
-                    for (var day = 1; day <= daysInMonth; day++) {
-                        var isToday = (day === today.date() && viewMonth === today.month() && viewYear === today.year());
-                        html += '<button type="button" class="vjp-day-btn' + (isToday ? ' is-today' : '') + '" data-day="' + day + '">' + toPersianDigits(day) + '</button>';
-                    }
-                    html += '</div>';
-
-                    popup.innerHTML = html;
-
-                    // Bind navigation
-                    popup.querySelector('[data-nav="prev"]').addEventListener('click', function() {
-                        viewMonth--;
-                        if (viewMonth < 1) { viewMonth = 12; viewYear--; }
-                        render();
-                    });
-                    popup.querySelector('[data-nav="next"]').addEventListener('click', function() {
-                        viewMonth++;
-                        if (viewMonth > 12) { viewMonth = 1; viewYear++; }
-                        render();
-                    });
-
-                    // Bind day selection
-                    popup.querySelectorAll('[data-day]').forEach(function(btn) {
-                        btn.addEventListener('click', function() {
-                            var day = parseInt(btn.getAttribute('data-day'), 10);
-                            var selected = new persianDate([viewYear, viewMonth, day]);
-                            input.value = selected.format('YYYY/MM/DD');
-                            popup.style.display = 'none';
-                        });
-                    });
-                }
-
-                function show() {
-                    viewYear = 0;
-                    viewMonth = 0;
-                    render();
-                    popup.style.display = 'block';
-                }
-
-                function hide() {
-                    popup.style.display = 'none';
-                }
-
-                // Open on input click
-                input.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    show();
-                });
-
-                // Open on calendar icon click
-                var icon = wrapper.querySelector('span.absolute');
-                if (icon) {
-                    icon.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        show();
-                    });
-                }
-
-                // Close on outside click
-                document.addEventListener('click', function(e) {
-                    if (!wrapper.contains(e.target)) hide();
-                });
-
-                return { show: show, hide: hide };
-            }
-
-            // ── Jalali Date Picker Initialization ──────────────────────
-            function initJalaliPickers() {
-                if (typeof persianDate === 'undefined') {
-                    console.warn('persian-date library not loaded — date inputs will accept manual text entry.');
-                    return;
-                }
-
-                document.querySelectorAll('.jalali-date-input').forEach(function(input) {
-                    var fieldName = input.getAttribute('data-jalali');
-                    if (!fieldName) return;
-
-                    // Convert existing ISO value to Jalali display
-                    var existingVal = input.value;
-                    if (existingVal) {
-                        try {
-                            var d = new Date(existingVal);
-                            if (!isNaN(d.getTime())) {
-                                var jDate = new persianDate(d);
-                                input.value = jDate.format('YYYY/MM/DD');
-                            }
-                        } catch(e) {}
-                    }
-
-                    createDatepicker(input);
-                });
-            }
-
-            // ── Jalali-to-Gregorian Conversion Before Submit ───────────
-            function convertDatesBeforeSubmit() {
-                var form = document.querySelector('form[asp-action="Edit"]');
-                if (!form) return;
-
-                form.addEventListener('submit', function() {
-                    syncEditEditor();
-
-                    document.querySelectorAll('.jalali-date-input').forEach(function(input) {
-                        var fieldName = input.getAttribute('data-jalali');
-                        if (!fieldName) return;
-
-                        var jalaliText = input.value.trim();
-                        if (jalaliText) {
-                            try {
-                                var parts = jalaliText.split('/');
-                                if (parts.length === 3) {
-                                    var jYear = parseInt(parts[0]);
-                                    var jMonth = parseInt(parts[1]);
-                                    var jDay = parseInt(parts[2]);
-
-                                    var pd = new persianDate([jYear, jMonth, jDay]);
-                                    var gregDate = pd.toDate();
-
-                                    var isoStr = gregDate.getFullYear() + '-' +
-                                        String(gregDate.getMonth() + 1).padStart(2, '0') + '-' +
-                                        String(gregDate.getDate()).padStart(2, '0');
-
-                                    input.value = isoStr;
-                                }
-                            } catch(e) {
-                                console.warn('Jalali date conversion failed for', fieldName, e);
-                            }
-                        }
-                    });
-                });
-            }
-
-            // ── WYSIWYG Editor ────────────────────────────────────────
-            var editEditor = document.getElementById('editContractEditor');
-            var editTextarea = document.getElementById('ContractBodyHtml');
-
-            window.syncEditEditor = function() {
-                if (editEditor && editTextarea) {
-                    editTextarea.value = editEditor.innerHTML;
-                }
-            };
-
-            if (editEditor && editTextarea && editTextarea.value) {
-                editEditor.innerHTML = editTextarea.value;
-            }
-
-            if (editEditor) {
-                editEditor.addEventListener('input', syncEditEditor);
-            }
-
-            document.querySelectorAll('.wysiwyg-btn[data-cmd]').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var cmd = btn.getAttribute('data-cmd');
-                    if (editEditor) editEditor.focus();
-                    document.execCommand(cmd, false, null);
-                    syncEditEditor();
-                });
-            });
-
-            // ── Template Auto-populate ────────────────────────────────
-            var templateSelect = document.getElementById('TemplateId');
-            if (templateSelect && editEditor) {
-                templateSelect.addEventListener('change', function() {
-                    var templateId = this.value;
-                    if (templateId && templateId !== '') {
-                        fetch('/Contracts/PreviewTemplate?id=' + templateId + '&raw=true')
-                            .then(function(r) { return r.text(); })
-                            .then(function(html) {
-                                if (html && html.length > 0) {
-                                    if (!editEditor.innerHTML.trim() || confirm('با انتخاب قالب جدید، متن فعلی جایگزین می‌شود. ادامه دهید؟')) {
-                                        editEditor.innerHTML = html;
-                                        syncEditEditor();
-                                    }
-                                }
-                            })
-                            .catch(function() {});
-                    }
-                });
-            }
-
-            // ── Initialize ────────────────────────────────────────────
-            document.addEventListener('DOMContentLoaded', function() {
-                initJalaliPickers();
-                convertDatesBeforeSubmit();
-            });
-        })();
-    </script>
+    <link rel="stylesheet" href="~/css/contracts-edit-style.css" asp-append-version="true" />
+    <script src="~/js/contracts-edit-script.js" asp-append-version="true"></script>
 }

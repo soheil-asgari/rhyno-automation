@@ -635,6 +635,11 @@ public sealed class TaxExporterService : ITaxExporterService
         // are fixing). If no live session exists, fail gracefully instead of relaunching.
         var context = ResolveContext(sessionToken, out var ownsContext);
         var completedSuccessfully = false;
+        // When the automation reaches the output-file modal step, later modal/poll errors are
+        // handled gracefully (and the browser must stay open so the operator can verify/fix),
+        // instead of being treated as a hard failure that closes the live Chromium window.
+        var reachedExportStep = false;
+
         if (context is null)
         {
             _logger.LogWarning(
@@ -660,6 +665,16 @@ public sealed class TaxExporterService : ITaxExporterService
             {
                 page = await SelectSessionPageAsync(context, cancellationToken) ?? await context.NewPageAsync();
             }
+
+            // Fallback harder for native JS dialogs (window.confirm/alert) that the Tax portal
+            // may raise when confirming the "درخواست فایل خروجی" request. Without this, Playwright
+            // auto-dismisses the dialog (i.e. clicks «انصراف») and the export request never
+            // registers, after which the completion marks failure and the live browser is closed.
+            page.Dialog += async (_, dialog) =>
+            {
+                try { await dialog.AcceptAsync(); }
+                catch { /* best-effort accept */ }
+            };
 
             // Smart pre-check: the operator may have already typed the OTP into the live
             // browser window and clicked «تایید» themselves. In that case the page is no
@@ -743,6 +758,7 @@ public sealed class TaxExporterService : ITaxExporterService
 
             // Step 7 - modal automation: open, select buy domestic, select ALL checkboxes for invoice status & pattern
             // (excluding rejected/voided/automatic-rejected statuses), set fiscal period and year.
+            reachedExportStep = true; // از این مرحله به بعد، خطاها نباید مرورگر زنده را ببندند.
             await EnsureExportModalAsync(page, cancellationToken);
             await SelectDomesticPurchaseRadioAsync(page, cancellationToken);
             await SelectAllCheckboxesAsync(page, cancellationToken);
@@ -784,17 +800,26 @@ public sealed class TaxExporterService : ITaxExporterService
             // Chromium process and leaving the profile dir locked (issue #3), we DO dispose the
             // browser when the operation FAILED. On success we leave the live parked session
             // (and its playwright) intact so the SAME browser stays usable.
+            //
+            // FIX (ثبت درخواست / مودال درخواست فایل خروجی): اگر خطا در مراحل مقدماتی
+            // (قبل از رسیدن به مودال / OTP) رخ داده باشد بستن مرورگر بلامانع است، اما اگر
+            // به مرحله‌ی انتخاب گزینه‌ها و ثبتِ مودال رسیده باشیم، نباید به‌خاطر خطای
+            // موقتی مودال/poll، مرورگرِ زنده (که ممکن است درخواست ثبت شده یا کاربر می‌خواهد
+            // دستی ادامه دهد) را ببندیم.
             if (!completedSuccessfully)
             {
-                if (context is not null)
+                if (!reachedExportStep)
                 {
-                    // Resolve the owning playwright parked in the registry and dispose it fully.
-                    var owning = _sessions.TryGetValue(sessionToken, out var parked)
-                        ? parked.Playwright
-                        : null;
-                    await DisposeSessionContextAsync(context, owning);
+                    if (context is not null)
+                    {
+                        // Resolve the owning playwright parked in the registry and dispose it fully.
+                        var owning = _sessions.TryGetValue(sessionToken, out var parked)
+                            ? parked.Playwright
+                            : null;
+                        await DisposeSessionContextAsync(context, owning);
+                    }
+                    _sessions.TryRemove(sessionToken, out _);
                 }
-                _sessions.TryRemove(sessionToken, out _);
             }
             else if (ownsContext)
             {
@@ -1864,53 +1889,92 @@ public sealed class TaxExporterService : ITaxExporterService
     }
 
     /// <summary>Click the green submit button (درخواست فایل خروجی) inside the modal.</summary>
+    /// <remarks>
+    /// FIX (درخواست فایل خروجی): قبلاً این متد بعد از submit اول، دکمه تأیید دوم را با
+    /// <c>page.Locator(...).Last</c> روی **کل صفحه** جستجو می‌کرد. چون دکمه بازکننده‌ی
+    /// مودال در خودِ صفحه هم متن «درخواست فایل خروجی» دارد، پس از بسته شدن مودالِ اول
+    /// (`primarySubmitBtn` کلیک شد → مودال بسته شد) آن locator به **دکمه بازکننده** می‌خورد
+    /// (یا در حین لود/نویگیشن یک PlaywrightException می‌داد که کچ نمی‌شد). نتیجه: استثنا از
+    /// این متد خام بیرون می‌رفت، به <c>finally</c> می‌رسید و آنجا <c>context.CloseAsync()</c>
+    /// مرورگرِ زنده را بلافاصله می‌بست. اینجا همه‌چیز را در همان <c>div[role='dialog']</c>
+    /// می‌مانیم، دکمه دوم را فقط داخل همان مودال پیدا می‌کنیم و هیچ استثنایی بیرون نمی‌دهیم.
+    /// </remarks>
     private async Task ClickSubmitExportRequestAsync(IPage page, CancellationToken ct)
     {
         _logger.LogInformation("در حال تکمیل فرم و کلیک روی دکمه ارسال...");
 
-        // ۱. دسترسی به دیالوگ فعال جاری
-        var activeDialog = page.Locator("div[role='dialog']").Last;
-
-        // ۲. انتخاب اجباری گزینه «خرید داخلی» (حل مشکل عدم ارسال فرم)
-        var kharidRadio = activeDialog.Locator("label, span, input")
-            .Filter(new LocatorFilterOptions { HasText = "خرید داخلی" })
-            .First;
-
-        if (await kharidRadio.IsVisibleAsync())
-        {
-            await kharidRadio.ClickAsync(new LocatorClickOptions { Force = true });
-            _logger.LogInformation("گزینه «خرید داخلی» با موفقیت انتخاب شد.");
-            await page.WaitForTimeoutAsync(500); // مکث کوتاه برای اعمال وضعیت فرم
-        }
-
-
-        // ۳. کلیک روی دکمه اول (ثبت فرم)
-        var primarySubmitBtn = activeDialog.Locator("button")
-            .Filter(new LocatorFilterOptions { HasText = "درخواست فایل خروجی" })
-            .First;
-
-        await primarySubmitBtn.ClickAsync(new LocatorClickOptions { Force = true, Timeout = 5000 });
-        _logger.LogInformation("دکمه ثبت اول (داخل فرم) کلیک شد.");
-
-        // ۴. انتظار برای ظهور دکمه مشکی تأیید نهایی (با مدیریت تایم‌اوت)
-        var confirmBlackBtn = page.Locator("button.MuiButton-containedInherit, button.MuiButton-colorInherit, div[role='dialog'] button")
+        // ۱. مودال فعال جاری — هیچ‌وقت از آن بیرون نمی‌رویم (تا دکمه بازکننده صفحه را نزنیم).
+        var activeDialog = page.Locator("div[role='dialog']")
             .Filter(new LocatorFilterOptions { HasText = "درخواست فایل خروجی" })
             .Last;
 
         try
         {
-            await confirmBlackBtn.WaitForAsync(new LocatorWaitForOptions
-            {
-                State = WaitForSelectorState.Visible,
-                Timeout = 8000
-            });
+            // ۲. انتخاب اجباری گزینه «خرید داخلی» (حل مشکل عدم ارسال فرم)
+            var kharidRadio = activeDialog.Locator("label, span, input")
+                .Filter(new LocatorFilterOptions { HasText = "خرید داخلی" })
+                .First;
 
-            await confirmBlackBtn.ClickAsync(new LocatorClickOptions { Force = true, Timeout = 5000 });
-            _logger.LogInformation("دکمه تأیید نهایی (مشکی) با موفقیت کلیک شد.");
+            if (await kharidRadio.IsVisibleAsync())
+            {
+                await kharidRadio.ClickAsync(new LocatorClickOptions { Force = true });
+                _logger.LogInformation("گزینه «خرید داخلی» با موفقیت انتخاب شد.");
+                await page.WaitForTimeoutAsync(500); // مکث کوتاه برای اعمال وضعیت فرم
+            }
+            else
+            {
+                _logger.LogInformation("گزینه «خرید داخلی» در مودال دیده نشد (شاید قبلاً انتخاب شده است).");
+            }
+
+            // ۳. کلیک روی دکمه اول (ثبت فرم) — فقط داخل همان مودال
+            var primarySubmitBtn = activeDialog.Locator("button")
+                .Filter(new LocatorFilterOptions { HasText = "درخواست فایل خروجی" })
+                .First;
+
+            if (await primarySubmitBtn.IsVisibleAsync())
+            {
+                await primarySubmitBtn.ClickAsync(new LocatorClickOptions { Force = true, Timeout = 5000 });
+                _logger.LogInformation("دکمه ثبت اول (داخل فرم) کلیک شد.");
+            }
+            else
+            {
+                _logger.LogWarning("دکمه «درخواست فایل خروجی» داخل مودال پیدا نشد؛ احتمالاً مودال بسته شده است.");
+                return;
+            }
+
+            // مودال اول بسته شد؛ چند لحظه صبر کن تا مودال تأیید دوم (اگر هست) رندر شود.
+            await page.WaitForTimeoutAsync(700);
+
+            // ۴. دکمه تأیید نهایی — همیشه همان‌جا داخل مودال فعال؛ timeout کوتاه و catch وسیع.
+            try
+            {
+                // فقط داخل همان dialog فعالیت می‌کنیم: `.Last` ولی scoped به activeDialog.
+                var confirmLocator = activeDialog.Locator("button")
+                    .Filter(new LocatorFilterOptions { HasText = "درخواست فایل خروجی" })
+                    .Last;
+
+                if (await confirmLocator.CountAsync() > 0 && await confirmLocator.IsVisibleAsync())
+                {
+                    await confirmLocator.ClickAsync(new LocatorClickOptions { Force = true, Timeout = 5000 });
+                    _logger.LogInformation("دکمه تأیید نهایی (مشکی) با موفقیت کلیک شد.");
+                }
+                else
+                {
+                    _logger.LogInformation("پنجره تأیید دوم (دکمه مشکی) ظاهر نشد؛ احتمالاً درخواست در مرحله اول نهایی شده است.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // دیگر اجازه نمی‌دهیم این خطای موقتی (بسته شدن مودال / نویگیشن) بیرون برود
+                // و مرورگر زنده را ببندد؛ به مرحله پایش وضعیت ادامه می‌دهیم.
+                _logger.LogWarning(ex, "پنجره تأیید دوم ظاهر نشد یا خطای موقتی رخ داد؛ ادامه می‌یابد.");
+            }
         }
-        catch (TimeoutException)
+        catch (Exception ex)
         {
-            _logger.LogWarning("پنجره تأیید دوم (دکمه مشکی) ظاهر نشد؛ احتمالاً درخواست در مرحله اول نهایی شده است.");
+            // هرگونه خطا در تکمیل/ارسال فرم، بی‌صدا swallow شده تا عملیات به پایش برسد؛
+            // مرورگر زنده نباید به‌خاطر این‌ها بسته شود.
+            _logger.LogError(ex, "خطا در حین کامل‌کردن و ارسال فرم درخواست فایل خروجی: {Message}", ex.Message);
         }
     }
     /// <summary>Poll the 1st table row every 10s (up to 5 minutes) until the status is «موفق».</summary>

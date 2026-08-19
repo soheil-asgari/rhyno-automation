@@ -58,95 +58,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>صورتحساب رسمی - @Model.InvoiceNumber</title>
-<style>
-    /* ─── Reset ─── */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* ─── Base ─── */
-    body {
-        font-family: Tahoma, Arial, sans-serif;
-        font-size: 9pt;
-        color: #000;
-        direction: rtl;
-        background: #fff;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    /* ─── Outer wrapper: full width for A4 ─── */
-    .page-wrap {
-        width: 100%;
-        padding: 4mm;
-    }
-
-    /* ─── Double-border box ─── */
-    .outer-border {
-        border: 2pt solid #000;
-        padding: 2pt;
-        width: 100%;
-    }
-    .inner-border {
-        border: 1pt solid #000;
-        padding: 3mm;
-        width: 100%;
-    }
-
-    /* ─── All tables use 100% width and collapsed borders ─── */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-    }
-    td, th {
-        border: 1pt solid #000;
-        padding: 3pt 5pt;
-        font-size: 8.5pt;
-        vertical-align: middle;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-    th {
-        font-weight: bold;
-        background-color: #e8e8e8 !important;
-        text-align: center;
-    }
-
-    /* ─── Section header row (as table row, not div) ─── */
-    .sec-hdr td {
-        background-color: #f0f0f0 !important;
-        font-weight: bold;
-        font-size: 9pt;
-        padding: 3pt 6pt;
-        text-align: right;
-    }
-
-    .lbl { font-weight: bold; background-color: #fafafa !important; width: 18%; }
-    .val { width: 32%; }
-
-    .c { text-align: center; }
-    .r { text-align: right; }
-    .l { text-align: left; }
-    .bold { font-weight: bold; }
-
-    .sum-lbl { font-weight: bold; background-color: #f0f0f0 !important; text-align: right; }
-    .sum-val { text-align: left; }
-    .grand-lbl { font-weight: bold; background-color: #ddd !important; text-align: right; }
-    .grand-val { font-weight: bold; background-color: #ddd !important; text-align: left; }
-
-    /* ─── Spacer between sections ─── */
-    .gap { height: 4pt; }
-
-    /* ─── Print overrides ─── */
-    @@media print {
-        @@page {
-            size: A4 portrait;
-            margin: 8mm 8mm 8mm 8mm;
-        }
-        body { padding: 0; margin: 0; }
-        .page-wrap { padding: 0; }
-        tr { page-break-inside: avoid; }
-    }
-</style>
+<link rel="stylesheet" href="~/css/financial-print-invoice-style.css" asp-append-version="true" />
 </head>
 <body>
 <div class="page-wrap">
@@ -331,13 +243,6 @@
 </div><!-- outer-border -->
 </div><!-- page-wrap -->
 
-<script>
-    window.addEventListener('DOMContentLoaded', function () {
-        setTimeout(function () {
-            window.print();
-            window.close();
-        }, 300);
-    });
-</script>
+<script src="~/js/financial-print-invoice-script.js" asp-append-version="true"></script>
 </body>
 </html>

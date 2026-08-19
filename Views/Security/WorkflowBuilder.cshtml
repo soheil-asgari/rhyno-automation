@@ -42,14 +42,13 @@
 
 @section Scripts {
     <!-- Inject master-data lookup options directly to React client window context -->
-    <script>
-        window.WorkflowBuilderData = {
-            documentType: '@documentType',
-            users: @Json.Serialize(userOptions),
-            roles: @Json.Serialize(roleOptions),
-            departments: @Json.Serialize(departmentOptions)
-        };
-    </script>
+    <script id="workflowBuilderData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            documentType = documentType,
+            users = userOptions,
+            roles = roleOptions,
+            departments = departmentOptions
+        }))</script>
+    <script src="~/js/security-workflow-builder-script.js" asp-append-version="true"></script>
     <!-- React Flow bundled script -->
     <script src="~/js/workflow/workflow-builder.js" asp-append-version="true"></script>
 }

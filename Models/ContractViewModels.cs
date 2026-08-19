@@ -169,6 +169,19 @@ namespace OfficeAutomation.Models
         [Display(Name = "تاریخ امضا")]
         public DateTime? SignDate { get; set; }
 
+        // ── Jalali display fields (string) ──
+        // Keep the real DateTime bound to a hidden ISO input so model binding
+        // always succeeds. These text inputs display the Jalali (shamsi) date
+        // to the user and are converted to ISO on the client before submit.
+        [Display(Name = "تاریخ شروع")]
+        public string? StartDateDisplay { get; set; }
+
+        [Display(Name = "تاریخ پایان")]
+        public string? EndDateDisplay { get; set; }
+
+        [Display(Name = "تاریخ امضا")]
+        public string? SignDateDisplay { get; set; }
+
         [Display(Name = "روزهای اخطار انقضا")]
         public int ExpiryNoticeDays { get; set; } = 30;
 
@@ -263,6 +276,16 @@ namespace OfficeAutomation.Models
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ امضا")]
         public DateTime? SignDate { get; set; }
+
+        // ── Jalali display fields (string) ──
+        [Display(Name = "تاریخ شروع")]
+        public string? StartDateDisplay { get; set; }
+
+        [Display(Name = "تاریخ پایان")]
+        public string? EndDateDisplay { get; set; }
+
+        [Display(Name = "تاریخ امضا")]
+        public string? SignDateDisplay { get; set; }
 
         [Display(Name = "روزهای اخطار انقضا")]
         public int ExpiryNoticeDays { get; set; } = 30;

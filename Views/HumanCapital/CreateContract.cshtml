@@ -4,38 +4,38 @@
     ViewData["SectionTitle"] = "ثبت قرارداد جدید";
 }
 
-<div class="w-full flex-1 flex flex-col gap-3 p-2.5 md:p-3" dir="rtl">
+<div class="w-full flex-1 flex flex-col gap-2 p-2 md:p-3" dir="rtl">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="flex items-center justify-between gap-3 mb-2 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
-            <h1 class="text-lg font-bold text-slate-900 dark:text-white">ثبت قرارداد جدید</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">ایجاد قرارداد یا حکم کارگزینی برای پرسنل</p>
+            <h1 class="text-sm font-bold text-slate-900 dark:text-white">ثبت قرارداد جدید</h1>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">ایجاد قرارداد یا حکم کارگزینی برای پرسنل</p>
         </div>
-        <a href="@Url.Action("Contracts", "HumanCapital")" class="inline-flex items-center gap-1.5 px-3 h-8 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition no-underline">
+        <a href="@Url.Action("Contracts", "HumanCapital")" class="inline-flex items-center gap-1 px-3 h-7 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold transition no-underline">
             <i class="bi bi-arrow-right"></i> بازگشت به لیست
         </a>
     </div>
 
     <!-- Form -->
-    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm p-4">
         <form method="post" asp-action="CreateContract" id="contract-form">
             @Html.AntiForgeryToken()
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <!-- Employee -->
-                <div class="flex flex-col gap-1.5">
-                    <label asp-for="EmployeeId" class="text-xs font-bold text-slate-700 dark:text-slate-300">کارمند <span class="text-rose-500">*</span></label>
+                <div class="flex flex-col gap-1">
+                    <label asp-for="EmployeeId" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">کارمند <span class="text-rose-500">*</span></label>
                     <select asp-for="EmployeeId" asp-items="Model.EmployeeOptions"
-                            class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200">
+                            class="h-7 rounded-lg border border-black/15 bg-white px-2 text-[11px] text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200">
                         <option value="">— انتخاب کارمند —</option>
                     </select>
-                    <span asp-validation-for="EmployeeId" class="text-[10px] text-rose-500"></span>
+                    <span asp-validation-for="EmployeeId" class="text-[9px] text-rose-500"></span>
                 </div>
 
                 <!-- Contract Type -->
-                <div class="flex flex-col gap-1.5">
-                    <label asp-for="ContractType" class="text-xs font-bold text-slate-700 dark:text-slate-300">نوع قرارداد <span class="text-rose-500">*</span></label>
+                <div class="flex flex-col gap-1">
+                    <label asp-for="ContractType" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">نوع قرارداد <span class="text-rose-500">*</span></label>
                     <select asp-for="ContractType"
-                            class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200">
+                            class="h-7 rounded-lg border border-black/15 bg-white px-2 text-[11px] text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200">
                         @foreach (var t in Model.ContractTypeOptions)
                         {
                             <option value="@t">@t</option>
@@ -44,51 +44,51 @@
                 </div>
 
                 <!-- Start Date -->
-                <div class="flex flex-col gap-1.5">
-                    <label asp-for="StartDate" class="text-xs font-bold text-slate-700 dark:text-slate-300">تاریخ شروع <span class="text-rose-500">*</span></label>
+                <div class="flex flex-col gap-1">
+                    <label asp-for="StartDate" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">تاریخ شروع <span class="text-rose-500">*</span></label>
                     <input asp-for="StartDate" type="text" placeholder="1405/01/01"
-                           class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200" />
-                    <span asp-validation-for="StartDate" class="text-[10px] text-rose-500"></span>
+                           class="h-7 rounded-lg border border-black/15 bg-white px-2 text-[11px] text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200" />
+                    <span asp-validation-for="StartDate" class="text-[9px] text-rose-500"></span>
                 </div>
 
                 <!-- End Date -->
-                <div class="flex flex-col gap-1.5">
-                    <label asp-for="EndDate" class="text-xs font-bold text-slate-700 dark:text-slate-300">تاریخ پایان</label>
+                <div class="flex flex-col gap-1">
+                    <label asp-for="EndDate" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">تاریخ پایان</label>
                     <input asp-for="EndDate" type="text" placeholder="1405/12/29"
-                           class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200" />
+                           class="h-7 rounded-lg border border-black/15 bg-white px-2 text-[11px] text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200" />
                 </div>
 
                 <!-- Base Salary -->
-                <div class="flex flex-col gap-1.5">
-                    <label asp-for="BaseSalary" class="text-xs font-bold text-slate-700 dark:text-slate-300">حقوق پایه (ریال)</label>
+                <div class="flex flex-col gap-1">
+                    <label asp-for="BaseSalary" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">حقوق پایه (ریال)</label>
                     <input asp-for="BaseSalary" type="number" min="0" step="1000"
-                           class="h-9 rounded-lg border border-black/15 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 tabular-nums" dir="ltr" />
-                    <span asp-validation-for="BaseSalary" class="text-[10px] text-rose-500"></span>
+                           class="h-7 rounded-lg border border-black/15 bg-white px-2 text-[11px] text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 tabular-nums" dir="ltr" />
+                    <span asp-validation-for="BaseSalary" class="text-[9px] text-rose-500"></span>
                 </div>
 
                 <!-- Is Active -->
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">وضعیت</label>
-                    <label class="flex items-center gap-2 mt-1 cursor-pointer">
-                        <input asp-for="IsActive" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" checked />
-                        <span class="text-xs text-slate-600 dark:text-slate-400">قرارداد فعال</span>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">وضعیت</label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input asp-for="IsActive" type="checkbox" class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" checked />
+                        <span class="text-[11px] text-slate-600 dark:text-slate-400">قرارداد فعال</span>
                     </label>
                 </div>
 
                 <!-- Notes -->
-                <div class="flex flex-col gap-1.5 md:col-span-2">
-                    <label asp-for="Notes" class="text-xs font-bold text-slate-700 dark:text-slate-300">توضیحات</label>
-                    <textarea asp-for="Notes" rows="3"
-                              class="rounded-lg border border-black/15 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 resize-none"></textarea>
+                <div class="flex flex-col gap-1 md:col-span-2">
+                    <label asp-for="Notes" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">توضیحات</label>
+                    <textarea asp-for="Notes" rows="2"
+                              class="rounded-lg border border-black/15 bg-white px-2 py-1.5 text-[11px] text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 resize-none"></textarea>
                 </div>
             </div>
 
             <!-- Submit -->
-            <div class="flex items-center justify-end gap-2 mt-5 pt-4 border-t border-black/5">
-                <a href="@Url.Action("Contracts", "HumanCapital")" class="inline-flex items-center gap-1.5 px-4 h-9 border border-black/20 bg-gradient-to-b from-white to-slate-100 text-slate-700 rounded-lg text-xs font-bold transition no-underline">
+            <div class="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-black/5">
+                <a href="@Url.Action("Contracts", "HumanCapital")" class="inline-flex items-center gap-1.5 px-3 h-8 border border-black/20 bg-gradient-to-b from-white to-slate-100 text-slate-700 rounded-lg text-[11px] font-bold transition no-underline">
                     انصراف
                 </a>
-                <button type="submit" class="inline-flex items-center gap-1.5 px-5 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold transition shadow-sm">
                     <i class="bi bi-check-lg"></i> ذخیره قرارداد
                 </button>
             </div>
@@ -96,14 +96,4 @@
     </div>
 </div>
 
-<script>
-    // Vanilla JS: Auto-format salary input with thousand separators
-    (() => {
-        const salaryInput = document.querySelector('#BaseSalary');
-        if (!salaryInput) return;
-        salaryInput.addEventListener('input', function () {
-            const raw = this.value.replace(/[^0-9]/g, '');
-            this.value = raw;
-        });
-    })();
-</script>
+<script src="~/js/human-capital-create-contract-script.js" asp-append-version="true"></script>
