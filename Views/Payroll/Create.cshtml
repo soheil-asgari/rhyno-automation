@@ -160,6 +160,6 @@
 <link rel="stylesheet" href="~/css/payroll-create-style.css" asp-append-version="true" />
 
 @section Scripts {
-    <script id="payrollItemsData" type="application/json">@Html.Raw(Json.Serialize(Model.Items ?? new List<object>()))</script>
+    <script id="payrollItemsData" type="application/json">@Html.Raw(Json.Serialize(Model.Items ?? new List<PayrollEmployeeRowViewModel>()))</script>
     <script src="~/js/payroll-create-script.js" asp-append-version="true"></script>
 }

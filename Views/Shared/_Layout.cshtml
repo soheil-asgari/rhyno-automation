@@ -41,6 +41,9 @@
     var brandLogo = brandingSettings?.LogoUrl;
     var brandFavicon = brandingSettings?.FaviconUrl;
     var brandBgUrl = brandingSettings?.DesktopBackgroundUrl;
+    var bodyStyle = !string.IsNullOrWhiteSpace(brandBgUrl)
+        ? $"background-color:#7baed1;background:url('{brandBgUrl}') no-repeat center center fixed;background-size:cover;"
+        : null;
     var appTitle = brandingSettings?.ApplicationTitle ?? "راینو ERP";
 
     // Sidebar accordion state helper
@@ -89,7 +92,7 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
-<body class="rahkaran-theme rahkaran-is-desktop"@(!string.IsNullOrWhiteSpace(brandBgUrl) ? $" style=\"background-color:#7baed1;background:url('{brandBgUrl}') no-repeat center center fixed;background-size:cover;\"" : "")>
+<body class="rahkaran-theme rahkaran-is-desktop" style="@bodyStyle">
 
     <!-- ═══════════════════════════════════════════════════
     ۱. HEADER — Transparent glass bar
