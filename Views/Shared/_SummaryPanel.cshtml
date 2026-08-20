@@ -1,15 +1,11 @@
 @model IEnumerable<OfficeAutomation.Models.FinancialHubKpiVM>
-<div class="row g-3">
+<div class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
     @foreach (var item in Model)
     {
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">@item.Title</div>
-                    <div class="fs-5 fw-bold">@item.Value</div>
-                    <div class="small text-muted">@item.Description</div>
-                </div>
-            </div>
+        <div class="erp-card h-full p-2.5">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">@item.Title</div>
+            <div class="text-[15px] font-bold text-slate-900 dark:text-white">@item.Value</div>
+            <div class="text-[11px] text-muted">@item.Description</div>
         </div>
     }
 </div>

@@ -7,16 +7,16 @@
     var sectionTone = ViewData["SectionTone"] as string ?? "primary";
 }
 
-<div class="section-header section-header-toned section-tone-@sectionTone">
+<div class="section-header section-header-toned section-tone-@sectionTone rhyno-section-header erp-toolbar">
     <div class="section-header-copy">
-        <h1 class="section-title">@title</h1>
+        <h1 class="section-title m-0 text-[15px]">@title</h1>
         @if (!string.IsNullOrWhiteSpace(subtitle))
         {
-            <p class="section-subtitle">@subtitle</p>
+            <p class="section-subtitle m-0 text-[11px]">@subtitle</p>
         }
     </div>
     @if (!string.IsNullOrWhiteSpace(actionUrl) && !string.IsNullOrWhiteSpace(actionText))
     {
-        <a href="@actionUrl" class="@actionCss">@actionText</a>
+        <a href="@actionUrl" class="@actionCss no-underline">@actionText</a>
     }
 </div>

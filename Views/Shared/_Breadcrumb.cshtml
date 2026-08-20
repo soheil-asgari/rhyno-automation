@@ -21,13 +21,13 @@
     var list = items.ToList();
     if (list.Count == 0) return;
 }
-<nav class="rhyno-breadcrumb" aria-label="مسیر صفحه">
-    <ol class="rhyno-breadcrumb-list">
+<nav class="rhyno-breadcrumb h-6 items-center text-[11px]" aria-label="مسیر صفحه">
+    <ol class="rhyno-breadcrumb-list m-0 p-0">
         @for (var i = 0; i < list.Count; i++)
         {
             var item = list[i];
             var isLast = i == list.Count - 1;
-            <li class="rhyno-breadcrumb-item @(isLast ? "is-current" : "")">
+            <li class="rhyno-breadcrumb-item flex items-center gap-1.5 text-[11px] @(isLast ? "is-current" : "")">
                 @if (!isLast && !string.IsNullOrWhiteSpace(item.Url))
                 {
                     <a href="@item.Url" class="rhyno-breadcrumb-link">@item.Label</a>

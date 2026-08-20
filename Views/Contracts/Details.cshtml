@@ -1,10 +1,22 @@
 @model ContractDetailsVM
+@using System.Globalization
 @{
     ViewData["Title"] = "جزئیات قرارداد";
     var activeTab = ViewBag.ActiveTab ?? "overview";
 }
+@functions {
+    string ToPersianDate(DateTime value)
+    {
+        var cal = new PersianCalendar();
+        return $"{cal.GetYear(value):0000}/{cal.GetMonth(value):00}/{cal.GetDayOfMonth(value):00}";
+    }
+    string ToPersianDateNullable(DateTime? value)
+    {
+        return value.HasValue ? ToPersianDate(value.Value) : "-";
+    }
+}
 
-<div class="container-fluid py-2 space-y-2" dir="rtl">
+<div class="container-fluid py-1 space-y-2" dir="rtl">
     @if (TempData["SuccessMessage"] is string successMsg)
     {
         <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-3.5 py-2.5 text-[11px] text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
@@ -28,40 +40,40 @@
     }' />
 
     @* Section Header Card *@
-    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+    <div class="erp-card p-2.5">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-xs">
                     <i class="bi bi-file-earmark-text text-white text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-slate-900 dark:text-white">@Model.Title</h1>
+                    <h1 class="text-[13px] font-bold text-slate-900 dark:text-white">@Model.Title</h1>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">@Model.ContractNumber</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
                 @if (Model.CanEdit)
                 {
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 no-underline">
                         <i class="bi bi-pencil ml-1"></i>ویرایش
                     </a>
                     <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit>
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
+                        <button type="submit" class="erp-btn text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
                             <i class="bi bi-archive ml-1"></i>بایگانی
                         </button>
                     </form>
                     <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیتم حذف شود؟');">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
+                        <button type="submit" class="erp-btn text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
                             <i class="bi bi-trash ml-1"></i>حذف
                         </button>
                     </form>
                 }
-                <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
                     <i class="bi bi-printer ml-1"></i>چاپ/PDF
                 </a>
-                <a asp-action="Index" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <a asp-action="Index" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
                     <i class="bi bi-arrow-right ml-1"></i>بازگشت
                 </a>
             </div>
@@ -118,7 +130,27 @@
                     </div>
                     <div class="rounded-lg bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-amber-100 dark:border-amber-900/30 p-3">
                         <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400">روزهای باقی‌مانده</span>
-                        <div class="text-sm font-black text-amber-600 dark:text-amber-400 font-mono tabular-nums mt-1">@Model.DaysRemaining روز</div>
+                        <div class="text-sm font-black text-amber-600 dark:text-amber-400 font-mono tabular-nums mt-1">
+                            @if (Model.EndDate.HasValue)
+                            {
+                                if (Model.DaysRemaining > 0)
+                                {
+                                    <text>@Model.DaysRemaining روز</text>
+                                }
+                                else if (Model.DaysRemaining == 0)
+                                {
+                                    <text>امروز</text>
+                                }
+                                else
+                                {
+                                    <span class="text-rose-600 dark:text-rose-400">منقضی شده (@Math.Abs(Model.DaysRemaining) روز گذشته)</span>
+                                }
+                            }
+                            else
+                            {
+                                <text>-</text>
+                            }
+                        </div>
                     </div>
                 </div>
 
@@ -149,16 +181,16 @@
                             @if (Model.IsArchived)
                             {
                                 <div class="flex justify-between text-[11px]"><span class="text-slate-500">بایگانی‌کننده:</span><span class="text-slate-700 dark:text-slate-300">@(Model.ArchivedByUserName ?? "-")</span></div>
-                                <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ بایگانی:</span><span class="font-mono text-slate-700 dark:text-slate-300">@(Model.ArchivedAt?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+                                <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ بایگانی:</span><span class="font-mono text-slate-700 dark:text-slate-300">@ToPersianDateNullable(Model.ArchivedAt)</span></div>
                             }
                         </div>
                     </div>
                     <div>
                         <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-2">تاریخ‌های مهم</h3>
                         <div class="space-y-2">
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ شروع:</span><span class="font-bold text-slate-800 dark:text-slate-200 font-mono">@Model.StartDate.ToString("yyyy/MM/dd")</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ پایان:</span><span class="font-mono text-slate-700 dark:text-slate-300">@(Model.EndDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ امضا:</span><span class="font-mono text-slate-700 dark:text-slate-300">@(Model.SignDate?.ToString("yyyy/MM/dd") ?? "-")</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ شروع:</span><span class="font-bold text-slate-800 dark:text-slate-200 font-mono">@ToPersianDate(Model.StartDate)</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ پایان:</span><span class="font-mono text-slate-700 dark:text-slate-300">@ToPersianDateNullable(Model.EndDate)</span></div>
+                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ امضا:</span><span class="font-mono text-slate-700 dark:text-slate-300">@ToPersianDateNullable(Model.SignDate)</span></div>
                             <div class="flex justify-between text-[11px]"><span class="text-slate-500">وضعیت پرداخت:</span>
                                 @{
                                     var pBadge = Model.PaymentStatus switch
@@ -215,7 +247,7 @@
             <div class="tab-panel @(activeTab == "content" ? "" : "hidden")" id="tab-content">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-[11px] font-black text-slate-900 dark:text-white">متن قرارداد</h3>
-                    <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                    <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700 no-underline">
                         <i class="bi bi-printer ml-1"></i>چاپ / Save PDF
                     </a>
                 </div>
@@ -250,7 +282,7 @@
                         <h3 class="text-xs font-black text-slate-900 dark:text-white">پرداخت‌ها</h3>
                         @if (Model.CanEdit)
                         {
-                            <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="addPaymentModal" onclick="openModal('addPaymentModal')">
+                            <button type="button" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="addPaymentModal" onclick="openModal('addPaymentModal')">
                                 <i class="bi bi-plus-circle ml-1"></i>پرداخت جدید
                             </button>
                         }
@@ -294,8 +326,8 @@
                                     {
                                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
                                             <td class="px-3 py-2 font-mono tabular-nums font-bold text-slate-800 dark:text-slate-200">@payment.Amount.ToString("N0")</td>
-                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@payment.PaymentDate.ToString("yyyy/MM/dd")</td>
-                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@(payment.DueDate?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(payment.PaymentDate)</td>
+                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDateNullable(payment.DueDate)</td>
                                             <td class="px-3 py-2">
                                                 @{
                                                     var payStatusBadge = payment.Status switch
@@ -360,7 +392,7 @@
                     <h3 class="text-xs font-black text-slate-900 dark:text-white">ضمیمه‌ها</h3>
                     @if (Model.CanEdit)
                     {
-                        <button type="button" class="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="uploadAttachmentModal" onclick="openModal('uploadAttachmentModal')">
+                        <button type="button" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="uploadAttachmentModal" onclick="openModal('uploadAttachmentModal')">
                             <i class="bi bi-cloud-upload ml-1"></i>بارگذاری فایل
                         </button>
                     }
@@ -389,7 +421,7 @@
                                         <td class="px-3 py-2 text-slate-600">@att.ContentType</td>
                                         <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
                                         <td class="px-3 py-2 text-slate-600">@(att.UploadedByUserName ?? "-")</td>
-                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@att.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(att.CreatedAt)</td>
                                         <td class="px-3 py-2 text-center">
                                             <div class="inline-flex gap-1">
                                                 <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود">
@@ -438,7 +470,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2">
                                         <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@log.UserName</span>
-                                        <span class="text-[9px] text-slate-400">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+                                        <span class="text-[9px] text-slate-400">@ToPersianDate(log.CreatedAt) @log.CreatedAt.ToString("HH:mm")</span>
                                     </div>
                                     <p class="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">
                                         @switch (log.Action)
@@ -486,11 +518,11 @@
 @if (Model.CanViewFinancials && Model.CanEdit)
 {
     <div class="rhyno-modal-overlay" id="addPaymentModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:4px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
             <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-2">
                     <i class="bi bi-wallet2 text-teal-600 text-xs"></i>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white">ثبت پرداخت جدید</span>
+                    <span class="text-[11px] font-bold text-slate-900 dark:text-white">ثبت پرداخت جدید</span>
                 </div>
                 <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('addPaymentModal')">&times;</button>
             </div>
@@ -520,7 +552,12 @@
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">روش پرداخت</label>
-                        <input name="PaymentMethod" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        <select name="PaymentMethod" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                            <option value="">انتخاب کنید</option>
+                            <option value="Card">کارت بانکی</option>
+                            <option value="Check">چک</option>
+                            <option value="BankTransfer">انتقال بانکی</option>
+                        </select>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">شماره مرجع</label>
@@ -532,10 +569,10 @@
                     </div>
                 </div>
                 <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="submit" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                    <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700">
                         <i class="bi bi-check-lg ml-1"></i>ثبت پرداخت
                     </button>
-                    <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('addPaymentModal')">
+                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('addPaymentModal')">
                         <i class="bi bi-x-lg ml-1"></i>انصراف
                     </button>
                 </div>
@@ -548,28 +585,36 @@
 @if (Model.CanEdit)
 {
     <div class="rhyno-modal-overlay" id="uploadAttachmentModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:4px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
             <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-2">
                     <i class="bi bi-cloud-upload text-teal-600 text-xs"></i>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white">بارگذاری فایل</span>
+                    <span class="text-[11px] font-bold text-slate-900 dark:text-white">بارگذاری فایل</span>
                 </div>
                 <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('uploadAttachmentModal')">&times;</button>
             </div>
             <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data" data-guard-submit>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="contractId" value="@Model.Id" />
-                <div class="p-3">
+                <div class="p-3 space-y-2">
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">انتخاب فایل</label>
                         <input name="file" type="file" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none file:border-0 file:bg-teal-50 file:text-teal-700 file:rounded file:px-2 file:py-0.5 file:text-[10px] file:font-bold" required />
                     </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">عنوان</label>
+                        <input name="Title" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="عنوان فایل" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">توضیحات</label>
+                        <textarea name="Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2" placeholder="توضیحات فایل"></textarea>
+                    </div>
                 </div>
                 <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="submit" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                    <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700">
                         <i class="bi bi-cloud-upload ml-1"></i>بارگذاری
                     </button>
-                    <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('uploadAttachmentModal')">
+                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('uploadAttachmentModal')">
                         <i class="bi bi-x-lg ml-1"></i>انصراف
                     </button>
                 </div>

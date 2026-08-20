@@ -1,16 +1,209 @@
 .dashboard-widget-icon {
-            transition: transform 0.2s ease, background 0.2s ease;
-        }
+    transition: transform 0.2s ease, background 0.2s ease;
+}
 
-        .rahkaran-widget-card:hover .dashboard-widget-icon {
-            transform: scale(1.1);
-        }
+.rahkaran-widget-card:hover .dashboard-widget-icon {
+    transform: scale(1.1);
+}
 
-        /* KPI metric cards keep their solid icon color on hover */
-        .rahkaran-widget-card:hover .dashboard-widget-icon[style*="background"] {
-            background: inherit !important;
-        }
+/* KPI metric cards keep their solid icon color on hover */
+.rahkaran-widget-card:hover .dashboard-widget-icon[style*="background"] {
+    background: inherit !important;
+}
 
-        .kpi-value {
-            font-variant-numeric: tabular-nums;
-        }
+.kpi-value {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════
+        COMPACT RAHKARAN DESK DENSITY
+        Persistent dashboard home — 11px type, tight rows, 3px radii.
+        Scoped to the home desk only so module pages are untouched.
+        ═══════════════════════════════════════════════════════════ */
+
+/* Toolbar links rendered as 28px chips */
+.desktop-toolbar {
+    gap: 6px;
+    padding: 4px 8px;
+}
+
+.desktop-toolbar a {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.desktop-toolbar a i {
+    font-size: 12px;
+    line-height: 1;
+}
+
+/* Widget grid shortcut cards — 76px tall, 18px icons, 11px titles */
+.rahkaran-desktop .rahkaran-widgets-grid {
+    gap: 6px;
+}
+
+.rahkaran-desktop .rahkaran-widget-card {
+    height: 76px;
+    min-height: 76px;
+    padding: 4px 4px;
+    border-radius: 3px;
+    gap: 2px;
+}
+
+.rahkaran-desktop .rahkaran-widget-card .widget-icon {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    margin-bottom: 2px;
+    border-radius: 3px;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.rahkaran-desktop .rahkaran-widget-card .widget-title {
+    font-size: 11px;
+    line-height: 1.25;
+    font-weight: 700;
+}
+
+/* KPI / statistics strip — 28px tall */
+.rahkaran-desktop .rahkaran-kpi-card {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 10px;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.rahkaran-desktop .rahkaran-kpi-card strong {
+    font-size: 12px;
+}
+
+/* rk-panel compact headers (28px) + list rows (26px) */
+.rahkaran-desktop .rk-dimgray-panel .rk-panel-head {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 8px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-panel-title {
+    font-size: 11px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-panel-badge {
+    font-size: 10px;
+    padding: 0 6px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-panel-list {
+    gap: 3px;
+    padding: 4px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item {
+    height: 26px;
+    min-height: 26px;
+    padding: 0 6px;
+    gap: 6px;
+    border-radius: 2px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item .rk-item-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    font-size: 11px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item i {
+    font-size: 11px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item small {
+    font-size: 10px;
+}
+
+.rahkaran-desktop .rk-dimgray-panel .rk-item-status {
+    font-size: 10px;
+    padding: 1px 5px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FIX DESK RK-ITEM-BODY ALIGNMENT & DENSITY
+   ═══════════════════════════════════════════════════════════ */
+
+/* ۱. باکس اصلی سطر */
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item {
+    height: 28px !important;
+    min-height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 0 8px !important;
+    border-radius: 2px !important;
+    box-sizing: border-box !important;
+}
+
+/* ۲. آیکون سمت راست */
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item .rk-item-icon {
+    width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
+}
+
+/* ۳. بدنه متون (تنظیم چیدمان افقی عنوان و تاریخ) */
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item .rk-item-body {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* ۴. عنوان اصلی */
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item .rk-item-body strong {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #2d3446 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+/* ۵. توضیحات و تاریخ (small) */
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item .rk-item-body small {
+    font-size: 10px !important;
+    color: #64748b !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+/* ۶. بج وضعیت (در انتظار تأیید) */
+.rahkaran-desktop .rk-dimgray-panel .rk-list-item .rk-item-status {
+    height: 18px !important;
+    line-height: 18px !important;
+    font-size: 10px !important;
+    padding: 0 6px !important;
+    border-radius: 2px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}

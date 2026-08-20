@@ -21,26 +21,26 @@
     var stepSize = size switch
     {
         "sm" => "h-6 w-6 text-[10px]",
-        "lg" => "h-10 w-10 text-sm",
-        _ => "h-8 w-8 text-xs"
+        "lg" => "h-8 w-8 text-[12px]",
+        _ => "h-7 w-7 text-[11px]"
     };
 
     var fontSize = size switch
     {
         "sm" => "text-[10px]",
-        "lg" => "text-sm",
-        _ => "text-xs"
+        "lg" => "text-[12px]",
+        _ => "text-[11px]"
     };
 
     var lineHeight = size switch
     {
         "sm" => "h-0.5",
-        "lg" => "h-1",
-        _ => "h-0.5"
+        "lg" => "h-[3px]",
+        _ => "h-[3px]"
     };
 }
 
-<div class="progress-indicator w-full py-4">
+<div class="progress-indicator w-full py-3">
     <div class="flex items-center justify-between">
         @for (int i = 0; i < steps.Length; i++)
         {

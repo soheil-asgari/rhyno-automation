@@ -44,7 +44,7 @@
                 var colors = { success: 'bg-emerald-600', error: 'bg-rose-600', warning: 'bg-amber-600', info: 'bg-teal-600' };
                 var icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
                 var t = document.createElement('div');
-                t.className = 'fixed bottom-4 left-4 z-[200] flex items-center gap-2 rounded-lg ' + (colors[type] || colors.info) + ' px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all duration-300 translate-y-4 opacity-0';
+                t.className = 'fixed bottom-4 left-4 z-[200] flex items-center gap-2 rounded-[3px] ' + (colors[type] || colors.info) + ' px-3 py-1.5 text-[11px] font-bold text-white shadow-lg transition-all duration-300 translate-y-4 opacity-0';
                 t.innerHTML = '<i class="bi ' + (icons[type] || icons.info) + '"></i> ' + msg;
                 document.body.appendChild(t);
                 requestAnimationFrame(function () { t.classList.remove('translate-y-4', 'opacity-0'); });

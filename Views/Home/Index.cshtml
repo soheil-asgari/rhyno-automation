@@ -85,8 +85,7 @@ KPI METRICS GRID (from model) — clickable executive shortcuts
         {
             var bgColor = iconColors[colorIndex % iconColors.Length];
             colorIndex++;
-            <a href="@metric.Url"
-               class="rahkaran-widget-card"
+            <a href="@metric.Url" class="rahkaran-widget-card"
                style="cursor:pointer;height:auto;min-height:90px;padding:12px 10px;text-decoration:none;">
                 <div class="widget-icon dashboard-widget-icon" style="background:@bgColor;color:#fff;">
                     <i class="bi @metric.Icon"></i>
@@ -120,15 +119,13 @@ PENDING WORK ITEMS (if any) — DimGray compact panel
                     "rejected" or "رد شد" => "#e11d48",
                     _ => "#007bb5"
                 };
-                <a href="@item.Url"
-                   class="rk-list-item"
-                   style="border-right:3px solid @statusColor;">
+                <a href="@item.Url" class="rk-list-item" style="border-right:3px solid @statusColor;">
                     <span class="rk-item-icon">
                         <i class="bi @item.Icon"></i>
                     </span>
-                    <span style="flex:1;min-width:0;">
-                        <strong style="display:block;font-size:12px;font-weight:700;color:#2d3446;">@item.Title</strong>
-                        <small style="display:block;font-size:10px;color:#777;">@item.Module · @item.DateText</small>
+                    <span class="rk-item-body">
+                        <strong>@item.Title</strong>
+                        <small>@item.Module · @item.DateText</small>
                     </span>
                     <span class="rk-item-status"
                           style="background:@statusColor;color:#fff;">@WorkflowStatus.Label(item.Status)</span>
@@ -141,74 +138,72 @@ PENDING WORK ITEMS (if any) — DimGray compact panel
 <!-- ═══════════════════════════════════════════════════════════
 SYSTEM ALERTS (if any) — DimGray compact panel
 ═══════════════════════════════════════════════════════════ -->
-    @if (Model.SystemAlerts != null && Model.SystemAlerts.Count > 0)
-    {
-        <div class="rk-dimgray-panel" style="margin-top:10px;">
-            <div class="rk-panel-head">
-                <h3 class="rk-panel-title"><i class="bi bi-bell" style="font-size:13px;"></i> هشدارهای عملیاتی</h3>
-                <span class="rk-panel-badge rk-panel-badge-amber">@ToFa(Model.SystemAlerts.Count) هشدار</span>
-            </div>
-            <div class="rk-panel-list">
-                @foreach (var alert in Model.SystemAlerts)
-                {
-                    var alertBorder = alert.Severity?.ToLowerInvariant() switch
-                    {
-                        "danger" => "#ef404d",
-                        "warning" => "#f08046",
-                        "info" => "#4d99d0",
-                        "success" => "#18af08",
-                        _ => "#3e4756"
-                    };
-                    <a href="@alert.Url"
-                       class="rk-list-item"
-                       style="border-right:3px solid @alertBorder;">
-                        <span class="rk-item-icon" style="color:@alertBorder;">
-                            <i class="bi @alert.Icon"></i>
-                        </span>
-                        <span style="flex:1;min-width:0;">
-                            <strong style="display:block;font-size:12px;font-weight:700;color:#2d3446;">@alert.Title</strong>
-                            <small style="display:block;font-size:11px;color:#6b7280;line-height:1.5;">@alert.Description</small>
-                        </span>
-                    </a>
-                }
-            </div>
+@if (Model.SystemAlerts != null && Model.SystemAlerts.Count > 0)
+{
+    <div class="rk-dimgray-panel" style="margin-top:10px;">
+        <div class="rk-panel-head">
+            <h3 class="rk-panel-title"><i class="bi bi-bell" style="font-size:13px;"></i> هشدارهای عملیاتی</h3>
+            <span class="rk-panel-badge rk-panel-badge-amber">@ToFa(Model.SystemAlerts.Count) هشدار</span>
         </div>
-    }
+        <div class="rk-panel-list">
+            @foreach (var alert in Model.SystemAlerts)
+            {
+                var alertBorder = alert.Severity?.ToLowerInvariant() switch
+                {
+                    "danger" => "#ef404d",
+                    "warning" => "#f08046",
+                    "info" => "#4d99d0",
+                    "success" => "#18af08",
+                    _ => "#3e4756"
+                };
+                <a href="@alert.Url" class="rk-list-item" style="border-right:3px solid @alertBorder;">
+                    <span class="rk-item-icon" style="color:@alertBorder;">
+                        <i class="bi @alert.Icon"></i>
+                    </span>
+                    <span style="flex:1;min-width:0;">
+                        <strong style="display:block;font-size:12px;font-weight:700;color:#2d3446;">@alert.Title</strong>
+                        <small style="display:block;font-size:11px;color:#6b7280;line-height:1.5;">@alert.Description</small>
+                    </span>
+                </a>
+            }
+        </div>
+    </div>
+}
 
-        <!-- ═══════════════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════════════════════════
 RECENT ACTIVITIES (if any)
 ═══════════════════════════════════════════════════════════ -->
-        @if (Model.RecentActivities != null && Model.RecentActivities.Count > 0)
-        {
-            <div class="rahkaran-page-content" style="margin-top:10px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                    <h3 style="margin:0;font-size:14px;font-weight:800;">آخرین فعالیت‌های سیستم</h3>
-                    <span style="color:#9ca3af;font-size:11px;">تراکنش‌های اخیر</span>
+@if (Model.RecentActivities != null && Model.RecentActivities.Count > 0)
+{
+    <div class="rahkaran-page-content" style="margin-top:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <h3 style="margin:0;font-size:14px;font-weight:800;">آخرین فعالیت‌های سیستم</h3>
+            <span style="color:#9ca3af;font-size:11px;">تراکنش‌های اخیر</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            @foreach (var item in Model.RecentActivities)
+            {
+                var statusColor = item.StatusCssClass?.ToLowerInvariant() switch
+                {
+                    "success" => "#10b981",
+                    "pending" => "#f59e0b",
+                    "danger" => "#e11d48",
+                    _ => "#94a3b8"
+                };
+                <div
+                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid #f3f4f6;border-radius:8px;background:#fafbfc;">
+                    <span style="min-width:0;">
+                        <strong style="display:block;font-size:12px;font-weight:700;color:#374151;">@item.DocumentType</strong>
+                        <small style="display:block;font-size:10px;color:#9ca3af;">@item.DateText</small>
+                    </span>
+                    <span
+                    style="background:@statusColor;color:#fff;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap;">@item.StatusText</span>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    @foreach (var item in Model.RecentActivities)
-                    {
-                        var statusColor = item.StatusCssClass?.ToLowerInvariant() switch
-                        {
-                            "success" => "#10b981",
-                            "pending" => "#f59e0b",
-                            "danger" => "#e11d48",
-                            _ => "#94a3b8"
-                        };
-                        <div
-                            style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid #f3f4f6;border-radius:8px;background:#fafbfc;">
-                            <span style="min-width:0;">
-                                <strong style="display:block;font-size:12px;font-weight:700;color:#374151;">@item.DocumentType</strong>
-                                <small style="display:block;font-size:10px;color:#9ca3af;">@item.DateText</small>
-                            </span>
-                            <span
-                            style="background:@statusColor;color:#fff;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap;">@item.StatusText</span>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
+            }
+        </div>
+    </div>
+}
 
-        @section Scripts {
-            <script src="~/js/home-index-script.js" asp-append-version="true"></script>
-        }
+@section Scripts {
+    <script src="~/js/home-index-script.js" asp-append-version="true"></script>
+}

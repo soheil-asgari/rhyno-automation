@@ -3,23 +3,23 @@
     ViewData["Title"] = "ویرایش قرارداد";
 }
 
-<div class="container-fluid py-2 space-y-2" dir="rtl">
+<div class="container-fluid py-1 space-y-2" dir="rtl">
     @* Page Header Card *@
-    <div class="contracts-header-card">
+    <div class="erp-card p-3 mb-3">
         <partial name="_Breadcrumb" model='new[] {
             new RhynoBreadcrumbItem("خانه", "/"),
             new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
             new RhynoBreadcrumbItem("ویرایش قرارداد", null)
         }' />
 
-        <div class="contracts-header-main">
-            <div class="contracts-header-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div class="w-7 h-7 rounded bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm"><i class="bi bi-file-earmark-text"></i></div>
             <div>
                 <h1>ویرایش قرارداد</h1>
                 <p>ویرایش اطلاعات قرارداد</p>
             </div>
-            <div class="contracts-header-actions">
-                <a asp-action="Index" class="contracts-header-btn">
+            <div >
+                <a asp-action="Index" erp-btn>
                     <i class="bi bi-arrow-right"></i>بازگشت
                 </a>
             </div>
@@ -38,170 +38,170 @@
         @* Redesigned Single-Column Layout - No Gaps *@
         <div class="contract-create-layout-redesigned">
         @* Card 1: General Information *@
-        <div class="form-section">
-            <div class="form-section-header">
-                <div class="form-section-icon"><i class="bi bi-info-circle"></i></div>
+        <div class="erp-fieldset">
+            <div class="flex items-center gap-2 mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-6 h-6 rounded bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-[10px]"><i class="bi bi-info-circle"></i></div>
                 <div>
                     <h2>اطلاعات عمومی</h2>
                     <p class="form-section-desc">اطلاعات پایه قرارداد</p>
                 </div>
             </div>
-            <div class="form-fields-grid">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
                 <div>
-                    <label asp-for="ContractNumber" class="form-label"></label>
+                    <label asp-for="ContractNumber" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="ContractNumber" class="form-control" />
+                        <input asp-for="ContractNumber" class="erp-input" />
                     </div>
-                    <span asp-validation-for="ContractNumber" class="form-validation"></span>
+                    <span asp-validation-for="ContractNumber" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div style="grid-column: span 2;">
-                    <label asp-for="Title" class="form-label"></label>
+                    <label asp-for="Title" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="Title" class="form-control" />
+                        <input asp-for="Title" class="erp-input" />
                     </div>
-                    <span asp-validation-for="Title" class="form-validation"></span>
+                    <span asp-validation-for="Title" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div>
-                    <label asp-for="ContractType" class="form-label"></label>
+                    <label asp-for="ContractType" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <select asp-for="ContractType" class="form-control" asp-items="Model.ContractTypeOptions">
+                        <select asp-for="ContractType" class="erp-select" asp-items="Model.ContractTypeOptions">
                             <option value="">انتخاب کنید</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label asp-for="Status" class="form-label"></label>
+                    <label asp-for="Status" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <select asp-for="Status" class="form-control" asp-items="Model.StatusOptions"></select>
+                        <select asp-for="Status" class="erp-select" asp-items="Model.StatusOptions"></select>
                     </div>
                 </div>
                 <div>
-                    <label asp-for="ExpiryNoticeDays" class="form-label"></label>
+                    <label asp-for="ExpiryNoticeDays" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="ExpiryNoticeDays" type="number" class="form-control" />
+                        <input asp-for="ExpiryNoticeDays" type="number" class="erp-input" />
                     </div>
                 </div>
             </div>
         </div>
 
         @* Card 2: Client & Party Info *@
-        <div class="form-section">
-            <div class="form-section-header">
-                <div class="form-section-icon"><i class="bi bi-people"></i></div>
+        <div class="erp-fieldset">
+            <div class="flex items-center gap-2 mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-6 h-6 rounded bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-[10px]"><i class="bi bi-people"></i></div>
                 <div>
                     <h2>مشتری / طرف قرارداد</h2>
                     <p class="form-section-desc">مشخصات طرف دیگر قرارداد</p>
                 </div>
             </div>
-            <div class="form-fields-grid">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
                 <div>
-                    <label asp-for="CustomerId" class="form-label"></label>
+                    <label asp-for="CustomerId" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <select asp-for="CustomerId" class="form-control" asp-items="Model.CustomerOptions">
+                        <select asp-for="CustomerId" class="erp-select" asp-items="Model.CustomerOptions">
                             <option value="">بدون مشتری (ثبت دستی)</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label asp-for="ClientName" class="form-label"></label>
+                    <label asp-for="ClientName" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="ClientName" class="form-control" />
+                        <input asp-for="ClientName" class="erp-input" />
                     </div>
-                    <span asp-validation-for="ClientName" class="form-validation"></span>
+                    <span asp-validation-for="ClientName" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div>
-                    <label asp-for="ClientPhone" class="form-label"></label>
+                    <label asp-for="ClientPhone" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="ClientPhone" class="form-control" />
+                        <input asp-for="ClientPhone" class="erp-input" />
                     </div>
                 </div>
                 <div>
-                    <label asp-for="ClientAddress" class="form-label"></label>
+                    <label asp-for="ClientAddress" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="ClientAddress" class="form-control" />
+                        <input asp-for="ClientAddress" class="erp-input" />
                     </div>
                 </div>
             </div>
         </div>
 
         @* Card 3: Dates & Financials *@
-        <div class="form-section">
-            <div class="form-section-header">
-                <div class="form-section-icon"><i class="bi bi-calendar3"></i></div>
+        <div class="erp-fieldset">
+            <div class="flex items-center gap-2 mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-6 h-6 rounded bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-[10px]"><i class="bi bi-calendar3"></i></div>
                 <div>
                     <h2>تاریخ‌ها و مالی</h2>
                     <p class="form-section-desc">تاریخ‌های کلیدی و مبالغ قرارداد</p>
                 </div>
             </div>
-            <div class="form-fields-grid-5">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
                 <div>
-                    <label asp-for="StartDate" class="form-label"></label>
+                    <label asp-for="StartDate" class="erp-label"></label>
                     <div class="input-wrapper icon-left jalali-datepicker-wrapper">
                         <span class="form-icon-left"><i class="bi bi-calendar3"></i></span>
-                        <input asp-for="StartDateDisplay" type="text" class="form-control jalali-date-input" data-jalali="StartDate" data-target="StartDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <input asp-for="StartDateDisplay" type="text" class="erp-input jalali-date-input" data-jalali="StartDate" data-target="StartDate" placeholder="تاریخ را انتخاب کنید" readonly />
                         <input asp-for="StartDate" type="hidden" class="jalali-date-hidden" />
                     </div>
-                    <span asp-validation-for="StartDate" class="form-validation"></span>
+                    <span asp-validation-for="StartDate" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div>
-                    <label asp-for="EndDate" class="form-label"></label>
+                    <label asp-for="EndDate" class="erp-label"></label>
                     <div class="input-wrapper icon-left jalali-datepicker-wrapper">
                         <span class="form-icon-left"><i class="bi bi-calendar3"></i></span>
-                        <input asp-for="EndDateDisplay" type="text" class="form-control jalali-date-input" data-jalali="EndDate" data-target="EndDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <input asp-for="EndDateDisplay" type="text" class="erp-input jalali-date-input" data-jalali="EndDate" data-target="EndDate" placeholder="تاریخ را انتخاب کنید" readonly />
                         <input asp-for="EndDate" type="hidden" class="jalali-date-hidden" />
                     </div>
-                    <span asp-validation-for="EndDate" class="form-validation"></span>
+                    <span asp-validation-for="EndDate" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div>
-                    <label asp-for="SignDate" class="form-label"></label>
+                    <label asp-for="SignDate" class="erp-label"></label>
                     <div class="input-wrapper icon-left jalali-datepicker-wrapper">
                         <span class="form-icon-left"><i class="bi bi-calendar3"></i></span>
-                        <input asp-for="SignDateDisplay" type="text" class="form-control jalali-date-input" data-jalali="SignDate" data-target="SignDate" placeholder="تاریخ را انتخاب کنید" readonly />
+                        <input asp-for="SignDateDisplay" type="text" class="erp-input jalali-date-input" data-jalali="SignDate" data-target="SignDate" placeholder="تاریخ را انتخاب کنید" readonly />
                         <input asp-for="SignDate" type="hidden" class="jalali-date-hidden" />
                     </div>
-                    <span asp-validation-for="SignDate" class="form-validation"></span>
+                    <span asp-validation-for="SignDate" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div>
-                    <label asp-for="TotalAmount" class="form-label"></label>
+                    <label asp-for="TotalAmount" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="TotalAmount" class="form-control" />
+                        <input asp-for="TotalAmount" class="erp-input" />
                     </div>
-                    <span asp-validation-for="TotalAmount" class="form-validation"></span>
+                    <span asp-validation-for="TotalAmount" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div>
-                    <label asp-for="PaidAmount" class="form-label"></label>
+                    <label asp-for="PaidAmount" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="PaidAmount" class="form-control" />
+                        <input asp-for="PaidAmount" class="erp-input" />
                     </div>
                 </div>
             </div>
             <div class="mt-2">
-                <span class="form-validation" style="color:#6b7280;">وضعیت پرداخت: @Model.PaymentStatus</span>
+                <span class="text-[9px] text-red-500 mt-0.5" style="color:#6b7280;">وضعیت پرداخت: @Model.PaymentStatus</span>
             </div>
         </div>
 
         @* Card 4: Assignment *@
-        <div class="form-section">
-            <div class="form-section-header">
-                <div class="form-section-icon"><i class="bi bi-person-badge"></i></div>
+        <div class="erp-fieldset">
+            <div class="flex items-center gap-2 mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-6 h-6 rounded bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-[10px]"><i class="bi bi-person-badge"></i></div>
                 <div>
                     <h2>اختصاص</h2>
                     <p class="form-section-desc">مسئول و قالب قرارداد</p>
                 </div>
             </div>
-            <div class="form-fields-grid">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
                 <div>
-                    <label asp-for="AssignedUserId" class="form-label"></label>
+                    <label asp-for="AssignedUserId" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <select asp-for="AssignedUserId" class="form-control" asp-items="Model.UserOptions">
+                        <select asp-for="AssignedUserId" class="erp-select" asp-items="Model.UserOptions">
                             <option value="">انتخاب کنید</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label asp-for="TemplateId" class="form-label"></label>
+                    <label asp-for="TemplateId" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <select asp-for="TemplateId" class="form-control" asp-items="Model.TemplateOptions">
+                        <select asp-for="TemplateId" class="erp-select" asp-items="Model.TemplateOptions">
                             <option value="">بدون قالب</option>
                         </select>
                     </div>
@@ -210,9 +210,9 @@
         </div>
 
         @* Card 5: Content & Terms *@
-        <div class="form-section">
-            <div class="form-section-header">
-                <div class="form-section-icon"><i class="bi bi-file-text"></i></div>
+        <div class="erp-fieldset">
+            <div class="flex items-center gap-2 mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-6 h-6 rounded bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-[10px]"><i class="bi bi-file-text"></i></div>
                 <div>
                     <h2>متن قرارداد</h2>
                     <p class="form-section-desc">شرح، یادداشت‌ها و متن قرارداد</p>
@@ -220,22 +220,22 @@
             </div>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
                     <div>
-                        <label class="form-label">توضیحات</label>
-                        <textarea asp-for="Description" class="form-control" style="height: 56px !important; resize: vertical;"></textarea>
-                        <span asp-validation-for="Description" class="form-validation"></span>
+                        <label class="erp-label">توضیحات</label>
+                        <textarea asp-for="Description" class="erp-input" style="min-height:48px; resize: vertical;"></textarea>
+                        <span asp-validation-for="Description" class="text-[9px] text-red-500 mt-0.5"></span>
                     </div>
                     <div>
-                        <label class="form-label">یادداشت‌ها</label>
-                        <textarea asp-for="Notes" class="form-control" style="height: 56px !important; resize: vertical;"></textarea>
+                        <label class="erp-label">یادداشت‌ها</label>
+                        <textarea asp-for="Notes" class="erp-input" style="min-height:48px; resize: vertical;"></textarea>
                     </div>
                     <div>
-                        <label class="form-label">شرایط و ضوابط</label>
-                        <textarea asp-for="TermsAndConditions" class="form-control" style="height: 56px !important; resize: vertical;"></textarea>
+                        <label class="erp-label">شرایط و ضوابط</label>
+                        <textarea asp-for="TermsAndConditions" class="erp-input" style="min-height:48px; resize: vertical;"></textarea>
                     </div>
                 </div>
-            <div class="form-fields-grid" style="margin-bottom:20px;">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2" style="margin-bottom:20px;">
                 <div>
-                    <label class="form-label">متن قرارداد (ویرایشگر بصری)</label>
+                    <label class="erp-label">متن قرارداد (ویرایشگر بصری)</label>
                     @* Toolbar *@
                     <div class="flex flex-wrap items-center gap-1 mb-1.5 px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
                         <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="bold" title="ضخیم"><b>B</b></button>
@@ -250,7 +250,7 @@
                         <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyLeft" title="چپ‌چین"><i class="bi bi-text-left"></i></button>
                     </div>
                     <div id="editContractEditor" class="wysiwyg-editor" contenteditable="true"
-                         style="min-height:140px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:right;overflow-y:auto;"
+                         style="min-height:120px;background:#fff;border:1px solid #e2e8f0;border-radius:3px;padding:8px;font-size:11px;line-height:1.6;font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:right;overflow-y:auto;"
                          data-placeholder="متن قرارداد را اینجا بنویسید..."></div>
                     <textarea asp-for="ContractBodyHtml" class="hidden" id="ContractBodyHtml"></textarea>
                 </div>
@@ -258,15 +258,15 @@
         </div><!-- /contract-create-layout-redesigned -->
 
         @* Action Buttons *@
-        <div class="form-section form-actions-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0;">
+        <div class="erp-card flex items-center justify-between px-3 py-2" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0;">
             <div class="text-[11px] text-slate-500 dark:text-slate-400">
                 <i class="bi bi-info-circle me-1"></i>تغییرات اعمال‌شده بلافاصله در سوابق قرارداد ثبت می‌شود.
             </div>
             <div class="flex items-center gap-2">
-                <button type="submit" class="rounded-lg bg-teal-600 px-4 py-2 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">
+                <button type="submit" class="erp-btn erp-btn-primary">
                     <i class="bi bi-check-lg ml-1"></i>ذخیره تغییرات
                 </button>
-                <a asp-action="Details" asp-route-id="@Model.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-4 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="erp-btn">
                     انصراف
                 </a>
             </div>

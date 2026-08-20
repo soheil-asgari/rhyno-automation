@@ -45,32 +45,32 @@
 <div class="container-fluid ledger-ops p-3 md:p-4" dir="rtl">
     @Html.AntiForgeryToken()
 
-    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm mb-4">
+    <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm mb-3">
         <div>
-            <h1 class="text-base font-black text-slate-900 dark:text-white">عملیات دفتر کل</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">دوره‌های مالی، نرخ ارز روزانه و اسناد حسابداری در یک صفحه متراکم و عملیاتی.</p>
+            <h1 class="text-[13px] font-black text-slate-900 dark:text-white">عملیات دفتر کل</h1>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">دوره‌های مالی، نرخ ارز روزانه و اسناد حسابداری در یک صفحه متراکم و عملیاتی.</p>
         </div>
     </header>
 
     @if (TempData["SuccessMessage"] is string success)
     {
-        <div class="mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 rounded-xl text-xs font-semibold">@success</div>
+        <div class="mb-2 p-2 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 rounded text-[11px] font-semibold">@success</div>
     }
     @if (TempData["ErrorMessage"] is string error)
     {
-        <div class="mb-4 p-3 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 rounded-xl text-xs font-semibold">@error</div>
+        <div class="mb-2 p-2 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 rounded text-[11px] font-semibold">@error</div>
     }
 
-    <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 mb-4" id="period-closing-panel">
-        <div class="mb-3">
-            <strong class="text-sm font-bold text-slate-900 dark:text-white">عملیات پایان دوره</strong>
-            <p class="text-xs text-slate-500 mt-0.5">صدور فشرده سند بستن حساب‌های موقت و انتقال خلاصه سود و زیان</p>
+    <section class="bg-white dark:bg-slate-900 rounded shadow-sm border border-slate-200 dark:border-slate-800 p-2.5 mb-3" id="period-closing-panel">
+        <div class="mb-2">
+            <strong class="text-[11px] font-black text-slate-900 dark:text-white">عملیات پایان دوره</strong>
+            <p class="text-[10px] text-slate-500 mt-0.5">صدور فشرده سند بستن حساب‌های موقت و انتقال خلاصه سود و زیان</p>
         </div>
-        <form asp-action="CloseTemporaryAccounts" method="post" class="flex flex-col md:flex-row items-end gap-3">
+        <form asp-action="CloseTemporaryAccounts" method="post" class="flex flex-col md:flex-row items-end gap-2">
             @Html.AntiForgeryToken()
-            <div class="flex-1 min-w-[200px] flex flex-col gap-1">
-                <label asp-for="PeriodClosing.FiscalPeriodId" class="text-xs font-bold text-slate-500 dark:text-slate-400">دوره مالی</label>
-                <select asp-for="PeriodClosing.FiscalPeriodId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+            <div class="flex-1 min-w-[200px] flex flex-col gap-0.5">
+                <label asp-for="PeriodClosing.FiscalPeriodId" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">دوره مالی</label>
+                <select asp-for="PeriodClosing.FiscalPeriodId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                     <option value="">انتخاب دوره</option>
                     @foreach (var period in Model.FiscalPeriods)
                     {
@@ -80,53 +80,53 @@
                     }
                 </select>
             </div>
-            <div class="flex-1 min-w-[200px] flex flex-col gap-1">
-                <label asp-for="PeriodClosing.DestinationAccountId" class="text-xs font-bold text-slate-500 dark:text-slate-400">حساب مقصد خلاصه سود و زیان</label>
-                <select asp-for="PeriodClosing.DestinationAccountId" asp-items="Model.AccountOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select>
+            <div class="flex-1 min-w-[200px] flex flex-col gap-0.5">
+                <label asp-for="PeriodClosing.DestinationAccountId" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">حساب مقصد خلاصه سود و زیان</label>
+                <select asp-for="PeriodClosing.DestinationAccountId" asp-items="Model.AccountOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select>
             </div>
             <div class="md:w-auto">
-                <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">صدور سند بستن حساب‌های موقت</button>
+                <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded text-[10px] font-black transition-colors">صدور سند بستن حساب‌های موقت</button>
             </div>
         </form>
     </section>
 
-    <details class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm mb-4 p-3.5">
-        <summary class="cursor-pointer text-sm font-bold text-slate-900 dark:text-white select-none">
+    <details class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm mb-3 p-2">
+        <summary class="cursor-pointer text-[11px] font-black text-slate-900 dark:text-white select-none">
             <span>پیکربندی مالی و نرخ‌ها</span>
-            <span class="text-xs text-slate-400 dark:text-slate-500 font-normal mr-2">دوره‌های مالی و نرخ ارز روزانه را پیکربندی کن.</span>
+            <span class="text-[9px] text-slate-400 dark:text-slate-500 font-normal mr-2">دوره‌های مالی و نرخ ارز روزانه را پیکربندی کن.</span>
         </summary>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-3">
-            <section class="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
-                <div class="mb-2.5">
-                    <strong class="text-xs font-bold text-slate-900 dark:text-white">دوره‌های مالی سال جاری</strong>
-                    <span class="text-[10px] text-slate-400 mr-2">@Model.FiscalPeriods.Count دوره</span>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2">
+            <section class="border border-slate-200 dark:border-slate-800 rounded p-2">
+                <div class="mb-2">
+                    <strong class="text-[11px] font-black text-slate-900 dark:text-white">دوره‌های مالی سال جاری</strong>
+                    <span class="text-[9px] text-slate-400 mr-2">@Model.FiscalPeriods.Count دوره</span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-right border-collapse">
-                        <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                            <tr>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">شماره دوره</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">نام دوره</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">شروع</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">پایان</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">وضعیت</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">تغییر وضعیت</th>
+                    <table class="w-full text-[11px] text-right border-collapse">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                            <tr style="height:28px">
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">شماره دوره</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">نام دوره</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">شروع</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">پایان</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">وضعیت</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">تغییر وضعیت</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
                             @foreach (var period in Model.FiscalPeriods)
                             {
-                                <tr>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@period.PeriodNumber</td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">@period.Name</td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@FormatCompactDate(period.StartDate)</td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@FormatCompactDate(period.EndDate)</td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">@period.Status</span></td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">
+                                <tr style="height:26px">
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@period.PeriodNumber</td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50">@period.Name</td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@FormatCompactDate(period.StartDate)</td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@FormatCompactDate(period.EndDate)</td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">@period.Status</span></td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50">
                                         <form asp-action="UpdateFiscalPeriodStatus" method="post" class="period-status-form m-0">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@period.Id" />
-                                            <select name="status" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" onchange="this.form.submit()">
+                                            <select name="status" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[10px] focus:ring-teal-500/20 focus:border-teal-500 outline-none" onchange="this.form.submit()">
                                                 <option value="@FiscalPeriodStatus.Open" selected="@(period.Status == FiscalPeriodStatus.Open)">Open</option>
                                                 <option value="@FiscalPeriodStatus.SoftLocked" selected="@(period.Status == FiscalPeriodStatus.SoftLocked)">SoftLocked</option>
                                                 <option value="@FiscalPeriodStatus.HardLocked" selected="@(period.Status == FiscalPeriodStatus.HardLocked)">HardLocked</option>
@@ -168,23 +168,23 @@
                     </div>
                 </form>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-right border-collapse">
-                        <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                            <tr>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">ارز</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">تاریخ</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">خرید</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">فروش</th>
+                    <table class="w-full text-[11px] text-right border-collapse">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                            <tr style="height:28px">
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">ارز</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">تاریخ</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px] text-left tabular-nums">خرید</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px] text-left tabular-nums">فروش</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
                             @foreach (var rate in Model.ExchangeRates)
                             {
-                                <tr>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">@rate.CurrencyCode</td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@FormatCompactDate(rate.RateDate)</td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@rate.BuyRate.ToString("N4")</td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@rate.SellRate.ToString("N4")</td>
+                                <tr style="height:26px">
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50">@rate.CurrencyCode</td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@FormatCompactDate(rate.RateDate)</td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@rate.BuyRate.ToString("N4")</td>
+                                    <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left">@rate.SellRate.ToString("N4")</td>
                                 </tr>
                             }
                         </tbody>
@@ -196,145 +196,157 @@
 
     <div class="grid grid-cols-1 gap-4">
         <!-- Create Voucher -->
-        <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-            <div class="mb-3">
-                <strong class="text-sm font-bold text-slate-900 dark:text-white">ثبت سند چندارزی</strong>
-                <p class="text-xs text-slate-500 mt-0.5">فرم ورود سریع خطوط سند حسابداری</p>
+        <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3">
+            <div class="mb-2">
+                <strong class="text-xs font-black text-slate-900 dark:text-white">ثبت سند چندارزی</strong>
+                <p class="text-[10px] text-slate-500 mt-0.5">فرم ورود سریع خطوط سند حسابداری</p>
             </div>
             <form asp-action="CreateVoucher" method="post" id="voucherForm">
                 @Html.AntiForgeryToken()
 
-                <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
-                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300" id="voucherEntryMode">حالت ورود: سند جدید</span>
-                    <div class="flex items-center gap-2">
-                        <button type="button" class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300" id="addVoucherRowButton">سطر جدید</button>
-                        <button type="button" class="h-7 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300" id="removeVoucherRowButton">حذف سطر</button>
+                <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2">
+                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300" id="voucherEntryMode">حالت ورود: سند جدید</span>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" class="h-6 rounded border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300" id="addVoucherRowButton">سطر جدید</button>
+                        <button type="button" class="h-6 rounded border border-slate-200 hover:bg-slate-50 dark:border-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300" id="removeVoucherRowButton">حذف سطر</button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-                    <div class="flex flex-col gap-1">
-                        <label asp-for="Voucher.VoucherDate" class="text-xs font-bold text-slate-500 dark:text-slate-400">تاریخ سند</label>
-                        <input asp-for="Voucher.VoucherDate" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <!-- Fieldset: اطلاعات سند -->
+                <fieldset class="erp-fieldset mb-2 border border-slate-200 dark:border-slate-700 rounded p-2">
+                    <legend class="text-[10px] font-black text-slate-600 dark:text-slate-400 px-1">اطلاعات سند</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+                        <div class="flex flex-col gap-0.5">
+                            <label asp-for="Voucher.VoucherDate" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">تاریخ سند</label>
+                            <input asp-for="Voucher.VoucherDate" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        </div>
+                        <div class="flex flex-col gap-0.5">
+                            <label asp-for="Voucher.JournalTypeId" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">ژورنال</label>
+                            <select asp-for="Voucher.JournalTypeId" asp-items="Model.JournalTypeOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select>
+                        </div>
+                        <div class="lg:col-span-2 flex flex-col gap-0.5">
+                            <label asp-for="Voucher.Description" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">شرح سند</label>
+                            <input asp-for="Voucher.Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded text-[10px] font-black transition-colors" id="saveVoucherButton">ذخیره سند</button>
+                        </div>
                     </div>
-                    <div class="flex flex-col gap-1">
-                        <label asp-for="Voucher.JournalTypeId" class="text-xs font-bold text-slate-500 dark:text-slate-400">ژورنال</label>
-                        <select asp-for="Voucher.JournalTypeId" asp-items="Model.JournalTypeOptions" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"></select>
-                    </div>
-                    <div class="lg:col-span-2 flex flex-col gap-1">
-                        <label asp-for="Voucher.Description" class="text-xs font-bold text-slate-500 dark:text-slate-400">شرح سند</label>
-                        <input asp-for="Voucher.Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors" id="saveVoucherButton">ذخیره سند</button>
-                    </div>
-                </div>
+                </fieldset>
 
-                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto">
-                    <table class="w-full text-xs text-right border-collapse" id="voucherLinesTable">
-                        <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                <!-- Fieldset: طرف حساب -->
+                <fieldset class="erp-fieldset mb-2 border border-slate-200 dark:border-slate-700 rounded p-2">
+                    <legend class="text-[10px] font-black text-slate-600 dark:text-slate-400 px-1">طرف حساب</legend>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500">انتخاب حساب در ردیف‌های جدول آیتم‌ها انجام می‌شود.</p>
+                </fieldset>
+
+                <!-- Fieldset: آیتم‌ها -->
+                <fieldset class="erp-fieldset border border-slate-200 dark:border-slate-700 rounded p-2 overflow-x-auto">
+                    <legend class="text-[10px] font-black text-slate-600 dark:text-slate-400 px-1">آیتم‌ها</legend>
+                    <table class="w-full text-[11px] text-right border-collapse" id="voucherLinesTable">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">حساب</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">حساب تفصیلی</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">ارز</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">نرخ</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">مبلغ ارزی</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">بدهکار</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">بستانکار</th>
-                                <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold">شرح</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">حساب</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">حساب تفصیلی</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">ارز</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px] text-left tabular-nums">نرخ</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px] text-left tabular-nums">مبلغ ارزی</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px] text-left tabular-nums">بدهکار</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px] text-left tabular-nums">بستانکار</th>
+                                <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]">شرح</th>
                             </tr>
                         </thead>
                         <tbody id="voucherLinesBody" data-next-index="@Model.Voucher.Lines.Count" data-account-options='@Html.Raw(accountLookupJson)' data-currency-options='@Html.Raw(currencyLookupJson)'>
                             @for (var i = 0; i < Model.Voucher.Lines.Count; i++)
                             {
-                                <tr class="voucher-line-row" data-row-index="@i">
+                                <tr class="voucher-line-row" data-row-index="@i" style="height:26px">
                                     <td class="d-none"><input type="hidden" name="Voucher.Lines.Index" value="@i" /></td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50">
                                         <div class="account-lookup relative">
                                             <input asp-for="Voucher.Lines[i].SubsidiaryAccountId" type="hidden" />
-                                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="account" autocomplete="off" value="@Model.AccountOptions.FirstOrDefault(item => item.Value == Model.Voucher.Lines[i].SubsidiaryAccountId.ToString())?.Text" />
-                                            <div class="account-lookup-menu absolute z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg mt-1 w-full max-h-48 overflow-y-auto" hidden></div>
+                                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="account" autocomplete="off" value="@Model.AccountOptions.FirstOrDefault(item => item.Value == Model.Voucher.Lines[i].SubsidiaryAccountId.ToString())?.Text" />
+                                            <div class="account-lookup-menu absolute z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-lg mt-1 w-full max-h-48 overflow-y-auto" hidden></div>
                                         </div>
                                     </td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50">
                                         <div class="floating-detail-lookup relative">
                                             <input asp-for="Voucher.Lines[i].FloatingDetailAccountId" type="hidden" />
-                                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="floatingDetail" autocomplete="off" value="" disabled />
-                                            <div class="floating-detail-lookup-menu absolute z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg mt-1 w-full max-h-48 overflow-y-auto" hidden></div>
+                                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="floatingDetail" autocomplete="off" value="" disabled />
+                                            <div class="floating-detail-lookup-menu absolute z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-lg mt-1 w-full max-h-48 overflow-y-auto" hidden></div>
                                         </div>
                                     </td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50">
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50">
                                         <div class="currency-lookup relative">
                                             <input asp-for="Voucher.Lines[i].CurrencyId" type="hidden" />
-                                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="currency" autocomplete="off" value="@Model.CurrencyLookupOptions.FirstOrDefault(item => item.Value == Model.Voucher.Lines[i].CurrencyId?.ToString())?.Text" />
-                                            <div class="currency-lookup-menu absolute z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg mt-1 w-full max-h-48 overflow-y-auto" hidden></div>
+                                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="currency" autocomplete="off" value="@Model.CurrencyLookupOptions.FirstOrDefault(item => item.Value == Model.Voucher.Lines[i].CurrencyId?.ToString())?.Text" />
+                                            <div class="currency-lookup-menu absolute z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-lg mt-1 w-full max-h-48 overflow-y-auto" hidden></div>
                                         </div>
                                     </td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].ExchangeRate" type="number" step="0.0001" min="0" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="rate" /></td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].ForeignAmount" type="number" step="0.0001" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="foreign" /></td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].DebitAmount" type="number" step="0.01" min="0" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="debit" /></td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].CreditAmount" type="number" step="0.01" min="0" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="credit" /></td>
-                                    <td class="p-3 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].Narration" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="narration" /></td>
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].ExchangeRate" type="number" step="0.0001" min="0" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] text-left tabular-nums focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="rate" /></td>
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].ForeignAmount" type="number" step="0.0001" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] text-left tabular-nums focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="foreign" /></td>
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].DebitAmount" type="number" step="0.01" min="0" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] text-left tabular-nums focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="debit" /></td>
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].CreditAmount" type="number" step="0.01" min="0" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] text-left tabular-nums focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="credit" /></td>
+                                    <td class="px-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50"><input asp-for="Voucher.Lines[i].Narration" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[11px] focus:ring-teal-500/20 focus:border-teal-500 outline-none" data-nav="narration" /></td>
                                 </tr>
                             }
                         </tbody>
                     </table>
-                </div>
+                </fieldset>
 
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">فرمول محاسبه: مبلغ پایه = مبلغ ارزی × نرخ تبدیل. در خطوط ارزی، مقدار بدهکار یا بستانکار بر اساس همین رابطه تکمیل می‌شود.</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">فرمول محاسبه: مبلغ پایه = مبلغ ارزی × نرخ تبدیل. در خطوط ارزی، مقدار بدهکار یا بستانکار بر اساس همین رابطه تکمیل می‌شود.</p>
             </form>
         </section>
 
         <!-- View Vouchers -->
         <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 mt-1.5">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
                 <div>
-                    <strong class="text-sm font-bold text-slate-900 dark:text-white">مرور اسناد حسابداری</strong>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">@Model.Vouchers.Count ردیف ثبت‌شده</p>
+                    <strong class="text-xs font-black text-slate-900 dark:text-white">مرور اسناد حسابداری</strong>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">@Model.Vouchers.Count ردیف ثبت‌شده</p>
                 </div>
-                <div class="flex items-center gap-2 flex-wrap" data-grid-id="Finance_Vouchers">
+                <div class="flex items-center gap-1.5 flex-wrap" data-grid-id="Finance_Vouchers">
                     <form asp-action="RenumberVouchers" method="post" class="m-0">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="fiscalPeriodId" value="@Model.CurrentFiscalPeriodId" />
-                        <button type="submit" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1" disabled="@(!Model.CurrentFiscalPeriodId.HasValue)">شماره‌گذاری مجدد اسناد</button>
+                        <button type="submit" class="h-6 rounded border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1" disabled="@(!Model.CurrentFiscalPeriodId.HasValue)">شماره‌گذاری مجدد اسناد</button>
                     </form>
-                    <select id="savedViewSelect" class="h-8 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 text-xs outline-none focus:ring-2 focus:ring-teal-500/10">
+                    <select id="savedViewSelect" class="h-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 text-[10px] outline-none focus:ring-2 focus:ring-teal-500/10">
                         <option value="">نمای پیش‌فرض</option>
                     </select>
-                    <input id="savedViewName" class="h-8 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 text-xs outline-none focus:ring-2 focus:ring-teal-500/10 w-28" placeholder="نام نما" />
-                    <button type="button" id="saveViewButton" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition">ذخیره نما</button>
+                    <input id="savedViewName" class="h-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 text-[10px] outline-none focus:ring-2 focus:ring-teal-500/10 w-24" placeholder="نام نما" />
+                    <button type="button" id="saveViewButton" class="h-6 rounded border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition">ذخیره نما</button>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4" id="voucherWorkflowToolbar" data-change-status-url="@Url.Action("ChangeVoucherStatus", "Financial")">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300" id="workflowCurrentStatus">وضعیت جاری: بدون انتخاب</span>
-                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Reviewed" disabled>تایید بررسی</button>
-                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Approved" disabled>تصویب سند</button>
-                <button type="button" class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Permanent" disabled>قطعی کردن نهایی</button>
+            <div class="flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-2" id="voucherWorkflowToolbar" data-change-status-url="@Url.Action("ChangeVoucherStatus", "Financial")">
+                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300" id="workflowCurrentStatus">وضعیت جاری: بدون انتخاب</span>
+                <button type="button" class="h-6 rounded border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[9px] font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Reviewed" disabled>تایید بررسی</button>
+                <button type="button" class="h-6 rounded border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[9px] font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Approved" disabled>تصویب سند</button>
+                <button type="button" class="h-6 rounded border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-2 text-[9px] font-bold text-slate-700 dark:text-slate-300 transition workflow-action-button" data-target-status="Permanent" disabled>قطعی کردن نهایی</button>
             </div>
 
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 overflow-x-auto">
-                <table class="w-full text-xs text-right border-collapse" id="financeVoucherGrid">
-                    <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                        <tr>
-                            @if (visible.Contains("voucherNumber")) { <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold" data-column-id="voucherNumber">شماره سند</th> }
-                            @if (visible.Contains("status")) { <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold" data-column-id="status">وضعیت</th> }
-                            @if (visible.Contains("voucherDate")) { <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold" data-column-id="voucherDate">تاریخ</th> }
-                            @if (visible.Contains("description")) { <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold" data-column-id="description">شرح</th> }
-                            @if (visible.Contains("journalType")) { <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold" data-column-id="journalType">ژورنال</th> }
-                            @if (visible.Contains("totalAmount")) { <th class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-bold" data-column-id="totalAmount">مبلغ کل</th> }
+            <div class="bg-white dark:bg-slate-900 rounded shadow-sm border border-slate-200 dark:border-slate-800 p-2 overflow-x-auto">
+                <table class="w-full text-[11px] text-right border-collapse" id="financeVoucherGrid">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                        <tr style="height:28px">
+                            @if (visible.Contains("voucherNumber")) { <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]" data-column-id="voucherNumber">شماره سند</th> }
+                            @if (visible.Contains("status")) { <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]" data-column-id="status">وضعیت</th> }
+                            @if (visible.Contains("voucherDate")) { <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]" data-column-id="voucherDate">تاریخ</th> }
+                            @if (visible.Contains("description")) { <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]" data-column-id="description">شرح</th> }
+                            @if (visible.Contains("journalType")) { <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px]" data-column-id="journalType">ژورنال</th> }
+                            @if (visible.Contains("totalAmount")) { <th class="px-1.5 py-1 border-b border-slate-100 dark:border-slate-800/50 font-bold text-[10px] text-left tabular-nums" data-column-id="totalAmount">مبلغ کل</th> }
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
                         @foreach (var voucher in Model.Vouchers)
                         {
-                            <tr class="voucher-grid-row hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer" data-voucher-id="@voucher.Id" data-voucher-status="@voucher.Status">
-                                @if (visible.Contains("voucherNumber")) { <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left" data-column-id="voucherNumber">@(voucher.VoucherNumber?.ToString() ?? "-")</td> }
-                                @if (visible.Contains("status")) { <td class="p-3 border-b border-slate-100 dark:border-slate-800/50" data-column-id="status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">@voucher.Status</span></td> }
-                                @if (visible.Contains("voucherDate")) { <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left" data-column-id="voucherDate">@FormatCompactDate(voucher.VoucherDate)</td> }
-                                @if (visible.Contains("description")) { <td class="p-3 border-b border-slate-100 dark:border-slate-800/50" data-column-id="description">@voucher.Description</td> }
-                                @if (visible.Contains("journalType")) { <td class="p-3 border-b border-slate-100 dark:border-slate-800/50" data-column-id="journalType">@voucher.JournalType</td> }
-                                @if (visible.Contains("totalAmount")) { <td class="p-3 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left" data-column-id="totalAmount">@voucher.TotalAmount.ToString("N0")</td> }
+                            <tr class="voucher-grid-row hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer" data-voucher-id="@voucher.Id" data-voucher-status="@voucher.Status" style="height:26px">
+                                @if (visible.Contains("voucherNumber")) { <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left" data-column-id="voucherNumber">@(voucher.VoucherNumber?.ToString() ?? "-")</td> }
+                                @if (visible.Contains("status")) { <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50" data-column-id="status"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">@voucher.Status</span></td> }
+                                @if (visible.Contains("voucherDate")) { <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left" data-column-id="voucherDate">@FormatCompactDate(voucher.VoucherDate)</td> }
+                                @if (visible.Contains("description")) { <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 truncate" data-column-id="description">@voucher.Description</td> }
+                                @if (visible.Contains("journalType")) { <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50" data-column-id="journalType">@voucher.JournalType</td> }
+                                @if (visible.Contains("totalAmount")) { <td class="px-1.5 py-0.5 border-b border-slate-100 dark:border-slate-800/50 font-mono tabular-nums text-left" data-column-id="totalAmount">@voucher.TotalAmount.ToString("N0")</td> }
                             </tr>
                         }
                     </tbody>

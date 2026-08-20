@@ -32,7 +32,7 @@
 
 .trial-balance-heading h1 {
     margin: 0;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 800;
     color: var(--tb-ink);
 }
@@ -42,7 +42,7 @@
     align-items: center;
     gap: 6px;
     margin-top: 3px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #1f2937;
 }
@@ -78,10 +78,10 @@
     grid-template-columns: minmax(0, 1fr) max-content;
     align-items: center !important;
     vertical-align: middle !important;
-    column-gap: 12px;
+    column-gap: 8px;
     row-gap: 0;
-    padding: 8px 10px;
-    margin-bottom: 8px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
     border: 1px solid #cbd5e1;
     background: #f8fafc;
 }
@@ -90,8 +90,8 @@
     display: flex;
     align-items: center !important;
     vertical-align: middle !important;
-    gap: 8px;
-    min-height: 36px;
+    gap: 6px;
+    min-height: 28px;
 }
 
 .tb-toolbar-filters {
@@ -133,23 +133,23 @@
 }
 
 .tb-control {
-    min-height: 32px;
+    min-height: 28px;
     border-radius: 0 !important;
     border-color: var(--tb-line-strong) !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     color: #000 !important;
     background: #fff !important;
-    padding: 0 10px !important;
+    padding: 0 8px !important;
 }
 
 .tb-toggle {
     display: inline-grid;
     grid-template-columns: 34px auto;
     align-items: center;
-    gap: 8px;
-    min-height: 32px;
-    padding: 4px 10px;
+    gap: 6px;
+    min-height: 28px;
+    padding: 3px 8px;
     border: 1px solid #d7dee7;
     background: #fff;
     cursor: pointer;
@@ -195,7 +195,7 @@
 }
 
 .tb-toggle-label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: #000;
     white-space: nowrap;
@@ -206,12 +206,12 @@
 .tb-check-filter {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    min-height: 32px;
-    padding: 4px 10px;
+    gap: 6px;
+    min-height: 28px;
+    padding: 3px 8px;
     border: 1px solid #d7dee7;
     background: #fff;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: #000;
     white-space: nowrap;
@@ -240,14 +240,14 @@
 }
 
 .tb-mode-button {
-    min-width: 78px;
-    min-height: 32px;
-    padding: 0 12px;
+    min-width: 70px;
+    min-height: 28px;
+    padding: 0 10px;
     border: 0;
     border-left: 1px solid #cbd5e1;
     background: #fff;
     color: #6b7280;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
 }
 
@@ -264,14 +264,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    min-width: 64px;
-    min-height: 32px;
-    padding: 0 12px;
+    gap: 4px;
+    min-width: 56px;
+    min-height: 28px;
+    padding: 0 10px;
     border: 1px solid #cbd5e1;
     background: #fff;
     color: #111827;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     text-decoration: none;
     line-height: 1.2;
@@ -311,9 +311,9 @@
 .trial-balance-grid th,
 .trial-balance-grid td {
     border: 1px solid #cbd5e1;
-    padding: 6px 8px;
-    font-size: 12px;
-    line-height: 1.45;
+    padding: 3px 6px;
+    font-size: 11px;
+    line-height: 1.35;
     color: #000;
     border-radius: 0;
     vertical-align: middle;
@@ -329,12 +329,14 @@
     text-align: center;
     white-space: nowrap;
     vertical-align: middle !important;
+    height: 28px;
+    font-size: 10px;
 }
 
 .trial-balance-grid thead th[rowspan] {
     vertical-align: middle !important;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .trial-balance-grid thead th[data-sort-key] {

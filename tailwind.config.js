@@ -165,6 +165,9 @@ module.exports = {
         '80': '20rem',
         '96': '24rem',
       },
+      spacing: {
+        '6.5': '1.625rem',
+      },
       borderRadius: {
         none: '0',
         sm: '0.375rem',

@@ -3,7 +3,7 @@
     ViewData["Title"] = "قراردادها";
 }
 
-<div class="container-fluid py-2 space-y-2" dir="rtl">
+<div class="container-fluid py-1 space-y-2" dir="rtl">
     @if (TempData["SuccessMessage"] is string successMsg)
     {
         <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-3.5 py-2.5 text-[11px] text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
@@ -28,85 +28,85 @@
     @* Section Header *@
     <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
-            <h1 class="text-[16px] font-black text-slate-900 dark:text-white">قراردادها</h1>
+            <h1 class="text-[13px] font-bold text-slate-900 dark:text-white">قراردادها</h1>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 @Model.TotalCount قرارداد ( @Model.ActiveCount فعال | @Model.CompletedCount تکمیل‌شده | @Model.DraftCount پیش‌نویس | @Model.ExpiringSoonCount در شرف انقضا )
             </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-            <a asp-action="Dashboard" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+            <a asp-action="Dashboard" class="erp-btn">
                 <i class="bi bi-speedometer2 ml-1"></i>داشبورد
             </a>
-            <a asp-action="Archive" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+            <a asp-action="Archive" class="erp-btn">
                 <i class="bi bi-archive ml-1"></i>بایگانی
             </a>
-            <a asp-action="Settings" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+            <a asp-action="Settings" class="erp-btn">
                 <i class="bi bi-gear ml-1"></i>تنظیمات
             </a>
-            <a asp-action="Create" class="rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+            <a asp-action="Create" class="erp-btn erp-btn-primary">
                 <i class="bi bi-plus-circle ml-1"></i>قرارداد جدید
             </a>
         </div>
     </div>
 
     @* Filter Card *@
-    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-3">
+    <div class="erp-fieldset">
         <form method="get" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 items-end">
             <div class="col-span-2 md:col-span-1">
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">جستجو</label>
-                <input name="SearchTerm" value="@Model.SearchTerm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="عنوان / شماره / مشتری" />
+                <input name="SearchTerm" value="@Model.SearchTerm" class="erp-input" placeholder="عنوان / شماره / مشتری" />
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">وضعیت</label>
-                <select name="Status" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.StatusOptions">
+                <select name="Status" class="erp-input" asp-items="Model.StatusOptions">
                     <option value="">همه</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">نوع قرارداد</label>
-                <select name="ContractType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.ContractTypeOptions">
+                <select name="ContractType" class="erp-input" asp-items="Model.ContractTypeOptions">
                     <option value="">همه</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">مسئول</label>
-                <select name="AssignedUserId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.ResponsibleUserOptions">
+                <select name="AssignedUserId" class="erp-input" asp-items="Model.ResponsibleUserOptions">
                     <option value="">همه</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">وضعیت پرداخت</label>
-                <select name="PaymentStatus" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.PaymentStatusOptions">
+                <select name="PaymentStatus" class="erp-input" asp-items="Model.PaymentStatusOptions">
                     <option value="">همه</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">از تاریخ شروع</label>
-                <input name="StartDateFrom" value="@Model.StartDateFrom?.ToString("yyyy-MM-dd")" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <input name="StartDateFrom" value="@Model.StartDateFrom?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تا تاریخ شروع</label>
-                <input name="StartDateTo" value="@Model.StartDateTo?.ToString("yyyy-MM-dd")" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <input name="StartDateTo" value="@Model.StartDateTo?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">از تاریخ پایان</label>
-                <input name="EndDateFrom" value="@Model.EndDateFrom?.ToString("yyyy-MM-dd")" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <input name="EndDateFrom" value="@Model.EndDateFrom?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تا تاریخ پایان</label>
-                <input name="EndDateTo" value="@Model.EndDateTo?.ToString("yyyy-MM-dd")" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <input name="EndDateTo" value="@Model.EndDateTo?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">حداقل مبلغ</label>
-                <input name="MinAmount" value="@Model.MinAmount" type="number" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <input name="MinAmount" value="@Model.MinAmount" type="number" class="erp-input" />
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">حداکثر مبلغ</label>
-                <input name="MaxAmount" value="@Model.MaxAmount" type="number" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                <input name="MaxAmount" value="@Model.MaxAmount" type="number" class="erp-input" />
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">مشتری</label>
-                <select name="CustomerId" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" asp-items="Model.CustomerOptions">
+                <select name="CustomerId" class="erp-input" asp-items="Model.CustomerOptions">
                     <option value="">همه</option>
                 </select>
             </div>
@@ -207,26 +207,26 @@
                                     }
                                     <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @statusBadge">@item.Status</span>
                                 </td>
-                                <td class="px-3 py-2 text-slate-600 dark:text-slate-400">@item.ResponsibleUserName</td>
+                                <td class="px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-400">@item.ResponsibleUserName</td>
                                 <td class="px-3 py-2 text-center">
                                     <div class="inline-flex gap-1">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="نمایش">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="erp-btn text-[9px] px-1.5 py-0.5 h-5 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="نمایش">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         @if (item.IsOwnedByCurrentUser)
                                         {
-                                            <a asp-action="Edit" asp-route-id="@item.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="ویرایش">
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="erp-btn text-[9px] px-1.5 py-0.5 h-5 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="ویرایش">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                             <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیتم حذف شود؟');">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
+                                                <button type="submit" class="erp-btn text-[9px] px-1.5 py-0.5 h-5 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                             <form asp-action="ArchiveContract" asp-route-id="@item.Id" method="post" class="inline" data-guard-submit>
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 transition" title="بایگانی">
+                                                <button type="submit" class="erp-btn text-[9px] px-1.5 py-0.5 h-5 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 transition" title="بایگانی">
                                                     <i class="bi bi-archive"></i>
                                                 </button>
                                             </form>
@@ -240,7 +240,7 @@
             </div>
 
             @* Footer *@
-            <div class="flex items-center justify-between px-3 py-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400">
+            <div class="flex items-center justify-between px-2 py-1.5 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400">
                 <div>
                     مجموع مبلغ کل: <span class="font-bold font-mono tabular-nums text-slate-800 dark:text-slate-200">@Model.TotalAmountSum.ToString("N0")</span>
                     | مجموع پرداخت‌شده: <span class="font-bold font-mono tabular-nums text-emerald-600">@Model.TotalPaidSum.ToString("N0")</span>
@@ -262,12 +262,12 @@
         else
         {
             <div class="text-center py-8">
-                <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
+                <div class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
                     <i class="bi bi-file-earmark-text text-slate-400 text-lg"></i>
                 </div>
                 <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">هیچ قراردادی یافت نشد</h3>
                 <p class="text-[11px] text-slate-400 dark:text-slate-500 mb-3">برای شروع، اولین قرارداد خود را ایجاد کنید.</p>
-                <a asp-action="Create" class="inline-flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                <a asp-action="Create" class="inline-flex items-center gap-1 erp-btn erp-btn-primary">
                     <i class="bi bi-plus-circle"></i>ایجاد قرارداد جدید
                 </a>
             </div>

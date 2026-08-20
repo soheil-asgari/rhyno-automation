@@ -74,7 +74,7 @@
 /* Flyout container — absolutely positioned, does NOT alter document flow. */
 #taxAiOverlay {
     position: fixed; bottom: 82px; left: 20px; z-index: 10000;
-    width: 360px; max-width: calc(100vw - 40px);
+    width: 320px; max-width: calc(100vw - 40px);
     background: #fff; border: 1px solid var(--tax-border);
     border-radius: 3px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
     display: flex; flex-direction: column; overflow: hidden;
@@ -101,7 +101,7 @@
 .tax-widget-ai .tax-widget-bubble { background: #fff; border: 1px solid var(--tax-border); }
 .tax-widget-user .tax-widget-bubble { background: var(--tax-head); color: #fff; }
 .tax-widget-input-row { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--tax-border); }
-.tax-widget-input { flex: 1; border: 1px solid var(--tax-border); border-radius: 2px; padding: 8px 10px; font-family: inherit; font-size: 12px; outline: none; }
+.tax-widget-input { flex: 1; border: 1px solid var(--tax-border); border-radius: 2px; padding: 0 8px; height: 28px; font-family: inherit; font-size: 11px; outline: none; }
 .tax-widget-input:focus { border-color: var(--tax-accent); }
-.tax-widget-send { width: 40px; border: none; background: var(--tax-head); color: #fff; border-radius: 2px; cursor: pointer; font-size: 16px; }
+.tax-widget-send { width: 36px; height: 28px; border: none; background: var(--tax-head); color: #fff; border-radius: 2px; cursor: pointer; font-size: 14px; display: grid; place-items: center; }
 .tax-widget-send:hover { background: var(--tax-head-2); }

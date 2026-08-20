@@ -1,6 +1,12 @@
-﻿
+/* -- ERP Density helpers -------------------------------------------- */
+.erp-fieldset { border-radius: 4px; }
+.erp-fieldset legend { font-size: 10px; font-weight: 800; padding: 0 4px; }
+.erp-table thead th { background: #f1f5f9; color: #334155; height: 28px; font-size: 10px; }
+.erp-table tbody td { height: 26px; font-size: 11px; }
+.erp-table .tabular-nums { font-variant-numeric: tabular-nums; }
+.erp-table .text-left { text-align: left; }
 .vat-page { direction: rtl; text-align: right; }
-        .vat-card { border-radius: 16px; }
+        .vat-card { border-radius: 4px; }
         .vat-kpi { min-height: 110px; }
         .vat-label { font-size: .76rem; color: var(--text-muted); }
         .vat-value { font-size: 1.15rem; font-weight: 800; color: var(--text-main); }
@@ -9,7 +15,7 @@
 
 
 .hub-page { direction: rtl; text-align: right; }
-        .hub-card { border-radius: 12px; }
+        .hub-card { border-radius: 4px; }
         .hub-tabs .nav-link { font-size: .8rem; padding: .4rem .7rem; }
         .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .65rem; }
         .hub-action-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: .7rem; background: #fff; }
@@ -19,7 +25,7 @@
 
 
 .fin-page { direction: rtl; text-align: right; }
-        .fin-card { border-radius: 12px; }
+        .fin-card { border-radius: 4px; }
         .fin-compact { font-size: .82rem; }
         html.theme-dark .fin-page,
         html.theme-dark .fin-page h5,
@@ -384,7 +390,7 @@ html[data-theme="dark"] .fin-page .btn-outline-secondary {
 
 
 .vat-page { direction: rtl; text-align: right; }
-        .vat-card { border-radius: 16px; }
+        .vat-card { border-radius: 4px; }
         .vat-kpi { min-height: 110px; }
         .vat-label { font-size: .76rem; color: var(--text-muted); }
         .vat-value { font-size: 1.15rem; font-weight: 800; color: var(--text-main); }
@@ -392,7 +398,7 @@ html[data-theme="dark"] .fin-page .btn-outline-secondary {
         .vat-row-warning { background: rgba(245, 158, 11, .08); }
 
 .hub-page { direction: rtl; text-align: right; }
-        .hub-card { border-radius: 12px; }
+        .hub-card { border-radius: 4px; }
         .hub-tabs .nav-link { font-size: .8rem; padding: .4rem .7rem; }
         .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .65rem; }
         .hub-action-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: .7rem; background: #fff; }
@@ -401,7 +407,7 @@ html[data-theme="dark"] .fin-page .btn-outline-secondary {
         .hub-chart-wrap { height: 320px; }
 
 .fin-page { direction: rtl; text-align: right; }
-        .fin-card { border-radius: 12px; }
+        .fin-card { border-radius: 4px; }
         .fin-compact { font-size: .82rem; }
         html.theme-dark .fin-page,
         html.theme-dark .fin-page h5,

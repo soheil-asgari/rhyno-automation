@@ -375,7 +375,7 @@ public sealed class ContractService : IContractService
         var c = await query.FirstOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new KeyNotFoundException($"Contract {id} not found.");
 
-        var daysRemaining = c.EndDate.HasValue ? (c.EndDate.Value - DateTime.Today).Days : 0;
+        var daysRemaining = c.EndDate.HasValue ? (c.EndDate.Value.Date - DateTime.Today).Days : 0;
 
         return new ContractDetailsVM
         {

@@ -25,108 +25,108 @@
     };
 }
 
-<section class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-5 flex flex-col gap-5">
+<section class="w-full erp-card p-3.5 flex flex-col gap-4">
     <!-- Header -->
-    <div class="flex flex-col gap-2">
-        <h5 class="m-0 text-sm font-black text-slate-900 dark:text-white">جزئیات گردش کار</h5>
-        <div class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">@Model.Title</div>
+    <div class="flex flex-col gap-1.5">
+        <h5 class="m-0 text-[12px] font-black text-slate-900 dark:text-white">جزئیات گردش کار</h5>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">@Model.Title</div>
         <div class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">@Model.Summary</div>
     </div>
 
     <!-- Status Summary Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div class="flex flex-col gap-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <div class="flex flex-col gap-1 p-2.5 rounded-[4px] bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
             <span class="text-[10px] text-slate-500 dark:text-slate-400">وضعیت</span>
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border w-max @StatusBadgeCss(Model.CurrentStatus)">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-[3px] text-[10px] font-bold border w-max @StatusBadgeCss(Model.CurrentStatus)">
                 @OfficeAutomation.Models.WorkflowStatus.Label(Model.CurrentStatus)
             </span>
         </div>
-        <div class="flex flex-col gap-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+        <div class="flex flex-col gap-1 p-2.5 rounded-[4px] bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
             <span class="text-[10px] text-slate-500 dark:text-slate-400">مسئول فعلی</span>
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">@(Model.CurrentAssigneeName ?? "-")</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@(Model.CurrentAssigneeName ?? "-")</span>
         </div>
-        <div class="flex flex-col gap-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+        <div class="flex flex-col gap-1 p-2.5 rounded-[4px] bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
             <span class="text-[10px] text-slate-500 dark:text-slate-400">مهلت</span>
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums">@ToPersian(Model.Deadline)</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 font-mono tabular-nums">@ToPersian(Model.Deadline)</span>
         </div>
-        <div class="flex flex-col gap-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+        <div class="flex flex-col gap-1 p-2.5 rounded-[4px] bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
             <span class="text-[10px] text-slate-500 dark:text-slate-400">سطح خدمت</span>
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">@Model.SlaState</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@Model.SlaState</span>
         </div>
     </div>
 
     <!-- Timeline & Decisions -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- Timeline -->
-        <div class="flex flex-col gap-3">
-            <h6 class="m-0 text-xs font-black text-slate-900 dark:text-white">خط زمانی</h6>
-            <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2.5">
+            <h6 class="m-0 text-[11px] font-black text-slate-900 dark:text-white">خط زمانی</h6>
+            <div class="flex flex-col gap-1.5">
                 @foreach (var item in Model.Timeline)
                 {
-                    <div class="p-3 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/60 dark:bg-slate-950/30">
-                        <div class="flex justify-between items-center gap-2">
-                            <strong class="text-xs font-bold text-slate-800 dark:text-slate-200">@item.ActionType</strong>
+                    <div class="p-2.5 border border-slate-100 dark:border-slate-800 rounded-[4px] bg-slate-50/60 dark:bg-slate-950/30">
+                        <div class="flex justify-between items-center gap-2 min-h-[26px]">
+                            <strong class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@item.ActionType</strong>
                             <small class="text-[10px] text-slate-500 dark:text-slate-500 font-mono">@ToPersian(item.OccurredAt)</small>
                         </div>
-                        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">@((item.ActorUser?.FullName) ?? item.ActorUserId)</div>
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400">@((item.ActorUser?.FullName) ?? item.ActorUserId)</div>
                         @if (!string.IsNullOrWhiteSpace(item.Description))
                         {
-                            <div class="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">@item.Description</div>
+                            <div class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">@item.Description</div>
                         }
                     </div>
                 }
                 @if (Model.Timeline.Count == 0)
                 {
-                    <div class="p-4 text-center text-[11px] text-slate-400 dark:text-slate-600">رویدادی ثبت نشده است.</div>
+                    <div class="p-3 text-center text-[11px] text-slate-400 dark:text-slate-600">رویدادی ثبت نشده است.</div>
                 }
             </div>
         </div>
 
         <!-- Decisions -->
-        <div class="flex flex-col gap-3">
-            <h6 class="m-0 text-xs font-black text-slate-900 dark:text-white">تصمیم‌ها</h6>
-            <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2.5">
+            <h6 class="m-0 text-[11px] font-black text-slate-900 dark:text-white">تصمیم‌ها</h6>
+            <div class="flex flex-col gap-1.5">
                 @foreach (var item in Model.Decisions)
                 {
-                    <div class="p-3 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/60 dark:bg-slate-950/30">
-                        <div class="flex justify-between items-center gap-2">
-                            <strong class="text-xs font-bold text-slate-800 dark:text-slate-200">@item.DecisionType</strong>
+                    <div class="p-2.5 border border-slate-100 dark:border-slate-800 rounded-[4px] bg-slate-50/60 dark:bg-slate-950/30">
+                        <div class="flex justify-between items-center gap-2 min-h-[26px]">
+                            <strong class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@item.DecisionType</strong>
                             <small class="text-[10px] text-slate-500 dark:text-slate-500 font-mono">@ToPersian(item.DecidedAt)</small>
                         </div>
-                        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">@((item.DecidedByUser?.FullName) ?? item.DecidedByUserId)</div>
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400">@((item.DecidedByUser?.FullName) ?? item.DecidedByUserId)</div>
                         @if (!string.IsNullOrWhiteSpace(item.Comment))
                         {
-                            <div class="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">@item.Comment</div>
+                            <div class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">@item.Comment</div>
                         }
                     </div>
                 }
                 @if (Model.Decisions.Count == 0)
                 {
-                    <div class="p-4 text-center text-[11px] text-slate-400 dark:text-slate-600">تصمیمی ثبت نشده است.</div>
+                    <div class="p-3 text-center text-[11px] text-slate-400 dark:text-slate-600">تصمیمی ثبت نشده است.</div>
                 }
             </div>
         </div>
     </div>
 
     <!-- Comments & Attachments -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- Comments -->
-        <div class="flex flex-col gap-3">
-            <h6 class="m-0 text-xs font-black text-slate-900 dark:text-white">نظرها</h6>
-            <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2.5">
+            <h6 class="m-0 text-[11px] font-black text-slate-900 dark:text-white">نظرها</h6>
+            <div class="flex flex-col gap-1.5">
                 @foreach (var item in Model.Comments)
                 {
-                    <div class="p-3 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/60 dark:bg-slate-950/30">
-                        <div class="flex justify-between items-center gap-2">
-                            <strong class="text-xs font-bold text-slate-800 dark:text-slate-200">@((item.AuthorUser?.FullName) ?? item.AuthorUserId)</strong>
+                    <div class="p-2.5 border border-slate-100 dark:border-slate-800 rounded-[4px] bg-slate-50/60 dark:bg-slate-950/30">
+                        <div class="flex justify-between items-center gap-2 min-h-[26px]">
+                            <strong class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@((item.AuthorUser?.FullName) ?? item.AuthorUserId)</strong>
                             <small class="text-[10px] text-slate-500 dark:text-slate-500 font-mono">@ToPersian(item.CreatedAt)</small>
                         </div>
-                        <div class="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">@item.Body</div>
+                        <div class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">@item.Body</div>
                     </div>
                 }
                 @if (Model.Comments.Count == 0)
                 {
-                    <div class="p-4 text-center text-[11px] text-slate-400 dark:text-slate-600">نظری ثبت نشده است.</div>
+                    <div class="p-3 text-center text-[11px] text-slate-400 dark:text-slate-600">نظری ثبت نشده است.</div>
                 }
             </div>
             <form asp-controller="WorkInbox" asp-action="AddComment" method="post" class="flex flex-col gap-2">
@@ -134,8 +134,8 @@
                 <input type="hidden" name="documentType" value="@Model.DocumentType" />
                 <input type="hidden" name="documentId" value="@Model.DocumentId" />
                 <input type="hidden" name="workflowStepId" value="@Model.CurrentWorkflowStepId" />
-                <textarea name="body" rows="3" class="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:focus:border-teal-400 dark:focus:ring-teal-500/20" placeholder="ثبت نظر جدید"></textarea>
-                <button type="submit" class="self-end flex items-center gap-1.5 px-4 h-8 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                <textarea name="body" rows="3" class="w-full erp-textarea" placeholder="ثبت نظر جدید"></textarea>
+                <button type="submit" class="self-end erp-btn-primary h-7 px-3 rounded-[3px] text-[11px]">
                     <i class="bi bi-chat-left-dots"></i>
                     <span>ثبت نظر</span>
                 </button>
@@ -143,25 +143,25 @@
         </div>
 
         <!-- Attachments -->
-        <div class="flex flex-col gap-3">
-            <h6 class="m-0 text-xs font-black text-slate-900 dark:text-white">پیوست‌ها</h6>
-            <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2.5">
+            <h6 class="m-0 text-[11px] font-black text-slate-900 dark:text-white">پیوست‌ها</h6>
+            <div class="flex flex-col gap-1.5">
                 @foreach (var item in Model.Attachments)
                 {
-                    <a class="p-3 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/60 dark:bg-slate-950/30 no-underline transition hover:border-teal-300 dark:hover:border-teal-700" href="@Url.Action("DownloadAttachment", "WorkInbox", new { id = item.Id })" target="_blank">
-                        <div class="flex justify-between items-center gap-2">
-                            <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <a class="p-2.5 border border-slate-100 dark:border-slate-800 rounded-[4px] bg-slate-50/60 dark:bg-slate-950/30 no-underline transition hover:border-teal-300 dark:hover:border-teal-700" href="@Url.Action("DownloadAttachment", "WorkInbox", new { id = item.Id })" target="_blank">
+                        <div class="flex justify-between items-center gap-2 min-h-[26px]">
+                            <strong class="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                                 <i class="bi bi-paperclip text-teal-600 dark:text-teal-400"></i>
                                 @item.FileName
                             </strong>
                             <small class="text-[10px] text-slate-500 dark:text-slate-500 font-mono">@ToPersian(item.UploadedAt)</small>
                         </div>
-                        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">@((item.UploadedByUser?.FullName) ?? item.UploadedByUserId)</div>
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400">@((item.UploadedByUser?.FullName) ?? item.UploadedByUserId)</div>
                     </a>
                 }
                 @if (Model.Attachments.Count == 0)
                 {
-                    <div class="p-4 text-center text-[11px] text-slate-400 dark:text-slate-600">پیوستی ثبت نشده است.</div>
+                    <div class="p-3 text-center text-[11px] text-slate-400 dark:text-slate-600">پیوستی ثبت نشده است.</div>
                 }
             </div>
             <form asp-controller="WorkInbox" asp-action="Decide" method="post" enctype="multipart/form-data" class="flex flex-col gap-2">
@@ -170,8 +170,8 @@
                 <input type="hidden" name="documentId" value="@Model.DocumentId" />
                 <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
                 <input type="hidden" name="decisionType" value="Comment" />
-                <input type="file" name="attachments" class="w-full text-xs file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 dark:file:bg-slate-800 file:text-xs file:font-bold text-slate-500 dark:text-slate-400" />
-                <button type="submit" class="self-end flex items-center gap-1.5 px-4 h-8 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm">
+                <input type="file" name="attachments" class="w-full text-[11px] file:mr-3 file:py-1.5 file:px-2.5 file:rounded-[3px] file:border-0 file:bg-slate-100 dark:file:bg-slate-800 file:text-[11px] file:font-bold text-slate-500 dark:text-slate-400" />
+                <button type="submit" class="self-end erp-btn h-7 px-3 rounded-[3px] text-[11px]">
                     <i class="bi bi-upload"></i>
                     <span>بارگذاری پیوست</span>
                 </button>
@@ -182,20 +182,20 @@
     <!-- Actions -->
     @if (Model.CanApprove || Model.CanReject || Model.CanReturn || Model.CanRequestChanges || Model.CanForward || Model.CanDelegate)
     {
-        <div class="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-            <h6 class="m-0 text-xs font-black text-slate-900 dark:text-white">اقدام‌ها</h6>
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div class="flex flex-col gap-2.5 border-t border-slate-100 dark:border-slate-800 pt-3">
+            <h6 class="m-0 text-[11px] font-black text-slate-900 dark:text-white">اقدام‌ها</h6>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
                 @if (Model.CanApprove)
                 {
-                    <div class="flex flex-col gap-2 p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                    <div class="flex flex-col gap-2 p-2.5 rounded-[4px] bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
                         <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="flex flex-col gap-2">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="documentType" value="@Model.DocumentType" />
                             <input type="hidden" name="documentId" value="@Model.DocumentId" />
                             <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
                             <input type="hidden" name="decisionType" value="Approve" />
-                            <textarea name="note" rows="2" class="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10" placeholder="توضیح تایید"></textarea>
-                            <button type="submit" class="flex items-center justify-center gap-1.5 px-4 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                            <textarea name="note" rows="2" class="w-full erp-textarea" placeholder="توضیح تایید"></textarea>
+                            <button type="submit" class="erp-btn h-7 px-3 rounded-[3px] text-[11px] bg-emerald-600 border-transparent text-white hover:bg-emerald-700">
                                 <i class="bi bi-check2-circle"></i>
                                 <span>تایید</span>
                             </button>
@@ -204,15 +204,15 @@
                 }
                 @if (Model.CanReject)
                 {
-                    <div class="flex flex-col gap-2 p-3 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
+                    <div class="flex flex-col gap-2 p-2.5 rounded-[4px] bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
                         <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="flex flex-col gap-2">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="documentType" value="@Model.DocumentType" />
                             <input type="hidden" name="documentId" value="@Model.DocumentId" />
                             <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
                             <input type="hidden" name="decisionType" value="Reject" />
-                            <textarea name="note" rows="2" class="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10" placeholder="دلیل رد"></textarea>
-                            <button type="submit" class="flex items-center justify-center gap-1.5 px-4 h-8 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                            <textarea name="note" rows="2" class="w-full erp-textarea" placeholder="دلیل رد"></textarea>
+                            <button type="submit" class="erp-btn h-7 px-3 rounded-[3px] text-[11px] bg-rose-600 border-transparent text-white hover:bg-rose-700">
                                 <i class="bi bi-x-circle"></i>
                                 <span>رد</span>
                             </button>
@@ -221,15 +221,15 @@
                 }
                 @if (Model.CanReturn)
                 {
-                    <div class="flex flex-col gap-2 p-3 rounded-xl bg-slate-50/60 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800">
+                    <div class="flex flex-col gap-2 p-2.5 rounded-[4px] bg-slate-50/60 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800">
                         <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="flex flex-col gap-2">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="documentType" value="@Model.DocumentType" />
                             <input type="hidden" name="documentId" value="@Model.DocumentId" />
                             <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
                             <input type="hidden" name="decisionType" value="Return" />
-                            <textarea name="note" rows="2" class="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-500/10" placeholder="علت بازگشت"></textarea>
-                            <button type="submit" class="flex items-center justify-center gap-1.5 px-4 h-8 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition">
+                            <textarea name="note" rows="2" class="w-full erp-textarea" placeholder="علت بازگشت"></textarea>
+                            <button type="submit" class="erp-btn h-7 px-3 rounded-[3px] text-[11px]">
                                 <i class="bi bi-arrow-counterclockwise"></i>
                                 <span>بازگشت</span>
                             </button>
@@ -238,15 +238,15 @@
                 }
                 @if (Model.CanRequestChanges)
                 {
-                    <div class="flex flex-col gap-2 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40">
+                    <div class="flex flex-col gap-2 p-2.5 rounded-[4px] bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40">
                         <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="flex flex-col gap-2">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="documentType" value="@Model.DocumentType" />
                             <input type="hidden" name="documentId" value="@Model.DocumentId" />
                             <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
                             <input type="hidden" name="decisionType" value="RequestChanges" />
-                            <textarea name="note" rows="2" class="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10" placeholder="درخواست اصلاح"></textarea>
-                            <button type="submit" class="flex items-center justify-center gap-1.5 px-4 h-8 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                            <textarea name="note" rows="2" class="w-full erp-textarea" placeholder="درخواست اصلاح"></textarea>
+                            <button type="submit" class="erp-btn h-7 px-3 rounded-[3px] text-[11px] bg-amber-500 border-transparent text-white hover:bg-amber-600">
                                 <i class="bi bi-pencil-square"></i>
                                 <span>درخواست اصلاح</span>
                             </button>
@@ -255,21 +255,21 @@
                 }
                 @if (Model.CanForward)
                 {
-                    <div class="flex flex-col gap-2 p-3 rounded-xl bg-sky-50/50 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/40">
+                    <div class="flex flex-col gap-2 p-2.5 rounded-[4px] bg-sky-50/50 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/40">
                         <form asp-controller="WorkInbox" asp-action="Decide" method="post" class="flex flex-col gap-2">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="documentType" value="@Model.DocumentType" />
                             <input type="hidden" name="documentId" value="@Model.DocumentId" />
                             <input type="hidden" name="stepNumber" value="@Model.CurrentStepNumber" />
                             <input type="hidden" name="decisionType" value="Forward" />
-                            <select name="forwardToUserId" class="w-full h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10">
+                            <select name="forwardToUserId" class="erp-select w-full h-7">
                                 @foreach (var user in Model.UserOptions)
                                 {
                                     <option value="@user.Id">@user.FullName</option>
                                 }
                             </select>
-                            <textarea name="note" rows="2" class="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10" placeholder="توضیح ارجاع"></textarea>
-                            <button type="submit" class="flex items-center justify-center gap-1.5 px-4 h-8 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                            <textarea name="note" rows="2" class="w-full erp-textarea" placeholder="توضیح ارجاع"></textarea>
+                            <button type="submit" class="erp-btn h-7 px-3 rounded-[3px] text-[11px] bg-sky-600 border-transparent text-white hover:bg-sky-700">
                                 <i class="bi bi-forward"></i>
                                 <span>ارجاع</span>
                             </button>
@@ -278,18 +278,18 @@
                 }
                 @if (Model.CanDelegate && Model.CurrentWorkflowStepId.HasValue)
                 {
-                    <div class="flex flex-col gap-2 p-3 rounded-xl bg-slate-50/60 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800">
+                    <div class="flex flex-col gap-2 p-2.5 rounded-[4px] bg-slate-50/60 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800">
                         <form asp-controller="WorkInbox" asp-action="Delegate" method="post" class="flex flex-col gap-2">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="workflowStepId" value="@Model.CurrentWorkflowStepId" />
-                            <select name="toUserId" class="w-full h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-500/10">
+                            <select name="toUserId" class="erp-select w-full h-7">
                                 @foreach (var user in Model.UserOptions)
                                 {
                                     <option value="@user.Id">@user.FullName</option>
                                 }
                             </select>
-                            <textarea name="note" rows="2" class="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-500/10" placeholder="توضیح واگذاری"></textarea>
-                            <button type="submit" class="flex items-center justify-center gap-1.5 px-4 h-8 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition">
+                            <textarea name="note" rows="2" class="w-full erp-textarea" placeholder="توضیح واگذاری"></textarea>
+                            <button type="submit" class="erp-btn h-7 px-3 rounded-[3px] text-[11px]">
                                 <i class="bi bi-person-fill-gear"></i>
                                 <span>واگذاری</span>
                             </button>
