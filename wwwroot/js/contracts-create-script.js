@@ -117,8 +117,8 @@
                 html += '</div>';
                 popup.innerHTML = html;
 
-                popup.querySelector('[data-nav="prev"]').onclick = function () { viewMonth--; if (viewMonth < 1) { viewMonth = 12; viewYear--; } render(); };
-                popup.querySelector('[data-nav="next"]').onclick = function () { viewMonth++; if (viewMonth > 12) { viewMonth = 1; viewYear++; } render(); };
+                popup.querySelector('[data-nav="prev"]').onclick = function (e) { e.stopPropagation(); e.preventDefault(); viewMonth--; if (viewMonth < 1) { viewMonth = 12; viewYear--; } render(); };
+                popup.querySelector('[data-nav="next"]').onclick = function (e) { e.stopPropagation(); e.preventDefault(); viewMonth++; if (viewMonth > 12) { viewMonth = 1; viewYear++; } render(); };
 
                 popup.querySelectorAll('[data-day]').forEach(function (btn) {
                 btn.onclick = function () {

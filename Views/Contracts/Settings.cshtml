@@ -1,4 +1,4 @@
-@model ContractSettingsVM
+﻿@model ContractSettingsVM
 @{
     ViewData["Title"] = "تنظیمات قراردادها";
 }
@@ -163,9 +163,9 @@
     </div>
 </div>
 
-@* Add Template Modal (Vanilla JS) *@
+@* Add Template Modal - Redesigned 2-Column Grid Layout *@
 <div class="rhyno-modal-overlay" id="addTemplateModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-    <div class="rhyno-modal-content" style="width:100%;max-width:820px;max-height:85vh;overflow-y:auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+    <div class="rhyno-modal-content" style="width:100%;max-width:960px;max-height:85vh;overflow-y:auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
         <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center gap-2">
                 <i class="bi bi-file-earmark-plus text-teal-600 text-xs"></i>
@@ -176,103 +176,93 @@
         <form asp-action="SaveTemplate" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="CurrentTemplateId" />
-            <div class="p-3 space-y-3">
-                <div>
-                    <label asp-for="TemplateName" class="erp-label"></label>
-                    <input asp-for="TemplateName" class="erp-input" required />
-                </div>
-                <div>
-                    <label asp-for="Description" class="erp-label"></label>
-                    <textarea asp-for="Description" class="erp-input resize-y" rows="2"></textarea>
-                </div>
-                <div class="flex gap-3">
-                    <div class="flex-1 min-w-0">
-                        <label class="erp-label">
-                            <i class="bi bi-pencil-square text-xs ml-1 text-blue-500"></i>ویرایشگر بصری قالب
-                        </label>
-                        @* Toolbar *@
-                        <div class="flex flex-wrap items-center gap-1 mb-1.5 px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="bold" title="ضخیم"><b>B</b></button>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="italic" title="کج"><i>I</i></button>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="underline" title="زیرخط"><u>U</u></button>
-                            <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertOrderedList" title="لیست شماره‌دار"><i class="bi bi-list-ol"></i></button>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertUnorderedList" title="لیست نقطه‌ای"><i class="bi bi-list-ul"></i></button>
-                            <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyRight" title="راست‌چین"><i class="bi bi-text-right"></i></button>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyCenter" title="وسط‌چین"><i class="bi bi-text-center"></i></button>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyLeft" title="چپ‌چین"><i class="bi bi-text-left"></i></button>
-                            <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertHorizontalRule" title="خط افقی"><i class="bi bi-hr"></i></button>
-                            <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" onclick="insertPageBreak()" title="شکن صفحه"><i class="bi bi-file-earmark-break"></i></button>
-
+            <div class="p-3">
+                <div class="grid grid-cols-12 gap-3">
+                    @* Main Column (col-span-9): Name, Description, Editor *@
+                    <div class="col-span-12 lg:col-span-9 space-y-3">
+                        <div>
+                            <label asp-for="TemplateName" class="erp-label"></label>
+                            <input asp-for="TemplateName" class="erp-input" required placeholder="نام قالب را وارد کنید" />
                         </div>
-                        @* Contenteditable editor *@
-                        <div id="htmlEditor" class="wysiwyg-editor" contenteditable="true"
-                             style="min-height:180px;background:#fff;border:1px solid #e2e8f0;border-radius:3px;padding:8px;font-size:11px;line-height:1.8;font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:right;overflow-y:auto;"
-                             data-placeholder="متن قالب را اینجا بنویسید..."></div>
-                        <textarea asp-for="HtmlContent" class="hidden" id="HtmlContent" rows="8"></textarea>
+                        <div>
+                            <label asp-for="Description" class="erp-label"></label>
+                            <textarea asp-for="Description" class="erp-input resize-y" rows="2" placeholder="توضیحات قالب (اختیاری)"></textarea>
+                        </div>
+                        <div>
+                            <label class="erp-label"><i class="bi bi-pencil-square text-xs ml-1 text-blue-500"></i>ویرایشگر بصری قالب</label>
+                            <div class="flex flex-wrap items-center gap-1 mb-1.5 px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="bold" title="ضخیم"><b>B</b></button>
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="italic" title="کج"><i>I</i></button>
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="underline" title="زیرخط"><u>U</u></button>
+                                <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertOrderedList" title="لیست شماره‌دار"><i class="bi bi-list-ol"></i></button>
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertUnorderedList" title="لیست نقطه‌ای"><i class="bi bi-list-ul"></i></button>
+                                <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyRight" title="راست‌چین"><i class="bi bi-text-right"></i></button>
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="justifyCenter" title="وسط‌چین"><i class="bi bi-text-center"></i></button>
+                                <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                                <button type="button" class="wysiwyg-btn px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition border-0 bg-transparent cursor-pointer" data-cmd="insertHorizontalRule" title="خط افقی"><i class="bi bi-hr"></i></button>
+                                <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                                <button type="button" class="px-2 py-0.5 text-[10px] font-bold text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/20 rounded transition border-0 bg-transparent cursor-pointer" onclick="insertPageBreak()" title="درج صفحه جدید"><i class="bi bi-files"></i> صفحه جدید</button>
+                            </div>
+                            <div id="htmlEditor" class="wysiwyg-editor" contenteditable="true" data-placeholder="محتوای قالب را اینجا بنویسید یا از تگ‌های کناری استفاده کنید..."
+                                style="min-height:280px;max-height:400px;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:12px;line-height:1.8;text-align:right;direction:rtl;font-family:Tahoma,'Segoe UI',sans-serif;">
+                            </div>
+                            <textarea asp-for="HtmlContent" id="HtmlContent" style="display:none;"></textarea>
+                        </div>
                     </div>
-                    @if (Model.AvailableTags.Any())
-                    {
-                        <div class="w-52 shrink-0 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-200 dark:border-slate-800 p-2.5">
-                            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-                                <i class="bi bi-tags text-xs"></i>
-                                <span>تگ‌های قابل استفاده</span>
+                    @* Sidebar Column (col-span-3): Categorized Placeholder Tags *@
+                    <div class="col-span-12 lg:col-span-3">
+                        <div class="erp-card p-2 max-h-[400px] overflow-y-auto">
+                            <div class="text-[9px] font-black text-slate-500 dark:text-slate-400 mb-2 px-1 flex items-center gap-1">
+                                <i class="bi bi-tags"></i> تگ‌های قابل جایگزاری
                             </div>
-                            <div class="space-y-2 max-h-80 overflow-y-auto">
-                                @* ── General Info Tags ── *@
-                                <div>
-                                    <div class="text-[8px] font-black text-teal-600 dark:text-teal-400 mb-1 px-1 flex items-center gap-1">
-                                        <i class="bi bi-info-circle"></i><span>اطلاعات کلی</span>
-                                    </div>
-                                    @foreach (var tag in Model.AvailableTags.Where(t => new[] { "{{ContractNumber}}","{{Title}}","{{ContractType}}","{{Description}}","{{Terms}}","{{Status}}","{{CompanyName}}","{{AssignedUser}}","{{StartDate}}","{{EndDate}}","{{SignDate}}" }.Contains(t.Tag)))
-                                    {
-                                        <button type="button" class="w-full text-right rounded px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:text-teal-600 dark:hover:text-teal-400 transition cursor-pointer border-0"
-                                                onclick="insertTagWysiwyg('@tag.Tag')"
-                                                title="@tag.Description">
-                                            <span class="font-bold">@tag.Tag</span>
-                                            <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
-                                        </button>
-                                    }
-                                </div>
-                                @* ── Parties Tags ── *@
-                                <div>
-                                    <div class="text-[8px] font-black text-blue-600 dark:text-blue-400 mb-1 px-1 flex items-center gap-1">
-                                        <i class="bi bi-people"></i><span>طرفین قرارداد</span>
-                                    </div>
-                                    @foreach (var tag in Model.AvailableTags.Where(t => new[] { "{{CustomerName}}","{{CustomerCompany}}","{{CustomerPhone}}","{{CustomerAddress}}","{{SecondPartyPhone}}" }.Contains(t.Tag)))
-                                    {
-                                        <button type="button" class="w-full text-right rounded px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer border-0"
-                                                onclick="insertTagWysiwyg('@tag.Tag')"
-                                                title="@tag.Description">
-                                            <span class="font-bold">@tag.Tag</span>
-                                            <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
-                                        </button>
-                                    }
-                                </div>
-                                @* ── Financial Info Tags ── *@
-                                <div>
-                                    <div class="text-[8px] font-black text-emerald-600 dark:text-emerald-400 mb-1 px-1 flex items-center gap-1">
-                                        <i class="bi bi-cash-stack"></i><span>اطلاعات مالی</span>
-                                    </div>
-                                    @foreach (var tag in Model.AvailableTags.Where(t => new[] { "{{TotalAmount}}","{{PaidAmount}}","{{RemainingBalance}}","{{PaymentStatus}}" }.Contains(t.Tag)))
-                                    {
-                                        <button type="button" class="w-full text-right rounded px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer border-0"
-                                                onclick="insertTagWysiwyg('@tag.Tag')"
-                                                title="@tag.Description">
-                                            <span class="font-bold">@tag.Tag</span>
-                                            <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
-                                        </button>
-                                    }
-                                </div>
+                            @* General / Parties *@
+                            <div class="mb-2">
+                                <div class="text-[8px] font-black text-blue-600 dark:text-blue-400 mb-1 px-1"><i class="bi bi-people"></i> طرفین</div>
+                                @foreach (var tag in Model.AvailableTags.Where(t => new[] { "{{CustomerName}}","{{CustomerCompany}}","{{CustomerPhone}}","{{CustomerAddress}}","{{SecondPartyPhone}}","{{CompanyName}}" }.Contains(t.Tag)))
+                                {
+                                    <button type="button" class="w-full text-right rounded px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer border-0" onclick="insertTagWysiwyg('@tag.Tag')" title="@tag.Description">
+                                        <span class="font-bold">@tag.Tag</span>
+                                        <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
+                                    </button>
+                                }
+                            </div>
+                            @* Financial *@
+                            <div class="mb-2">
+                                <div class="text-[8px] font-black text-emerald-600 dark:text-emerald-400 mb-1 px-1"><i class="bi bi-cash-stack"></i> اطلاعات مالی</div>
+                                @foreach (var tag in Model.AvailableTags.Where(t => new[] { "{{TotalAmount}}","{{PaidAmount}}","{{RemainingBalance}}","{{PaymentStatus}}" }.Contains(t.Tag)))
+                                {
+                                    <button type="button" class="w-full text-right rounded px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer border-0" onclick="insertTagWysiwyg('@tag.Tag')" title="@tag.Description">
+                                        <span class="font-bold">@tag.Tag</span>
+                                        <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
+                                    </button>
+                                }
+                            </div>
+                            @* Dates *@
+                            <div class="mb-2">
+                                <div class="text-[8px] font-black text-purple-600 dark:text-purple-400 mb-1 px-1"><i class="bi bi-calendar3"></i> تاریخ‌ها</div>
+                                @foreach (var tag in Model.AvailableTags.Where(t => new[] { "{{StartDate}}","{{EndDate}}","{{SignDate}}" }.Contains(t.Tag)))
+                                {
+                                    <button type="button" class="w-full text-right rounded px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:text-purple-600 dark:hover:text-purple-400 transition cursor-pointer border-0" onclick="insertTagWysiwyg('@tag.Tag')" title="@tag.Description">
+                                        <span class="font-bold">@tag.Tag</span>
+                                        <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
+                                    </button>
+                                }
+                            </div>
+                            @* Other *@
+                            <div>
+                                <div class="text-[8px] font-black text-amber-600 dark:text-amber-400 mb-1 px-1"><i class="bi bi-info-circle"></i> سایر</div>
+                                @foreach (var tag in Model.AvailableTags.Where(t => new[] { "{{ContractNumber}}","{{ContractType}}","{{AssignedUser}}","{{ResponsibleUser}}","{{Description}}","{{Terms}}","{{Status}}" }.Contains(t.Tag)))
+                                {
+                                    <button type="button" class="w-full text-right rounded px-2 py-1 text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:text-amber-600 dark:hover:text-amber-400 transition cursor-pointer border-0" onclick="insertTagWysiwyg('@tag.Tag')" title="@tag.Description">
+                                        <span class="font-bold">@tag.Tag</span>
+                                        <span class="block text-[8px] text-slate-400 dark:text-slate-500">@tag.DisplayName</span>
+                                    </button>
+                                }
                             </div>
                         </div>
-                    }
-                </div>
-                <div class="flex items-center gap-2">
-                    <input asp-for="IsDefault" class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/20" type="checkbox" />
-                    <label asp-for="IsDefault" class="text-[11px] text-slate-700 dark:text-slate-300 font-bold">به عنوان قالب پیش‌فرض</label>
+                    </div>
                 </div>
             </div>
             <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
@@ -286,7 +276,6 @@
         </form>
     </div>
 </div>
-
 @section Styles {
     <link rel="stylesheet" href="~/css/contracts-form.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/contracts-settings-style.css" asp-append-version="true" />

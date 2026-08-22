@@ -44,3 +44,8 @@
             color: #0369a1;
             font-weight: 700;
         }
+/* ── Jalali datepicker: prevent overflow clipping ── */
+        .jalali-datepicker-wrapper {
+            overflow: visible !important;
+            position: relative !important;
+        }

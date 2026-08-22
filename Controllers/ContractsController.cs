@@ -31,6 +31,36 @@ public class ContractsController : Controller
         return userId;
     }
 
+    /// <summary>
+    /// Converts a Persian (Shamsi) date string (e.g. 1403/05/29) to Gregorian DateTime.
+    /// Returns null for invalid, empty, or unparseable input.
+    /// </summary>
+    public static DateTime? ToGregorianDate(string persianDateStr)
+    {
+        if (string.IsNullOrWhiteSpace(persianDateStr)) return null;
+        try
+        {
+            var parts = persianDateStr.Split('/');
+            if (parts.Length != 3) return null;
+
+            // Convert Persian digits to English digits
+            string yearStr = string.Concat(parts[0].Select(c => char.GetNumericValue(c) >= 0 ? char.GetNumericValue(c).ToString() : c.ToString()));
+            string monthStr = string.Concat(parts[1].Select(c => char.GetNumericValue(c) >= 0 ? char.GetNumericValue(c).ToString() : c.ToString()));
+            string dayStr = string.Concat(parts[2].Select(c => char.GetNumericValue(c) >= 0 ? char.GetNumericValue(c).ToString() : c.ToString()));
+
+            int year = int.Parse(yearStr);
+            int month = int.Parse(monthStr);
+            int day = int.Parse(dayStr);
+
+            var pc = new System.Globalization.PersianCalendar();
+            return pc.ToDateTime(year, month, day, 0, 0, 0, 0);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  Index
     // ═══════════════════════════════════════════════════════════════
@@ -73,6 +103,22 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Create")]
     public async Task<IActionResult> Create(ContractCreateVM model, CancellationToken ct)
     {
+        // Safely convert Persian date display strings to Gregorian if the hidden DateTime fields are MinValue / uninitialized
+        if (model.StartDate == default || model.StartDate.Year < 1700)
+        {
+            var converted = ToGregorianDate(model.StartDateDisplay);
+            if (converted.HasValue) model.StartDate = converted.Value;
+        }
+        if ((!model.EndDate.HasValue || model.EndDate.Value.Year < 1700) && !string.IsNullOrWhiteSpace(model.EndDateDisplay))
+        {
+            var converted = ToGregorianDate(model.EndDateDisplay);
+            if (converted.HasValue) model.EndDate = converted.Value;
+        }
+        if ((!model.SignDate.HasValue || model.SignDate.Value.Year < 1700) && !string.IsNullOrWhiteSpace(model.SignDateDisplay))
+        {
+            var converted = ToGregorianDate(model.SignDateDisplay);
+            if (converted.HasValue) model.SignDate = converted.Value;
+        }
         if (!ModelState.IsValid)
         {
             var currentUserId = GetCurrentUserId();
@@ -270,11 +316,46 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Payment")]
     public async Task<IActionResult> AddPayment(ContractPaymentCreateVM model, CancellationToken ct)
     {
-        if (!ModelState.IsValid)
+        // If dates arrived as Persian date strings (from hidden fields that bypass model binding),
+        // parse them to Gregorian DateTime here as a safety net.
+        // The front-end JS converts before submit, but this guards against direct posts.
+        if (ModelState.IsValid == false)
         {
-            TempData["ErrorMessage"] = "اطلاعات پرداخت معتبر نیست.";
-            return RedirectToAction(nameof(Details), new { id = model.ContractId });
+            // Attempt to fix Persian-date strings that couldn't bind to DateTime
+            var paymentDateRaw = HttpContext.Request.Form["PaymentDate"].FirstOrDefault();
+            var dueDateRaw = HttpContext.Request.Form["DueDate"].FirstOrDefault();
+
+            if (paymentDateRaw != null && model.PaymentDate == default)
+            {
+                var parsed = ToGregorianDate(paymentDateRaw);
+                if (parsed.HasValue)
+                {
+                    model.PaymentDate = parsed.Value;
+                    ModelState.Remove("PaymentDate");
+                }
+            }
+            if (dueDateRaw != null && model.DueDate == null)
+            {
+                var parsed = ToGregorianDate(dueDateRaw);
+                if (parsed.HasValue)
+                {
+                    model.DueDate = parsed.Value;
+                    ModelState.Remove("DueDate");
+                }
+            }
+
+            // Re-validate after patching
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(" | ", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+                _logger.LogWarning("AddPayment ModelState invalid: {Errors}", errors);
+                TempData["ErrorMessage"] = "اطلاعات پرداخت معتبر نیست.";
+                return RedirectToAction(nameof(Details), new { id = model.ContractId });
+            }
         }
+
         try
         {
             var currentUser = GetCurrentUserId();
@@ -361,15 +442,17 @@ public class ContractsController : Controller
 
     [HttpGet("Contracts/GenerateDocument/{id}")]
     [PermissionAuthorize("Contract.View")]
-    public async Task<IActionResult> GenerateDocument(int id, int? templateId, CancellationToken ct)
+    public async Task<IActionResult> GenerateDocument(int id, CancellationToken ct)
     {
         try
         {
             var currentUserId = GetCurrentUserId();
-            var html = await _contractService.GenerateContractDocumentAsync(id, templateId, currentUserId, ct);
-            return Content(html, "text/html", System.Text.Encoding.UTF8);
+            var vm = await _contractService.GetDetailsViewModelAsync(id, currentUserId, ct);
+            ViewData["Title"] = "چاپ / PDF قرارداد";
+            return View("GenerateDocument", vm);
         }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -104,6 +104,8 @@ namespace OfficeAutomation.Models
         public DateTime CreatedAt { get; set; }
         public DateTime? ArchivedAt { get; set; }
         public string? ArchivedByUserName { get; set; }
+        /// <summary>Payments for dynamic row-level calculation in Index</summary>
+        public List<ContractPayment> Payments { get; set; } = new();
     }
 
     /// <summary>

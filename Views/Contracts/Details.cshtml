@@ -3,16 +3,46 @@
 @{
     ViewData["Title"] = "جزئیات قرارداد";
     var activeTab = ViewBag.ActiveTab ?? "overview";
+
+    // Safe date validation helpers
+    bool hasValidEndDate = Model.EndDate.HasValue && Model.EndDate.Value.Year > 1700;
+    bool hasValidStartDate = Model.StartDate.Year > 1700;
+    bool hasValidSignDate = Model.SignDate.HasValue && Model.SignDate.Value.Year > 1700;
+
+    int? remainingDays = hasValidEndDate ? (int?)(Model.EndDate.Value.Date - DateTime.Today).Days : null;
+
+    // Calculate payment stats from Payments collection
+    decimal paidAmount = Model.Payments?
+        .Where(p => p.Status == "Paid")
+        .Sum(p => p.Amount) ?? 0;
+    decimal totalAmount = Model.TotalAmount;
+    decimal remainingAmountCalc = totalAmount - paidAmount;
+    int paymentProgress = totalAmount > 0 ? (int)Math.Min(100, Math.Round((paidAmount / totalAmount) * 100)) : 0;
 }
 @functions {
+    /// <summary>
+    /// Safely converts a DateTime to Persian (Shamsi) date string.
+    /// Returns "ثبت نشده" for DateTime.MinValue, uninitialized dates, or years before 1700 (Gregorian)
+    /// to avoid PersianCalendar ArgumentOutOfRangeException.
+    /// </summary>
     string ToPersianDate(DateTime value)
     {
-        var cal = new PersianCalendar();
-        return $"{cal.GetYear(value):0000}/{cal.GetMonth(value):00}/{cal.GetDayOfMonth(value):00}";
+        if (value == DateTime.MinValue || value.Year < 1700)
+            return "ثبت نشده";
+        try
+        {
+            var cal = new PersianCalendar();
+            return $"{cal.GetYear(value):0000}/{cal.GetMonth(value):00}/{cal.GetDayOfMonth(value):00}";
+        }
+        catch
+        {
+            return "ثبت نشده";
+        }
     }
     string ToPersianDateNullable(DateTime? value)
     {
-        return value.HasValue ? ToPersianDate(value.Value) : "-";
+        if (!value.HasValue) return "ثبت نشده";
+        return ToPersianDate(value.Value);
     }
 }
 
@@ -122,33 +152,33 @@
                     </div>
                     <div class="rounded-lg bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 border border-emerald-100 dark:border-emerald-900/30 p-3">
                         <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">پرداخت شده</span>
-                        <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums mt-1">@Model.PaidAmount.ToString("N0")</div>
+                        <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums mt-1">@paidAmount.ToString("N0")</div>
                     </div>
                     <div class="rounded-lg bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/20 border border-rose-100 dark:border-rose-900/30 p-3">
                         <span class="text-[9px] font-bold text-rose-600 dark:text-rose-400">باقی مانده</span>
-                        <div class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums mt-1">@Model.RemainingBalance.ToString("N0")</div>
+                        <div class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums mt-1">@remainingAmountCalc.ToString("N0")</div>
                     </div>
                     <div class="rounded-lg bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-amber-100 dark:border-amber-900/30 p-3">
                         <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400">روزهای باقی‌مانده</span>
                         <div class="text-sm font-black text-amber-600 dark:text-amber-400 font-mono tabular-nums mt-1">
-                            @if (Model.EndDate.HasValue)
+                            @if (hasValidEndDate && remainingDays.HasValue)
                             {
-                                if (Model.DaysRemaining > 0)
+                                if (remainingDays.Value < 0)
                                 {
-                                    <text>@Model.DaysRemaining روز</text>
+                                    <span class="text-rose-600 dark:text-rose-400">منقضی شده (@Math.Abs(remainingDays.Value) روز پیش)</span>
                                 }
-                                else if (Model.DaysRemaining == 0)
+                                else if (remainingDays.Value == 0)
                                 {
                                     <text>امروز</text>
                                 }
                                 else
                                 {
-                                    <span class="text-rose-600 dark:text-rose-400">منقضی شده (@Math.Abs(Model.DaysRemaining) روز گذشته)</span>
+                                    <text>@remainingDays.Value روز باقی‌مانده</text>
                                 }
                             }
                             else
                             {
-                                <text>-</text>
+                                <text>تاریخ پایان مشخص نشده</text>
                             }
                         </div>
                     </div>
@@ -156,26 +186,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <div>
-                        <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-2">اطلاعات قرارداد</h3>
-                        <div class="space-y-2">
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">شماره قرارداد:</span><span class="font-bold text-slate-800 dark:text-slate-200">@Model.ContractNumber</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">عنوان:</span><span class="text-slate-700 dark:text-slate-300">@Model.Title</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">نوع:</span><span class="text-slate-700 dark:text-slate-300">@(Model.ContractType ?? "-")</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">وضعیت:</span>
-                                @{
-                                    var sBadge = Model.Status switch
-                                    {
-                                        var s when s == ContractStatuses.Active => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                                        var s when s == ContractStatuses.Completed => "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                                        var s when s == ContractStatuses.Draft => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-                                        var s when s == ContractStatuses.ExpiringSoon => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                                        var s when s == ContractStatuses.Expired => "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400",
-                                        _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                                    };
-                                }
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold @sBadge">@Model.Status</span>
-                            </div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">مشتری:</span><span class="text-slate-700 dark:text-slate-300">@(!string.IsNullOrEmpty(Model.CustomerName) ? Model.CustomerName : Model.ClientName)</span></div>
+                        
                             <div class="flex justify-between text-[11px]"><span class="text-slate-500">مسئول:</span><span class="text-slate-700 dark:text-slate-300">@(Model.ResponsibleUserName ?? "-")</span></div>
                             <div class="flex justify-between text-[11px]"><span class="text-slate-500">قالب:</span><span class="text-slate-700 dark:text-slate-300">@(Model.TemplateName ?? "بدون قالب")</span></div>
                             @if (Model.IsArchived)
@@ -185,43 +196,39 @@
                             }
                         </div>
                     </div>
-                    <div>
-                        <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-2">تاریخ‌های مهم</h3>
-                        <div class="space-y-2">
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ شروع:</span><span class="font-bold text-slate-800 dark:text-slate-200 font-mono">@ToPersianDate(Model.StartDate)</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ پایان:</span><span class="font-mono text-slate-700 dark:text-slate-300">@ToPersianDateNullable(Model.EndDate)</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ امضا:</span><span class="font-mono text-slate-700 dark:text-slate-300">@ToPersianDateNullable(Model.SignDate)</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">وضعیت پرداخت:</span>
-                                @{
-                                    var pBadge = Model.PaymentStatus switch
-                                    {
-                                        "FullyPaid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                                        "PartiallyPaid" => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                                        _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                                    };
-                                    var pText = Model.PaymentStatus switch
-                                    {
-                                        "FullyPaid" => "تسویه شده",
-                                        "PartiallyPaid" => "پرداخت جزئی",
-                                        _ => "پرداخت نشده"
-                                    };
-                                }
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold @pBadge">@pText</span>
+<div>
+                        <div class="space-y-3">
+                            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">تاریخ‌های مهم</h3>
+                            <div class="grid grid-cols-2 gap-y-2 text-sm">
+                                <span class="text-slate-500">تاریخ شروع:</span>
+                                <span class="font-medium text-slate-900 dark:text-white">@ToPersianDate(Model.StartDate)</span>
+                                <span class="text-slate-500">تاریخ پایان:</span>
+                                <span class="font-medium text-slate-900 dark:text-white">@ToPersianDateNullable(Model.EndDate)</span>
+                                <span class="text-slate-500">تاریخ امضا:</span>
+                                <span class="font-medium text-slate-900 dark:text-white">@ToPersianDateNullable(Model.SignDate)</span>
+                                <span class="text-slate-500">وضعیت پرداخت:</span>
+                                <div>
+                                    @if (remainingAmountCalc <= 0 && totalAmount > 0) {
+                                        <span class="px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-800 font-medium">تسویه شده</span>
+                                    } else if (paidAmount > 0) {
+                                        <span class="px-2 py-0.5 text-xs rounded bg-amber-100 text-amber-800 font-medium">پرداخت جزئی</span>
+                                    } else {
+                                        <span class="px-2 py-0.5 text-xs rounded bg-rose-100 text-rose-800 font-medium">پرداخت نشده</span>
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                @if (Model.TotalAmount > 0)
+                @if (totalAmount > 0)
                 {
-                    var paidPct = (int)(Model.PaidAmount * 100 / Model.TotalAmount);
                     <div class="mt-2">
                         <div class="flex justify-between text-[10px] text-slate-500 mb-1">
-                            <span>پیشرفت پرداخت</span>
-                            <span class="font-bold">@paidPct%</span>
+                            <span>پیشرفت پرداخت (@paidAmount.ToString("N0") از @totalAmount.ToString("N0"))</span>
+                            <span class="font-bold">@paymentProgress%</span>
                         </div>
                         <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                            <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: @paidPct%"></div>
+                            <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: @paymentProgress%"></div>
                         </div>
                     </div>
                 }
@@ -282,7 +289,7 @@
                         <h3 class="text-xs font-black text-slate-900 dark:text-white">پرداخت‌ها</h3>
                         @if (Model.CanEdit)
                         {
-                            <button type="button" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="addPaymentModal" onclick="openModal('addPaymentModal')">
+                            <button type="button" id="btnNewPayment" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="addPaymentModal">
                                 <i class="bi bi-plus-circle ml-1"></i>پرداخت جدید
                             </button>
                         }
@@ -392,7 +399,7 @@
                     <h3 class="text-xs font-black text-slate-900 dark:text-white">ضمیمه‌ها</h3>
                     @if (Model.CanEdit)
                     {
-                        <button type="button" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="uploadAttachmentModal" onclick="openModal('uploadAttachmentModal')">
+                        <button type="button" id="btnUploadAttachment" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="uploadAttachmentModal">
                             <i class="bi bi-cloud-upload ml-1"></i>بارگذاری فایل
                         </button>
                     }
@@ -517,14 +524,14 @@
 @* Add Payment Modal *@
 @if (Model.CanViewFinancials && Model.CanEdit)
 {
-    <div class="rhyno-modal-overlay" id="addPaymentModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:4px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
-            <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
+    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4" id="addPaymentModal">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-lg overflow-visible">
+            <div class="bg-gray-50 dark:bg-slate-800 px-4 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i class="bi bi-wallet2 text-teal-600 text-xs"></i>
-                    <span class="text-[11px] font-bold text-slate-900 dark:text-white">ثبت پرداخت جدید</span>
+                    <span class="text-sm font-bold text-gray-900 dark:text-white">ثبت پرداخت جدید</span>
                 </div>
-                <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('addPaymentModal')">&times;</button>
+                <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition cursor-pointer border-0 bg-transparent text-lg" data-close-modal>&times;</button>
             </div>
             <form asp-action="AddPayment" method="post" data-guard-submit>
                 @Html.AntiForgeryToken()
@@ -536,11 +543,11 @@
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تاریخ پرداخت</label>
-                        <input name="PaymentDate" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" required />
+                        <input name="PaymentDate" type="text" id="paymentDate" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input" placeholder="140X/MM/DD" autocomplete="off" required />
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تاریخ سررسید</label>
-                        <input name="DueDate" type="date" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        <input name="DueDate" type="text" id="paymentDueDate" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input" placeholder="140X/MM/DD" autocomplete="off" />
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">وضعیت</label>
@@ -572,7 +579,7 @@
                     <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700">
                         <i class="bi bi-check-lg ml-1"></i>ثبت پرداخت
                     </button>
-                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('addPaymentModal')">
+                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" data-close-modal>
                         <i class="bi bi-x-lg ml-1"></i>انصراف
                     </button>
                 </div>
@@ -584,14 +591,14 @@
 @* Upload Attachment Modal *@
 @if (Model.CanEdit)
 {
-    <div class="rhyno-modal-overlay" id="uploadAttachmentModal" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-        <div class="rhyno-modal-content" style="width:100%;max-width:480px;background:#fff;border-radius:4px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
-            <div class="flex items-center justify-between py-2 px-3 border-b border-slate-100 dark:border-slate-800">
+    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4" id="uploadAttachmentModal">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
+            <div class="bg-gray-50 dark:bg-slate-800 px-4 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i class="bi bi-cloud-upload text-teal-600 text-xs"></i>
-                    <span class="text-[11px] font-bold text-slate-900 dark:text-white">بارگذاری فایل</span>
+                    <span class="text-sm font-bold text-gray-900 dark:text-white">بارگذاری فایل</span>
                 </div>
-                <button type="button" class="rhyno-modal-close" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;" onclick="closeModal('uploadAttachmentModal')">&times;</button>
+                <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition cursor-pointer border-0 bg-transparent text-lg" data-close-modal>&times;</button>
             </div>
             <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data" data-guard-submit>
                 @Html.AntiForgeryToken()
@@ -614,7 +621,7 @@
                     <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700">
                         <i class="bi bi-cloud-upload ml-1"></i>بارگذاری
                     </button>
-                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" onclick="closeModal('uploadAttachmentModal')">
+                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" data-close-modal>
                         <i class="bi bi-x-lg ml-1"></i>انصراف
                     </button>
                 </div>
@@ -628,5 +635,6 @@
 }
 
 @section Scripts {
+    <script src="~/js/persian-date.min.js"></script>
     <script src="~/js/contracts-details-script.js" asp-append-version="true"></script>
 }

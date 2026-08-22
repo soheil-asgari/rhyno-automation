@@ -167,8 +167,20 @@
                                     <span class="inline-flex items-center rounded-md bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700">@(item.ContractType ?? "-")</span>
                                 </td>
                                 <td class="px-3 py-2 font-mono tabular-nums text-slate-800 dark:text-slate-200 font-bold">@item.TotalAmount.ToString("N0")</td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-emerald-600 dark:text-emerald-400">@item.PaidAmount.ToString("N0")</td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-rose-600 dark:text-rose-400">@item.RemainingBalance.ToString("N0")</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
+                                    @{
+                                        var paidSum = item.Payments?
+                                            .Where(p => p.Status == "Paid")
+                                            .Sum(p => p.Amount) ?? 0;
+                                    }
+                                    @paidSum.ToString("N0")
+                                </td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-rose-600 dark:text-rose-400">
+                                    @{
+                                        var remainingSum = item.TotalAmount - paidSum;
+                                    }
+                                    @remainingSum.ToString("N0")
+                                </td>
                                 <td class="px-3 py-2">
                                     @{
                                         var paymentBadge = item.PaymentStatus switch
@@ -277,4 +289,8 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/contracts-index-style.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <!-- Vanilla JS only — no jQuery -->
 }

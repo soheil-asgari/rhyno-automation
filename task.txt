@@ -1,143 +1,41 @@
-ACT TASKS FOR EXECUTION AGENT
-Global constraints for EVERY task: RTL Persian UI; no Bootstrap/no React; never rename/remove element ids, asp-fors, or data-* hooks used by JS; keep dark: variants; after touching tailwind.input.css/tailwind.config.js run npm run build:css; finish every task with dotnet build succeeding.
+[ACT URGENT FIX: REMOVE RESIDUAL JS 404, FIX MODAL DATEPICKER CLIPPING & BUBBLING]
 
-[ACT TASK 1]: Create ERP Compact Design System & fix global density root-cause
-Target Files: wwwroot/css/tailwind.input.css, wwwroot/css/site.css (create), tailwind.config.js, Views/Shared/_Layout.cshtml, Views/Shared/_TabLayout.cshtml
-Action: (a) In tailwind.input.css @layer base: change global input rule from min-height:38px !important; padding:.5rem .75rem !important; rounded-xl → height:28px; padding:0 8px; border-radius:3px; font-size:11px and focus ring-4 indigo → ring-1 teal-600/30 border-teal-600; compact headings (h1 15px/h2 13px/h3 12px/h4-h5 11px); compact .btn/.form-control overrides. (b) In @layer components re-density all .rhyno-* classes (rounded-2xl→rounded-[4px], table px-5 py-4→px-2 h-7/h-[26px], btn px-4 py-2→h-7 px-3 rounded-[3px], modal rounded-2xl→rounded-[4px], kpi p-4→p-2.5). (c) Add .erp-* component classes + dark variants exactly per Step-2 spec. (d) Add spacing '6.5': '1.625rem' to tailwind.config.js. (e) Create wwwroot/css/site.css with the plain-CSS mirror of .erp-* (so it works even before Tailwind rebuild) and add <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" /> after the tailwind.css link in BOTH _Layout.cshtml and _TabLayout.cshtml. (f) Run npm run build:css, then dotnet build.
-Prompt to give to Claude Code:
-"Implement the Rhyno ERP compact design system: edit wwwroot/css/tailwind.input.css to replace the 38px !important global input rule with 28px compact inputs (11px font, 3px radius, 0 8px padding, teal focus ring), compact the base headings, re-density all .rhyno-* component classes (cards/buttons/tables/modals/KPI to 3-4px radii and 26-28px heights), and add new .erp-input, .erp-select, .erp-textarea, .erp-label, .erp-btn, .erp-btn-primary, .erp-btn-danger, .erp-fieldset, .erp-table, .erp-card, .erp-card-header, .erp-toolbar, .erp-tab, .erp-modal, .erp-badge, .erp-page, .erp-empty classes per this spec: [paste Step-2 spec]. Add spacing['6.5']='1.625rem' to tailwind.config.js. Create wwwroot/css/site.css as a plain-CSS fallback copy of the .erp-* classes with dark-mode variants, and reference it after tailwind.css in Views/Shared/_Layout.cshtml and Views/Shared/_TabLayout.cshtml. Run npm run build:css and dotnet build. Do not change any markup ids or form bindings."
+Please apply the following direct fixes to `Views/Contracts/Details.cshtml` and related scripts:
 
-[ACT TASK 2]: Compact the shell — header, sidebar, tab bar, confirm dialog
-Target Files: Views/Shared/_Layout.cshtml, wwwroot/css/rahkaran-theme.css, wwwroot/css/shared-layout-style-1.css, wwwroot/css/shared-sidebar-style.css, wwwroot/js/tab-manager.js (only rendered class/size strings if needed)
-Action: Reduce header 52px→44px; notifications/user dropdowns → rounded-[4px], rows h-7 text-[11px]; confirm dialog → 4px radius, padding p-3, buttons .erp-btn; sidebar module-toggle/menu-item → h-[26px] text-[11px] px-2; keep rhynoTabBar/rhynoWorkspace ids; verify tab bar renders fixed dashboard correctly when no tabs open.
-Prompt to give to Claude Code:
-"Compact the Rhyno shell chrome to Rahkaran density: in rahkaran-theme.css reduce .rahkaran-header to 44px, shrink sidebar menu items to 26px height / 11px font, keep the tab system (.rhyno-tab*, .rhyno-tab-viewport) functionally identical but ensure 11px font and ~30px bar. In Views/Shared/_Layout.cshtml restyle the notifications dropdown, user menu and the #appConfirmDialog modal to 4px radius, 28px buttons (.erp-btn), 11px text — WITHOUT changing any ids, onclick handlers or Razor logic. Run dotnet build."
+---
 
-[ACT TASK 3]: Persistent Dashboard — Home/Index compact desk
-Target Files: Views/Home/Index.cshtml, wwwroot/css/home-index-style.css, wwwroot/css/home-dashboard.css, wwwroot/css/dashboard.css
-Action: Widget cards 76px height / 18px icons / 11px titles; KPI bar 28px; rk-panel headers h-7, list rows 26px; toolbar .erp-toolbar; keep home-index-script.js hooks (onlineUsersCount, changeBackground, addShortcut, addWidget).
-Prompt to give to Claude Code:
-"Refactor Views/Home/Index.cshtml (the persistent dashboard desk) to compact Rahkaran density: widget grid cards 76px with 18px icons and 11px titles, KPI strip 28px tall, alert/notification panels with 28px headers and 26px rows, toolbar links as 28px chips. Adjust home-index-style.css/home-dashboard.css/dashboard.css accordingly. Keep all element ids and JS onclick handlers. Run dotnet build."
+### 1. REMOVE RESIDUAL 404 SCRIPT REFERENCES
+- Search all `.cshtml` and `.js` files (especially `Details.cshtml` and `wwwroot/js/contracts-details-script.js`) for any leftover tag or code requesting `persian-datepicker.min.js` or `persian-date.min.js`.
+- Completely delete those `<script>` / `<link>` tags to eliminate the 404 MIME type error in the browser console.
 
-[ACT TASK 4]: Shared partials + global JS UI sizes
-Target Files: Views/Shared/_Breadcrumb.cshtml, _SectionHeader.cshtml, _SavedFiltersPanel.cshtml, _EmptyState.cshtml, _QuickActionsGrid.cshtml, _WorkflowDetailPanel.cshtml, _PreviewPanel.cshtml, _SummaryPanel.cshtml, _AuditTrailItem.cshtml, _ProgressIndicator.cshtml, _SkeletonLoader.cshtml, _TaxAiAssistantWidget.cshtml, _ProfileSettings.cshtml, Error.cshtml, AccessDenied.cshtml, Maintenance.cshtml, wwwroot/js/layout.js
-Action: Apply .erp-* classes to every partial (breadcrumb h-6, empty state py-6, workflow timeline 26px rows, skeleton 26px bars, slide-over w-80 with h-7 inputs); in layout.js shrink toast to text-[11px] px-3 py-1.5 rounded-[3px].
-Prompt to give to Claude Code:
-"Compact all shared partials in Views/Shared/ listed above to the ERP compact standard (11px text, 26-28px controls, 3-4px radii, .erp-* classes). In wwwroot/js/layout.js update the dynamically created toast element to compact sizes (11px font, 3px radius). Preserve all partial models, ids and classes that page scripts depend on. Run dotnet build."
+---
 
-[ACT TASK 5]: Contracts module (7 views)
-Target Files: Views/Contracts/Index.cshtml, Create.cshtml, Edit.cshtml, Details.cshtml, Dashboard.cshtml, Archive.cshtml, Settings.cshtml, wwwroot/css/contracts-form.css, wwwroot/css/contracts-*-style.css
-Action: Create/Edit → 3-step wizard kept, each step body becomes .erp-fieldset groups (طرف قرارداد/مالی/ملاحظات) with .erp-input, grids grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2, wizard circles 24px h-7 bar; Index/Archive/Dashboard → .erp-toolbar + .erp-table + fieldset filters; Details → compact tabs + .erp-modal dialogs; density-pass contracts-form.css (802 L) padding/radius values.
-Prompt to give to Claude Code:
-"Refactor all 7 Contracts views to compact Rahkaran ERP density: replace rounded-xl p-5/p-6 card wrappers with .erp-card/.erp-fieldset group boxes with overlay legends, apply .erp-input/.erp-select to every form control, convert list pages to .erp-table (28px header bg-slate-100, 26px rows, 11px text), compact the wizard header in Create/Edit to 24px step circles. Keep ids contractCreateForm, .wizard-step-btn, [data-step-panel] and all asp-for bindings intact. Density-pass contracts-form.css. Run dotnet build."
+### 2. FIX PAYMENT MODAL DATEINPUT & OVERFLOW CLIPPING (`Details.cshtml`)
+- In `#addPaymentModal`:
+  1. Change the payment date input from `<input type="date">` to a text input with a Jalali mask or Vanilla Jalali picker:
+     `<input type="text" id="paymentDueDate" name="DueDate" class="erp-input jalali-input" placeholder="140X/MM/DD" autocomplete="off" />`
+  2. Change modal container CSS classes from `overflow-hidden` or `overflow-y-auto` to **`overflow-visible`**:
+     Ensure `#addPaymentModal .modal-card` or the modal wrapper has `overflow: visible !important;` so the datepicker dropdown popup is NOT clipped at the bottom.
 
-[ACT TASK 6]: Financial core (5 views)
-Target Files: Views/Financial/Dashboard.cshtml, ChartOfAccounts.cshtml, Ledger.cshtml, LedgerOperations.cshtml, TrialBalance.cshtml, wwwroot/css/financial-pages.css, finance-ledger-operations.css, trial-balance.css, financial-dashboard.css
-Action: LedgerOperations voucher form → fieldsets (اطلاعات سند/طرف حساب/آیتم‌ها) + amount inputs text-left tabular-nums; ChartOfAccounts tree rows 26px + compact modals (25 refs); TrialBalance sticky 28px header; keep chart containers and all JS hooks.
-Prompt to give to Claude Code:
-"Compact the financial core views (Dashboard, ChartOfAccounts, Ledger, LedgerOperations, TrialBalance) to ERP density: fieldset-based voucher entry, .erp-table grids with 28px slate-100 headers and 26px rows, compact modals (4px radius, 28px buttons). Density-pass the four financial CSS files. Preserve every id used by financial-*script.js and chart.js canvas sizes. Run dotnet build."
+---
 
-[ACT TASK 7]: Financial invoices & tax reports (7 views)
-Target Files: Views/Financial/Invoices.cshtml, CreateInvoice.cshtml, EditInvoice.cshtml, VatDashboard.cshtml, SeasonalTax.cshtml, SeasonalTaxReport.cshtml, ReportingHub.cshtml, wwwroot/css/financial-vat-dashboard-style.css
-Action: Invoices list → .erp-toolbar (ثبت فاکتور/اکسل/چاپ as .erp-btn h-7), fieldset filters, .erp-table keeping data-pro-table; Create/Edit invoice line-items table 26px rows; keep financial-create-invoice-script.js hooks.
-Prompt to give to Claude Code:
-"Refactor the seven Financial invoice/tax views to compact density: toolbar buttons .erp-btn h-7, filter panel as .erp-fieldset with .erp-input h-7 text-[11px], data grids .erp-table (keep all data-pro-table attributes), invoice line-item editor as a 26px-row grid. Density-pass financial-vat-dashboard-style.css. Run dotnet build."
+### 3. FIX MONTH NAV AUTO-CLOSE & EVENT BUBBLING (`Details.cshtml` / JS)
+- **Modal Backdrop Listener Fix:**
+  Update the modal click / backdrop listener in Vanilla JS so it does NOT close when clicking inside the datepicker popup or month navigation arrows:
+  ```javascript
+  document.addEventListener('click', function (e) {
+      // Ignore clicks inside datepicker popups or calendar elements
+      if (e.target.closest('.datepicker-container') || e.target.closest('.jalali-datepicker') || e.target.closest('.pwt-datepicker-container')) {
+          return;
+      }
+      
+      // Modal backdrop closing logic
+      if (e.target.classList.contains('modal-backdrop') || e.target.hasAttribute('data-modal-overlay')) {
+          const modal = e.target.closest('.fixed');
+          if (modal) modal.classList.add('hidden');
+      }
+  });
+Stop Propagation on Calendar Controls:
+If using a Vanilla Jalali Datepicker instance, attach e.stopPropagation() and e.preventDefault() to calendar prev/next month buttons so month navigation clicks do not bubble up to close the modal.
 
-[ACT TASK 8]: Financial print views (normalize only)
-Target Files: Views/Financial/PrintInvoice.cshtml, PrintPayslip.cshtml, PrintWarehouseReceipt.cshtml, wwwroot/css/financial-print*.css
-Action: Do NOT apply ERP compact chrome; only ensure the new global input/heading base rules don't break print layout (add @media print guards / explicit sizes where needed). Verify A4 output.
-Prompt to give to Claude Code:
-"Audit the three Financial print views against the new compact global base styles in tailwind.input.css; where the new 11px/28px base rules leak into print output, pin explicit print-safe sizes inside the existing print CSS files. Do not redesign print layouts. Run dotnet build."
-
-[ACT TASK 9]: Warehouse dashboard & master data (10 views)
-Target Files: Views/Warehouse/Index.cshtml, Products.cshtml, CreateProduct.cshtml, EditProduct.cshtml, Warehouses.cshtml, CreateWarehouse.cshtml, EditWarehouse.cshtml, Stock.cshtml, Closing.cshtml, wwwroot/css/warehouse-dashboard.css, wwwroot/js/warehouse-index-script.js (untouched, hooks only)
-Action: Dashboard stat cards h-14 (values 13px), panels .erp-card-header, shortcuts as .erp-btn h-6; master-data lists .erp-table; product/warehouse forms .erp-fieldset + .erp-input.
-Prompt to give to Claude Code:
-"Compact the Warehouse dashboard and master-data views (Index, Products, CreateProduct, EditProduct, Warehouses, CreateWarehouse, EditWarehouse, Stock, Closing) to ERP density: .erp-card/.erp-fieldset wrappers, .erp-input controls, .erp-table grids, 26px list rows. Density-pass warehouse-dashboard.css. Keep all ids used by warehouse-*script.js. Run dotnet build."
-
-[ACT TASK 10]: Warehouse documents (11 views)
-Target Files: Views/Warehouse/Receipts.cshtml, CreateReceipt.cshtml, ReceiptDetails.cshtml, Issuances.cshtml, CreateIssuance.cshtml, IssuanceDetails.cshtml, TransferRequests.cshtml, CreateTransferRequest.cshtml, TransferRequestDetails.cshtml, Countings.cshtml, CreateCounting.cshtml, CountingDetails.cshtml, wwwroot/css/warehouse-forms.css
-Action: Document forms → fieldsets + line-item 26px grids; detail pages → compact _WorkflowDetailPanel + action toolbars h-7; lists → .erp-table; keep workflow decision button ids.
-Prompt to give to Claude Code:
-"Refactor all Warehouse document views (receipts, issuances, transfer requests, countings — lists, create forms, detail pages) to compact ERP density: .erp-fieldset form groups, .erp-input controls, .erp-table line items with 26px rows, .erp-toolbar action bars, compact workflow decision panels. Preserve all form ids and workflow decision hooks. Density-pass warehouse-forms.css. Run dotnet build."
-
-[ACT TASK 11]: HumanCapital personnel (4 views)
-Target Files: Views/HumanCapital/Index.cshtml, Create.cshtml, Edit.cshtml, Details.cshtml, wwwroot/css/human-capital.css, human-capital-index.css, human-capital-details.css
-Action: Create/Edit → fieldsets (مشخصات فردی/شغلی/حقوق و دستمزد/بانک و بیمه) with .erp-input; Index list + stat row compact; Details tabs h-7. jQuery human-capital-create-script.js is active — do not change any field ids.
-Prompt to give to Claude Code:
-"Compact the four HumanCapital personnel views to Rahkaran density: fieldset group boxes, .erp-input controls in grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 layouts, .erp-table lists, compact detail tabs. human-capital-create-script.js uses jQuery and field ids — keep every id/asp-for intact. Density-pass the three human-capital CSS files. Run dotnet build."
-
-[ACT TASK 12]: HumanCapital sub-modules + Payroll (13 views)
-Target Files: Views/HumanCapital/Contracts.cshtml, CreateContract.cshtml, Leaves.cshtml, CreateLeave.cshtml, Loans.cshtml, CreateLoan.cshtml, Attendance.cshtml, CreateAttendance.cshtml, Reports.cshtml, ModulePlaceholder.cshtml, Views/Payroll/Index.cshtml, Create.cshtml, Details.cshtml
-Action: Standard [L]/[F]/[D] compaction; payroll factors grid 26px; placeholder page minimal centered .erp-card.
-Prompt to give to Claude Code:
-"Compact the HumanCapital sub-module views (employment contracts, leaves, loans, attendance, reports, placeholder) and all three Payroll views to ERP density with .erp-fieldset forms, .erp-input controls and .erp-table grids (26px rows). Preserve JS hooks (leaves-create-script, human-capital-create-contract-script, payroll-create-script). Run dotnet build."
-
-[ACT TASK 13]: Letters + Leaves modules (10 views)
-Target Files: Views/Letters/Index.cshtml, Create.cshtml (CKEditor inside), Edit.cshtml, Details.cshtml, Delete.cshtml, Views/Leaves/Index.cshtml, Create.cshtml, Edit.cshtml, Details.cshtml, Delete.cshtml, CSS: Letter.css, letters-index*.css, letters-details-style.css, leave-*.css
-Action: Letters index filters + table compact; Create keeps CKEditor instance (only shrink surrounding padding/header); Details keeps _WorkflowDetailPanel; Leaves CRUD standard; Delete views → compact confirm cards.
-Prompt to give to Claude Code:
-"Refactor the Letters and Leaves modules (10 views) to compact density. In Letters/Create.cshtml keep the CKEditor initialization exactly as-is and only compact the surrounding chrome. Use .erp-fieldset, .erp-input, .erp-table, .erp-toolbar. Leave leave-handler.js/letters-*.js DOM hooks intact. Density-pass Letter.css/letters/leave CSS files. Run dotnet build."
-
-[ACT TASK 14]: Bimeh + Waybill (10 views)
-Target Files: Views/Bimeh/* (Index, Create, Edit, Details, Delete), Views/Waybill/* (Index, Create, Edit, Details, Delete), wwwroot/css/Bimeh.css, Waybill.css, bimeh-create-style.css, wwwroot/js/bimeh-create-script.js, bimeh-edit-script.js, insurance-form.js
-Action: Standard CRUD compaction; insurance premium calculation fields keep ids; waybill form fieldsets.
-Prompt to give to Claude Code:
-"Compact the Bimeh (insurance) and Waybill modules — all 10 CRUD views — to ERP density (.erp-fieldset, .erp-input, .erp-table, 26px rows). Insurance calculation scripts (insurance-form.js, bimeh-*-script.js) depend on field ids — preserve them. Density-pass Bimeh.css/Waybill.css. Run dotnet build."
-
-[ACT TASK 15]: Commercial module (8 views)
-Target Files: Views/Commercial/InvoiceGrid.cshtml, Details.cshtml, Quotations.cshtml, QuotationEditor.cshtml, Parties.cshtml, PartyEditor.cshtml, ReturnsGrid.cshtml, CreateReturn.cshtml, wwwroot/js/commercial-create-return-script.js, commercial-quotation-editor-script.js
-Action: Grids → .erp-table; editors → fieldsets; party editor panel compact.
-Prompt to give to Claude Code:
-"Refactor the 8 Commercial views (invoice grid, quotations + editor, parties + editor, returns grid + create return, details) to compact ERP density with .erp-table, .erp-fieldset, .erp-input, .erp-toolbar. Preserve ids used by the two commercial scripts. Run dotnet build."
-
-[ACT TASK 16]: Base data & users (10 views)
-Target Files: Views/Employers/Index|Create|Edit.cshtml, Views/Vendors/Index|Create|Edit.cshtml, Views/Departments/Index|Create.cshtml, Views/Users/Index|Create.cshtml, wwwroot/js/users-create-script.js
-Action: Simple master-data lists → .erp-table + toolbar; create/edit forms → single .erp-fieldset + .erp-input.
-Prompt to give to Claude Code:
-"Compact the Employers, Vendors, Departments and Users views (10 files) to ERP density: list pages with .erp-toolbar + .erp-table (28px header, 26px rows), forms as one .erp-fieldset with .erp-input controls. Keep users-create-script.js hooks. Run dotnet build."
-
-[ACT TASK 17]: Security + DocumentArchive + WorkInbox (9 views)
-Target Files: Views/Security/Index|Matrix|WorkflowBuilder|WorkflowRoutes.cshtml, Views/DocumentArchive/Index|Versions.cshtml, Views/WorkInbox/Index|Kanban.cshtml, CSS: security*.css, work-inbox.css, JS: security-matrix-script.js, security-workflow-builder-script.js, work-inbox-*-script.js, wwwroot/js/workflow/workflow-builder.js
-Action: Matrix cells 24px; workflow builder canvas chrome compact (do not touch graph logic); document archive list + version timeline compact; Kanban cards p-2 text-[11px], columns w-64.
-Prompt to give to Claude Code:
-"Compact Security (Index, Matrix, WorkflowBuilder, WorkflowRoutes), DocumentArchive (Index, Versions) and WorkInbox (Index, Kanban) views to ERP density: permission matrix cells 24px, workflow builder toolbars h-7 (keep canvas logic), archive tables .erp-table, kanban cards 11px text with 8px padding. Preserve all script DOM hooks. Density-pass security/work-inbox CSS. Run dotnet build."
-
-[ACT TASK 18]: Tax + Mowadiyan (6 views)
-Target Files: Views/TaxAnalytics/Assistant.cshtml, Views/TaxAnalytics/Insights.cshtml, Views/TaxAudit/Index.cshtml, Views/Mowadiyan/Index.cshtml, Reconciliation.cshtml, Settings.cshtml, CSS: tax-analytics.css, tax-audit.css, mowadiyan.css, JS: tax-assistant.js, tax-audit.js, mowadiyan-*-script.js
-Action: Assistant chat bubbles 26px lines + h-7 composer; reconciliation grid + modals (11 refs) compact; settings fieldsets.
-Prompt to give to Claude Code:
-"Refactor the Tax and Mowadiyan views (6 files) to compact density: tax assistant chat with 11px bubbles and 28px composer, insights/tax-audit grids .erp-table, Mowadiyan reconciliation modals compact (4px radius), settings as .erp-fieldset. Preserve mowadiyan/tax script hooks. Density-pass the three module CSS files. Run dotnet build."
-
-[ACT TASK 19]: Dashboards & BI group (12 views)
-Target Files: Views/ManagementDashboard/Index|Overview.cshtml, Views/AuditDashboard/Index.cshtml, Views/InvoiceDashboard/Index|Detail.cshtml, Views/InvoiceIntake/Index.cshtml, Views/IntakeAutomation/Index.cshtml, Views/ProcessAnalysis/Index.cshtml, Views/Reports/Index.cshtml, Views/OrganizationCalendar/Index.cshtml, Views/AiAssistant/Index.cshtml, Views/Search/Index.cshtml, Views/Notifications/Index.cshtml, CSS: management-dashboard.css, audit-dashboard-index-style.css, invoice-dashboard.css, invoice-intake.css, intake-automation.css, process-analysis-index-style.css, reports.css, organization-calendar-index-style.css, notifications.css, aiassistant.css
-Action: KPI cards p-2.5 / values 13px; chart boxes keep canvas sizes; list rows 26px; calendar cells compact; invoice-dashboard.js is jQuery-heavy → markup-only edits, ids intact.
-Prompt to give to Claude Code:
-"Compact all 12 dashboard/BI/analytics views to ERP density: KPI metric cards with 11px labels and 13px values, .erp-table lists with 26px rows, compact report tiles, compact notification rows. invoice-dashboard.js uses jQuery — change markup classes only, never ids. Keep chart.js canvas containers. Density-pass the listed CSS files. Run dotnet build."
-
-[ACT TASK 20]: Settings hub (7 views + 2,251-line CSS)
-Target Files: Views/Settings/Index.cshtml, _GeneralSettings.cshtml, _ProfileSecuritySettings.cshtml, _SystemConnectivitySettings.cshtml, _UiPreferencesSettings.cshtml, _BrandingSettings.cshtml, TwoFactorSetup.cshtml, wwwroot/css/settings.css, JS: settings-hub.js, settings-index-script.js, settings-branding-settings-script.js, settings-two-factor-setup-script.js
-Action: Tab nav h-7 text-[11px] (keep #settings-tab + data-target + .tab-pane mechanics); every pane as .erp-fieldset sections; branding previews compact; two-factor QR card compact; systematic density pass over settings.css (padding/radius/font overrides).
-Prompt to give to Claude Code:
-"Refactor the Settings hub: compact the tab navigation in Settings/Index.cshtml to 28px tabs / 11px font while keeping settings-hub.js selectors (#settings-tab, data-target, .tab-btn, .tab-pane) untouched; convert all five settings partials and TwoFactorSetup to .erp-fieldset group boxes with .erp-input controls; then perform a full density pass over wwwroot/css/settings.css (2,251 lines) reducing paddings/radii/font sizes to the compact standard. Run dotnet build."
-
-[ACT TASK 21]: Identity Area + Admin Pages (8 files)
-Target Files: Areas/Identity/Pages/Account/Login.cshtml, Register.cshtml, ForgotPassword.cshtml, Logout.cshtml, Areas/Identity/Pages/Shared/_LoginPartial.cshtml, Pages/Admin/AuditLogs.cshtml, Pages/_LoginPartial.cshtml, Pages/Shared/_LoginPartial.cshtml, CSS: account-login-style.css, Login.css, account-forgotpassword-style.css, admin-audit-logs-style.css
-Action: Keep branding/visual panels; compact form controls to 28px/11px/3px radius; audit logs → .erp-table. Files are UTF-8 Persian — read/write with explicit UTF-8 encoding to avoid mojibake.
-Prompt to give to Claude Code:
-"Compact the Identity pages (Login, Register, ForgotPassword, Logout) and Pages/Admin/AuditLogs to ERP density: 28px inputs, 11px text, 3px radii, compact .erp-btn submit buttons — keeping the login branding/visual panels and all asp-page handlers. IMPORTANT: these files contain Persian UTF-8 text; preserve encoding exactly. Density-pass the four auth/admin CSS files. Run dotnet build."
-
-[ACT TASK 22]: Final QA sweep, dark mode/RTL, dead-asset report
-Target Files: all wwwroot/css/*-style.css not yet passed, Views/** spot-check, wwwroot/js/site.js (dead), wwwroot/js/dataTables*.js (unused), Views/Shared/_Sidebar.cshtml (unused)
-Action: Grep-verify zero remaining rounded-2xl/h-10/py-3.5/min-height: 38px in app CSS (exclude print CSS/libs); verify dark-mode variants of .erp-*; verify RTL alignment; confirm npm run build:css + dotnet build clean; produce cleanup report (dead site.js, unused DataTables assets, unused _Sidebar.cshtml) — delete only on explicit approval.
-Prompt to give to Claude Code:
-"Perform the final QA sweep for the Rhyno compact refactor: search Views/** and wwwroot/css/** for leftover spacious patterns (rounded-2xl, rounded-xl outside print/libs, h-10, h-11, h-12, p-6, p-8, py-3.5, min-height: 38px, px-4 py-3 table cells) and fix any stragglers to the .erp-* standard; verify .erp-* dark-mode variants and RTL alignment; run npm run build:css and dotnet build; then report dead assets (wwwroot/js/site.js, unused dataTables files, unused Views/Shared/_Sidebar.cshtml) without deleting them."
-
-Summary
-I performed a full read-only audit of the repository (no files modified) and produced the execution blueprint above. Key takeaways:
-
-Root cause identified: the spacious "accessibility" look comes from wwwroot/css/tailwind.input.css global base rules (38px !important inputs, rounded-xl) and the glassmorphic .rhyno-* component layer — fixing these in Act Task 1 instantly densifies the whole app before per-view work begins.
-site.css does not exist yet — Task 1 creates it and wires it into both _Layout.cshtml and _TabLayout.cshtml.
-The Rahkaran shell already exists (tab manager, persistent dashboard, dark header), so Task 2 is a density pass, not a rebuild.
-152 views inventoried across 25 modules, with a per-file matrix and 22 atomic, dependency-ordered Act tasks, each formatted for direct copy-paste into Claude Code.
-Safety constraints baked into every task: jQuery stays (6 scripts depend on it), no Bootstrap, all element ids/form bindings preserved, print views exempt, UTF-8 Persian encoding protected, and mandatory npm run build:css + dotnet build verification per task.
+Run dotnet build, refresh the browser with Ctrl + F5, and verify that console errors are gone and the modal datepicker opens without clipping.

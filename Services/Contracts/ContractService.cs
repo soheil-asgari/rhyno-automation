@@ -233,6 +233,7 @@ public sealed class ContractService : IContractService
         var query = _context.Contracts.AsNoTracking()
             .Include(c => c.AssignedUser)
             .Include(c => c.Customer)
+            .Include(c => c.Payments)
             .AsQueryable();
 
         // Visibility enforcement
@@ -310,7 +311,8 @@ public sealed class ContractService : IContractService
                 AssignedUserId = c.AssignedUserId,
                 IsArchived = c.IsArchived,
                 IsOwnedByCurrentUser = c.AssignedUserId == currentUserId || c.CreatedByUserId == currentUserId,
-                CreatedAt = c.CreatedAt
+                CreatedAt = c.CreatedAt,
+                Payments = c.Payments.ToList()
             }).ToListAsync(ct);
 
         // Summary stats
@@ -375,7 +377,17 @@ public sealed class ContractService : IContractService
         var c = await query.FirstOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new KeyNotFoundException($"Contract {id} not found.");
 
-        var daysRemaining = c.EndDate.HasValue ? (c.EndDate.Value.Date - DateTime.Today).Days : 0;
+        // SAFE: Compute DaysRemaining only when EndDate is valid (not null, not MinValue, year >= 1700).
+        // This prevents PersianCalendar / date arithmetic exceptions downstream.
+        int daysRemaining = 0;
+        if (c.EndDate.HasValue && c.EndDate.Value != DateTime.MinValue && c.EndDate.Value.Year >= 1700)
+        {
+            daysRemaining = (c.EndDate.Value.Date - DateTime.Today).Days;
+        }
+        else
+        {
+            daysRemaining = 0; // No valid end date → no remaining days to display
+        }
 
         return new ContractDetailsVM
         {
