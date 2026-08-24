@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
 using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
@@ -15,6 +15,8 @@ public sealed class ContractService : IContractService
     private readonly IAuditLogger _auditLogger;
     private readonly ITemplateRenderingService _templateRenderer;
     private readonly ITenantSettingsService _tenantSettings;
+    private readonly IVersionService _versionService;
+    private readonly IContractAccountingService _contractAccounting;
 
     public ContractService(
         OfficeDbContext context,
@@ -22,7 +24,9 @@ public sealed class ContractService : IContractService
         ILogger<ContractService> logger,
         IAuditLogger auditLogger,
         ITemplateRenderingService templateRenderer,
-        ITenantSettingsService tenantSettings)
+        ITenantSettingsService tenantSettings,
+        IVersionService versionService,
+        IContractAccountingService contractAccounting)
     {
         _context = context;
         _userManager = userManager;
@@ -30,6 +34,8 @@ public sealed class ContractService : IContractService
         _auditLogger = auditLogger;
         _templateRenderer = templateRenderer;
         _tenantSettings = tenantSettings;
+        _versionService = versionService;
+        _contractAccounting = contractAccounting;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -370,7 +376,8 @@ public sealed class ContractService : IContractService
             .Include(x => x.Attachments)
             .Include(x => x.AuditLogs).ThenInclude(al => al.User)
             .Include(x => x.ArchivedByUser)
-            .Include(x => x.Attachments).ThenInclude(a => a.UploadedByUser);
+            .Include(x => x.Attachments).ThenInclude(a => a.UploadedByUser)
+            .Include(x => x.Amendments).ThenInclude(a => a.CreatedByUser);
 
         query = ApplyVisibilityFilter(query, currentUserId, isAdmin);
 
@@ -441,8 +448,92 @@ public sealed class ContractService : IContractService
                 Id = al.Id, UserName = al.User != null ? al.User.FullName ?? al.User.UserName ?? "نامشخص" : "نامشخص",
                 Action = al.Action, OldStatus = al.OldStatus, NewStatus = al.NewStatus,
                 Description = al.Description, CreatedAt = al.CreatedAt
+            }).ToList(),
+            LifecycleSteps = BuildLifecycleSteps(c.AuditLogs),
+            Amendments = c.Amendments.OrderByDescending(a => a.CreatedAt).Select(a => new AmendmentListItemVM
+            {
+                Id = a.Id,
+                AmendmentType = a.AmendmentType,
+                AmendmentNumber = a.AmendmentNumber,
+                Title = a.Title,
+                Description = a.Description,
+                AmountChange = a.AmountChange,
+                NewTotalAmount = a.NewTotalAmount,
+                EndDateChangeDays = a.EndDateChangeDays,
+                NewEndDate = a.NewEndDate,
+                EffectiveDate = a.EffectiveDate,
+                Status = a.Status,
+                CreatedByUserName = a.CreatedByUser != null ? a.CreatedByUser.FullName ?? a.CreatedByUser.UserName ?? "" : "",
+                CreatedAt = a.CreatedAt,
+                CreatedAtText = ToPersianDate(a.CreatedAt)
             }).ToList()
         };
+    }
+
+    /// <summary>
+    /// Builds a data-driven lifecycle stepper step list from the contract's audit log entries.
+    /// Maps StatusChanged audit log entries to lifecycle steps, recording timestamps, actors,
+    /// and descriptions. Detects rejection cycles and marks them with RejectionCount.
+    /// </summary>
+    private static List<LifecycleStepVM> BuildLifecycleSteps(ICollection<ContractAuditLog> auditLogs)
+    {
+        // Canonical lifecycle order (status key → display label → icon)
+        var lifecycleMap = new (string key, string label, string icon)[]
+        {
+            (ContractStatuses.Draft,            "پیش‌نویس",          "bi-pencil"),
+            (ContractStatuses.PendingApproval,  "در انتظار تایید",   "bi-clock"),
+            (ContractStatuses.Active,           "فعال",              "bi-check-circle"),
+            (ContractStatuses.ExpiringSoon,     "در شرف انقضا",      "bi-exclamation-triangle"),
+            (ContractStatuses.Expired,          "منقضی شده",         "bi-calendar-x"),
+        };
+
+        // Get status-transition audit logs, ordered chronologically
+        var transitions = auditLogs
+            .Where(al => al.Action == "StatusChanged" && al.NewStatus != null)
+            .OrderBy(al => al.CreatedAt)
+            .ToList();
+
+        // Determine the most recent transition for each target status
+        var latestPerStatus = transitions
+            .GroupBy(al => al.NewStatus!)
+            .ToDictionary(g => g.Key, g => g.Last());
+
+        // Count how many times each status was the target (to detect rejection cycles)
+        var transitionCounts = transitions
+            .GroupBy(al => al.NewStatus!)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        // Determine which status is current: the last transition's NewStatus, or the contract's Status
+        string? currentStatus = transitions.LastOrDefault()?.NewStatus;
+
+        var steps = new List<LifecycleStepVM>();
+        foreach (var (key, label, icon) in lifecycleMap)
+        {
+            var isCompleted = latestPerStatus.ContainsKey(key);
+            var isCurrent = key == currentStatus;
+            var count = transitionCounts.GetValueOrDefault(key, 0);
+            var hasRejection = count > 1; // More than one entry = was rejected and re-entered
+
+            ContractAuditLog? entry = null;
+            latestPerStatus.TryGetValue(key, out entry);
+
+            steps.Add(new LifecycleStepVM
+            {
+                StatusKey = key,
+                Label = label,
+                Icon = icon,
+                IsCompleted = isCompleted,
+                IsCurrent = isCurrent,
+                CompletedAt = entry?.CreatedAt,
+                CompletedByUserName = entry?.User?.FullName ?? entry?.User?.UserName,
+                Description = entry?.Description,
+                RejectionReason = hasRejection ? $"این مرحله {count} بار ثبت شده است (بازگشت/تکرار)." : null,
+                RejectionCount = hasRejection ? count : 0,
+                ApprovalDecision = null // Approval data can be hydrated separately if needed
+            });
+        }
+
+        return steps;
     }
 
     public async Task<ContractCreateVM> BuildCreateViewModelAsync(string currentUserId, CancellationToken ct = default)
@@ -542,6 +633,11 @@ public sealed class ContractService : IContractService
 
         _context.Contracts.Add(contract);
         await _context.SaveChangesAsync(ct);
+
+        // Create initial version 1.0 snapshot
+        await _versionService.CreateVersionSnapshotAsync(
+            contract, currentUserId, "Created", "قرارداد ایجاد شد",
+            isMajor: true, skipIfUnchanged: false, ct: ct);
 
         // Log creation
         await AddAuditLogAsync(contract.Id, currentUserId, "Created", null, contract.Status, "قرارداد ایجاد شد", ct);
@@ -648,6 +744,22 @@ public sealed class ContractService : IContractService
             c.PaymentStatus = PaymentStatuses.Unpaid;
 
         await _context.SaveChangesAsync(ct);
+
+        // Create version snapshot after update
+        var isStatusChange = oldStatus != model.Status;
+        var changeDescription = isStatusChange
+            ? $"تغییر وضعیت از {oldStatus} به {model.Status}"
+            : "قرارداد ویرایش شد";
+        await _versionService.CreateVersionSnapshotAsync(
+            c, currentUserId, isStatusChange ? "StatusChange" : "Edited", changeDescription,
+            isMajor: false, skipIfUnchanged: true, ct: ct);
+
+        // Log status change if changed
+// ── Accrual accounting: book deferred revenue when contract becomes Active ──
+        if (oldStatus != ContractStatuses.Active && model.Status == ContractStatuses.Active)
+        {
+            await _contractAccounting.RecordDeferredRevenueAsync(c, currentUserId, ct);
+        }
 
         // Log status change if changed
         if (oldStatus != model.Status)
@@ -857,6 +969,13 @@ public sealed class ContractService : IContractService
         await _context.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
+// ── Accounting integration: create accrual-basis journal entry ──
+        if (model.Status == "Paid")
+        {
+            await _contractAccounting.RecordCashReceiptAsync(contract, payment, currentUserId, ct);
+        }
+
+        // Payment audit detail: capture actor, payment ID, contract ID, operation,
         // Payment audit detail: capture actor, payment ID, contract ID, operation,
         // timestamp, and the previous/new PaidAmount for traceability.
         await AddAuditLogAsync(
@@ -907,6 +1026,13 @@ public sealed class ContractService : IContractService
         await _context.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
+// ── Accounting integration: reverse the payment journal entry ──
+        if (payment.Status == "Paid" && contract != null)
+        {
+            await _contractAccounting.RevertCashReceiptAsync(contract, payment, currentUserId, ct);
+        }
+
+        // Payment audit detail: capture actor, payment ID, contract ID, operation,
         // Payment audit detail: capture actor, payment ID, contract ID, operation,
         // timestamp, and the previous/new PaidAmount for traceability.
         await AddAuditLogAsync(
@@ -1469,6 +1595,45 @@ public sealed class ContractService : IContractService
         return _templateRenderer.RenderPreview(template.HtmlContent);
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    //  Accounting Backfill
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Backfill: ايجاد سند درآمد معوق برای قراردادهای فعال پيش از اين قابليت.
+    /// يک‌بار اجرا می‌شود.
+    /// </summary>
+    public async Task<(int Updated, int Errors)> BackfillDeferredRevenueForExistingAsync(string currentUserId, CancellationToken ct = default)
+    {
+        var activeContracts = await _context.Contracts
+            .Where(c => c.Status == ContractStatuses.Active && c.TotalAmount > 0)
+            .ToListAsync(ct);
+
+        int updated = 0, errors = 0;
+
+        foreach (var contract in activeContracts)
+        {
+            try
+            {
+                await _contractAccounting.RecordDeferredRevenueAsync(contract, currentUserId, ct);
+                updated++;
+                _logger.LogInformation("Backfill: deferred revenue booked for contract {Id} ({Number}).",
+                    contract.Id, contract.ContractNumber);
+            }
+            catch (Exception ex)
+            {
+                errors++;
+                _logger.LogError(ex, "Backfill failed for contract {Id} ({Number}).", contract.Id, contract.ContractNumber);
+            }
+        }
+
+        _logger.LogInformation(
+            "Deferred revenue backfill completed: {Updated} updated, {Errors} errors out of {Total} contracts.",
+            updated, errors, activeContracts.Count);
+
+        return (updated, errors);
+    }
+
     private static string GetDefaultTemplateHtml()
     {
         return @"<!DOCTYPE html>
@@ -1530,8 +1695,18 @@ public sealed class ContractService : IContractService
         var expiringSoon = await query.CountAsync(c => c.Status == ContractStatuses.ExpiringSoon, ct);
 
         var totalAmount = await query.SumAsync(c => c.TotalAmount, ct);
-        var totalPaid = await query.SumAsync(c => c.PaidAmount, ct);
 
+        // Compute TotalPaid from the actual ContractPayments table (subquery) rather than
+        // relying on the denormalized Contract.PaidAmount column, so the dashboard always
+        // reflects the true sum of all paid payments even when the denormalized field is
+        // stale (e.g. after a direct DB update that bypassed AddPaymentAsync/DeletePaymentAsync).
+        var contractIds = await query.Select(c => c.Id).ToListAsync(ct);
+        var totalPaid = await _context.ContractPayments
+            .Where(p => contractIds.Contains(p.ContractId) && p.Status == "Paid")
+            .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
+
+        // Payment status counts: compute from the denormalized PaymentStatus field on Contract
+        // (this is kept in sync by AddPaymentAsync / DeletePaymentAsync).
         var fullyPaid = await query.CountAsync(c => c.PaymentStatus == PaymentStatuses.FullyPaid && c.TotalAmount > 0, ct);
         var partiallyPaid = await query.CountAsync(c => c.PaymentStatus == PaymentStatuses.PartiallyPaid && c.TotalAmount > 0, ct);
         var unpaid = await query.CountAsync(c => (c.PaymentStatus == PaymentStatuses.Unpaid || c.PaidAmount <= 0) && c.TotalAmount > 0, ct);
@@ -1650,5 +1825,17 @@ public sealed class ContractService : IContractService
         existing.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync(ct);
         return existing;
+    }
+private static string ToPersianDate(DateTime dt)
+    {
+        try
+        {
+            var pc = new System.Globalization.PersianCalendar();
+            return $"{pc.GetYear(dt):0000}/{pc.GetMonth(dt):00}/{pc.GetDayOfMonth(dt):00}";
+        }
+        catch
+        {
+            return dt.ToString("yyyy/MM/dd");
+        }
     }
 }

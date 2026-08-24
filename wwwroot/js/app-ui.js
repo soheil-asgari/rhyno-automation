@@ -33,22 +33,65 @@ window.AppUI = window.AppUI || {};
         element.dataset.loading = loading ? '1' : '0';
     };
 
-    const confirm = (message, onOk) => {
+const CONFIRM_SEVERITY = {
+        danger: { icon: 'bi-exclamation-triangle-fill', color: '#e11d48', bg: '#fef2f2', btnBg: '#e11d48' },
+        warning: { icon: 'bi-exclamation-circle-fill', color: '#f59e0b', bg: '#fffbeb', btnBg: '#f59e0b' },
+        info: { icon: 'bi-info-circle-fill', color: '#3b82f6', bg: '#eff6ff', btnBg: '#3b82f6' },
+        success: { icon: 'bi-check-circle-fill', color: '#10b981', bg: '#f0fdf4', btnBg: '#10b981' }
+    };
+    const confirm = (options) => {
         const modalEl = document.getElementById('appConfirmDialog');
         const msgEl = document.getElementById('appConfirmMessage');
         const okBtn = document.getElementById('appConfirmOk');
+        const cancelBtn = document.getElementById('appConfirmCancel');
+        const titleEl = document.getElementById('appConfirmTitle');
+        const iconEl = document.getElementById('appConfirmIcon');
+
+        const opts = typeof options === 'string' ? { message: options } : (options || {});
+        const message = opts.message || 'آیا مطمئن هستید؟';
+        const title = opts.title || 'تایید عملیات';
+        const severity = opts.severity || 'info';
+        const confirmText = opts.confirmText || 'تایید';
+        const cancelText = opts.cancelText || 'انصراف';
+
         if (!modalEl || !msgEl || !okBtn) {
-            if (window.confirm(message)) onOk?.();
-            return;
+            return Promise.resolve(window.confirm(message));
         }
 
+        const sev = CONFIRM_SEVERITY[severity] || CONFIRM_SEVERITY.info;
+
+        if (titleEl) titleEl.textContent = title;
         msgEl.textContent = message;
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        okBtn.onclick = () => {
-            modal.hide();
-            onOk?.();
-        };
-        modal.show();
+        if (iconEl) {
+            iconEl.style.background = sev.color;
+            iconEl.innerHTML = `<i class="bi ${sev.icon}"></i>`;
+        }
+        okBtn.textContent = confirmText;
+        okBtn.style.background = sev.btnBg;
+        if (cancelBtn) cancelBtn.textContent = cancelText;
+
+        modalEl.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        return new Promise((resolve) => {
+            const cleanup = () => {
+                okBtn.removeEventListener('click', onConfirm);
+                if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
+                modalEl.querySelectorAll('.confirm-dialog-close')
+                    .forEach(btn => btn.removeEventListener('click', onCancel));
+            };
+            const onConfirm = () => { hideConfirm('appConfirmDialog'); cleanup(); resolve(true); };
+            const onCancel = () => { hideConfirm('appConfirmDialog'); cleanup(); resolve(false); };
+            okBtn.addEventListener('click', onConfirm);
+            if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+            modalEl.querySelectorAll('.confirm-dialog-close')
+                .forEach(btn => btn.addEventListener('click', onCancel));
+        });
+    };
+
+    const hideConfirm = (id) => {
+        const el = document.getElementById(id || 'appConfirmDialog');
+        if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
     };
 
     const emptyState = (icon, title, description) => `
@@ -223,10 +266,56 @@ window.AppUI = window.AppUI || {};
             }
         });
     };
+/**
+     * Auto-wire data-confirm-* attributes on any element.
+     * When clicked, shows a confirm dialog and only proceeds if confirmed.
+     * Supported: data-confirm-title, data-confirm-message, data-confirm-severity,
+     *            data-confirm-confirm-text, data-confirm-cancel-text
+     */
+    const initDataConfirmAttributes = () => {
+        document.addEventListener('click', async (e) => {
+            const el = e.target.closest('[data-confirm-message]');
+            if (!el) return;
+
+            const message = el.getAttribute('data-confirm-message');
+            if (!message) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const confirmed = await confirm({
+                title: el.getAttribute('data-confirm-title') || undefined,
+                message: message,
+                severity: el.getAttribute('data-confirm-severity') || 'warning',
+                confirmText: el.getAttribute('data-confirm-confirm-text') || undefined,
+                cancelText: el.getAttribute('data-confirm-cancel-text') || undefined
+            });
+
+            if (!confirmed) return;
+
+            const tag = el.tagName.toLowerCase();
+            if (tag === 'a') {
+                const href = el.getAttribute('href');
+                if (href && href !== '#' && !href.startsWith('javascript:')) {
+                    window.location.href = href;
+                }
+            } else if (tag === 'button' || tag === 'input') {
+                const form = el.closest('form');
+                if (form && el.getAttribute('type') === 'submit') {
+                    form.requestSubmit(el);
+                } else if (form && el.hasAttribute('data-form-submit')) {
+                    form.requestSubmit();
+                } else {
+                    el.click();
+                }
+            }
+        });
+    };
 
     window.AppUI.toast = showToast;
     window.AppUI.loading = setLoading;
     window.AppUI.confirm = confirm;
+    window.AppUI.hideConfirm = hideConfirm;
     window.AppUI.empty = emptyState;
     window.AppUI.skeletonRows = skeletonRows;
     window.AppUI.fetchJsonRetry = fetchJsonRetry;
@@ -234,6 +323,7 @@ window.AppUI = window.AppUI || {};
     const initAll = () => {
         initCommandPalette();
         initIframePrinting();
+        initDataConfirmAttributes();
     };
 
     if (document.readyState === 'loading') {

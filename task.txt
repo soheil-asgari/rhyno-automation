@@ -1,41 +1,37 @@
-[ACT URGENT FIX: REMOVE RESIDUAL JS 404, FIX MODAL DATEPICKER CLIPPING & BUBBLING]
+You are a Senior ASP.NET Core Developer and EF Core specialist, executing implementation based on an approved planning/audit document for the Contracts Management module.
 
-Please apply the following direct fixes to `Views/Contracts/Details.cshtml` and related scripts:
+MODE: ACT — SEQUENTIAL, ITEM-BY-ITEM EXECUTION. This is PHASE 1 of 5.
 
----
+### Tech Stack Constraints (must be respected in every artifact)
+- Backend: C# / ASP.NET Core, EF Core, SQL Server, Multi-DbContext architecture
+- Frontend: HTML5 / Pure CSS (Flexbox & Grid) / Vanilla JavaScript only — no Bootstrap, React, Next.js, jQuery, or any external framework
+- UI Concept: Tab-based Dynamic UI — every list/form opens as a closable tab
+- Extend the EXISTING codebase, do not reinvent: existing `ContractService` / `IContractService`, existing `erp-*` CSS design system, existing RLS methods (`EnforceAccessAsync`, `CanUserViewContract`, `CanUserEditContract`), existing `ContractAuditLog` audit pattern, existing Jalali datepicker, existing tab-switching JS pattern in `contracts-details-script.js`.
 
-### 1. REMOVE RESIDUAL 404 SCRIPT REFERENCES
-- Search all `.cshtml` and `.js` files (especially `Details.cshtml` and `wwwroot/js/contracts-details-script.js`) for any leftover tag or code requesting `persian-datepicker.min.js` or `persian-date.min.js`.
-- Completely delete those `<script>` / `<link>` tags to eliminate the 404 MIME type error in the browser console.
+### Background Context (from the approved Plan/Audit)
+The current Contracts module has: `Contract`, `ContractAttachment`, `ContractAuditLog`, `ContractPayment`, `ContractTemplate`, `ContractUserSetting`, `HrContract` entities; a `ContractService` (CRUD, basic state machine, payments, attachments); an MVC `ContractsController`; Tab-based detail view (Overview/Content/Payments/Attachments/Activity); a 3-step create wizard. It has NO approval workflow, NO scheduled background jobs, NO custom confirmation modals, NO loading states.
 
----
+### Backlog Items for This Phase (implement in this exact order)
 
-### 2. FIX PAYMENT MODAL DATEINPUT & OVERFLOW CLIPPING (`Details.cshtml`)
-- In `#addPaymentModal`:
-  1. Change the payment date input from `<input type="date">` to a text input with a Jalali mask or Vanilla Jalali picker:
-     `<input type="text" id="paymentDueDate" name="DueDate" class="erp-input jalali-input" placeholder="140X/MM/DD" autocomplete="off" />`
-  2. Change modal container CSS classes from `overflow-hidden` or `overflow-y-auto` to **`overflow-visible`**:
-     Ensure `#addPaymentModal .modal-card` or the modal wrapper has `overflow: visible !important;` so the datepicker dropdown popup is NOT clipped at the bottom.
+**Item 1 — Approval Workflow Engine (Backend, CRITICAL, no dependencies)**
+Build a multi-level, parallel-capable, threshold-based approval engine: new entities `ApprovalRequest`, `ApprovalStep`, `ApprovalDelegation`; new service `IApprovalService` / `ApprovalService`; support sequential AND parallel approval chains; support financial-threshold-based routing (e.g., Manager < $10K, Director < $100K, VP >= $100K); support delegation when an approver is unavailable; support rejection with mandatory reason and return-to-draft vs return-to-previous-stage; full audit trail via existing `ContractAuditLog` pattern. Register new entities in the correct DbContext.
 
----
+**Item 2 — Background Job for Expiry/Renewal/Payment Processing (Backend, CRITICAL, depends on nothing structurally but should call existing `UpdateExpiringSoonStatusesAsync`)**
+Implement an `IHostedService`/`BackgroundService` that runs on a schedule (configurable interval) and: calls the existing `UpdateExpiringSoonStatusesAsync`, checks for overdue payments, checks for contracts approaching expiry per `ExpiryNoticeDays`, and prepares data for the (future) notification engine. Make it safe for multi-instance deployment (avoid duplicate runs, e.g. via a distributed lock or SQL-based job lock table).
 
-### 3. FIX MONTH NAV AUTO-CLOSE & EVENT BUBBLING (`Details.cshtml` / JS)
-- **Modal Backdrop Listener Fix:**
-  Update the modal click / backdrop listener in Vanilla JS so it does NOT close when clicking inside the datepicker popup or month navigation arrows:
-  ```javascript
-  document.addEventListener('click', function (e) {
-      // Ignore clicks inside datepicker popups or calendar elements
-      if (e.target.closest('.datepicker-container') || e.target.closest('.jalali-datepicker') || e.target.closest('.pwt-datepicker-container')) {
-          return;
-      }
-      
-      // Modal backdrop closing logic
-      if (e.target.classList.contains('modal-backdrop') || e.target.hasAttribute('data-modal-overlay')) {
-          const modal = e.target.closest('.fixed');
-          if (modal) modal.classList.add('hidden');
-      }
-  });
-Stop Propagation on Calendar Controls:
-If using a Vanilla Jalali Datepicker instance, attach e.stopPropagation() and e.preventDefault() to calendar prev/next month buttons so month navigation clicks do not bubble up to close the modal.
+**Item 3 — Custom Confirmation Dialogs (Frontend, CRITICAL, no dependencies)**
+Replace all browser-native `confirm()` calls (e.g., delete contract) with a reusable custom modal component: pure HTML/CSS/Vanilla JS, RTL-supported, keyboard accessible (focus trap, Escape to close, Enter to confirm), supports a title + message + confirm/cancel buttons + optional "type CONTRACT NUMBER to confirm" pattern for destructive actions. Must integrate with the existing `erp-*` design system and existing modal patterns already used for "Add Payment"/"Upload Document".
 
-Run dotnet build, refresh the browser with Ctrl + F5, and verify that console errors are gone and the modal datepicker opens without clipping.
+**Item 4 — Loading States (Frontend, CRITICAL, no dependencies)**
+Add: CSS skeleton loaders for the contracts list/dashboard while data loads; JS to disable submit buttons and show a spinner during form submission (prevent double-submit) on Create/Edit/Payment/Upload forms; a loading overlay pattern for filter/pagination changes on the list view. Pure CSS animations only, no external libraries.
+
+### Execution Rules
+1. Implement ONE item per turn, in the order listed above.
+2. For each item: state `Backlog Item #N — [Name] — Layer — Priority`, restate the spec in 1-2 sentences, then produce the FULL real artifact(s) — actual EF Core classes, Fluent API config, DbContext registration (name which context), migration notes, service/interface methods, controller endpoints, and/or full HTML/CSS/JS — no pseudo-code.
+3. Explicitly state how each artifact integrates with existing code (exact file/class names to modify).
+4. List any new follow-up sub-tasks discovered during implementation.
+5. Wait for my confirmation ("ok next") before moving to the next item — do not auto-chain.
+6. After Item 4 is complete, give a short Phase 1 completion summary and STOP. Wait for me to provide the Phase 2 prompt before continuing.
+
+### Start
+Confirm you understand the scope and rules, then begin with **Item 1 — Approval Workflow Engine**.

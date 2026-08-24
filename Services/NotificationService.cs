@@ -121,9 +121,32 @@ public sealed class NotificationService
     public async Task<NotificationCenterVM> BuildCenterAsync(
         string userId,
         int take = 80,
+        string? filterBySeverity = null,
+        string? filterByModule = null,
+        bool? showUnreadOnly = null,
         CancellationToken cancellationToken = default)
     {
         var query = ActiveNotifications(userId);
+
+        // Apply filters
+        if (filterBySeverity is { Length: > 0 } severity
+            && !string.Equals(severity, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            var normalized = NotificationSeverity.Normalize(severity);
+            query = query.Where(item => item.Severity == normalized);
+        }
+
+        if (filterByModule is { Length: > 0 } module
+            && !string.Equals(module, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(item => item.SourceModule != null && item.SourceModule == module);
+        }
+
+        if (showUnreadOnly == true)
+        {
+            query = query.Where(item => !item.IsRead);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
         var unreadCount = await query.CountAsync(item => !item.IsRead, cancellationToken);
 

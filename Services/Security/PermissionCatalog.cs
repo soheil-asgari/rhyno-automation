@@ -65,7 +65,10 @@ namespace OfficeAutomation.Services.Security
             new() { Key = "Contract.Delete", DisplayName = "حذف قرارداد", Category = "قراردادها", Description = "حذف قراردادها." },
             new() { Key = "Contract.Payment", DisplayName = "مدیریت پرداخت‌ها", Category = "قراردادها", Description = "ثبت و حذف پرداخت‌های قرارداد." },
             new() { Key = "Contract.Settings", DisplayName = "تنظیمات قراردادها", Category = "قراردادها", Description = "مدیریت قالب‌ها و تنظیمات قراردادها." },
-            new() { Key = "Contract.Archive", DisplayName = "بایگانی قراردادها", Category = "قراردادها", Description = "بایگانی و خروج از بایگانی قراردادها." }
+            new() { Key = "Contract.Archive", DisplayName = "بایگانی قراردادها", Category = "قراردادها", Description = "بایگانی و خروج از بایگانی قراردادها." },
+            new() { Key = "Contract.Admin", DisplayName = "مدیریت پیشرفته قراردادها", Category = "قراردادها", Description = "دسترسی به عملیات مدیریتی مانند بازپرداخت درآمد معوق." },
+            new() { Key = "Contract.Amendment", DisplayName = "مدیریت اصلاحیه‌ها", Category = "قراردادها", Description = "ایجاد و اعمال اصلاحیه، الحاقیه و تمدید قراردادها." },
+            new() { Key = "Notification.AlertSettings", DisplayName = "تنظیمات اعلان‌ها", Category = "قراردادها", Description = "مدیریت نحوه دریافت اعلان‌های سیستمی." },
         ];
 
         public static readonly IReadOnlyDictionary<string, string[]> ControllerFallbackPermissions =
@@ -87,6 +90,7 @@ namespace OfficeAutomation.Services.Security
                 ["OrganizationCalendar"] = ["Calendar.View"],
                 ["DocumentArchive"] = ["Archive.View"],
                 ["Contracts"] = ["Contract.View"],
+                ["Notifications"] = ["Contract.View"],
                 ["تحلیل‌فرآیند"] = ["تحلیل.مشاهده"]
             };
     }

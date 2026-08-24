@@ -1,0 +1,132 @@
+@model ContractDetailsVM
+@{
+    // Terminal / off-ramp statuses
+    var terminalStatuses = new Dictionary<string, (string label, string icon, string colorClass)>
+    {
+        ["Suspended"] = ("معلق", "bi-pause-circle", "stepper-terminal-amber"),
+        ["Cancelled"] = ("لغو شده", "bi-x-circle", "stepper-terminal-red"),
+        ["Terminated"] = ("فسخ شده", "bi-slash-circle", "stepper-terminal-red"),
+        ["Completed"] = ("تکمیل شده", "bi-check-all", "stepper-terminal-green"),
+        ["Archived"] = ("بایگانی شده", "bi-archive", "stepper-terminal-slate"),
+    };
+
+    string currentStatus = Model.Status;
+    bool isTerminal = terminalStatuses.ContainsKey(currentStatus);
+    var steps = Model.LifecycleSteps;
+
+    // Build tooltip text for a lifecycle step
+    string StepTooltip(OfficeAutomation.Models.LifecycleStepVM s)
+    {
+        var parts = new List<string> { s.Label };
+        if (s.CompletedAt.HasValue)
+        {
+            try
+            {
+                var cal = new System.Globalization.PersianCalendar();
+                parts.Add("تاریخ: " + cal.GetYear(s.CompletedAt.Value).ToString("0000") + "/" + cal.GetMonth(s.CompletedAt.Value).ToString("00") + "/" + cal.GetDayOfMonth(s.CompletedAt.Value).ToString("00") + " " + s.CompletedAt.Value.ToString("HH:mm"));
+            }
+            catch
+            {
+                parts.Add("تاریخ: " + s.CompletedAt.Value.ToString("yyyy/MM/dd HH:mm"));
+            }
+        }
+        if (!string.IsNullOrEmpty(s.CompletedByUserName))
+            parts.Add("توسط: " + s.CompletedByUserName);
+        if (!string.IsNullOrEmpty(s.Description))
+            parts.Add("توضیح: " + s.Description);
+        if (!string.IsNullOrEmpty(s.RejectionReason))
+            parts.Add("⚠ " + s.RejectionReason);
+        return string.Join("\n", parts);
+    }
+}
+
+<div class="lifecycle-stepper-wrapper">
+    @if (steps.Count == 0)
+    {
+        @* Fallback: no audit log data *@
+        <div class="stepper-unknown">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">وضعیت: @currentStatus</span>
+        </div>
+    }
+    else if (isTerminal)
+    {
+        @* Terminal state: data-driven stepper with terminal badge *@
+        <div class="lifecycle-stepper lifecycle-stepper-terminal">
+            @for (int i = 0; i < steps.Count; i++)
+            {
+                var s = steps[i];
+                var nodeClass = s.IsCompleted ? "stepper-completed" : s.IsCurrent ? "stepper-current" : "stepper-future";
+                if (s.RejectionCount > 0) { nodeClass += " stepper-has-rejection"; }
+                <div class="stepper-node @nodeClass" title="@StepTooltip(s)">
+                    <div class="stepper-circle">
+                        @if (s.IsCompleted)
+                        {
+                            <i class="bi bi-check-lg"></i>
+                        }
+                        else
+                        {
+                            <i class="bi @s.Icon"></i>
+                        }
+                    </div>
+                    <span class="stepper-label">@s.Label</span>
+                    @if (s.RejectionCount > 0)
+                    {
+                        <span class="stepper-rejection-badge" title="تعداد بازگشت/تکرار: @s.RejectionCount">
+                            <i class="bi bi-arrow-return-left"></i> @s.RejectionCount
+                        </span>
+                    }
+                </div>
+                @if (i < steps.Count - 1)
+                {
+                    <div class="stepper-connector @(s.IsCompleted ? "connector-completed" : "")"></div>
+                }
+            }
+        </div>
+        <div class="stepper-terminal-info">
+            <div class="stepper-terminal-badge @terminalStatuses[currentStatus].colorClass">
+                <i class="bi @terminalStatuses[currentStatus].icon"></i>
+                <span>@terminalStatuses[currentStatus].label</span>
+            </div>
+            <span class="stepper-terminal-hint">این قرارداد از روند عادی خارج شده است.</span>
+        </div>
+    }
+    else
+    {
+        @* Normal flow stepper *@
+        <div class="lifecycle-stepper">
+            @for (int i = 0; i < steps.Count; i++)
+            {
+                var s = steps[i];
+                var nodeClass = s.IsCompleted ? "stepper-completed" : s.IsCurrent ? "stepper-current" : "stepper-future";
+                if (s.RejectionCount > 0) { nodeClass += " stepper-has-rejection"; }
+                <div class="stepper-node @nodeClass" title="@StepTooltip(s)">
+                    <div class="stepper-circle">
+                        @if (s.IsCompleted)
+                        {
+                            <i class="bi bi-check-lg"></i>
+                        }
+                        else
+                        {
+                            <i class="bi @s.Icon"></i>
+                        }
+                    </div>
+                    <span class="stepper-label">@s.Label</span>
+                    @if (s.IsCurrent)
+                    {
+                        <span class="stepper-status-badge">وضعیت فعلی</span>
+                    }
+                    @if (s.RejectionCount > 0)
+                    {
+                        <span class="stepper-rejection-badge" title="تعداد بازگشت/تکرار: @s.RejectionCount">
+                            <i class="bi bi-arrow-return-left"></i> @s.RejectionCount
+                        </span>
+                    }
+                </div>
+                @if (i < steps.Count - 1)
+                {
+                    <div class="stepper-connector @(s.IsCompleted ? "connector-completed" : "")"></div>
+                }
+            }
+        </div>
+    }
+</div>

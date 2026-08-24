@@ -22,11 +22,6 @@
         }
         catch { return "ثبت نشده"; }
     }
-    string ToPersianDateNullable(DateTime? value)
-    {
-        if (!value.HasValue) return "ثبت نشده";
-        return ToPersianDate(value.Value);
-    }
 }
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
@@ -174,7 +169,10 @@
             <button class="btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> چاپ</button>
             <button onclick="window.print()"><i class="bi bi-file-pdf"></i> ذخیره PDF</button>
             <span class="spacer"></span>
-            <a href="javascript:history.back()"><i class="bi bi-arrow-right"></i> بازگشت</a>
+            <a href="@Url.Action("Details", "Contracts", new { id = Model.Id })"
+   onclick="event.preventDefault(); if(history.length > 1) { history.back(); } else { window.location.href='@Url.Action("Details", "Contracts", new { id = Model.Id })'; }">
+   <i class="bi bi-arrow-right"></i> بازگشت
+</a>
         </div>
 <div class="doc-header">
             <div class="doc-header-right">

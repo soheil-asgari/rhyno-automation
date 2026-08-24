@@ -43,7 +43,7 @@
             <a asp-action="Settings" class="erp-btn">
                 <i class="bi bi-gear ml-1"></i>تنظیمات
             </a>
-            <a asp-action="Create" class="erp-btn erp-btn-primary">
+            <a asp-action="Create" asp-route-_tab="1" class="erp-btn erp-btn-primary">
                 <i class="bi bi-plus-circle ml-1"></i>قرارداد جدید
             </a>
         </div>
@@ -51,7 +51,7 @@
 
     @* Filter Card *@
     <div class="erp-fieldset">
-        <form method="get" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 items-end">
+        <form method="get" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 items-end" data-filter-form>
             <div class="col-span-2 md:col-span-1">
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">جستجو</label>
                 <input name="SearchTerm" value="@Model.SearchTerm" class="erp-input" placeholder="عنوان / شماره / مشتری" />
@@ -133,6 +133,7 @@
 
     @* Data Table *@
     <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="erp-card overflow-hidden position-relative" data-table-wrapper>
         @if (Model.Items.Any())
         {
             <div class="overflow-x-auto">
@@ -265,11 +266,12 @@
                         {
                             <a asp-action="Index" asp-route-Page="@p" asp-route-SearchTerm="@Model.SearchTerm"
                                asp-route-Status="@Model.Status"
-                               class="rounded-lg px-2 py-1 text-[10px] font-bold no-underline transition @(p == Model.Page ? "bg-teal-600 text-white" : "border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800")">@p</a>
+                               class="rounded-lg px-2 py-1 text-[10px] font-bold no-underline transition @(p == Model.Page ? "bg-teal-600 text-white" : "border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800")" data-page-link>@p</a>
                         }
                     </div>
                 }
             </div>
+        
         }
         else
         {
@@ -292,5 +294,5 @@
 }
 
 @section Scripts {
-    <!-- Vanilla JS only — no jQuery -->
+    <script src="~/js/contracts-index-script.js" asp-append-version="true"></script>
 }

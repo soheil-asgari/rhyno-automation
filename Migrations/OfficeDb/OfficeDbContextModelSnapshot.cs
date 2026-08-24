@@ -22,6 +22,128 @@ namespace OfficeAutomation.Migrations.OfficeDb
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("OfficeAutomation.Models.AlertRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AdvanceNoticeDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FilterConditions")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSystemRule")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("SendEmail")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("SendInApp")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Info");
+
+                    b.Property<string>("SourceModule")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<string>("TenantId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("TriggerType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("SourceModule");
+
+                    b.HasIndex("TriggerType")
+                        .IsUnique()
+                        .HasFilter("[TenantId] IS NULL");
+
+                    b.ToTable("AlertRules", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.AlertSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlertRuleId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ReceiveEmail")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ReceiveInApp")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TenantId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlertRuleId");
+
+                    b.HasIndex("UserId", "AlertRuleId")
+                        .IsUnique();
+
+                    b.ToTable("AlertSubscriptions", (string)null);
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -120,6 +242,9 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.Property<string>("AssignedUserId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<decimal>("BaseCurrencyAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("ClientAddress")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
@@ -153,8 +278,18 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)")
+                        .HasDefaultValue("IRR");
+
                     b.Property<int?>("CustomerId")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("DefaultTaxRatePercent")
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
@@ -163,6 +298,11 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("ExchangeRate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,6)")
+                        .HasDefaultValue(1m);
+
                     b.Property<int>("ExpiryNoticeDays")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -170,6 +310,9 @@ namespace OfficeAutomation.Migrations.OfficeDb
 
                     b.Property<bool>("IsArchived")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastRevenueRecognitionDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
@@ -181,6 +324,9 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("RecognizedRevenue")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("RemainingBalance")
                         .ValueGeneratedOnAddOrUpdate()
@@ -198,6 +344,13 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)");
 
+                    b.Property<string>("TaxMethod")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Exclusive");
+
                     b.Property<int?>("TemplateId")
                         .HasColumnType("int");
 
@@ -210,6 +363,12 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalAmountInclusiveTax")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalTaxAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -230,6 +389,8 @@ namespace OfficeAutomation.Migrations.OfficeDb
 
                     b.HasIndex("CreatedByUserId");
 
+                    b.HasIndex("CurrencyCode");
+
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("EndDate");
@@ -240,9 +401,312 @@ namespace OfficeAutomation.Migrations.OfficeDb
 
                     b.HasIndex("Status");
 
+                    b.HasIndex("TaxMethod");
+
                     b.HasIndex("TemplateId");
 
                     b.ToTable("Contracts", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractAmendment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AmendmentNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AmendmentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("AmountChange")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("AppliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AppliedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("ApprovalRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CurrencyCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EndDateChangeDays")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("ExchangeRate")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<DateTime?>("NewEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("NewTotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("TaxRatePercent")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("VersionSnapshotId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppliedByUserId");
+
+                    b.HasIndex("ApprovalRequestId");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ContractId", "AmendmentNumber")
+                        .IsUnique();
+
+                    b.ToTable("ContractAmendments", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractApprovalDelegation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContractType")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FromUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ToUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromUserId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("ToUserId");
+
+                    b.ToTable("ContractApprovalDelegations", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractApprovalRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApprovalMode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentStepNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExpiryHours")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FinalComment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("RejectionReturnMode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("RequestedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("SubmittedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("ContractApprovalRequests", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractApprovalStep", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AssignedRoleId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AssignedUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AssigneeType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("ContractApprovalRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DecidedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DecidedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("DelegatedToUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaxThreshold")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MinThreshold")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ReturnToStepNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StepExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("StepExpiryHours")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StepNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StepTitle")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedUserId");
+
+                    b.HasIndex("ContractApprovalRequestId");
+
+                    b.HasIndex("DecidedByUserId");
+
+                    b.HasIndex("Decision");
+
+                    b.HasIndex("DelegatedToUserId");
+
+                    b.ToTable("ContractApprovalSteps", (string)null);
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.ContractAttachment", b =>
@@ -259,6 +723,68 @@ namespace OfficeAutomation.Migrations.OfficeDb
 
                     b.Property<int>("ContractId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CurrentVersionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("UploadedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("CurrentVersionId");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.ToTable("ContractAttachments", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractAttachmentVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttachmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ChangeDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -286,11 +812,19 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ContractId");
+                    b.HasIndex("AttachmentId");
 
-                    b.ToTable("ContractAttachments", (string)null);
+                    b.HasIndex("UploadedByUserId");
+
+                    b.HasIndex("AttachmentId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("ContractAttachmentVersions", (string)null);
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.ContractAuditLog", b =>
@@ -355,8 +889,15 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CurrencyCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("ExchangeRate")
+                        .HasColumnType("decimal(18,6)");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
@@ -378,6 +919,9 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<decimal?>("TaxAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContractId");
@@ -385,6 +929,386 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.HasIndex("PaymentDate");
 
                     b.ToTable("ContractPayments", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractPaymentSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("InstallmentCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ScheduleType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.ToTable("ContractPaymentSchedules", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractPaymentScheduleInstallment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("InstallmentNumber")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Percentage")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DueDate");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.ToTable("ContractPaymentScheduleInstallments", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractSignatureAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<string>("Metadata")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("PerformedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("SignatureRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SignerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventType");
+
+                    b.HasIndex("PerformedByUserId");
+
+                    b.HasIndex("SignatureRequestId");
+
+                    b.HasIndex("SignerId");
+
+                    b.ToTable("ContractSignatureAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractSignatureRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessToken")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int?>("AmendmentId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("AutoActivateContract")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentSignerStep")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DeliveryMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("LinkExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("LinkExpiryHours")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("SigningOrder")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessToken")
+                        .IsUnique()
+                        .HasFilter("[AccessToken] IS NOT NULL");
+
+                    b.HasIndex("AmendmentId");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("ContractSignatureRequests", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractSignatureSigner", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CertificateThumbprint")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Organization")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SentByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("SignOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SignatureImageData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SignatureRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("SignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SignedIpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<string>("SignedUserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SignerToken")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("SignerType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("ViewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Result");
+
+                    b.HasIndex("SentByUserId");
+
+                    b.HasIndex("SignatureRequestId");
+
+                    b.HasIndex("SignerToken")
+                        .IsUnique()
+                        .HasFilter("[SignerToken] IS NOT NULL");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ContractSignatureSigners", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractTaxLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AmendmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CalculationMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsExempt")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TaxBaseAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TaxCategory")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TaxName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("TaxRatePercent")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AmendmentId");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("TaxCategory");
+
+                    b.ToTable("ContractTaxLines", (string)null);
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.ContractTemplate", b =>
@@ -468,6 +1392,56 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .IsUnique();
 
                     b.ToTable("ContractUserSettings", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChangeDescription")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("MajorVersion")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinorVersion")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SnapshotData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("ContractId", "MajorVersion", "MinorVersion")
+                        .IsUnique();
+
+                    b.ToTable("ContractVersions", (string)null);
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.Customer", b =>
@@ -1380,6 +2354,35 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.AlertRule", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.AlertSubscription", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.AlertRule", "AlertRule")
+                        .WithMany()
+                        .HasForeignKey("AlertRuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AlertRule");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.Contract", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.User", "ArchivedByUser")
@@ -1419,6 +2422,109 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.ContractAmendment", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "AppliedByUser")
+                        .WithMany()
+                        .HasForeignKey("AppliedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OfficeAutomation.Models.ContractApprovalRequest", "ApprovalRequest")
+                        .WithMany()
+                        .HasForeignKey("ApprovalRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.Contract", "Contract")
+                        .WithMany("Amendments")
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AppliedByUser");
+
+                    b.Navigation("ApprovalRequest");
+
+                    b.Navigation("Contract");
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractApprovalDelegation", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "FromUser")
+                        .WithMany()
+                        .HasForeignKey("FromUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "ToUser")
+                        .WithMany()
+                        .HasForeignKey("ToUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FromUser");
+
+                    b.Navigation("ToUser");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractApprovalRequest", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Contract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contract");
+
+                    b.Navigation("RequestedByUser");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractApprovalStep", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "AssignedUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OfficeAutomation.Models.ContractApprovalRequest", "ContractApprovalRequest")
+                        .WithMany("Steps")
+                        .HasForeignKey("ContractApprovalRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "DecidedByUser")
+                        .WithMany()
+                        .HasForeignKey("DecidedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OfficeAutomation.Models.User", "DelegatedToUser")
+                        .WithMany()
+                        .HasForeignKey("DelegatedToUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AssignedUser");
+
+                    b.Navigation("ContractApprovalRequest");
+
+                    b.Navigation("DecidedByUser");
+
+                    b.Navigation("DelegatedToUser");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.ContractAttachment", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.Contract", "Contract")
@@ -1427,7 +2533,41 @@ namespace OfficeAutomation.Migrations.OfficeDb
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("OfficeAutomation.Models.ContractAttachmentVersion", "CurrentVersion")
+                        .WithMany()
+                        .HasForeignKey("CurrentVersionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("OfficeAutomation.Models.User", "UploadedByUser")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Contract");
+
+                    b.Navigation("CurrentVersion");
+
+                    b.Navigation("UploadedByUser");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractAttachmentVersion", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.ContractAttachment", "Attachment")
+                        .WithMany("Versions")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "UploadedByUser")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Attachment");
+
+                    b.Navigation("UploadedByUser");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.ContractAuditLog", b =>
@@ -1460,6 +2600,129 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.Navigation("Contract");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Models.ContractPaymentSchedule", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Contract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contract");
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractPaymentScheduleInstallment", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.ContractPayment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.ContractPaymentSchedule", "Schedule")
+                        .WithMany("Installments")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractSignatureAuditLog", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "PerformedByUser")
+                        .WithMany()
+                        .HasForeignKey("PerformedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("OfficeAutomation.Models.ContractSignatureRequest", "SignatureRequest")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("SignatureRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.ContractSignatureSigner", "Signer")
+                        .WithMany()
+                        .HasForeignKey("SignerId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("PerformedByUser");
+
+                    b.Navigation("SignatureRequest");
+
+                    b.Navigation("Signer");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractSignatureRequest", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.ContractAmendment", "Amendment")
+                        .WithMany()
+                        .HasForeignKey("AmendmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.Contract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Amendment");
+
+                    b.Navigation("Contract");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractSignatureSigner", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.User", "SentByUser")
+                        .WithMany()
+                        .HasForeignKey("SentByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("OfficeAutomation.Models.ContractSignatureRequest", "SignatureRequest")
+                        .WithMany("Signers")
+                        .HasForeignKey("SignatureRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("SentByUser");
+
+                    b.Navigation("SignatureRequest");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractTaxLine", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.ContractAmendment", "Amendment")
+                        .WithMany()
+                        .HasForeignKey("AmendmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("OfficeAutomation.Models.Contract", "Contract")
+                        .WithMany("TaxLines")
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Amendment");
+
+                    b.Navigation("Contract");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Models.ContractTemplate", b =>
                 {
                     b.HasOne("OfficeAutomation.Models.User", "OwnerUser")
@@ -1486,6 +2749,25 @@ namespace OfficeAutomation.Migrations.OfficeDb
                     b.Navigation("DefaultResponsibleUser");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractVersion", b =>
+                {
+                    b.HasOne("OfficeAutomation.Models.Contract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contract");
+
+                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.DocumentArchiveItem", b =>
@@ -1641,11 +2923,37 @@ namespace OfficeAutomation.Migrations.OfficeDb
 
             modelBuilder.Entity("OfficeAutomation.Models.Contract", b =>
                 {
+                    b.Navigation("Amendments");
+
                     b.Navigation("Attachments");
 
                     b.Navigation("AuditLogs");
 
                     b.Navigation("Payments");
+
+                    b.Navigation("TaxLines");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractApprovalRequest", b =>
+                {
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractAttachment", b =>
+                {
+                    b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractPaymentSchedule", b =>
+                {
+                    b.Navigation("Installments");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Models.ContractSignatureRequest", b =>
+                {
+                    b.Navigation("AuditLogs");
+
+                    b.Navigation("Signers");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Models.ContractTemplate", b =>

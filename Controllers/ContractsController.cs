@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using OfficeAutomation.Models;
@@ -13,11 +13,15 @@ namespace OfficeAutomation.Controllers;
 public class ContractsController : Controller
 {
     private readonly IContractService _contractService;
+    private readonly ISignatureService _signatureService;
+    private readonly IAttachmentVersionService _attachmentVersionService;
     private readonly ILogger<ContractsController> _logger;
 
-    public ContractsController(IContractService contractService, ILogger<ContractsController> logger)
+    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, ILogger<ContractsController> logger)
     {
         _contractService = contractService;
+        _signatureService = signatureService;
+        _attachmentVersionService = attachmentVersionService;
         _logger = logger;
     }
 
@@ -26,7 +30,7 @@ public class ContractsController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
-            throw new UnauthorizedAccessException("کاربر احراز هویت نشده است.");
+            throw new UnauthorizedAccessException("ع©ط§ط±ط¨ط± ط§ط­ط±ط§ط² ظ‡ظˆغŒطھ ظ†ط´ط¯ظ‡ ط§ط³طھ.");
         }
         return userId;
     }
@@ -35,7 +39,7 @@ public class ContractsController : Controller
     /// Converts a Persian (Shamsi) date string (e.g. 1403/05/29) to Gregorian DateTime.
     /// Returns null for invalid, empty, or unparseable input.
     /// </summary>
-    public static DateTime? ToGregorianDate(string persianDateStr)
+    public static DateTime? ToGregorianDate(string? persianDateStr)
     {
         if (string.IsNullOrWhiteSpace(persianDateStr)) return null;
         try
@@ -61,9 +65,9 @@ public class ContractsController : Controller
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Index
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet]
     public async Task<IActionResult> Index(ContractIndexVM filter, CancellationToken ct)
@@ -73,9 +77,9 @@ public class ContractsController : Controller
         return View(vm);
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Dashboard
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet("Contracts/Dashboard")]
     public async Task<IActionResult> Dashboard(CancellationToken ct)
@@ -85,9 +89,9 @@ public class ContractsController : Controller
         return View(vm);
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Create
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet]
     [PermissionAuthorize("Contract.Create")]
@@ -137,7 +141,7 @@ public class ContractsController : Controller
         {
             var currentUser = GetCurrentUserId();
             var contract = await _contractService.CreateContractAsync(model, currentUser, ct);
-            TempData["SuccessMessage"] = "قرارداد با موفقیت ایجاد شد.";
+            TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط§غŒط¬ط§ط¯ ط´ط¯.";
             return RedirectToAction(nameof(Details), new { id = contract.Id });
         }
         catch (InvalidOperationException ex)
@@ -157,9 +161,9 @@ public class ContractsController : Controller
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Edit
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet]
     [PermissionAuthorize("Contract.Edit")]
@@ -206,7 +210,7 @@ public class ContractsController : Controller
             var currentUserId = GetCurrentUserId();
             await _contractService.EnforceAccessAsync(model.Id, currentUserId, ct);
             await _contractService.UpdateContractAsync(model, currentUserId, ct);
-            TempData["SuccessMessage"] = "قرارداد با موفقیت ویرایش شد.";
+            TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ظˆغŒط±ط§غŒط´ ط´ط¯.";
             return RedirectToAction(nameof(Details), new { id = model.Id });
         }
         catch (KeyNotFoundException) { return NotFound(); }
@@ -220,9 +224,9 @@ public class ContractsController : Controller
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Details
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet]
     public async Task<IActionResult> Details(int id, CancellationToken ct)
@@ -236,9 +240,9 @@ public class ContractsController : Controller
         catch (KeyNotFoundException) { return NotFound(); }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Delete
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -254,13 +258,13 @@ public class ContractsController : Controller
 
         var deleted = await _contractService.DeleteContractAsync(id, currentUserId, ct);
         if (!deleted) return NotFound();
-        TempData["SuccessMessage"] = "قرارداد با موفقیت حذف شد.";
+        TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط­ط°ظپ ط´ط¯.";
         return RedirectToAction(nameof(Index));
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Archive
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet]
     [PermissionAuthorize("Contract.Archive")]
@@ -285,7 +289,7 @@ public class ContractsController : Controller
 
         var archived = await _contractService.ArchiveContractAsync(id, currentUserId, ct);
         if (!archived) return NotFound();
-        TempData["SuccessMessage"] = "قرارداد با موفقیت بایگانی شد.";
+        TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط¨ط§غŒع¯ط§ظ†غŒ ط´ط¯.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -303,13 +307,13 @@ public class ContractsController : Controller
 
         var unarchived = await _contractService.UnarchiveContractAsync(id, currentUserId, ct);
         if (!unarchived) return NotFound();
-        TempData["SuccessMessage"] = "قرارداد از بایگانی خارج شد.";
+        TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط§ط² ط¨ط§غŒع¯ط§ظ†غŒ ط®ط§ط±ط¬ ط´ط¯.";
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Payments
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -351,7 +355,7 @@ public class ContractsController : Controller
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage));
                 _logger.LogWarning("AddPayment ModelState invalid: {Errors}", errors);
-                TempData["ErrorMessage"] = "اطلاعات پرداخت معتبر نیست.";
+                TempData["ErrorMessage"] = "ط§ط·ظ„ط§ط¹ط§طھ ظ¾ط±ط¯ط§ط®طھ ظ…ط¹طھط¨ط± ظ†غŒط³طھ.";
                 return RedirectToAction(nameof(Details), new { id = model.ContractId });
             }
         }
@@ -360,7 +364,7 @@ public class ContractsController : Controller
         {
             var currentUser = GetCurrentUserId();
             await _contractService.AddPaymentAsync(model, currentUser, ct);
-            TempData["SuccessMessage"] = "پرداخت با موفقیت ثبت شد.";
+            TempData["SuccessMessage"] = "ظ¾ط±ط¯ط§ط®طھ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط«ط¨طھ ط´ط¯.";
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
@@ -377,15 +381,15 @@ public class ContractsController : Controller
             var currentUser = GetCurrentUserId();
             var deleted = await _contractService.DeletePaymentAsync(paymentId, contractId, currentUser, ct);
             if (!deleted) return NotFound();
-            TempData["SuccessMessage"] = "پرداخت با موفقیت حذف شد.";
+            TempData["SuccessMessage"] = "ظ¾ط±ط¯ط§ط®طھ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط­ط°ظپ ط´ط¯.";
             return RedirectToAction(nameof(Details), new { id = contractId });
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Attachments
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -394,7 +398,7 @@ public class ContractsController : Controller
     {
         if (file == null || file.Length == 0)
         {
-            TempData["ErrorMessage"] = "فایل انتخاب نشده است.";
+            TempData["ErrorMessage"] = "ظپط§غŒظ„ ط§ظ†طھط®ط§ط¨ ظ†ط´ط¯ظ‡ ط§ط³طھ.";
             return RedirectToAction(nameof(Details), new { id = contractId });
         }
 
@@ -403,7 +407,7 @@ public class ContractsController : Controller
             var currentUserId = GetCurrentUserId();
             await using var stream = file.OpenReadStream();
             await _contractService.UploadAttachmentAsync(contractId, file.FileName, stream, file.ContentType, currentUserId, ct);
-            TempData["SuccessMessage"] = "فایل با موفقیت بارگذاری شد.";
+            TempData["SuccessMessage"] = "ظپط§غŒظ„ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط¨ط§ط±ع¯ط°ط§ط±غŒ ط´ط¯.";
         }
         catch (KeyNotFoundException) { return NotFound(); }
         return RedirectToAction(nameof(Details), new { id = contractId });
@@ -430,15 +434,15 @@ public class ContractsController : Controller
             var currentUser = GetCurrentUserId();
             var deleted = await _contractService.DeleteAttachmentAsync(attachmentId, contractId, currentUser, ct);
             if (!deleted) return NotFound();
-            TempData["SuccessMessage"] = "فایل پیوست حذف شد.";
+            TempData["SuccessMessage"] = "ظپط§غŒظ„ ظ¾غŒظˆط³طھ ط­ط°ظپ ط´ط¯.";
             return RedirectToAction(nameof(Details), new { id = contractId });
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Document Generation
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet("Contracts/GenerateDocument/{id}")]
     [PermissionAuthorize("Contract.View")]
@@ -448,16 +452,16 @@ public class ContractsController : Controller
         {
             var currentUserId = GetCurrentUserId();
             var vm = await _contractService.GetDetailsViewModelAsync(id, currentUserId, ct);
-            ViewData["Title"] = "چاپ / PDF قرارداد";
+            ViewData["Title"] = "ع†ط§ظ¾ / PDF ظ‚ط±ط§ط±ط¯ط§ط¯";
             return View("GenerateDocument", vm);
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Settings / Templates
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet]
     [PermissionAuthorize("Contract.Settings")]
@@ -486,7 +490,7 @@ public class ContractsController : Controller
         var currentUser = GetCurrentUserId();
         model.UserId = currentUser;
         await _contractService.SaveSettingsAsync(model, currentUser, ct);
-        TempData["SuccessMessage"] = "تنظیمات با موفقیت ذخیره شد.";
+        TempData["SuccessMessage"] = "طھظ†ط¸غŒظ…ط§طھ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط°ط®غŒط±ظ‡ ط´ط¯.";
         return RedirectToAction(nameof(Settings));
     }
 
@@ -505,7 +509,7 @@ public class ContractsController : Controller
         }
         var currentUser = GetCurrentUserId();
         await _contractService.SaveTemplateAsync(model, currentUser, ct);
-        TempData["SuccessMessage"] = "قالب با موفقیت ذخیره شد.";
+        TempData["SuccessMessage"] = "ظ‚ط§ظ„ط¨ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط°ط®غŒط±ظ‡ ط´ط¯.";
         return RedirectToAction(nameof(Settings));
     }
 
@@ -517,7 +521,7 @@ public class ContractsController : Controller
         var currentUserId = GetCurrentUserId();
         var deleted = await _contractService.DeleteTemplateAsync(templateId, currentUserId, ct);
         if (!deleted) return NotFound();
-        TempData["SuccessMessage"] = "قالب با موفقیت حذف شد.";
+        TempData["SuccessMessage"] = "ظ‚ط§ظ„ط¨ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط­ط°ظپ ط´ط¯.";
         return RedirectToAction(nameof(Settings));
     }
 
@@ -529,13 +533,13 @@ public class ContractsController : Controller
         var currentUserId = GetCurrentUserId();
         var set = await _contractService.SetDefaultTemplateAsync(templateId, currentUserId, ct);
         if (!set) return NotFound();
-        TempData["SuccessMessage"] = "قالب پیش‌فرض با موفقیت تنظیم شد.";
+        TempData["SuccessMessage"] = "ظ‚ط§ظ„ط¨ ظ¾غŒط´â€Œظپط±ط¶ ط¨ط§ ظ…ظˆظپظ‚غŒطھ طھظ†ط¸غŒظ… ط´ط¯.";
         return RedirectToAction(nameof(Settings));
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Template Preview (for auto-populate in Create/Edit)
-    // ═══════════════════════════════════════════════════════════════
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
     [HttpGet("Contracts/PreviewTemplate")]
     [PermissionAuthorize("Contract.View")]
@@ -551,5 +555,284 @@ public class ContractsController : Controller
         }
         var preview = await _contractService.PreviewTemplateAsync(id, currentUserId, ct);
         return Content(preview, "text/html", System.Text.Encoding.UTF8);
+    }
+// â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    //  E-Signature: Internal Sign
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+
+    [HttpPost("Contracts/{contractId}/Sign")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SignContract(int contractId, [FromBody] SignContractRequest request, CancellationToken ct)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.SignatureImageData))
+            return Json(new { success = false, message = "ط¯ط§ط¯ظ‡â€Œظ‡ط§غŒ ط§ظ…ط¶ط§ ط®ط§ظ„غŒ ط§ط³طھ." });
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
+            var userAgent = Request.Headers.UserAgent.ToString();
+
+            var signer = await _signatureService.CaptureInternalSignatureAsync(
+                contractId, request.SignatureImageData, request.Comment, ipAddress, userAgent, userId, ct);
+
+            return Json(new { success = true, message = "ط§ظ…ط¶ط§ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط«ط¨طھ ط´ط¯.", signerId = signer.Id, signedAt = signer.SignedAt });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to sign contract {ContractId}", contractId);
+            return Json(new { success = false, message = $"ط®ط·ط§ ط¯ط± ط«ط¨طھ ط§ظ…ط¶ط§: {ex.Message}" });
+        }
+    }
+
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    //  E-Signature: Get External Sign Link
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+
+    [HttpPost("Contracts/{contractId}/GetExternalSignLink")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GetExternalSignLink(int contractId, [FromBody] GetExternalSignLinkRequest request, CancellationToken ct)
+    {
+        if (request == null || request.SignerId <= 0)
+            return Json(new { success = false, message = "ط´ظ†ط§ط³ظ‡ ط§ظ…ط¶ط§ع©ظ†ظ†ط¯ظ‡ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ." });
+
+        try
+        {
+            var link = await _signatureService.GenerateExternalSignerLinkAsync(contractId, request.SignerId, ct);
+            return Json(new { success = true, link });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate external sign link for contract {ContractId}", contractId);
+            return Json(new { success = false, message = $"ط®ط·ط§ ط¯ط± طھظˆظ„غŒط¯ ظ„غŒظ†ع©: {ex.Message}" });
+        }
+    }
+
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    //  E-Signature: Create Signature Request
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+
+    [HttpPost("Contracts/Signature/CreateRequest/{contractId}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateSignatureRequest(int contractId, [FromBody] CreateSignatureRequestVm model, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "ط§ط·ظ„ط§ط¹ط§طھ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ." });
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _signatureService.CreateSignatureRequestAsync(
+                contractId, model.Title, model.Message, model.DeliveryMethod,
+                model.SigningOrder, model.AutoActivateContract, model.AmendmentId, userId, ct);
+            return Json(new { success = true, requestId = result.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create signature request for contract {ContractId}", contractId);
+            return Json(new { success = false, message = $"ط®ط·ط§ ط¯ط± ط§غŒط¬ط§ط¯ ط¯ط±ط®ظˆط§ط³طھ: {ex.Message}" });
+        }
+    }
+
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    //  E-Signature: Get Signature Requests
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+
+    [HttpGet("Contracts/{contractId}/SignatureRequests")]
+    public async Task<IActionResult> GetSignatureRequests(int contractId, CancellationToken ct)
+    {
+        try
+        {
+            var requests = await _signatureService.GetSignatureRequestsAsync(contractId, ct);
+            var data = requests.Select(r => new
+            {
+                r.Id, r.Title, r.Status, r.DeliveryMethod, r.SigningOrder, r.AutoActivateContract, r.CreatedAt, r.CompletedAt,
+                Signers = r.Signers.Select(s => new
+                {
+                    s.Id, s.UserId, UserName = s.User?.FullName ?? s.FullName ?? s.Email ?? "ظ†ط§ظ…ط´ط®طµ",
+                    s.SignerType, s.Result, s.SignOrder, s.SignedAt, hasSignatureImage = s.SignatureImageData != null
+                }),
+                AuditLogs = r.AuditLogs.Select(a => new { a.EventType, a.Description, a.CreatedAt })
+            });
+            return Json(new { success = true, data });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get signature requests for contract {ContractId}", contractId);
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+// ════════════════════════════════════════════════════════════
+    //  Attachment Versioning
+    // ════════════════════════════════════════════════════════════
+
+    [HttpGet("Contracts/Attachment/{attachmentId}/Versions")]
+    public async Task<IActionResult> GetAttachmentVersions(int attachmentId, CancellationToken ct)
+    {
+        try
+        {
+            var versions = await _attachmentVersionService.GetVersionsAsync(attachmentId, ct);
+            return Json(new { success = true, data = versions });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get versions for attachment {AttachmentId}", attachmentId);
+            return Json(new { success = false, message = "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø§Ø²ÛŒØ§Ø¨ÛŒ Ù†Ø³Ø®Ù‡â€ŒÙ‡Ø§." });
+        }
+    }
+
+    [HttpPost("Contracts/Attachment/{attachmentId}/UploadVersion")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadAttachmentVersion(int attachmentId, IFormFile file, string? changeDescription, CancellationToken ct)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            if (file == null || file.Length == 0)
+                return Json(new { success = false, message = "ÙØ§ÛŒÙ„ÛŒ Ø§Ù†ØªØ®Ø§Ø¨ Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª." });
+
+            await using var stream = file.OpenReadStream();
+            var version = await _attachmentVersionService.UploadNewVersionAsync(
+                attachmentId, file.FileName, file.ContentType ?? "application/octet-stream",
+                file.Length, stream, userId, changeDescription, ct);
+
+            return Json(new { success = true, versionId = version.Id, versionNumber = version.VersionNumber });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload new version for attachment {AttachmentId}", attachmentId);
+            return Json(new { success = false, message = "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ Ù†Ø³Ø®Ù‡ Ø¬Ø¯ÛŒØ¯: " + ex.Message });
+        }
+    }
+
+    [HttpGet("Contracts/Attachment/Version/{versionId}/Download")]
+    public async Task<IActionResult> DownloadAttachmentVersion(int versionId, CancellationToken ct)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var filePath = await _attachmentVersionService.GetVersionFilePathAsync(versionId, userId, ct);
+            if (filePath == null)
+                return NotFound();
+
+            return PhysicalFile(filePath, "application/octet-stream", Path.GetFileName(filePath));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to download version {VersionId}", versionId);
+            return NotFound();
+        }
+    }
+
+    [HttpPost("Contracts/Attachment/Version/{versionId}/Restore")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RestoreAttachmentVersion(int versionId, CancellationToken ct)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var version = await _attachmentVersionService.RestoreVersionAsync(versionId, userId, ct);
+            return Json(new { success = true, versionId = version.Id, versionNumber = version.VersionNumber });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to restore version {VersionId}", versionId);
+            return Json(new { success = false, message = "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø§Ø²Ú¯Ø±Ø¯Ø§Ù†ÛŒ Ù†Ø³Ø®Ù‡: " + ex.Message });
+        }
+    }
+// ════════════════════════════════════════════════════════════
+    //  Attachment Preview
+    // ════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Returns file content for previewing an attachment in the browser.
+    /// For PDF/images/text, returns the file stream directly.
+    /// For unsupported types, returns a 404 with an error message.
+    /// </summary>
+    [HttpGet("Contracts/Attachment/{attachmentId}/Preview")]
+    public async Task<IActionResult> PreviewAttachment(int attachmentId, CancellationToken ct)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            // Get attachment with access check
+            var attachment = await _contractService.GetAttachmentAsync(attachmentId, userId, ct);
+            if (attachment == null)
+                return NotFound();
+
+            // Determine the file path from the current version
+            string? filePath = null;
+            string? contentType = attachment.ContentType;
+            string fileName = attachment.FileName;
+
+            if (attachment.CurrentVersionId.HasValue)
+            {
+                filePath = await _attachmentVersionService.GetVersionFilePathAsync(attachment.CurrentVersionId.Value, userId, ct);
+            }
+
+            if (filePath == null || !System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var ext = System.IO.Path.GetExtension(fileName).ToLowerInvariant();
+            var previewableImageExts = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".svg" };
+            var previewableTextExts = new[] { ".txt", ".csv", ".log", ".json", ".xml", ".md", ".yaml", ".yml", ".ini", ".cfg", ".config" };
+
+            // PDF: return file stream
+            if (ext == ".pdf")
+            {
+                return PhysicalFile(filePath, contentType ?? "application/pdf", fileName);
+            }
+
+            // Images: return file stream
+            if (previewableImageExts.Contains(ext))
+            {
+                var imageContentType = contentType;
+                if (string.IsNullOrEmpty(imageContentType) || imageContentType == "application/octet-stream")
+                {
+                    imageContentType = ext switch
+                    {
+                        ".jpg" or ".jpeg" => "image/jpeg",
+                        ".png" => "image/png",
+                        ".gif" => "image/gif",
+                        ".bmp" => "image/bmp",
+                        ".tiff" or ".tif" => "image/tiff",
+                        ".webp" => "image/webp",
+                        ".svg" => "image/svg+xml",
+                        _ => "application/octet-stream"
+                    };
+                }
+                return PhysicalFile(filePath, imageContentType, fileName);
+            }
+
+            // Text: read content and return as plain text
+            if (previewableTextExts.Contains(ext))
+            {
+                var text = await System.IO.File.ReadAllTextAsync(filePath, ct);
+                // Limit to first 500KB to avoid huge responses
+                if (text.Length > 512000)
+                    text = text[..512000] + "\n\n... (فایل بزرگتر از حد مجاز برای نمایش است)";
+                return Content(text, "text/plain; charset=utf-8");
+            }
+
+            // Unsupported type: return JSON with preview-not-available indicator
+            return Ok(new
+            {
+                success = false,
+                previewUnavailable = true,
+                message = "پیش‌نمایش برای این نوع فایل در دسترس نیست.",
+                fileName,
+                fileSize = attachment.FileSize,
+                contentType = contentType
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to preview attachment {AttachmentId}", attachmentId);
+            return NotFound();
+        }
     }
 }

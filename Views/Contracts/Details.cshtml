@@ -1,4 +1,4 @@
-@model ContractDetailsVM
+﻿@model ContractDetailsVM
 @using System.Globalization
 @{
     ViewData["Title"] = "جزئیات قرارداد";
@@ -9,7 +9,7 @@
     bool hasValidStartDate = Model.StartDate.Year > 1700;
     bool hasValidSignDate = Model.SignDate.HasValue && Model.SignDate.Value.Year > 1700;
 
-    int? remainingDays = hasValidEndDate ? (int?)(Model.EndDate.Value.Date - DateTime.Today).Days : null;
+    int? remainingDays = hasValidEndDate ? (int?)(Model.EndDate!.Value.Date - DateTime.Today).Days : null;
 
     // Calculate payment stats from Payments collection
     decimal paidAmount = Model.Payments?
@@ -184,6 +184,9 @@
                     </div>
                 </div>
 
+                @* Lifecycle Status Stepper *@
+                <partial name="_LifecycleStepper" model="Model" />
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <div>
                         
@@ -308,8 +311,17 @@
                             </div>
                         </div>
                     }
+<div id="paymentScheduleContainer" class="mt-3" data-contract-id="@Model.Id">
+                        <div class="schedule-skeleton space-y-2 " aria-label="در حال بارگذاری برنامه پرداخت">
+                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div>
+                        </div>
+                    </div>
 
-                    @if (Model.Payments.Any())
+                    @if (Model.Payments != null && Model.Payments.Any())
                     {
                         <div class="overflow-x-auto">
                             <table class="w-full text-[11px]">
@@ -394,7 +406,7 @@
             </div>
 
             @* Tab 4: Attachments *@
-            <div class="tab-panel @(activeTab == "attachments" ? "" : "hidden")" id="tab-attachments">
+            <div class="tab-panel @(activeTab == "attachments" ? "" : "hidden")" id="tab-attachments" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-xs font-black text-slate-900 dark:text-white">ضمیمه‌ها</h3>
                     @if (Model.CanEdit)
@@ -404,8 +416,29 @@
                         </button>
                     }
                 </div>
-                @if (Model.Attachments.Any())
+
+                @if (Model.CanEdit)
                 {
+                    @* Drag-and-Drop Upload Zone *@
+                    <div class="contract-dropzone" id="contractDropzone">
+                        <i class="bi bi-cloud-upload contract-dropzone-icon"></i>
+                        <p class="contract-dropzone-text">فایل‌ها را اینجا رها کنید یا کلیک کنید</p>
+                        <p class="contract-dropzone-sub">فایل‌های PDF, Word, Excel, تصاویر تا ۲۰ مگابایت</p>
+                        <span class="contract-dropzone-hint">چند فایل را می‌توانید همزمان انتخاب کنید</span>
+                        <input type="file" id="contractFileInput" class="hidden" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.tiff,.tif,.bmp,.zip,.rar,.7z,.txt" />
+                    </div>
+
+                    @* Validation Error Messages Container *@
+                    <div class="contract-upload-errors" id="contractUploadErrors"></div>
+
+                    @* Upload Progress Queue *@
+                    <div class="contract-upload-queue" id="contractUploadQueue"></div>
+                }
+
+                @* Existing Attachments List *@
+                <div id="contractAttachmentsList">
+                    @if (Model.Attachments.Any())
+                    {
                     <div class="overflow-x-auto">
                         <table class="w-full text-[11px]">
                             <thead>
@@ -418,10 +451,10 @@
                                     <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60" id="contractAttachmentsBody">
                                 @foreach (var att in Model.Attachments)
                                 {
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition" data-attachment-id="@att.Id">
                                         <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">
                                             <i class="bi bi-file-earmark ml-1 text-slate-400"></i>@att.FileName
                                         </td>
@@ -431,6 +464,9 @@
                                         <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(att.CreatedAt)</td>
                                         <td class="px-3 py-2 text-center">
                                             <div class="inline-flex gap-1">
+                                                <button type="button" onclick="openAttachmentPreview(@att.Id, '@att.FileName.Replace("'", "\\'")', '@(att.ContentType ?? "")', @att.FileSize, '/Contracts/DownloadAttachment/@att.Id')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition cursor-pointer" title="پیش‌نمایش">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
                                                 <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود">
                                                     <i class="bi bi-download"></i>
                                                 </a>
@@ -453,11 +489,102 @@
                 }
                 else
                 {
-                    <div class="text-center py-6">
+                    <div class="text-center py-6" id="contractAttachmentsEmpty">
                         <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
                             <i class="bi bi-paperclip text-slate-400"></i>
                         </div>
                         <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمیمه‌ای وجود ندارد.</p>
+                    </div>
+                }
+            </div>
+
+            @* Tab 5.5: Amendments *@
+            <div class="tab-panel @(activeTab == "amendments" ? "" : "hidden")" id="tab-amendments">
+                <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-3">اصلاحیه‌ها / الحاقیه‌ها / تمدیدها</h3>
+                @if (Model.Amendments.Any())
+                {
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[11px]">
+                            <thead>
+                                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">#</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">نوع</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">عنوان</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">تغییر مبلغ</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ اثر</th>
+                                    <th class="text-right px-3 py-2 font-bold text-slate-500">وضعیت</th>
+                                    <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                                @foreach (var am in Model.Amendments)
+                                {
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@am.AmendmentNumber</td>
+                                        <td class="px-3 py-2"><span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400">@am.AmendmentTypeDisplay</span></td>
+                                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@am.Title</td>
+                                        <td class="px-3 py-2 font-mono tabular-nums @(am.AmountChange >= 0 ? "text-emerald-600" : "text-rose-600")">@(am.AmountChange >= 0 ? "+" : "")@am.AmountChange.ToString("N0")</td>
+                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(am.EffectiveDate)</td>
+                                        <td class="px-3 py-2">
+                                            @if (am.Status == "Draft") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">پیش‌نویس</span> }
+                                            else if (am.Status == "PendingApproval") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">در انتظار تایید</span> }
+                                            else if (am.Status == "Approved") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400">تایید شده</span> }
+                                            else if (am.Status == "Applied") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">اعمال شده</span> }
+                                            else if (am.Status == "Rejected") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400">رد شده</span> }
+                                            else if (am.Status == "Cancelled") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">لغو شده</span> }
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            <div class="inline-flex gap-1">
+                                                @if (am.CanEdit && Model.CanEdit)
+                                                {
+                                                    <form asp-action="SubmitAmendmentForApproval" asp-route-amendmentId="@am.Id" method="post" class="inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition" title="ارسال به تایید">
+                                                            <i class="bi bi-send"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                                @if (am.CanApply && Model.CanEdit)
+                                                {
+                                                    <form asp-action="ApplyAmendment" asp-route-amendmentId="@am.Id" method="post" class="inline" onsubmit="return confirm('اصلاحیه اعمال شود؟');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-400 transition" title="اعمال">
+                                                            <i class="bi bi-check2-all"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                                @if (am.Status == "Draft" || am.Status == "PendingApproval")
+                                                {
+                                                    <form asp-action="CancelAmendment" asp-route-amendmentId="@am.Id" method="post" class="inline" onsubmit="return confirm('لغو شود؟');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="لغو">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-6">
+                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
+                            <i class="bi bi-pencil-square text-slate-400"></i>
+                        </div>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ اصلاحیه‌ای برای این قرارداد وجود ندارد.</p>
+                    </div>
+                }
+                @if (Model.CanEdit)
+                {
+                    <div class="mt-3 flex justify-end">
+                        <a asp-action="CreateAmendment" asp-route-contractId="@Model.Id" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 no-underline" data-modal-target="amendmentModal">
+                            <i class="bi bi-plus-lg ml-1"></i>ایجاد اصلاحیهٔ جدید
+                        </a>
                     </div>
                 }
             </div>
@@ -630,6 +757,9 @@
     </div>
 }
 
+@* ── Attachment Preview Modal ──────────────────────────────────── *@
+<partial name="_AttachmentPreview" />
+
 @section Styles {
     <link rel="stylesheet" href="~/css/contracts-details-style.css" asp-append-version="true" />
 }
@@ -637,4 +767,39 @@
 @section Scripts {
     <script src="~/js/persian-date.min.js"></script>
     <script src="~/js/contracts-details-script.js" asp-append-version="true"></script>
+    <script src="~/js/contracts-attachment-upload.js" asp-append-version="true"></script>
+    <script src="~/js/contracts-attachment-preview.js" asp-append-version="true"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var container = document.getElementById('paymentScheduleContainer');
+        if (!container) return;
+        var contractId = container.getAttribute('data-contract-id');
+        if (!contractId) return;
+
+        function loadSchedule() {
+            container.innerHTML = '<div class="schedule-skeleton space-y-2 "><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
+            fetch('/Contracts/Schedule/' + contractId)
+                .then(function (r) { return r.text(); })
+                .then(function (html) { container.innerHTML = html; })
+                .catch(function () { container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="loadSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>'; });
+        }
+
+        // Load when the Payments tab is shown
+        var paymentsTab = document.querySelector('[data-tab="payments"]');
+        if (paymentsTab) {
+            paymentsTab.addEventListener('click', function () {
+                if (!container.dataset.loaded) {
+                    container.dataset.loaded = '1';
+                    loadSchedule();
+                }
+            });
+        }
+
+        // Also load if the Payments tab is already active
+        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) {
+            container.dataset.loaded = '1';
+            loadSchedule();
+        }
+    });
+</script>
 }

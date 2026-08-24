@@ -1,0 +1,30 @@
+@*
+ * Rhyno Contracts — Notification Panel Widget
+ *
+ * Displays recent contract-specific notifications on the dashboard.
+ * Auto-populated by contracts-notification-script.js via AJAX.
+ *@
+<div class="erp-card p-2.5">
+    <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+            <i class="bi bi-bell text-amber-500"></i>
+            <span>اعلان‌های قراردادها</span>
+        </h2>
+        <div class="flex items-center gap-2">
+            <span id="notificationPanelCount" class="text-[9px] font-bold text-slate-400 dark:text-slate-500"></span>
+            <button type="button"
+                    id="headerMarkAllRead"
+                    class="text-[9px] text-sky-600 dark:text-sky-400 hover:underline border-0 bg-transparent cursor-pointer"
+                    title="علامت‌گذاری همه به عنوان خوانده شده">
+                <i class="bi bi-check2-all ml-1"></i>خواندن همه
+            </button>
+        </div>
+    </div>
+    <div id="contractNotificationsPanel" class="divide-y divide-slate-100 dark:divide-slate-800">
+        @* Populated by contracts-notification-script.js via AJAX *@
+        <div class="flex items-center gap-2 py-3 px-2">
+            <span class="rhyno-spinner" style="width:14px;height:14px;border-width:2px;"></span>
+            <span class="text-[10px] text-slate-400">در حال بارگذاری اعلان‌ها...</span>
+        </div>
+    </div>
+</div>

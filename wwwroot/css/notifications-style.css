@@ -1,0 +1,67 @@
+/* ── Notification Center Styles ──────────────────────── */
+.notification-item {
+  cursor: default;
+}
+
+.notification-item .mark-read-btn {
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.notification-item:hover .mark-read-btn {
+  opacity: 1;
+}
+
+/* ── Alert Settings Toggle Card ── */
+.alert-rule-card {
+  transition: box-shadow 0.15s ease;
+}
+.alert-rule-card:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.dark .alert-rule-card:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Toggle switch custom */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #cbd5e1;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+.dark .toggle-slider {
+  background: #475569;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: #0d9488;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+}

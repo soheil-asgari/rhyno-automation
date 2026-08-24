@@ -1,1 +1,114 @@
 .font-mono { font-variant-numeric: tabular-nums; }
+
+/* ── Skeleton Loading Shimmer ──────────────────────── */
+.schedule-skeleton {
+  border-radius: 6px;
+  overflow: hidden;
+}
+.schedule-skeleton > div {
+  position: relative;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+.dark .schedule-skeleton > div {
+  background: #334155;
+}
+.schedule-skeleton > div::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+.dark .schedule-skeleton > div::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Index Page Loading Overlay ────────────────────── */
+.contracts-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(248, 250, 252, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+}
+.dark .contracts-loading-overlay {
+  background: rgba(15, 23, 42, 0.85);
+}
+.contracts-loading-overlay .rhyno-spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+.contracts-loading-overlay span {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── Skeleton table rows ── */
+.skeleton-row td {
+  padding: 8px 12px;
+}
+.skeleton-row td > .sk {
+  display: block;
+  height: 12px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+.dark .skeleton-row td > .sk {
+  background: #334155;
+}
+.skeleton-row td > .sk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+.dark .skeleton-row td > .sk::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+
+/* ── Dashboard Skeleton Cards ── */
+.dashboard-skeleton-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+.dashboard-skeleton-card > div {
+  position: relative;
+  overflow: hidden;
+  background: #e2e8f0;
+  border-radius: 6px;
+}
+.dark .dashboard-skeleton-card > div {
+  background: #334155;
+}
+.dashboard-skeleton-card > div::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+.dark .dashboard-skeleton-card > div::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+
+/* ── Pagination spinner ── */
+.pagination-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+  font-size: 10px;
+}

@@ -135,6 +135,56 @@ namespace OfficeAutomation.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal RemainingBalance { get; set; }
 
+        // ── Multi-Currency ──────────────────────────────────────────────
+        /// <summary>کد ارز (IRR, USD, EUR, …)</summary>
+        [Required]
+        [StringLength(3)]
+        [Display(Name = "ارز")]
+        public string CurrencyCode { get; set; } = Models.CurrencyCode.IRR;
+
+        /// <summary>نرخ تبدیل به ارز پایه (IRR) جهت گزارش‌گیری</summary>
+        [Display(Name = "نرخ تبدیل")]
+        [Column(TypeName = "decimal(18,6)")]
+        public decimal ExchangeRate { get; set; } = 1m;
+
+        /// <summary>مبلغ به ارز پایه (IRR) برای گزارش‌های مالی</summary>
+        [Display(Name = "مبلغ پایه (IRR)")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal BaseCurrencyAmount { get; set; }
+
+        // ── Tax / VAT ───────────────────────────────────────────────────
+        /// <summary>روش محاسبه مالیات (Exclusive, Inclusive, None)</summary>
+        [Required]
+        [StringLength(20)]
+        [Display(Name = "روش محاسبه مالیات")]
+        public string TaxMethod { get; set; } = TaxCalculationMethod.Exclusive;
+
+        /// <summary>نرخ مالیات پیش‌فرض (درصد)</summary>
+        [Display(Name = "نرخ مالیات (%)")]
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal DefaultTaxRatePercent { get; set; }
+
+        /// <summary>مبلغ کل مالیات</summary>
+        [Display(Name = "مجموع مالیات")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalTaxAmount { get; set; }
+
+        /// <summary>مبلغ شامل مالیات (مبلغ کل + مالیات)</summary>
+        [Display(Name = "مبلغ نهایی (با مالیات)")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalAmountInclusiveTax { get; set; }
+
+        // ── Revenue Recognition (Accrual Basis) ──
+        /// <summary>مبلغ درآمد شناسایی‌شده تاکنون منهای دریافت‌ها</summary>
+        [Display(Name = "درآمد شناسایی‌شده")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal RecognizedRevenue { get; set; }
+
+        /// <summary>آخرین تاریخی که درآمد برای آن شناسایی شده است</summary>
+        [Display(Name = "آخرین شناسایی درآمد")]
+        [DataType(DataType.Date)]
+        public DateTime? LastRevenueRecognitionDate { get; set; }
+
         /// <summary>وضعیت پرداخت (محاسبه خودکار)</summary>
         [Required]
         [StringLength(20)]
@@ -215,5 +265,7 @@ namespace OfficeAutomation.Models
         public List<ContractPayment> Payments { get; set; } = new();
         public List<ContractAttachment> Attachments { get; set; } = new();
         public List<ContractAuditLog> AuditLogs { get; set; } = new();
+        public List<ContractAmendment> Amendments { get; set; } = new();
+        public List<ContractTaxLine> TaxLines { get; set; } = new();
     }
 }

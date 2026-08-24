@@ -1,0 +1,89 @@
+@model AlertSettingsVM
+@{
+    ViewData["Title"] = "تنظیمات اعلان‌ها";
+}
+
+<div class="container-fluid py-1 space-y-2" dir="rtl">
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
+        <div>
+            <h1 class="text-[13px] font-bold text-slate-900 dark:text-white">تنظیمات اعلان‌ها</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">مدیریت نحوه دریافت اعلان‌های سیستم</p>
+        </div>
+        <a asp-action="Index" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+            <i class="bi bi-bell ml-1"></i>بازگشت به مرکز اعلان‌ها
+        </a>
+    </div>
+
+    <div class="space-y-2">
+        @foreach (var rule in Model.Rules)
+        {
+            <div class="erp-card p-2.5 alert-rule-card flex items-center justify-between gap-3" data-rule-id="@rule.Id">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <strong class="text-[12px] text-slate-900 dark:text-white">@rule.DisplayName</strong>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold
+                            @(rule.Severity == "Danger" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" :
+                              rule.Severity == "Warning" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                              rule.Severity == "Success" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
+                              "bg-sky-100 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400")">
+                            @rule.Severity
+                        </span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(rule.Description))
+                    {
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">@rule.Description</p>
+                    }
+                </div>
+                <div class="flex items-center gap-4 flex-shrink-0">
+                    <label class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 cursor-pointer">
+                        <span>داخل سیستم</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="alert-toggle-inapp" @(rule.SubscribedInApp ? "checked" : "") />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                    <label class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 cursor-pointer">
+                        <span>ایمیل</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="alert-toggle-email" @(rule.SubscribedEmail ? "checked" : "") />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications-style.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".alert-toggle-inapp, .alert-toggle-email").forEach(function (toggle) {
+                toggle.addEventListener("change", function () {
+                    var card = this.closest("[data-rule-id]");
+                    if (!card) return;
+                    var ruleId = parseInt(card.getAttribute("data-rule-id"), 10);
+                    var inAppChecked = card.querySelector(".alert-toggle-inapp").checked;
+                    var emailChecked = card.querySelector(".alert-toggle-email").checked;
+
+                    var token = document.querySelector('meta[name="request-verification-token"]');
+                    var antiforgery = token ? token.getAttribute("content") : "";
+
+                    fetch("/Notifications/UpdateSubscription", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "RequestVerificationToken": antiforgery },
+                        body: JSON.stringify({
+                            ruleId: ruleId,
+                            receiveInApp: inAppChecked,
+                            receiveEmail: emailChecked
+                        })
+                    }).catch(function () {});
+                });
+            });
+        });
+    </script>
+}

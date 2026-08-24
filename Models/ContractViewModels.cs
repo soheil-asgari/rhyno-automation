@@ -352,6 +352,8 @@ namespace OfficeAutomation.Models
         public List<ContractPaymentVM> Payments { get; set; } = new();
         public List<ContractAttachmentVM> Attachments { get; set; } = new();
         public List<ContractAuditLogVM> AuditLogs { get; set; } = new();
+public List<LifecycleStepVM> LifecycleSteps { get; set; } = new();
+        public List<AmendmentListItemVM> Amendments { get; set; } = new();
     }
 
     public class ContractPaymentVM
@@ -539,4 +541,133 @@ namespace OfficeAutomation.Models
         public int PartiallyPaid { get; set; }
         public int Unpaid { get; set; }
     }
+/// <summary>Request body for internal signature capture</summary>
+public class SignContractRequest
+{
+    /// <summary>تصویر امضا به صورت Base64</summary>
+    [Required(ErrorMessage = "داده‌های امضا الزامی است.")]
+    public string SignatureImageData { get; set; } = string.Empty;
+
+    /// <summary>توضیح اختیاری</summary>
+    public string? Comment { get; set; }
+}
+
+/// <summary>Request body for generating an external sign link</summary>
+public class GetExternalSignLinkRequest
+{
+    /// <summary>شناسه امضاکننده</summary>
+    [Required]
+    public int SignerId { get; set; }
+}
+
+/// <summary>Request body for creating a signature request</summary>
+public class CreateSignatureRequestVm
+{
+    /// <summary>عنوان درخواست امضا</summary>
+    [Required(ErrorMessage = "عنوان الزامی است.")]
+    [StringLength(200)]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>پیام به امضاکنندگان</summary>
+    [StringLength(2000)]
+    public string? Message { get; set; }
+
+    /// <summary>روش ارسال: InApp, Email, SMS</summary>
+    [Required]
+    public string DeliveryMethod { get; set; } = SignatureDeliveryMethod.InApp;
+
+    /// <summary>ترتیب امضا: Sequential, Parallel</summary>
+    [Required]
+    public string SigningOrder { get; set; } = "Sequential";
+
+    /// <summary>فعال‌سازی خودکار قرارداد پس از تکمیل امضاها</summary>
+    public bool AutoActivateContract { get; set; }
+
+    /// <summary>اصلاحیه مرتبط (اختیاری)</summary>
+    public int? AmendmentId { get; set; }
+}
+public class AmendmentListItemVM
+{
+    public int Id { get; set; }
+    public string AmendmentType { get; set; } = string.Empty;
+    public string AmendmentTypeDisplay { get; set; } = string.Empty;
+    public int AmendmentNumber { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal AmountChange { get; set; }
+    public decimal? NewTotalAmount { get; set; }
+    public int? EndDateChangeDays { get; set; }
+    public DateTime? NewEndDate { get; set; }
+    public DateTime EffectiveDate { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public bool CanEdit { get; set; }
+    public bool CanApply { get; set; }
+    public string CreatedByUserName { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public string CreatedAtText { get; set; } = string.Empty;
+}
+
+public class AmendmentDetailVM
+{
+    public int Id { get; set; }
+    public int ContractId { get; set; }
+    public string AmendmentType { get; set; } = string.Empty;
+    public int AmendmentNumber { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal AmountChange { get; set; }
+    public decimal? NewTotalAmount { get; set; }
+    public int? EndDateChangeDays { get; set; }
+    public DateTime? NewEndDate { get; set; }
+    public DateTime EffectiveDate { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string CreatedByUserName { get; set; } = string.Empty;
+    public string? AppliedByUserName { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? AppliedAt { get; set; }
+    public int? ApprovalRequestId { get; set; }
+}
+
+public class AmendmentCreateVM
+{
+    [Required] public int ContractId { get; set; }
+    [Required][StringLength(20)] public string AmendmentType { get; set; } = AmendmentTypeNames.Amendment;
+    [Required][StringLength(200)] public string Title { get; set; } = string.Empty;
+    [StringLength(4000)] public string? Description { get; set; }
+    public decimal AmountChange { get; set; }
+    public int? EndDateChangeDays { get; set; }
+    [DataType(DataType.Date)] public DateTime? NewEndDate { get; set; }
+    [Required][DataType(DataType.Date)] public DateTime EffectiveDate { get; set; } = DateTime.Today;
+    public bool RequiresApproval { get; set; } = true;
+    public string? ApprovalWorkflowConfigJson { get; set; }
+}
+
+public class AmendmentEditVM
+{
+    [Required][StringLength(200)] public string Title { get; set; } = string.Empty;
+    [StringLength(4000)] public string? Description { get; set; }
+    public decimal AmountChange { get; set; }
+    public int? EndDateChangeDays { get; set; }
+    [DataType(DataType.Date)] public DateTime? NewEndDate { get; set; }
+    [Required][DataType(DataType.Date)] public DateTime EffectiveDate { get; set; } = DateTime.Today;
+}
+
+public class LifecycleStepVM
+{
+    public string Label { get; set; } = string.Empty;
+    public string StatusKey { get; set; } = string.Empty;
+    public string? Icon { get; set; }
+    public DateTime? Date { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public string? UserName { get; set; }
+    public string? CompletedByUserName { get; set; }
+    public bool IsCompleted { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsCurrent { get; set; }
+    public string? Color { get; set; }
+    public string? Description { get; set; }
+    public string? RejectionReason { get; set; }
+    public int? RejectionCount { get; set; }
+    public string? ApprovalDecision { get; set; }
+}
 }

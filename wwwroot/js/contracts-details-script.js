@@ -1,3 +1,119 @@
+// ── Signature Pad Integration ────────────────────────────────────
+    function initSignaturePad() {
+        var canvas = document.getElementById('sig-pad');
+        if (!canvas || typeof SignaturePad === 'undefined') return;
+
+        var pad = new SignaturePad(canvas, {
+            backgroundColor: 'rgba(255, 255, 255, 0)',
+            penColor: 'rgb(0, 0, 0)'
+        });
+
+        function resizeCanvas() {
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext('2d').scale(ratio, ratio);
+            pad.clear();
+        }
+
+        // Resize when the signature tab is shown
+        var sigTabBtn = document.querySelector('[data-tab="signature"]');
+        if (sigTabBtn) {
+            sigTabBtn.addEventListener('click', function () {
+                setTimeout(resizeCanvas, 100);
+            });
+        }
+
+        document.getElementById('sig-clear')?.addEventListener('click', function () { pad.clear(); });
+
+        document.getElementById('sig-contract-save')?.addEventListener('click', function () {
+            if (pad.isEmpty()) {
+                Swal.fire('خطا', 'لطفاً امضای خود را رسم کنید.', 'warning');
+                return;
+            }
+            var dataUrl = pad.toDataURL();
+            var contractId = this.getAttribute('data-contract-id');
+            if (!contractId) return;
+
+            Swal.fire({
+                title: 'ثبت امضای قرارداد',
+                text: 'امضای شما برای این قرارداد ثبت می‌شود.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'بله، ثبت شود',
+                cancelButtonText: 'انصراف'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                fetch('/Contracts/' + contractId + '/Sign', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ signatureImageData: dataUrl })
+                }).then(function (r) { return r.json(); }).then(function (resp) {
+                    if (resp.success) {
+                        Swal.fire('موفقیت', 'امضا با موفقیت ثبت شد.', 'success').then(function () { location.reload(); });
+                    } else {
+                        Swal.fire('خطا', resp.message || 'خطا در ثبت امضا.', 'error');
+                    }
+                }).catch(function () {
+                    Swal.fire('خطا', 'ارتباط با سرور برقرار نشد.', 'error');
+                });
+            });
+        });
+    }
+
+    // ── Signature Requests Tab Loader ────────────────────────────
+    function initSignatureRequestsTab() {
+        var tabBtn = document.querySelector('[data-tab="signature"]');
+        if (!tabBtn) return;
+        tabBtn.addEventListener('click', function () {
+            var container = document.getElementById('tab-signature');
+            if (!container || container.dataset.loaded) return;
+            container.dataset.loaded = 'true';
+            var contractId = container.getAttribute('data-contract-id');
+            if (!contractId) return;
+            fetch('/Contracts/' + contractId + '/SignatureRequests')
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (!resp.success) return;
+                    renderSignatureRequests(container, resp.data);
+                });
+        });
+    }
+
+    function renderSignatureRequests(container, requests) {
+        var html = '<div class="space-y-4">';
+        requests.forEach(function (req) {
+            html += '<div class="border border-slate-200 dark:border-slate-700 rounded-lg p-3">';
+            html += '<div class="flex items-center justify-between mb-2">';
+            html += '<span class="font-medium text-sm">' + escHtml(req.title) + '</span>';
+            html += '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700">' + req.status + '</span>';
+            html += '</div>';
+            html += '<div class="text-[11px] text-slate-500 space-y-1">';
+            html += '<div><span class="font-medium">نوع ارسال:</span> ' + req.deliveryMethod + ' | <span class="font-medium">ترتیب:</span> ' + req.signingOrder + '</div>';
+            html += '<div><span class="font-medium">تاریخ:</span> ' + new Date(req.createdAt).toLocaleDateString('fa-IR') + '</div>';
+            if (req.completedAt) html += '<div><span class="font-medium">تکمیل:</span> ' + new Date(req.completedAt).toLocaleDateString('fa-IR') + '</div>';
+            html += '<div class="mt-2"><span class="font-medium">امضاکنندگان:</span></div>';
+            html += '<ul class="list-disc list-inside">';
+            req.signers.forEach(function (s) {
+                var icon = s.result === 'Signed' ? 'bi-check-circle-fill text-green-600' : s.result === 'Declined' ? 'bi-x-circle-fill text-rose-500' : 'bi-clock text-slate-400';
+                html += '<li class="text-xs"><i class="bi ' + icon + ' ml-1"></i>' + escHtml(s.userName) + ' (' + s.signerType + ') - ' + s.result + (s.signedAt ? ' در ' + new Date(s.signedAt).toLocaleDateString('fa-IR') : '') + '</li>';
+            });
+            html += '</ul></div></div>';
+        });
+        if (requests.length === 0) html += '<div class="text-center py-8 text-slate-400 text-sm">درخواست امضایی وجود ندارد.</div>';
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
@@ -300,6 +416,40 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ── Schedule Lazy-Load Retry Helper ──
+    window.reloadPaymentSchedule = function () {
+        var container = document.getElementById('paymentScheduleContainer');
+        if (!container) return;
+        delete container.dataset.loaded;
+        container.innerHTML = '<div class="schedule-skeleton space-y-2 "><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
+        var contractId = container.getAttribute('data-contract-id');
+        if (!contractId) return;
+        fetch('/Contracts/Schedule/' + contractId)
+            .then(function (r) { return r.text(); })
+            .then(function (html) { container.innerHTML = html; })
+            .catch(function () {
+                container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="reloadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
+            });
+    };
+
+    // ── Schedule Lazy-Load Retry Helper ──
+    window.reloadPaymentSchedule = function () {
+        var container = document.getElementById('paymentScheduleContainer');
+        if (!container) return;
+        delete container.dataset.loaded;
+        container.innerHTML = '<div class="schedule-skeleton space-y-2 "><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
+        var contractId = container.getAttribute('data-contract-id');
+        if (!contractId) return;
+        fetch('/Contracts/Schedule/' + contractId)
+            .then(function (r) { return r.text(); })
+            .then(function (html) { container.innerHTML = html; })
+            .catch(function () {
+                container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="reloadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
+            });
+    };
+
     initTabs();
+    initSignaturePad();
+    initSignatureRequestsTab();
     initJalaliPickers();
 });

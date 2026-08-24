@@ -72,6 +72,12 @@ public interface IContractService
     // ── Financial Tracking ────────────────────────────────────────
     Task RecalculatePaymentStatusAsync(int contractId, CancellationToken ct = default);
 
+/// <summary>
+    /// Backfill: ایجاد سند درآمد معوق (Deferred Revenue) برای قراردادهای فعالی که
+    /// پیش از اضافه شدن این قابلیت ایجاد شده بودند. یک‌بار اجرا می‌شود.
+    /// </summary>
+    /// <returns>تعداد قراردادهای به‌روز شده، و تعداد خطاها</returns>
+    Task<(int Updated, int Errors)> BackfillDeferredRevenueForExistingAsync(string currentUserId, CancellationToken ct = default);
     // ── Expiry Engine ─────────────────────────────────────────────
     Task<int> UpdateExpiringSoonStatusesAsync(CancellationToken ct = default);
 }

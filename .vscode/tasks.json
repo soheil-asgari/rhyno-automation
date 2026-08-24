@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "sqlproj: Build rhyno",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"f:/rhyno-automation-1/rhyno-automation/rhyno/rhyno.sqlproj",
+				"/p:NetCoreBuild=true",
+				"/p:NETCoreTargetsPath=c:/Users/esmaeili/.vscode/extensions/ms-mssql.sql-database-projects-vscode-1.7.0/BuildDirectory",
+				"/p:SystemDacpacsLocation=c:/Users/esmaeili/.vscode/extensions/ms-mssql.sql-database-projects-vscode-1.7.0/BuildDirectory"
+			],
+			"problemMatcher": "$sqlproj-problem-matcher",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Builds the rhyno SQL project"
+		}
+	]
+}

@@ -11,7 +11,8 @@
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">نمای کلی وضعیت قراردادها و اطلاعات مالی</p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-            <a asp-action="Index" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+            <a href="@Url.Action("Index", "Contracts")" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition"
+               onclick="event.preventDefault(); (window.parent.RhynoTabs ? window.parent.RhynoTabs.open('/Contracts/Index', '\u0641\u0647\u0631\u0633\u062A \u0642\u0631\u0627\u0631\u062F\u0627\u062F\u0647\u0627', 'bi-list-ul') : window.location.href='/Contracts/Index');">
                 <i class="bi bi-list-ul ml-1"></i>فهرست قراردادها
             </a>
             <a asp-action="Create" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 no-underline">
@@ -21,7 +22,7 @@
     </div>
 
     @* Metric Cards Grid *@
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" data-dashboard-metrics>
         <!-- Total Contracts -->
         <div class="erp-card p-2.5 flex flex-col justify-between">
             <div class="flex items-start justify-between">
@@ -213,8 +214,17 @@
             </div>
         </div>
     </div>
+
+    @* ── Notification Panel ── *@
+    <partial name="_ContractNotifications" />
 </div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/contracts-dashboard-style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/notifications-style.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/contracts-dashboard-script.js" asp-append-version="true"></script>
+    <script src="~/js/contracts-notification-script.js" asp-append-version="true"></script>
 }

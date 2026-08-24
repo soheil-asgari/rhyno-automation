@@ -1,0 +1,195 @@
+﻿@model PaymentScheduleVM
+@using System.Globalization
+@{
+    var installments = Model.Installments;
+    bool hasSchedule = installments != null && installments.Count > 0;
+    bool isCustomEditable = hasSchedule && Model.ScheduleType == "Custom";
+    int scheduleId = hasSchedule ? installments![0].Id : 0;
+    int schedulePk = Model.ScheduleId;
+}
+<div class="bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/40 p-3">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-[12px] font-bold text-slate-800 dark:text-slate-200">
+            <i class="bi bi-calendar-check ml-1 text-teal-500"></i>برنامه زمان‌بندی پرداخت
+        </h3>
+        @if (hasSchedule)
+        {
+            <form method="post" action="/Contracts/Schedule/Delete/@schedulePk"
+                  onsubmit="return confirm('آیا از حذف برنامه پرداخت اطمینان دارید؟');" class="inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="contractId" value="@Model.ContractId" />
+                <button type="submit" class="text-[10px] text-rose-500 hover:text-rose-700 transition">
+                    <i class="bi bi-trash3 ml-0.5"></i>حذف برنامه
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (!hasSchedule)
+    {
+        <form method="post" action="/Contracts/Schedule/Generate" class="space-y-2.5">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ContractId" value="@Model.ContractId" />
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">نوع برنامه</label>
+                    <select name="ScheduleType" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 text-[11px]">
+                        <option value="Fixed">قسط مساوی (Fixed)</option>
+                        <option value="Milestone">مرحله‌ای (Milestone)</option>
+                        <option value="Percentage">درصدی (Percentage)</option>
+                        <option value="Custom">دستی (Custom)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">تعداد اقساط</label>
+                    <input type="number" name="InstallmentCount" value="@Model.InstallmentCount" min="1" max="60" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 text-[11px]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">تاریخ اولین قسط</label>
+                    <input type="date" name="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 text-[11px]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">فاصله (روز)</label>
+                    <input type="number" name="IntervalDays" value="@Model.IntervalDays" min="1" max="365" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 text-[11px]" />
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="px-4 py-1.5 bg-teal-500 hover:bg-teal-600 text-white rounded text-[11px] font-medium transition"><i class="bi bi-plus-lg ml-1"></i>ایجاد برنامه
+                </button>
+            </div>
+        </form>
+    }
+
+@if (hasSchedule && !isCustomEditable)
+    {
+        <div class="overflow-x-auto">
+            <table class="w-full text-[11px]">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <th class="px-2 py-1.5 text-right text-[10px] font-medium text-slate-500 dark:text-slate-400">#</th>
+                        <th class="px-2 py-1.5 text-right text-[10px] font-medium text-slate-500 dark:text-slate-400">توضیحات</th>
+                        <th class="px-2 py-1.5 text-right text-[10px] font-medium text-slate-500 dark:text-slate-400">سررسید</th>
+                        <th class="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500 dark:text-slate-400">مبلغ</th>
+                        <th class="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500 dark:text-slate-400">تجمعی</th>
+                        <th class="px-2 py-1.5 text-center text-[10px] font-medium text-slate-500 dark:text-slate-400">وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inst in installments!.OrderBy(i => i.InstallmentNumber))
+                    {
+                        var rowClass = inst.IsOverdue ? "bg-rose-50/60 dark:bg-rose-950/10" : "";
+                        var statusBadge = "";
+                        switch (inst.Status) {
+                            case "Paid": statusBadge = "<span class='inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'><i class='bi bi-check-circle-fill ml-0.5'></i>پرداخت شده</span>"; break;
+                            case "Overdue": statusBadge = "<span class='inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'><i class='bi bi-exclamation-triangle-fill ml-0.5'></i>سررسید گذشته</span>"; break;
+                            default: statusBadge = "<span class='inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'><i class='bi bi-clock-fill ml-0.5'></i>در انتظار</span>"; break;
+                        }
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition @rowClass">
+                            <td class="px-2 py-1.5 font-mono text-slate-700 dark:text-slate-300">@inst.InstallmentNumber</td>
+                            <td class="px-2 py-1.5 text-slate-700 dark:text-slate-300">@inst.Description</td>
+                            <td class="px-2 py-1.5 text-slate-700 dark:text-slate-300">@ToPersianDate(inst.DueDate)</td>
+                            <td class="px-2 py-1.5 text-left font-mono tabular-nums font-bold text-slate-800 dark:text-slate-200">@inst.Amount.ToString("N0")</td>
+                            <td class="px-2 py-1.5 text-left font-mono tabular-nums text-slate-500 dark:text-slate-400">@inst.CumulativeAmount.ToString("N0")</td>
+                            <td class="px-2 py-1.5 text-center">@Html.Raw(statusBadge)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+            <span class="font-medium">نوع برنامه:</span> @Model.ScheduleType
+            &nbsp;|&nbsp;
+            <span class="font-medium">مبلغ کل:</span> @Model.ContractTotalAmount.ToString("N0")
+        </div>
+    }
+@if (isCustomEditable)
+    {
+        <form method="post" action="/Contracts/Schedule/Customize" class="space-y-2.5">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="scheduleId" value="@schedulePk" />
+            <input type="hidden" name="contractId" value="@Model.ContractId" />
+            <div class="overflow-x-auto">
+                <table class="w-full text-[11px]" id="custom-installments-table">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-700">
+                            <th class="px-2 py-1.5 text-right text-[10px] font-medium text-slate-500 dark:text-slate-400">#</th>
+                            <th class="px-2 py-1.5 text-right text-[10px] font-medium text-slate-500 dark:text-slate-400">توضیحات</th>
+                            <th class="px-2 py-1.5 text-right text-[10px] font-medium text-slate-500 dark:text-slate-400">سررسید</th>
+                            <th class="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500 dark:text-slate-400">مبلغ</th>
+                            <th class="px-2 py-1.5 text-center text-[10px] font-medium text-slate-500 dark:text-slate-400">وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < installments!.Count; i++)
+                        {
+                            var inst = installments[i];
+                            var rowClass = inst.IsOverdue ? "bg-rose-50/60 dark:bg-rose-950/10" : "";
+                            var statusBadge = "";
+                            switch (inst.Status) {
+                                case "Paid": statusBadge = "<span class='inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'><i class='bi bi-check-circle-fill ml-0.5'></i>پرداخت شده</span>"; break;
+                                case "Overdue": statusBadge = "<span class='inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'><i class='bi bi-exclamation-triangle-fill ml-0.5'></i>سررسید گذشته</span>"; break;
+                                default: statusBadge = "<span class='inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'><i class='bi bi-clock-fill ml-0.5'></i>در انتظار</span>"; break;
+                            }
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition @rowClass">
+                                <td class="px-2 py-1.5 font-mono text-slate-700 dark:text-slate-300">@(i + 1)</td>
+                                <td class="px-2 py-1.5">
+                                    <input type="text" name="Installments[@i].Description" value="@inst.Description" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-[11px]" />
+                                </td>
+                                <td class="px-2 py-1.5">
+                                    <input type="date" name="Installments[@i].DueDate" value="@inst.DueDate.ToString("yyyy-MM-dd")" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-[11px]" />
+                                </td>
+                                <td class="px-2 py-1.5 text-left">
+                                    <input type="number" step="0.01" name="Installments[@i].Amount" value="@inst.Amount" class="w-full text-left font-mono tabular-nums rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-[11px] installment-amount-input" required />
+                                </td>
+                                <td class="px-2 py-1.5 text-center">@Html.Raw(statusBadge)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-2 flex items-center justify-between">
+                <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                    <span class="font-medium">نوع برنامه:</span> @Model.ScheduleType
+                    &nbsp;|&nbsp;
+                    <span class="font-medium">مبلغ کل:</span> @Model.ContractTotalAmount.ToString("N0")
+                    &nbsp;|&nbsp;
+                    <span class="font-medium">مجموع اقساط:</span>
+                    <span id="custom-total-display" class="font-bold">@installments.Sum(i => i.Amount).ToString("N0")</span>
+                </div>
+                <button type="submit" class="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded text-[11px] font-medium transition">
+                    <i class="bi bi-check2-square ml-1"></i>ذخیره تغییرات
+                </button>
+            </div>
+            <div id="custom-total-error" class="hidden text-[10px] text-rose-600 dark:text-rose-400 mt-1">
+                <i class="bi bi-exclamation-circle ml-0.5"></i>مجموع مبالغ اقساط با مبلغ کل قرارداد مطابقت ندارد.
+            </div>
+        </form>
+<script>
+            (function() {
+                var inputs = document.querySelectorAll('.installment-amount-input');
+                var totalDisplay = document.getElementById('custom-total-display');
+                var totalError = document.getElementById('custom-total-error');
+                var targetTotal = @Model.ContractTotalAmount;
+                function recalc() {
+                    var sum = 0;
+                    inputs.forEach(function(inp) { sum += parseFloat(inp.value) || 0; });
+                    totalDisplay.textContent = sum.toLocaleString(undefined, {minimumFractionDigits:0,maximumFractionDigits:0});
+                    if (Math.abs(sum - targetTotal) > 0.009) {
+                        totalError.classList.remove('hidden');
+                    } else {
+                        totalError.classList.add('hidden');
+                    }
+                }
+                inputs.forEach(function(inp) { inp.addEventListener('input', recalc); });
+            })();
+        </script>
+    }
+</div>
+
+@functions {
+    string ToPersianDate(DateTime value) {
+        if (value == DateTime.MinValue || value.Year < 1700) return "نامشخص";
+        try { var cal = new PersianCalendar(); return $"{cal.GetYear(value):0000}/{cal.GetMonth(value):00}/{cal.GetDayOfMonth(value):00}"; }
+        catch { return "نامشخص"; }
+    }
+}

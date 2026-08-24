@@ -1,0 +1,81 @@
+@{
+    // Defaults
+    var confirmId = ViewData["ConfirmDialogId"] as string ?? "appConfirmDialog";
+    var confirmTitle = ViewData["ConfirmTitle"] as string ?? "تایید عملیات";
+}
+
+@* 
+    Enhanced Confirm Dialog Partial
+    Usage in Layout: @await Html.PartialAsync("_ConfirmDialog")
+    
+    JavaScript API:
+      const confirmed = await AppUI.confirm({
+        title: 'حذف قرارداد',
+        message: 'آیا از حذف این قرارداد مطمئن هستید؟',
+        severity: 'danger',    // 'danger' | 'warning' | 'info' | 'success'
+        confirmText: 'حذف',
+        cancelText: 'انصراف'
+      });
+      if (confirmed) { ... }
+
+    HTML Data Attributes (auto-wired for any element):
+      <button data-confirm-message="آیا مطمئن هستید؟"
+              data-confirm-title="حذف"
+              data-confirm-severity="danger"
+              data-confirm-confirm-text="حذف"
+              onclick="...">
+        حذف
+      </button>
+*@
+
+<div id="@confirmId" class="rhyno-modal-overlay"
+     style="position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);"
+     role="dialog" aria-modal="true" aria-labelledby="@(confirmId)-title">
+    <div class="rhyno-modal-content"
+         style="width:100%;max-width:420px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+        
+        @* ── Header ── *@
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span id="@(confirmId)-icon"
+                      class="confirm-dialog-icon"
+                      style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:14px;color:#fff;background:#6b7280;">
+                    <i class="bi bi-question-lg"></i>
+                </span>
+                <h5 id="@(confirmId)-title"
+                    class="confirm-dialog-title"
+                    style="margin:0;font-size:14px;font-weight:800;color:#1f2937;">
+                    @confirmTitle
+                </h5>
+            </div>
+            <button type="button" class="confirm-dialog-close"
+                    style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;"
+                    onclick="AppUI.hideConfirm('@confirmId')">&times;</button>
+        </div>
+
+        @* ── Body ── *@
+        <div style="padding:16px 18px;">
+            <p id="@(confirmId)-message"
+               class="confirm-dialog-message"
+               style="margin:0;font-size:13px;color:#4b5563;line-height:1.6;">
+                آیا مطمئن هستید؟
+            </p>
+        </div>
+
+        @* ── Footer ── *@
+        <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #f3f4f6;">
+            <button type="button"
+                    id="@(confirmId)-cancel"
+                    class="confirm-dialog-cancel btn-confirm-cancel"
+                    style="padding:8px 16px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;">
+                انصراف
+            </button>
+            <button type="button"
+                    id="@(confirmId)-ok"
+                    class="confirm-dialog-ok btn-confirm-ok"
+                    style="padding:8px 16px;border:none;background:#e11d48;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">
+                تایید
+            </button>
+        </div>
+    </div>
+</div>

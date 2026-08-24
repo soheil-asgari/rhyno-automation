@@ -1640,7 +1640,9 @@ public sealed class TaxExporterService : ITaxExporterService
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new() { Timeout = 15000 });
 
             // ۲. اگر منوی «صورتحساب‌ها» از قبل در صفحه باشد، یعنی مستقیماً وارد پرونده شده‌اید
-            var isMenuVisible = await page.Locator("text=صورتحساب‌ها").IsVisibleAsync(new() { Timeout = 3000 });
+            var invoicesMenuItem = page.Locator("text=صورتحساب‌ها");
+            var isMenuVisible = await invoicesMenuItem.CountAsync() > 0
+                && await invoicesMenuItem.First.IsVisibleAsync();
             if (isMenuVisible)
             {
                 _logger.LogInformation("کاربر مستقیماً وارد پرونده شده است؛ عبور از کلیک «ورود به پرونده».");
@@ -1779,6 +1781,7 @@ public sealed class TaxExporterService : ITaxExporterService
         try
         {
             var ownerFrame = await checkbox.OwnerFrameAsync();
+            if (ownerFrame is null) return false;
             var result = await ownerFrame.EvaluateAsync<bool>(
                 @"el => {
                     let p = el.closest('label') || el.parentElement;

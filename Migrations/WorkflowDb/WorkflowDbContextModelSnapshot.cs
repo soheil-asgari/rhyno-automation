@@ -771,6 +771,10 @@ namespace OfficeAutomation.Migrations.WorkflowDb
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
 
+                    b.Property<string>("DesktopBackgroundUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<string>("FaviconUrl")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");

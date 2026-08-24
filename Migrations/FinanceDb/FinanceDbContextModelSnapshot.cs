@@ -1584,6 +1584,80 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.ToTable("AccountGroups");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AllocationJournalTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("JournalTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("SourceSubsidiaryAccountId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JournalTypeId");
+
+                    b.HasIndex("SourceSubsidiaryAccountId");
+
+                    b.ToTable("AllocationJournalTemplate", (string)null);
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AllocationJournalTemplateLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AllocationJournalTemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Narration")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal?>("Percentage")
+                        .HasColumnType("decimal(7,4)");
+
+                    b.Property<decimal?>("Ratio")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<int>("TargetSubsidiaryAccountId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AllocationJournalTemplateId");
+
+                    b.HasIndex("TargetSubsidiaryAccountId");
+
+                    b.ToTable("AllocationJournalTemplateLine", (string)null);
+                });
+
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.Currency", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1734,6 +1808,52 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.HasIndex("FiscalYearId", "StartDate", "EndDate");
 
                     b.ToTable("FiscalPeriods");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.FiscalPeriodAuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("FiscalPeriodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("FiscalYearId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("PreviousStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FiscalPeriodId");
+
+                    b.HasIndex("Timestamp");
+
+                    b.ToTable("FiscalPeriodAuditLog", (string)null);
                 });
 
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.FiscalYear", b =>
@@ -2463,6 +2583,44 @@ namespace OfficeAutomation.Migrations.FinanceDb
                     b.Navigation("Invoice");
                 });
 
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AllocationJournalTemplate", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.JournalType", "JournalType")
+                        .WithMany()
+                        .HasForeignKey("JournalTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.SubsidiaryAccount", "SourceSubsidiaryAccount")
+                        .WithMany()
+                        .HasForeignKey("SourceSubsidiaryAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("JournalType");
+
+                    b.Navigation("SourceSubsidiaryAccount");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AllocationJournalTemplateLine", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.AllocationJournalTemplate", "AllocationJournalTemplate")
+                        .WithMany("Lines")
+                        .HasForeignKey("AllocationJournalTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.SubsidiaryAccount", "TargetSubsidiaryAccount")
+                        .WithMany()
+                        .HasForeignKey("TargetSubsidiaryAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AllocationJournalTemplate");
+
+                    b.Navigation("TargetSubsidiaryAccount");
+                });
+
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.CurrencyExchangeRate", b =>
                 {
                     b.HasOne("OfficeAutomation.Modules.Finance.Domain.Currency", "Currency")
@@ -2493,6 +2651,17 @@ namespace OfficeAutomation.Migrations.FinanceDb
                         .IsRequired();
 
                     b.Navigation("FiscalYear");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.FiscalPeriodAuditLog", b =>
+                {
+                    b.HasOne("OfficeAutomation.Modules.Finance.Domain.FiscalPeriod", "FiscalPeriod")
+                        .WithMany()
+                        .HasForeignKey("FiscalPeriodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FiscalPeriod");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.GeneralAccount", b =>
@@ -2714,6 +2883,11 @@ namespace OfficeAutomation.Migrations.FinanceDb
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AccountGroup", b =>
                 {
                     b.Navigation("GeneralAccounts");
+                });
+
+            modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.AllocationJournalTemplate", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("OfficeAutomation.Modules.Finance.Domain.Currency", b =>

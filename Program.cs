@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +61,7 @@ builder.Services.Configure<TenantOptions>(builder.Configuration.GetSection(Tenan
 builder.Services.Configure<AuditRetentionOptions>(builder.Configuration.GetSection(AuditRetentionOptions.SectionName));
 builder.Services.Configure<OcrOptions>(builder.Configuration.GetSection(OcrOptions.SectionName));
 
-// ── Swagger / OpenAPI ──────────────────────────────────
+// â”€â”€ Swagger / OpenAPI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -69,7 +69,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "Rhyno ERP API",
         Version = "v1",
-        Description = "رابط برنامه‌نویسی کاربردی (API) عمومی سیستم برنامه‌ریزی منابع سازمانی راینو",
+        Description = "ط±ط§ط¨ط· ط¨ط±ظ†ط§ظ…ظ‡â€Œظ†ظˆغŒط³غŒ ع©ط§ط±ط¨ط±ط¯غŒ (API) ط¹ظ…ظˆظ…غŒ ط³غŒط³طھظ… ط¨ط±ظ†ط§ظ…ظ‡â€Œط±غŒط²غŒ ظ…ظ†ط§ط¨ط¹ ط³ط§ط²ظ…ط§ظ†غŒ ط±ط§غŒظ†ظˆ",
         Contact = new OpenApiContact
         {
             Name = "Rhyno Support",
@@ -81,7 +81,7 @@ builder.Services.AddSwaggerGen(options =>
     // Add API Key authentication definition
     options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        Description = "API Key را در هدر وارد کنید. مثال: X-Api-Key: your-api-key",
+        Description = "API Key ط±ط§ ط¯ط± ظ‡ط¯ط± ظˆط§ط±ط¯ ع©ظ†غŒط¯. ظ…ط«ط§ظ„: X-Api-Key: your-api-key",
         Name = "X-Api-Key",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -111,7 +111,7 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
-// ── Redis Caching ──────────────────────────────────────
+// â”€â”€ Redis Caching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var redisConnectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
@@ -122,7 +122,7 @@ if (!string.IsNullOrWhiteSpace(redisConnectionString))
     });
 }
 
-// ── API Key Authentication ─────────────────────────────
+// â”€â”€ API Key Authentication â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 builder.Services.AddAuthentication()
     .AddApiKeyAuthentication(options =>
     {
@@ -131,18 +131,25 @@ builder.Services.AddAuthentication()
         options.ValidApiKeys = apiKeys;
     });
 
-// ── HTTP Client Factory ────────────────────────────────
+// â”€â”€ HTTP Client Factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 builder.Services.AddHttpClient("ExternalServices", client =>
 {
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Rhyno-ERP/1.0");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
-// ── Export & Import Services ───────────────────────────
+// â”€â”€ Export & Import Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IBulkImportService, BulkImportService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IApprovalService, ApprovalService>();
+builder.Services.AddScoped<IVersionService, VersionService>();
+builder.Services.AddScoped<IContractAccountingService, ContractAccountingService>();
+builder.Services.AddScoped<IPaymentScheduleService, PaymentScheduleService>();
+        builder.Services.AddScoped<IAmendmentService, AmendmentService>();
+        builder.Services.AddScoped<ISignatureService, SignatureService>();
 builder.Services.AddScoped<ITemplateRenderingService, TemplateRenderingService>();
+builder.Services.AddScoped<IAttachmentVersionService, AttachmentVersionService>();
 builder.Services.AddSingleton<ITenantRegistry, TenantRegistry>();
 builder.Services.AddScoped<TenantMigrationOrchestrator>();
 builder.Services.AddHostedService<TenantMigrationHostedService>();
@@ -189,7 +196,7 @@ builder.Services.AddDbContext<OfficeDbContext>(ConfigureTenantDbContext);
 // TaxDbContext is resolved through a SCOPED factory (see Modules/Persistence/TaxDbContextFactory.cs).
 // Registering it as a scoped factory ensures the options (and the scoped tenancy services such as
 // ITenantConnectionStringResolver and the EF interceptors) are resolved from a real IServiceScope
-// instead of from the application root provider — fixing the
+// instead of from the application root provider â€” fixing the
 // "Cannot resolve scoped service 'ITenantConnectionStringResolver' from root provider" exception.
 builder.Services.AddScoped<IDbContextFactory<TaxDbContext>, TaxDbContextFactory>();
 builder.Services.AddDbContext<PlatformDbContext>((serviceProvider, options) =>
@@ -210,10 +217,10 @@ builder.Services.AddIdentity<User, ApplicationRole>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 
-    // تنظیمات مهم برای نام کاربری به جای ایمیل
+    // طھظ†ط¸غŒظ…ط§طھ ظ…ظ‡ظ… ط¨ط±ط§غŒ ظ†ط§ظ… ع©ط§ط±ط¨ط±غŒ ط¨ظ‡ ط¬ط§غŒ ط§غŒظ…غŒظ„
     options.User.AllowedUserNameCharacters =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ " +
-        "آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی";
+        "ط¢ط§ط¨ظ¾طھط«ط¬ع†ط­ط®ط¯ط°ط±ط²عکط³ط´طµط¶ط·ط¸ط¹ط؛ظپظ‚ع©ع¯ظ„ظ…ظ†ظˆظ‡غŒ";
 
     options.User.RequireUniqueEmail = false;
     options.SignIn.RequireConfirmedAccount = false;
@@ -323,7 +330,7 @@ builder.Services.AddSingleton<ICaptchaOcrClient>(sp =>
 // SEPARATE HTTP requests (InitiatePortalLogin then CreatePortalExport); a scoped
 // lifetime would hand each request a fresh instance with an empty `_sessions`,
 // forcing a self-healing relaunch that loses the OTP-pending SSO state and throws
-// "کادر ورود کد تأیید (OTP) در صفحه پیدا نشد".
+// "ع©ط§ط¯ط± ظˆط±ظˆط¯ ع©ط¯ طھط£غŒغŒط¯ (OTP) ط¯ط± طµظپط­ظ‡ ظ¾غŒط¯ط§ ظ†ط´ط¯".
 builder.Services.AddSingleton<ITaxExporterService, TaxExporterService>();
 
 builder.Services.AddScoped<ZipArchiveProcessor>();
@@ -340,6 +347,7 @@ builder.Services.AddScoped<ProcessMiningService>();
 builder.Services.AddScoped<IOutboxService, OutboxService>();
 builder.Services.AddSingleton<IEventBusPublisher, RabbitMqEventBusPublisher>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<IAlertService, AlertService>();
 builder.Services.AddScoped<SecurityAuditNotificationService>();
 builder.Services.AddScoped<WorkInboxService>();
 builder.Services.AddScoped<WorkflowDetailService>();
@@ -370,8 +378,10 @@ builder.Services.AddSingleton<ITotpService, TotpService>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddHostedService<DocumentRetentionBackgroundService>();
 builder.Services.AddHostedService<ScheduledReportBackgroundService>();
+builder.Services.AddHostedService<ContractBackgroundJobCoordinator>();
 
-// ── Health Checks (Advanced) ───────────────────────────
+
+// â”€â”€ Health Checks (Advanced) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database", tags: new[] { "db", "sql" })
     .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: new[] { "messaging" })
@@ -445,7 +455,7 @@ if (isEfDesignTime)
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 
-// 3. تنظیمات محیط اجرا
+// 3. طھظ†ط¸غŒظ…ط§طھ ظ…ط­غŒط· ط§ط¬ط±ط§
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -458,7 +468,7 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStaticFiles();
 
-// ── Force UTF-8 Encoding for all responses ──────────────
+// â”€â”€ Force UTF-8 Encoding for all responses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // NOTE: We must NOT set context.Request.ContentType here. Modifying Request.ContentType
 // on incoming GET requests corrupts ASP.NET Core's internal Endpoint Routing engine and
 // can cause 404s. Only the Response.ContentType is set below.
@@ -470,16 +480,16 @@ app.Use(async (context, next) =>
     context.Response.ContentType = context.Response.ContentType ?? "text/html; charset=utf-8";
 });
 
-// ── API JSON exception handling ────────────────────────
+// â”€â”€ API JSON exception handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Registered before routing so it catches exceptions from downstream
 // middleware and controllers. API/JSON requests receive a stable JSON
 // error envelope; browser requests fall through to the HTML error page.
 app.UseApiExceptionHandling();
 
-// ── Security Headers ───────────────────────────────────
+// â”€â”€ Security Headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.UseSecurityHeaders();
 
-// ── Swagger (only in Development or when enabled) ──────
+// â”€â”€ Swagger (only in Development or when enabled) â”€â”€â”€â”€â”€â”€
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger(options =>
@@ -495,7 +505,7 @@ if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swa
     });
 }
 
-// ── 404 Handling ───────────────────────────────────────
+// â”€â”€ 404 Handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.UseStatusCodePagesWithReExecute("/Home/Error?code={0}");
 
 app.UseRouting();
@@ -568,7 +578,7 @@ app.Use(async (context, next) =>
     }
 });
 
-// 4. ترتیب حیاتی احراز هویت
+// 4. طھط±طھغŒط¨ ط­غŒط§طھغŒ ط§ط­ط±ط§ط² ظ‡ظˆغŒطھ
 app.UseAuthentication();
 app.Use(async (context, next) =>
 {
@@ -601,7 +611,7 @@ app.Use(async (context, next) =>
     logger.LogDebug("After authorization complete {Path}", context.Request.Path);
 });
 
-// 5. نقشه مسیرها
+// 5. ظ†ظ‚ط´ظ‡ ظ…ط³غŒط±ظ‡ط§
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -609,7 +619,7 @@ app.MapRazorPages();
 app.MapHealthChecks("/health");
 app.MapHub<OfficeAutomation.Hubs.AutomationHub>("/automationHub");
 
-// ── TaxDbContext auto-migration (runs unconditionally to ensure InvoiceRecords & MowadiyanSubmissions tables exist) ──
+// â”€â”€ TaxDbContext auto-migration (runs unconditionally to ensure InvoiceRecords & MowadiyanSubmissions tables exist) â”€â”€
 try
 {
     using var scope = app.Services.CreateScope();
@@ -635,7 +645,7 @@ catch (Exception ex)
     }
 }
 
-// ── OfficeDbContext auto-migration (ensures Contracts, ContractTemplates, Customers, etc. exist) ──
+// â”€â”€ OfficeDbContext auto-migration (ensures Contracts, ContractTemplates, Customers, etc. exist) â”€â”€
 try
 {
     using var officeScope = app.Services.CreateScope();
@@ -670,7 +680,7 @@ else
     logger.LogInformation("Startup bootstrap skipped because Bootstrap:RunOnStartup is disabled.");
 }
 
-// ── Bootstrap Admin User (always runs, idempotent) ──
+// â”€â”€ Bootstrap Admin User (always runs, idempotent) â”€â”€
 try
 {
     using var adminScope = app.Services.CreateScope();
@@ -683,7 +693,7 @@ catch (Exception ex)
     logger.LogWarning(ex, "BootstrapAdmin: seed failed (DB may not be ready): {Message}", ex.Message);
 }
 
-// ── Startup Route Diagnostics ──────────────────────────
+// â”€â”€ Startup Route Diagnostics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Outputs all active mapped routes to the console on startup so we can verify that
 // Areas/Identity/Pages/Account/Login appears in the [REGISTERED ROUTE] logs.
 app.Lifetime.ApplicationStarted.Register(() =>

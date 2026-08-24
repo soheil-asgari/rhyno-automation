@@ -47,6 +47,22 @@ namespace OfficeAutomation.Models
         [Display(Name = "توضیحات")]
         public string? Notes { get; set; }
 
+        // ── Multi-Currency ──────────────────────────────────────────────
+        /// <summary>کد ارز پرداخت (اگر خالی باشد، از ارز قرارداد استفاده می‌شود)</summary>
+        [StringLength(3)]
+        [Display(Name = "ارز پرداخت")]
+        public string? CurrencyCode { get; set; }
+
+        /// <summary>نرخ تبدیل در زمان پرداخت</summary>
+        [Column(TypeName = "decimal(18,6)")]
+        [Display(Name = "نرخ تبدیل")]
+        public decimal? ExchangeRate { get; set; }
+
+        /// <summary>مبلغ مالیات پرداختی (در صورت تفکیک)</summary>
+        [Column(TypeName = "decimal(18,2)")]
+        [Display(Name = "مالیات پرداخت")]
+        public decimal? TaxAmount { get; set; }
+
         [Display(Name = "تاریخ ثبت")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }

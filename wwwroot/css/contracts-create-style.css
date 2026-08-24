@@ -61,3 +61,24 @@
         .wizard-step-content.active {
             display: block;
         }
+
+        /* ── First card inside rahkaran-desktop: offset container padding ── */
+        .contract-create-card-first {
+            /*
+             * .rahkaran-desktop has padding: 18px 22px (desktop) / 16px 20px (tab content).
+             * This card is the very first child, and the padding pushes it down too far.
+             * Instead of a hard -mt-3 (-12px) that overcorrects on mobile (where
+             * .rahkaran-desktop padding is 12px), we compute the offset carefully.
+             *
+             * Desktop (& tab-content):  16px padding top → -8px  (leaves 8px net gap)
+             * Mobile (<768px):          12px padding top → -4px  (leaves 8px net gap)
+             */
+            margin-top: -0.5rem;  /* -8px — works at 16px container padding */
+        }
+
+        /* At mobile breakpoint (<768px) where .rahkaran-desktop padding shrinks to 12px */
+        @media (max-width: 767.98px) {
+            .contract-create-card-first {
+                margin-top: -0.25rem; /* -4px — leaves 8px net gap from 12px padding */
+            }
+        }

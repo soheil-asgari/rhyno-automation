@@ -1,0 +1,70 @@
+@* ── Attachment Preview Modal ────────────────────────────────────── *@
+@* Rendered inline on the Contracts Details page; triggered via JS *@
+<div class="fixed inset-0 z-[100] bg-black/60 hidden flex items-center justify-center p-2 sm:p-4" id="attachmentPreviewModal">
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        @* ── Header ──────────────────────────────────────────────── *@
+        <div class="bg-gray-50 dark:bg-slate-800 px-3 py-2.5 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-2 min-w-0">
+                <i class="bi bi-eye text-teal-600 text-sm flex-shrink-0"></i>
+                <span class="text-[13px] font-bold text-gray-900 dark:text-white truncate" id="previewModalTitle">پیش‌نمایش فایل</span>
+            </div>
+            <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition cursor-pointer border-0 bg-transparent text-lg flex-shrink-0" id="previewModalClose">&times;</button>
+        </div>
+
+        @* ── Loading State ───────────────────────────────────────── *@
+        <div class="flex items-center justify-center py-16" id="previewLoading">
+            <div class="flex flex-col items-center gap-3">
+                <div class="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">در حال بارگذاری پیش‌نمایش...</span>
+            </div>
+        </div>
+
+        @* ── Content Area ────────────────────────────────────────── *@
+        <div class="flex-1 overflow-hidden hidden" id="previewContent">
+            @* PDF Viewer *@
+            <div class="h-full w-full hidden" id="previewPdfContainer">
+                <iframe id="previewPdfFrame" class="w-full h-full border-0" style="min-height: 65vh;"></iframe>
+            </div>
+
+            @* Image Viewer *@
+            <div class="flex items-center justify-center p-4 h-full hidden" id="previewImageContainer">
+                <img id="previewImage" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm" alt="" />
+            </div>
+
+            @* Text Viewer *@
+            <div class="h-full hidden" id="previewTextContainer">
+                <pre id="previewText" class="w-full h-full overflow-auto p-4 text-[11px] font-mono leading-relaxed text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 border-0 resize-none whitespace-pre-wrap break-all" style="min-height: 65vh; direction: ltr; text-align: left;"></pre>
+            </div>
+
+            @* Unsupported *@
+            <div class="flex items-center justify-center py-16 hidden" id="previewUnsupported">
+                <div class="flex flex-col items-center gap-3 text-center px-4">
+                    <div class="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        <i class="bi bi-file-earmark-x text-slate-400 text-2xl"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-slate-600 dark:text-slate-400">پیش‌نمایش برای این نوع فایل در دسترس نیست.</span>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500" id="previewUnsupportedDetail"></span>
+                </div>
+            </div>
+
+            @* Error *@
+            <div class="flex items-center justify-center py-16 hidden" id="previewError">
+                <div class="flex flex-col items-center gap-3 text-center px-4">
+                    <div class="w-14 h-14 rounded-full bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center">
+                        <i class="bi bi-exclamation-triangle text-rose-400 text-2xl"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-rose-600 dark:text-rose-400">خطا در بارگذاری پیش‌نمایش</span>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500">فایل ممکن است حذف شده باشد یا دسترسی ندارید.</span>
+                </div>
+            </div>
+        </div>
+
+        @* ── Footer with download link ────────────────────────────── *@
+        <div class="bg-gray-50 dark:bg-slate-800 px-3 py-2 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0 hidden" id="previewFooter">
+            <span class="text-[10px] text-slate-500 dark:text-slate-400" id="previewFileInfo"></span>
+            <a id="previewDownloadLink" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2.5 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-teal-950/20 dark:hover:text-teal-400 no-underline transition inline-flex items-center gap-1" target="_blank">
+                <i class="bi bi-download"></i>دانلود فایل
+            </a>
+        </div>
+    </div>
+</div>

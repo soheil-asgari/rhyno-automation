@@ -489,29 +489,7 @@
                                                                                                                                                 <!-- ═══════════════════════════════════════════════════════
     CONFIRM DIALOG (Vanilla JS Modal)
     ═══════════════════════════════════════════════════════════ -->
-                                                                                                                                                <div id="appConfirmDialog" class="rhyno-modal-overlay"
-                                                                                                                                                     style="position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
-                                                                                                                                                    <div class="rhyno-modal-content"
-                                                                                                                                                         style="width:100%;max-width:420px;background:#fff;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
-                                                                                                                                                        <div
-                                                                                                                                                            style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f3f4f6;">
-                                                                                                                                                            <h5 style="margin:0;font-size:14px;font-weight:800;color:#1f2937;">تایید عملیات</h5>
-                                                                                                                                                            <button type="button"
-                                                                                                                                                                    style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:#9ca3af;cursor:pointer;border-radius:6px;font-size:16px;"
-                                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">&times;</button>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div style="padding:16px 18px;">
-                                                                                                                                                            <p id="appConfirmMessage" style="margin:0;font-size:13px;color:#4b5563;">آیا مطمئن هستید؟</p>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #f3f4f6;">
-                                                                                                                                                            <button type="button"
-                                                                                                                                                                    style="padding:8px 16px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;"
-                                                                                                                                                                    onclick="Rhyno.hideModal('appConfirmDialog')">لغو</button>
-                                                                                                                                                            <button type="button" id="appConfirmOk"
-                                                                                                                                                                    style="padding:8px 16px;border:none;background:#e11d48;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">تایید</button>
-                                                                                                                                                        </div>
-                                                                                                                                                    </div>
-                                                                                                                                                </div>
+                                                                                                                                                @await Html.PartialAsync("_ConfirmDialog")
 
                                                                                                                                                 <!-- ═══════════════════════════════════════════════════════
     SCRIPTS
@@ -529,6 +507,42 @@
                 <script src="~/js/form-guard.js" asp-append-version="true"></script>
                 <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
                 <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
+                <script>
+                    // ── Notification Badge Auto-Refresh ──
+                    (function() {
+                        var badge = document.getElementById('notificationBadge');
+                        if (!badge) {
+                            // Find the bell badge element dynamically
+                            var bellBtn = document.querySelector('.btn-toggle-menu [class*="bi-bell"]');
+                            if (bellBtn) {
+                                badge = bellBtn.parentElement.querySelector('span[style*="position:absolute"]');
+                            }
+                        }
+                        function refreshBadge() {
+                            fetch('/Notifications/UnreadCount', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                                .then(function(r) { return r.json(); })
+                                .then(function(data) {
+                                    if (badge) {
+                                        if (data.count > 0) {
+                                            badge.style.display = 'flex';
+                                            badge.textContent = data.count.toLocaleString();
+                                        } else {
+                                            badge.style.display = 'none';
+                                        }
+                                    }
+                                    // Also update dropdown counter if present
+                                    var dropdownBadge = document.querySelector('.rhyno-dropdown [class*="rounded-full"][class*="px-2"]');
+                                    if (dropdownBadge) {
+                                        dropdownBadge.textContent = data.count.toLocaleString() + ' مورد';
+                                    }
+                                })
+                                .catch(function() {});
+                        }
+                        // Poll every 60 seconds
+                        refreshBadge();
+                        setInterval(refreshBadge, 60000);
+                    })();
+                </script>
                                                                                                                                                 @if (User?.Identity?.IsAuthenticated == true)
                                                                                                                                                 {
                                                                                                                                                     @await Html.PartialAsync("_TaxAiAssistantWidget")

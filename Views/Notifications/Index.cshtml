@@ -1,90 +1,126 @@
-@model OfficeAutomation.Models.NotificationCenterVM
-
+﻿@model NotificationCenterIndexVM
 @{
     ViewData["Title"] = "مرکز اعلان‌ها";
 }
+@using System
+@functions {
+    string ActiveTabClass(string value)
+    {
+        var current = Model.SeverityFilter ?? "";
+        return string.Equals(current, value, StringComparison.OrdinalIgnoreCase)
+            ? "bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-bold"
+            : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40";
+    }
+}
 
-<section class="max-w-4xl mx-auto py-6 px-4" dir="rtl">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+<div class="container-fluid py-1 space-y-2" dir="rtl">
+    @* Section Header *@
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between px-1">
         <div>
-            <h1 class="text-lg font-black text-slate-900 dark:text-white">مرکز اعلان‌ها</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">پیگیری اعلان‌های خوانده‌نشده، هشدارهای عملیاتی و ارجاع‌های سیستم.</p>
+            <h1 class="text-[13px] font-bold text-slate-900 dark:text-white">مرکز اعلان‌ها</h1>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                @Model.UnreadCount اعلان خوانده‌نشده از @Model.TotalCount اعلان
+            </p>
         </div>
-        <form asp-action="MarkAllRead" method="post">
-            <button class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 bg-transparent px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5" type="submit" disabled="@(Model.UnreadCount == 0)">
-                <i class="bi bi-check2-all"></i>
-                <span>خواندن همه</span>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a asp-action="AlertSettings" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <i class="bi bi-gear ml-1"></i>تنظیمات اعلان‌ها
+            </a>
+            <button type="button" id="markAllReadBtn" class="erp-btn erp-btn-primary text-white shadow-sm no-underline transition">
+                <i class="bi bi-check2-all ml-1"></i>خواندن همه
             </button>
-        </form>
+
+    </div>
+    @* Filter Bar *@
+    <div class="flex flex-wrap items-center gap-2 px-1" data-filter-bar>
+        <div class="flex items-center gap-0.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/40 p-0.5">
+            <a href="@Url.Action("Index", "Notifications", new { severity = "", module = Model.SourceModuleFilter, unreadOnly = Model.ShowUnreadOnly })"
+               class="@ActiveTabClass("") inline-block rounded-md px-2.5 py-1 text-[11px] no-underline transition">همه</a>
+            <a href="@Url.Action("Index", "Notifications", new { severity = "Info", module = Model.SourceModuleFilter, unreadOnly = Model.ShowUnreadOnly })"
+               class="@ActiveTabClass("Info") inline-block rounded-md px-2.5 py-1 text-[11px] no-underline transition">اطلاع</a>
+            <a href="@Url.Action("Index", "Notifications", new { severity = "Success", module = Model.SourceModuleFilter, unreadOnly = Model.ShowUnreadOnly })"
+               class="@ActiveTabClass("Success") inline-block rounded-md px-2.5 py-1 text-[11px] no-underline transition">موفق</a>
+            <a href="@Url.Action("Index", "Notifications", new { severity = "Warning", module = Model.SourceModuleFilter, unreadOnly = Model.ShowUnreadOnly })"
+               class="@ActiveTabClass("Warning") inline-block rounded-md px-2.5 py-1 text-[11px] no-underline transition">هشدار</a>
+            <a href="@Url.Action("Index", "Notifications", new { severity = "Danger", module = Model.SourceModuleFilter, unreadOnly = Model.ShowUnreadOnly })"
+               class="@ActiveTabClass("Danger") inline-block rounded-md px-2.5 py-1 text-[11px] no-underline transition">خطر</a>
+        </div>
+
+        <select class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-300 outline-none"
+                onchange="var v=this.value; window.location.href='@Url.Action("Index", "Notifications")?severity=@Model.SeverityFilter&amp;module='+encodeURIComponent(v)+'&amp;unreadOnly=@(Model.ShowUnreadOnly?.ToString().ToLowerInvariant())'">
+            <option value="">همه ماژول‌ها</option>
+            <option value="Contracts" selected="@(Model.SourceModuleFilter == "Contracts")">قراردادها</option>
+            <option value="Approvals" selected="@(Model.SourceModuleFilter == "Approvals")">تأییدها</option>
+            <option value="PaymentSchedule" selected="@(Model.SourceModuleFilter == "PaymentSchedule")">برنامه پرداخت</option>
+            <option value="System" selected="@(Model.SourceModuleFilter == "System")">سیستم</option>
+        </select>
+
+        <label class="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+            <input type="checkbox" @(Model.ShowUnreadOnly == true ? "checked" : "")
+                   onchange="window.location.href='@Url.Action("Index", "Notifications")?severity=@Model.SeverityFilter&amp;module=@Model.SourceModuleFilter&amp;unreadOnly='+(this.checked?'true':'')/>
+            فقط خوانده‌نشده</label>
     </div>
 
-    <div class="flex gap-4 mb-6">
-        <div class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-center">
-            <span class="block text-2xl font-black text-slate-900 dark:text-white font-mono">@Model.TotalCount.ToString("N0")</span>
-            <small class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">کل اعلان‌ها</small>
-        </div>
-        <div class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-center">
-            <span class="block text-2xl font-black text-rose-650 dark:text-rose-400 font-mono">@Model.UnreadCount.ToString("N0")</span>
-            <small class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">خوانده‌نشده</small>
-        </div>
-    </div>
-
-    @if (Model.Items.Count == 0)
-    {
-        <div class="text-center text-xs text-slate-400 dark:text-slate-600 py-12">اعلانی برای نمایش وجود ندارد.</div>
-    }
-    else
-    {
-        <div class="space-y-2">
-            @foreach (var item in Model.Items)
-            {
-                var bgClass = item.IsRead ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-800/30";
-                <article class="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-2xl @bgClass gap-4 transition hover:shadow-sm">
-                    <div class="flex items-start gap-3 flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mt-0.5">
-                            @if (!item.IsRead)
-                            {
-                                <div class="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" title="خوانده‌نشده"></div>
-                            }
-                            <i class="bi @item.Icon text-slate-400 dark:text-slate-500 text-lg"></i>
+    @* Notification List *@
+    <div class="erp-card" data-notification-list>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+                <i class="bi bi-bell-slash text-3xl mb-2"></i>
+                <span class="text-[12px]">هیچ اعلانی وجود ندارد.</span>
+            </div>
+        }
+        else
+        {
+            <div class="divide-y divide-slate-100 dark:divide-slate-800" data-notification-container>
+                @foreach (var item in Model.Items)
+                {
+                    var itemBg = item.IsRead ? "" : "bg-sky-50/50 dark:bg-sky-950/10";
+                    var toneBg = item.CssTone == "danger" ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400" :
+                        item.CssTone == "warning" ? "bg-amber-100 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400" :
+                        item.CssTone == "success" ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" :
+                        "bg-sky-100 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400";
+                    <div class="notification-item @itemBg flex items-start gap-3 px-3 py-3 transition hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                         data-notification-id="@item.Id" data-is-read="@item.IsRead.ToString().ToLowerInvariant()">
+                        <div class="mt-0.5 h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 text-sm @toneBg">
+                            <i class="bi @item.Icon text-xs"></i>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-baseline justify-between gap-2 flex-wrap">
-                                <strong class="text-xs font-black text-slate-900 dark:text-white">@item.Title</strong>
-                                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">@item.CreatedAtText</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <strong class="block text-[12px] text-slate-900 dark:text-white">@item.Title</strong>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">@item.Message</p>
+                                </div>
+                                @if (!item.IsRead)
+                                {
+                                    <button type="button" class="mark-read-btn flex-shrink-0 h-5 w-5 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-300 hover:text-sky-500 hover:border-sky-400 transition"
+                                            title="علامت‌گذاری به عنوان خوانده شده">
+                                        <i class="bi bi-check text-[9px]"></i>
+                                    </button>
+                                }
                             </div>
-                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">@item.Message</p>
-                            @if (!string.IsNullOrWhiteSpace(item.SourceModule))
-                            {
-                                <span class="inline-block mt-2 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded font-bold">@item.SourceModule</span>
-                            }
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[9px] text-slate-400 dark:text-slate-500">@item.CreatedAtText</span>
+                                <span class="text-[9px] text-slate-300 dark:text-slate-600">|</span>
+                                <span class="text-[9px] text-slate-400 dark:text-slate-500">@item.SourceModule</span>
+                                @if (!string.IsNullOrEmpty(item.LinkUrl))
+                                {
+                                    <span class="text-[9px] text-slate-300 dark:text-slate-600">|</span>
+                                    <a href="@item.LinkUrl" class="text-[9px] text-sky-600 dark:text-sky-400 no-underline hover:underline">مشاهده</a>
+                                }
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
-                        @if (!string.IsNullOrWhiteSpace(item.LinkUrl))
-                        {
-                            <a class="h-8 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1" href="@item.LinkUrl">
-                                <i class="bi bi-arrow-left"></i>
-                                <span>مشاهده</span>
-                            </a>
-                        }
-                        @if (!item.IsRead)
-                        {
-                            <form asp-action="MarkRead" method="post" class="m-0">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                                <button class="h-8 rounded-lg bg-teal-600 hover:bg-teal-700 text-white px-3 text-xs font-bold transition flex items-center gap-1" type="submit">
-                                    <i class="bi bi-check2"></i>
-                                    <span>خواندم</span>
-                                </button>
-                            </form>
-                        }
-                    </div>
-                </article>
-            }
-        </div>
-    }
-</section>
+                }
+            </div>
+        }
+    </div>
+</div>
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/notifications-style.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/notifications-index-script.js" asp-append-version="true"></script>
 }
