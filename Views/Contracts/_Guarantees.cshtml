@@ -1,0 +1,62 @@
+@model List<ContractGuaranteeVM>
+@using System.Globalization
+@{
+    bool canEdit = ViewBag.CanEdit ?? false;
+    int contractId = ViewBag.ContractId;
+<div class="bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/40 p-3 mt-3">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-[12px] font-bold text-slate-800 dark:text-slate-200">
+            <i class="bi bi-shield-check ml-1 text-teal-500"></i>ضمانت‌نامه‌ها / کسور وجه تضمین
+        </h3>
+        @if (canEdit) {<button type="button" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer text-[10px] px-3 py-1.5" data-modal-target="addGuaranteeModal"><i class="bi bi-plus-circle ml-1"></i>ضمانت جدید</button>}
+    </div>
+    @if (Model.Count > 0) {
+        <div class="overflow-x-auto"><table class="w-full text-[11px]"><thead><tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            <th class="px-3 py-2 text-right font-bold text-slate-600 dark:text-slate-400">نوع</th>
+            <th class="px-3 py-2 text-right font-bold text-slate-600 dark:text-slate-400">شماره</th>
+            <th class="px-3 py-2 text-right font-bold text-slate-600 dark:text-slate-400">بانک/صادرکننده</th>
+            <th class="px-3 py-2 text-left font-bold text-slate-600 dark:text-slate-400">مبلغ</th>
+            <th class="px-3 py-2 text-center font-bold text-slate-600 dark:text-slate-400">تاریخ صدور</th>
+            <th class="px-3 py-2 text-center font-bold text-slate-600 dark:text-slate-400">تاریخ انقضا</th>
+            <th class="px-3 py-2 text-center font-bold text-slate-600 dark:text-slate-400">وضعیت</th>
+            @if (canEdit) {<th class="px-3 py-2 text-center font-bold text-slate-600 dark:text-slate-400">عملیات</th>}
+        </tr></thead><tbody>
+            @foreach (var g in Model) { var d2e = (g.ExpiryDate.Date - DateTime.Today).Days;
+                <tr class="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition @(g.IsExpiringSoon ? "guarantee-expiring-row" : "")">
+                    <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@g.GuaranteeTypeDisplay</td>
+                    <td class="px-3 py-2 text-slate-700 dark:text-slate-300 font-medium">@g.GuaranteeNumber</td>
+                    <td class="px-3 py-2 text-slate-500">@(g.IssuingBank ?? "-")</td>
+                    <td class="px-3 py-2 text-left font-mono tabular-nums text-slate-700 dark:text-slate-300">@g.Amount.ToString("N0")</td>
+                    <td class="px-3 py-2 text-center text-slate-500">@ToPersianDate(g.IssuedDate)</td>
+                    <td class="px-3 py-2 text-center">
+                        <span class="@(d2e <= 30 && d2e >= 0 && g.Status == "Active" ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500")">@ToPersianDate(g.ExpiryDate)</span>
+                        @if (d2e <= 30 && d2e >= 0 && g.Status == "Active") {<span class="text-[9px] text-amber-600 dark:text-amber-400 block">@d2e روز باقی‌مانده</span>}
+                    </td>
+                    <td class="px-3 py-2 text-center"><span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @g.BadgeClass">@g.StatusDisplay</span></td>
+                    @if (canEdit) {<td class="px-3 py-2 text-center"><div class="inline-flex gap-1">
+                        @if (g.CanRelease) {<form action="/Contracts/@contractId/Guarantees/Release/@g.Id" method="post" class="inline release-guarantee-form">@Html.AntiForgeryToken()<button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition" title="آزادسازی"><i class="bi bi-unlock"></i></button></form>}
+                        <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 transition edit-guarantee-btn"
+                                data-guarantee-id="@g.Id" data-guarantee-type="@g.GuaranteeType" data-guarantee-number="@g.GuaranteeNumber"
+                                data-issuing-bank="@(g.IssuingBank ?? "")" data-amount="@g.Amount"
+                                data-issued-date="@g.IssuedDate.ToString("yyyy-MM-dd")" data-expiry-date="@g.ExpiryDate.ToString("yyyy-MM-dd")"
+                                data-retention-pct="@(g.RetentionPercentage?.ToString() ?? "")" data-release-condition="@(g.ReleaseCondition ?? "")" title="ویرایش"><i class="bi bi-pencil"></i></button>
+                        <form action="/Contracts/@contractId/Guarantees/Delete/@g.Id" method="post" class="inline delete-guarantee-form">@Html.AntiForgeryToken()<button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition" title="حذف"><i class="bi bi-trash"></i></button></form>
+                    </div></td>}
+                </tr>
+            }
+        </tbody></table></div>
+    } else {
+        <div class="text-center py-6">
+            <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-shield text-slate-400"></i></div>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمانت‌نامه‌ای ثبت نشده است.</p>
+        </div>
+    }
+</div>
+}
+
+@functions {
+    string ToPersianDate(DateTime value) {
+        if (value == DateTime.MinValue || value.Year < 1700) return "N/A";
+        try { var cal = new PersianCalendar(); return $"{cal.GetYear(value):0000}/{cal.GetMonth(value):00}/{cal.GetDayOfMonth(value):00}"; } catch { return "N/A"; }
+    }
+}

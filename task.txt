@@ -35,3 +35,190 @@ Add: CSS skeleton loaders for the contracts list/dashboard while data loads; JS 
 
 ### Start
 Confirm you understand the scope and rules, then begin with **Item 1 — Approval Workflow Engine**.
+
+CONTINUING ACT MODE — PHASE 2 of 5 (Core Contract Lifecycle).
+
+Same tech stack constraints and execution rules as Phase 1 apply (extend existing code, one item per turn, full real artifacts, wait for "ok next" between items, phase-completion summary at the end, then stop).
+
+Phase 1 is complete: Approval Workflow Engine, Background Job for expiry/payment processing, Custom Confirmation Dialogs, and Loading States have been implemented. Use those as available building blocks (e.g., approval events can now feed the notification engine below; the background job can now trigger alerts).
+
+### Backlog Items for This Phase (implement in this exact order)
+
+**Item 5 — Contract Versioning & Snapshotting (Backend, CRITICAL, no dependencies)**
+New entity `ContractVersion` storing a full field-level snapshot of a contract at each save (major.minor versioning — major for amendments, minor for corrections). Add a version-diff capability (compare any two versions, return changed fields with old/new values). Hook into `ContractService` so every Update call creates a new version snapshot before applying changes. Register in the correct DbContext with appropriate indexing (ContractId + VersionNumber).
+
+**Item 6 — Payment Schedule Builder (Backend, CRITICAL, no dependencies)**
+New entities `PaymentSchedule` and `PaymentScheduleItem`. Support 4 schedule types: Fixed (equal installments on fixed dates), Milestone-based, Percentage-based (e.g. 30/40/30), and Custom (arbitrary amounts/dates). Service method to auto-generate `ContractPayment`-linked installment records from a schedule definition. Must integrate with the existing `ContractPayment` entity and `RecalculatePaymentStatusAsync` method — do not duplicate payment tracking logic, extend it.
+
+**Item 7 — Notification/Alert Engine (Backend, CRITICAL, depends on Item 5's background job pattern and Phase 1's Approval Workflow for approval-related alerts)**
+New service `IContractAlertService` / `ContractAlertService`. Generate alerts for: contract expiry (multi-tier: 90/60/30/14/7/1 days), renewal decisions due, payment due (N days before) and overdue payments, guarantee/retention expiry (stub hook for future Item 23). Integrate with the platform's existing notification infrastructure (SignalR is already present in the project — connect to it) and existing `ContractUserSetting.NotifyOnCreate` pattern, extending it into a fuller preference model. Wire into the Phase 1 background job so alerts are generated on each scheduled run.
+
+**Item 8 — Lifecycle Status Timeline / Stepper (Frontend, CRITICAL, depends on Item 5 for version data and existing `ContractAuditLog`)**
+Build a pure CSS/JS visual timeline component showing all lifecycle states (Draft, Internal Review, Legal Review, Negotiation, Pending Approval, Approved, Signature Pending/Partial/Complete, Active, Amendment In Progress, Suspended, Terminated, Expired, Renewed, Archived, Cancelled). Current state highlighted, completed states with checkmarks + timestamps (from `ContractAuditLog`), future states grayed out, rejected/returned states with warning indicator, hover tooltip with who/when/comment. Responsive: horizontal on desktop, vertical on mobile. Add as a new section in the existing Overview tab.
+
+**Item 9 — Notification Bell + Alert Panel/Drawer (Frontend, CRITICAL, depends on Item 7)**
+Bell icon with unread count badge in the top navigation. Slide-out drawer/dropdown listing recent notifications, filterable by type (expiry/payment/approval/system), mark-as-read / mark-all-as-read, click-to-navigate to the relevant contract, relative timestamps ("2 hours ago"). Pure Vanilla JS, connects to Item 7's alert data via existing SignalR or a polling fallback.
+
+**Item 10 — Amendment & Addendum Entity + Workflow (Both, HIGH, depends on Items 5 (versioning) and Phase 1's Approval Workflow)**
+New entity `ContractAmendment` (type: Amendment/Addendum/Renewal, links to parent contract, effective date, financial-impact fields). Amendment-specific workflow states routed through the Item-1 approval engine. On amendment affecting `TotalAmount` or `EndDate`, trigger recalculation of remaining payment schedule (Item 6) and expiry tracking. Frontend: new "Amendments" section/sub-tab in the contract detail view listing amendment history with a "Create Amendment" action that opens a scoped edit form.
+
+### Execution Rules
+Same as Phase 1: one item per turn, full real artifacts, explicit integration notes, follow-up sub-tasks listed, wait for "ok next" between items. After Item 10, give a Phase 2 completion summary and STOP, waiting for the Phase 3 prompt.
+
+### Start
+Confirm scope understood, then begin with **Item 5 — Contract Versioning & Snapshotting**.
+
+
+
+CONTINUING ACT MODE — PHASE 3 of 5 (Financial Integration).
+
+Same tech stack constraints and execution rules apply. Phases 1 and 2 are complete: Approval Engine, Background Jobs, Confirmation Dialogs, Loading States, Contract Versioning, Payment Schedule Builder (backend), Notification Engine, Notification UI, Lifecycle Timeline, and Amendment workflow are all implemented. Build on top of these.
+
+### Backlog Items for This Phase (implement in this exact order)
+
+**Item 11 — Accounting Integration (Backend, HIGH, depends on Item 6 — Payment Schedule Builder)**
+New service `IContractAccountingService` / `ContractAccountingService`. Generate journal entries on payment receipt/disbursement events (hook into the existing payment-add flow in `ContractService`). Implement accrual-basis revenue recognition spread over the contract period. Integrate with the existing chart-of-accounts structure (identify and reuse existing Accounting module DbContext/entities — do NOT redesign the accounting module, only add the integration touch-point from Contracts).
+
+**Item 12 — Multi-Currency & Tax/VAT Support (Backend, HIGH, depends on Items 6 and 11)**
+Add `Currency` field to `Contract` (with a currency master/reference table if one doesn't already exist), an exchange-rate table with rate source + date, tax fields (VAT rate, withholding tax rate), and a tax-inclusive/exclusive toggle affecting how `TotalAmount` and `PaymentSchedule` amounts are calculated and displayed. Update `ContractAccountingService` from Item 11 to account for currency conversion and tax splitting in journal entries.
+
+**Item 13 — E-Signature Workflow & Integration (Backend, HIGH, depends on Phase 1 Approval Workflow)**
+Build a signature workflow with states (Pending/Partial/Complete) tracked per party. Wire in the existing `signature-pad` library already present in `wwwroot/lib/signature-pad/` (currently unused) for internal signature capture. Add API endpoints to capture/store/verify signatures, tied to specific document versions. Leave a clean extension point (interface) for a future external e-sign provider (DocuSign/Adobe Sign) integration, but do not build the external integration itself yet — just the internal workflow and the extension point.
+
+**Item 14 — Document Versioning (Backend, HIGH, no hard dependency)**
+Extend `ContractAttachment` with a check-in/check-out and versioning mechanism: new entity `AttachmentVersion` (or self-referencing version chain on `ContractAttachment`), preserving all previous versions with download access, version number displayed, "Upload New Version" flow that keeps the old file accessible.
+
+**Item 15 — Payment Schedule Builder UI (Frontend, HIGH, depends on Item 6)**
+Visual schedule builder: select schedule type (Fixed/Milestone/Percentage/Custom) → auto-generate an editable installment grid (date, amount, description, status) → running cumulative-total column → overdue rows highlighted → simple bar/line visualization of payments over time using pure Canvas/SVG (no chart library needed for this simple case, or integrate the already-available ChartJS library if simpler). Add as a new section in the Payments tab, alongside (not replacing) the existing ad-hoc payment entry form.
+
+**Item 16 — Drag-and-Drop File Upload + Multi-File (Frontend, HIGH, no hard dependency)**
+Add a drag-and-drop upload zone to the Attachments tab (large dashed-border area), multi-file selection, per-file upload progress bars, client-side file type/size validation with clear inline error messages before hitting the server. Must call the existing upload endpoint/validation pipeline (path traversal, extension, MIME, magic bytes checks already implemented server-side) — do not bypass or duplicate that validation, just improve the client experience around it.
+
+**Item 17 — File Preview (Frontend, HIGH, depends on Item 16 for upload UI context but can reuse existing attachment list)**
+Inline PDF preview (via `<iframe>` or PDF.js if already available in the project's libs), image lightbox for image attachments, "No preview available" fallback for other formats. Trigger via a "Preview" action next to Download/Delete in the attachments grid.
+
+**Item 18 — Dashboard Charts (Frontend, HIGH, no hard dependency, uses existing but currently-unused ChartJS library)**
+Integrate the already-present ChartJS library (`wwwroot/lib/chartjs/`) into the Contracts Dashboard: status distribution doughnut chart, monthly contract value trend line chart, contract count by type bar chart. Pull data from the existing `ContractDashboardVM` aggregates, extending the VM with the additional grouped data needed for these charts.
+
+### Execution Rules
+Same as previous phases: one item per turn, full real artifacts, explicit integration notes, follow-up sub-tasks listed, wait for "ok next". After Item 18, give a Phase 3 completion summary and STOP, waiting for the Phase 4 prompt.
+
+### Start
+Confirm scope understood, then begin with **Item 11 — Accounting Integration**.
+
+
+
+
+CONTINUING ACT MODE — PHASE 4 of 5 (Type-Specific Logic & Reporting).
+
+Same tech stack constraints and execution rules apply. Phases 1-3 are complete: full approval/versioning/scheduling/notification/amendment backbone, accounting integration, multi-currency/tax, e-signature, document versioning, schedule builder UI, drag-drop upload, file preview, and dashboard charts are all implemented. Build on top of these.
+
+### Backlog Items for This Phase (implement in this exact order)
+
+**Item 19 — Dynamic Form Fields by Contract Type (Both, HIGH, no hard dependency)**
+Backend: extend the `Contract` model to support type-specific fields — decide and implement either an EAV (Entity-Attribute-Value) pattern via a new `ContractTypeField`/`ContractFieldValue` entity pair, OR typed extension tables per major type (e.g., `ContractLeaseDetails`, `ContractNdaDetails`, `ContractSlaDetails`) — pick the approach that best fits the existing Multi-DbContext architecture and justify the choice briefly before implementing. Add type-specific validation rules. Frontend: JS to show/hide field sections based on the Contract Type dropdown selection in the Create wizard and Edit form, without page reload.
+
+**Item 20 — Bulk Actions on List View (Frontend, HIGH, no hard dependency)**
+Add a checkbox column to the contracts list, a bulk-action dropdown (Change Status, Assign to User, Archive, Export), confirmation via the Item-3 custom modal, and a batch backend endpoint in `ContractsController`/`ContractService` to process the selected IDs transactionally.
+
+**Item 21 — Valid Status Dropdown in Edit Form (Frontend, HIGH, depends on Phase 1 Approval Workflow and existing `ValidateContractStateTransition`)**
+On the Edit form, filter the Status dropdown to only show statuses that are valid next transitions from the current status AND permitted for the current user's role — reuse the existing `ValidateContractStateTransition` transition map, now also respecting the Item-1 approval-role gating.
+
+**Item 22 — Bank Guarantee / Retention Money Entity + UI (Both, MEDIUM, no hard dependency)**
+Backend: new entity `ContractGuarantee` (bank name, guarantee number, amount, issue date, expiry date, status, retention percentage, release conditions). Frontend: guarantee table in a new section of the Financials/Payments tab, add/edit form, status badges (active/expiring/released/claimed), visual indicator for guarantees nearing expiry (wire into Item 7's alert engine).
+
+**Item 23 — Late Payment Penalty Engine (Backend, MEDIUM, depends on Items 6 and 2)**
+Configurable penalty rules (fixed amount, percentage per day/week/month, simple vs compound, grace period, penalty cap as % of contract value). Auto-calculate penalties on overdue installments during the Phase-1 background job run, and store them linked to the relevant `ContractPayment`/`PaymentScheduleItem`.
+
+**Item 24 — Budget / Credit Limit Checks (Backend, MEDIUM, no hard dependency)**
+Add a check against an existing Budget entity (if present in another module — identify and reuse) and against Customer credit limit before allowing a contract to transition to Active. Block or require override-approval (routing through Item-1's approval engine) if the limit is exceeded.
+
+**Item 25 — Mandatory Documents per Contract Type (Both, MEDIUM, depends on Items 14 and 19)**
+Backend: new entity `DocumentRequirement` mapping contract type → required document categories. Gate the Draft→Legal Review or Approval transitions on required documents being present. Frontend: a document checklist UI in the Attachments tab showing required vs uploaded status per item.
+
+**Item 26 — Advanced Reporting: Financial Exposure, Obligations Calendar, Aging Report (Backend, MEDIUM, depends on Items 6 and 11)**
+New report queries/endpoints: payment aging report (overdue buckets: 0-30/31-60/61-90/90+ days), revenue recognition schedule report, contract value pipeline (expected revenue/cost by period), obligations calendar (upcoming payment/renewal dates).
+
+**Item 27 — Export to Excel/PDF from List and Reports (Both, MEDIUM, depends on Item 26)**
+Backend: Excel generation (e.g., via a lightweight library already available in the project, or ClosedXML/EPPlus if allowed) and PDF generation for the reports from Item 26 and for the filtered contracts list. Frontend: export button with format selector on the list view and each report.
+
+### Execution Rules
+Same as previous phases: one item per turn, full real artifacts, explicit integration notes, follow-up sub-tasks listed, wait for "ok next". After Item 27, give a Phase 4 completion summary and STOP, waiting for the Phase 5 prompt.
+
+### Start
+Confirm scope understood, then begin with **Item 19 — Dynamic Form Fields by Contract Type**.
+
+
+
+
+CONTINUING ACT MODE — PHASE 5 of 5 (Polish & Advanced Features — final phase).
+
+Same tech stack constraints and execution rules apply. Phases 1-4 are complete: the full lifecycle, financial, type-specific, and reporting backbone is implemented. This phase covers remaining MEDIUM and LOW priority polish items.
+
+### Backlog Items for This Phase (implement in this exact order)
+
+**Item 28 — Auto-Renewal Logic (Backend, MEDIUM, depends on Items 7 and 2)**
+Add `AutoRenew` flag to `Contract`, an auto-renewal window configuration (e.g., "renew N days before expiry unless cancelled"), a pre-renewal notification via Item 7's alert engine ("Contract will auto-renew in N days — click to cancel"), and an execution job (in the Phase-1 background service) that creates the renewed contract period and logs the event via `ContractAuditLog`.
+
+**Item 29 — Column Customization on List View (Frontend, MEDIUM, no hard dependency)**
+Column-chooser dropdown (show/hide columns), drag-to-reorder columns, persist preferences per user (localStorage first, with a note on optionally persisting server-side via `ContractUserSetting`).
+
+**Item 30 — Saved Views / Filters (Both, MEDIUM, depends on Item 29)**
+Leverage the existing (but currently unintegrated) `SavedViewContracts` entity — wire it into the Contracts Index view: save current filter/sort/column configuration as a named view, list/select saved views, share views with team (if the entity supports it — check and extend if needed).
+
+**Item 31 — File Size Formatting (Frontend, MEDIUM, no dependency)**
+Utility JS function to format raw byte counts into KB/MB/GB, applied throughout the Attachments grid and Item-14 document versioning UI.
+
+**Item 32 — Accessibility Audit & Remediation (Frontend, MEDIUM, no dependency)**
+Full pass over Contracts views: add missing ARIA attributes (`aria-expanded`, `aria-selected`, `aria-hidden`, `aria-label`), ensure keyboard navigation (arrow keys for datepicker, focus trap in all modals including Item 3's confirmation dialogs, visible focus indicators), verify screen-reader labels on icon-only buttons, confirm WCAG AA color contrast on status badges and text.
+
+**Item 33 — Auto-Save Draft on Create Form (Both, MEDIUM, no hard dependency)**
+Periodic auto-save via fetch API while filling out the Create wizard (Phase 2/3 changes may have added new fields — ensure the auto-save payload matches current form shape), storing as a Draft-status contract, with a "Resume Draft" entry point on the dashboard/list.
+
+**Item 34 — Step Validation in Create Wizard (Frontend, MEDIUM, depends on Item 19 for dynamic fields)**
+Validate required fields on the current wizard step before allowing "Next," with visual error indicators on the step badges themselves (not just inline field errors).
+
+**Item 35 — Mobile-Responsive Optimization (Frontend, MEDIUM, no hard dependency)**
+Review and optimize all Contracts views for mobile: list view switches to a card layout below a breakpoint, modals go full-screen on small viewports, touch targets meet 44×44px minimum, forms stack vertically.
+
+**Item 36 — Related/Linked Contracts Tab (Both, MEDIUM, depends on Item 10 — Amendments)**
+Backend: query to find linked contracts (parent/child amendment chain, and any other explicit relationships). Frontend: new "Related" sub-tab in the contract detail view listing these links with quick-navigation.
+
+**Item 37 — Contract Numbering Series per Type (Backend, LOW, no dependency)**
+Configurable numbering pattern per contract type (e.g., `PUR-{year}-{seq}`, `SAL-{year}-{seq}`, `EMP-{year}-{seq}`), replacing the current single `CTR-{year}-{seq}` format in `GenerateNextContractNumberAsync` — must remain backward-compatible with already-issued numbers.
+
+**Item 38 — Clause Library with Versioning (Backend, LOW, no dependency)**
+New entities `ContractClause` and `ClauseVersion` — reusable clauses tagged by category/jurisdiction/language/risk level, with version tracking so contracts using an outdated clause version can be flagged. Link clauses into `ContractTemplate`.
+
+**Item 39 — Template Approval Workflow (Backend, LOW, depends on Item 1 and Item 38)**
+Templates must be reviewed/approved (routed through the Item-1 approval engine) by a Legal role before becoming available for use in new contracts.
+
+**Item 40 — OCR Text Extraction for Attachments (Backend, LOW, no dependency)**
+Integrate an OCR library/service to extract searchable text from scanned document attachments, storing extracted text for future full-text search.
+
+**Item 41 — REST API Layer with Swagger/OpenAPI (Backend, LOW, no dependency)**
+Add a dedicated API controller (JSON responses, proper REST conventions) alongside the existing MVC `ContractsController`, with Swagger/OpenAPI documentation and basic API versioning.
+
+**Item 42 — Webhook/Event System for Contract Lifecycle (Backend, LOW, depends on Item 1's state machine)**
+Publish events on lifecycle transitions (contract.created, contract.approved, contract.expired, etc.), a webhook registration mechanism, and retry/failure handling for webhook delivery.
+
+**Item 43 — Bulk Import from Excel/CSV (Both, LOW, no dependency)**
+Backend: import parser with row-level validation and error reporting. Frontend: upload UI with column-mapping step and a preview-before-commit screen.
+
+**Item 44 — In-App Toast Notifications (Frontend, LOW, depends on Item 7)**
+CSS toast component (auto-dismiss, stacking for multiple toasts), triggered on real-time events (e.g., "Payment of X recorded") via the existing SignalR connection used in Item 9.
+
+**Item 45 — Dark Mode Consistency Audit (Frontend, LOW, no dependency)**
+Systematic review of `dark:` Tailwind-style classes (or equivalent custom dark-mode classes) across every Contracts view built in Phases 1-5, fixing any missed elements.
+
+**Item 46 — Inline Document Content Editor (Frontend, LOW, depends on Item 14)**
+A lightweight rich-text or markdown editor (pure Vanilla JS, no external library) for editing text-based contract attachments in place.
+
+**Item 47 — Contract Quick-Create Modal (Frontend, LOW, depends on Item 19)**
+A compact modal form with only the essential fields for rapid contract entry, as a shortcut alternative to the full wizard, accessible from the list view and dashboard.
+
+### Execution Rules
+Same as previous phases: one item per turn, full real artifacts, explicit integration notes, follow-up sub-tasks listed, wait for "ok next". After Item 47, give a final project-completion summary covering all 47 items across all 5 phases.
+
+### Start
+Confirm scope understood, then begin with **Item 28 — Auto-Renewal Logic**.

@@ -1,0 +1,101 @@
+@model ReportsIndexVM
+@{
+    ViewData["Title"] = "گزارش‌های قراردادها";
+    var activeTab = Model.ActiveTab;
+}
+<div class="container-fluid py-1 space-y-2" dir="rtl">
+    <partial name="_Breadcrumb" model='new[] { new RhynoBreadcrumbItem("خانه", "/"), new RhynoBreadcrumbItem("قراردادها", "/Contracts"), new RhynoBreadcrumbItem("گزارش‌ها", null) }' />
+    <div class="erp-card p-2.5">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-8 h-8 rounded bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-xs"><i class="bi bi-bar-chart-line text-white text-xl"></i></div>
+            <div><h1 class="text-[13px] font-bold text-slate-900 dark:text-white">گزارش‌های قراردادها</h1><p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">آمار و تحلیل قراردادها</p></div>
+        </div>
+    </div>
+    <div class="flex items-center justify-between mb-2">
+        <div class="hidden sm:block"></div>
+        <div class="flex gap-1">
+            <button type="button" class="erp-btn text-[10px] px-2 py-1" onclick="exportCurrentReport('excel')" title="Export as Excel">
+                <i class="bi bi-file-earmark-spreadsheet text-emerald-600 ml-1"></i>Excel
+            </button>
+            <button type="button" class="erp-btn text-[10px] px-2 py-1" onclick="exportCurrentReport('pdf')" title="Export as PDF">
+                <i class="bi bi-file-earmark-pdf text-rose-600 ml-1"></i>PDF
+            </button>
+        </div>
+    </div>
+    <div class="flex gap-1 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
+        <button class="tab-btn px-4 py-2.5 border-b-2 transition whitespace-nowrap text-[11px] font-bold @(activeTab == "financial-exposure" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="financial-exposure" type="button"><i class="bi bi-shield-exclamation ml-1"></i>مواجهه مالی</button>
+        <button class="tab-btn px-4 py-2.5 border-b-2 transition whitespace-nowrap text-[11px] font-bold @(activeTab == "payment-aging" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="payment-aging" type="button"><i class="bi bi-clock-history ml-1"></i>پیری پرداخت</button>
+        <button class="tab-btn px-4 py-2.5 border-b-2 transition whitespace-nowrap text-[11px] font-bold @(activeTab == "revenue" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="revenue" type="button"><i class="bi bi-graph-up ml-1"></i>شناسایی درآمد</button>
+        <button class="tab-btn px-4 py-2.5 border-b-2 transition whitespace-nowrap text-[11px] font-bold @(activeTab == "pipeline" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="pipeline" type="button"><i class="bi bi-diagram-3 ml-1"></i>خط لوله ارزش</button>
+        <button class="tab-btn px-4 py-2.5 border-b-2 transition whitespace-nowrap text-[11px] font-bold @(activeTab == "calendar" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="calendar" type="button"><i class="bi bi-calendar-event ml-1"></i>تقویم تعهدات</button>
+    </div>
+    @foreach (var tab in new[] { "financial-exposure", "payment-aging", "revenue", "pipeline", "calendar" })
+    {
+        <div class="tab-panel @(activeTab == tab ? "" : "hidden")" id="tab-@tab">
+            <div class="text-center py-8"><div class="animate-spin inline-block w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full"></div><p class="text-[11px] text-slate-400 mt-2">در حال بارگذاری...</p></div>
+        </div>
+    }
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var urls = { 'financial-exposure': '/Contracts/Reports/Data/Exposure', 'payment-aging': '/Contracts/Reports/Data/Aging', 'revenue': '/Contracts/Reports/Data/Revenue', 'pipeline': '/Contracts/Reports/Data/Pipeline', 'calendar': '/Contracts/Reports/Data/Calendar' };
+    function loadTab(tabId) {
+        var panel = document.getElementById('tab-' + tabId);
+        if (!panel || panel.dataset.loaded) return;
+        panel.dataset.loaded = '1';
+        fetch(urls[tabId]).then(function(r) { return r.json(); }).then(function(d) { panel.innerHTML = renderTab(tabId, d); }).catch(function() { panel.innerHTML = '<div class=\"text-center py-4 text-[11px] text-rose-500\"><i class=\"bi bi-exclamation-triangle ml-1\"></i>Error</div>'; });
+    }
+    function kpi(label, value, sub, color) {
+        var c = ({ emerald: 'text-emerald-600', rose: 'text-rose-600', amber: 'text-amber-600', sky: 'text-sky-600', indigo: 'text-indigo-600', slate: 'text-slate-700' })[color] || 'text-slate-700';
+        return '<div class=\"bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/40 p-2.5\"><p class=\"text-[10px] text-slate-500 dark:text-slate-400\">' + label + '</p><p class=\"text-sm font-bold ' + c + '\">' + value + '</p>' + (sub ? '<p class=\"text-[9px] text-slate-400\">' + sub + '</p>' : '') + '</div>';
+    }
+    function renderTab(id, d) {
+        if (id === 'financial-exposure') return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Active Value', d.totalActiveValue.toLocaleString(), d.activeContractCount + ' c', 'emerald') + kpi('At Risk', d.atRiskValue.toLocaleString(), d.atRiskCount + ' c', 'rose') + kpi('Pending', d.pendingApprovalValue.toLocaleString(), d.pendingApprovalCount + ' c', 'amber') + kpi('Exp Ratio', d.exposureRatioPercent + '%', '', 'slate') + '</div><div class=\"grid grid-cols-2 gap-2.5\">' + kpi('Recognized', d.totalRecognizedRevenue.toLocaleString(), '', 'sky') + kpi('Receivables', d.totalOutstandingReceivables.toLocaleString(), '', 'indigo') + '</div>';
+        if (id === 'payment-aging') return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Total Overdue', d.totalOverdue.toLocaleString(), '', 'rose') + kpi('Count', d.totalOverdueCount, '', 'slate') + kpi('Avg', d.averageOverdueAmount.toLocaleString(), '', 'slate') + kpi('Max', d.maxDaysOverdue + ' d', '', 'amber') + '</div>' + table(d.buckets, ['Bucket', 'Count', 'Total'], ['bucketName', 'count', 'totalAmount']);
+        if (id === 'revenue') return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Recognized', d.totalRecognized.toLocaleString(), '', 'emerald') + kpi('Scheduled', d.totalScheduled.toLocaleString(), '', 'sky') + kpi('Active Value', d.totalActiveValue.toLocaleString(), '', 'slate') + kpi('Active', d.activeContractCount, '', 'slate') + '</div>' + table(d.periods, ['Period', 'Recognized', 'Scheduled'], ['periodLabel', 'recognizedAmount', 'scheduledAmount']);
+        if (id === 'pipeline') return '<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3\">' + kpi('Total Value', d.grandTotalValue.toLocaleString(), '', 'slate') + kpi('Count', d.grandTotalCount, '', 'slate') + kpi('Avg', d.averageContractValue.toLocaleString(), '', 'slate') + '</div>' + table(d.items, ['Status', 'Count', 'Value', 'Share'], ['status', 'count', 'totalValue', 'percentageOfTotal'], ['', '', '', '%']);
+        if (id === 'calendar') return '<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3\">' + kpi('Events', d.totalEvents, '', 'slate') + kpi('Total', d.totalAmountDue.toLocaleString(), '', 'rose') + kpi('Period', d.upcomingMonths + 'm', '', 'slate') + '</div>' + table(d.events, ['Date', 'Type', 'Count', 'Amount'], ['date', 'obligationTypeDisplay', 'count', 'totalAmount']);
+        return '';
+    }
+    function table(items, headers, fields, suffixes) {
+        var h = '<div class=\"overflow-x-auto\"><table class=\"w-full text-[11px]\"><thead><tr class=\"border-b border-slate-100 bg-slate-50\">';
+        headers.forEach(function(hl) { h += '<th class=\"px-3 py-2 text-right font-bold text-slate-600\">' + hl + '</th>'; });
+        h += '</tr></thead><tbody>';
+        items.forEach(function(item) {
+            h += '<tr class=\"border-b border-slate-50 hover:bg-slate-50 transition\">';
+            fields.forEach(function(f, i) { h += '<td class=\"px-3 py-2 font-mono tabular-nums text-slate-700\">' + (item[f] != null ? item[f].toLocaleString ? item[f].toLocaleString() : item[f] : '') + (suffixes && suffixes[i] || '') + '</td>'; });
+            h += '</tr>';
+        });
+        return h + '</tbody></table></div>';
+    }
+    window.currentReportTab = '@activeTab';
+    function exportCurrentReport(format) {
+        var tab = window.currentReportTab || 'financial-exposure';
+        var btn = document.querySelector('[data-export-menu]');
+        fetch('/Contracts/Reports/Export/' + tab + '?format=' + format)
+            .then(function(r) { if (!r.ok) throw new Error('Export failed'); return r.blob(); })
+            .then(function(blob) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = tab + '_Report_' + new Date().toISOString().slice(0, 10) + '.' + format;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })
+            .catch(function() { alert('Export failed. Check server logs.'); });
+    }
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var tab = this.getAttribute('data-tab');
+            window.currentReportTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('border-teal-500', 'text-teal-600', 'dark:text-teal-400'); b.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-slate-300'); });
+            this.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-slate-300');
+            this.classList.add('border-teal-500', 'text-teal-600', 'dark:text-teal-400');
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.add('hidden'); });
+            var panel = document.getElementById('tab-' + tab);
+            if (panel) { panel.classList.remove('hidden'); loadTab(tab); }
+        });
+    });
+    loadTab('@activeTab');
+});
+</script>

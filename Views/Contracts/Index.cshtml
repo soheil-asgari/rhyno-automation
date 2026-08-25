@@ -43,6 +43,38 @@
             <a asp-action="Settings" class="erp-btn">
                 <i class="bi bi-gear ml-1"></i>تنظیمات
             </a>
+            <div class="relative" data-export-dropdown>
+                <button type="button" class="erp-btn" onclick="toggleExportDropdown(event)">
+                    <i class="bi bi-download ml-1"></i>Export
+                    <i class="bi bi-chevron-down text-[9px] mr-1"></i>
+                </button>
+                <div class="absolute left-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg min-w-[140px] z-50 hidden" data-export-menu>
+                    <button type="button" class="w-full text-right px-3.5 py-2 text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition flex items-center gap-2" onclick="exportContracts('excel')">
+                        <i class="bi bi-file-earmark-spreadsheet text-emerald-600"></i> Excel
+                    </button>
+                    <button type="button" class="w-full text-right px-3.5 py-2 text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition flex items-center gap-2" onclick="exportContracts('pdf')">
+                        <i class="bi bi-file-earmark-pdf text-rose-600"></i> PDF
+                    </button>
+                </div>
+            </div>
+            <div class="relative" data-column-chooser>
+                <button type="button" class="erp-btn" onclick="toggleColumnChooser(event)" title="تنظیم ستون‌ها">
+                    <i class="bi bi-layout-sidebar-inset ml-1"></i>ستون‌ها
+                    <i class="bi bi-chevron-down text-[9px] mr-1"></i>
+                </button>
+                <div class="absolute left-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg min-w-[200px] z-50 hidden" data-column-menu>
+                    <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
+                        <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300">نمایش ستون‌ها</span>
+                    </div>
+                    <div class="px-3 py-2 max-h-[280px] overflow-y-auto space-y-1.5" data-column-list>
+                        <!-- Column checkboxes rendered by JS -->
+                    </div>
+                    <div class="px-3 py-2 border-t border-slate-100 dark:border-slate-700 flex gap-2">
+                        <button type="button" class="erp-btn flex-1 text-center" onclick="resetColumnDefaults()">پیش‌فرض</button>
+                        <button type="button" class="erp-btn erp-btn-primary flex-1 text-center" onclick="applyColumnChanges()">اعمال</button>
+                    </div>
+                </div>
+            </div>
             <a asp-action="Create" asp-route-_tab="1" class="erp-btn erp-btn-primary">
                 <i class="bi bi-plus-circle ml-1"></i>قرارداد جدید
             </a>
@@ -131,44 +163,78 @@
         </form>
     </div>
 
+@* Bulk Action Toolbar *@
+    <div id="bulkActionBar" class="bulk-action-bar" style="display:none;">
+        <div class="flex items-center gap-2 flex-wrap">
+            <span id="bulkSelectedCount" class="text-[11px] font-bold text-slate-600 dark:text-slate-300 ml-2">0 انتخاب</span>
+            <select id="bulkActionSelect" class="bulk-action-select">
+                <option value="">عملیات گروهی...</option>
+                <option value="status">تغییر وضعیت</option>
+                <option value="assign">اختصاص به کاربر</option>
+                <option value="archive">بایگانی</option>
+                <option value="delete">حذف</option>
+            </select>
+            <button type="button" id="bulkActionApplyBtn" class="erp-btn text-[11px]" disabled>اعمال</button>
+            <button type="button" id="bulkActionClearBtn" class="erp-btn text-[11px] border-none text-rose-500 hover:text-rose-700">لغو انتخاب</button>
+        </div>
+        @* Inline sub-controls for status/assign *@
+        <div id="bulkActionSubControls" class="flex items-center gap-2 mt-2" style="display:none;">
+            <select id="bulkNewStatus" class="erp-input" style="display:none;">
+                <option value="">انتخاب وضعیت جدید...</option>
+                @foreach (var s in ContractStatuses.All)
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+            <select id="bulkAssignUser" class="erp-input" style="display:none;" asp-items="Model.ResponsibleUserOptions">
+                <option value="">انتخاب کاربر...</option>
+            </select>
+        </div>
+    </div>
     @* Data Table *@
     <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div class="erp-card overflow-hidden position-relative" data-table-wrapper>
+        <div class="erp-card overflow-hidden position-relative" data-table-wrapper data-saved-columns='@Model.SavedColumnsJson'>
         @if (Model.Items.Any())
         {
             <div class="overflow-x-auto">
                 <table class="w-full text-[11px]">
                     <thead>
                         <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">#</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">شماره قرارداد</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">عنوان</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">مشتری</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">نوع</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">مبلغ کل</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">پرداخت‌شده</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">باقی‌مانده</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">وضعیت پرداخت</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">تاریخ شروع</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">تاریخ پایان</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">وضعیت</th>
-                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400">مسئول</th>
-                            <th class="text-center px-3 py-2 font-bold text-slate-500 dark:text-slate-400">عملیات</th>
+                            <th class="text-center px-3 py-2 font-bold text-slate-500 dark:text-slate-400 w-10">
+                                <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox bulk-checkbox-all" title="انتخاب همه" />
+                            </th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="Id">#</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="ContractNumber">شماره قرارداد</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="Title">عنوان</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="ClientName">مشتری</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="ContractType">نوع</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="TotalAmount">مبلغ کل</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="PaidAmount">پرداخت‌شده</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="RemainingBalance">باقی‌مانده</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="PaymentStatus">وضعیت پرداخت</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="StartDate">تاریخ شروع</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="EndDate">تاریخ پایان</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="Status">وضعیت</th>
+                            <th class="text-right px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="ResponsibleUser">مسئول</th>
+                            <th class="text-center px-3 py-2 font-bold text-slate-500 dark:text-slate-400" data-column-id="Actions">عملیات</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
                         @foreach (var item in Model.Items)
                         {
                             <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                                <td class="px-3 py-2 text-slate-500">@item.Id</td>
-                                <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@item.ContractNumber</td>
-                                <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@item.Title</td>
-                                <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@(item.CustomerName ?? item.ClientName)</td>
-                                <td class="px-3 py-2">
+                                <td class="text-center px-3 py-2">
+                                    <input type="checkbox" class="bulk-checkbox row-checkbox" value="@item.Id" title="انتخاب" />
+                                </td>
+                                <td class="px-3 py-2 text-slate-500" data-column-id="Id">@item.Id</td>
+                                <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200" data-column-id="ContractNumber">@item.ContractNumber</td>
+                                <td class="px-3 py-2 text-slate-700 dark:text-slate-300" data-column-id="Title">@item.Title</td>
+                                <td class="px-3 py-2 text-slate-700 dark:text-slate-300" data-column-id="ClientName">@(item.CustomerName ?? item.ClientName)</td>
+                                <td class="px-3 py-2" data-column-id="ContractType">
                                     <span class="inline-flex items-center rounded-md bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700">@(item.ContractType ?? "-")</span>
                                 </td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-800 dark:text-slate-200 font-bold">@item.TotalAmount.ToString("N0")</td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-800 dark:text-slate-200 font-bold" data-column-id="TotalAmount">@item.TotalAmount.ToString("N0")</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-emerald-600 dark:text-emerald-400" data-column-id="PaidAmount">
                                     @{
                                         var paidSum = item.Payments?
                                             .Where(p => p.Status == "Paid")
@@ -176,13 +242,13 @@
                                     }
                                     @paidSum.ToString("N0")
                                 </td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-rose-600 dark:text-rose-400">
+                                <td class="px-3 py-2 font-mono tabular-nums text-rose-600 dark:text-rose-400" data-column-id="RemainingBalance">
                                     @{
                                         var remainingSum = item.TotalAmount - paidSum;
                                     }
                                     @remainingSum.ToString("N0")
                                 </td>
-                                <td class="px-3 py-2">
+                                <td class="px-3 py-2" data-column-id="PaymentStatus">
                                     @{
                                         var paymentBadge = item.PaymentStatus switch
                                         {
@@ -199,9 +265,9 @@
                                     }
                                     <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @paymentBadge">@paymentText</span>
                                 </td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@item.StartDate.ToString("yyyy/MM/dd")</td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@(item.EndDate?.ToString("yyyy/MM/dd") ?? "-")</td>
-                                <td class="px-3 py-2">
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400" data-column-id="StartDate">@item.StartDate.ToString("yyyy/MM/dd")</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400" data-column-id="EndDate">@(item.EndDate?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                <td class="px-3 py-2" data-column-id="Status">
                                     @{
                                         var statusBadge = item.Status switch
                                         {
@@ -220,8 +286,8 @@
                                     }
                                     <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @statusBadge">@item.Status</span>
                                 </td>
-                                <td class="px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-400">@item.ResponsibleUserName</td>
-                                <td class="px-3 py-2 text-center">
+                                <td class="px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-400" data-column-id="ResponsibleUser">@item.ResponsibleUserName</td>
+                                <td class="px-3 py-2 text-center" data-column-id="Actions">
                                     <div class="inline-flex gap-1">
                                         <a asp-action="Details" asp-route-id="@item.Id" class="erp-btn text-[9px] px-1.5 py-0.5 h-5 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="نمایش">
                                             <i class="bi bi-eye"></i>
@@ -289,10 +355,13 @@
     </div>
 </div>
 
+@* CSRF token for bulk action AJAX calls — read from the meta tag placed in _Layout *@
+
 @section Styles {
     <link rel="stylesheet" href="~/css/contracts-index-style.css" asp-append-version="true" />
 }
 
 @section Scripts {
     <script src="~/js/contracts-index-script.js" asp-append-version="true"></script>
+    <script src="~/js/contracts-column-chooser.js" asp-append-version="true"></script>
 }

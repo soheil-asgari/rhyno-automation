@@ -1,4 +1,4 @@
-(function() {
+﻿(function() {
             'use strict';
 
             // ════════════════════════════════════════════════════════════
@@ -265,3 +265,84 @@
                 });
             });
         })();
+// ── Dynamic Type-Specific Fields (EAV) ──────────────────────
+                var allTypeFields = [];
+                try { var jsonEl = document.getElementById('allTypeFieldsJson'); if (jsonEl && jsonEl.value) allTypeFields = JSON.parse(jsonEl.value); } catch(e) {}
+
+                var preloadedFieldValues = {};
+                try {
+                    var valuesEl = document.getElementById('submittedFieldValuesJson');
+                    if (valuesEl && valuesEl.value && valuesEl.value !== '{}') {
+                        var parsed = JSON.parse(valuesEl.value);
+                        if (typeof parsed === 'object' && !Array.isArray(parsed)) preloadedFieldValues = parsed;
+                    }
+                } catch(e) {}
+
+                function renderDynamicFieldsForType(contractType) {
+                    var container = document.getElementById('dynamicFieldsContainer');
+                    if (!container) return;
+                    var matching = allTypeFields.filter(function(f) { return f.ContractType === contractType; });
+                    if (matching.length === 0) { container.innerHTML = ''; return; }
+
+                    var sections = {};
+                    matching.forEach(function(f) {
+                        var section = f.SectionName || 'سایر اطلاعات';
+                        if (!sections[section]) sections[section] = [];
+                        sections[section].push(f);
+                    });
+
+                    var html = '<div class="erp-fieldset mt-3">';
+                    html += '<div class="flex items-center gap-2 mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">';
+                    html += '<div class="w-6 h-6 rounded bg-teal-50 dark:bg-teal-950/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-[10px]"><i class="bi bi-list-check"></i></div>';
+                    html += '<div><h2>اطلاعات تخصصی قرارداد</h2><p class="form-section-desc">فیلدهای مرتبط با نوع قرارداد</p></div></div>';
+
+                    Object.keys(sections).forEach(function(sectionName) {
+                        var fields = sections[sectionName];
+                        html += '<div class="mb-3"><h3 class="text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1.5">' + sectionName + '</h3>';
+                        html += '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">';
+                        fields.forEach(function(field) {
+                            var savedValue = preloadedFieldValues[field.FieldKey] || '';
+                            html += '<div class="dynamic-field" data-field-key="' + field.FieldKey + '">';
+                            html += '<label class="erp-label">' + field.DisplayName + (field.IsRequired ? ' <span class="text-red-500">*</span>' : '') + '</label>';
+                            html += '<div class="input-wrapper">';
+                            if (field.FieldType === 'Boolean') {
+                                html += '<select class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '"><option value="">انتخاب کنید</option><option value="بله"' + (savedValue === 'بله' ? ' selected' : '') + '>بله</option><option value="خیر"' + (savedValue === 'خیر' ? ' selected' : '') + '>خیر</option></select>';
+                            } else if (field.FieldType === 'Select' && field.Options) {
+                                html += '<select class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '"><option value="">انتخاب کنید</option>';
+                                field.Options.split(',').forEach(function(o) { html += '<option value="' + o.trim() + '"' + (savedValue === o.trim() ? ' selected' : '') + '>' + o.trim() + '</option>'; });
+                                html += '</select>';
+                            } else if (field.FieldType === 'TextArea' || field.FieldType === 'Textarea') {
+                                html += '<textarea class="erp-input dynamic-field-input w-full min-h-[52px] text-[11px]" data-field-key="' + field.FieldKey + '" placeholder="' + (field.Placeholder || '') + '" rows="2">' + savedValue + '</textarea>';
+                            } else {
+                                html += '<input type="text" class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '" value="' + savedValue.replace(/"/g, '&quot;') + '" placeholder="' + (field.Placeholder || '') + '" />';
+                            }
+                            html += '</div></div>';
+                        });
+                        html += '</div></div>';
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                }
+
+                var contractTypeSelect = document.getElementById('ContractType');
+                if (contractTypeSelect) contractTypeSelect.addEventListener('change', function() { renderDynamicFieldsForType(this.value); });
+
+                function collectDynamicFieldValues() {
+                    // Remove any prior dynamic hidden inputs
+                    document.querySelectorAll('input.dynamic-field-hidden').forEach(function(h) { h.remove(); });
+                    // Create proper hidden inputs for ASP.NET Core Dictionary model binding
+                    document.querySelectorAll('.dynamic-field-input').forEach(function(input) {
+                        var key = input.getAttribute('data-field-key');
+                        if (key) {
+                            var hidden = document.createElement('input');
+                            hidden.type = 'hidden';
+                            hidden.name = 'FieldValues[' + key + ']';
+                            hidden.value = input.value || '';
+                            hidden.className = 'dynamic-field-hidden';
+                            input.closest('.dynamic-field')?.appendChild(hidden);
+                        }
+                    });
+                }
+
+                document.querySelector('form[action*="Edit"]')?.addEventListener('submit', function() { collectDynamicFieldValues(); window.syncEditEditor(); });
+            })();

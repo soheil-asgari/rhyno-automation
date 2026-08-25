@@ -39,6 +39,16 @@ public sealed class ContractBackgroundJobCoordinator : BackgroundService
                     using var scope = _scopeFactory.CreateScope();
                     await RunRevenueRecognitionAsync(scope.ServiceProvider, now, stoppingToken);
                 }
+                if (now.Hour == 3)
+                {
+                    using var scope = _scopeFactory.CreateScope();
+                    await RunPenaltyCalculationAsync(scope.ServiceProvider, now, stoppingToken);
+                }
+                if (now.Hour == 4)
+                {
+                    using var scope = _scopeFactory.CreateScope();
+                    await RunAutoRenewalAsync(scope.ServiceProvider, now, stoppingToken);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
             catch (Exception ex) { _logger.LogError(ex, "Error in coordinator."); }
@@ -220,5 +230,20 @@ public sealed class ContractBackgroundJobCoordinator : BackgroundService
         var updated = await accountingService.RecognizeAllActiveContractsAsync(now, "SYSTEM", ct);
         if (updated > 0)
             _logger.LogInformation("Revenue recognition: {0} contracts processed.", updated);
+    }
+
+    private async Task RunPenaltyCalculationAsync(IServiceProvider services, DateTime now, CancellationToken ct)
+    {
+        var penaltyService = services.GetRequiredService<IPaymentPenaltyService>();
+        var count = await penaltyService.ApplyCalculatedPenaltiesAsync(ct);
+        _logger.LogInformation("Penalty calculation: {0} penalties processed.", count);
+    }
+
+    private async Task RunAutoRenewalAsync(IServiceProvider services, DateTime now, CancellationToken ct)
+    {
+        var contractService = services.GetRequiredService<IContractService>();
+        var count = await contractService.ProcessAutoRenewalsAsync(ct);
+        if (count > 0)
+            _logger.LogInformation("Auto-renewal: {0} contracts renewed.", count);
     }
 }

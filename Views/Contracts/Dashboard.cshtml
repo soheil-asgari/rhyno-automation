@@ -215,6 +215,53 @@
         </div>
     </div>
 
+    @* ── Charts Grid ── *@
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3" data-chart-container>
+        @* Status Distribution – Doughnut *@
+        <div class="erp-card p-3">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">
+                    <i class="bi bi-pie-chart ml-1 text-sky-600"></i>توزیع وضعیت قراردادها
+                </h2>
+            </div>
+            <div class="relative" style="height:220px">
+                <canvas data-chart-type="doughnut"
+                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.StatusDistribution)'
+                        style="width:100%;height:100%"></canvas>
+            </div>
+        </div>
+
+        @* Monthly Value Trend – Line *@
+        <div class="erp-card p-3">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">
+                    <i class="bi bi-graph-up-arrow ml-1 text-sky-600"></i>روند ارزش ماهانه (۱۲ ماه اخیر)
+                </h2>
+            </div>
+            <div class="relative" style="height:220px">
+                <canvas data-chart-type="line"
+                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.MonthlyValueTrend)'
+                        style="width:100%;height:100%"></canvas>
+            </div>
+        </div>
+    </div>
+
+    @* Contract Count by Type – Bar (full-width) *@
+    <div class="grid grid-cols-1 gap-3" data-chart-container>
+        <div class="erp-card p-3">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">
+                    <i class="bi bi-bar-chart ml-1 text-sky-600"></i>تعداد قراردادها به تفکیک نوع
+                </h2>
+            </div>
+            <div class="relative" style="height:260px">
+                <canvas data-chart-type="bar"
+                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.ContractTypeDistribution)'
+                        style="width:100%;height:100%"></canvas>
+            </div>
+        </div>
+    </div>
+
     @* ── Notification Panel ── *@
     <partial name="_ContractNotifications" />
 </div>
@@ -227,4 +274,6 @@
 @section Scripts {
     <script src="~/js/contracts-dashboard-script.js" asp-append-version="true"></script>
     <script src="~/js/contracts-notification-script.js" asp-append-version="true"></script>
+    <script src="~/lib/chartjs/chart.umd.min.js" asp-append-version="true"></script>
+    <script src="~/js/contracts-dashboard-charts.js" asp-append-version="true"></script>
 }

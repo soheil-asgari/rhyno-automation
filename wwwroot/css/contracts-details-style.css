@@ -644,7 +644,49 @@
         min-height: 55vh !important;
     }
 }
+
+/* ── Guarantee / Retention Money ──────────────────────────── */
+.guarantee-expiring-row {
+    animation: guarantee-amber-glow 2s ease-in-out infinite;
+}
+@keyframes guarantee-amber-glow {
+    0%, 100% { background-color: rgba(251, 191, 36, 0.03); }
+    50% { background-color: rgba(251, 191, 36, 0.12); }
+}
+.dark .guarantee-expiring-row {
+    animation-name: guarantee-amber-glow-dark;
+}
+@keyframes guarantee-amber-glow-dark {
+    0%, 100% { background-color: rgba(251, 191, 36, 0.03); }
+    50% { background-color: rgba(251, 191, 36, 0.10); }
+}
+
+
     flex-shrink: 0;
     margin-top: 1px;
     color: #ef4444;
+}
+
+/* ?? Penalty / Late Payment ???????????????????????????? */
+#penaltyRuleModal {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+#penaltyRuleModal > div {
+    animation: penalty-modal-enter 0.2s ease-out;
+}
+@keyframes penalty-modal-enter {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.penalty-overdue-row td {
+    background-color: rgba(251, 191, 36, 0.04);
+
+/* ── Document Requirements ───────────────────────────── */
+.doc-missing-row td {
+    background-color: rgba(251, 191, 36, 0.04);
+}
+.doc-missing-row:hover td {
+    background-color: rgba(251, 191, 36, 0.1);
+}
 }

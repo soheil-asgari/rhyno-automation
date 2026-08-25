@@ -233,6 +233,12 @@
                         <textarea asp-for="TermsAndConditions" class="erp-input" style="min-height:48px; resize: vertical;"></textarea>
                     </div>
                 </div>
+            @* ── Dynamic Type-Specific Fields ── *@
+            <div id="dynamicFieldsContainer" class="mt-3">
+                @* Rendered by JS based on selected contract type *@
+            </div>
+            <input type="hidden" id="allTypeFieldsJson" value='@System.Text.Json.JsonSerializer.Serialize(Model.TypeFields)' />
+            <input type="hidden" id="submittedFieldValuesJson" name="FieldValues" value='@System.Text.Json.JsonSerializer.Serialize(Model.FieldValues)' />
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2" style="margin-bottom:20px;">
                 <div>
                     <label class="erp-label">متن قرارداد (ویرایشگر بصری)</label>

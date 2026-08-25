@@ -1,0 +1,102 @@
+@model DocumentRequirementChecklistVM
+@{
+    bool canEdit = ViewBag.CanEdit ?? false;
+    int contractId = Model.ContractId;
+}
+<div class="bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/40 p-3 mt-3">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-[12px] font-bold text-slate-800 dark:text-slate-200">
+            <i class="bi bi-file-check ml-1 text-teal-500"></i>مدارک الزامی
+        </h3>
+        @if (canEdit && Model.Items.Count == 0)
+        {
+            <form method="post" action="/Contracts/@contractId/Requirements/Seed" class="inline seed-requirements-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer text-[10px] px-3 py-1.5">
+                    <i class="bi bi-gear ml-1"></i>بارگذاری پیش‌فرض‌ها
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (Model.Items.Count > 0)
+    {
+        <div class="mb-3">
+            <div class="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mb-1">
+                <span>آپلود مدارک الزامی</span>
+                <span class="font-bold @(Model.AllRequiredUploaded ? "text-emerald-600" : "text-amber-600")">
+                    @Model.UploadedRequiredCount از @Model.RequiredCount
+                </span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500 @(Model.AllRequiredUploaded ? "bg-emerald-500" : "bg-amber-500")" style="width: @Model.ProgressPercent%"></div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-[11px]">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                        <th class="px-3 py-2 text-right font-bold text-slate-600 dark:text-slate-400">نام مدرک</th>
+                        <th class="px-3 py-2 text-right font-bold text-slate-600 dark:text-slate-400">دسته‌بندی</th>
+                        <th class="px-3 py-2 text-center font-bold text-slate-600 dark:text-slate-400">وضعیت</th>
+                        @if (canEdit) { <th class="px-3 py-2 text-center font-bold text-slate-600 dark:text-slate-400">عملیات</th> }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr class="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition @(!item.IsUploaded && item.IsRequired ? "doc-missing-row" : "")">
+                            <td class="px-3 py-2">
+                                <div class="flex items-center gap-2">
+                                    @if (item.IsUploaded) { <i class="bi bi-check-circle-fill text-emerald-500 text-sm"></i> }
+                                    else if (item.IsRequired) { <i class="bi bi-x-circle-fill text-rose-400 text-sm"></i> }
+                                    else { <i class="bi bi-dash-circle text-slate-300 text-sm"></i> }
+                                    <div>
+                                        <span class="text-slate-700 dark:text-slate-300 font-medium">@item.DocumentName</span>
+                                        @if (!string.IsNullOrEmpty(item.Description))
+                                        {
+                                            <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">@item.Description</p>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700">
+                                    @item.DocumentCategoryDisplay
+                                </span>
+                            </td>
+                            <td class="px-3 py-2 text-center">
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @item.StatusBadgeClass">@item.StatusDisplay</span>
+                            </td>
+                            @if (canEdit)
+                            {
+                                <td class="px-3 py-2 text-center">
+                                    @if (item.IsUploaded)
+                                    {
+                                        <div class="inline-flex gap-1">
+                                            <a href="/Contracts/DownloadAttachment?attachmentId=@item.UploadedAttachmentId" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition no-underline" title="دانلود"><i class="bi bi-download"></i></a>
+                                            <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition upload-for-req-btn" data-req-id="@item.Id" data-req-name="@item.DocumentName" title="آپلود مجدد"><i class="bi bi-arrow-up-circle"></i></button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-400 transition upload-for-req-btn" data-req-id="@item.Id" data-req-name="@item.DocumentName" title="آپلود مدرک"><i class="bi bi-upload ml-0.5"></i>آپلود</button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-6">
+            <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-file-earmark-text text-slate-400"></i></div>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 mb-1">هیچ مدرکی برای این نوع قرارداد تعریف نشده است.</p>
+            @if (canEdit) { <p class="text-[10px] text-slate-400 dark:text-slate-500">روی دکمه "بارگذاری پیش‌فرض‌ها" کلیک کنید.</p> }
+        </div>
+    }
+</div>

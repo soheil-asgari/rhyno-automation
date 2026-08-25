@@ -48,6 +48,12 @@ namespace OfficeAutomation.Models
         public User? UploadedByUser { get; set; }
 
         public List<ContractAttachmentVersion> Versions { get; set; } = new();
+
+        /// <summary>مدرک الزامی که این پیوست برای آن آپلود شده است (اختیاری)</summary>
+        public int? DocumentRequirementId { get; set; }
+
+        /// <summary>الزام مدرک مرتبط</summary>
+        public DocumentRequirement? DocumentRequirement { get; set; }
     }
 
     /// <summary>

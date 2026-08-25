@@ -45,6 +45,8 @@ public sealed class OfficeDbContext : ModularDbContext
     public DbSet<ContractUserSetting> ContractUserSettings => Set<ContractUserSetting>();
     public DbSet<ContractAuditLog> ContractAuditLogs => Set<ContractAuditLog>();
 
+    // ── Document Requirements Module ─────────────────────────────────
+    public DbSet<DocumentRequirement> DocumentRequirements => Set<DocumentRequirement>();
     // ── Approval Workflow Module ───────────────────────────────────
     public DbSet<ContractApprovalRequest> ContractApprovalRequests => Set<ContractApprovalRequest>();
     public DbSet<ContractApprovalStep> ContractApprovalSteps => Set<ContractApprovalStep>();
@@ -59,15 +61,29 @@ public sealed class OfficeDbContext : ModularDbContext
     // ── Amendment Module ──────────────────────────────────────────────
     public DbSet<ContractAmendment> ContractAmendments => Set<ContractAmendment>();
 
+    // ── Auto-Renewal Module ────────────────────────────────────────
+    public DbSet<AutoRenewalLog> AutoRenewalLogs => Set<AutoRenewalLog>();
+
     // ── Tax / VAT Module ──────────────────────────────────────────────────
     public DbSet<ContractTaxLine> ContractTaxLines => Set<ContractTaxLine>();
 
-// ── Attachment Versioning Module ─────────────────────────────────
+// ── Guarantee Module ────────────────────────────────────────────────────
+    public DbSet<ContractGuarantee> ContractGuarantees => Set<ContractGuarantee>();
+
+    // ── Penalty Module ─────────────────────────────────────────────────────
+    public DbSet<PaymentPenaltyRule> PaymentPenaltyRules => Set<PaymentPenaltyRule>();
+    public DbSet<CalculatedPenalty> CalculatedPenalties => Set<CalculatedPenalty>();
+
+    // ── Attachment Versioning Module ─────────────────────────────────
     public DbSet<ContractAttachmentVersion> ContractAttachmentVersions => Set<ContractAttachmentVersion>();
     // ── E-Signature Module ──────────────────────────────────────────────
     public DbSet<ContractSignatureRequest> ContractSignatureRequests => Set<ContractSignatureRequest>();
     public DbSet<ContractSignatureSigner> ContractSignatureSigners => Set<ContractSignatureSigner>();
     public DbSet<ContractSignatureAuditLog> ContractSignatureAuditLogs => Set<ContractSignatureAuditLog>();
+
+    // ── Dynamic Form Fields (EAV) ────────────────────────────────────────
+    public DbSet<ContractTypeField> ContractTypeFields => Set<ContractTypeField>();
+    public DbSet<ContractFieldValue> ContractFieldValues => Set<ContractFieldValue>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -142,6 +158,11 @@ public sealed class OfficeDbContext : ModularDbContext
             entity.HasOne(c => c.ArchivedByUser)
                 .WithMany()
                 .HasForeignKey(c => c.ArchivedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(c => c.AutoRenewalCancelledByUser)
+                .WithMany()
+                .HasForeignKey(c => c.AutoRenewalCancelledByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(c => c.ContractTemplate)
@@ -568,6 +589,195 @@ public sealed class OfficeDbContext : ModularDbContext
                 .WithMany()
                 .HasForeignKey(a => a.ApprovalRequestId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── ContractTypeField Configuration (EAV) ────────────────────────
+        modelBuilder.Entity<ContractTypeField>(entity =>
+        {
+            entity.ToTable("ContractTypeFields");
+
+            entity.HasIndex(f => new { f.ContractType, f.FieldKey }).IsUnique();
+
+            entity.Property(f => f.ContractType)
+                .HasMaxLength(60)
+                .IsRequired();
+
+            entity.Property(f => f.FieldKey)
+                .HasMaxLength(120)
+                .IsRequired();
+
+            entity.Property(f => f.DisplayName)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(f => f.FieldType)
+                .HasMaxLength(30)
+                .IsRequired()
+                .HasDefaultValue("Text");
+
+            entity.Property(f => f.Options)
+                .HasMaxLength(2000);
+
+            entity.Property(f => f.SectionName)
+                .HasMaxLength(200);
+
+            entity.Property(f => f.Placeholder)
+                .HasMaxLength(200);
+
+            entity.Property(f => f.ValidationPattern)
+                .HasMaxLength(500);
+
+            entity.Property(f => f.ValidationMessage)
+                .HasMaxLength(500);
+        });
+
+        // ── ContractFieldValue Configuration (EAV) ───────────────────────
+        modelBuilder.Entity<ContractFieldValue>(entity =>
+        {
+            entity.ToTable("ContractFieldValues");
+
+            entity.HasIndex(v => new { v.ContractId, v.ContractTypeFieldId }).IsUnique();
+
+            entity.Property(v => v.Value)
+                .HasMaxLength(4000);
+
+            entity.HasOne(v => v.Contract)
+                .WithMany(c => c.FieldValues)
+                .HasForeignKey(v => v.ContractId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(v => v.FieldDefinition)
+                .WithMany()
+                .HasForeignKey(v => v.ContractTypeFieldId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── ContractGuarantee Configuration ────────────────────────────
+        modelBuilder.Entity<ContractGuarantee>(entity =>
+        {
+            entity.ToTable("ContractGuarantees");
+
+            entity.HasIndex(g => g.ContractId);
+            entity.HasIndex(g => g.GuaranteeNumber);
+            entity.HasIndex(g => g.ExpiryDate);
+            entity.HasIndex(g => g.Status);
+
+            entity.Property(g => g.GuaranteeType).HasMaxLength(40).IsRequired();
+            entity.Property(g => g.GuaranteeNumber).HasMaxLength(100).IsRequired();
+            entity.Property(g => g.IssuingBank).HasMaxLength(200);
+            entity.Property(g => g.Amount).HasColumnType("decimal(18,2)");
+            entity.Property(g => g.Status).HasMaxLength(20).IsRequired();
+            entity.Property(g => g.RetentionPercentage).HasColumnType("decimal(5,2)");
+            entity.Property(g => g.ReleaseCondition).HasMaxLength(500);
+            entity.Property(g => g.CreatedByUserId).HasMaxLength(450).IsRequired();
+
+            entity.HasOne(g => g.Contract)
+                .WithMany()
+                .HasForeignKey(g => g.ContractId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(g => g.Amendment)
+                .WithMany()
+                .HasForeignKey(g => g.AmendmentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(g => g.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(g => g.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── PaymentPenaltyRule Configuration ───────────────────────────
+        modelBuilder.Entity<PaymentPenaltyRule>(entity =>
+        {
+            entity.ToTable("PaymentPenaltyRules");
+
+            entity.HasIndex(r => r.ContractId);
+            entity.HasIndex(r => r.IsActive);
+
+            entity.Property(r => r.PenaltyType).HasMaxLength(30).IsRequired();
+            entity.Property(r => r.PenaltyAmount).HasColumnType("decimal(18,2)");
+            entity.Property(r => r.PenaltyPercentage).HasColumnType("decimal(5,2)");
+            entity.Property(r => r.CapType).HasMaxLength(20).IsRequired();
+            entity.Property(r => r.CapValue).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(r => r.Contract)
+                .WithMany()
+                .HasForeignKey(r => r.ContractId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── CalculatedPenalty Configuration ─────────────────────────────
+        modelBuilder.Entity<CalculatedPenalty>(entity =>
+        {
+            entity.ToTable("CalculatedPenalties");
+
+            entity.HasIndex(p => p.PaymentId);
+            entity.HasIndex(p => p.ContractId);
+            entity.HasIndex(p => p.Status);
+
+            entity.Property(p => p.CalculatedAmount).HasColumnType("decimal(18,2)").IsRequired();
+            entity.Property(p => p.Status).HasMaxLength(20).IsRequired();
+            entity.Property(p => p.CalculationBasis).HasMaxLength(1000);
+
+            entity.HasOne(p => p.Payment)
+                .WithMany()
+                .HasForeignKey(p => p.PaymentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(p => p.Contract)
+                .WithMany()
+                .HasForeignKey(p => p.ContractId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── DocumentRequirement Configuration ────────────────────────────
+        modelBuilder.Entity<DocumentRequirement>(entity =>
+        {
+            entity.ToTable("DocumentRequirements");
+
+            entity.HasIndex(r => r.ContractType);
+            entity.HasIndex(r => r.DocumentCategory);
+
+            entity.Property(r => r.ContractType).HasMaxLength(60).IsRequired();
+            entity.Property(r => r.DocumentCategory).HasMaxLength(60).IsRequired();
+            entity.Property(r => r.DocumentName).HasMaxLength(200).IsRequired();
+            entity.Property(r => r.Description).HasMaxLength(500);
+        });
+
+        // ── ContractAttachment → DocumentRequirement FK ─────────────────
+        modelBuilder.Entity<ContractAttachment>(entity =>
+        {
+            entity.HasIndex(a => a.DocumentRequirementId);
+
+            entity.HasOne(a => a.DocumentRequirement)
+                .WithMany()
+                .HasForeignKey(a => a.DocumentRequirementId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── AutoRenewalLog Configuration ──────────────────────────────────
+        modelBuilder.Entity<AutoRenewalLog>(entity =>
+        {
+            entity.ToTable("AutoRenewalLogs");
+
+            entity.HasIndex(l => l.ContractId);
+            entity.HasIndex(l => l.RenewedContractId);
+            entity.HasIndex(l => l.Status);
+
+            entity.Property(l => l.Status).HasMaxLength(30).IsRequired();
+            entity.Property(l => l.Notes).HasMaxLength(1000);
+            entity.Property(l => l.CancelledByUserId).HasMaxLength(450);
+
+            entity.HasOne(l => l.Contract)
+                .WithMany(c => c.AutoRenewalLogs)
+                .HasForeignKey(l => l.ContractId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(l => l.CancelledByUser)
+                .WithMany()
+                .HasForeignKey(l => l.CancelledByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.ApplyConfigurationsFromAssembly(

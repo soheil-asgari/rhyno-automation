@@ -209,6 +209,36 @@ namespace OfficeAutomation.Models
         [Display(Name = "روزهای اخطار انقضا")]
         public int ExpiryNoticeDays { get; set; } = 30;
 
+        // ── Auto-Renewal ─────────────────────────────────────────────────
+        /// <summary>آیا قرارداد به صورت خودکار تمدید می‌شود</summary>
+        [Display(Name = "تمدید خودکار")]
+        public bool IsAutoRenew { get; set; }
+
+        /// <summary>تعداد روز قبل از انقضا برای اجرای تمدید خودکار (پیش‌فرض: 7)</summary>
+        [Display(Name = "تمدید خودکار N روز قبل از انقضا")]
+        public int AutoRenewDaysBeforeExpiry { get; set; } = 7;
+
+        /// <summary>مدت تمدید به ماه (پیش‌فرض: 12)</summary>
+        [Display(Name = "مدت تمدید (ماه)")]
+        public int AutoRenewTermMonths { get; set; } = 12;
+
+        /// <summary>تاریخ لغو تمدید خودکار (اگر کاربر لغو کرده باشد)</summary>
+        [Display(Name = "تاریخ لغو تمدید خودکار")]
+        public DateTime? AutoRenewalCancelledAt { get; set; }
+
+        /// <summary>کاربری که تمدید خودکار را لغو کرده است</summary>
+        [Display(Name = "لغوکننده تمدید خودکار")]
+        [StringLength(450)]
+        public string? AutoRenewalCancelledByUserId { get; set; }
+
+        /// <summary>کاربر لغوکننده تمدید خودکار</summary>
+        [Display(Name = "لغوکننده تمدید خودکار")]
+        public User? AutoRenewalCancelledByUser { get; set; }
+
+        /// <summary>آخرین تاریخ تمدید خودکار</summary>
+        [Display(Name = "آخرین تمدید خودکار")]
+        public DateTime? LastAutoRenewedAt { get; set; }
+
         // ── Status ──
         [Required]
         [StringLength(40)]
@@ -267,5 +297,7 @@ namespace OfficeAutomation.Models
         public List<ContractAuditLog> AuditLogs { get; set; } = new();
         public List<ContractAmendment> Amendments { get; set; } = new();
         public List<ContractTaxLine> TaxLines { get; set; } = new();
+        public List<ContractFieldValue> FieldValues { get; set; } = new();
+        public List<AutoRenewalLog> AutoRenewalLogs { get; set; } = new();
     }
 }

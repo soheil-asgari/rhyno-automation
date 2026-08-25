@@ -69,6 +69,16 @@ public interface IContractService
     Task<bool> IsContractNumberUniqueAsync(string contractNumber, int? excludeId = null, CancellationToken ct = default);
     Task<string> GenerateNextContractNumberAsync(CancellationToken ct = default);
 
+    // ── Dynamic Form Fields (EAV) ─────────────────────────────────
+    /// <summary>Load all type field definitions for all contract types</summary>
+    Task<List<ContractTypeFieldVM>> GetAllTypeFieldDefinitionsAsync(CancellationToken ct = default);
+
+    /// <summary>Save field values for a contract (replaces all existing values)</summary>
+    Task SaveFieldValuesAsync(int contractId, string contractType, Dictionary<string, string> fieldValues, CancellationToken ct = default);
+
+    /// <summary>Load field values for a contract, matched with their definitions</summary>
+    Task<List<ContractTypeFieldVM>> LoadFieldValuesAsync(int contractId, CancellationToken ct = default);
+
     // ── Financial Tracking ────────────────────────────────────────
     Task RecalculatePaymentStatusAsync(int contractId, CancellationToken ct = default);
 
@@ -80,4 +90,37 @@ public interface IContractService
     Task<(int Updated, int Errors)> BackfillDeferredRevenueForExistingAsync(string currentUserId, CancellationToken ct = default);
     // ── Expiry Engine ─────────────────────────────────────────────
     Task<int> UpdateExpiringSoonStatusesAsync(CancellationToken ct = default);
+
+    // ── Bulk Actions ──────────────────────────────────────────────
+    /// <summary>
+    /// Executes a bulk action (status change, assign, archive, delete) on
+    /// multiple contracts in a single transaction. All-or-nothing.
+    /// </summary>
+    Task<BulkActionResult> BulkActionAsync(BulkActionRequest request, string currentUserId, CancellationToken ct = default);
+
+    // ── Auto-Renewal ───────────────────────────────────────────
+    /// <summary>
+    /// Processes all contracts that are due for auto-renewal.
+    /// Creates a new contract period and logs the event.
+    /// Should be called from the background job coordinator.
+    /// </summary>
+    /// <returns>Number of contracts renewed successfully</returns>
+    Task<int> ProcessAutoRenewalsAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Cancels the auto-renewal for a contract before it executes.
+    /// </summary>
+    Task<bool> CancelAutoRenewalAsync(int contractId, string currentUserId, CancellationToken ct = default);
+
+    // ── Column Customization ───────────────────────────────────────
+    /// <summary>
+    /// Saves the user's column visibility preferences for the contracts list.
+    /// </summary>
+    Task SaveColumnPreferenceAsync(string userId, string[] columnNames, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets the user's saved column names for the contracts list.
+    /// Returns null if no preference has been saved.
+    /// </summary>
+    Task<string[]?> GetColumnPreferenceAsync(string userId, CancellationToken ct = default);
 }

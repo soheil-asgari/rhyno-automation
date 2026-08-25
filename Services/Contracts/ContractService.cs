@@ -17,6 +17,8 @@ public sealed class ContractService : IContractService
     private readonly ITenantSettingsService _tenantSettings;
     private readonly IVersionService _versionService;
     private readonly IContractAccountingService _contractAccounting;
+    private readonly IPaymentPenaltyService _penaltyService;
+    private readonly IDocumentRequirementService _documentRequirementService;
 
     public ContractService(
         OfficeDbContext context,
@@ -26,7 +28,9 @@ public sealed class ContractService : IContractService
         ITemplateRenderingService templateRenderer,
         ITenantSettingsService tenantSettings,
         IVersionService versionService,
-        IContractAccountingService contractAccounting)
+        IContractAccountingService contractAccounting,
+        IPaymentPenaltyService penaltyService,
+        IDocumentRequirementService documentRequirementService)
     {
         _context = context;
         _userManager = userManager;
@@ -36,6 +40,8 @@ public sealed class ContractService : IContractService
         _tenantSettings = tenantSettings;
         _versionService = versionService;
         _contractAccounting = contractAccounting;
+        _penaltyService = penaltyService;
+        _documentRequirementService = documentRequirementService;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -52,8 +58,9 @@ public sealed class ContractService : IContractService
     /// <summary>
     /// Enforces the Contract status state machine. Invalid transitions fail safely.
     /// Non-admin users may only move a contract forward through the standard lifecycle.
+    /// Also checks mandatory document requirements for Draft→PendingApproval transitions.
     /// </summary>
-    private static void ValidateContractStateTransition(string currentStatus, string requestedStatus, bool isAdmin, string currentUserId)
+    private async Task ValidateContractStateTransition(string currentStatus, string requestedStatus, bool isAdmin, string currentUserId, int? contractId = null)
     {
         // No transition requested / same state — always allowed.
         if (string.Equals(currentStatus, requestedStatus, StringComparison.Ordinal))
@@ -82,6 +89,17 @@ public sealed class ContractService : IContractService
 
         throw new UnauthorizedAccessException(
             $"انتقال وضعیت از «{currentStatus}» به «{requestedStatus}» مجاز نیست.");
+    }
+
+    private async Task EnforceDocumentRequirementsAsync(int contractId)
+    {
+        var (allUploaded, missingNames) = await _documentRequirementService.ValidateRequiredDocumentsAsync(contractId);
+        if (!allUploaded)
+        {
+            var missingStr = string.Join("، ", missingNames);
+            throw new InvalidOperationException(
+                $"برای انتقال وضعیت، ابتدا مدارک الزامی زیر را آپلود کنید: {missingStr}");
+        }
     }
 
     /// <summary>
@@ -350,6 +368,12 @@ public sealed class ContractService : IContractService
             _ => s
         }, Selected = s == filter.PaymentStatus }).ToList();
         filter.Items = items;
+        // ── Load saved column preferences ──
+        var columnPrefs = await GetColumnPreferenceAsync(currentUserId, ct);
+        if (columnPrefs != null)
+        {
+            filter.SavedColumnsJson = System.Text.Json.JsonSerializer.Serialize(columnPrefs);
+        }
         return filter;
     }
 
@@ -377,7 +401,8 @@ public sealed class ContractService : IContractService
             .Include(x => x.AuditLogs).ThenInclude(al => al.User)
             .Include(x => x.ArchivedByUser)
             .Include(x => x.Attachments).ThenInclude(a => a.UploadedByUser)
-            .Include(x => x.Amendments).ThenInclude(a => a.CreatedByUser);
+            .Include(x => x.Amendments).ThenInclude(a => a.CreatedByUser)
+            .Include(x => x.AutoRenewalLogs).ThenInclude(al => al.CancelledByUser);
 
         query = ApplyVisibilityFilter(query, currentUserId, isAdmin);
 
@@ -432,6 +457,30 @@ public sealed class ContractService : IContractService
             DaysRemaining = daysRemaining,
             CanEdit = CanUserEditContract(c, currentUserId, isAdmin),
             CanViewFinancials = CanUserViewFinancials(c, currentUserId, isAdmin),
+
+            // ── Auto-Renewal ──
+            IsAutoRenew = c.IsAutoRenew,
+            AutoRenewDaysBeforeExpiry = c.AutoRenewDaysBeforeExpiry,
+            AutoRenewTermMonths = c.AutoRenewTermMonths,
+            AutoRenewalCancelledAt = c.AutoRenewalCancelledAt,
+            AutoRenewalCancelledByUserName = c.AutoRenewalCancelledByUser?.FullName ?? c.AutoRenewalCancelledByUser?.UserName,
+            LastAutoRenewedAt = c.LastAutoRenewedAt,
+            AutoRenewalLogs = c.AutoRenewalLogs.OrderByDescending(al => al.RenewedAt).Select(al => new AutoRenewalLogVM
+            {
+                Id = al.Id,
+                ContractId = al.ContractId,
+                RenewedContractId = al.RenewedContractId,
+                RenewedAt = al.RenewedAt,
+                RenewedAtText = ToPersianDate(al.RenewedAt),
+                PreviousEndDate = al.PreviousEndDate,
+                PreviousEndDateText = al.PreviousEndDate.HasValue ? ToPersianDate(al.PreviousEndDate.Value) : null,
+                NewEndDate = al.NewEndDate,
+                NewEndDateText = al.NewEndDate.HasValue ? ToPersianDate(al.NewEndDate.Value) : null,
+                RenewalTermMonths = al.RenewalTermMonths,
+                Status = al.Status,
+                Notes = al.Notes,
+                CancelledByUserName = al.CancelledByUser?.FullName ?? al.CancelledByUser?.UserName
+            }).ToList(),
             Payments = c.Payments.OrderByDescending(p => p.PaymentDate).Select(p => new ContractPaymentVM
             {
                 Id = p.Id, Amount = p.Amount, PaymentDate = p.PaymentDate, DueDate = p.DueDate,
@@ -466,7 +515,8 @@ public sealed class ContractService : IContractService
                 CreatedByUserName = a.CreatedByUser != null ? a.CreatedByUser.FullName ?? a.CreatedByUser.UserName ?? "" : "",
                 CreatedAt = a.CreatedAt,
                 CreatedAtText = ToPersianDate(a.CreatedAt)
-            }).ToList()
+            }).ToList(),
+            TypeFields = await LoadFieldValuesAsync(c.Id, ct)
         };
     }
 
@@ -539,6 +589,7 @@ public sealed class ContractService : IContractService
     public async Task<ContractCreateVM> BuildCreateViewModelAsync(string currentUserId, CancellationToken ct = default)
     {
         var contractNumber = await GenerateNextContractNumberAsync(ct);
+        var typeFields = await GetAllTypeFieldDefinitionsAsync(ct);
         return new ContractCreateVM
         {
             ContractNumber = contractNumber,
@@ -546,7 +597,8 @@ public sealed class ContractService : IContractService
             ContractTypeOptions = ContractTypes.All.Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = s, Text = s }).ToList(),
             UserOptions = await GetUserSelectListAsync(null, ct),
             TemplateOptions = await GetTemplateSelectListAsync(currentUserId, null, ct),
-            CustomerOptions = await GetCustomerSelectListAsync(null, ct)
+            CustomerOptions = await GetCustomerSelectListAsync(null, ct),
+            TypeFields = typeFields
         };
     }
 
@@ -612,7 +664,10 @@ public sealed class ContractService : IContractService
             CreatedByUserId = currentUserId,
             IsArchived = false,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            IsAutoRenew = model.IsAutoRenew,
+            AutoRenewDaysBeforeExpiry = model.AutoRenewDaysBeforeExpiry > 0 ? model.AutoRenewDaysBeforeExpiry : 7,
+            AutoRenewTermMonths = model.AutoRenewTermMonths > 0 ? model.AutoRenewTermMonths : 12
         };
 
         // Render contract body from template if template selected
@@ -642,6 +697,12 @@ public sealed class ContractService : IContractService
         // Log creation
         await AddAuditLogAsync(contract.Id, currentUserId, "Created", null, contract.Status, "قرارداد ایجاد شد", ct);
 
+        // Save dynamic field values (EAV)
+        if (!string.IsNullOrWhiteSpace(contract.ContractType) && model.FieldValues?.Count > 0)
+        {
+            await SaveFieldValuesAsync(contract.Id, contract.ContractType, model.FieldValues, ct);
+        }
+
         _logger.LogInformation("Contract {ContractNumber} created by {UserId}", contract.ContractNumber, currentUserId);
         return contract;
     }
@@ -653,6 +714,9 @@ public sealed class ContractService : IContractService
             .Include(x => x.ContractTemplate)
             .FirstOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new KeyNotFoundException($"Contract {id} not found.");
+
+        var typeFields = await GetAllTypeFieldDefinitionsAsync(ct);
+        var fieldValues = await LoadFieldValuesAsync(id, ct);
 
         return new ContractEditVM
         {
@@ -679,11 +743,16 @@ public sealed class ContractService : IContractService
             Status = c.Status,
             AssignedUserId = c.AssignedUserId,
             TemplateId = c.TemplateId,
+            IsAutoRenew = c.IsAutoRenew,
+            AutoRenewDaysBeforeExpiry = c.AutoRenewDaysBeforeExpiry,
+            AutoRenewTermMonths = c.AutoRenewTermMonths,
             StatusOptions = ContractStatuses.All.Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = s, Text = s, Selected = s == c.Status }).ToList(),
             ContractTypeOptions = ContractTypes.All.Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = s, Text = s, Selected = s == c.ContractType }).ToList(),
             UserOptions = await GetUserSelectListAsync(c.AssignedUserId, ct),
             TemplateOptions = await GetTemplateSelectListAsync(currentUserId, c.TemplateId, ct),
-            CustomerOptions = await GetCustomerSelectListAsync(c.CustomerId, ct)
+            CustomerOptions = await GetCustomerSelectListAsync(c.CustomerId, ct),
+            TypeFields = typeFields,
+            FieldValues = fieldValues.ToDictionary(f => f.FieldKey, f => f.Value ?? string.Empty)
         };
     }
 
@@ -703,7 +772,13 @@ public sealed class ContractService : IContractService
         var requestedStatus = string.IsNullOrWhiteSpace(model.Status) ? c.Status : model.Status;
 
         // Validate the status transition via the state machine.
-        ValidateContractStateTransition(oldStatus, requestedStatus, isAdmin, currentUserId);
+        await ValidateContractStateTransition(oldStatus, requestedStatus, isAdmin, currentUserId, c.Id);
+
+        // Enforce document requirements: Draft→PendingApproval requires all mandatory docs uploaded
+        if (oldStatus == ContractStatuses.Draft && requestedStatus == ContractStatuses.PendingApproval)
+        {
+            await EnforceDocumentRequirementsAsync(c.Id);
+        }
 
         // A non-admin cannot reassign the contract to a different user (server-controlled).
         if (!isAdmin && !string.IsNullOrWhiteSpace(model.AssignedUserId) && model.AssignedUserId != currentUserId
@@ -732,6 +807,9 @@ public sealed class ContractService : IContractService
         c.AssignedUserId = isAdmin ? model.AssignedUserId : (model.AssignedUserId ?? c.AssignedUserId);
         c.TemplateId = model.TemplateId;
         c.UpdatedAt = DateTime.UtcNow;
+        c.IsAutoRenew = model.IsAutoRenew;
+        c.AutoRenewDaysBeforeExpiry = model.AutoRenewDaysBeforeExpiry > 0 ? model.AutoRenewDaysBeforeExpiry : 7;
+        c.AutoRenewTermMonths = model.AutoRenewTermMonths > 0 ? model.AutoRenewTermMonths : 12;
 
         // Recalculate payment status
         c.PaidAmount = c.Payments.Sum(p => p.Amount);
@@ -769,6 +847,12 @@ public sealed class ContractService : IContractService
         else
         {
             await AddAuditLogAsync(c.Id, currentUserId, "Edited", null, null, "قرارداد ویرایش شد", ct);
+        }
+
+        // Save dynamic field values (EAV)
+        if (!string.IsNullOrWhiteSpace(c.ContractType) && model.FieldValues?.Count > 0)
+        {
+            await SaveFieldValuesAsync(c.Id, c.ContractType, model.FieldValues, ct);
         }
 
         _logger.LogInformation("Contract {ContractNumber} updated by {UserId}", c.ContractNumber, currentUserId);
@@ -988,6 +1072,10 @@ public sealed class ContractService : IContractService
             ct);
 
         _logger.LogInformation("Payment {Amount} added to contract {ContractId} by {UserId}", model.Amount, model.ContractId, currentUserId);
+
+        // Auto-create default penalty rule if none exists
+        try { await _penaltyService.CreateDefaultRuleAsync(model.ContractId, ct); } catch { /* non-critical */ }
+
         return payment;
     }
 
@@ -1711,6 +1799,40 @@ public sealed class ContractService : IContractService
         var partiallyPaid = await query.CountAsync(c => c.PaymentStatus == PaymentStatuses.PartiallyPaid && c.TotalAmount > 0, ct);
         var unpaid = await query.CountAsync(c => (c.PaymentStatus == PaymentStatuses.Unpaid || c.PaidAmount <= 0) && c.TotalAmount > 0, ct);
 
+        // ── Chart data: Status distribution ──
+        var statusGroups = await query
+            .GroupBy(c => c.Status)
+            .Select(g => new { Label = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        // ── Chart data: Monthly value trend (last 12 months) ──
+        var twelveMonthsAgo = now.AddMonths(-12);
+        var monthlyGroups = await query
+            .Where(c => c.SignDate >= twelveMonthsAgo || c.CreatedAt >= twelveMonthsAgo)
+            .GroupBy(c => new { Year = (c.SignDate ?? c.CreatedAt).Year, Month = (c.SignDate ?? c.CreatedAt).Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(c => c.TotalAmount) })
+            .ToListAsync(ct);
+
+        // Build a complete 12-month series (fill missing months with 0)
+        var monthlyTrend = new List<ChartDataPoint>();
+        for (int i = 11; i >= 0; i--)
+        {
+            var monthDate = now.AddMonths(-i);
+            var match = monthlyGroups.FirstOrDefault(m => m.Year == monthDate.Year && m.Month == monthDate.Month);
+            monthlyTrend.Add(new ChartDataPoint
+            {
+                Label = monthDate.ToString("yyyy/MM"),
+                Value = match?.Total ?? 0m
+            });
+        }
+
+        // ── Chart data: Contract type distribution ──
+        var typeGroups = await query
+            .Where(c => c.ContractType != null && c.ContractType != "")
+            .GroupBy(c => c.ContractType!)
+            .Select(g => new { Label = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
         return new ContractDashboardVM
         {
             TotalContracts = total,
@@ -1724,7 +1846,11 @@ public sealed class ContractService : IContractService
             TotalOutstanding = totalAmount - totalPaid,
             FullyPaid = fullyPaid,
             PartiallyPaid = partiallyPaid,
-            Unpaid = unpaid
+            Unpaid = unpaid,
+
+            StatusDistribution = statusGroups.Select(g => new ChartDataPoint { Label = g.Label, Value = g.Count }).ToList(),
+            MonthlyValueTrend = monthlyTrend,
+            ContractTypeDistribution = typeGroups.Select(g => new ChartDataPoint { Label = g.Label, Value = g.Count }).ToList()
         };
     }
 
@@ -1826,7 +1952,99 @@ public sealed class ContractService : IContractService
         await _context.SaveChangesAsync(ct);
         return existing;
     }
-private static string ToPersianDate(DateTime dt)
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Dynamic Form Fields (EAV)
+    // ═══════════════════════════════════════════════════════════════
+
+    public async Task<List<ContractTypeFieldVM>> GetAllTypeFieldDefinitionsAsync(CancellationToken ct = default)
+    {
+        return await _context.ContractTypeFields
+            .AsNoTracking()
+            .OrderBy(f => f.ContractType)
+            .ThenBy(f => f.SortOrder)
+            .Select(f => new ContractTypeFieldVM
+            {
+                Id = f.Id,
+                ContractType = f.ContractType,
+                FieldKey = f.FieldKey,
+                DisplayName = f.DisplayName,
+                FieldType = f.FieldType,
+                Options = f.Options,
+                IsRequired = f.IsRequired,
+                SortOrder = f.SortOrder,
+                SectionName = f.SectionName,
+                Placeholder = f.Placeholder,
+                ValidationPattern = f.ValidationPattern,
+                ValidationMessage = f.ValidationMessage
+            })
+            .ToListAsync(ct);
+    }
+
+    public async Task SaveFieldValuesAsync(int contractId, string contractType, Dictionary<string, string> fieldValues, CancellationToken ct = default)
+    {
+        // Remove existing values
+        var existing = await _context.ContractFieldValues
+            .Where(v => v.ContractId == contractId)
+            .ToListAsync(ct);
+        _context.ContractFieldValues.RemoveRange(existing);
+
+        if (fieldValues == null || fieldValues.Count == 0)
+            return;
+
+        // Get the field definitions for this contract type
+        var definitions = await _context.ContractTypeFields
+            .AsNoTracking()
+            .Where(f => f.ContractType == contractType)
+            .ToListAsync(ct);
+
+        var fieldDefMap = definitions.ToDictionary(f => f.FieldKey, f => f.Id);
+
+        var values = new List<ContractFieldValue>();
+        foreach (var kvp in fieldValues)
+        {
+            if (string.IsNullOrWhiteSpace(kvp.Key))
+                continue;
+            if (!fieldDefMap.TryGetValue(kvp.Key, out var defId))
+                continue;
+
+            values.Add(new ContractFieldValue
+            {
+                ContractId = contractId,
+                ContractTypeFieldId = defId,
+                Value = kvp.Value?.Trim()
+            });
+        }
+
+        if (values.Count > 0)
+        {
+            _context.ContractFieldValues.AddRange(values);
+            await _context.SaveChangesAsync(ct);
+        }
+    }
+
+    public async Task<List<ContractTypeFieldVM>> LoadFieldValuesAsync(int contractId, CancellationToken ct = default)
+    {
+        var defs = await GetAllTypeFieldDefinitionsAsync(ct);
+        var defLookup = defs.ToDictionary(f => f.Id, f => f);
+
+        var savedValues = await _context.ContractFieldValues
+            .AsNoTracking()
+            .Where(v => v.ContractId == contractId)
+            .ToListAsync(ct);
+
+        foreach (var sv in savedValues)
+        {
+            if (defLookup.TryGetValue(sv.ContractTypeFieldId, out var def))
+            {
+                def.Value = sv.Value;
+            }
+        }
+
+        return defs;
+    }
+
+    private static string ToPersianDate(DateTime dt)
     {
         try
         {
@@ -1836,6 +2054,329 @@ private static string ToPersianDate(DateTime dt)
         catch
         {
             return dt.ToString("yyyy/MM/dd");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Bulk Actions
+    // ═══════════════════════════════════════════════════════════════
+
+    public async Task<BulkActionResult> BulkActionAsync(BulkActionRequest request, string currentUserId, CancellationToken ct = default)
+    {
+        if (request.IDs == null || request.IDs.Count == 0)
+        {
+            return new BulkActionResult { Message = "هیچ قراردادی انتخاب نشده است." };
+        }
+
+        var isAdmin = await IsAdminAsync(currentUserId);
+        var result = new BulkActionResult();
+        var errors = new List<string>();
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+        try
+        {
+            foreach (var id in request.IDs)
+            {
+                try
+                {
+                    var contract = await _context.Contracts
+                        .FirstOrDefaultAsync(c => c.Id == id, ct);
+
+                    if (contract == null)
+                    {
+                        errors.Add($"قرارداد با شناسه {id} یافت نشد.");
+                        continue;
+                    }
+
+                    if (!CanUserEditContract(contract, currentUserId, isAdmin))
+                    {
+                        errors.Add($"شما به قرارداد {contract.ContractNumber} دسترسی ندارید.");
+                        continue;
+                    }
+                    switch (request.Action.ToLowerInvariant())
+                    {
+                        case "status":
+                            if (string.IsNullOrWhiteSpace(request.NewStatus))
+                            {
+                                errors.Add($"وضعیت جدید برای قرارداد {contract.ContractNumber} مشخص نشده است.");
+                                continue;
+                            }
+                            var oldStatus = contract.Status;
+                            await ValidateContractStateTransition(contract.Status, request.NewStatus, isAdmin, currentUserId, contract.Id);
+                            if (contract.Status == ContractStatuses.Draft && request.NewStatus == ContractStatuses.PendingApproval)
+                            {
+                                await EnforceDocumentRequirementsAsync(contract.Id);
+                            }
+                            contract.Status = request.NewStatus;
+                            contract.UpdatedAt = DateTime.Now;
+                            await AddAuditLogAsync(contract.Id, currentUserId, "StatusChanged", oldStatus, request.NewStatus,
+                                $"تغییر وضعیت گروهی از {oldStatus} به {request.NewStatus}", ct);
+                            result.SuccessCount++;
+                            break;
+
+                        case "assign":
+                            if (string.IsNullOrWhiteSpace(request.AssignToUserId))
+                            {
+                                errors.Add($"کاربر مسئول برای قرارداد {contract.ContractNumber} مشخص نشده است.");
+                                continue;
+                            }
+                            var oldAssignee = contract.AssignedUserId;
+                            contract.AssignedUserId = request.AssignToUserId;
+                            contract.UpdatedAt = DateTime.Now;
+                            await AddAuditLogAsync(contract.Id, currentUserId, "Assigned", oldAssignee, request.AssignToUserId,
+                                $"تغییر مسئول گروهی", ct);
+                            result.SuccessCount++;
+                            break;
+
+                        case "archive":
+                            if (contract.IsArchived)
+                            {
+                                errors.Add($"قرارداد {contract.ContractNumber} قبلاً بایگانی شده است.");
+                                continue;
+                            }
+                            contract.IsArchived = true;
+                            contract.ArchivedAt = DateTime.Now;
+                            contract.ArchivedByUserId = currentUserId;
+                            contract.Status = ContractStatuses.Archived;
+                            contract.UpdatedAt = DateTime.Now;
+                            await AddAuditLogAsync(contract.Id, currentUserId, "Archived", null, ContractStatuses.Archived,
+                                "بایگانی گروهی", ct);
+                            result.SuccessCount++;
+                            break;
+
+                        case "delete":
+                            _context.Contracts.Remove(contract);
+                            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", id.ToString());
+                            try
+                            {
+                                if (Directory.Exists(uploadsDir))
+                                    Directory.Delete(uploadsDir, recursive: true);
+                            }
+                            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+                            {
+                                _logger.LogWarning(ex, "Failed to delete upload directory for contract {ContractId} during bulk delete", id);
+                            }
+                            result.SuccessCount++;
+                            break;
+
+                        default:
+                            errors.Add($"عملیات '{request.Action}' نامعتبر است.");
+                            continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Bulk action failed for contract {ContractId}", id);
+                    errors.Add($"خطا در پردازش قرارداد {id}: {ex.Message}");
+                    continue;
+                }
+            }
+
+            if (result.SuccessCount > 0)
+            {
+                await _context.SaveChangesAsync(ct);
+                await transaction.CommitAsync(ct);
+                result.Message = $"{result.SuccessCount} قرارداد با موفقیت پردازش شد.";
+            }
+            else
+            {
+                await transaction.RollbackAsync(ct);
+                result.Message = "هیچ قراردادی پردازش نشد.";
+            }
+
+            result.FailureCount = errors.Count;
+            result.Errors = errors;
+            return result;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(ct);
+            _logger.LogError(ex, "Bulk action transaction failed");
+            return new BulkActionResult
+            {
+                Message = "عملیات گروهی با خطا مواجه شد. تمام تغییرات لغو شدند.",
+                FailureCount = request.IDs.Count,
+                Errors = new List<string> { ex.Message }
+            };
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Auto-Renewal Logic
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Processes all contracts that are due for auto-renewal.
+    /// A contract qualifies for auto-renewal when:
+    ///   - IsAutoRenew == true
+    ///   - Status is Active or ExpiringSoon
+    ///   - Not cancelled (AutoRenewalCancelledAt == null)
+    ///   - EndDate is within the next AutoRenewDaysBeforeExpiry days (or today/expired)
+    ///   - Has not already been auto-renewed past this EndDate (LastAutoRenewedAt check)
+    ///
+    /// For each qualifying contract, a new contract period is created by extending
+    /// the EndDate by AutoRenewTermMonths. An AutoRenewalLog entry is recorded.
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Number of contracts renewed</returns>
+    public async Task<int> ProcessAutoRenewalsAsync(CancellationToken ct = default)
+    {
+        var today = DateTime.Today;
+        var renewals = await _context.Contracts
+            .Where(c => c.IsAutoRenew
+                && c.AutoRenewalCancelledAt == null
+                && c.EndDate != null
+                && (c.Status == ContractStatuses.Active
+                    || c.Status == ContractStatuses.ExpiringSoon
+                    || c.Status == ContractStatuses.Expired)
+                && c.EndDate.Value.Date <= today.AddDays(c.AutoRenewDaysBeforeExpiry)
+                && (c.LastAutoRenewedAt == null || c.LastAutoRenewedAt.Value.Date < c.EndDate.Value.Date))
+            .ToListAsync(ct);
+
+        int renewedCount = 0;
+        foreach (var contract in renewals)
+        {
+            try
+            {
+                var previousEndDate = contract.EndDate!.Value;
+                var newEndDate = previousEndDate.AddMonths(contract.AutoRenewTermMonths);
+
+                contract.EndDate = newEndDate;
+                contract.LastAutoRenewedAt = DateTime.UtcNow;
+                contract.Status = ContractStatuses.Active;
+                contract.UpdatedAt = DateTime.UtcNow;
+
+                var log = new AutoRenewalLog
+                {
+                    ContractId = contract.Id,
+                    RenewedContractId = null,
+                    RenewedAt = DateTime.UtcNow,
+                    PreviousEndDate = previousEndDate,
+                    NewEndDate = newEndDate,
+                    RenewalTermMonths = contract.AutoRenewTermMonths,
+                    Status = "Success",
+                    Notes = $"تمدید خودکار قرارداد به مدت {contract.AutoRenewTermMonths} ماه",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.AutoRenewalLogs.Add(log);
+                _logger.LogInformation(
+                    "Auto-renewed contract {ContractId} ({ContractNumber}): EndDate extended from {OldEndDate:yyyy-MM-dd} to {NewEndDate:yyyy-MM-dd}",
+                    contract.Id, contract.ContractNumber, previousEndDate, newEndDate);
+
+                renewedCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to auto-renew contract {ContractId} ({ContractNumber})",
+                    contract.Id, contract.ContractNumber);
+            }
+        }
+
+        if (renewedCount > 0)
+        {
+            await _context.SaveChangesAsync(ct);
+        }
+
+        return renewedCount;
+    }
+
+    /// <summary>
+    /// Cancels the auto-renewal for a contract before it executes.
+    /// Sets AutoRenewalCancelledAt and records a log entry.
+    /// </summary>
+    public async Task<bool> CancelAutoRenewalAsync(int contractId, string currentUserId, CancellationToken ct = default)
+    {
+        var contract = await _context.Contracts
+            .FirstOrDefaultAsync(c => c.Id == contractId, ct);
+
+        if (contract == null)
+            return false;
+
+        if (!contract.IsAutoRenew)
+            return false; // Already not set for auto-renewal
+
+        if (contract.AutoRenewalCancelledAt != null)
+            return false; // Already cancelled
+
+        contract.IsAutoRenew = false;
+        contract.AutoRenewalCancelledAt = DateTime.UtcNow;
+        contract.AutoRenewalCancelledByUserId = currentUserId;
+        contract.UpdatedAt = DateTime.UtcNow;
+
+        var log = new AutoRenewalLog
+        {
+            ContractId = contract.Id,
+            RenewedContractId = null,
+            RenewedAt = DateTime.UtcNow,
+            PreviousEndDate = contract.EndDate,
+            NewEndDate = contract.EndDate,
+            RenewalTermMonths = contract.AutoRenewTermMonths,
+            Status = "CancelledByUser",
+            Notes = "تمدید خودکار توسط کاربر لغو شد",
+            CancelledByUserId = currentUserId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.AutoRenewalLogs.Add(log);
+        await _context.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Auto-renewal cancelled for contract {ContractId} ({ContractNumber}) by user {UserId}",
+            contract.Id, contract.ContractNumber, currentUserId);
+
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Column Customization
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Saves the user's column visibility preferences for the contracts list.
+    /// </summary>
+    public async Task SaveColumnPreferenceAsync(string userId, string[] columnNames, CancellationToken ct = default)
+    {
+        var settings = await _context.ContractUserSettings
+            .FirstOrDefaultAsync(s => s.UserId == userId, ct);
+
+        if (settings == null)
+        {
+            settings = new ContractUserSetting
+            {
+                UserId = userId,
+                DefaultStatus = ContractStatuses.Draft,
+                SelectedColumns = System.Text.Json.JsonSerializer.Serialize(columnNames)
+            };
+            _context.ContractUserSettings.Add(settings);
+        }
+        else
+        {
+            settings.SelectedColumns = System.Text.Json.JsonSerializer.Serialize(columnNames);
+            settings.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Gets the user's saved column names for the contracts list.
+    /// Returns null if no preference has been saved.
+    /// </summary>
+    public async Task<string[]?> GetColumnPreferenceAsync(string userId, CancellationToken ct = default)
+    {
+        var settings = await _context.ContractUserSettings
+            .FirstOrDefaultAsync(s => s.UserId == userId, ct);
+
+        if (settings == null || string.IsNullOrEmpty(settings.SelectedColumns))
+            return null;
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<string[]>(settings.SelectedColumns);
+        }
+        catch
+        {
+            return null;
         }
     }
 }

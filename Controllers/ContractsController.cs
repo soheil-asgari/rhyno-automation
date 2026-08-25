@@ -15,13 +15,19 @@ public class ContractsController : Controller
     private readonly IContractService _contractService;
     private readonly ISignatureService _signatureService;
     private readonly IAttachmentVersionService _attachmentVersionService;
+    private readonly IContractFieldValidator _fieldValidator;
     private readonly ILogger<ContractsController> _logger;
+private readonly IContractReportService _reportService;
+private readonly IContractExportService _exportService;
 
-    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, ILogger<ContractsController> logger)
+    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, ILogger<ContractsController> logger)
     {
         _contractService = contractService;
         _signatureService = signatureService;
         _attachmentVersionService = attachmentVersionService;
+        _fieldValidator = fieldValidator;
+        _reportService = reportService;
+        _exportService = exportService;
         _logger = logger;
     }
 
@@ -89,6 +95,52 @@ public class ContractsController : Controller
         return View(vm);
     }
 
+// ═══════════════════════════════════════════════════════════════
+    //  Reports
+    // ═══════════════════════════════════════════════════════════════
+
+    [HttpGet("Contracts/Reports")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> Reports(int? obligationsMonths, CancellationToken ct)
+    {
+        var vm = await _reportService.GetAllReportsAsync(obligationsMonths ?? 6, ct);
+        return View(vm);
+    }
+
+    [HttpGet("Contracts/Reports/Data/Aging")]
+    public async Task<IActionResult> AgingReportData(CancellationToken ct)
+    {
+        var vm = await _reportService.GetPaymentAgingReportAsync(ct);
+        return Json(vm);
+    }
+
+    [HttpGet("Contracts/Reports/Data/Revenue")]
+    public async Task<IActionResult> RevenueReportData(CancellationToken ct)
+    {
+        var vm = await _reportService.GetRevenueRecognitionScheduleAsync(ct);
+        return Json(vm);
+    }
+
+    [HttpGet("Contracts/Reports/Data/Pipeline")]
+    public async Task<IActionResult> PipelineReportData(CancellationToken ct)
+    {
+        var vm = await _reportService.GetContractValuePipelineAsync(ct);
+        return Json(vm);
+    }
+
+    [HttpGet("Contracts/Reports/Data/Calendar")]
+    public async Task<IActionResult> CalendarReportData(int? months, CancellationToken ct)
+    {
+        var vm = await _reportService.GetObligationsCalendarAsync(months ?? 6, ct);
+        return Json(vm);
+    }
+
+    [HttpGet("Contracts/Reports/Data/Exposure")]
+    public async Task<IActionResult> ExposureReportData(CancellationToken ct)
+    {
+        var vm = await _reportService.GetFinancialExposureAsync(ct);
+        return Json(vm);
+    }
     // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Create
     // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
@@ -123,6 +175,14 @@ public class ContractsController : Controller
             var converted = ToGregorianDate(model.SignDateDisplay);
             if (converted.HasValue) model.SignDate = converted.Value;
         }
+
+        // ── Dynamic field validation ──
+        var fieldErrors = _fieldValidator.ValidateFields(model.ContractType ?? string.Empty, model.TypeFields, model.FieldValues);
+        foreach (var err in fieldErrors)
+        {
+            ModelState.AddModelError($"FieldValues[{err.Key}]", err.Value);
+        }
+
         if (!ModelState.IsValid)
         {
             var currentUserId = GetCurrentUserId();
@@ -135,6 +195,8 @@ public class ContractsController : Controller
             vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
             vm.Status = model.Status; vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
             vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
+            vm.FieldValues = model.FieldValues;
+            vm.TypeFields = model.TypeFields;
             return View(vm);
         }
         try
@@ -157,6 +219,8 @@ public class ContractsController : Controller
             vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
             vm.Status = model.Status; vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
             vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
+            vm.FieldValues = model.FieldValues;
+            vm.TypeFields = model.TypeFields;
             return View(vm);
         }
     }
@@ -186,6 +250,13 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Edit")]
     public async Task<IActionResult> Edit(ContractEditVM model, CancellationToken ct)
     {
+        // ── Dynamic field validation ──
+        var fieldErrors = _fieldValidator.ValidateFields(model.ContractType ?? string.Empty, model.TypeFields, model.FieldValues);
+        foreach (var err in fieldErrors)
+        {
+            ModelState.AddModelError($"FieldValues[{err.Key}]", err.Value);
+        }
+
         if (!ModelState.IsValid)
         {
             var currentUserId = GetCurrentUserId();
@@ -201,6 +272,8 @@ public class ContractsController : Controller
                 vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
                 vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
                 vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
+                vm.FieldValues = model.FieldValues;
+                vm.TypeFields = model.TypeFields;
                 return View(vm);
             }
             catch (KeyNotFoundException) { return NotFound(); }
@@ -220,6 +293,8 @@ public class ContractsController : Controller
             ModelState.AddModelError("ContractNumber", ex.Message);
             var currentUserId = GetCurrentUserId();
             var vm = await _contractService.BuildEditViewModelAsync(model.Id, currentUserId, ct);
+            vm.FieldValues = model.FieldValues;
+            vm.TypeFields = model.TypeFields;
             return View(vm);
         }
     }
@@ -833,6 +908,162 @@ public class ContractsController : Controller
         {
             _logger.LogError(ex, "Failed to preview attachment {AttachmentId}", attachmentId);
             return NotFound();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Bulk Action
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Executes a bulk operation on multiple contracts (status change, assign,
+    /// archive, delete). Returns a JSON result for frontend consumption.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BulkAction([FromBody] BulkActionRequest request, CancellationToken ct)
+    {
+        if (request == null || request.IDs == null || request.IDs.Count == 0)
+        {
+            return Ok(new BulkActionResult
+            {
+                FailureCount = 1,
+                Message = "هیچ قراردادی انتخاب نشده است."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Action))
+        {
+            return Ok(new BulkActionResult
+            {
+                FailureCount = 1,
+                Message = "عملیات مشخص نشده است."
+            });
+        }
+
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            var result = await _contractService.BulkActionAsync(request, currentUserId, ct);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Bulk action failed");
+            return Ok(new BulkActionResult
+            {
+                FailureCount = request.IDs.Count,
+                Message = "خطا در انجام عملیات گروهی."
+            });
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  Export: Contract List → Excel
+    // ════════════════════════════════════════════════════════════
+
+    [HttpGet("Contracts/Export/Contracts")]
+    public async Task<IActionResult> ExportContracts([FromQuery] ContractIndexVM filters, [FromQuery] string format = "excel", CancellationToken ct = default)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            if (format.Equals("excel", StringComparison.OrdinalIgnoreCase))
+            {
+                var bytes = await _exportService.ExportContractsToExcelAsync(filters, userId, ct);
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Contracts_{DateTime.Now:yyyyMMdd}.xlsx");
+            }
+            return BadRequest(new { message = "Unsupported format. Use 'excel'." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export contracts");
+            return BadRequest(new { message = "Export failed." });
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  Export: Reports → Excel / PDF
+    // ════════════════════════════════════════════════════════════
+
+    [HttpGet("Contracts/Reports/Export/{reportType}")]
+    public async Task<IActionResult> ExportReport(string reportType, [FromQuery] string format = "excel", CancellationToken ct = default)
+    {
+        try
+        {
+            var validTypes = new[] { "aging", "revenue", "pipeline", "calendar", "exposure" };
+            if (!validTypes.Contains(reportType.ToLowerInvariant()))
+                return BadRequest(new { message = $"Invalid report type: {reportType}" });
+
+            if (format.Equals("excel", StringComparison.OrdinalIgnoreCase))
+            {
+                var bytes = await _exportService.ExportReportToExcelAsync(reportType, ct);
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{reportType}_Report_{DateTime.Now:yyyyMMdd}.xlsx");
+            }
+            else if (format.Equals("pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                var bytes = await _exportService.ExportReportToPdfAsync(reportType, ct);
+                return File(bytes, "application/pdf", $"{reportType}_Report_{DateTime.Now:yyyyMMdd}.pdf");
+            }
+            return BadRequest(new { message = "Unsupported format. Use 'excel' or 'pdf'." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export report {ReportType} as {Format}", reportType, format);
+            return BadRequest(new { message = "Export failed. Ensure Playwright is installed: dotnet tool install --global Microsoft.Playwright.CLI && playwright install" });
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  Auto-Renewal
+    // ─────────────────────────────────────────────────────────────────
+
+    [HttpPost("Contracts/CancelAutoRenewal/{contractId}")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Edit")]
+    public async Task<IActionResult> CancelAutoRenewal(int contractId, CancellationToken ct)
+    {
+        var currentUserId = GetCurrentUserId();
+        var result = await _contractService.CancelAutoRenewalAsync(contractId, currentUserId, ct);
+        if (!result)
+        {
+            TempData["ErrorMessage"] = "عدم امکان لغو تمدید خودکار. قرارداد تمدید خودکار فعال ندارد یا مجاز نیستید.";
+        }
+        else
+        {
+            TempData["SuccessMessage"] = "تمدید خودکار با موفقیت لغو شد.";
+        }
+        return RedirectToAction(nameof(Details), new { id = contractId });
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  Column Customization
+    // ─────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Saves the user's column visibility preferences for the contracts list.
+    /// </summary>
+    [HttpPost("Contracts/SaveColumnPreference")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveColumnPreference([FromBody] SaveColumnPreferenceRequest request, CancellationToken ct)
+    {
+        if (request?.ColumnNames == null)
+            return Json(new { success = false, message = "داده‌ای ارسال نشده است." });
+
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            await _contractService.SaveColumnPreferenceAsync(currentUserId, request.ColumnNames, ct);
+            return Json(new { success = true, message = "تنظیمات ستون‌ها ذخیره شد." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save column preference");
+            return Json(new { success = false, message = "خطا در ذخیره تنظیمات ستون‌ها." });
         }
     }
 }

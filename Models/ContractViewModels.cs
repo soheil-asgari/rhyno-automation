@@ -80,6 +80,10 @@ namespace OfficeAutomation.Models
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public List<SelectListItem> PaymentStatusOptions { get; set; } = new();
         public List<ContractIndexItemVM> Items { get; set; } = new();
+
+        // ── Column Customization ──
+        /// <summary>JSON array of selected column names. Null means all columns shown.</summary>
+        public string? SavedColumnsJson { get; set; }
     }
 
     public class ContractIndexItemVM
@@ -187,6 +191,16 @@ namespace OfficeAutomation.Models
         [Display(Name = "روزهای اخطار انقضا")]
         public int ExpiryNoticeDays { get; set; } = 30;
 
+        // ── Auto-Renewal ───────────────────────────────────────────
+        [Display(Name = "تمدید خودکار")]
+        public bool IsAutoRenew { get; set; }
+
+        [Display(Name = "تمدید خودکار N روز قبل از انقضا")]
+        public int AutoRenewDaysBeforeExpiry { get; set; } = 7;
+
+        [Display(Name = "مدت تمدید (ماه)")]
+        public int AutoRenewTermMonths { get; set; } = 12;
+
         [Display(Name = "وضعیت")]
         public string Status { get; set; } = ContractStatuses.Draft;
 
@@ -201,6 +215,9 @@ namespace OfficeAutomation.Models
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> TemplateOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
+public string? WorkflowId { get; set; }
+        public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
+        public Dictionary<string, string> FieldValues { get; set; } = new();
     }
 
     /// <summary>
@@ -292,6 +309,16 @@ namespace OfficeAutomation.Models
         [Display(Name = "روزهای اخطار انقضا")]
         public int ExpiryNoticeDays { get; set; } = 30;
 
+        // ── Auto-Renewal ───────────────────────────────────────────
+        [Display(Name = "تمدید خودکار")]
+        public bool IsAutoRenew { get; set; }
+
+        [Display(Name = "تمدید خودکار N روز قبل از انقضا")]
+        public int AutoRenewDaysBeforeExpiry { get; set; } = 7;
+
+        [Display(Name = "مدت تمدید (ماه)")]
+        public int AutoRenewTermMonths { get; set; } = 12;
+
         [Required(ErrorMessage = "وضعیت الزامی است.")]
         [Display(Name = "وضعیت")]
         public string Status { get; set; } = ContractStatuses.Draft;
@@ -306,6 +333,8 @@ namespace OfficeAutomation.Models
         public List<SelectListItem> ContractTypeOptions { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> TemplateOptions { get; set; } = new();
+public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
+        public Dictionary<string, string> FieldValues { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
     }
 
@@ -349,11 +378,22 @@ namespace OfficeAutomation.Models
         public bool CanViewFinancials { get; set; }
         public int DaysRemaining { get; set; }
 
+        // ── Auto-Renewal ───────────────────────────────────────────
+        public bool IsAutoRenew { get; set; }
+        public int AutoRenewDaysBeforeExpiry { get; set; } = 7;
+        public int AutoRenewTermMonths { get; set; } = 12;
+        public DateTime? AutoRenewalCancelledAt { get; set; }
+        public string? AutoRenewalCancelledByUserName { get; set; }
+        public DateTime? LastAutoRenewedAt { get; set; }
+        public List<AutoRenewalLogVM> AutoRenewalLogs { get; set; } = new();
+
         public List<ContractPaymentVM> Payments { get; set; } = new();
         public List<ContractAttachmentVM> Attachments { get; set; } = new();
-        public List<ContractAuditLogVM> AuditLogs { get; set; } = new();
 public List<LifecycleStepVM> LifecycleSteps { get; set; } = new();
+        public List<ContractAuditLogVM> AuditLogs { get; set; } = new();
         public List<AmendmentListItemVM> Amendments { get; set; } = new();
+public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
+        public Dictionary<string, string> FieldValues { get; set; } = new();
     }
 
     public class ContractPaymentVM
@@ -540,6 +580,9 @@ public List<LifecycleStepVM> LifecycleSteps { get; set; } = new();
         public int FullyPaid { get; set; }
         public int PartiallyPaid { get; set; }
         public int Unpaid { get; set; }
+public List<ChartDataPoint> StatusDistribution { get; set; } = new();
+        public List<ChartDataPoint> MonthlyValueTrend { get; set; } = new();
+        public List<ChartDataPoint> ContractTypeDistribution { get; set; } = new();
     }
 /// <summary>Request body for internal signature capture</summary>
 public class SignContractRequest
@@ -669,5 +712,31 @@ public class LifecycleStepVM
     public string? RejectionReason { get; set; }
     public int? RejectionCount { get; set; }
     public string? ApprovalDecision { get; set; }
+}
+
+public class AutoRenewalLogVM
+{
+    public int Id { get; set; }
+    public int ContractId { get; set; }
+    public int? RenewedContractId { get; set; }
+    public DateTime RenewedAt { get; set; }
+    public string RenewedAtText { get; set; } = string.Empty;
+    public DateTime? PreviousEndDate { get; set; }
+    public string? PreviousEndDateText { get; set; }
+    public DateTime? NewEndDate { get; set; }
+    public string? NewEndDateText { get; set; }
+    public int RenewalTermMonths { get; set; }
+    public string Status { get; set; } = "Success";
+    public string? Notes { get; set; }
+    public string? CancelledByUserName { get; set; }
+}
+
+/// <summary>
+/// Request model for saving column visibility preferences.
+/// </summary>
+public class SaveColumnPreferenceRequest
+{
+    /// <summary>نام ستون‌های انتخاب‌شده</summary>
+    public string[] ColumnNames { get; set; } = Array.Empty<string>();
 }
 }

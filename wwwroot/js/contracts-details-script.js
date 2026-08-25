@@ -450,6 +450,82 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initTabs();
     initSignaturePad();
+
+    // ── Document Requirements Lazy-Load ────────────────────
+    function initDocumentRequirements() {
+        var container = document.getElementById('documentRequirementsContainer');
+        if (!container) return;
+        var contractId = container.getAttribute('data-contract-id');
+        if (!contractId) return;
+
+        function loadRequirements() {
+            container.innerHTML = '<div class="text-center py-6"><div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mx-auto"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div></div>';
+            fetch('/Contracts/' + contractId + '/Requirements')
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    container.innerHTML = html;
+                    bindRequirementUI();
+                })
+                .catch(function () {
+                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="loadRequirements()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
+                });
+        }
+
+        function bindRequirementUI() {
+            // Seed defaults form
+            document.querySelectorAll('.seed-requirements-form').forEach(function (f) {
+                f.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var btn = this.querySelector('button');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="bi bi-hourglass ml-1"></i>در حال بارگذاری...';
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+                    }).then(function (r) { return r.json(); }).then(function (resp) {
+                        if (resp.success) { loadRequirements(); }
+                        else { alert(resp.message || 'خطا'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-gear ml-1"></i>بارگذاری پیش‌فرض‌ها'; }
+                    }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-gear ml-1"></i>بارگذاری پیش‌فرض‌ها'; });
+                });
+            });
+
+            // Upload for requirement buttons
+            document.querySelectorAll('.upload-for-req-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var reqId = this.getAttribute('data-req-id');
+                    var reqName = this.getAttribute('data-req-name');
+                    // Trigger the main upload button with a data attribute for the requirement
+                    var uploadBtn = document.getElementById('btnUploadAttachment');
+                    if (uploadBtn) {
+                        uploadBtn.setAttribute('data-req-id', reqId);
+                    }
+                    // Open the upload modal
+                    var modal = document.getElementById('uploadAttachmentModal');
+                    if (modal) { modal.classList.remove('hidden'); }
+                });
+            });
+        }
+
+        // Load when the Attachments tab is shown
+        var attachmentsTab = document.querySelector('[data-tab="attachments"]');
+        if (attachmentsTab) {
+            attachmentsTab.addEventListener('click', function () {
+                if (!container.dataset.loaded) {
+                    container.dataset.loaded = '1';
+                    loadRequirements();
+                }
+            });
+        }
+
+        // Also load if Attachments tab is already active
+        if (document.getElementById('tab-attachments') && !document.getElementById('tab-attachments').classList.contains('hidden')) {
+            container.dataset.loaded = '1';
+            loadRequirements();
+        }
+    }
+
+    initDocumentRequirements();
     initSignatureRequestsTab();
     initJalaliPickers();
 });

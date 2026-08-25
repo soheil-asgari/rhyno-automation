@@ -61,7 +61,7 @@ builder.Services.Configure<TenantOptions>(builder.Configuration.GetSection(Tenan
 builder.Services.Configure<AuditRetentionOptions>(builder.Configuration.GetSection(AuditRetentionOptions.SectionName));
 builder.Services.Configure<OcrOptions>(builder.Configuration.GetSection(OcrOptions.SectionName));
 
-// â”€â”€ Swagger / OpenAPI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Swagger / OpenAPI â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -111,7 +111,7 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
-// â”€â”€ Redis Caching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Redis Caching â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 var redisConnectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
@@ -122,7 +122,7 @@ if (!string.IsNullOrWhiteSpace(redisConnectionString))
     });
 }
 
-// â”€â”€ API Key Authentication â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ API Key Authentication â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 builder.Services.AddAuthentication()
     .AddApiKeyAuthentication(options =>
     {
@@ -131,17 +131,20 @@ builder.Services.AddAuthentication()
         options.ValidApiKeys = apiKeys;
     });
 
-// â”€â”€ HTTP Client Factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ HTTP Client Factory â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 builder.Services.AddHttpClient("ExternalServices", client =>
 {
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Rhyno-ERP/1.0");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
-// â”€â”€ Export & Import Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Export & Import Services â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<IContractExportService, ContractExportService>();
 builder.Services.AddScoped<IBulkImportService, BulkImportService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IContractFieldValidator, ContractFieldValidator>();
+builder.Services.AddScoped<ContractTypeFieldSeeder>();
 builder.Services.AddScoped<IApprovalService, ApprovalService>();
 builder.Services.AddScoped<IVersionService, VersionService>();
 builder.Services.AddScoped<IContractAccountingService, ContractAccountingService>();
@@ -196,7 +199,7 @@ builder.Services.AddDbContext<OfficeDbContext>(ConfigureTenantDbContext);
 // TaxDbContext is resolved through a SCOPED factory (see Modules/Persistence/TaxDbContextFactory.cs).
 // Registering it as a scoped factory ensures the options (and the scoped tenancy services such as
 // ITenantConnectionStringResolver and the EF interceptors) are resolved from a real IServiceScope
-// instead of from the application root provider â€” fixing the
+// instead of from the application root provider â€" fixing the
 // "Cannot resolve scoped service 'ITenantConnectionStringResolver' from root provider" exception.
 builder.Services.AddScoped<IDbContextFactory<TaxDbContext>, TaxDbContextFactory>();
 builder.Services.AddDbContext<PlatformDbContext>((serviceProvider, options) =>
@@ -347,7 +350,12 @@ builder.Services.AddScoped<ProcessMiningService>();
 builder.Services.AddScoped<IOutboxService, OutboxService>();
 builder.Services.AddSingleton<IEventBusPublisher, RabbitMqEventBusPublisher>();
 builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<IAlertService, AlertService>();
+builder.Services.AddScoped<IContractGuaranteeService, ContractGuaranteeService>();
+builder.Services.AddScoped<IPaymentPenaltyService, PaymentPenaltyService>();
+builder.Services.AddScoped<IDocumentRequirementService, DocumentRequirementService>();
+builder.Services.AddScoped<IContractReportService, ContractReportService>();
+
+        builder.Services.AddScoped<IAlertService, AlertService>();
 builder.Services.AddScoped<SecurityAuditNotificationService>();
 builder.Services.AddScoped<WorkInboxService>();
 builder.Services.AddScoped<WorkflowDetailService>();
@@ -381,7 +389,7 @@ builder.Services.AddHostedService<ScheduledReportBackgroundService>();
 builder.Services.AddHostedService<ContractBackgroundJobCoordinator>();
 
 
-// â”€â”€ Health Checks (Advanced) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Health Checks (Advanced) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database", tags: new[] { "db", "sql" })
     .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: new[] { "messaging" })
@@ -468,7 +476,7 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStaticFiles();
 
-// â”€â”€ Force UTF-8 Encoding for all responses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Force UTF-8 Encoding for all responses â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 // NOTE: We must NOT set context.Request.ContentType here. Modifying Request.ContentType
 // on incoming GET requests corrupts ASP.NET Core's internal Endpoint Routing engine and
 // can cause 404s. Only the Response.ContentType is set below.
@@ -480,16 +488,16 @@ app.Use(async (context, next) =>
     context.Response.ContentType = context.Response.ContentType ?? "text/html; charset=utf-8";
 });
 
-// â”€â”€ API JSON exception handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ API JSON exception handling â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 // Registered before routing so it catches exceptions from downstream
 // middleware and controllers. API/JSON requests receive a stable JSON
 // error envelope; browser requests fall through to the HTML error page.
 app.UseApiExceptionHandling();
 
-// â”€â”€ Security Headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Security Headers â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 app.UseSecurityHeaders();
 
-// â”€â”€ Swagger (only in Development or when enabled) â”€â”€â”€â”€â”€â”€
+// â"€â"€ Swagger (only in Development or when enabled) â"€â"€â"€â"€â"€â"€
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger(options =>
@@ -505,7 +513,7 @@ if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swa
     });
 }
 
-// â”€â”€ 404 Handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ 404 Handling â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 app.UseStatusCodePagesWithReExecute("/Home/Error?code={0}");
 
 app.UseRouting();
@@ -619,54 +627,25 @@ app.MapRazorPages();
 app.MapHealthChecks("/health");
 app.MapHub<OfficeAutomation.Hubs.AutomationHub>("/automationHub");
 
-// â”€â”€ TaxDbContext auto-migration (runs unconditionally to ensure InvoiceRecords & MowadiyanSubmissions tables exist) â”€â”€
-try
-{
-    using var scope = app.Services.CreateScope();
-    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TaxDbContext>>();
-    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-    await dbContext.Database.MigrateAsync();
-    logger.LogInformation("TaxDbContext migrations applied successfully on startup.");
-}
-catch (Exception ex)
-{
-    logger.LogWarning(ex, "TaxDbContext MigrateAsync failed, falling back to EnsureCreated: {Message}", ex.Message);
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TaxDbContext>>();
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        await dbContext.Database.EnsureCreatedAsync();
-        logger.LogInformation("TaxDbContext schema ensured via EnsureCreated fallback.");
-    }
-    catch (Exception fallbackEx)
-    {
-        logger.LogWarning(fallbackEx, "TaxDbContext EnsureCreated also failed (DB may not be ready): {Message}", fallbackEx.Message);
-    }
-}
+// --- Auto-migrate ALL database contexts on startup (fail-fast) ---
+// Each context is migrated via Database.MigrateAsync(). If any context fails,
+// the exception is logged and re-thrown immediately so the app does NOT start
+// with a partially-migrated database.
+logger.LogInformation("Starting database migrations for all contexts...");
+await DatabaseMigrationService.MigrateAllAsync(app.Services, logger);
+logger.LogInformation("All database context migrations applied successfully on startup.");
 
-// â”€â”€ OfficeDbContext auto-migration (ensures Contracts, ContractTemplates, Customers, etc. exist) â”€â”€
+// --- Seed ContractTypeField definitions (idempotent, runs after migration) ---
 try
 {
-    using var officeScope = app.Services.CreateScope();
-    var officeContext = officeScope.ServiceProvider.GetRequiredService<OfficeDbContext>();
-    await officeContext.Database.MigrateAsync();
-    logger.LogInformation("OfficeDbContext migrations applied successfully on startup.");
+    using var seedScope = app.Services.CreateScope();
+    var fieldSeeder = seedScope.ServiceProvider.GetRequiredService<ContractTypeFieldSeeder>();
+    await fieldSeeder.SeedAsync();
+    logger.LogInformation("ContractTypeFieldSeeder executed successfully.");
 }
 catch (Exception ex)
 {
-    logger.LogWarning(ex, "OfficeDbContext MigrateAsync failed, falling back to EnsureCreated: {Message}", ex.Message);
-    try
-    {
-        using var officeScope = app.Services.CreateScope();
-        var officeContext = officeScope.ServiceProvider.GetRequiredService<OfficeDbContext>();
-        await officeContext.Database.EnsureCreatedAsync();
-        logger.LogInformation("OfficeDbContext schema ensured via EnsureCreated fallback.");
-    }
-    catch (Exception fallbackEx)
-    {
-        logger.LogWarning(fallbackEx, "OfficeDbContext EnsureCreated also failed (DB may not be ready): {Message}", fallbackEx.Message);
-    }
+    logger.LogWarning(ex, "ContractTypeFieldSeeder failed (DB may not be ready): {Message}", ex.Message);
 }
 
 if (builder.Configuration.GetValue("Bootstrap:RunOnStartup", false))
@@ -680,7 +659,7 @@ else
     logger.LogInformation("Startup bootstrap skipped because Bootstrap:RunOnStartup is disabled.");
 }
 
-// â”€â”€ Bootstrap Admin User (always runs, idempotent) â”€â”€
+// â"€â"€ Bootstrap Admin User (always runs, idempotent) â"€â"€
 try
 {
     using var adminScope = app.Services.CreateScope();
@@ -693,7 +672,7 @@ catch (Exception ex)
     logger.LogWarning(ex, "BootstrapAdmin: seed failed (DB may not be ready): {Message}", ex.Message);
 }
 
-// â”€â”€ Startup Route Diagnostics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Startup Route Diagnostics â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 // Outputs all active mapped routes to the console on startup so we can verify that
 // Areas/Identity/Pages/Account/Login appears in the [REGISTERED ROUTE] logs.
 app.Lifetime.ApplicationStarted.Register(() =>
@@ -708,6 +687,10 @@ app.Lifetime.ApplicationStarted.Register(() =>
 app.Run();
 
 public partial class Program { }
+
+
+
+
 
 
 
