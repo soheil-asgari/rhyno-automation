@@ -10,20 +10,12 @@ namespace OfficeAutomation.Migrations.WorkflowDb
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "DesktopBackgroundUrl",
-                table: "SystemSettings",
-                type: "nvarchar(512)",
-                maxLength: 512,
-                nullable: true);
+            // ستون DesktopBackgroundUrl از قبل در دیتابیس وجود دارد
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "DesktopBackgroundUrl",
-                table: "SystemSettings");
         }
     }
 }
