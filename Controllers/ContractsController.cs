@@ -17,10 +17,11 @@ public class ContractsController : Controller
     private readonly IAttachmentVersionService _attachmentVersionService;
     private readonly IContractFieldValidator _fieldValidator;
     private readonly ILogger<ContractsController> _logger;
-private readonly IContractReportService _reportService;
-private readonly IContractExportService _exportService;
+    private readonly IContractReportService _reportService;
+    private readonly IContractExportService _exportService;
+    private readonly IPaymentScheduleService _paymentScheduleService;
 
-    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, ILogger<ContractsController> logger)
+    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, IPaymentScheduleService paymentScheduleService, ILogger<ContractsController> logger)
     {
         _contractService = contractService;
         _signatureService = signatureService;
@@ -28,6 +29,7 @@ private readonly IContractExportService _exportService;
         _fieldValidator = fieldValidator;
         _reportService = reportService;
         _exportService = exportService;
+        _paymentScheduleService = paymentScheduleService;
         _logger = logger;
     }
 
@@ -36,9 +38,14 @@ private readonly IContractExportService _exportService;
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
-            throw new UnauthorizedAccessException("ع©ط§ط±ط¨ط± ط§ط­ط±ط§ط² ظ‡ظˆغŒطھ ظ†ط´ط¯ظ‡ ط§ط³طھ.");
+            throw new UnauthorizedAccessException("کاربر احراز هویت نشده است.");
         }
         return userId;
+    }
+
+    private bool IsAjaxRequest()
+    {
+        return HttpContext.Request.Headers.XRequestedWith == "XMLHttpRequest";
     }
 
     /// <summary>
@@ -389,6 +396,93 @@ private readonly IContractExportService _exportService;
     // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  Payments
     // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    /// <summary>GET: /Contracts/Schedule/{contractId} — returns payment schedule partial view</summary>
+    [HttpGet("Contracts/Schedule/{contractId}")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> Schedule(int contractId, CancellationToken ct)
+    {
+        try
+        {
+            var vm = await _paymentScheduleService.GetScheduleAsync(contractId, ct);
+            if (vm == null)
+            {
+                // Return empty state when no schedule exists — front-end shows the "no schedule" message
+                vm = new PaymentScheduleVM
+                {
+                    ContractId = contractId,
+                    InstallmentCount = 1,
+                    IntervalDays = 30,
+                    StartDate = DateTime.Today,
+                    Installments = new List<PaymentScheduleInstallmentVM>()
+                };
+            }
+            return PartialView("~/Views/Contracts/_PaymentSchedule.cshtml", vm);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load payment schedule for contract {ContractId}", contractId);
+            return Content("<div class=\"text-center py-4 text-[11px] text-rose-500\"><i class=\"bi bi-exclamation-triangle ml-1\"></i>خطا در بارگذاری برنامه پرداخت.</div>", "text/html");
+        }
+    }
+// ═══════════════════════════════════════════════════════════════
+    //  Payment Schedule — Generate & Delete
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>POST: /Contracts/Schedule/Generate — creates a new payment schedule</summary>
+    [HttpPost("Contracts/Schedule/Generate")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Payment")]
+    public async Task<IActionResult> GenerateSchedule([FromForm] PaymentScheduleVM model, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "اطلاعات برنامه پرداخت معتبر نیست.";
+            return RedirectToAction(nameof(Details), new { id = model.ContractId });
+        }
+
+        try
+        {
+            var currentUser = GetCurrentUserId();
+            await _paymentScheduleService.GenerateScheduleAsync(model, currentUser, ct);
+            TempData["SuccessMessage"] = "برنامه پرداخت با موفقیت ایجاد شد.";
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate payment schedule for contract {ContractId}", model.ContractId);
+            TempData["ErrorMessage"] = "خطا در ایجاد برنامه پرداخت: " + ex.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { id = model.ContractId });
+    }
+
+    /// <summary>POST: /Contracts/Schedule/Delete/{scheduleId} — deletes a payment schedule</summary>
+    [HttpPost("Contracts/Schedule/Delete/{scheduleId}")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Payment")]
+    public async Task<IActionResult> DeleteSchedule(int scheduleId, int contractId, CancellationToken ct)
+    {
+        try
+        {
+            var currentUser = GetCurrentUserId();
+            var deleted = await _paymentScheduleService.DeleteScheduleAsync(scheduleId, currentUser, ct);
+            if (!deleted) return NotFound();
+            TempData["SuccessMessage"] = "برنامه پرداخت با موفقیت حذف شد.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete payment schedule {ScheduleId}", scheduleId);
+            TempData["ErrorMessage"] = "خطا در حذف برنامه پرداخت.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id = contractId });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Payments
+    // ═══════════════════════════════════════════════════════════════
+
+
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -473,7 +567,7 @@ private readonly IContractExportService _exportService;
     {
         if (file == null || file.Length == 0)
         {
-            TempData["ErrorMessage"] = "ظپط§غŒظ„ ط§ظ†طھط®ط§ط¨ ظ†ط´ط¯ظ‡ ط§ط³طھ.";
+            TempData["ErrorMessage"] = "فایل انتخاب نشده است.";
             return RedirectToAction(nameof(Details), new { id = contractId });
         }
 
@@ -481,10 +575,41 @@ private readonly IContractExportService _exportService;
         {
             var currentUserId = GetCurrentUserId();
             await using var stream = file.OpenReadStream();
-            await _contractService.UploadAttachmentAsync(contractId, file.FileName, stream, file.ContentType, currentUserId, ct);
-            TempData["SuccessMessage"] = "ظپط§غŒظ„ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط¨ط§ط±ع¯ط°ط§ط±غŒ ط´ط¯.";
+            var attachment = await _contractService.UploadAttachmentAsync(contractId, file.FileName, stream, file.ContentType, currentUserId, ct);
+
+            // Add audit log
+            var attachmentName = attachment?.FileName ?? file?.FileName ?? "نامشخص";
+            await _contractService.AddAuditLogAsync(contractId, currentUserId, "AttachmentUploaded", null, null, $"فایل {attachmentName} بارگذاری شد", ct);
+
+            var isAjax = HttpContext.Request.Headers.XRequestedWith == "XMLHttpRequest";
+            if (isAjax)
+            {
+                var userName = User.FindFirstValue("FullName") ?? User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "نامشخص";
+                return Json(new
+                {
+                    success = true,
+                    attachment = new
+                    {
+                        id = attachment!.Id,
+                        fileName = attachment.FileName,
+                        contentType = attachment.ContentType ?? "application/octet-stream",
+                        fileSize = attachment.FileSize,
+                        createdAt = attachment.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                        uploadedByUserName = userName
+                    }
+                });
+            }
+
+            TempData["SuccessMessage"] = "فایل با موفقیت بارگذاری شد.";
         }
-        catch (KeyNotFoundException) { return NotFound(); }
+        catch (KeyNotFoundException) { if (IsAjaxRequest()) return Json(new { success = false, message = "قرارداد یافت نشد." }); return NotFound(); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload attachment for contract {ContractId}", contractId);
+            if (IsAjaxRequest())
+                return Json(new { success = false, message = "خطا در بارگذاری فایل: " + ex.Message });
+            TempData["ErrorMessage"] = "خطا در بارگذاری فایل.";
+        }
         return RedirectToAction(nameof(Details), new { id = contractId });
     }
 
@@ -507,12 +632,35 @@ private readonly IContractExportService _exportService;
         try
         {
             var currentUser = GetCurrentUserId();
-            var deleted = await _contractService.DeleteAttachmentAsync(attachmentId, contractId, currentUser, ct);
-            if (!deleted) return NotFound();
-            TempData["SuccessMessage"] = "ظپط§غŒظ„ ظ¾غŒظˆط³طھ ط­ط°ظپ ط´ط¯.";
+            var att = await _contractService.GetAttachmentAsync(attachmentId, currentUser, ct);
+            var fileName = att?.FileName ?? "نامشخص";
+            // Resolve the actual contractId from the attachment to handle mismatches
+            var actualContractId = att?.ContractId ?? contractId;
+            var deleted = await _contractService.DeleteAttachmentAsync(attachmentId, actualContractId, currentUser, ct);
+            if (!deleted)
+            {
+                // Try deleting by attachmentId only (ignore contractId mismatch)
+                await _contractService.DeleteAttachmentByIdOnlyAsync(attachmentId, currentUser, ct);
+            }
+
+            // Add audit log
+            await _contractService.AddAuditLogAsync(actualContractId, currentUser, "AttachmentDeleted", null, null, $"فایل {fileName} حذف شد", ct);
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, message = "فایل پیوست حذف شد." });
+
+            TempData["SuccessMessage"] = "فایل پیوست حذف شد.";
             return RedirectToAction(nameof(Details), new { id = contractId });
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete attachment {AttachmentId}", attachmentId);
+            if (IsAjaxRequest())
+                return Json(new { success = false, message = "خطا در حذف فایل." });
+            TempData["ErrorMessage"] = "خطا در حذف فایل.";
+            return RedirectToAction(nameof(Details), new { id = contractId });
+        }
     }
 
     // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
@@ -833,32 +981,84 @@ private readonly IContractExportService _exportService;
             // Get attachment with access check
             var attachment = await _contractService.GetAttachmentAsync(attachmentId, userId, ct);
             if (attachment == null)
-                return NotFound();
+            {
+                _logger.LogWarning("Attachment {AttachmentId} not found for preview", attachmentId);
+                return Ok(new
+                {
+                    success = false,
+                    previewUnavailable = true,
+                    message = "پیوست مورد نظر یافت نشد.",
+                    fileName = (string?)null,
+                    fileSize = (long?)null,
+                    contentType = (string?)null
+                });
+            }
 
-            // Determine the file path from the current version
+            // Determine the file path: first try CurrentVersion, then fallback to RelativePath,
+            // then try direct upload path pattern
             string? filePath = null;
             string? contentType = attachment.ContentType;
             string fileName = attachment.FileName;
-
+    
             if (attachment.CurrentVersionId.HasValue)
             {
                 filePath = await _attachmentVersionService.GetVersionFilePathAsync(attachment.CurrentVersionId.Value, userId, ct);
             }
-
+    
+            // Fallback: use attachment.RelativePath
+            if (filePath == null && !string.IsNullOrEmpty(attachment.RelativePath))
+            {
+                var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
+                var candidate = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
+                if (candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(candidate))
+                {
+                    filePath = candidate;
+                }
+            }
+    
+            // Final fallback: scan the contract's upload directory for any file matching the StoredFileName
+            if (filePath == null && !string.IsNullOrEmpty(attachment.StoredFileName))
+            {
+                var contractDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", attachment.ContractId.ToString());
+                if (Directory.Exists(contractDir))
+                {
+                    var directFile = Directory.GetFiles(contractDir)
+                        .FirstOrDefault(f => Path.GetFileName(f).Equals(attachment.StoredFileName, StringComparison.OrdinalIgnoreCase));
+                    if (directFile != null)
+                    {
+                        filePath = directFile;
+                    }
+                }
+            }
+    
             if (filePath == null || !System.IO.File.Exists(filePath))
-                return NotFound();
+            {
+                _logger.LogWarning("Preview file not found for attachment {AttachmentId}, CurrentVersionId={VersionId}, RelativePath={Path}, StoredFileName={StoredFileName}",
+                    attachmentId, attachment.CurrentVersionId, attachment.RelativePath, attachment.StoredFileName);
+                // Return preview-unavailable instead of 404 so the frontend shows a meaningful message
+                return Ok(new
+                {
+                    success = false,
+                    previewUnavailable = true,
+                    message = "فایل پیوست در سرور یافت نشد. ممکن است حذف شده باشد.",
+                    fileName = attachment.FileName,
+                    fileSize = attachment.FileSize,
+                    contentType = attachment.ContentType
+                });
+            }
 
             var ext = System.IO.Path.GetExtension(fileName).ToLowerInvariant();
             var previewableImageExts = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".svg" };
             var previewableTextExts = new[] { ".txt", ".csv", ".log", ".json", ".xml", ".md", ".yaml", ".yml", ".ini", ".cfg", ".config" };
 
-            // PDF: return file stream
+            // PDF: return file stream (inline for browser preview)
             if (ext == ".pdf")
             {
-                return PhysicalFile(filePath, contentType ?? "application/pdf", fileName);
+                Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+                return PhysicalFile(filePath, contentType ?? "application/pdf");
             }
 
-            // Images: return file stream
+            // Images: return file stream (inline for browser preview)
             if (previewableImageExts.Contains(ext))
             {
                 var imageContentType = contentType;
@@ -876,7 +1076,8 @@ private readonly IContractExportService _exportService;
                         _ => "application/octet-stream"
                     };
                 }
-                return PhysicalFile(filePath, imageContentType, fileName);
+                Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+                return PhysicalFile(filePath, imageContentType);
             }
 
             // Text: read content and return as plain text
@@ -904,10 +1105,33 @@ private readonly IContractExportService _exportService;
         {
             return Forbid();
         }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Parent contract not found for attachment {AttachmentId}", attachmentId);
+            return Ok(new
+            {
+                success = false,
+                previewUnavailable = true,
+                message = "فایل پیوست در سرور یافت نشد. ممکن است حذف شده باشد.",
+                fileName = (string?)null,
+                fileSize = (long?)null,
+                contentType = (string?)null
+            });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to preview attachment {AttachmentId}", attachmentId);
-            return NotFound();
+            _logger.LogError("PREVIEW_DIAG: AttachmentId={AttachmentId}, ExType={ExType}, ExMsg={ExMsg}, InnerEx={InnerEx}, StackTrace={Stack}",
+                attachmentId, ex.GetType().Name, ex.Message, ex.InnerException?.Message ?? "null", ex.StackTrace);
+            return Ok(new
+            {
+                success = false,
+                previewUnavailable = true,
+                message = "خطا در بارگذاری پیش‌نمایش فایل.",
+                fileName = (string?)null,
+                fileSize = (long?)null,
+                contentType = (string?)null
+            });
         }
     }
 
@@ -977,12 +1201,17 @@ private readonly IContractExportService _exportService;
                 var bytes = await _exportService.ExportContractsToExcelAsync(filters, userId, ct);
                 return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Contracts_{DateTime.Now:yyyyMMdd}.xlsx");
             }
-            return BadRequest(new { message = "Unsupported format. Use 'excel'." });
+            else if (format.Equals("pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                var bytes = await _exportService.ExportContractsToPdfAsync(filters, userId, ct);
+                return File(bytes, "application/pdf", $"Contracts_{DateTime.Now:yyyyMMdd}.pdf");
+            }
+            return BadRequest(new { message = "Unsupported format. Use 'excel' or 'pdf'." });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to export contracts");
-            return BadRequest(new { message = "Export failed." });
+            return BadRequest(new { message = $"Export failed: {ex.Message}" });
         }
     }
 
@@ -1064,6 +1293,32 @@ private readonly IContractExportService _exportService;
         {
             _logger.LogError(ex, "Failed to save column preference");
             return Json(new { success = false, message = "خطا در ذخیره تنظیمات ستون‌ها." });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Repair / Cleanup
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Removes orphaned attachment DB records whose physical file no longer exists on disk.
+    /// Restricted to admin users. Returns removed count.
+    /// </summary>
+    [HttpPost("Contracts/CleanupOrphanedAttachments/{contractId?}")]
+    [PermissionAuthorize("Contract.Delete")]
+    public async Task<IActionResult> CleanupOrphanedAttachments(int? contractId, CancellationToken ct)
+    {
+        try
+        {
+            var currentUser = GetCurrentUserId();
+            var count = await _contractService.CleanupOrphanedAttachmentsAsync(contractId, currentUser, ct);
+            return Json(new { success = true, removedCount = count, message = $"{count} پیوست یتیم حذف شد." });
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to cleanup orphaned attachments");
+            return Json(new { success = false, message = "خطا در پاکسازی: " + ex.Message });
         }
     }
 }

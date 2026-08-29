@@ -217,3 +217,49 @@
   font-size: 11px;
   padding: 4px 10px;
 }
+
+/* ── Body loading state (for export and bulk actions) ── */
+body.is-loading {
+  position: relative;
+  cursor: progress;
+}
+body.is-loading::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(248, 250, 252, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dark body.is-loading::after {
+  background: rgba(15, 23, 42, 0.8);
+}
+body.is-loading::before {
+  content: '';
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 100000;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #14b8a6;
+  border-radius: 50%;
+  animation: rhyno-loading-spin 0.6s linear infinite;
+}
+.dark body.is-loading::before {
+  border-color: #334155;
+  border-top-color: #14b8a6;
+}
+@keyframes rhyno-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Vanilla JS Modal (replaces Bootstrap modal) ── */
+body.rhyno-modal-open {
+  overflow: hidden;
+}
+

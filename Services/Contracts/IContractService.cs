@@ -27,6 +27,8 @@ public interface IContractService
     Task<ContractAttachment> UploadAttachmentAsync(int contractId, string fileName, Stream fileStream, string contentType, string uploadedByUserId, CancellationToken ct = default);
     Task<ContractAttachment?> GetAttachmentAsync(int attachmentId, string currentUserId, CancellationToken ct = default);
     Task<bool> DeleteAttachmentAsync(int attachmentId, int contractId, string currentUserId, CancellationToken ct = default);
+    /// <summary>Deletes an attachment by Id only, resolving contract from the attachment record.</summary>
+    Task<bool> DeleteAttachmentByIdOnlyAsync(int attachmentId, string currentUserId, CancellationToken ct = default);
     /// <summary>
     /// Resolves the physical path for an attachment after verifying the caller
     /// has access to the parent contract. Returns null if unauthorized or missing.
@@ -37,6 +39,12 @@ public interface IContractService
     /// storage path safely.
     /// </summary>
     ContractAttachment? ValidateAttachmentUpload(string fileName, string contentType, long sizeBytes);
+    /// <summary>
+    /// Adds an audit log entry for a contract.
+    /// </summary>
+    Task AddAuditLogAsync(int contractId, string userId, string action, string? oldStatus, string? newStatus, string? description = null, CancellationToken ct = default);
+    /// <summary>Removes orphaned attachment DB records whose physical files are missing. Admin only.</summary>
+    Task<int> CleanupOrphanedAttachmentsAsync(int? contractId, string currentUserId, CancellationToken ct = default);
 
     // ── Templates / Settings ──────────────────────────────────────
     Task<ContractSettingsVM> GetSettingsViewModelAsync(string currentUserId, CancellationToken ct = default);

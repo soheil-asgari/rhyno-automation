@@ -108,11 +108,12 @@ namespace OfficeAutomation.Controllers
                 .ToList();
 
             var recentActivities = auditLogs
+                .Where(item => !item.TableName.Contains("Notification", StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(item => item.DateTime)
                 .Take(5)
                 .Select(item => new DashboardRecentActivity
                 {
-                    DocumentType = item.TableName,
+                    DocumentType = item.TableName.Contains("Contract", StringComparison.OrdinalIgnoreCase) ? "قراردادها" : item.TableName,
                     DateText = ToPersianDate(item.DateTime),
                     StatusText = NormalizeActionLabel(item.Action),
                     StatusCssClass = NormalizeActionCss(item.Action)

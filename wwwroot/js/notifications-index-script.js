@@ -24,6 +24,11 @@ document.addEventListener("DOMContentLoaded", function () {
             var antiforgery = token ? token.getAttribute("content") : "";
 
             fetch("/Notifications/MarkRead/" + id, {
+// Fallback: try hidden input if meta tag not found
+            if (!antiforgery) {
+                var hiddenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (hiddenInput) antiforgery = hiddenInput.value;
+            }
                 method: "POST",
                 headers: { "Content-Type": "application/json", "RequestVerificationToken": antiforgery },
                 body: JSON.stringify({})
@@ -49,6 +54,11 @@ document.addEventListener("DOMContentLoaded", function () {
         markAllBtn.addEventListener("click", function () {
             var token = document.querySelector('meta[name="request-verification-token"]');
             var antiforgery = token ? token.getAttribute("content") : "";
+            // Fallback: try hidden input if meta tag not found
+            if (!antiforgery) {
+                var hiddenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (hiddenInput) antiforgery = hiddenInput.value;
+            }
 
             fetch("/Notifications/MarkAllRead", {
                 method: "POST",

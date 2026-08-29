@@ -43,10 +43,57 @@
 <div class="lifecycle-stepper-wrapper">
     @if (steps.Count == 0)
     {
-        @* Fallback: no audit log data *@
-        <div class="stepper-unknown">
-            <span class="text-[11px] text-slate-500 dark:text-slate-400">وضعیت: @currentStatus</span>
-        </div>
+        @* Fallback: no audit log data — show static stepper based on current status *@
+        var fallbackSteps = new (string key, string label, string icon)[]
+        {
+            ("پیش‌نویس", "پیش‌نویس", "bi-pencil"),
+            ("در انتظار تایید", "در انتظار تایید", "bi-clock"),
+            ("فعال", "فعال", "bi-check-circle"),
+            ("در شرف انقضا", "در شرف انقضا", "bi-exclamation-triangle"),
+            ("منقضی شده", "منقضی شده", "bi-calendar-x"),
+        };
+        int currentIdx = -1;
+        for (int i = 0; i < fallbackSteps.Length; i++)
+        {
+            if (fallbackSteps[i].key == currentStatus) { currentIdx = i; break; }
+        }
+        if (currentIdx >= 0)
+        {
+            <div class="lifecycle-stepper">
+                @for (int i = 0; i < fallbackSteps.Length; i++)
+                {
+                    var s = fallbackSteps[i];
+                    var nodeClass = i < currentIdx ? "stepper-completed" : i == currentIdx ? "stepper-current" : "stepper-future";
+                    <div class="stepper-node @nodeClass" title="@s.label">
+                        <div class="stepper-circle">
+                            @if (i < currentIdx)
+                            {
+                                <i class="bi bi-check-lg"></i>
+                            }
+                            else
+                            {
+                                <i class="bi @s.icon"></i>
+                            }
+                        </div>
+                        <span class="stepper-label">@s.label</span>
+                        @if (i == currentIdx)
+                        {
+                            <span class="stepper-status-badge">وضعیت فعلی</span>
+                        }
+                    </div>
+                    @if (i < fallbackSteps.Length - 1)
+                    {
+                        <div class="stepper-connector @(i < currentIdx ? "connector-completed" : "")"></div>
+                    }
+                }
+            </div>
+        }
+        else
+        {
+            <div class="stepper-unknown">
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">وضعیت: @currentStatus</span>
+            </div>
+        }
     }
     else if (isTerminal)
     {

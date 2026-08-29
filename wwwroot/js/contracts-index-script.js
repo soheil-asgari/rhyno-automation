@@ -243,16 +243,24 @@ function exportContracts(format) {
     var params = new URLSearchParams(window.location.search);
     params.set('format', format);
     AppUI.loading(document.body, true);
+    var ext = format === 'excel' ? 'xlsx' : format;
     fetch('/Contracts/Export/Contracts?' + params.toString())
         .then(function(r) {
-            if (!r.ok) throw new Error('Export failed');
+            // Check Content-Type to detect error JSON vs actual file
+            var contentType = r.headers.get('Content-Type') || '';
+            if (!r.ok || contentType.indexOf('json') !== -1) {
+                // Server returned an error (BadRequest JSON), parse it
+                return r.json().then(function(errData) {
+                    throw new Error(errData.message || 'Export failed (server error)');
+                });
+            }
             return r.blob();
         })
         .then(function(blob) {
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = url;
-            a.download = 'Contracts_' + new Date().toISOString().slice(0, 10) + '.' + format;
+            a.download = 'Contracts_' + new Date().toISOString().slice(0, 10) + '.' + ext;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -261,6 +269,7 @@ function exportContracts(format) {
         })
         .catch(function(err) {
             AppUI.toast('Export failed: ' + err.message, 'danger');
+            console.error('Export error:', err);
         })
         .finally(function() {
             AppUI.loading(document.body, false);

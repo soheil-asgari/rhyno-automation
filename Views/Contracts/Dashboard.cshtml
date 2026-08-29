@@ -31,7 +31,7 @@
                     <h3 class="text-sm font-black text-slate-900 dark:text-white mt-0.5 font-mono tabular-nums">@Model.TotalContracts.ToString("N0")</h3>
                 </div>
                 <div class="h-7 w-7 rounded bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <i class="bi bi-file-signature text-sm"></i>
+                    <i class="bi bi-files text-sm"></i>
                 </div>
             </div>
             <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">مجموع قراردادهای ثبت‌شده</p>
@@ -226,7 +226,7 @@
             </div>
             <div class="relative" style="height:220px">
                 <canvas data-chart-type="doughnut"
-                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.StatusDistribution)'
+                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.StatusDistribution, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })'
                         style="width:100%;height:100%"></canvas>
             </div>
         </div>
@@ -240,7 +240,7 @@
             </div>
             <div class="relative" style="height:220px">
                 <canvas data-chart-type="line"
-                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.MonthlyValueTrend)'
+                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.MonthlyValueTrend, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })'
                         style="width:100%;height:100%"></canvas>
             </div>
         </div>
@@ -256,7 +256,23 @@
             </div>
             <div class="relative" style="height:260px">
                 <canvas data-chart-type="bar"
-                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.ContractTypeDistribution)'
+                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.ContractTypeDistribution, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })'
+                        style="width:100%;height:100%"></canvas>
+            </div>
+        </div>
+    </div>
+
+    @* Amount vs Paid vs Remaining – Grouped Bar *@
+    <div class="grid grid-cols-1 gap-3" data-chart-container>
+        <div class="erp-card p-3">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">
+                    <i class="bi bi-cash-stack ml-1 text-emerald-600"></i>مقایسه مبلغ کل، پرداخت شده و باقی‌مانده
+                </h2>
+            </div>
+            <div class="relative" style="height:180px">
+                <canvas data-chart-type="payment-summary"
+                        data-chart-data='@System.Text.Json.JsonSerializer.Serialize(Model.PaymentSummary, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })'
                         style="width:100%;height:100%"></canvas>
             </div>
         </div>

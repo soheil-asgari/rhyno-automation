@@ -32,7 +32,7 @@ public class DocumentRequirementsController : Controller
         try
         {
             var vm = await _requirementService.GetChecklistAsync(contractId, ct);
-            return PartialView("_DocumentRequirements", vm);
+            return PartialView("~/Views/Contracts/_DocumentRequirements.cshtml", vm);
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }

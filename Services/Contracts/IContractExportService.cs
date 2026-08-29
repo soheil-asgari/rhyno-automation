@@ -28,6 +28,12 @@ public interface IContractExportService
     Task<byte[]> ExportReportToPdfAsync(string reportType, CancellationToken ct = default);
 
     /// <summary>
+    /// Export filtered contract list to PDF via Playwright (HTML → PDF).
+    /// Columns: ContractNumber, Title, ContractType, Status, Value, StartDate, EndDate, AssignedTo, CreatedDate
+    /// </summary>
+    Task<byte[]> ExportContractsToPdfAsync(ContractIndexVM filters, string currentUserId, CancellationToken ct = default);
+
+    /// <summary>
     /// Generate HTML table markup for a given report type (used by PDF export).
     /// </summary>
     Task<string> GenerateReportHtmlAsync(string reportType, CancellationToken ct = default);

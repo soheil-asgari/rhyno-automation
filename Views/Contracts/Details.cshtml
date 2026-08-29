@@ -198,29 +198,33 @@
                                 <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ بایگانی:</span><span class="font-mono text-slate-700 dark:text-slate-300">@ToPersianDateNullable(Model.ArchivedAt)</span></div>
                             }
                         </div>
-                    </div>
-<div>
-                        <div class="space-y-3">
-                            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">تاریخ‌های مهم</h3>
-                            <div class="grid grid-cols-2 gap-y-2 text-sm">
-                                <span class="text-slate-500">تاریخ شروع:</span>
-                                <span class="font-medium text-slate-900 dark:text-white">@ToPersianDate(Model.StartDate)</span>
-                                <span class="text-slate-500">تاریخ پایان:</span>
-                                <span class="font-medium text-slate-900 dark:text-white">@ToPersianDateNullable(Model.EndDate)</span>
-                                <span class="text-slate-500">تاریخ امضا:</span>
-                                <span class="font-medium text-slate-900 dark:text-white">@ToPersianDateNullable(Model.SignDate)</span>
-                                <span class="text-slate-500">وضعیت پرداخت:</span>
-                                <div>
-                                    @if (remainingAmountCalc <= 0 && totalAmount > 0) {
-                                        <span class="px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-800 font-medium">تسویه شده</span>
-                                    } else if (paidAmount > 0) {
-                                        <span class="px-2 py-0.5 text-xs rounded bg-amber-100 text-amber-800 font-medium">پرداخت جزئی</span>
-                                    } else {
-                                        <span class="px-2 py-0.5 text-xs rounded bg-rose-100 text-rose-800 font-medium">پرداخت نشده</span>
-                                    }
+                    <div>
+                        <div class="space-y-2.5">
+                            <h3 class="text-[11px] font-black text-slate-800 dark:text-slate-200 tracking-wide flex items-center gap-1.5">
+                                <i class="bi bi-calendar3 text-teal-500 text-[11px]"></i>تاریخ‌های مهم
+                            </h3>
+                            <div class="rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 p-3">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">تاریخ شروع:</span>
+                                    <span class="text-[11px] font-medium text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@ToPersianDate(Model.StartDate)</span>
+                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">تاریخ پایان:</span>
+                                    <span class="text-[11px] font-medium text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@ToPersianDateNullable(Model.EndDate)</span>
+                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">تاریخ امضا:</span>
+                                    <span class="text-[11px] font-medium text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@ToPersianDateNullable(Model.SignDate)</span>
+                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">وضعیت پرداخت:</span>
+                                    <div class="text-left">
+                                        @if (remainingAmountCalc <= 0 && totalAmount > 0) {
+                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold">تسویه شده</span>
+                                        } else if (paidAmount > 0) {
+                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-bold">پرداخت جزئی</span>
+                                        } else {
+                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 font-bold">پرداخت نشده</span>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </div>
 
                 @if (totalAmount > 0)
@@ -251,34 +255,34 @@
                         <p class="text-[11px] text-slate-700 dark:text-slate-300 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-lg p-2.5">@Model.Notes</p>
                     </div>
                 }
-            </div>
-@* Dynamic Type-Specific Fields (EAV) *@
-@if (Model.TypeFields is { Count: > 0 } && Model.TypeFields.Any(f => f.ContractType == Model.ContractType && !string.IsNullOrEmpty(f.Value)))
-{
-    var relevantFields = Model.TypeFields.Where(f => f.ContractType == Model.ContractType && !string.IsNullOrEmpty(f.Value)).ToList();
-    var sections = relevantFields.GroupBy(f => f.SectionName ?? "سایر اطلاعات").ToList();
-
-    <div class="mt-3">
-        <h3 class="text-[10px] font-bold text-slate-500 block mb-2">اطلاعات تخصصی قرارداد</h3>
-        <div class="rounded-lg bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-3">
-            @foreach (var sec in sections)
+            @* Dynamic Type-Specific Fields (EAV) *@
+            @if (Model.TypeFields is { Count: > 0 } && Model.TypeFields.Any(f => f.ContractType == Model.ContractType && !string.IsNullOrEmpty(f.Value)))
             {
-                <div class="mb-2 last:mb-0">
-                    <span class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 block mb-1">@sec.Key</span>
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                        @foreach (var field in sec)
+                var relevantFields = Model.TypeFields.Where(f => f.ContractType == Model.ContractType && !string.IsNullOrEmpty(f.Value)).ToList();
+                var sections = relevantFields.GroupBy(f => f.SectionName ?? "سایر اطلاعات").ToList();
+
+                <div class="mt-3">
+                    <h3 class="text-[10px] font-bold text-slate-500 block mb-2">اطلاعات تخصصی قرارداد</h3>
+                    <div class="rounded-lg bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-3">
+                        @foreach (var sec in sections)
                         {
-                            <div>
-                                <span class="text-[9px] text-slate-500">@field.DisplayName:</span>
-                                <span class="text-[11px] font-medium text-slate-900 dark:text-white">@field.Value</span>
+                            <div class="mb-2 last:mb-0">
+                                <span class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 block mb-1">@sec.Key</span>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                                    @foreach (var field in sec)
+                                    {
+                                        <div>
+                                            <span class="text-[9px] text-slate-500">@field.DisplayName:</span>
+                                            <span class="text-[11px] font-medium text-slate-900 dark:text-white">@field.Value</span>
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         }
                     </div>
                 </div>
             }
-        </div>
-    </div>
-}
+            </div>
             @* Tab 2: Document Content *@
             <div class="tab-panel @(activeTab == "content" ? "" : "hidden")" id="tab-content">
                 <div class="flex justify-between items-center mb-3">
@@ -679,6 +683,12 @@
                                             case "Edited":
                                                 <span>قرارداد را ویرایش کرد</span>
                                                 break;
+                                            case "AttachmentUploaded":
+                                                <span>@log.Description</span>
+                                                break;
+                                            case "AttachmentDeleted":
+                                                <span>@log.Description</span>
+                                                break;
                                             default:
                                                 <span>@log.Action - @log.Description</span>
                                                 break;
@@ -700,7 +710,6 @@
                 }
             </div>
         </div>
-    </div>
 </div>
 
 @* Add Payment Modal *@
@@ -812,6 +821,34 @@
     </div>
 }
 
+@* Add Guarantee Modal *@
+@if (Model.CanEdit)
+{
+    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4" id="addGuaranteeModal">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
+            <div class="bg-gray-50 dark:bg-slate-800 px-4 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+                <span class="text-sm font-bold text-gray-900 dark:text-white">ثبت ضمانت‌نامه جدید</span>
+                <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition border-0 bg-transparent text-lg" data-close-modal>&times;</button>
+            </div>
+            <form action="/Contracts/@Model.Id/Guarantees/Add" method="post" class="add-guarantee-form">
+                @Html.AntiForgeryToken()
+                <div class="p-3 space-y-2">
+                    <select name="GuaranteeType" class="erp-input w-full" required><option value="">نوع ضمانت‌نامه</option><option value="BankGuarantee">ضمانت‌نامه بانکی</option><option value="RetentionMoney">کسور وجه تضمین</option><option value="ParentCompanyGuarantee">ضمانت شرکت مادر</option><option value="AdvancePaymentGuarantee">ضمانت پیش‌پرداخت</option><option value="WarrantyGuarantee">ضمانت گارانتی</option></select>
+                    <input name="GuaranteeNumber" class="erp-input w-full" placeholder="شماره ضمانت‌نامه" required />
+                    <input name="IssuingBank" class="erp-input w-full" placeholder="بانک / صادرکننده" />
+                    <input name="Amount" type="number" min="0" class="erp-input w-full" placeholder="مبلغ" required />
+                    <input name="IssuedDate" type="date" class="erp-input w-full" required />
+                    <input name="ExpiryDate" type="date" class="erp-input w-full" required />
+                </div>
+                <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white">ثبت</button>
+                    <button type="button" class="erp-btn text-[10px]" data-close-modal>انصراف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
 @* ── Attachment Preview Modal ──────────────────────────────────── *@
 <partial name="_AttachmentPreview" />
 
@@ -827,102 +864,227 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var sched = document.getElementById('paymentScheduleContainer');
-        if (sched) loadPaymentSchedule(sched);
+        if (sched) initPaymentSchedule(sched);
         var guar = document.getElementById('guaranteesContainer');
         if (guar) initGuarantees(guar);
         var pen = document.getElementById('penaltiesContainer');
         if (pen) initPenalties(pen);
     });
 
-    function loadPaymentSchedule(c) {
-        var id = c.getAttribute('data-contract-id'); if (!id) return;
+    // ── Payment Schedule Lazy-Load (with empty-state + error handling) ──
+    function initPaymentSchedule(container) {
+        var id = container.getAttribute('data-contract-id'); if (!id) return;
         function load() {
-            c.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
-            fetch('/Contracts/Schedule/' + id).then(r=>r.text()).then(h=>c.innerHTML=h).catch(()=>c.innerHTML='<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>Error</div>');
+            // 1. Show skeleton only
+            container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
+            fetch('/Contracts/Schedule/' + id)
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    var text = (html || '').trim();
+                    // 2. Empty / too-short response → "no data" state
+                    if (text === '' || text === '<div></div>' || text.length < 20) {
+                        container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-wallet2 text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">برنامه پرداختی ثبت نشده است.</p><button onclick="window.reloadPaymentSchedule()" class="mt-2 text-[10px] text-teal-600 hover:text-teal-700 underline">تلاش مجدد</button></div>'
+                    } else {
+                        // 3. Real data
+                        container.innerHTML = html;
+                    }
+                })
+                .catch(function () {
+                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="window.reloadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
+                });
         }
         var tab = document.querySelector('[data-tab="payments"]');
-        if (tab) tab.addEventListener('click', function(){if(!c.dataset.loaded){c.dataset.loaded='1';load();}});
-        if (document.getElementById('tab-payments')&&!document.getElementById('tab-payments').classList.contains('hidden')){c.dataset.loaded='1';load();}
+        if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
+        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
     }
 
-    function initGuarantees(c) {
-        var id = c.getAttribute('data-contract-id'); if (!id) return;
+    // ── Guarantees Lazy-Load (with empty-state + error handling) ──
+    function initGuarantees(container) {
+        var id = container.getAttribute('data-contract-id'); if (!id) return;
         function load() {
-            c.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
-            fetch('/Contracts/' + id + '/Guarantees').then(r=>r.text()).then(h=>{c.innerHTML=h;bindGuaranteeUI();}).catch(()=>c.innerHTML='<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>Error</div>');
+            container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
+            fetch('/Contracts/' + id + '/Guarantees')
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    var text = (html || '').trim();
+                    if (text === '' || text === '<div></div>' || text.length < 20) {
+                        container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-shield-check text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمانت‌نامه‌ای ثبت نشده است.</p></div>';
+                    } else {
+                        container.innerHTML = html;
+                        bindGuaranteeUI();
+                    }
+                })
+                .catch(function () {
+                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری ضمانت‌نامه‌ها.</div>';
+                });
         }
         var tab = document.querySelector('[data-tab="payments"]');
-        if (tab) tab.addEventListener('click', function(){if(!c.dataset.loaded){c.dataset.loaded='1';load();}});
-        if (document.getElementById('tab-payments')&&!document.getElementById('tab-payments').classList.contains('hidden')){c.dataset.loaded='1';load();}
+        if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
+        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
     }
 
-    function initPenalties(c) {
-        var id = c.getAttribute('data-contract-id'); if (!id) return;
+    // ── Penalties Lazy-Load (with empty-state + error handling) ──
+    function initPenalties(container) {
+        var id = container.getAttribute('data-contract-id'); if (!id) return;
         function load() {
-            c.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
-            fetch('/Contracts/' + id + '/Penalties').then(r=>r.text()).then(h=>{c.innerHTML=h;bindPenaltyUI();}).catch(()=>c.innerHTML='<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>Error</div>');
+            container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
+            fetch('/Contracts/' + id + '/Penalties')
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    var text = (html || '').trim();
+                    if (text === '' || text === '<div></div>' || text.length < 20) {
+                        container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-exclamation-triangle text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ جریمه‌ای ثبت نشده است.</p></div>';
+                    } else {
+                        container.innerHTML = html;
+                        bindPenaltyUI();
+                    }
+                })
+                .catch(function () {
+                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری جریمه‌ها.</div>';
+                });
         }
         var tab = document.querySelector('[data-tab="payments"]');
-        if (tab) tab.addEventListener('click', function(){if(!c.dataset.loaded){c.dataset.loaded='1';load();}});
-        if (document.getElementById('tab-payments')&&!document.getElementById('tab-payments').classList.contains('hidden')){c.dataset.loaded='1';load();}
+        if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
+        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
     }
 
+        // -- Retry helper for schedule --
+    window.reloadPaymentSchedule = function () {
+        var c = document.getElementById('paymentScheduleContainer');
+        if (c) { delete c.dataset.loaded; initPaymentSchedule(c); }
+    };
+
+    // -- Penalty UI Binding --
     function bindPenaltyUI() {
-        document.querySelectorAll('[data-modal-target]').forEach(function(b){b.addEventListener('click',function(){var m=document.getElementById(this.getAttribute('data-modal-target'));if(m)m.classList.remove('hidden');});});
-        document.querySelectorAll('.penalty-status-form').forEach(function(f){f.addEventListener('submit',function(e){e.preventDefault();if(!confirm('تغییر وضعیت تایید شود؟'))return;var btn=this.querySelector('button');btn.disabled=true;fetch(this.action,{method:'POST',body:new FormData(this),headers:{'RequestVerificationToken':document.querySelector('input[name=\\\"__RequestVerificationToken\\\"]')?.value||''}}).then(r=>r.json()).then(resp=>{if(resp.success)reloadPenalties();else{alert(resp.message||'Error');btn.disabled=false;}}).catch(function(){alert('Connection error');btn.disabled=false;});});});
-        document.getElementById('penaltyRuleForm')?.addEventListener('submit',function(e){e.preventDefault();var btn=this.querySelector('button[type=\\"submit\\"]');btn.disabled=true;fetch(this.action,{method:'POST',body:new FormData(this),headers:{'RequestVerificationToken':document.querySelector('input[name=\\\"__RequestVerificationToken\\\"]')?.value||''}}).then(r=>r.json()).then(resp=>{if(resp.success){document.getElementById('penaltyRuleModal').classList.add('hidden');reloadPenalties();}else{alert(resp.message||'Error');}btn.disabled=false;}).catch(function(){alert('Connection error');btn.disabled=false;});});
+        document.querySelectorAll('[data-open-penalty-modal]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var m = document.getElementById('penaltyRuleModal');
+                if (m) m.classList.remove('hidden');
+            });
+        });
+        document.querySelectorAll('[data-close-modal]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                this.closest('.fixed.inset-0').classList.add('hidden');
+            });
+        });
+        document.querySelectorAll('.fixed.inset-0').forEach(function (m) {
+            m.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
+        });
+        document.querySelectorAll('.penalty-status-form').forEach(function (f) {
+            f.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (!confirm('تغییر وضعیت تایید شود؟')) return;
+                var btn = this.querySelector('button');
+                btn.disabled = true;
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this),
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+                }).then(function (r) { return r.json(); }).then(function (resp) {
+                    if (resp.success) reloadPenalties();
+                    else { alert(resp.message || 'خطا'); btn.disabled = false; }
+                }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; });
+            });
+        });
+        document.getElementById('penaltyRuleForm')?.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+            }).then(function (r) { return r.json(); }).then(function (resp) {
+                if (resp.success) { document.getElementById('penaltyRuleModal').classList.add('hidden'); reloadPenalties(); }
+                else { alert(resp.message || 'خطا'); }
+                btn.disabled = false;
+            }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; });
+        });
     }
 
     function reloadPenalties() {
-        var c=document.getElementById('penaltiesContainer');if(!c)return;delete c.dataset.loaded;var id=c.getAttribute('data-contract-id');if(!id)return;
-        c.innerHTML='<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
-        fetch('/Contracts/'+id+'/Penalties').then(r=>r.text()).then(h=>{c.innerHTML=h;bindPenaltyUI();}).catch(()=>c.innerHTML='<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>Error</div>');
+        var c = document.getElementById('penaltiesContainer');
+        if (!c) return;
+        delete c.dataset.loaded;
+        initPenalties(c);
+    }
 
+    // -- Guarantee UI Binding --
     function bindGuaranteeUI() {
-        document.querySelectorAll('[data-modal-target]').forEach(function(b){b.addEventListener('click',function(){var m=document.getElementById(this.getAttribute('data-modal-target'));if(m)m.classList.remove('hidden');});});
-        document.querySelectorAll('[data-close-modal]').forEach(function(b){b.addEventListener('click',function(){this.closest('.fixed.inset-0').classList.add('hidden');});});
-        document.querySelectorAll('.fixed.inset-0').forEach(function(m){m.addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});});
-        document.querySelectorAll('.release-guarantee-form').forEach(function(f){f.addEventListener('submit',function(e){e.preventDefault();if(!confirm('آزادسازی تایید شود؟'))return;var btn=this.querySelector('button');btn.disabled=true;fetch(this.action,{method:'POST',body:new FormData(this),headers:{'RequestVerificationToken':document.querySelector('input[name=\"__RequestVerificationToken\"]')?.value||''}}).then(r=>r.json()).then(resp=>{if(resp.success)reloadGuarantees();else{alert(resp.message||'Error');btn.disabled=false;}}).catch(function(){alert('Connection error');btn.disabled=false;});});});
-        document.querySelectorAll('.delete-guarantee-form').forEach(function(f){f.addEventListener('submit',function(e){e.preventDefault();if(!confirm('حذف تایید شود؟'))return;fetch(this.action,{method:'POST',body:new FormData(this),headers:{'RequestVerificationToken':document.querySelector('input[name=\"__RequestVerificationToken\"]')?.value||''}}).then(r=>r.json()).then(resp=>{if(resp.success)reloadGuarantees();else alert(resp.message||'Error');}).catch(function(){alert('Connection error');});});});
+        document.querySelectorAll('[data-modal-target]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var m = document.getElementById(this.getAttribute('data-modal-target'));
+                if (m) m.classList.remove('hidden');
+            });
+        });
+        document.querySelectorAll('[data-close-modal]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                this.closest('.fixed.inset-0').classList.add('hidden');
+            });
+        });
+        document.querySelectorAll('.fixed.inset-0').forEach(function (m) {
+            m.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
+        });
+        document.querySelectorAll('.add-guarantee-form').forEach(function (f) {
+            f.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var form = this;
+                var btn = form.querySelector('button[type="submit"]');
+                if (btn) btn.disabled = true;
+                fetch(form.action, { method: 'POST', body: new FormData(form) })
+                    .then(function (r) { return r.json(); })
+                    .then(function (resp) {
+                        if (resp.success) {
+                            form.closest('.fixed.inset-0').classList.add('hidden');
+                            form.reset();
+                            reloadGuarantees();
+                        } else { alert(resp.message || 'خطا در ثبت ضمانت‌نامه.'); }
+                        if (btn) btn.disabled = false;
+                    })
+                    .catch(function () { alert('خطا در ارتباط با سرور.'); if (btn) btn.disabled = false; });
+            });
+        });
+        document.querySelectorAll('.release-guarantee-form').forEach(function (f) {
+            f.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (!confirm('آزادسازی تایید شود؟')) return;
+                var btn = this.querySelector('button');
+                btn.disabled = true;
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this),
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+                }).then(function (r) { return r.json(); }).then(function (resp) {
+                    if (resp.success) reloadGuarantees();
+                    else { alert(resp.message || 'خطا'); btn.disabled = false; }
+                }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; });
+            });
+        });
+        document.querySelectorAll('.delete-guarantee-form').forEach(function (f) {
+            f.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (!confirm('حذف تایید شود؟')) return;
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this),
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+                }).then(function (r) { return r.json(); }).then(function (resp) {
+                    if (resp.success) reloadGuarantees();
+                    else alert(resp.message || 'خطا');
+                }).catch(function () { alert('خطا در ارتباط'); });
+            });
+        });
     }
 
     function reloadGuarantees() {
-        var c=document.getElementById('guaranteesContainer');if(!c)return;delete c.dataset.loaded;var id=c.getAttribute('data-contract-id');if(!id)return;
-        c.innerHTML='<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
-        fetch('/Contracts/'+id+'/Guarantees').then(r=>r.text()).then(h=>{c.innerHTML=h;bindGuaranteeUI();}).catch(()=>c.innerHTML='<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>Error</div>');
+        var c = document.getElementById('guaranteesContainer');
+        if (!c) return;
+        delete c.dataset.loaded;
+        initGuarantees(c);
     }
 </script>
-
-    document.addEventListener('DOMContentLoaded', function () {
-        var container = document.getElementById('paymentScheduleContainer');
-        if (!container) return;
-        var contractId = container.getAttribute('data-contract-id');
-        if (!contractId) return;
-
-        function loadSchedule() {
-            container.innerHTML = '<div class="schedule-skeleton space-y-2 "><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
-            fetch('/Contracts/Schedule/' + contractId)
-                .then(function (r) { return r.text(); })
-                .then(function (html) { container.innerHTML = html; })
-                .catch(function () { container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="loadSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>'; });
-        }
-
-        // Load when the Payments tab is shown
-        var paymentsTab = document.querySelector('[data-tab="payments"]');
-        if (paymentsTab) {
-            paymentsTab.addEventListener('click', function () {
-                if (!container.dataset.loaded) {
-                    container.dataset.loaded = '1';
-                    loadSchedule();
-                }
-            });
-        }
-
-        // Also load if the Payments tab is already active
-        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) {
-            container.dataset.loaded = '1';
-            loadSchedule();
-        }
-    });
-</script>
 }
+
+
+
+

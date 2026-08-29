@@ -416,36 +416,54 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Schedule Lazy-Load Retry Helper ──
-    window.reloadPaymentSchedule = function () {
+    // ── Payment Schedule Lazy-Load (with auto-trigger on tab click) ──
+    function loadPaymentSchedule() {
         var container = document.getElementById('paymentScheduleContainer');
         if (!container) return;
-        delete container.dataset.loaded;
-        container.innerHTML = '<div class="schedule-skeleton space-y-2 "><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
         var contractId = container.getAttribute('data-contract-id');
         if (!contractId) return;
+        // Show skeleton only if we have a valid contractId
+        container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
         fetch('/Contracts/Schedule/' + contractId)
             .then(function (r) { return r.text(); })
-            .then(function (html) { container.innerHTML = html; })
+            .then(function (html) {
+                container.innerHTML = html;
+                // Re-initialize Jalali datepickers on dynamically loaded content
+                if (typeof initJalaliPickers === 'function') initJalaliPickers();
+                // If the returned HTML is empty or just whitespace, show empty state
+                var text = (html || '').trim();
+                if (text === '' || text === '<div></div>' || text.length < 10) {
+                    container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-wallet2 text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">برنامه پرداختی ثبت نشده است.</p><button onclick="loadPaymentSchedule()" class="mt-2 text-[10px] text-teal-600 hover:text-teal-700 underline">تلاش مجدد</button></div>';
+                }
+            })
             .catch(function () {
-                container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="reloadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
+                container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="loadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
             });
-    };
+    }
 
-    // ── Schedule Lazy-Load Retry Helper ──
+    // Auto-trigger payment schedule load when Payments tab is clicked
+    var paymentsTab = document.querySelector('[data-tab="payments"]');
+    if (paymentsTab) {
+        paymentsTab.addEventListener('click', function () {
+            var container = document.getElementById('paymentScheduleContainer');
+            if (container && !container.dataset.loaded) {
+                container.dataset.loaded = '1';
+                loadPaymentSchedule();
+            }
+        });
+    }
+    // Also load if Payments tab is already active
+    if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) {
+        loadPaymentSchedule();
+    }
+
+    // Expose retry helper globally
     window.reloadPaymentSchedule = function () {
         var container = document.getElementById('paymentScheduleContainer');
-        if (!container) return;
-        delete container.dataset.loaded;
-        container.innerHTML = '<div class="schedule-skeleton space-y-2 "><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
-        var contractId = container.getAttribute('data-contract-id');
-        if (!contractId) return;
-        fetch('/Contracts/Schedule/' + contractId)
-            .then(function (r) { return r.text(); })
-            .then(function (html) { container.innerHTML = html; })
-            .catch(function () {
-                container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="reloadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
-            });
+        if (container) {
+            delete container.dataset.loaded;
+            loadPaymentSchedule();
+        }
     };
 
     initTabs();

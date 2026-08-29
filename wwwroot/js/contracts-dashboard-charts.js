@@ -1,10 +1,11 @@
-/**
- * Rhyno Contracts Dashboard � Chart.js Charts
+﻿/**
+ * Rhyno Contracts Dashboard — Chart.js Charts
  *
- * Renders three charts on the Contracts Dashboard:
- *   1. Status Distribution          � Doughnut
- *   2. Monthly Value Trend          � Line
- *   3. Contract Count by Type       � Bar
+ * Renders charts on the Contracts Dashboard:
+ *   1. Status Distribution          — Doughnut
+ *   2. Monthly Value Trend          — Line
+ *   3. Contract Count by Type       — Bar
+ *   4. Amount vs Paid vs Remaining  — Grouped Bar
  *
  * Respects dark mode via a MutationObserver on <html> class list.
  */
@@ -45,6 +46,31 @@
         var raw = canvas.getAttribute('data-chart-data');
         if (!raw) return null;
         try { return JSON.parse(raw); } catch (e) { return null; }
+    }
+
+    // ── Persian (Jalali) date conversion helpers ──
+    var PERSIAN_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+
+    function toPersianDigits(str) {
+        return String(str).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
+    }
+
+    function gregToPersianLabel(gregLabel) {
+        if (!gregLabel || gregLabel.length < 7) return gregLabel;
+        try {
+            var parts = gregLabel.split('/');
+            if (parts.length < 2) return gregLabel;
+            var gYear = parseInt(parts[0], 10);
+            var gMonth = parseInt(parts[1], 10);
+            if (isNaN(gYear) || isNaN(gMonth)) return gregLabel;
+            var pYear = gYear - 621;
+            var pMonth = gMonth - 3;
+            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
+            if (pMonth < 1 || pMonth > 12) return gregLabel;
+            return PERSIAN_MONTHS[pMonth - 1] + ' ' + toPersianDigits(pYear);
+        } catch (e) {
+            return gregLabel;
+        }
     }
 
     function buildDoughnut(canvas) {
@@ -91,28 +117,25 @@
     function buildLine(canvas) {
         var data = parseData(canvas);
         if (!data || !data.length) return;
-        var labels = data.map(function(d){return d.label;});
-        var values = data.map(function(d){return d.value;});
+        var labels = data.map(function(d){ return d.label; });
+        var values = data.map(function(d){ return d.value; });
         new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '���� �� (�����)',
+                    label: 'ارزش قراردادها',
                     data: values,
-                    fill: true,
-                    backgroundColor: function(ctx){
-                        var g=ctx.chart.ctx.createLinearGradient(0,0,0,ctx.chart.height);
-                        g.addColorStop(0,themeColor('rgba(14,165,233,0.30)','rgba(14,165,233,0.25)'));
-                        g.addColorStop(1,themeColor('rgba(14,165,233,0.02)','rgba(14,165,233,0.02)'));
-                        return g;
-                    },
-                    borderColor: themeColor('#0ea5e9','#38bdf8'),
+                    borderColor: '#0ea5e9',
+                    backgroundColor: 'rgba(14,165,233,0.08)',
                     borderWidth: 2,
-                    pointBackgroundColor: themeColor('#0ea5e9','#38bdf8'),
+                    pointBackgroundColor: '#0ea5e9',
                     pointBorderColor: themeColor('#ffffff','#1e293b'),
                     pointBorderWidth: 1.5,
-                    pointRadius: 3, pointHoverRadius: 5, tension: 0.3
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.3,
+                    fill: true
                 }]
             },
             options: {
@@ -123,12 +146,39 @@
                         backgroundColor: tooltipBg(), titleFont: fontOpts(10), bodyFont: fontOpts(10),
                         titleColor: tooltipText(), bodyColor: tooltipText(),
                         borderColor: tooltipBorder(), borderWidth: 1, padding: 8, cornerRadius: 6,
-                        callbacks: { label: function(ctx){ return Number(ctx.parsed.y).toLocaleString('fa-IR')+' �����'; } }
+                        callbacks: {
+                            title: function(items) {
+                                if (!items.length) return '';
+                                return gregToPersianLabel(items[0].label);
+                            },
+                            label: function(ctx) {
+                                return Number(ctx.parsed.y).toLocaleString('fa-IR') + ' ریال';
+                            }
+                        }
                     }
                 },
                 scales: {
-                    x: { grid: { color: gridColor(), drawBorder: false }, ticks: { font: fontOpts(9), maxRotation: 45, minRotation: 0 } },
-                    y: { grid: { color: gridColor(), drawBorder: false }, ticks: { font: fontOpts(9), callback: function(v){ return Number(v).toLocaleString('fa-IR'); } } }
+                    x: {
+                        grid: { color: gridColor(), drawBorder: false },
+                        ticks: {
+                            font: fontOpts(9),
+                            maxRotation: 45,
+                            minRotation: 0,
+                            callback: function(value, index, ticks) {
+                                var label = this.getLabelForValue(value);
+                                return gregToPersianLabel(label);
+                            }
+                        }
+                    },
+                    y: {
+                        grid: { color: gridColor(), drawBorder: false },
+                        ticks: {
+                            font: fontOpts(9),
+                            callback: function(v) {
+                                return Number(v).toLocaleString('fa-IR');
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -145,7 +195,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '����� �������',
+                    label: 'تعداد قراردادها',
                     data: values,
                     backgroundColor: colors.map(function(c){ return c+(document.documentElement.classList.contains('dark')?'bb':'88'); }),
                     borderColor: colors, borderWidth: 1.5, borderRadius: 4, maxBarThickness: 48
@@ -169,6 +219,51 @@
         });
     }
 
+
+    function buildPaymentSummary(canvas) {
+        var data = parseData(canvas);
+        if (!data || data.length < 2) return;
+        var labels = data.map(function(d){return d.label;});
+        var values = data.map(function(d){return parseFloat(d.value);});
+        var bgColors = ['#0ea5e9', '#22c55e', '#f59e0b'];
+        new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [''],
+                datasets: data.map(function(d, i) {
+                    return {
+                        label: d.label,
+                        data: [parseFloat(d.value)],
+                        backgroundColor: bgColors[i % bgColors.length] + (document.documentElement.classList.contains('dark') ? 'cc' : '99'),
+                        borderColor: bgColors[i % bgColors.length],
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        maxBarThickness: 48
+                    };
+                })
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 8, boxWidth: 10, font: fontOpts(9) } },
+                    tooltip: {
+                        backgroundColor: tooltipBg(), titleFont: fontOpts(10), bodyFont: fontOpts(10),
+                        titleColor: tooltipText(), bodyColor: tooltipText(),
+                        borderColor: tooltipBorder(), borderWidth: 1, padding: 8, cornerRadius: 6,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' + Number(ctx.raw).toLocaleString('fa-IR') + ' ریال';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { stacked: true, grid: { color: gridColor(), drawBorder: false }, ticks: { font: fontOpts(9), display: false } },
+                    y: { stacked: true, grid: { color: gridColor(), drawBorder: false }, ticks: { font: fontOpts(9), callback: function(v) { return Number(v).toLocaleString('fa-IR'); } } }
+                }
+            }
+        });
+    }
     function initCharts() {
         if (typeof Chart === 'undefined') { setTimeout(initCharts, 200); return; }
         var canvases = document.querySelectorAll('canvas[data-chart-type]');
@@ -178,6 +273,7 @@
             if (type === 'doughnut') buildDoughnut(canvas);
             else if (type === 'line') buildLine(canvas);
             else if (type === 'bar') buildBar(canvas);
+            else if (type === 'payment-summary') buildPaymentSummary(canvas);
         });
     }
 
@@ -195,3 +291,4 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCharts);
     else initCharts();
 })();
+

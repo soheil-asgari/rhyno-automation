@@ -53,7 +53,7 @@ public class ContractGuaranteesController : Controller
 
         ViewBag.CanEdit = canEdit;
         ViewBag.ContractId = contractId;
-        return PartialView("_Guarantees", guarantees);
+        return PartialView("~/Views/Contracts/_Guarantees.cshtml", guarantees);
     }
 
     [HttpPost("Contracts/{contractId}/Guarantees/Add")]

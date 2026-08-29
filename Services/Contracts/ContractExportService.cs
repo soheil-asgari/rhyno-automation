@@ -62,6 +62,61 @@ public class ContractExportService : IContractExportService
         using var ms = new MemoryStream(); wb.SaveAs(ms); return ms.ToArray();
     }
 
+    public async Task<byte[]> ExportContractsToPdfAsync(ContractIndexVM filters, string currentUserId, CancellationToken ct = default)
+    {
+        var query = _db.Contracts.Include(c => c.AssignedUser).AsNoTracking();
+
+        if (!filters.ShowArchived) query = query.Where(c => c.Status != ContractStatuses.Archived);
+        if (!string.IsNullOrWhiteSpace(filters.SearchTerm))
+        { var t = filters.SearchTerm.Trim(); query = query.Where(c => c.ContractNumber.Contains(t) || c.Title.Contains(t) || c.ClientName!.Contains(t)); }
+        if (!string.IsNullOrWhiteSpace(filters.Status)) query = query.Where(c => c.Status == filters.Status);
+        if (!string.IsNullOrWhiteSpace(filters.ContractType)) query = query.Where(c => c.ContractType == filters.ContractType);
+        if (!string.IsNullOrWhiteSpace(filters.AssignedUserId)) query = query.Where(c => c.AssignedUserId == filters.AssignedUserId);
+        if (!string.IsNullOrWhiteSpace(filters.ClientName)) query = query.Where(c => c.ClientName!.Contains(filters.ClientName));
+        if (filters.StartDateFrom.HasValue) query = query.Where(c => c.StartDate >= filters.StartDateFrom.Value);
+        if (filters.StartDateTo.HasValue) query = query.Where(c => c.StartDate <= filters.StartDateTo.Value);
+        if (filters.EndDateFrom.HasValue) query = query.Where(c => c.EndDate >= filters.EndDateFrom.Value);
+        if (filters.EndDateTo.HasValue) query = query.Where(c => c.EndDate <= filters.EndDateTo.Value);
+        if (filters.MinAmount.HasValue) query = query.Where(c => c.TotalAmountInclusiveTax >= filters.MinAmount.Value);
+        if (filters.MaxAmount.HasValue) query = query.Where(c => c.TotalAmountInclusiveTax <= filters.MaxAmount.Value);
+        if (filters.ExpiringSoonOnly == true) query = query.Where(c => c.EndDate.HasValue && c.EndDate.Value <= DateTime.UtcNow.AddMonths(3));
+
+        var contracts = await query.OrderByDescending(c => c.CreatedAt)
+            .Select(c => new { c.ContractNumber, c.Title, c.ContractType, c.Status, c.TotalAmountInclusiveTax, c.StartDate, c.EndDate, AssignedTo = c.AssignedUser != null ? c.AssignedUser.FullName ?? c.AssignedUser.UserName : "", c.CreatedAt })
+            .ToListAsync(ct);
+
+        var sb = new StringBuilder();
+        sb.Append("<html><head><meta charset=\"utf-8\"><style>");
+        sb.Append("body{font-family:Tahoma,Arial,sans-serif;font-size:11px;direction:rtl;padding:20px;}");
+        sb.Append("h1{font-size:16px;color:#0f766b;margin-bottom:16px;}");
+        sb.Append("table{width:100%;border-collapse:collapse;}");
+        sb.Append("th{background:#0f766b;color:white;padding:6px 4px;font-size:10px;text-align:center;}");
+        sb.Append("td{padding:5px 4px;border:1px solid #ddd;text-align:center;font-size:10px;}");
+        sb.Append("tr:nth-child(even){background:#f9f9f9;}");
+        sb.Append("</style></head><body>");
+        sb.Append("<h1>Contracts List</h1>");
+        sb.Append("<p>Generated: ").Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm")).Append("</p>");
+        sb.Append("<table><thead><tr>");
+        sb.Append("<th>Contract Number</th><th>Title</th><th>Type</th><th>Status</th><th>Value</th><th>Start Date</th><th>End Date</th><th>Assigned To</th>");
+        sb.Append("</tr></thead><tbody>");
+        foreach (var c in contracts)
+        {
+            sb.Append("<tr>");
+            sb.Append("<td>").Append(c.ContractNumber).Append("</td>");
+            sb.Append("<td>").Append(c.Title).Append("</td>");
+            sb.Append("<td>").Append(c.ContractType).Append("</td>");
+            sb.Append("<td>").Append(c.Status).Append("</td>");
+            sb.Append("<td>").Append(c.TotalAmountInclusiveTax.ToString("N0")).Append("</td>");
+            sb.Append("<td>").Append(c.StartDate.ToString("yyyy-MM-dd")).Append("</td>");
+            sb.Append("<td>").Append(c.EndDate?.ToString("yyyy-MM-dd") ?? "").Append("</td>");
+            sb.Append("<td>").Append(c.AssignedTo).Append("</td>");
+            sb.Append("</tr>");
+        }
+        sb.Append("</tbody></table></body></html>");
+
+        return await HtmlToPdfAsync(sb.ToString(), ct);
+    }
+
     public async Task<byte[]> ExportReportToExcelAsync(string reportType, CancellationToken ct = default)
     {
         using var wb = new XLWorkbook();

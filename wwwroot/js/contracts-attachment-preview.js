@@ -52,7 +52,7 @@
         if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / 1048576).toFixed(1) + ' MB';
     }
-function hideAllPanels() {
+    function hideAllPanels() {
         [pdfContainer, imgContainer, textContainer, unsupportedEl, errorEl].forEach(function (el) {
             if (el) el.classList.add('hidden');
         });
@@ -94,6 +94,20 @@ function hideAllPanels() {
             xhr.open('GET', previewUrl, true);
             xhr.onload = function () {
                 if (xhr.status === 200) {
+                    try {
+                        var ct = xhr.getResponseHeader('Content-Type') || '';
+                        if (ct.indexOf('application/json') >= 0) {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (resp.previewUnavailable) {
+                                loadingEl.classList.add('hidden');
+                                contentEl.classList.remove('hidden');
+                                unsupportedEl.classList.remove('hidden');
+                                unsupportedDetail.textContent = resp.fileName + ' (' + (resp.contentType || '') + ', ' + formatSize(resp.fileSize) + ')';
+                                showFooter(fileName, fileSize, downloadUrl);
+                                return;
+                            }
+                        }
+                    } catch (e) { /* not JSON, treat as plain text */ }
                     loadingEl.classList.add('hidden');
                     contentEl.classList.remove('hidden');
                     textContainer.classList.remove('hidden');

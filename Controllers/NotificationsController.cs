@@ -9,6 +9,7 @@ using System.Security.Claims;
 namespace OfficeAutomation.Controllers;
 
 [Authorize]
+[Route("[controller]")]
 public class NotificationsController : Controller
 {
     private readonly NotificationService _notificationService;
@@ -35,7 +36,7 @@ public class NotificationsController : Controller
     //  Notification Center
     // ══════════════════════════════════════════════════════════
 
-    [HttpGet]
+    [HttpGet("")]
     public async Task<IActionResult> Index(
         string? severity = null,
         string? module = null,
@@ -84,7 +85,7 @@ public class NotificationsController : Controller
     //  AJAX: Unread Count (for header badge polling)
     // ══════════════════════════════════════════════════════════
 
-    [HttpGet("Notifications/UnreadCount")]
+    [HttpGet("UnreadCount")]
     public async Task<IActionResult> UnreadCount(CancellationToken ct)
     {
         var userId = GetCurrentUserId();
@@ -96,7 +97,7 @@ public class NotificationsController : Controller
     //  AJAX: Mark Single Notification as Read
     // ══════════════════════════════════════════════════════════
 
-    [HttpPost("Notifications/MarkRead/{id}")]
+    [HttpPost("MarkRead/{id}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkRead(int id, CancellationToken ct)
     {
@@ -109,7 +110,7 @@ public class NotificationsController : Controller
     //  AJAX: Mark All Notifications as Read
     // ══════════════════════════════════════════════════════════
 
-    [HttpPost("Notifications/MarkAllRead")]
+    [HttpPost("MarkAllRead")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAllRead(CancellationToken ct)
     {
@@ -122,7 +123,7 @@ public class NotificationsController : Controller
     //  AJAX: Get Notifications as JSON (for header panel)
     // ══════════════════════════════════════════════════════════
 
-    [HttpGet("Notifications/GetNotificationsJson")]
+    [HttpGet("GetNotificationsJson")]
     public async Task<IActionResult> GetNotificationsJson(
         string? module = null,
         string? severity = null,
@@ -145,7 +146,7 @@ public class NotificationsController : Controller
     //  Alert Rules Settings Page
     // ══════════════════════════════════════════════════════════
 
-    [HttpGet("Notifications/AlertSettings")]
+    [HttpGet("AlertSettings")]
     [PermissionAuthorize("Notification.AlertSettings")]
     public async Task<IActionResult> AlertSettings(string? sourceModule, CancellationToken ct)
     {
@@ -158,7 +159,7 @@ public class NotificationsController : Controller
     //  AJAX: Update Alert Subscription
     // ══════════════════════════════════════════════════════════
 
-    [HttpPost("Notifications/UpdateSubscription")]
+    [HttpPost("UpdateSubscription")]
     [ValidateAntiForgeryToken]
     [PermissionAuthorize("Notification.AlertSettings")]
     public async Task<IActionResult> UpdateSubscription([FromBody] AlertSubscriptionUpdateVM model, CancellationToken ct)

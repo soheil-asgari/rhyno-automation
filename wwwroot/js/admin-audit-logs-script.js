@@ -46,7 +46,22 @@
                 modalContent: document.getElementById('auditDiffContent')
             };
 
-            const modal = els.modal ? new bootstrap.Modal(els.modal) : null;
+            const modal = els.modal ? (() => {
+                // Vanilla JS modal — replaces bootstrap.Modal
+                const el = els.modal;
+                return {
+                    show: function () {
+                        el.classList.remove('hidden');
+                        el.style.display = 'flex';
+                        document.body.classList.add('rhyno-modal-open');
+                    },
+                    hide: function () {
+                        el.classList.add('hidden');
+                        el.style.display = 'none';
+                        document.body.classList.remove('rhyno-modal-open');
+                    }
+                };
+            })() : null;
             const persianNumberFormatter = new Intl.NumberFormat('fa-IR');
 
             const getValue = (obj, ...keys) => {

@@ -282,6 +282,46 @@
   font-weight: 500;
 }
 
+/* ── Loading / "is-loading" state ─────────────────────── */
+.is-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+.is-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.4);
+    z-index: 5;
+}
+body.is-loading::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    cursor: wait;
+}
+body.is-loading::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #14b8a6;
+    border-radius: 50%;
+    animation: rhyno-spin 0.7s linear infinite;
+    z-index: 10000;
+}
+
+@keyframes rhyno-spin {
+    to { transform: rotate(360deg); }
+}
+
 /* ── Empty State ────────────────────────────────────────── */
 .erp-empty {
   display: flex;

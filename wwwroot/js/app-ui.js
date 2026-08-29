@@ -18,12 +18,33 @@ window.AppUI = window.AppUI || {};
         toast.innerHTML = `
             <div class="d-flex">
                 <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="بستن"></button>
             </div>`;
         container.appendChild(toast);
-        const instance = bootstrap.Toast.getOrCreateInstance(toast, { delay: 3500 });
-        toast.addEventListener('hidden.bs.toast', () => toast.remove());
-        instance.show();
+
+        // Auto-dismiss the toast after 3.5s (vanilla, no Bootstrap JS dependency).
+        const dismiss = () => {
+            toast.style.transition = 'opacity 0.2s ease';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 220);
+        };
+        const timer = setTimeout(dismiss, 3500);
+
+        // Close button (present in every toast) dismisses it early.
+        const closeBtn = toast.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                clearTimeout(timer);
+                dismiss();
+            });
+        }
+
+        // Show animation.
+        toast.style.opacity = '0';
+        requestAnimationFrame(() => {
+            toast.style.transition = 'opacity 0.2s ease';
+            toast.style.opacity = '1';
+        });
     };
 
     const setLoading = (element, loading) => {
@@ -132,11 +153,10 @@ const CONFIRM_SEVERITY = {
         const modalEl = document.getElementById('appCommandPalette');
         const input = document.getElementById('appCommandInput');
         const list = document.getElementById('appCommandList');
-        if (!modalEl || !input || !list || !window.bootstrap) {
+        if (!modalEl || !input || !list) {
             return;
         }
 
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         const normalize = (value) => String(value || '')
             .replace(/[ي]/g, 'ی')
             .replace(/[ك]/g, 'ک')
@@ -239,14 +259,19 @@ const CONFIRM_SEVERITY = {
                 event.preventDefault();
                 input.value = '';
                 render();
-                modal.show();
+                // Vanilla modal show — replaces bootstrap.Modal.show()
+                modalEl.classList.remove('hidden');
+                modalEl.style.display = 'flex';
+                document.body.classList.add('rhyno-modal-open');
                 setTimeout(() => input.focus(), 80);
             }
         });
 
-        modalEl.addEventListener('shown.bs.modal', () => {
-            render();
-            input.focus();
+        modalEl.addEventListener('transitionend', (event) => {
+            if (event.propertyName === 'opacity' && !modalEl.classList.contains('hidden')) {
+                render();
+                input.focus();
+            }
         });
     };
 

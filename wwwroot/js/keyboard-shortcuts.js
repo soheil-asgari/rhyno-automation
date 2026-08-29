@@ -149,12 +149,15 @@
     function openCommandPalette() {
         const palette = document.getElementById('appCommandPalette');
         if (palette) {
-            const modal = new bootstrap.Modal(palette);
-            modal.show();
+            // Vanilla JS modal — replaces bootstrap.Modal
+            palette.classList.remove('hidden');
+            palette.style.display = 'flex';
+            document.body.classList.add('rhyno-modal-open');
             setTimeout(() => {
                 const input = document.getElementById('appCommandInput');
                 if (input) input.focus();
             }, 150);
+            // Close on Escape or click outside (handled by global Esc handler)
         }
     }
 
@@ -204,11 +207,22 @@
      * Close all modals
      */
     function closeAllModals() {
-        const modals = document.querySelectorAll('.modal.show');
+        // Vanilla JS — close any element with 'modal' class and 'show' or 'is-active'
+        const modals = document.querySelectorAll('.modal.show, .modal.is-active, [data-modal-active]');
         modals.forEach(modal => {
-            const instance = bootstrap.Modal.getInstance(modal);
-            if (instance) instance.hide();
+            if (modal.classList.contains('hidden')) return;
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            modal.classList.remove('is-active');
+            modal.removeAttribute('data-modal-active');
         });
+        // Also close command palette specifically
+        const palette = document.getElementById('appCommandPalette');
+        if (palette && !palette.classList.contains('hidden')) {
+            palette.classList.add('hidden');
+            palette.style.display = 'none';
+        }
+        document.body.classList.remove('rhyno-modal-open');
 
         // Close sidebar on mobile
         const sidebar = document.getElementById('appSidebar');

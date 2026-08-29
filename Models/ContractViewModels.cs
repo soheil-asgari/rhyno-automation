@@ -583,6 +583,8 @@ public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
 public List<ChartDataPoint> StatusDistribution { get; set; } = new();
         public List<ChartDataPoint> MonthlyValueTrend { get; set; } = new();
         public List<ChartDataPoint> ContractTypeDistribution { get; set; } = new();
+        /// <summary>مقایسه مجموع مبلغ قراردادها، مبلغ پرداخت شده و باقی‌مانده (برای نمودار)</summary>
+        public List<ChartDataPoint> PaymentSummary { get; set; } = new();
     }
 /// <summary>Request body for internal signature capture</summary>
 public class SignContractRequest

@@ -128,8 +128,11 @@ public sealed class AttachmentVersionService : IAttachmentVersionService
 
         await _contractService.EnforceAccessAsync(version.Attachment.ContractId, userId, ct);
 
-        var fullPath = Path.GetFullPath(Path.Combine(UploadsRoot, "..", "..", version.RelativePath));
-        var uploadsRoot = Path.GetFullPath(UploadsRoot);
+        // Resolve path relative to the wwwroot directory
+        // version.RelativePath is stored as "uploads/contracts/{id}/versions/{file}" (no wwwroot prefix)
+        var wwwRoot = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"));
+        var fullPath = Path.GetFullPath(Path.Combine(wwwRoot, version.RelativePath));
+        var uploadsRoot = Path.GetFullPath(Path.Combine(wwwRoot, "uploads", "contracts"));
 
         if (!fullPath.StartsWith(uploadsRoot, StringComparison.OrdinalIgnoreCase))
             return null;

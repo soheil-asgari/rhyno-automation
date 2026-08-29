@@ -230,20 +230,29 @@ public sealed class ContractService : IContractService
     /// <summary>
     /// ثبت لاگ تغییرات در قرارداد
     /// </summary>
-    private async Task AddAuditLogAsync(int contractId, string userId, string action, string? oldStatus, string? newStatus, string? description = null, CancellationToken ct = default)
+    public async Task AddAuditLogAsync(int contractId, string userId, string action, string? oldStatus, string? newStatus, string? description = null, CancellationToken ct = default)
     {
-        var auditLog = new ContractAuditLog
+        try
         {
-            ContractId = contractId,
-            UserId = userId,
-            Action = action,
-            OldStatus = oldStatus,
-            NewStatus = newStatus,
-            Description = description,
-            CreatedAt = DateTime.Now
-        };
-        _context.ContractAuditLogs.Add(auditLog);
-        await _context.SaveChangesAsync(ct);
+            var auditLog = new ContractAuditLog
+            {
+                ContractId = contractId,
+                UserId = userId,
+                Action = action,
+                OldStatus = oldStatus,
+                NewStatus = newStatus,
+                Description = description,
+                CreatedAt = DateTime.Now
+            };
+            _context.ContractAuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync(ct);
+            _logger.LogDebug("Audit log created: ContractId={ContractId}, Action={Action}, UserId={UserId}", contractId, action, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create audit log for contract {ContractId}: Action={Action}", contractId, action);
+            throw;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -498,7 +507,7 @@ public sealed class ContractService : IContractService
                 Action = al.Action, OldStatus = al.OldStatus, NewStatus = al.NewStatus,
                 Description = al.Description, CreatedAt = al.CreatedAt
             }).ToList(),
-            LifecycleSteps = BuildLifecycleSteps(c.AuditLogs),
+            LifecycleSteps = BuildLifecycleSteps(c.AuditLogs, c.Status),
             Amendments = c.Amendments.OrderByDescending(a => a.CreatedAt).Select(a => new AmendmentListItemVM
             {
                 Id = a.Id,
@@ -524,8 +533,9 @@ public sealed class ContractService : IContractService
     /// Builds a data-driven lifecycle stepper step list from the contract's audit log entries.
     /// Maps StatusChanged audit log entries to lifecycle steps, recording timestamps, actors,
     /// and descriptions. Detects rejection cycles and marks them with RejectionCount.
+    /// Falls back to the contract's current Status when no audit logs exist.
     /// </summary>
-    private static List<LifecycleStepVM> BuildLifecycleSteps(ICollection<ContractAuditLog> auditLogs)
+    private static List<LifecycleStepVM> BuildLifecycleSteps(ICollection<ContractAuditLog> auditLogs, string? contractStatus = null)
     {
         // Canonical lifecycle order (status key → display label → icon)
         var lifecycleMap = new (string key, string label, string icon)[]
@@ -554,7 +564,7 @@ public sealed class ContractService : IContractService
             .ToDictionary(g => g.Key, g => g.Count());
 
         // Determine which status is current: the last transition's NewStatus, or the contract's Status
-        string? currentStatus = transitions.LastOrDefault()?.NewStatus;
+        string? currentStatus = transitions.LastOrDefault()?.NewStatus ?? contractStatus;
 
         var steps = new List<LifecycleStepVM>();
         foreach (var (key, label, icon) in lifecycleMap)
@@ -823,23 +833,7 @@ public sealed class ContractService : IContractService
 
         await _context.SaveChangesAsync(ct);
 
-        // Create version snapshot after update
-        var isStatusChange = oldStatus != model.Status;
-        var changeDescription = isStatusChange
-            ? $"تغییر وضعیت از {oldStatus} به {model.Status}"
-            : "قرارداد ویرایش شد";
-        await _versionService.CreateVersionSnapshotAsync(
-            c, currentUserId, isStatusChange ? "StatusChange" : "Edited", changeDescription,
-            isMajor: false, skipIfUnchanged: true, ct: ct);
-
-        // Log status change if changed
-// ── Accrual accounting: book deferred revenue when contract becomes Active ──
-        if (oldStatus != ContractStatuses.Active && model.Status == ContractStatuses.Active)
-        {
-            await _contractAccounting.RecordDeferredRevenueAsync(c, currentUserId, ct);
-        }
-
-        // Log status change if changed
+        // ── Log audit FIRST so history is never lost if version snapshot fails ──
         if (oldStatus != model.Status)
         {
             await AddAuditLogAsync(c.Id, currentUserId, "StatusChanged", oldStatus, model.Status, $"تغییر وضعیت از {oldStatus} به {model.Status}", ct);
@@ -847,6 +841,28 @@ public sealed class ContractService : IContractService
         else
         {
             await AddAuditLogAsync(c.Id, currentUserId, "Edited", null, null, "قرارداد ویرایش شد", ct);
+        }
+
+        // Create version snapshot after update (non-critical — catch errors)
+        try
+        {
+            var isStatusChange = oldStatus != model.Status;
+            var changeDescription = isStatusChange
+                ? $"تغییر وضعیت از {oldStatus} به {model.Status}"
+                : "قرارداد ویرایش شد";
+            await _versionService.CreateVersionSnapshotAsync(
+                c, currentUserId, isStatusChange ? "StatusChange" : "Edited", changeDescription,
+                isMajor: false, skipIfUnchanged: true, ct: ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Version snapshot creation failed for contract {ContractId} — audit log already saved.", c.Id);
+        }
+
+        // ── Accrual accounting: book deferred revenue when contract becomes Active ──
+        if (oldStatus != ContractStatuses.Active && model.Status == ContractStatuses.Active)
+        {
+            await _contractAccounting.RecordDeferredRevenueAsync(c, currentUserId, ct);
         }
 
         // Save dynamic field values (EAV)
@@ -861,8 +877,20 @@ public sealed class ContractService : IContractService
 
     public async Task<bool> DeleteContractAsync(int id, string currentUserId, CancellationToken ct = default)
     {
-        var c = await _context.Contracts.Include(x => x.Payments).Include(x => x.Attachments).FirstOrDefaultAsync(x => x.Id == id, ct);
+        var c = await _context.Contracts
+            .Include(x => x.Payments)
+            .Include(x => x.Attachments)
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
         if (c == null) return false;
+
+        // Delete related penalty rules first (FK constraint FK_PaymentPenaltyRules_Contracts_ContractId)
+        var penaltyRules = await _context.PaymentPenaltyRules
+            .Where(r => r.ContractId == id)
+            .ToListAsync(ct);
+        if (penaltyRules.Count > 0)
+        {
+            _context.PaymentPenaltyRules.RemoveRange(penaltyRules);
+        }
 
         // Delete the per-contract upload directory so attachment files do not remain
         // orphaned on disk (residual sensitive data / storage leak).
@@ -1246,6 +1274,41 @@ public sealed class ContractService : IContractService
 
         _context.ContractAttachments.Add(attachment);
         await _context.SaveChangesAsync(ct);
+
+        // Create initial version record so CurrentVersionId is set for preview & version tracking
+        try
+        {
+            var versionDir = Path.Combine(uploadsDir, "versions");
+            Directory.CreateDirectory(versionDir);
+            var versionFileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+            var versionPath = Path.Combine(versionDir, versionFileName);
+            System.IO.File.Copy(fullPath, versionPath, overwrite: false);
+
+            var version = new ContractAttachmentVersion
+            {
+                AttachmentId = attachment.Id,
+                VersionNumber = 1,
+                FileName = attachment.FileName,
+                StoredFileName = versionFileName,
+                RelativePath = Path.Combine("uploads", "contracts", contractId.ToString(), "versions", versionFileName),
+                ContentType = attachment.ContentType,
+                FileSize = attachment.FileSize,
+                ChangeDescription = "نسخه اولیه",
+                UploadedByUserId = uploadedByUserId
+            };
+            _context.ContractAttachmentVersions.Add(version);
+            await _context.SaveChangesAsync(ct);
+
+            attachment.CurrentVersionId = version.Id;
+            attachment.VersionNumber = 1;
+            await _context.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            // Non-critical: version record creation failed, fallback to RelativePath preview
+            _logger.LogWarning(ex, "Failed to create initial version for attachment {AttachmentId}, falling back to RelativePath preview", attachment.Id);
+        }
+
         _logger.LogInformation("Attachment {FileName} uploaded to contract {ContractId}", attachment.FileName, contractId);
         return attachment;
     }
@@ -1369,15 +1432,103 @@ public sealed class ContractService : IContractService
             .FirstOrDefaultAsync(a => a.Id == attachmentId && a.ContractId == contractId, ct);
         if (attachment == null) return false;
 
-        // Resolve the canonical path and ensure it stays under the contracts uploads root.
-        var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
-        var fullPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
-        if (fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
-            File.Delete(fullPath);
+        // Try to delete the physical file — ignore errors (locked / missing / permission)
+        try
+        {
+            var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
+            var fullPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
+            if (fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
+                File.Delete(fullPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not delete physical file for attachment {AttachmentId} — removing DB record anyway.", attachmentId);
+        }
+
+        // Try to clean up version files
+        if (attachment.CurrentVersionId.HasValue)
+        {
+            try
+            {
+                var versionsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", contractId.ToString(), "versions");
+                if (Directory.Exists(versionsDir))
+                {
+                    foreach (var versionFile in Directory.GetFiles(versionsDir))
+                    {
+                        try { File.Delete(versionFile); } catch { }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clean up version files for attachment {AttachmentId}", attachmentId);
+            }
+        }
 
         _context.ContractAttachments.Remove(attachment);
         await _context.SaveChangesAsync(ct);
         return true;
+    }
+
+    /// <summary>
+    /// Deletes an attachment by Id only (resolves contract from attachment record).
+    /// Used as fallback when contractId parameter mismatches.
+    /// </summary>
+    public async Task<bool> DeleteAttachmentByIdOnlyAsync(int attachmentId, string currentUserId, CancellationToken ct = default)
+    {
+        var attachment = await _context.ContractAttachments
+            .FirstOrDefaultAsync(a => a.Id == attachmentId, ct);
+        if (attachment == null) return false;
+
+        await EnforceAccessAsync(attachment.ContractId, currentUserId, ct);
+
+        // Try to delete the physical file — ignore errors (locked / missing / permission)
+        try
+        {
+            var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
+            var fullPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
+            if (fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
+                File.Delete(fullPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not delete physical file for attachment {AttachmentId} (by-id-only) — removing DB record anyway.", attachmentId);
+        }
+
+        _context.ContractAttachments.Remove(attachment);
+        await _context.SaveChangesAsync(ct);
+        _logger.LogInformation("Attachment {AttachmentId} ({FileName}) deleted by {UserId}", attachmentId, attachment.FileName, currentUserId);
+        return true;
+    }
+
+    public async Task<int> CleanupOrphanedAttachmentsAsync(int? contractId, string currentUserId, CancellationToken ct = default)
+    {
+        var isAdmin = await IsAdminAsync(currentUserId);
+        if (!isAdmin) throw new UnauthorizedAccessException("Only admins can cleanup orphaned attachments.");
+
+        var query = _context.ContractAttachments.AsNoTracking();
+        if (contractId.HasValue)
+            query = query.Where(a => a.ContractId == contractId.Value);
+
+        var attachments = await query.ToListAsync(ct);
+        var removedCount = 0;
+        foreach (var attachment in attachments)
+        {
+            var fullPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
+            if (!File.Exists(fullPath))
+            {
+                _logger.LogWarning("Removing orphaned attachment {AttachmentId} ({FileName}) - file not found at {Path}", attachment.Id, attachment.FileName, fullPath);
+                var attachToRemove = await _context.ContractAttachments.FindAsync(new object[] { attachment.Id }, ct);
+                if (attachToRemove != null)
+                {
+                    _context.ContractAttachments.Remove(attachToRemove);
+                    removedCount++;
+                }
+            }
+        }
+        if (removedCount > 0)
+            await _context.SaveChangesAsync(ct);
+        return removedCount;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1850,7 +2001,13 @@ public sealed class ContractService : IContractService
 
             StatusDistribution = statusGroups.Select(g => new ChartDataPoint { Label = g.Label, Value = g.Count }).ToList(),
             MonthlyValueTrend = monthlyTrend,
-            ContractTypeDistribution = typeGroups.Select(g => new ChartDataPoint { Label = g.Label, Value = g.Count }).ToList()
+            ContractTypeDistribution = typeGroups.Select(g => new ChartDataPoint { Label = g.Label, Value = g.Count }).ToList(),
+            PaymentSummary = new List<ChartDataPoint>
+            {
+                new() { Label = "مبلغ کل قراردادها", Value = totalAmount },
+                new() { Label = "مبلغ پرداخت شده", Value = totalPaid },
+                new() { Label = "باقی مانده", Value = totalAmount - totalPaid },
+            }
         };
     }
 

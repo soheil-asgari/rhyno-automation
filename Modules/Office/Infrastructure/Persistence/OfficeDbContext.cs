@@ -219,6 +219,11 @@ public sealed class OfficeDbContext : ModularDbContext
             entity.HasIndex(al => al.ContractId);
             entity.HasIndex(al => al.UserId);
 
+            entity.HasOne(al => al.Contract)
+                .WithMany(c => c.AuditLogs)
+                .HasForeignKey(al => al.ContractId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(al => al.User)
                 .WithMany()
                 .HasForeignKey(al => al.UserId)

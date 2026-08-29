@@ -1,10 +1,26 @@
-﻿$(document).ready(function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
+    'use strict';
+    
+    function openModal(modalId) {
+        var el = document.getElementById(modalId);
+        if (!el) return;
+        el.classList.remove('hidden');
+        el.style.display = 'flex';
+        document.body.classList.add('rhyno-modal-open');
+    }
+    
+    function closeModal(modalId) {
+        var el = document.getElementById(modalId);
+        if (!el) return;
+        el.classList.add('hidden');
+        el.style.display = 'none';
+        document.body.classList.remove('rhyno-modal-open');
+    }
+
     const btnAddUser = document.getElementById('btn-manual-add-user');
     if (btnAddUser) {
         btnAddUser.addEventListener('click', function () {
-            const modalEl = document.getElementById('modal-add-user');
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
+            openModal('modal-add-user');
         });
     }
     // تنظیمات عمومی SweetAlert
@@ -239,13 +255,9 @@ window.deleteUser = function (id) {
 
             Swal.close(); // بستن لودینگ
 
-            // باز کردن مودال به روش ایمن
-            const modalElement = document.getElementById('modal-edit-user');
-            let modalInstance = bootstrap.Modal.getInstance(modalElement);
-            if (!modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement);
-            }
-            modalInstance.show();
+            // باز کردن مودال به روش ایمن (Vanilla JS)
+            closeModal('modal-edit-user');
+            openModal('modal-edit-user');
         })
         .catch(err => {
             console.error("Edit Error:", err);

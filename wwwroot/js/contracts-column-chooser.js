@@ -10,9 +10,19 @@
  *   6. Reset to default (show all columns)
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
     'use strict';
 
+    // ── Shared CSRF token reader (meta-tag first, hidden input fallback) ──
+    function getCsrfToken() {
+        var meta = document.querySelector('meta[name="request-verification-token"]');
+        if (meta) return meta.getAttribute('content');
+        var input = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (input) return input.value;
+        return '';
+    }
+
+    function initColumnChooser() {
     // ── Column definitions (data-column-id → display name) ──
     var COLUMNS = {
         Id: 'ردیف',
@@ -53,20 +63,23 @@ document.addEventListener('DOMContentLoaded', function () {
     function applyVisibility(cols) {
         var allColumnIds = Object.keys(COLUMNS);
         allColumnIds.forEach(function (id) {
+            var visible = (cols === null) || cols.indexOf(id) !== -1;
+
             var headers = tableWrapper.querySelectorAll('th[data-column-id="' + id + '"]');
             var cells = tableWrapper.querySelectorAll('td[data-column-id="' + id + '"]');
 
-            var visible = (cols === null) || cols.indexOf(id) !== -1;
-            var display = visible ? '' : 'none';
+            if (!headers.length && !cells.length) {
+                console.warn('Column visibility: no elements found for data-column-id="' + id + '"');
+            }
 
-            headers.forEach(function (el) { el.style.display = display; });
-            cells.forEach(function (el) { el.style.display = display; });
+            headers.forEach(function (el) { el.style.display = visible ? '' : 'none'; });
+            cells.forEach(function (el) { el.style.display = visible ? '' : 'none'; });
         });
     }
 
     // ── Render column checkboxes in the chooser ──
     function renderColumnCheckboxes(cols) {
-        var list = tableWrapper.querySelector('[data-column-list]');
+        var list = document.querySelector('[data-column-list]');
         if (!list) return;
 
         var html = '';
@@ -89,27 +102,31 @@ document.addEventListener('DOMContentLoaded', function () {
     renderColumnCheckboxes(currentColumns);
 
 // ═══════════════════════════════════════════════════════════════
-    //  Exposed functions (called from onclick in toolbar)
-    // ═══════════════════════════════════════════════════════════════
+//  Exposed functions (called from onclick in toolbar)
+// ═══════════════════════════════════════════════════════════════
 
-    // Toggle column chooser dropdown
-    window.toggleColumnChooser = function (event) {
-        event.stopPropagation();
-        var menu = tableWrapper.querySelector('[data-column-menu]');
-        if (!menu) return;
-        menu.classList.toggle('hidden');
-        if (!menu.classList.contains('hidden')) {
-            var close = function (e) {
-                menu.classList.add('hidden');
-                document.removeEventListener('click', close);
-            };
-            setTimeout(function () { document.addEventListener('click', close); }, 10);
-        }
-    };
+// Toggle column chooser dropdown
+window.toggleColumnChooser = function (event) {
+    event.stopPropagation();
+    var menu = document.querySelector('[data-column-menu]');
+    if (!menu) return;
+    var wasHidden = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden');
+    // Only attach outside-click listener when opening
+    if (wasHidden) {
+        var close = function (e) {
+            // Ignore clicks inside the menu
+            if (menu.contains(e.target)) return;
+            menu.classList.add('hidden');
+            document.removeEventListener('click', close);
+        };
+        setTimeout(function () { document.addEventListener('click', close); }, 10);
+    }
+};
 
     // Apply current checkbox state to the table
     window.applyColumnChanges = function () {
-        var checkboxes = tableWrapper.querySelectorAll('.column-checkbox');
+        var checkboxes = document.querySelectorAll('.column-checkbox');
         var selected = [];
         checkboxes.forEach(function (cb) {
             if (cb.checked) {
@@ -125,7 +142,8 @@ document.addEventListener('DOMContentLoaded', function () {
         persistColumns(selected);
 
         // Close dropdown
-        var menu = tableWrapper.querySelector('[data-column-menu]');
+        // Search whole document as the menu is outside tableWrapper
+        var menu = document.querySelector('[data-column-menu]');
         if (menu) menu.classList.add('hidden');
     };
 
@@ -136,9 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderColumnCheckboxes(null);
 
         // Persist empty preference (null = all)
-        var csrfToken = '';
-        var metaTag = document.querySelector('meta[name="request-verification-token"]');
-        if (metaTag) csrfToken = metaTag.getAttribute('content');
+        var csrfToken = getCsrfToken();
 
         fetch('/Contracts/SaveColumnPreference', {
             method: 'POST',
@@ -163,9 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Persist to server ──
     function persistColumns(columnNames) {
-        var csrfToken = '';
-        var metaTag = document.querySelector('meta[name="request-verification-token"]');
-        if (metaTag) csrfToken = metaTag.getAttribute('content');
+        var csrfToken = getCsrfToken();
 
         fetch('/Contracts/SaveColumnPreference', {
             method: 'POST',
@@ -187,4 +201,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 AppUI.toast('خطا در ذخیره تنظیمات ستون‌ها.', 'danger');
             });
     }
-});
+
+    }
+
+    // Auto-init: run immediately if DOM is ready, or wait for the event
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initColumnChooser);
+    } else {
+        initColumnChooser();
+    }
+})();

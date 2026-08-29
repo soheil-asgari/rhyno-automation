@@ -60,7 +60,7 @@ public class PaymentPenaltiesController : Controller
                 .Select(t => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(
                     CapTypeNames.DisplayNames.GetValueOrDefault(t, t), t)).ToList();
 
-            return PartialView("_Penalties", new PenaltySectionVM { Rules = rules, Penalties = penalties });
+            return PartialView("~/Views/Contracts/_Penalties.cshtml", new PenaltySectionVM { Rules = rules, Penalties = penalties });
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
