@@ -485,56 +485,53 @@
 
                 @* Existing Attachments List *@
                 <div id="contractAttachmentsList">
-                    @if (Model.Attachments.Any())
-                    {
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-[11px]">
-                            <thead>
-                                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">نام فایل</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">نوع</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">حجم</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">بارگذاری‌کننده</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ</th>
-                                    <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60" id="contractAttachmentsBody">
-                                @foreach (var att in Model.Attachments)
+                 @if (Model.Attachments.Any())
+{
+    <div class="overflow-x-auto">
+        <table class="w-full text-[11px]">
+            <thead>
+                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                    <th class="text-right px-3 py-2 font-bold text-slate-500">نام فایل</th>
+                    <th class="text-right px-3 py-2 font-bold text-slate-500">نوع</th>
+                    <th class="text-right px-3 py-2 font-bold text-slate-500">حجم</th>
+                    <th class="text-right px-3 py-2 font-bold text-slate-500">بارگذاری‌کننده</th>
+                    <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ</th>
+                    <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60" id="contractAttachmentsBody">
+                @foreach (var att in Model.Attachments)
+                {
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition" data-attachment-id="@att.Id">
+                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">
+                            <i class="bi bi-file-earmark ml-1 text-slate-400"></i>@att.FileName
+                        </td>
+                        <td class="px-3 py-2 text-slate-600">@att.ContentType</td>
+                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
+                        <td class="px-3 py-2 text-slate-600">@(att.UploadedByUserName ?? "-")</td>
+                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(att.CreatedAt)</td>
+                        <td class="px-3 py-2 text-center">
+                            <div class="inline-flex gap-1">
+                                <button type="button" onclick="openAttachmentPreview(@att.Id, '@att.FileName.Replace("'", "\\'")', '@(att.ContentType ?? "")', @att.FileSize, '/Contracts/DownloadAttachment/@att.Id')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition cursor-pointer" title="پیش‌نمایش">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                @if (Model.CanEdit)
                                 {
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition" data-attachment-id="@att.Id">
-                                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">
-                                            <i class="bi bi-file-earmark ml-1 text-slate-400"></i>@att.FileName
-                                        </td>
-                                        <td class="px-3 py-2 text-slate-600">@att.ContentType</td>
-                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
-                                        <td class="px-3 py-2 text-slate-600">@(att.UploadedByUserName ?? "-")</td>
-                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(att.CreatedAt)</td>
-                                        <td class="px-3 py-2 text-center">
-                                            <div class="inline-flex gap-1">
-                                                <button type="button" onclick="openAttachmentPreview(@att.Id, '@att.FileName.Replace("'", "\\'")', '@(att.ContentType ?? "")', @att.FileSize, '/Contracts/DownloadAttachment/@att.Id')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition cursor-pointer" title="پیش‌نمایش">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود">
-                                                    <i class="bi bi-download"></i>
-                                                </a>
-                                                @if (Model.CanEdit)
-                                                {
-                                                    <form asp-action="DeleteAttachment" asp-route-attachmentId="@att.Id" asp-route-contractId="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('فایل حذف شود؟');">
-                                                        @Html.AntiForgeryToken()
-                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                }
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <button type="button" onclick="deleteAttachment(@att.Id)" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition cursor-pointer" title="حذف">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
+                            </div>
+                        </td>
+                    </tr>
                 }
+            </tbody>
+        </table>
+    </div>
+}
                 else
                 {
                     <div class="text-center py-6" id="contractAttachmentsEmpty">

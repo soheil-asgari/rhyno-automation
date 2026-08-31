@@ -7,117 +7,178 @@
     OfficeAutomation.Models.SystemSetting? loginBranding = null;
     try { loginBranding = await TenantSettingsService.GetSystemSettingsAsync(); } catch { }
     var loginAppTitle = loginBranding?.ApplicationTitle ?? "راینو ERP";
-    var loginBgUrl = loginBranding?.LoginBackgroundUrl;
     var loginLogoUrl = loginBranding?.LogoUrl;
     var loginFaviconUrl = loginBranding?.FaviconUrl;
-    var loginPrimaryColor = loginBranding?.PrimaryColor;
 }
 
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ورود - @loginAppTitle</title>
-    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true" />
+    <title>ورود به حساب کاربری | @loginAppTitle</title>
+    
     @if (!string.IsNullOrWhiteSpace(loginFaviconUrl))
     {
         <link rel="icon" href="@loginFaviconUrl" />
     }
-    <link rel="stylesheet" href="~/css/account-login-style.css" asp-append-version="true" />
+
+    <!-- Icons & Core Stylesheet -->
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/account-auth-modern.css" asp-append-version="true" />
 </head>
+<body class="auth-body">
 
-<body>
-    <div class="ambient-glow top-right"></div>
-    <div class="ambient-glow bottom-left"></div>
+    <!-- Fluid Aurora Light Mesh Background -->
+    <div class="aurora-canvas">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-2"></div>
+        <div class="aurora-blob aurora-3"></div>
+        <div class="mesh-texture"></div>
+    </div>
 
-    <main class="login-wrapper">
-        <!-- Left visual panel -->
-        <section class="login-visual">
-            <div class="brand-lockup">
-                <div class="brand-logo">
-                    @if (!string.IsNullOrWhiteSpace(loginLogoUrl))
-                    {
-                        <img src="@loginLogoUrl" alt="@loginAppTitle"
-                             onerror="this.style.display='none';this.parentElement.querySelector('.fallback').style.display='grid'" />
-                        <span class="fallback" style="display:none;">R</span>
-                    }
-                    else
-                    {
-                        <span class="fallback"><i class="bi bi-grid-3x3-gap-fill"></i></span>
-                    }
+    <!-- Main Polymorphic Viewport -->
+    <main class="auth-viewport">
+        <div class="poly-card">
+            
+            <!-- Brand & Identity -->
+            <header class="auth-identity stagger-1">
+                <div class="brand-emblem-wrap">
+                    <div class="brand-emblem">
+                        @if (!string.IsNullOrWhiteSpace(loginLogoUrl))
+                        {
+                            <img src="@loginLogoUrl" alt="@loginAppTitle" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                            <span class="emblem-fallback" style="display:none;"><i class="bi bi-layers-half"></i></span>
+                        }
+                        else
+                        {
+                            <span class="emblem-fallback"><i class="bi bi-layers-half"></i></span>
+                        }
+                    </div>
                 </div>
-                <div>
-                    <div class="brand-title">@loginAppTitle</div>
-                    <div class="brand-subtitle">سامانه یکپارچه مدیریت سازمانی</div>
+                <h1 class="brand-title">@loginAppTitle</h1>
+                <p class="brand-description">سامانه یکپارچه مدیریت سازمانی و هوش تجاری</p>
+            </header>
+
+            <!-- Login Form -->
+            <form method="post" id="loginForm" class="auth-form" novalidate>
+                <!-- Server Errors Summary -->
+                <div asp-validation-summary="ModelOnly" class="error-banner stagger-2" role="alert"></div>
+
+                <!-- Username or Email Field -->
+                <div class="form-field-group stagger-2">
+                    <label asp-for="Input.Email" class="field-label">نام کاربری یا ایمیل</label>
+                    <div class="glass-input-wrapper">
+                        <i class="bi bi-person field-icon"></i>
+                        <input asp-for="Input.Email"
+                               autocomplete="username"
+                               placeholder="شناسه کاربری یا name@company.com"
+                               class="glass-input"
+                               dir="ltr"
+                               autofocus />
+                    </div>
+                    <span asp-validation-for="Input.Email" class="validation-message"></span>
                 </div>
-            </div>
 
-            <div class="hero-copy">
-                <h1>به داشبورد سازمانی خوش آمدید</h1>
-                <p>برای دسترسی به اطلاعات مالی، منابع انسانی، انبارداری و گزارش‌های مدیریتی، لطفاً با حساب کاربری خود
-                    وارد شوید.</p>
+                <!-- Password Field -->
+                <div class="form-field-group stagger-3">
+                    <div class="field-label-split">
+                        <label asp-for="Input.Password" class="field-label">کلمه عبور</label>
+                        <a asp-page="./ForgotPassword" class="forgot-link">فراموشی رمز؟</a>
+                    </div>
+                    <div class="glass-input-wrapper">
+                        <i class="bi bi-shield-lock field-icon"></i>
+                        <input asp-for="Input.Password"
+                               id="pwdField"
+                               type="password"
+                               autocomplete="current-password"
+                               placeholder="••••••••••••"
+                               class="glass-input password-text"
+                               dir="ltr" />
+                        <button type="button" id="pwdToggleBtn" class="pwd-peek-btn" tabindex="-1" title="نمایش/مخفی‌سازی رمز">
+                            <i class="bi bi-eye" id="pwdToggleIcon"></i>
+                        </button>
+                    </div>
+                    <!-- CapsLock Alert -->
+                    <div id="capsHint" class="caps-warning" style="display: none;">
+                        <i class="bi bi-capslock-fill"></i> کلید Caps Lock روشن است
+                    </div>
+                    <span asp-validation-for="Input.Password" class="validation-message"></span>
                 </div>
 
-                <div class="hero-divider"></div>
-            </section>
-
-            <!-- Right login form panel -->
-            <section class="login-card">
-                <div class="form-head">
-                    <h1>ورود کاربران</h1>
-                    <h2>لطفا مشخصات حساب کاربری خود را وارد نمایید</h2>
-                    <hr />
+                <!-- Remember Me & Helpers -->
+                <div class="form-controls-row stagger-4">
+                    <label class="ios-switch">
+                        <input asp-for="Input.RememberMe" type="checkbox" />
+                        <span class="switch-handle"></span>
+                        <span class="switch-label">مرا به خاطر بسپار</span>
+                    </label>
                 </div>
 
-                <form method="post" id="account">
-                    <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
-
-                    <div class="form-group">
-                        <label asp-for="Input.Email">نام کاربری یا ایمیل</label>
-                        <div class="input-wrap">
-                            <i class="bi bi-person"></i>
-                            <input asp-for="Input.Email" class="form-control" autocomplete="username"
-                                   placeholder="نام کاربری خود را وارد کنید" />
+                <!-- Action Button with Shimmer -->
+                <div class="stagger-5">
+                    <button type="submit" id="submitBtn" class="poly-submit-btn">
+                        <span class="btn-text-wrap">
+                            <span>ورود به سامانه</span>
+                            <i class="bi bi-arrow-left"></i>
+                        </span>
+                        <div class="btn-spinner-wrap" style="display: none;">
+                            <span class="spin-ring"></span>
+                            <span>در حال بررسی اعتبار...</span>
                         </div>
-                        <span asp-validation-for="Input.Email" class="text-danger"
-                              style="font-size:0.72rem;color:#a03025;"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label asp-for="Input.Password">کلمه عبور</label>
-                        <div class="input-wrap">
-                            <i class="bi bi-lock"></i>
-                            <input asp-for="Input.Password" type="password" class="form-control"
-                                   autocomplete="current-password" placeholder="••••••••" />
-                        </div>
-                        <span asp-validation-for="Input.Password" class="text-danger"
-                              style="font-size:0.72rem;color:#a03025;"></span>
-                    </div>
-
-                    <div class="login-options">
-                        <label class="remember-check">
-                            <input asp-for="Input.RememberMe" />
-                            <span>مرا به خاطر بسپار</span>
-                        </label>
-                        <a asp-area="Identity" asp-page="/Account/ForgotPassword" class="forgot-link">فراموشی رمز عبور؟</a>
-                    </div>
-
-                    <button type="submit" class="btn-login">
-                        <i class="bi bi-box-arrow-in-right"></i>
-                        <span>ورود به سامانه</span>
                     </button>
-                </form>
-
-                <div class="login-footer">
-                    @loginAppTitle &mdash; نسخه ۱.۰ &copy; @DateTime.Now.Year
                 </div>
-            </section>
-        </main>
+            </form>
 
-        <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
-        <partial name="_ValidationScriptsPartial" />
-    </body>
+            <!-- Bottom Meta Info -->
+            <footer class="auth-card-footer stagger-5">
+                <div class="security-badge">
+                    <i class="bi bi-shield-check"></i>
+                    <span>اتصال امن سازمانی (SSL 256-bit)</span>
+                </div>
+                <p class="copyright-text">&copy; @DateTime.Now.Year @loginAppTitle &mdash; تمامی حقوق محفوظ است</p>
+            </footer>
 
+        </div>
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Password toggle
+            const toggleBtn = document.getElementById('pwdToggleBtn');
+            const pwdField = document.getElementById('pwdField');
+            const toggleIcon = document.getElementById('pwdToggleIcon');
+
+            toggleBtn?.addEventListener('click', () => {
+                const isPassword = pwdField.getAttribute('type') === 'password';
+                pwdField.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+
+            // CapsLock Warning
+            const capsHint = document.getElementById('capsHint');
+            pwdField?.addEventListener('keyup', (e) => {
+                if (e.getModifierState && e.getModifierState('CapsLock')) {
+                    capsHint.style.display = 'flex';
+                } else {
+                    capsHint.style.display = 'none';
+                }
+            });
+
+            // Form Submit Loading State
+            const form = document.getElementById('loginForm');
+            const submitBtn = document.getElementById('submitBtn');
+            form?.addEventListener('submit', function () {
+                if ($(this).valid()) {
+                    submitBtn.classList.add('loading');
+                    submitBtn.disabled = true;
+                    submitBtn.querySelector('.btn-text-wrap').style.display = 'none';
+                    submitBtn.querySelector('.btn-spinner-wrap').style.display = 'flex';
+                }
+            });
+        });
+    </script>
+</body>
 </html>

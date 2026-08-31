@@ -2,9 +2,15 @@
     'use strict';
 
     var tp = document.getElementById('tab-attachments');
-    if (!tp) return;
+    if (!tp) {
+        console.warn('[Attachments] المان #tab-attachments یافت نشد.');
+        return;
+    }
     var cid = tp.getAttribute('data-contract-id');
-    if (!cid) return;
+    if (!cid) {
+        console.warn('[Attachments] شناسه قرارداد (data-contract-id) یافت نشد.');
+        return;
+    }
 
     var dz = document.getElementById('contractDropzone');
     var fi = document.getElementById('contractFileInput');
@@ -16,7 +22,130 @@
     var LIM = 20 * 1024 * 1024;
     var EXT = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png', '.gif', '.tiff', '.tif', '.bmp', '.zip', '.rar', '.7z', '.txt'];
 
-    // ── Modal form (prevent redirect on submit) ──────────────
+    // ── مدال تاییدیه اختصاصی با Tailwind بدون وابستگی خارجی ──────────────
+    function showLocalConfirm(title, message, onConfirm) {
+        var existingModal = document.getElementById('rhynoConfirmModal');
+        if (existingModal) existingModal.remove();
+
+        var modalHtml = 
+            '<div id="rhynoConfirmModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 transition-opacity">' +
+                '<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full p-5 border border-slate-200 dark:border-slate-800 transform transition-all">' +
+                    '<div class="flex items-center gap-3 mb-3 text-rose-600 dark:text-rose-500">' +
+                        '<div class="flex items-center justify-center h-9 w-9 rounded-xl bg-rose-50 dark:bg-rose-950/50">' +
+                            '<i class="bi bi-trash text-lg"></i>' +
+                        '</div>' +
+                        '<h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">' + title + '</h3>' +
+                    '</div>' +
+                    '<p class="text-xs text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">' + message + '</p>' +
+                    '<div class="flex justify-end gap-2">' +
+                        '<button type="button" id="btnConfirmCancel" class="px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer">انصراف</button>' +
+                        '<button type="button" id="btnConfirmOk" class="px-3.5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm transition cursor-pointer">حذف شود</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        var modal = document.getElementById('rhynoConfirmModal');
+        var btnCancel = document.getElementById('btnConfirmCancel');
+        var btnOk = document.getElementById('btnConfirmOk');
+
+        function closeModal() {
+            if (modal) modal.remove();
+        }
+
+        btnCancel.addEventListener('click', closeModal);
+        btnOk.addEventListener('click', function () {
+            closeModal();
+            onConfirm();
+        });
+    }
+
+    function csrf() {
+        var i = document.querySelector('input[name=__RequestVerificationToken]');
+        return i ? i.value : '';
+    }
+
+    function esc(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    // ── تابع حذف اصلی با لاگ دقیق کنسول ────────────────────────────────
+    window.deleteAttachment = function (attachmentId) {
+        console.log('[DeleteAttachment] ۱. کلیک بر روی حذف ضمیمه ID:', attachmentId);
+
+        showLocalConfirm('حذف ضمیمه', 'آیا از حذف این فایل ضمیمه اطمینان دارید؟ این عملیات قابل بازگشت نیست.', async function () {
+            console.log('[DeleteAttachment] ۲. کاربر دکمه حذف را در مدال کلیک کرد.');
+
+            var token = csrf();
+            console.log('[DeleteAttachment] ۳. وضعیت CSRF Token:', token ? 'یافت شد' : '❌ یافت نشد!');
+
+            var fd = new FormData();
+            fd.append('attachmentId', attachmentId);
+            fd.append('contractId', cid);
+            fd.append('__RequestVerificationToken', token);
+
+            try {
+                console.log('[DeleteAttachment] ۴. ارسال درخواست POST به /Contracts/DeleteAttachment...');
+                var response = await fetch('/Contracts/DeleteAttachment', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: fd
+                });
+
+                console.log('[DeleteAttachment] ۵. کد وضعیت HTTP دریافت شد:', response.status);
+
+                if (!response.ok) {
+                    console.error('[DeleteAttachment] ❌ خطا در پاسخ سرور. کد وضعیت:', response.status);
+                    alert('خطایی در سرور رخ داد (کد ' + response.status + ')');
+                    return;
+                }
+
+                var r = await response.json();
+                console.log('[DeleteAttachment] ۶. پاسخ JSON سرور:', r);
+
+                if (r.success) {
+                    console.log('[DeleteAttachment] ۷. عملیات حذف در سرور موفق بود. در حال حذف سطر DOM...');
+                    var row = document.querySelector('[data-attachment-id="' + attachmentId + '"]');
+                    if (row) {
+                        row.remove();
+                        console.log('[DeleteAttachment] ۸. سطر با موفقیت از جدول پاک شد.');
+                    } else {
+                        console.warn('[DeleteAttachment] ⚠️ سطری با data-attachment-id="' + attachmentId + '" در DOM پیدا نشد!');
+                    }
+
+                    var currentBody = document.getElementById('contractAttachmentsBody');
+                    if (currentBody && !currentBody.querySelector('tr')) {
+                        console.log('[DeleteAttachment] ۹. تمام سطرها حذف شدند، نمایش وضعیت خالی...');
+                        var tableWrapper = document.querySelector('#contractAttachmentsList .overflow-x-auto');
+                        if (tableWrapper) tableWrapper.remove();
+
+                        ae = document.getElementById('contractAttachmentsEmpty');
+                        if (ae) {
+                            ae.classList.remove('hidden');
+                        } else {
+                            var emptyHtml = '<div class="text-center py-6" id="contractAttachmentsEmpty">' +
+                                '<div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">' +
+                                '<i class="bi bi-paperclip text-slate-400"></i></div>' +
+                                '<p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمیمه‌ای وجود ندارد.</p></div>';
+                            if (al) al.insertAdjacentHTML('beforeend', emptyHtml);
+                        }
+                    }
+                } else {
+                    console.error('[DeleteAttachment] ❌ خروجی سرور همراه با خطا بود:', r.message);
+                    alert(r.message || 'خطا در حذف فایل');
+                }
+            } catch (err) {
+                console.error('[DeleteAttachment] ❌ خطای شبکه یا اجرای اسکریپت:', err);
+                alert('خطا در ارتباط با سرور');
+            }
+        });
+    };
+
+    // ── فرم مودال آپلود ──────────────────────────────────────────────
     var modalForm = document.querySelector('#uploadAttachmentModal form');
     if (modalForm) {
         modalForm.addEventListener('submit', function (e) {
@@ -25,7 +154,6 @@
             if (!fileInput || !fileInput.files || !fileInput.files.length) return;
             hf(fileInput.files);
             fileInput.value = '';
-            // close modal
             var modal = modalForm.closest('.fixed');
             if (modal) {
                 modal.classList.add('hidden');
@@ -35,19 +163,6 @@
     }
 
     if (!dz || !fi) return;
-
-    function csrf() {
-        var i = document.querySelector('input[name=__RequestVerificationToken]');
-        if (i) return i.value;
-        return '';
-    }
-
-    function esc(s) {
-        if (!s) return '';
-        var d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
-    }
 
     function sz(b) {
         if (b < 1024) return b + ' B';
@@ -128,7 +243,6 @@
                     if (r.success) { fq(qid, true, ''); ar(r.attachment); }
                     else { fq(qid, false, r.message || 'خطا در بارگذاری'); }
                 } catch (ex) { fq(qid, false, 'پاسخ نامعتبر سرور'); }
-                // Remove queue item after delay
                 setTimeout(function () {
                     var qi = qe.querySelector('[data-queue-id="' + qid + '"]');
                     if (qi) { qi.remove(); if (!qe.querySelector('.contract-upload-item')) qe.classList.remove('active'); }
@@ -155,8 +269,10 @@
             '<td class="px-3 py-2 text-center"><div class="inline-flex gap-1">' +
             '<button type="button" onclick="openAttachmentPreview(' + a.id + ', \'' + esc(a.fileName).replace(/'/g, "\\'") + '\', \'' + esc(a.contentType || '') + '\', ' + a.fileSize + ', \'' + downloadUrl + '\')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition cursor-pointer" title="پیش‌نمایش"><i class="bi bi-eye"></i></button>' +
             '<a href="' + downloadUrl + '" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود"><i class="bi bi-download"></i></a>' +
-            '<button type="button" onclick="deleteAttachment(' + a.id + ')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف"><i class="bi bi-trash"></i></button>' +
+            '<button type="button" onclick="deleteAttachment(' + a.id + ')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition cursor-pointer" title="حذف"><i class="bi bi-trash"></i></button>' +
             '</div></td></tr>';
+
+        ab = document.getElementById('contractAttachmentsBody');
         if (ab) { ab.insertAdjacentHTML('beforeend', h); }
         else {
             var th = '<div class="overflow-x-auto"><table class="w-full text-[11px]"><thead><tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">' +
@@ -174,66 +290,12 @@
                 else al.insertAdjacentHTML('beforeend', th);
             }
         }
-        // Re-bind ab reference
         ab = document.getElementById('contractAttachmentsBody');
-    }
-
-    // ── Delete via AJAX ────────────────────────────────────
-    window.deleteAttachment = function (attachmentId) {
-        if (!confirm('فایل حذف شود؟')) return;
-        var fd = new FormData();
-        fd.append('attachmentId', attachmentId);
-        fd.append('contractId', cid);
-        fd.append('__RequestVerificationToken', csrf());
-        var x = new XMLHttpRequest();
-        x.addEventListener('load', function () {
-            if (x.status >= 200 && x.status < 300) {
-                try {
-                    var r = JSON.parse(x.responseText);
-                    if (r.success) {
-                        // Remove row
-                        var row = document.querySelector('[data-attachment-id="' + attachmentId + '"]');
-                        if (row) row.remove();
-                        // Show empty state if no rows left
-                        if (ab && !ab.querySelector('tr')) {
-                            var tableWrapper = document.querySelector('#contractAttachmentsList .overflow-x-auto');
-                            if (tableWrapper) tableWrapper.remove();
-                            if (ae) ae.classList.remove('hidden');
-                            // Show empty state if it was removed, recreate
-                            if (!document.getElementById('contractAttachmentsEmpty')) {
-                                var emptyHtml = '<div class="text-center py-6" id="contractAttachmentsEmpty">' +
-                                    '<div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">' +
-                                    '<i class="bi bi-paperclip text-slate-400"></i></div>' +
-                                    '<p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمیمه‌ای وجود ندارد.</p></div>';
-                                var list = document.getElementById('contractAttachmentsList');
-                                if (list) list.insertAdjacentHTML('beforeend', emptyHtml);
-                            }
-                        }
-                    } else { alert(r.message || 'خطا در حذف فایل'); }
-                } catch (ex) { alert('خطا در حذف فایل'); }
-            } else { alert('خطا در حذف فایل'); }
-        });
-        x.addEventListener('error', function () { alert('خطای شبکه'); });
-        x.open('POST', '/Contracts/DeleteAttachment', true);
-        x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        x.send(fd);
-    };
-
-    function hf(list) {
-        ce();
-        var fs = [];
-        for (var i = 0; i < list.length; i++) fs.push(list[i]);
-        var r = val(fs);
-        se(r.errors);
-        for (var j = 0; j < r.valid.length; j++) {
-            var qid = aq(r.valid[j]);
-            ul(r.valid[j], qid);
-        }
     }
 
     function pd(e) { e.preventDefault(); e.stopPropagation(); }
 
-    dz.addEventListener('click', function (e) { fi.click(); });
+    dz.addEventListener('click', function () { fi.click(); });
     fi.addEventListener('change', function (e) {
         if (e.target.files && e.target.files.length > 0) hf(e.target.files);
         e.target.value = '';
@@ -247,7 +309,7 @@
     dz.addEventListener('dragleave', function (e) { pd(e); if (!dz.contains(e.relatedTarget)) dz.classList.remove('drag-over'); }, false);
     dz.addEventListener('drop', function (e) { pd(e); dz.classList.remove('drag-over'); if (e.dataTransfer.files && e.dataTransfer.files.length > 0) hf(e.dataTransfer.files); }, false);
 
-    // ── Convert server-rendered delete forms to AJAX ──────
+    // ── هندل کردن فرم‌های سابمیت‌شده حذف ──────────────────────────────
     document.querySelectorAll('#contractAttachmentsList form[action*="DeleteAttachment"]').forEach(function (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();

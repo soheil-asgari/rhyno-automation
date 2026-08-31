@@ -1,19 +1,11 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
+﻿#nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using OfficeAutomation.Models;
 
 namespace OfficeAutomation.Areas.Identity.Pages.Account
@@ -30,51 +22,32 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
             _logger = logger;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
-        public InputModel Input { get; set; }
+        public InputModel Input { get; set; } = new();
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public IList<AuthenticationScheme> ExternalLogins { get; set; }
+        public IList<AuthenticationScheme> ExternalLogins { get; set; } = [];
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public string ReturnUrl { get; set; }
+        public string? ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [TempData]
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
-            [Required(ErrorMessage = "نام کاربری الزامی است")]
-            // [EmailAddress] <--- این خط را پاک کن تا "soheil" خطا ندهد
-            public string Email { get; set; }
+            [Required(ErrorMessage = "لطفاً نام کاربری یا ایمیل خود را وارد کنید.")]
+            [Display(Name = "نام کاربری یا ایمیل")]
+            public string Email { get; set; } = string.Empty;
 
-            [Required(ErrorMessage = "رمز عبور الزامی است")]
+            [Required(ErrorMessage = "لطفاً رمز عبور را وارد کنید.")]
             [DataType(DataType.Password)]
-            public string Password { get; set; }
+            [Display(Name = "رمز عبور")]
+            public string Password { get; set; } = string.Empty;
 
             [Display(Name = "مرا به خاطر بسپار")]
             public bool RememberMe { get; set; }
         }
 
-        public async Task OnGetAsync(string returnUrl = null)
+        public async Task OnGetAsync(string? returnUrl = null)
         {
             if (!string.IsNullOrEmpty(ErrorMessage))
             {
@@ -82,58 +55,57 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
             }
 
             returnUrl ??= Url.Content("~/");
-
-            // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
             ReturnUrl = returnUrl;
         }
 
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
-            // Sanitize returnUrl to prevent open-redirect attacks. Only redirect to a
-            // local URL; fall back gracefully to "/" when null, empty, or non-local.
-            if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
-            {
-                returnUrl = Url.Content("~/");
-            }
+            returnUrl = (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl)) 
+                ? Url.Content("~/") 
+                : returnUrl;
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var loginName = Input.Email?.Trim();
-                var password = Input.Password?.Trim();
-                var user = await _signInManager.UserManager.FindByNameAsync(loginName)
-                    ?? await _signInManager.UserManager.FindByEmailAsync(loginName);
-                var userName = user?.UserName ?? loginName;
-
-                // Count failed attempts so repeated bad credentials trigger Identity lockout.
-                var result = await _signInManager.PasswordSignInAsync(userName, password, Input.RememberMe, lockoutOnFailure: true);
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
-                }
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return RedirectToPage("./Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "نام کاربری یا رمز عبور اشتباه است.");
-                    return Page();
-                }
+                return Page();
             }
 
-            // If we got this far, something failed, redisplay form
+            var identifier = Input.Email.Trim();
+            var password = Input.Password.Trim();
+
+            // جستجو هم بر اساس UserName و هم Email
+            var user = await _signInManager.UserManager.FindByNameAsync(identifier)
+                       ?? await _signInManager.UserManager.FindByEmailAsync(identifier);
+
+            var resolvedUserName = user?.UserName ?? identifier;
+
+            var result = await _signInManager.PasswordSignInAsync(
+                resolvedUserName, 
+                password, 
+                Input.RememberMe, 
+                lockoutOnFailure: true);
+
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User '{UserName}' logged in successfully.", resolvedUserName);
+                return LocalRedirect(returnUrl);
+            }
+
+            if (result.RequiresTwoFactor)
+            {
+                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+            }
+
+            if (result.IsLockedOut)
+            {
+                _logger.LogWarning("User account '{UserName}' locked out.", resolvedUserName);
+                return RedirectToPage("./Lockout");
+            }
+
+            ModelState.AddModelError(string.Empty, "نام کاربری یا کلمه عبور وارد شده نادرست است.");
             return Page();
         }
     }
