@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Net.Http.Headers;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services.Contracts;
 using OfficeAutomation.Services.Security;
@@ -20,8 +21,8 @@ public class ContractsController : Controller
     private readonly IContractReportService _reportService;
     private readonly IContractExportService _exportService;
     private readonly IPaymentScheduleService _paymentScheduleService;
-
-    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, IPaymentScheduleService paymentScheduleService, ILogger<ContractsController> logger)
+    private readonly IWebHostEnvironment _env;
+    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, IPaymentScheduleService paymentScheduleService, ILogger<ContractsController> logger, IWebHostEnvironment env)
     {
         _contractService = contractService;
         _signatureService = signatureService;
@@ -31,6 +32,7 @@ public class ContractsController : Controller
         _exportService = exportService;
         _paymentScheduleService = paymentScheduleService;
         _logger = logger;
+        _env = env;
     }
 
     private string GetCurrentUserId()
@@ -102,7 +104,7 @@ public class ContractsController : Controller
         return View(vm);
     }
 
-// ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     //  Reports
     // ═══════════════════════════════════════════════════════════════
 
@@ -424,7 +426,7 @@ public class ContractsController : Controller
             return Content("<div class=\"text-center py-4 text-[11px] text-rose-500\"><i class=\"bi bi-exclamation-triangle ml-1\"></i>خطا در بارگذاری برنامه پرداخت.</div>", "text/html");
         }
     }
-// ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     //  Payment Schedule — Generate & Delete
     // ═══════════════════════════════════════════════════════════════
 
@@ -779,7 +781,7 @@ public class ContractsController : Controller
         var preview = await _contractService.PreviewTemplateAsync(id, currentUserId, ct);
         return Content(preview, "text/html", System.Text.Encoding.UTF8);
     }
-// â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
     //  E-Signature: Internal Sign
     // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
@@ -869,11 +871,24 @@ public class ContractsController : Controller
             var requests = await _signatureService.GetSignatureRequestsAsync(contractId, ct);
             var data = requests.Select(r => new
             {
-                r.Id, r.Title, r.Status, r.DeliveryMethod, r.SigningOrder, r.AutoActivateContract, r.CreatedAt, r.CompletedAt,
+                r.Id,
+                r.Title,
+                r.Status,
+                r.DeliveryMethod,
+                r.SigningOrder,
+                r.AutoActivateContract,
+                r.CreatedAt,
+                r.CompletedAt,
                 Signers = r.Signers.Select(s => new
                 {
-                    s.Id, s.UserId, UserName = s.User?.FullName ?? s.FullName ?? s.Email ?? "ظ†ط§ظ…ط´ط®طµ",
-                    s.SignerType, s.Result, s.SignOrder, s.SignedAt, hasSignatureImage = s.SignatureImageData != null
+                    s.Id,
+                    s.UserId,
+                    UserName = s.User?.FullName ?? s.FullName ?? s.Email ?? "ظ†ط§ظ…ط´ط®طµ",
+                    s.SignerType,
+                    s.Result,
+                    s.SignOrder,
+                    s.SignedAt,
+                    hasSignatureImage = s.SignatureImageData != null
                 }),
                 AuditLogs = r.AuditLogs.Select(a => new { a.EventType, a.Description, a.CreatedAt })
             });
@@ -885,7 +900,7 @@ public class ContractsController : Controller
             return Json(new { success = false, message = ex.Message });
         }
     }
-// ════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════
     //  Attachment Versioning
     // ════════════════════════════════════════════════════════════
 
@@ -963,14 +978,22 @@ public class ContractsController : Controller
             return Json(new { success = false, message = "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø§Ø²Ú¯Ø±Ø¯Ø§Ù†ÛŒ Ù†Ø³Ø®Ù‡: " + ex.Message });
         }
     }
-// ════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════
     //  Attachment Preview
     // ════════════════════════════════════════════════════════════
+
+    private static readonly HashSet<string> PreviewableImageExts = new(
+        [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".svg"],
+        StringComparer.OrdinalIgnoreCase);
+
+    private static readonly HashSet<string> PreviewableTextExts = new(
+        [".txt", ".csv", ".log", ".json", ".xml", ".md", ".yaml", ".yml", ".ini", ".cfg", ".config"],
+        StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Returns file content for previewing an attachment in the browser.
     /// For PDF/images/text, returns the file stream directly.
-    /// For unsupported types, returns a 404 with an error message.
+    /// For unsupported types, returns a JSON response with previewUnavailable = true.
     /// </summary>
     [HttpGet("Contracts/Attachment/{attachmentId}/Preview")]
     public async Task<IActionResult> PreviewAttachment(int attachmentId, CancellationToken ct)
@@ -978,128 +1001,65 @@ public class ContractsController : Controller
         try
         {
             var userId = GetCurrentUserId();
-            // Get attachment with access check
             var attachment = await _contractService.GetAttachmentAsync(attachmentId, userId, ct);
+
             if (attachment == null)
             {
                 _logger.LogWarning("Attachment {AttachmentId} not found for preview", attachmentId);
-                return Ok(new
-                {
-                    success = false,
-                    previewUnavailable = true,
-                    message = "پیوست مورد نظر یافت نشد.",
-                    fileName = (string?)null,
-                    fileSize = (long?)null,
-                    contentType = (string?)null
-                });
+                return CreateUnavailableResult("پیوست مورد نظر یافت نشد.");
             }
 
-            // Determine the file path: first try CurrentVersion, then fallback to RelativePath,
-            // then try direct upload path pattern
-            string? filePath = null;
-            string? contentType = attachment.ContentType;
-            string fileName = attachment.FileName;
-    
-            if (attachment.CurrentVersionId.HasValue)
+            // یافتن مسیر فیزیکی فایل
+            string? filePath = await ResolveFilePathAsync(attachment, userId, ct);
+
+            if (string.IsNullOrEmpty(filePath) || !System.IO.File.Exists(filePath))
             {
-                filePath = await _attachmentVersionService.GetVersionFilePathAsync(attachment.CurrentVersionId.Value, userId, ct);
+                _logger.LogWarning("Preview file not found for attachment {AttachmentId}, CurrentVersionId={VersionId}",
+                    attachmentId, attachment.CurrentVersionId);
+
+                return CreateUnavailableResult(
+                    "فایل پیوست در سرور یافت نشد. ممکن است حذف شده باشد.",
+                    attachment.FileName, attachment.FileSize, attachment.ContentType);
             }
-    
-            // Fallback: use attachment.RelativePath
-            if (filePath == null && !string.IsNullOrEmpty(attachment.RelativePath))
+
+            var fileName = attachment.FileName;
+            var ext = Path.GetExtension(fileName);
+            var contentType = attachment.ContentType;
+
+            // ۱. فایل‌های PDF با پشتیبانی از HTTP 206 Partial Content
+            if (".pdf".Equals(ext, StringComparison.OrdinalIgnoreCase))
             {
-                var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"));
-                var candidate = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
-                if (candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(candidate))
+                // اگر درخواست Blob از سمت JS است (query param ?blob=1)
+                // با Content-Type خنثی سرو کنیم تا IDM نتواند رهگیری کند
+                if (Request.Query.ContainsKey("blob"))
                 {
-                    filePath = candidate;
+                    return PhysicalFile(filePath, "application/octet-stream", enableRangeProcessing: false);
                 }
-            }
-    
-            // Final fallback: scan the contract's upload directory for any file matching the StoredFileName
-            if (filePath == null && !string.IsNullOrEmpty(attachment.StoredFileName))
-            {
-                var contractDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", attachment.ContractId.ToString());
-                if (Directory.Exists(contractDir))
-                {
-                    var directFile = Directory.GetFiles(contractDir)
-                        .FirstOrDefault(f => Path.GetFileName(f).Equals(attachment.StoredFileName, StringComparison.OrdinalIgnoreCase));
-                    if (directFile != null)
-                    {
-                        filePath = directFile;
-                    }
-                }
-            }
-    
-            if (filePath == null || !System.IO.File.Exists(filePath))
-            {
-                _logger.LogWarning("Preview file not found for attachment {AttachmentId}, CurrentVersionId={VersionId}, RelativePath={Path}, StoredFileName={StoredFileName}",
-                    attachmentId, attachment.CurrentVersionId, attachment.RelativePath, attachment.StoredFileName);
-                // Return preview-unavailable instead of 404 so the frontend shows a meaningful message
-                return Ok(new
-                {
-                    success = false,
-                    previewUnavailable = true,
-                    message = "فایل پیوست در سرور یافت نشد. ممکن است حذف شده باشد.",
-                    fileName = attachment.FileName,
-                    fileSize = attachment.FileSize,
-                    contentType = attachment.ContentType
-                });
+                SetInlineContentDisposition(fileName);
+                return PhysicalFile(filePath, contentType ?? "application/pdf", enableRangeProcessing: true);
             }
 
-            var ext = System.IO.Path.GetExtension(fileName).ToLowerInvariant();
-            var previewableImageExts = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".svg" };
-            var previewableTextExts = new[] { ".txt", ".csv", ".log", ".json", ".xml", ".md", ".yaml", ".yml", ".ini", ".cfg", ".config" };
-
-            // PDF: return file stream (inline for browser preview)
-            if (ext == ".pdf")
+            // ۲. تصاویر
+            if (PreviewableImageExts.Contains(ext))
             {
-                Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
-                return PhysicalFile(filePath, contentType ?? "application/pdf");
-            }
-
-            // Images: return file stream (inline for browser preview)
-            if (previewableImageExts.Contains(ext))
-            {
-                var imageContentType = contentType;
-                if (string.IsNullOrEmpty(imageContentType) || imageContentType == "application/octet-stream")
-                {
-                    imageContentType = ext switch
-                    {
-                        ".jpg" or ".jpeg" => "image/jpeg",
-                        ".png" => "image/png",
-                        ".gif" => "image/gif",
-                        ".bmp" => "image/bmp",
-                        ".tiff" or ".tif" => "image/tiff",
-                        ".webp" => "image/webp",
-                        ".svg" => "image/svg+xml",
-                        _ => "application/octet-stream"
-                    };
-                }
-                Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+                var imageContentType = GetImageContentType(ext, contentType);
+                SetInlineContentDisposition(fileName);
                 return PhysicalFile(filePath, imageContentType);
             }
 
-            // Text: read content and return as plain text
-            if (previewableTextExts.Contains(ext))
+            // ۳. متون متنی (محدود به 500KB)
+            if (PreviewableTextExts.Contains(ext))
             {
                 var text = await System.IO.File.ReadAllTextAsync(filePath, ct);
-                // Limit to first 500KB to avoid huge responses
                 if (text.Length > 512000)
+                {
                     text = text[..512000] + "\n\n... (فایل بزرگتر از حد مجاز برای نمایش است)";
+                }
                 return Content(text, "text/plain; charset=utf-8");
             }
 
-            // Unsupported type: return JSON with preview-not-available indicator
-            return Ok(new
-            {
-                success = false,
-                previewUnavailable = true,
-                message = "پیش‌نمایش برای این نوع فایل در دسترس نیست.",
-                fileName,
-                fileSize = attachment.FileSize,
-                contentType = contentType
-            });
+            // ۴. فرمت‌های غیرقابل پیش‌نمایش مستقیم
+            return CreateUnavailableResult("پیش‌نمایش برای این نوع فایل در دسترس نیست.", fileName, attachment.FileSize, contentType);
         }
         catch (UnauthorizedAccessException)
         {
@@ -1108,32 +1068,106 @@ public class ContractsController : Controller
         catch (KeyNotFoundException ex)
         {
             _logger.LogWarning(ex, "Parent contract not found for attachment {AttachmentId}", attachmentId);
-            return Ok(new
-            {
-                success = false,
-                previewUnavailable = true,
-                message = "فایل پیوست در سرور یافت نشد. ممکن است حذف شده باشد.",
-                fileName = (string?)null,
-                fileSize = (long?)null,
-                contentType = (string?)null
-            });
+            return CreateUnavailableResult("فایل پیوست در سرور یافت نشد. ممکن است حذف شده باشد.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to preview attachment {AttachmentId}", attachmentId);
-            _logger.LogError("PREVIEW_DIAG: AttachmentId={AttachmentId}, ExType={ExType}, ExMsg={ExMsg}, InnerEx={InnerEx}, StackTrace={Stack}",
-                attachmentId, ex.GetType().Name, ex.Message, ex.InnerException?.Message ?? "null", ex.StackTrace);
+
             return Ok(new
             {
                 success = false,
                 previewUnavailable = true,
-                message = "خطا در بارگذاری پیش‌نمایش فایل.",
-                fileName = (string?)null,
-                fileSize = (long?)null,
-                contentType = (string?)null
+                message = "خطای غیرمنتظره‌ای در بارگذاری پیش‌نمایش رخ داد.",
+                details = _env.IsDevelopment() ? ex.ToString() : null
             });
         }
     }
+
+    #region Helper Methods
+
+    // تغییر ورودی به مدل OfficeAutomation.Models.ContractAttachment و اصلاح تایپ userId به dynamic/string
+    private async Task<string?> ResolveFilePathAsync(OfficeAutomation.Models.ContractAttachment attachment, dynamic userId, CancellationToken ct)
+    {
+        // 1. Current Version Path
+        if (attachment.CurrentVersionId.HasValue)
+        {
+            var versionPath = await _attachmentVersionService.GetVersionFilePathAsync(attachment.CurrentVersionId.Value, userId, ct);
+            if (!string.IsNullOrEmpty(versionPath) && System.IO.File.Exists(versionPath))
+                return versionPath;
+        }
+
+        // 2. Relative Path (با ایمن‌سازی کامل Path Traversal)
+        if (!string.IsNullOrEmpty(attachment.RelativePath))
+        {
+            var root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts"))
+                       + Path.DirectorySeparatorChar;
+            var candidate = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.RelativePath.TrimStart('/')));
+
+            if (candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        // 3. Stored File Name Scan
+        if (!string.IsNullOrEmpty(attachment.StoredFileName))
+        {
+            var contractDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", attachment.ContractId.ToString());
+            if (Directory.Exists(contractDir))
+            {
+                var directFile = Directory.GetFiles(contractDir)
+                    .FirstOrDefault(f => Path.GetFileName(f).Equals(attachment.StoredFileName, StringComparison.OrdinalIgnoreCase));
+
+                if (directFile != null) return directFile;
+            }
+        }
+
+        return null;
+    }
+
+    private void SetInlineContentDisposition(string fileName)
+    {
+        var disposition = new ContentDispositionHeaderValue("inline")
+        {
+            FileName = fileName,
+            FileNameStar = fileName
+        };
+        Response.Headers[HeaderNames.ContentDisposition] = disposition.ToString();
+    }
+
+    private static string GetImageContentType(string ext, string? fallbackContentType)
+    {
+        if (!string.IsNullOrEmpty(fallbackContentType) && fallbackContentType != "application/octet-stream")
+            return fallbackContentType;
+
+        return ext switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".tiff" or ".tif" => "image/tiff",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            _ => "application/octet-stream"
+        };
+    }
+
+    private IActionResult CreateUnavailableResult(string message, string? fileName = null, long? fileSize = null, string? contentType = null)
+    {
+        return Ok(new
+        {
+            success = false,
+            previewUnavailable = true,
+            message,
+            fileName,
+            fileSize,
+            contentType
+        });
+    }
+
+    #endregion
 
     // ═══════════════════════════════════════════════════════════════
     //  Bulk Action

@@ -25,13 +25,13 @@
     var errorEl = document.getElementById('previewError');
 
     /** Determine if a content type / extension is previewable */
+    var imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg'];
+    var textExts = ['.txt', '.csv', '.log', '.json', '.xml', '.md', '.yaml', '.yml', '.ini', '.cfg', '.config'];
+
     function getPreviewType(fileName, contentType) {
         var ext = (fileName || '').toLowerCase();
         var dotIdx = ext.lastIndexOf('.');
         ext = dotIdx >= 0 ? ext.substring(dotIdx) : '';
-
-        var imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg'];
-        var textExts = ['.txt', '.csv', '.log', '.json', '.xml', '.md', '.yaml', '.yml', '.ini', '.cfg', '.config'];
 
         if (ext === '.pdf') return 'pdf';
         if (imageExts.indexOf(ext) >= 0) return 'image';
@@ -52,6 +52,7 @@
         if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / 1048576).toFixed(1) + ' MB';
     }
+
     function hideAllPanels() {
         [pdfContainer, imgContainer, textContainer, unsupportedEl, errorEl].forEach(function (el) {
             if (el) el.classList.add('hidden');
@@ -75,11 +76,35 @@
         var previewUrl = '/Contracts/Attachment/' + attachmentId + '/Preview';
 
         if (previewType === 'pdf') {
-            loadingEl.classList.add('hidden');
-            contentEl.classList.remove('hidden');
-            pdfContainer.classList.remove('hidden');
-            pdfFrame.src = previewUrl;
-            showFooter(fileName, fileSize, previewUrl);
+            // دریافت PDF به صورت Blob با Content-Type خنثی (application/octet-stream)
+            // تا IDM نتواند هدر application/pdf را ببیند
+            var blobUrl = previewUrl + '?blob=1';
+            fetch(blobUrl)
+                .then(function (resp) {
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    return resp.blob();
+                })
+                .then(function (blob) {
+                    // بازسازی Blob با Content-Type صحیح PDF تا Chrome PDFium فعال شود
+                    var pdfBlob = new Blob([blob], { type: 'application/pdf' });
+                    var objUrl = URL.createObjectURL(pdfBlob);
+                    // لود Blob در iframe — Chrome PDFium رندر را بر عهده می‌گیرد
+                    pdfFrame.src = objUrl;
+                    pdfContainer.innerHTML = '';
+                    pdfContainer.appendChild(pdfFrame);
+                    loadingEl.classList.add('hidden');
+                    contentEl.classList.remove('hidden');
+                    pdfContainer.classList.remove('hidden');
+                    showFooter(fileName, fileSize, downloadUrl || previewUrl);
+                })
+                .catch(function () {
+                    // fallback: مستقیم در iframe با URL اصلی (IDM ممکن است بگیرد)
+                    pdfFrame.src = previewUrl;
+                    loadingEl.classList.add('hidden');
+                    contentEl.classList.remove('hidden');
+                    pdfContainer.classList.remove('hidden');
+                    showFooter(fileName, fileSize, downloadUrl || previewUrl);
+                });
         } else if (previewType === 'image') {
             imgEl.onload = function () {
                 loadingEl.classList.add('hidden');
@@ -157,9 +182,12 @@
 
     function closeModal() {
         modal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
+        document.body.style.overflow = '';
+        // Clean up all panel states
         pdfFrame.src = '';
-        imgEl.src = '';
+        imgEl.removeAttribute('src');
+        imgEl.onload = null;
+        imgEl.onerror = null;
         textEl.textContent = '';
         hideAllPanels();
     }
