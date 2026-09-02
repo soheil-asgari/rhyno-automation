@@ -34,13 +34,13 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
 
         public class InputModel
         {
-            [Required(ErrorMessage = "لطفاً نام کاربری یا ایمیل خود را وارد کنید.")]
+            [Required(ErrorMessage = "وارد کردن نام کاربری یا ایمیل الزامی است.")]
             [Display(Name = "نام کاربری یا ایمیل")]
             public string Email { get; set; } = string.Empty;
 
-            [Required(ErrorMessage = "لطفاً رمز عبور را وارد کنید.")]
+            [Required(ErrorMessage = "وارد کردن کلمه عبور الزامی است.")]
             [DataType(DataType.Password)]
-            [Display(Name = "رمز عبور")]
+            [Display(Name = "کلمه عبور")]
             public string Password { get; set; } = string.Empty;
 
             [Display(Name = "مرا به خاطر بسپار")]
@@ -62,8 +62,8 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
-            returnUrl = (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl)) 
-                ? Url.Content("~/") 
+            returnUrl = (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
+                ? Url.Content("~/")
                 : returnUrl;
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
@@ -76,21 +76,21 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
             var identifier = Input.Email.Trim();
             var password = Input.Password.Trim();
 
-            // جستجو هم بر اساس UserName و هم Email
+            // جستجو هم بر اساس UserName و هم Email بدون حساسیت به حروف
             var user = await _signInManager.UserManager.FindByNameAsync(identifier)
                        ?? await _signInManager.UserManager.FindByEmailAsync(identifier);
 
             var resolvedUserName = user?.UserName ?? identifier;
 
             var result = await _signInManager.PasswordSignInAsync(
-                resolvedUserName, 
-                password, 
-                Input.RememberMe, 
+                resolvedUserName,
+                password,
+                Input.RememberMe,
                 lockoutOnFailure: true);
 
             if (result.Succeeded)
             {
-                _logger.LogInformation("User '{UserName}' logged in successfully.", resolvedUserName);
+                _logger.LogInformation("کاربر '{UserName}' با موفقیت وارد سامانه شد.", resolvedUserName);
                 return LocalRedirect(returnUrl);
             }
 
@@ -101,11 +101,11 @@ namespace OfficeAutomation.Areas.Identity.Pages.Account
 
             if (result.IsLockedOut)
             {
-                _logger.LogWarning("User account '{UserName}' locked out.", resolvedUserName);
+                _logger.LogWarning("حساب کاربری '{UserName}' به دلیل تلاش‌های ناموفق قفل شده است.", resolvedUserName);
                 return RedirectToPage("./Lockout");
             }
 
-            ModelState.AddModelError(string.Empty, "نام کاربری یا کلمه عبور وارد شده نادرست است.");
+            ModelState.AddModelError(string.Empty, "نام کاربری یا کلمه عبور اشتباه است.");
             return Page();
         }
     }

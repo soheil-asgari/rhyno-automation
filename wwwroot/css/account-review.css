@@ -1,0 +1,71 @@
+.sg-review-container {
+    display: flex;
+    height: calc(100vh - 100px);
+    direction: rtl;
+    font-family: Vazir, Tahoma;
+    background: #f0f0f0;
+}
+
+.sg-sidebar {
+    width: 150px;
+    background: #e4e4e4;
+    border-left: 1px solid #ccc;
+    padding: 5px;
+}
+
+.sg-sidebar button {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 2px;
+    background: #fff;
+    border: 1px solid #bbb;
+    text-align: right;
+    cursor: pointer;
+}
+
+.sg-sidebar button.active {
+    background: #0078d7;
+    color: #fff;
+    border-color: #005a9e;
+}
+
+.sg-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.sg-filter-box {
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 15px;
+}
+
+.sg-grid-container {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #ccc;
+    overflow: auto;
+}
+
+.sg-grid {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: right;
+}
+
+.sg-grid th,
+.sg-grid td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.sg-grid th {
+    background: #e1dfdd;
+}

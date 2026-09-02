@@ -1,4 +1,4 @@
-@using System.Security.Claims
+﻿@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Antiforgery
 @using OfficeAutomation.Models
@@ -53,7 +53,7 @@
     }
 }
 <!DOCTYPE html>
-<html lang="fa" dir="rtl"@(string.IsNullOrWhiteSpace(brandPrimary) ? "" : $" style=\"--rk-accent:{brandPrimary};--rk-accent-light:{brandAccent};\"")>
+<html lang="fa" dir="rtl" @(string.IsNullOrWhiteSpace(brandPrimary) ? "" : $" style=\"--rk-accent:{brandPrimary};--rk-accent-light:{brandAccent};\"")>
 
 <head>
     <meta charset="utf-8" />
@@ -267,206 +267,306 @@
                                                                 <li><a class='menu-item @(currentController == "Letters" ? "active" : "")'
                                                                        asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i>
                                                                     نامه‌ها</a></li>
-                                                                    </ul>
-                                                                </div>
-                                                            }
+                                                                </ul>
+                                                            </div>
+                                                        }
 
-                                    <!-- Contracts Module (Standalone) -->
-                                    @if (userCanAccessContracts)
-                                    {
-                                        <div class="menu-group sidebar-module" data-module="contracts">
-                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                                                <span>قراردادها</span>
-                                                <i class="bi bi-chevron-down chevron"></i>
-                                            </button>
-                                            <ul class="menu-list module-children"
-                                                style="max-height:@(IsExpanded("Contracts") ? "400px" : "0");">
-                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Dashboard" ? "active" : "")'
-                                                       asp-controller="Contracts" asp-action="Dashboard"><i
-                                                    class="bi bi-grid-1x2 menu-icon"></i> داشبورد قراردادها</a></li>
-                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Index" ? "active" : "")'
-                                                       asp-controller="Contracts" asp-action="Index"><i
-                                                    class="bi bi-file-earmark-text menu-icon"></i> فهرست قراردادها</a></li>
-                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Create" ? "active" : "")'
-                                                       asp-controller="Contracts" asp-action="Create"><i
-                                                    class="bi bi-plus-circle menu-icon"></i> قرارداد جدید</a></li>
-                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Archive" ? "active" : "")'
-                                                       asp-controller="Contracts" asp-action="Archive"><i
-                                                    class="bi bi-archive menu-icon"></i> بایگانی</a></li>
-                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Settings" ? "active" : "")'
-                                                       asp-controller="Contracts" asp-action="Settings"><i
-                                                    class="bi bi-gear menu-icon"></i> تنظیمات</a></li>
-                                            </ul>
-                                        </div>
-                                    }
+                                                        <!-- Contracts Module (Standalone) -->
+                                                        @if (userCanAccessContracts)
+                                                        {
+                                                            <div class="menu-group sidebar-module" data-module="contracts">
+                                                                <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                    <span>قراردادها</span>
+                                                                    <i class="bi bi-chevron-down chevron"></i>
+                                                                </button>
+                                                                <ul class="menu-list module-children"
+                                                                    style="max-height:@(IsExpanded("Contracts") ? "400px" : "0");">
+                                                                    <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Dashboard" ? "active" : "")'
+                                                                           asp-controller="Contracts" asp-action="Dashboard"><i
+                                                                        class="bi bi-grid-1x2 menu-icon"></i> داشبورد قراردادها</a></li>
+                                                                        <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Index" ? "active" : "")'
+                                                                               asp-controller="Contracts" asp-action="Index"><i
+                                                                            class="bi bi-file-earmark-text menu-icon"></i> فهرست قراردادها</a></li>
+                                                                            <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Create" ? "active" : "")'
+                                                                                   asp-controller="Contracts" asp-action="Create"><i
+                                                                                class="bi bi-plus-circle menu-icon"></i> قرارداد جدید</a></li>
+                                                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Archive" ? "active" : "")'
+                                                                                       asp-controller="Contracts" asp-action="Archive"><i class="bi bi-archive menu-icon"></i>
+                                                                                    بایگانی</a></li>
+                                                                                    <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Settings" ? "active" : "")'
+                                                                                           asp-controller="Contracts" asp-action="Settings"><i class="bi bi-gear menu-icon"></i>
+                                                                                        تنظیمات</a></li>
+                                                                                    </ul>
+                                                                                </div>
+                                                                            }
 
-                                    <!-- Finance Module -->
-                                    @if (userCanAccessFinance)
-                                    {
-                                        <div class="menu-group sidebar-module" data-module="finance">
-                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                                                <span>مالی و حسابداری</span>
-                                                <i class="bi bi-chevron-down chevron"></i>
-                                            </button>
-                                            <ul class="menu-list module-children"
-                                                style="max-height:@(IsExpanded("Financial","Payroll","Bimeh","InvoiceIntake","InvoiceDashboard","Mowadiyan","TaxAnalytics") ? "1000px" : "0");">
-                                                <li><a class='menu-item @(currentController == "Financial" && currentAction == "Dashboard" ? "active" : "")'
-                                                       asp-controller="Financial" asp-action="Dashboard"><i
-                                                    class="bi bi-grid-3x3-gap menu-icon"></i> داشبورد مالی</a></li>
-                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "ChartOfAccounts" ? "active" : "")'
-                                                           asp-controller="Financial" asp-action="ChartOfAccounts"><i
-                                                        class="bi bi-diagram-2 menu-icon"></i> کدینگ حساب‌ها</a></li>
-                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "Ledger" ? "active" : "")'
-                                                               asp-controller="Financial" asp-action="Ledger"><i
-                                                            class="bi bi-journal-arrow-down menu-icon"></i> دفاتر حسابداری</a></li>
-                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "Invoices" ? "active" : "")'
-                                                           asp-controller="Financial" asp-action="Invoices"><i class="bi bi-receipt menu-icon"></i>
-                                                        فاکتورها</a></li>
-                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "LedgerOperations" ? "active" : "")'
-                                                               asp-controller="Financial" asp-action="LedgerOperations"><i
-                                                            class="bi bi-journal-richtext menu-icon"></i> دفتر کل</a></li>
-                                                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")'
-                                                                   asp-controller="Financial" asp-action="GetTrialBalance"><i
-                                                                class="bi bi-table menu-icon"></i> تراز آزمایشی</a></li>
-                                                                <li><a class='menu-item @(currentController == "Financial" && currentAction == "VatDashboard" ? "active" : "")'
-                                                                       asp-controller="Financial" asp-action="VatDashboard"><i
-                                                                    class="bi bi-percent menu-icon"></i> ارزش افزوده</a></li>
-                                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "SeasonalTax" ? "active" : "")'
-                                                                           asp-controller="Financial" asp-action="SeasonalTax"><i
-                                                                        class="bi bi-file-earmark-bar-graph menu-icon"></i> گزارشات فصلی ۱۶۹</a></li>
-                                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "ReportingHub" ? "active" : "")'
-                                                                               asp-controller="Financial" asp-action="ReportingHub"><i
-                                                                            class="bi bi-bar-chart-line menu-icon"></i> گزارش‌ها</a></li>
-                                                                            <!-- TAX MODULE MENU LOADED -->
-                                                                            <li><a class='menu-item @(currentController == "InvoiceIntake" ? "active" : "")'
-                                                                                   asp-controller="InvoiceIntake" asp-action="Index"><i
-                                                                                class="bi bi-receipt-cutoff menu-icon"></i> ورود و پردازش فاکتورها</a></li>
-                                                                                <li><a class='menu-item @(currentController == "InvoiceDashboard" ? "active" : "")'
-                                                                                       asp-controller="InvoiceDashboard" asp-action="Index"><i
-                                                                                    class="bi bi-graph-up-arrow menu-icon"></i> داشبورد جامع مالیاتی</a></li>
-                                                                                    <li><a class='menu-item @(currentController == "Mowadiyan" ? "active" : "")'
-                                                                                           asp-controller="Mowadiyan" asp-action="Index"><i class="bi bi-globe2 menu-icon"></i>
-                                                                                        سامانه مودیان و تطبیق</a></li>
-                                                                                        <li><a class='menu-item @(currentController == "TaxAnalytics" ? "active" : "")'
-                                                                                               asp-controller="TaxAnalytics" asp-action="Index"><i class="bi bi-robot menu-icon"></i>
-                                                                                            تحلیل و دستیار هوشمند مالیاتی</a></li>
+                                                                            <!-- Finance Module -->
+                                                                            <!-- Finance Module -->
+                                                                            @if (userCanAccessFinance)
+                                                                            {
+                                                                                <div class="menu-group sidebar-module" data-module="finance">
+                                                                                    <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                                        <span>مالی و حسابداری</span>
+                                                                                        <i class="bi bi-chevron-down chevron"></i>
+                                                                                    </button>
+                                                                                    <ul class="menu-list module-children"
+                                                                                        style="max-height:@(IsExpanded("Financial","Payroll","Bimeh","InvoiceIntake","InvoiceDashboard","Mowadiyan","TaxAnalytics","Commercial","TaxAudit") ? "1500px" : "0"); padding-left: 0;">
 
-                                                                                            <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")'
-                                                                                                   asp-controller="Payroll" asp-action="Index"><i class="bi bi-wallet2 menu-icon"></i>
-                                                                                                حقوق</a></li>
-                                                                                                <li><a class='menu-item @(currentController == "Bimeh" ? "active" : "")' asp-controller="Bimeh"
-                                                                                                           asp-action="Index"><i class="bi bi-shield-check menu-icon"></i> بیمه</a></li>
-                                                                                                </ul>
-                                                                                            </div>
-                                                                                        }
+                                                                                        <!-- زیرگروه ۱: حسابداری و دفاتر (آبی روشن با متن مشکی) -->
+                                                                                        <div class="sub-menu-group" style="margin-bottom: 6px;">
+                                                                                            <button type="button" onclick="toggleSubgroup(this)"
+                                                                                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 12px; background: #dbeafe; border-right: 4px solid #3b82f6; color: #000; font-size: 11.5px; font-weight: 700; border-radius: 4px; cursor: pointer; border-left: none; border-top: none; border-bottom: none;">
+                                                                                                <span><i class="bi bi-journal-text ml-1 text-blue-600"></i> حسابداری و دفاتر</span>
+                                                                                                <i class="bi bi-chevron-down chevron text-xs"
+                                                                                                   style="transform: rotate(-90deg); transition: transform 0.3s;"></i>
+                                                                                            </button>
+                                                                                            <ul class="sub-menu-list"
+                                                                                                style="max-height: 0px; overflow: hidden; transition: max-height 0.3s ease; padding-right: 8px; margin-top: 2px; list-style: none;">
+                                                                                                <li><a class='menu-item @(currentController == "Financial" && currentAction == "Dashboard" ? "active" : "")'
+                                                                                                       asp-controller="Financial" asp-action="Dashboard"><i
+                                                                                                    class="bi bi-grid-3x3-gap menu-icon"></i> داشبورد مالی</a></li>
+                                                                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "ChartOfAccounts" ? "active" : "")'
+                                                                                                           asp-controller="Financial" asp-action="ChartOfAccounts"><i
+                                                                                                        class="bi bi-diagram-2 menu-icon"></i> کدینگ حساب‌ها</a></li>
+                                                                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "Ledger" ? "active" : "")'
+                                                                                                               asp-controller="Financial" asp-action="Ledger"><i
+                                                                                                            class="bi bi-journal-arrow-down menu-icon"></i> دفاتر حسابداری</a></li>
+                                                                                                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "LedgerOperations" ? "active" : "")'
+                                                                                                                   asp-controller="Financial" asp-action="LedgerOperations"><i
+                                                                                                                class="bi bi-journal-richtext menu-icon"></i> دفتر کل</a></li>
+                                                                                                                <li><a class='menu-item @(currentController == "AccountReview" ? "active" : "")'
+                                                                                                                       asp-controller="AccountReview" asp-action="Index"><i
+                                                                                                                    class="bi bi-journal-text menu-icon"></i> مرور حساب‌ها</a></li>
+                                                                                                                <li><a class='menu-item @(currentController == "Financial" && currentAction == "GetTrialBalance" ? "active" : "")'
+                                                                                                                       asp-controller="Financial" asp-action="GetTrialBalance"><i
+                                                                                                                    class="bi bi-table menu-icon"></i> تراز آزمایشی</a></li>
+                                                                                                                    <li><a class='menu-item @(currentController == "Financial" && currentAction == "Invoices" ? "active" : "")'
+                                                                                                                           asp-controller="Financial" asp-action="Invoices"><i
+                                                                                                                        class="bi bi-receipt menu-icon"></i> فاکتورها</a></li>
+                                                                                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "ReportingHub" ? "active" : "")'
+                                                                                                                               asp-controller="Financial" asp-action="ReportingHub"><i
+                                                                                                                            class="bi bi-bar-chart-line menu-icon"></i> گزارش‌ها</a></li>
+                                                                                                                        </ul>
+                                                                                                                    </div>
 
-                                                                                        <!-- Warehouse Module -->
-                                                                                        @if (userCanAccessWarehouse)
-                                                                                        {
-                                                                                            <div class="menu-group sidebar-module" data-module="warehouse">
-                                                                                                <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                                                                                                    <span>انبار و عملیات</span>
-                                                                                                    <i class="bi bi-chevron-down chevron"></i>
-                                                                                                </button>
-                                                                                                <ul class="menu-list module-children"
-                                                                                                    style="max-height:@(IsExpanded("Warehouse","WarehouseInventory","WarehouseReceipts","WarehouseIssuances","WarehouseTransfer","Vendors","Waybill") ? "600px" : "0");">
-                                                                                                    <li><a class='menu-item @(currentController == "Warehouse" ? "active" : "")'
-                                                                                                           asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam menu-icon"></i>
-                                                                                                        داشبورد انبار</a></li>
-                                                                                                        <li><a class='menu-item @(currentController == "Warehouse" && currentAction == "Products" ? "active" : "")'
-                                                                                                               asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box menu-icon"></i>
-                                                                                                            کالاها</a></li>
-                                                                                                            <li><a class='menu-item @(currentController == "WarehouseInventory" && currentAction == "Stock" ? "active" : "")'
-                                                                                                                   asp-controller="WarehouseInventory" asp-action="Stock"><i
-                                                                                                                class="bi bi-layers menu-icon"></i> موجودی</a></li>
-                                                                                                                <li><a class='menu-item @(currentController == "WarehouseReceipts" ? "active" : "")'
-                                                                                                                       asp-controller="WarehouseReceipts" asp-action="Receipts"><i
-                                                                                                                    class="bi bi-box-arrow-in-down menu-icon"></i> رسیدها</a></li>
-                                                                                                                    <li><a class='menu-item @(currentController == "WarehouseIssuances" ? "active" : "")'
-                                                                                                                           asp-controller="WarehouseIssuances" asp-action="Issuances"><i
-                                                                                                                        class="bi bi-box-arrow-up menu-icon"></i> حواله‌ها</a></li>
-                                                                                                                        <li><a class='menu-item @(currentController == "Vendors" ? "active" : "")'
-                                                                                                                               asp-controller="Vendors" asp-action="Index"><i class="bi bi-building menu-icon"></i>
-                                                                                                                            تامین‌کنندگان</a></li>
-                                                                                                                            <li><a class='menu-item @(currentController == "Waybill" ? "active" : "")'
-                                                                                                                                   asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck menu-icon"></i>
-                                                                                                                                بارنامه</a></li>
-                                                                                                                            </ul>
-                                                                                                                        </div>
-                                                                                                                    }
+                                                                                                                    <!-- زیرگروه ۲: بازرگانی و فروش (سبز روشن با متن مشکی) -->
+                                                                                                                    <div class="sub-menu-group" style="margin-bottom: 6px;">
+                                                                                                                        <button type="button" onclick="toggleSubgroup(this)"
+                                                                                                                                style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 12px; background: #d1fae5; border-right: 4px solid #10b981; color: #000; font-size: 11.5px; font-weight: 700; border-radius: 4px; cursor: pointer; border-left: none; border-top: none; border-bottom: none;">
+                                                                                                                            <span><i class="bi bi-cart-check ml-1 text-emerald-600"></i> بازرگانی و فروش</span>
+                                                                                                                            <i class="bi bi-chevron-down chevron text-xs"
+                                                                                                                               style="transform: rotate(-90deg); transition: transform 0.3s;"></i>
+                                                                                                                        </button>
+                                                                                                                        <ul class="sub-menu-list"
+                                                                                                                            style="max-height: 0px; overflow: hidden; transition: max-height 0.3s ease; padding-right: 8px; margin-top: 2px; list-style: none;">
+                                                                                                                            <li><a class='menu-item @(currentController == "Commercial" && currentAction == "Sales" ? "active" : "")'
+                                                                                                                                   asp-controller="Commercial" asp-action="Sales"><i
+                                                                                                                                class="bi bi-graph-up-arrow menu-icon"></i> فروش (بازرگانی)</a></li>
+                                                                                                                                <li><a class='menu-item @(currentController == "Commercial" && currentAction == "Purchases" ? "active" : "")'
+                                                                                                                                       asp-controller="Commercial" asp-action="Purchases"><i
+                                                                                                                                    class="bi bi-cart menu-icon"></i> خرید (بازرگانی)</a></li>
+                                                                                                                                    <li><a class='menu-item @(currentController == "Commercial" && currentAction == "SalesReturns" ? "active" : "")'
+                                                                                                                                           asp-controller="Commercial" asp-action="SalesReturns"><i
+                                                                                                                                        class="bi bi-arrow-counterclockwise menu-icon"></i> برگشت از فروش</a></li>
+                                                                                                                                        <li><a class='menu-item @(currentController == "Commercial" && currentAction == "PurchaseReturns" ? "active" : "")'
+                                                                                                                                               asp-controller="Commercial" asp-action="PurchaseReturns"><i
+                                                                                                                                            class="bi bi-arrow-counterclockwise menu-icon"></i> برگشت از خرید</a></li>
+                                                                                                                                            <li><a class='menu-item @(currentController == "Commercial" && currentAction == "Quotations" ? "active" : "")'
+                                                                                                                                                   asp-controller="Commercial" asp-action="Quotations" asp-route-type="Sale"><i
+                                                                                                                                                class="bi bi-file-earmark-text menu-icon"></i> پیش‌فاکتورها</a></li>
+                                                                                                                                                <li><a class='menu-item @(currentController == "Commercial" && currentAction == "Parties" ? "active" : "")'
+                                                                                                                                                       asp-controller="Commercial" asp-action="Parties"><i
+                                                                                                                                                    class="bi bi-people menu-icon"></i> طرف‌های حساب</a></li>
+                                                                                                                                                </ul>
+                                                                                                                                            </div>
 
-                                                                                                                    <!-- Management Module -->
-                                                                                                                    @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
-                                                                                                                    {
-                                                                                                                        <div class="menu-group sidebar-module" data-module="management">
-                                                                                                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
-                                                                                                                                <span>مدیریت سیستم</span>
-                                                                                                                                <i class="bi bi-chevron-down chevron"></i>
-                                                                                                                            </button>
-                                                                                                                            <ul class="menu-list module-children"
-                                                                                                                                style="max-height:@(IsExpanded("ManagementDashboard","Settings","Security","AuditDashboard","ProcessAnalysis","Reports","DocumentArchive") ? "600px" : "0");">
-                                                                                                                                @if (userCanAccessSystemSettings)
-                                                                                                                                {
-                                                                                                                                    <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Overview" ? "active" : "")'
-                                                                                                                                           asp-controller="ManagementDashboard" asp-action="Overview"><i
-                                                                                                                                        class="bi bi-grid-1x2 menu-icon"></i> داشبورد مدیریتی</a></li>
-                                                                                                                                        <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Index" ? "active" : "")'
-                                                                                                                                               asp-controller="ManagementDashboard" asp-action="Index"><i
-                                                                                                                                            class="bi bi-stars menu-icon"></i> گزارش‌ساز هوشمند</a></li>
-                                                                                                                                            <li><a class='menu-item @(currentController == "Settings" ? "active" : "")'
-                                                                                                                                                   asp-controller="Settings" asp-action="Index"><i class="bi bi-gear menu-icon"></i>
-                                                                                                                                                تنظیمات</a></li>
-                                                                                                                                                <li><a class='menu-item @(currentController == "Security" ? "active" : "")'
-                                                                                                                                                       asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock menu-icon"></i>
-                                                                                                                                                    امنیت</a></li>
-                                                                                                                                                    <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")'
-                                                                                                                                                           asp-controller="Security" asp-action="WorkflowBuilder"><i
-                                                                                                                                                        class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
-                                                                                                                                                        <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")'
-                                                                                                                                                               asp-controller="DocumentArchive" asp-action="Index"><i
-                                                                                                                                                            class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
-                                                                                                                                                            <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")'
-                                                                                                                                                                   asp-controller="AuditDashboard" asp-action="Index"><i
-                                                                                                                                                                class="bi bi-activity menu-icon"></i> ممیزی</a></li>
-                                                                                                                                                            }
-                                                                                                                                                            @if (userCanAccessProcessAnalytics)
-                                                                                                                                                            {
-                                                                                                                                                                <li><a class='menu-item @(currentController == "ProcessAnalysis" ? "active" : "")'
-                                                                                                                                                                       asp-controller="ProcessAnalysis" asp-action="Index"><i
-                                                                                                                                                                    class="bi bi-diagram-3 menu-icon"></i> تحلیل فرایند</a></li>
-                                                                                                                                                                }
-                                                                                                                                                                <li><a class='menu-item @(currentController == "Reports" ? "active" : "")'
-                                                                                                                                                                       asp-controller="Reports" asp-action="Index"><i
-                                                                                                                                                                    class="bi bi-file-bar-graph menu-icon"></i> گزارشات</a></li>
-                                                                                                                                                                </ul>
-                                                                                                                                                            </div>
-                                                                                                                                                        }
+                                                                                                                                            <!-- زیرگروه ۳: مالیات و سامانه مؤدیان (نارنجی روشن با متن مشکی) -->
+                                                                                                                                            <div class="sub-menu-group" style="margin-bottom: 6px;">
+                                                                                                                                                <button type="button" onclick="toggleSubgroup(this)"
+                                                                                                                                                        style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 12px; background: #fef3c7; border-right: 4px solid #f59e0b; color: #000; font-size: 11.5px; font-weight: 700; border-radius: 4px; cursor: pointer; border-left: none; border-top: none; border-bottom: none;">
+                                                                                                                                                    <span><i class="bi bi-shield-check ml-1 text-amber-600"></i> مالیات و سامانه
+                                                                                                                                                        مؤدیان</span>
+                                                                                                                                                        <i class="bi bi-chevron-down chevron text-xs"
+                                                                                                                                                           style="transform: rotate(-90deg); transition: transform 0.3s;"></i>
+                                                                                                                                                    </button>
+                                                                                                                                                    <ul class="sub-menu-list"
+                                                                                                                                                        style="max-height: 0px; overflow: hidden; transition: max-height 0.3s ease; padding-right: 8px; margin-top: 2px; list-style: none;">
+                                                                                                                                                        <li><a class='menu-item @(currentController == "InvoiceIntake" ? "active" : "")'
+                                                                                                                                                               asp-controller="InvoiceIntake" asp-action="Index"><i
+                                                                                                                                                            class="bi bi-receipt-cutoff menu-icon"></i> ورود و پردازش فاکتورها</a></li>
+                                                                                                                                                            <li><a class='menu-item @(currentController == "InvoiceDashboard" ? "active" : "")'
+                                                                                                                                                                   asp-controller="InvoiceDashboard" asp-action="Index"><i
+                                                                                                                                                                class="bi bi-graph-up-arrow menu-icon"></i> داشبورد جامع مالیاتی</a></li>
+                                                                                                                                                                <li><a class='menu-item @(currentController == "Mowadiyan" && currentAction == "Index" ? "active" : "")'
+                                                                                                                                                                       asp-controller="Mowadiyan" asp-action="Index"><i
+                                                                                                                                                                    class="bi bi-globe2 menu-icon"></i> سامانه مؤدیان</a></li>
+                                                                                                                                                                    <li><a class='menu-item @(currentController == "Mowadiyan" && currentAction == "Reconciliation" ? "active" : "")'
+                                                                                                                                                                           asp-controller="Mowadiyan" asp-action="Reconciliation"><i
+                                                                                                                                                                        class="bi bi-arrow-left-right menu-icon"></i> تطبیق مالیاتی</a></li>
+                                                                                                                                                                        <li><a class='menu-item @(currentController == "Financial" && currentAction == "VatDashboard" ? "active" : "")'
+                                                                                                                                                                               asp-controller="Financial" asp-action="VatDashboard"><i
+                                                                                                                                                                            class="bi bi-percent menu-icon"></i> ارزش افزوده</a></li>
+                                                                                                                                                                            <li><a class='menu-item @(currentController == "Financial" && currentAction == "SeasonalTax" ? "active" : "")'
+                                                                                                                                                                                   asp-controller="Financial" asp-action="SeasonalTax"><i
+                                                                                                                                                                                class="bi bi-file-earmark-bar-graph menu-icon"></i> گزارشات فصلی ۱۶۹</a>
+                                                                                                                                                                            </li>
+                                                                                                                                                                            <li><a class='menu-item @(currentController == "TaxAudit" ? "active" : "")'
+                                                                                                                                                                                   asp-controller="TaxAudit" asp-action="Index"><i
+                                                                                                                                                                                class="bi bi-shield-lock menu-icon"></i> ممیزی مالیات</a></li>
+                                                                                                                                                                                <li><a class='menu-item @(currentController == "TaxAnalytics" ? "active" : "")'
+                                                                                                                                                                                       asp-controller="TaxAnalytics" asp-action="Index"><i
+                                                                                                                                                                                    class="bi bi-robot menu-icon"></i> تحلیل و دستیار هوشمند</a></li>
+                                                                                                                                                                                </ul>
+                                                                                                                                                                            </div>
 
-                                                                                                                                                    </div>
+                                                                                                                                                                            <!-- زیرگروه ۴: حقوق و دستمزد (صورتی روشن با متن مشکی) -->
+                                                                                                                                                                            <div class="sub-menu-group" style="margin-bottom: 6px;">
+                                                                                                                                                                                <button type="button" onclick="toggleSubgroup(this)"
+                                                                                                                                                                                        style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 12px; background: #fce7f3; border-right: 4px solid #ec4899; color: #000; font-size: 11.5px; font-weight: 700; border-radius: 4px; cursor: pointer; border-left: none; border-top: none; border-bottom: none;">
+                                                                                                                                                                                    <span><i class="bi bi-wallet2 ml-1 text-pink-600"></i> حقوق و دستمزد</span>
+                                                                                                                                                                                    <i class="bi bi-chevron-down chevron text-xs"
+                                                                                                                                                                                       style="transform: rotate(-90deg); transition: transform 0.3s;"></i>
+                                                                                                                                                                                </button>
+                                                                                                                                                                                <ul class="sub-menu-list"
+                                                                                                                                                                                    style="max-height: 0px; overflow: hidden; transition: max-height 0.3s ease; padding-right: 8px; margin-top: 2px; list-style: none;">
+                                                                                                                                                                                    <li><a class='menu-item @(currentController == "Payroll" ? "active" : "")'
+                                                                                                                                                                                           asp-controller="Payroll" asp-action="Index"><i
+                                                                                                                                                                                        class="bi bi-wallet2 menu-icon"></i> حقوق</a></li>
+                                                                                                                                                                                        <li><a class='menu-item @(currentController == "Bimeh" ? "active" : "")'
+                                                                                                                                                                                               asp-controller="Bimeh" asp-action="Index"><i
+                                                                                                                                                                                            class="bi bi-shield-check menu-icon"></i> بیمه</a></li>
+                                                                                                                                                                                        </ul>
+                                                                                                                                                                                    </div>
 
-                                                                                                                                                    <!-- User Footer in Sidebar -->
-                                                                                                                                                    <div class="sidebar-footer">
-                                                                                                                                                        <a asp-controller="Settings" asp-action="Index">
-                                                                                                                                                            <span
-                                                                                                                                                                style="width:32px;height:32px;border-radius:2px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;color:var(--rk-sidebar-text);font-size:14px;border:1px solid rgba(0,0,0,0.15);"><i
-                                                                                                                                                                class="bi bi-person"></i></span>
-                                                                                                                                                                <span style="min-width:0;flex:1;">
-                                                                                                                                                                    <span
-                                                                                                                                                                    style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
-                                                                                                                                                                    <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
-                                                                                                                                                                </span>
-                                                                                                                                                            </a>
-                                                                                                                                                        </div>
-                                                                                                                                                    </aside>
+                                                                                                                                                                                </ul>
+                                                                                                                                                                            </div>
 
-                                                                                                                                                    <!-- ═══════════════════════════════════════════════════
+                                                                                                                                                                            <script>
+                                                                                                                                                                                function toggleSubgroup(btn) {
+                                                                                                                                                                                const list = btn.nextElementSibling;
+                                                                                                                                                                                const chevron = btn.querySelector('.chevron');
+                                                                                                                                                                                const isOpen = list.style.maxHeight && list.style.maxHeight !== '0px';
+                                                                                                                                                                                if (isOpen) {
+                                                                                                                                                                                list.style.maxHeight = '0px';
+                                                                                                                                                                                if (chevron) chevron.style.transform = 'rotate(-90deg)';
+                                                                                                                                                                                } else {
+                                                                                                                                                                                const items = list.querySelectorAll('li').length;
+                                                                                                                                                                                list.style.maxHeight = (items * 34 + 10) + 'px';
+                                                                                                                                                                                if (chevron) chevron.style.transform = 'rotate(0deg)';
+                                                                                                                                                                                const moduleChildren = btn.closest('.module-children');
+                                                                                                                                                                                if (moduleChildren) moduleChildren.style.maxHeight = '5000px';
+                                                                                                                                                                                }
+                                                                                                                                                                                }
+                                                                                                                                                                            </script>
+                                                                                                                                                                        }
+
+                                                                                                                                                                        <!-- Warehouse Module -->
+                                                                                                                                                                        @if (userCanAccessWarehouse)
+                                                                                                                                                                        {
+                                                                                                                                                                            <div class="menu-group sidebar-module" data-module="warehouse">
+                                                                                                                                                                                <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                                                                                                                                    <span>انبار و عملیات</span>
+                                                                                                                                                                                    <i class="bi bi-chevron-down chevron"></i>
+                                                                                                                                                                                </button>
+                                                                                                                                                                                <ul class="menu-list module-children"
+                                                                                                                                                                                    style="max-height:@(IsExpanded("Warehouse","WarehouseInventory","WarehouseReceipts","WarehouseIssuances","WarehouseTransfer","Vendors","Waybill") ? "600px" : "0");">
+                                                                                                                                                                                    <li><a class='menu-item @(currentController == "Warehouse" ? "active" : "")'
+                                                                                                                                                                                           asp-controller="Warehouse" asp-action="Index"><i class="bi bi-box-seam menu-icon"></i>
+                                                                                                                                                                                        داشبورد انبار</a></li>
+                                                                                                                                                                                        <li><a class='menu-item @(currentController == "Warehouse" && currentAction == "Products" ? "active" : "")'
+                                                                                                                                                                                               asp-controller="Warehouse" asp-action="Products"><i class="bi bi-box menu-icon"></i>
+                                                                                                                                                                                            کالاها</a></li>
+                                                                                                                                                                                            <li><a class='menu-item @(currentController == "WarehouseInventory" && currentAction == "Stock" ? "active" : "")'
+                                                                                                                                                                                                   asp-controller="WarehouseInventory" asp-action="Stock"><i
+                                                                                                                                                                                                class="bi bi-layers menu-icon"></i> موجودی</a></li>
+                                                                                                                                                                                                <li><a class='menu-item @(currentController == "WarehouseReceipts" ? "active" : "")'
+                                                                                                                                                                                                       asp-controller="WarehouseReceipts" asp-action="Receipts"><i
+                                                                                                                                                                                                    class="bi bi-box-arrow-in-down menu-icon"></i> رسیدها</a></li>
+                                                                                                                                                                                                    <li><a class='menu-item @(currentController == "WarehouseIssuances" ? "active" : "")'
+                                                                                                                                                                                                           asp-controller="WarehouseIssuances" asp-action="Issuances"><i
+                                                                                                                                                                                                        class="bi bi-box-arrow-up menu-icon"></i> حواله‌ها</a></li>
+                                                                                                                                                                                                        <li><a class='menu-item @(currentController == "Vendors" ? "active" : "")'
+                                                                                                                                                                                                               asp-controller="Vendors" asp-action="Index"><i class="bi bi-building menu-icon"></i>
+                                                                                                                                                                                                            تامین‌کنندگان</a></li>
+                                                                                                                                                                                                            <li><a class='menu-item @(currentController == "Waybill" ? "active" : "")'
+                                                                                                                                                                                                                   asp-controller="Waybill" asp-action="Index"><i class="bi bi-truck menu-icon"></i>
+                                                                                                                                                                                                                بارنامه</a></li>
+                                                                                                                                                                                                            </ul>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                    }
+
+                                                                                                                                                                                                    <!-- Management Module -->
+                                                                                                                                                                                                    @if (userCanAccessSystemSettings || userCanAccessProcessAnalytics)
+                                                                                                                                                                                                    {
+                                                                                                                                                                                                        <div class="menu-group sidebar-module" data-module="management">
+                                                                                                                                                                                                            <button type="button" class="module-toggle" onclick="Rhyno.toggleModule(this)">
+                                                                                                                                                                                                                <span>مدیریت سیستم</span>
+                                                                                                                                                                                                                <i class="bi bi-chevron-down chevron"></i>
+                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                            <ul class="menu-list module-children"
+                                                                                                                                                                                                                style="max-height:@(IsExpanded("ManagementDashboard","Settings","Security","AuditDashboard","ProcessAnalysis","Reports","DocumentArchive") ? "600px" : "0");">
+                                                                                                                                                                                                                @if (userCanAccessSystemSettings)
+                                                                                                                                                                                                                {
+                                                                                                                                                                                                                    <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Overview" ? "active" : "")'
+                                                                                                                                                                                                                           asp-controller="ManagementDashboard" asp-action="Overview"><i
+                                                                                                                                                                                                                        class="bi bi-grid-1x2 menu-icon"></i> داشبورد مدیریتی</a></li>
+                                                                                                                                                                                                                        <li><a class='menu-item @(currentController == "ManagementDashboard" && currentAction == "Index" ? "active" : "")'
+                                                                                                                                                                                                                               asp-controller="ManagementDashboard" asp-action="Index"><i
+                                                                                                                                                                                                                            class="bi bi-stars menu-icon"></i> گزارش‌ساز هوشمند</a></li>
+                                                                                                                                                                                                                            <li><a class='menu-item @(currentController == "Settings" ? "active" : "")'
+                                                                                                                                                                                                                                   asp-controller="Settings" asp-action="Index"><i class="bi bi-gear menu-icon"></i>
+                                                                                                                                                                                                                                تنظیمات</a></li>
+                                                                                                                                                                                                                                <li><a class='menu-item @(currentController == "Security" ? "active" : "")'
+                                                                                                                                                                                                                                       asp-controller="Security" asp-action="Index"><i class="bi bi-shield-lock menu-icon"></i>
+                                                                                                                                                                                                                                    امنیت</a></li>
+                                                                                                                                                                                                                                    <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")'
+                                                                                                                                                                                                                                           asp-controller="Security" asp-action="WorkflowBuilder"><i
+                                                                                                                                                                                                                                        class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
+                                                                                                                                                                                                                                        <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")'
+                                                                                                                                                                                                                                               asp-controller="DocumentArchive" asp-action="Index"><i
+                                                                                                                                                                                                                                            class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
+                                                                                                                                                                                                                                            <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")'
+                                                                                                                                                                                                                                                   asp-controller="AuditDashboard" asp-action="Index"><i
+                                                                                                                                                                                                                                                class="bi bi-activity menu-icon"></i> ممیزی</a></li>
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                            @if (userCanAccessProcessAnalytics)
+                                                                                                                                                                                                                                            {
+                                                                                                                                                                                                                                                <li><a class='menu-item @(currentController == "ProcessAnalysis" ? "active" : "")'
+                                                                                                                                                                                                                                                       asp-controller="ProcessAnalysis" asp-action="Index"><i
+                                                                                                                                                                                                                                                    class="bi bi-diagram-3 menu-icon"></i> تحلیل فرایند</a></li>
+                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                <li><a class='menu-item @(currentController == "Reports" ? "active" : "")'
+                                                                                                                                                                                                                                                       asp-controller="Reports" asp-action="Index"><i
+                                                                                                                                                                                                                                                    class="bi bi-file-bar-graph menu-icon"></i> گزارشات</a></li>
+                                                                                                                                                                                                                                                </ul>
+                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                    </div>
+
+                                                                                                                                                                                                                                    <!-- User Footer in Sidebar -->
+                                                                                                                                                                                                                                    <div class="sidebar-footer">
+                                                                                                                                                                                                                                        <a asp-controller="Settings" asp-action="Index">
+                                                                                                                                                                                                                                            <span
+                                                                                                                                                                                                                                                style="width:32px;height:32px;border-radius:2px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;color:var(--rk-sidebar-text);font-size:14px;border:1px solid rgba(0,0,0,0.15);"><i
+                                                                                                                                                                                                                                                class="bi bi-person"></i></span>
+                                                                                                                                                                                                                                                <span style="min-width:0;flex:1;">
+                                                                                                                                                                                                                                                    <span
+                                                                                                                                                                                                                                                    style="display:block;font-size:12px;font-weight:800;color:var(--rk-sidebar-text);">@displayName</span>
+                                                                                                                                                                                                                                                    <span style="display:block;font-size:10px;color:var(--rk-sidebar-muted);">@userRoleLabel</span>
+                                                                                                                                                                                                                                                </span>
+                                                                                                                                                                                                                                            </a>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                    </aside>
+
+                                                                                                                                                                                                                                    <!-- ═══════════════════════════════════════════════════
         MAIN CONTENT — Desktop / Page Content Area
         ═══════════════════════════════════════════════════════ -->
-                                                                                                                                                    <main class="rahkaran-desktop" id="mainContentArea">
-                                                                                                                                                        @RenderBody()
-                                                                                                                                                    </main>
+                                                                                                                                                                                                                                    <main class="rahkaran-desktop" id="mainContentArea">
+                                                                                                                                                                                                                                        @RenderBody()
+                                                                                                                                                                                                                                    </main>
 
-                                                                                                                                                    <!-- ═══════════════════════════════════════════════════
+                                                                                                                                                                                                                                    <!-- ═══════════════════════════════════════════════════
         MULTI-TAB WORKSPACE — Persistent Enterprise Shell
         Tab bar + iframe stack render here via tab-manager.js.
         Wrapped in a column so the bar spans full width above the
@@ -474,79 +574,79 @@
         The static @RenderBody() above is hidden once tabs init;
         the default fixed tab (میز کار) then owns the viewport.
         ═══════════════════════════════════════════════════════ -->
-                                                                                                                                                    <div class="rhyno-tab-column">
-                                                                                                                                                        <div class="rhyno-tab-bar-host" id="rhynoTabBarHost" role="tablist" aria-label="تب های باز">
-                                                                                                                                                            <div class="rhyno-tab-bar" id="rhynoTabBar"></div>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div class="rhyno-tab-viewport" id="rhynoWorkspace" aria-live="polite"></div>
-                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    <div class="rhyno-tab-column">
+                                                                                                                                                                                                                                        <div class="rhyno-tab-bar-host" id="rhynoTabBarHost" role="tablist" aria-label="تب های باز">
+                                                                                                                                                                                                                                            <div class="rhyno-tab-bar" id="rhynoTabBar"></div>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="rhyno-tab-viewport" id="rhynoWorkspace" aria-live="polite"></div>
+                                                                                                                                                                                                                                    </div>
 
-                                                                                                                                                </div>
+                                                                                                                                                                                                                                </div>
 
-                                                                                                                                                <!-- Hidden AntiForgery Form -->
-                                                                                                                                                <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
+                                                                                                                                                                                                                                <!-- Hidden AntiForgery Form -->
+                                                                                                                                                                                                                                <form id="rhGlobalAntiForgery" class="hidden">@Html.AntiForgeryToken()</form>
 
-                                                                                                                                                <!-- ═══════════════════════════════════════════════════════
+                                                                                                                                                                                                                                <!-- ═══════════════════════════════════════════════════════
     CONFIRM DIALOG (Vanilla JS Modal)
     ═══════════════════════════════════════════════════════════ -->
-                                                                                                                                                @await Html.PartialAsync("_ConfirmDialog")
+                                                                                                                                                                                                                                @await Html.PartialAsync("_ConfirmDialog")
 
-                                                                                                                                                <!-- ═══════════════════════════════════════════════════════
+                                                                                                                                                                                                                                <!-- ═══════════════════════════════════════════════════════
     SCRIPTS
     ═══════════════════════════════════════════════════════════ -->
-                                                                                                                                                <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
 
-                                                                                                                                                <script src="~/js/layout.js" asp-append-version="true"></script>
-                                                                                                                                                <script src="~/js/tab-manager.js" asp-append-version="true"></script>
-                                                                                                                                                <script src="~/js/professional-table.js" asp-append-version="true"></script>
-                                                                                                                                                <script src="~/js/shared-layout-script-2.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/js/layout.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/js/tab-manager.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/js/professional-table.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/js/shared-layout-script-2.js" asp-append-version="true"></script>
 
-                                                                                                                                                <script src="~/js/app-ui.js" asp-append-version="true"></script>
-                                                                                                                                                @await RenderSectionAsync("Scripts", required: false)
-                <script src="~/js/modal-focus.js" asp-append-version="true"></script>
-                <script src="~/js/form-guard.js" asp-append-version="true"></script>
-                <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
-                <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
-                <script>
-                    // ── Notification Badge Auto-Refresh ──
-                    (function() {
-                        var badge = document.getElementById('notificationBadge');
-                        if (!badge) {
-                            // Find the bell badge element dynamically
-                            var bellBtn = document.querySelector('.btn-toggle-menu [class*="bi-bell"]');
-                            if (bellBtn) {
-                                badge = bellBtn.parentElement.querySelector('span[style*="position:absolute"]');
-                            }
-                        }
-                        function refreshBadge() {
-                            fetch('/Notifications/UnreadCount', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                                .then(function(r) { return r.json(); })
-                                .then(function(data) {
-                                    if (badge) {
-                                        if (data.count > 0) {
-                                            badge.style.display = 'flex';
-                                            badge.textContent = data.count.toLocaleString();
-                                        } else {
-                                            badge.style.display = 'none';
-                                        }
-                                    }
-                                    // Also update dropdown counter if present
-                                    var dropdownBadge = document.querySelector('.rhyno-dropdown [class*="rounded-full"][class*="px-2"]');
-                                    if (dropdownBadge) {
-                                        dropdownBadge.textContent = data.count.toLocaleString() + ' مورد';
-                                    }
-                                })
-                                .catch(function() {});
-                        }
-                        // Poll every 60 seconds
-                        refreshBadge();
-                        setInterval(refreshBadge, 60000);
-                    })();
-                </script>
-                                                                                                                                                @if (User?.Identity?.IsAuthenticated == true)
-                                                                                                                                                {
-                                                                                                                                                    @await Html.PartialAsync("_TaxAiAssistantWidget")
-                                                                                                                                                }
-                                                                                                                                            </body>
+                                                                                                                                                                                                                                <script src="~/js/app-ui.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                @await RenderSectionAsync("Scripts", required: false)
+                                                                                                                                                                                                                                <script src="~/js/modal-focus.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/js/form-guard.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/js/onboarding-tour.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script src="~/js/keyboard-shortcuts.js" asp-append-version="true"></script>
+                                                                                                                                                                                                                                <script>
+                                                                                                                                                                                                                                    // ── Notification Badge Auto-Refresh ──
+                                                                                                                                                                                                                                    (function () {
+                                                                                                                                                                                                                                    var badge = document.getElementById('notificationBadge');
+                                                                                                                                                                                                                                    if (!badge) {
+                                                                                                                                                                                                                                    // Find the bell badge element dynamically
+                                                                                                                                                                                                                                    var bellBtn = document.querySelector('.btn-toggle-menu [class*="bi-bell"]');
+                                                                                                                                                                                                                                    if (bellBtn) {
+                                                                                                                                                                                                                                    badge = bellBtn.parentElement.querySelector('span[style*="position:absolute"]');
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                    function refreshBadge() {
+                                                                                                                                                                                                                                    fetch('/Notifications/UnreadCount', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                                                                                                                                                                                                                                    .then(function (r) { return r.json(); })
+                                                                                                                                                                                                                                    .then(function (data) {
+                                                                                                                                                                                                                                    if (badge) {
+                                                                                                                                                                                                                                    if (data.count > 0) {
+                                                                                                                                                                                                                                    badge.style.display = 'flex';
+                                                                                                                                                                                                                                    badge.textContent = data.count.toLocaleString();
+                                                                                                                                                                                                                                    } else {
+                                                                                                                                                                                                                                    badge.style.display = 'none';
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                    // Also update dropdown counter if present
+                                                                                                                                                                                                                                    var dropdownBadge = document.querySelector('.rhyno-dropdown [class*="rounded-full"][class*="px-2"]');
+                                                                                                                                                                                                                                    if (dropdownBadge) {
+                                                                                                                                                                                                                                    dropdownBadge.textContent = data.count.toLocaleString() + ' مورد';
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                    })
+                                                                                                                                                                                                                                    .catch(function () { });
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                    // Poll every 60 seconds
+                                                                                                                                                                                                                                    refreshBadge();
+                                                                                                                                                                                                                                    setInterval(refreshBadge, 60000);
+                                                                                                                                                                                                                                    })();
+                                                                                                                                                                                                                                </script>
+                                                                                                                                                                                                                                @if (User?.Identity?.IsAuthenticated == true)
+                                                                                                                                                                                                                                {
+                                                                                                                                                                                                                                    @await Html.PartialAsync("_TaxAiAssistantWidget")
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                            </body>
 
-                                                                                                                                        </html>
+                                                                                                                                                                                                                        </html>

@@ -1,2 +1,334 @@
-Set-Content 'f:\rhyno-automation-1\rhyno-automation\Views\Financial\TrialBalance.cshtml' -Value $c -NoNewline
-if(-not $?){exit 1}
+@model TrialBalancePageVM
+@using System.Text.Json
+@{
+    ViewData["Title"] = "تراز آزمایشی انترپرایز";
+    var reportIssuer = User?.Identity?.Name ?? "کاربر سیستم";
+}
+
+<div class="w-full flex-1 flex flex-col gap-4 p-3 md:p-4" dir="rtl">
+    <!-- Header Block for Print -->
+    <section
+        class="hidden print:flex justify-between items-center border-b-2 border-slate-300 pb-3 mb-3 text-xs text-slate-800"
+        aria-hidden="true">
+        <div>
+            <strong class="block text-sm">اتوماسیون اداری و مالی راینو</strong>
+            <span>گزارش تراز آزمایشی اسناد دفتر کل</span>
+        </div>
+        <div class="text-center">
+            <strong>بازه گزارش</strong>
+            <span id="printPeriodLabel" class="block mt-1 font-bold"></span>
+        </div>
+        <div class="text-left">
+            <strong id="printGeneratedAt" class="block font-bold"></strong>
+            <span id="printReportCode" class="block mt-0.5"></span>
+            <span class="block mt-0.5">صادرکننده: @reportIssuer</span>
+        </div>
+    </section>
+
+    <!-- Interactive Header -->
+    <header
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+        <div>
+            <h1 class="m-0 text-base font-black text-slate-900 dark:text-white tracking-tight">تراز آزمایشی انترپرایز
+            </h1>
+            <div class="flex items-center gap-2 mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <span id="trialBalancePeriodName">@Model.Report.FiscalPeriodName</span>
+                <span>|</span>
+                <span id="trialBalancePeriodRange"></span>
+            </div>
+        </div>
+        <div id="trialBalanceStatus"
+             class="self-start sm:self-auto px-3 py-1 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-900/50 transition"
+             aria-live="polite">
+            آماده نمایش
+        </div>
+    </header>
+
+    <!-- Control Form & Actions Toolbar -->
+    <form id="trialBalanceForm"
+          class="flex flex-col gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm print:hidden"
+          method="get" asp-controller="Financial" asp-action="GetTrialBalance"
+          data-json-url="@Url.Action("GetTrialBalance", "Financial")">
+
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Period Select -->
+            <div class="flex flex-col gap-1 min-w-[200px]">
+                <label for="fiscalPeriodId" class="text-[11px] font-bold text-slate-500 dark:text-slate-400">دوره
+                    مالی</label>
+                    <select id="fiscalPeriodId" name="fiscalPeriodId"
+                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none"
+                            asp-items="Model.FiscalPeriodOptions"></select>
+                </div>
+
+                <!-- Toggles & Filters -->
+                <div class="flex flex-wrap items-center gap-3 mt-2.5">
+                    <label
+                        class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <input id="includeMoatagh" name="includeMoatagh" type="checkbox" value="true"
+                               checked="@Model.IncludeMoatagh"
+                               class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        <span>شامل اسناد موقت</span>
+                    </label>
+
+                    <label
+                        class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <input id="groupByFloatingDetail" name="groupByFloatingDetail" type="checkbox" value="true"
+                               checked="@Model.GroupByFloatingDetail"
+                               class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        <span>تفکیک تفصیلی شناور</span>
+                    </label>
+
+                    <label
+                        class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <input id="nonZeroOnly" type="checkbox"
+                               class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-sm focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        <span>فقط حساب‌های دارای مانده</span>
+                    </label>
+                </div>
+            </div>
+
+            <input type="hidden" id="sixColumnField" name="sixColumn"
+                   value="@Model.SixColumn.ToString().ToLowerInvariant()" />
+
+            <!-- Actions Toolbar -->
+            <div
+                class="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-2">
+                <div class="flex items-center gap-2">
+                    <button type="submit"
+                            class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition shadow-sm">
+                        <i class="bi bi-arrow-clockwise text-teal-600 dark:text-teal-400"></i>
+                        <span>به‌روزرسانی سیستم</span>
+                    </button>
+
+                    <button id="trialBalancePrintButton" type="button"
+                            class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition shadow-sm">
+                        <i class="bi bi-printer text-teal-600 dark:text-teal-400"></i>
+                        <span>چاپ گزارش</span>
+                    </button>
+
+                    <a id="trialBalanceJsonLink"
+                       class="flex items-center justify-center h-8 px-3 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition no-underline shadow-sm"
+                       asp-controller="Financial" asp-action="GetTrialBalance"
+                       asp-route-fiscalPeriodId="@Model.FiscalPeriodId" asp-route-includeMoatagh="@Model.IncludeMoatagh"
+                       asp-route-groupByFloatingDetail="@Model.GroupByFloatingDetail"
+                       asp-route-sixColumn="@Model.SixColumn" asp-route-format="json">خروجی JSON</a>
+                </div>
+
+                <!-- View Modes (4 vs 6 Columns) -->
+                <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg" role="group"
+                     aria-label="نوع نمایش">
+                    <button type="button"
+                            class="tb-mode-button px-3 py-1.5 rounded-md text-xs font-bold transition @(!Model.SixColumn ? "is-active bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200")"
+                            data-six-column="false">۴ ستونی</button>
+                    <button type="button"
+                            class="tb-mode-button px-3 py-1.5 rounded-md text-xs font-bold transition @(Model.SixColumn ? "is-active bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200")"
+                            data-six-column="true">۶ ستونی</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Data Table Grid Container -->
+        <section
+            class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto w-full" id="trialBalanceGridWrap">
+                <table class="w-full min-w-[800px] text-xs text-right border-collapse" id="trialBalanceGrid">
+                    <thead id="trialBalanceHead"
+                           class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    </thead>
+                    <tbody id="trialBalanceBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                    <tfoot id="trialBalanceFoot"
+                           class="bg-slate-50 dark:bg-slate-800/60 font-bold border-t border-slate-200 dark:border-slate-700">
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        <!-- Print Signatures Section -->
+        <section class="hidden print:grid grid-cols-4 gap-4 mt-12 text-center text-xs text-slate-800" aria-hidden="true">
+            <div class="border border-slate-300 p-4 rounded">
+                <strong>تنظیم کننده</strong>
+                <span class="block mt-8">نام و امضا</span>
+            </div>
+            <div class="border border-slate-300 p-4 rounded">
+                <strong>رئیس حسابداری</strong>
+                <span class="block mt-8">نام و امضا</span>
+            </div>
+            <div class="border border-slate-300 p-4 rounded">
+                <strong>مدیر مالی</strong>
+                <span class="block mt-8">نام و امضا</span>
+            </div>
+            <div class="border border-slate-300 p-4 rounded">
+                <strong>مدیر عامل</strong>
+                <span class="block mt-8">نام و امضا</span>
+            </div>
+        </section>
+    </div>
+
+    <!-- Initial State JSON -->
+    <script id="trialBalanceInitialState" type="application/json">
+        @Html.Raw(JsonSerializer.Serialize(new
+        {
+                    fiscalPeriodId = Model.FiscalPeriodId,
+                    includeMoatagh = Model.IncludeMoatagh,
+                    groupByFloatingDetail = Model.GroupByFloatingDetail,
+                    sixColumn = Model.SixColumn,
+                    report = Model.Report
+        }))
+    </script>
+
+    @section Styles {
+        <style>
+            /* Table overrides for compact typography & styling */
+            #trialBalanceGrid {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            #trialBalanceGrid th,
+            #trialBalanceGrid td {
+                padding: 6px 10px !important;
+                /* py-1.5 px-2.5 */
+                border-bottom: 1px solid var(--tb-border, #e2e8f0) !important;
+                font-size: 11px !important;
+            }
+
+            #trialBalanceGrid {
+                --tb-border: #e2e8f0;
+            }
+
+            .dark #trialBalanceGrid,
+            [data-theme="dark"] #trialBalanceGrid {
+                --tb-border: #334155;
+            }
+
+            /* Zebra striping */
+            #trialBalanceGrid tbody tr:nth-child(even) {
+                background-color: #f8fafc !important;
+            }
+
+            .dark #trialBalanceGrid tbody tr:nth-child(even),
+            [data-theme="dark"] #trialBalanceGrid tbody tr:nth-child(even) {
+                background-color: rgba(30, 41, 59, 0.3) !important;
+            }
+
+            /* Hover highlighters */
+            #trialBalanceGrid tbody tr:hover {
+                background-color: #f1f5f9 !important;
+                transition: background-color 0.15s ease;
+            }
+
+            .dark #trialBalanceGrid tbody tr:hover,
+            [data-theme="dark"] #trialBalanceGrid tbody tr:hover {
+                background-color: #334155 !important;
+            }
+
+            /* Header cells */
+            #trialBalanceGrid thead th {
+                background-color: #f8fafc !important;
+                color: #334155 !important;
+                font-weight: 800 !important;
+                text-align: right !important;
+            }
+
+            .dark #trialBalanceGrid thead th,
+            [data-theme="dark"] #trialBalanceGrid thead th {
+                background-color: #1e293b !important;
+                color: #e2e8f0 !important;
+            }
+
+            /* Sorted Columns */
+            #trialBalanceGrid .sorted-column-cell {
+                background-color: rgba(241, 245, 249, 0.4);
+            }
+
+            .dark #trialBalanceGrid .sorted-column-cell,
+            [data-theme="dark"] #trialBalanceGrid .sorted-column-cell {
+                background-color: rgba(51, 65, 85, 0.15);
+            }
+
+            /* Sorting Headers cursor */
+            #trialBalanceGrid th[data-sort-key] {
+                cursor: pointer;
+                user-select: none;
+                position: relative;
+            }
+
+            /* Balance Check Flag */
+            .tb-balance-flag {
+                display: inline-block;
+                padding: 2px 6px;
+                font-size: 10px;
+                font-weight: bold;
+                border-radius: 4px;
+                background-color: #fee2e2;
+                color: #991b1b;
+                margin-right: 8px;
+            }
+
+            .dark .tb-balance-flag,
+            [data-theme="dark"] .tb-balance-flag {
+                background-color: #7f1d1d;
+                color: #fca5a5;
+            }
+
+            /* Footer total styling */
+            #trialBalanceFoot tr {
+                background-color: #f8fafc !important;
+                font-weight: 800 !important;
+            }
+
+            .dark #trialBalanceFoot tr,
+            [data-theme="dark"] #trialBalanceFoot tr {
+                background-color: rgba(30, 41, 59, 0.6) !important;
+            }
+
+            /* Empty results state */
+            .tb-empty {
+                text-align: center !important;
+                padding: 24px !important;
+                color: #94a3b8 !important;
+            }
+
+            /* Active mode tab */
+            .tb-mode-button.is-active {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+            }
+
+            .dark .tb-mode-button.is-active,
+            [data-theme="dark"] .tb-mode-button.is-active {
+                background-color: #475569 !important;
+                color: #ffffff !important;
+            }
+
+            /* Loading indicators */
+            #trialBalanceStatus.is-loading {
+                background-color: #fef08a;
+                color: #854d0e;
+                border-color: #fef08a;
+            }
+
+            .dark #trialBalanceStatus.is-loading {
+                background-color: #713f12;
+                color: #fef08a;
+                border-color: #713f12;
+            }
+
+            #trialBalanceStatus.is-alert {
+                background-color: #fee2e2;
+                color: #991b1b;
+                border-color: #fee2e2;
+            }
+
+            .dark #trialBalanceStatus.is-alert {
+                background-color: #7f1d1d;
+                color: #fca5a5;
+                border-color: #7f1d1d;
+            }
+        </style>
+    }
+
+    @section Scripts {
+        <script src="~/js/trial-balance.js" asp-append-version="true"></script>
+    }

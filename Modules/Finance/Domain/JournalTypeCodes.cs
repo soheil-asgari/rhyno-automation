@@ -10,4 +10,7 @@ public static class JournalTypeCodes
     public const string Closing = "CLOSING";
     public const string Opening = "OPENING";
     public const string Adjustment = "ADJUSTMENT";
+    public const string Contract = "CONTRACT";
+    public const string Waybill = "WAYBILL";
+    public const string Insurance = "INSURANCE";
 }

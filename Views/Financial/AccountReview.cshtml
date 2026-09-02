@@ -1,0 +1,287 @@
+@using OfficeAutomation.Services.Financial
+@{
+    ViewData["Title"] = "مرور حساب‌ها";
+    var fiscalYears = ViewBag.FiscalYears as List<FiscalYearOptionDto> ?? [];
+    var journalTypes = ViewBag.JournalTypes as List<JournalTypeOptionDto> ?? [];
+    var detailedTypes = ViewBag.DetailedTypes as List<DetailedTypeOptionDto> ?? [];
+    var voucherStates = ViewBag.VoucherStates as List<VoucherStateOptionDto> ?? [];
+    var currentYear = fiscalYears.FirstOrDefault()?.Name ?? "1405";
+}
+<div class="ar-shell" dir="rtl">
+    <!-- Header / TabStrip -->
+    <div class="ar-header">
+        <div class="ar-tabstrip" role="tablist">
+            <button type="button" class="ar-tab active" id="tabReport" role="tab" aria-selected="true">گزارش</button>
+            <button type="button" class="ar-tab" id="tabFilters" role="tab" aria-selected="false">فیلتر اسناد</button>
+        </div>
+        <div class="ar-header-tools">
+            <button type="button" class="ar-btn ar-btn-ghost" id="btnRefilter" title="فیلتر مجدد">
+                <i class="bi bi-arrow-counterclockwise"></i> فیلتر مجدد
+            </button>
+            <div class="ar-dropdown" id="dropReviewBy">
+                <button type="button" class="ar-btn ar-btn-ghost" id="btnReviewBy" title="مرور تفصیلی‌ها">
+                    <i class="bi bi-layers"></i> مرور تفصیلی‌ها <span class="ar-caret"></span>
+                </button>
+                <div class="ar-dropdown-menu ar-hidden">
+                    <label class="ar-opt" data-review="group"><input type="radio" name="radReview" value="group" checked> گروه</label>
+                    <label class="ar-opt" data-review="general"><input type="radio" name="radReview" value="general"> کل</label>
+                    <label class="ar-opt" data-review="subsidiary"><input type="radio" name="radReview" value="subsidiary"> معین</label>
+                    <label class="ar-opt" data-review="detail"><input type="radio" name="radReview" value="detail"> تفصیلی</label>
+                    <label class="ar-opt" data-review="floating4"><input type="radio" name="radReview" value="floating4"> سطح چهار</label>
+                    <label class="ar-opt" data-review="floating5"><input type="radio" name="radReview" value="floating5"> سطح پنج</label>
+                    <label class="ar-opt" data-review="floating6"><input type="radio" name="radReview" value="floating6"> سطح شش</label>
+                    <label class="ar-opt" data-review="currency"><input type="radio" name="radReview" value="currency"> ارز</label>
+                    <label class="ar-opt" data-review="tracking"><input type="radio" name="radReview" value="tracking"> پیگیری</label>
+                    <label class="ar-opt" data-review="detailAcct"><input type="radio" name="radReview" value="detailAcct"> حساب تفصیلی</label>
+                </div>
+            </div>
+            <button type="button" class="ar-btn ar-btn-ghost" id="btnHelp" title="راهنما">
+                <i class="bi bi-question-circle"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="ar-body">
+        <!-- Sidebar: Account Levels -->
+        <aside class="ar-sidebar">
+            <div class="ar-sidebar-search">
+                <input type="text" id="arSearchBox" placeholder="جستجو..." autocomplete="off" />
+            </div>
+            <nav class="ar-levels" id="arLevels">
+                <button type="button" class="ar-level active" data-level="1">گروه</button>
+                <button type="button" class="ar-level" data-level="2">کل</button>
+                <button type="button" class="ar-level" data-level="3">معین</button>
+                <button type="button" class="ar-level" data-level="4">سطح چهار</button>
+                <button type="button" class="ar-level" data-level="5">سطح پنج</button>
+                <button type="button" class="ar-level" data-level="6">سطح شش</button>
+                <button type="button" class="ar-level" data-level="7">ارز</button>
+                <button type="button" class="ar-level" data-level="8">پیگیری</button>
+                <button type="button" class="ar-level" data-level="9">حساب تفصیلی</button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <section class="ar-content">
+            <!-- Collapsible Filter Panel — collapsed by default -->
+            <fieldset class="ar-filter-panel sg-collapsed" id="filterPanel">
+                <legend class="ar-legend" id="filterLegend">
+                    <span class="ar-legend-toggle" id="filterToggle" title="باز/بستن">›</span>
+                    محدوده اسناد
+                </legend>
+                <div class="ar-filter-grid ar-hidden" id="filterGrid">
+                    <div class="ar-filter-col">
+                        <div class="ar-field">
+                            <label>از دوره مالی *</label>
+                            <select id="fromFiscalYear" class="ar-select">
+                                @foreach (var fy in fiscalYears)
+                                {
+                                    <option value="@fy.Name" selected="@(fy.Name == currentYear)">@fy.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="ar-field">
+                            <label>تا دوره مالی *</label>
+                            <select id="toFiscalYear" class="ar-select">
+                                @foreach (var fy in fiscalYears)
+                                {
+                                    <option value="@fy.Name" selected="@(fy.Name == currentYear)">@fy.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="ar-field">
+                            <label>نوع حساب</label>
+                            <select id="accountType" class="ar-select">
+                                <option value="">همه</option>
+                                <option value="1">دائم</option>
+                                <option value="2">موقت</option>
+                                <option value="3">انتظامی</option>
+                            </select>
+                        </div>
+                        <div class="ar-field ar-check">
+                            <label class="ar-checkbox">
+                                <input type="checkbox" id="withBalance" />
+                                <span>حساب‌های با مانده</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="ar-filter-col">
+                        <div class="ar-field">
+                            <label>نوع تفصیلی</label>
+                            <div class="ar-multi" id="multiDetailType">
+                                <button type="button" class="ar-multi-btn" data-target="detailType">
+                                    <span class="ar-multi-summary" id="sumDetailType">همه</span><span class="ar-caret"></span>
+                                </button>
+                                <div class="ar-multi-menu ar-hidden" data-menu="detailType" id="detailTypeMenu">
+                                    @foreach (var dt in detailedTypes)
+                                    {
+                                        <label class="ar-opt"><input type="checkbox" value="@dt.Id"> @dt.Name</label>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ar-field">
+                            <label>نوع سند</label>
+                            <div class="ar-multi" id="multiVoucherType">
+                                <button type="button" class="ar-multi-btn" data-target="voucherTypes">
+                                    <span class="ar-multi-summary" id="sumVoucherTypes">همه</span><span class="ar-caret"></span>
+                                </button>
+                                <div class="ar-multi-menu ar-hidden" data-menu="voucherTypes" id="voucherTypeMenu">
+                                    @foreach (var jt in journalTypes)
+                                    {
+                                        <label class="ar-opt"><input type="checkbox" value="@jt.Id"> @jt.Name</label>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ar-field">
+                            <label>وضعیت سند</label>
+                            <select id="voucherStates" class="ar-select">
+                                <option value="">همه</option>
+                                @foreach (var vs in voucherStates)
+                                {
+                                    <option value="@vs.Id">@vs.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ar-filter-col">
+                        <div class="ar-field">
+                            <label>فیلتر بر اساس</label>
+                            <select id="filterMode" class="ar-select">
+                                <option value="month">ماه</option>
+                                <option value="date">تاریخ</option>
+                                <option value="number">شماره سند</option>
+                            </select>
+                        </div>
+                        <div class="ar-field" id="fromMonthField">
+                            <label>از ماه</label>
+                            <select id="fromMonth" class="ar-select">
+                                <option value="">انتخاب</option>
+                                @for (var m = 1; m <= 12; m++)
+                                {
+                                    <option value="@m">@m</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="ar-field" id="toMonthField">
+                            <label>تا ماه</label>
+                            <select id="toMonth" class="ar-select">
+                                <option value="">انتخاب</option>
+                                @for (var m = 1; m <= 12; m++)
+                                {
+                                    <option value="@m">@m</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="ar-field ar-hidden" id="fromDateField">
+                            <label>از تاریخ</label>
+                            <input type="date" id="fromDate" class="ar-input" />
+                        </div>
+                        <div class="ar-field ar-hidden" id="toDateField">
+                            <label>تا تاریخ</label>
+                            <input type="date" id="toDate" class="ar-input" />
+                        </div>
+                        <div class="ar-field ar-hidden" id="fromNumberField">
+                            <label>از سند</label>
+                            <input type="number" id="fromNumber" class="ar-input" />
+                        </div>
+                        <div class="ar-field ar-hidden" id="toNumberField">
+                            <label>تا سند</label>
+                            <input type="number" id="toNumber" class="ar-input" />
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Account Path / Breadcrumb -->
+            <div class="ar-path" id="arPath">گروه: —</div>
+
+            <!-- Data Grid -->
+            <div class="ar-grid-wrap">
+                <table class="ar-grid" id="arTable">
+                    <thead>
+                        <tr>
+                            <th>کد حساب</th>
+                            <th>عنوان حساب</th>
+                            <th class="ar-num">گردش بدهکار</th>
+                            <th class="ar-num">گردش بستانکار</th>
+                            <th class="ar-num">مانده بدهکار</th>
+                            <th class="ar-num">مانده بستانکار</th>
+                            <th>منبع / ماژول</th>
+                        </tr>
+                    </thead>
+                    <tbody id="arTableBody">
+                        <tr class="ar-empty"><td colspan="7">سطری برای نمایش وجود ندارد.</td></tr>
+                    </tbody>
+                    <tfoot id="arTableFoot" style="display:none;">
+                        <tr>
+                            <td colspan="2">جمع کل</td>
+                            <td class="ar-num" id="arTotalDebit">0</td>
+                            <td class="ar-num" id="arTotalCredit">0</td>
+                            <td class="ar-num" id="arTotalDebitBal">0</td>
+                            <td class="ar-num" id="arTotalCreditBal">0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="ar-actionbar">
+                <button type="button" class="ar-btn ar-btn-primary" id="btnApply"><i class="bi bi-funnel"></i> بروز رسانی</button>
+                <button type="button" class="ar-btn" id="btnPrint"><i class="bi bi-printer"></i> چاپ</button>
+                <button type="button" class="ar-btn" id="btnTransactions"><i class="bi bi-list-ul"></i> مشاهده گردش</button>
+                <button type="button" class="ar-btn" id="btnExport"><i class="bi bi-file-earmark-excel"></i> خروجی</button>
+                <span class="ar-count" id="arCount">تعداد رکوردها: ۰</span>
+            </div>
+
+            <!-- Pager Bar -->
+            <div class="ar-pagerbar">
+                <span class="ar-pager-summary" id="arPagerSummary">موارد ۰ تا ۰</span>
+                <div class="ar-pager-controls">
+                    <button type="button" class="ar-pager-btn" id="btnFirst" title="اول">|<<</button>
+                    <button type="button" class="ar-pager-btn" id="btnPrev" title="قبلی"><</button>
+                    <select id="pageSelect" class="ar-select ar-pager-page" title="صفحه">
+                        <option value="1">صفحه ۱</option>
+                    </select>
+                    <button type="button" class="ar-pager-btn" id="btnNext" title="بعدی">></button>
+                    <button type="button" class="ar-pager-btn" id="btnLast" title="آخر">>>|</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Transactions Modal -->
+    <div class="ar-modal-overlay ar-hidden" id="txModal">
+        <div class="ar-modal">
+            <div class="ar-modal-head">
+                <span>گردش حساب</span>
+                <button type="button" class="ar-modal-close" data-close="txModal">&times;</button>
+            </div>
+            <div class="ar-modal-body">
+                <table class="ar-grid">
+                    <thead>
+                        <tr>
+                            <th>شماره سند</th>
+                            <th>تاریخ</th>
+                            <th>شرح</th>
+                            <th>نوع سند</th>
+                            <th class="ar-num">بدهکار</th>
+                            <th class="ar-num">بستانکار</th>
+                            <th class="ar-num">مانده</th>
+                            <th>منبع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txModalBody">
+                        <tr class="ar-empty"><td colspan="8">سطری برای نمایش وجود ندارد.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/financial/account-review.css" asp-append-version="true" />
+<script src="~/js/financial/account-review.js" asp-append-version="true"></script>

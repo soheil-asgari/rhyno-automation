@@ -264,6 +264,9 @@ builder.Services.AddScoped<TrialBalanceService>();
 builder.Services.AddScoped<LedgerService>();
 builder.Services.AddScoped<RecurringJournalService>();
 builder.Services.AddScoped<VoucherRenumberingService>();
+builder.Services.AddScoped<OfficeAutomation.Services.Financial.IAccountReviewService, OfficeAutomation.Services.Financial.AccountReviewService>();
+builder.Services.AddScoped<OfficeAutomation.Services.Financial.ChartOfAccountsSeeder>();
+builder.Services.AddScoped<OfficeAutomation.Services.Financial.MockVoucherSeeder>();
 builder.Services.AddSingleton<ITableSchemaRegistry, TableSchemaRegistry>();
 builder.Services.AddScoped<IDigitalSignatureService, DigitalSignatureService>();
 builder.Services.AddScoped<IDecisionEngine, DecisionEngine>();
@@ -634,6 +637,33 @@ app.MapHub<OfficeAutomation.Hubs.AutomationHub>("/automationHub");
 logger.LogInformation("Starting database migrations for all contexts...");
 await DatabaseMigrationService.MigrateAllAsync(app.Services, logger);
 logger.LogInformation("All database context migrations applied successfully on startup.");
+
+// --- Seed Chart of Accounts from hesab.txt (idempotent) ---
+try
+{
+    using var coaScope = app.Services.CreateScope();
+    var coaSeeder = coaScope.ServiceProvider.GetRequiredService<OfficeAutomation.Services.Financial.ChartOfAccountsSeeder>();
+    var hesabPath = Path.Combine(Directory.GetCurrentDirectory(), "hesab.txt");
+    await coaSeeder.SeedAsync(hesabPath);
+    logger.LogInformation("ChartOfAccountsSeeder executed successfully.");
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "ChartOfAccountsSeeder failed: {Message}", ex.Message);
+}
+
+// --- Seed mock vouchers (idempotent) ---
+try
+{
+    using var mockScope = app.Services.CreateScope();
+    var mockSeeder = mockScope.ServiceProvider.GetRequiredService<OfficeAutomation.Services.Financial.MockVoucherSeeder>();
+    await mockSeeder.SeedAsync();
+    logger.LogInformation("MockVoucherSeeder executed successfully.");
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "MockVoucherSeeder failed: {Message}", ex.Message);
+}
 
 // --- Seed ContractTypeField definitions (idempotent, runs after migration) ---
 try
