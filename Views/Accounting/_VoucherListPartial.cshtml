@@ -1,0 +1,178 @@
+<link rel="stylesheet" href="~/css/accounting-grid.css" />
+
+<div class="rk-erp-window">
+    <!-- نوار عنوان -->
+    <div class="rk-window-header">
+        <div class="rk-header-title">
+            <span class="rk-collapse-btn">▼</span>
+            <span>لیست اسناد حسابداری</span>
+        </div>
+        <div>
+            <button type="button" class="rk-btn rk-btn-text" id="btnColumnsDropdown" title="مدیریت ستون‌ها">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span>ستون‌ها</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- راهنمای کشیدن ستون‌ها -->
+    <div class="rk-group-drag-panel">
+        جهت گروه‌بندی، عنوان ستون مورد نظر را به این قسمت بکشید
+    </div>
+
+    <!-- نوار ابزار تمیز و یکپارچه -->
+    <div class="rk-toolbar-container">
+        <div class="rk-toolbar-actions">
+            <!-- سند جدید با هایلایت ملایم -->
+            <!-- دکمه سند جدید -->
+            <!-- دکمه سند جدید -->
+            <button type="button" class="rk-btn" id="btnNewVoucher" title="سند جدید">
+                <svg width="16" height="16" viewBox="0 0 16 16">
+                    <path d="M3 1h7l4 4v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#f8fafc"
+                          stroke="#64748b" stroke-width="1.2" />
+                    <path d="M10 1v4h4" fill="#cbd5e1" stroke="#64748b" stroke-width="1" />
+                    <circle cx="12" cy="12" r="3.5" fill="#16a34a" />
+                    <path d="M12 10.5v3M10.5 12h3" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" />
+                </svg>
+            </button>
+
+            <!-- ویرایش -->
+            <button type="button" class="rk-btn rk-disabled" id="btnEditVoucher" title="ویرایش" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+            </button>
+
+            <!-- حذف -->
+            <button type="button" class="rk-btn rk-disabled" id="btnDeleteVoucher" title="حذف" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+            </button>
+
+            <span class="rk-toolbar-divider"></span>
+
+            <!-- فیلتر و جستجو -->
+            <button type="button" class="rk-btn" id="btnClearFilters" title="پاک‌کردن فیلترها">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                    <line x1="1" y1="1" x2="23" y2="23" stroke="#ef4444" stroke-width="2" />
+                </svg>
+            </button>
+
+            <!-- ارسال به دفتر کل -->
+            <button type="button" class="rk-btn" title="دفتر کل">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+            </button>
+
+            <span class="rk-toolbar-divider"></span>
+
+            <!-- خروجی اکسل -->
+            <button type="button" class="rk-btn" id="btnExportExcel" title="خروجی به اکسل">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="8" y1="13" x2="16" y2="17" />
+                    <line x1="16" y1="13" x2="8" y2="17" />
+                </svg>
+            </button>
+
+            <!-- چاپ -->
+            <button type="button" class="rk-btn" id="btnPrint" title="چاپ">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- جدول داده‌های مالی -->
+    <div class="rk-grid-scroll">
+        <table class="rk-table" id="voucherTable">
+            <thead>
+                <tr class="rk-header-row">
+                    <th style="width: 80px;">شماره سند</th>
+                    <th style="width: 85px;">تاریخ</th>
+                    <th style="width: 75px;">وضعیت</th>
+                    <th style="width: 80px;">نوع سند</th>
+                    <th style="width: 300px;">شرح</th>
+                    <th style="width: 80px;">شماره عطف</th>
+                    <th style="width: 75px;">شماره روزانه</th>
+                    <th style="width: 120px;">مبلغ سند</th>
+                    <th style="width: 110px;">صادرکننده</th>
+                    <th style="width: 110px;">آخرین تغییر</th>
+                    <th style="width: 110px;">بررسی‌کننده</th>
+                </tr>
+                <!-- سطر فیلتر -->
+                <tr class="rk-filter-row">
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="voucherNo" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="voucherDate" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="status" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="voucherType" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="description" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="referenceNo" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="dailyNo" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="amount" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="createdBy" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="modifiedBy" /></div>
+                    </th>
+                    <th>
+                        <div class="rk-f-cell"><input type="text" data-filter="checkedBy" /></div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="voucherTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <!-- نوار پایین و پیجینگ -->
+    <div class="rk-bottom-status-bar">
+        <div class="rk-bottom-tools">
+            <span class="rk-record-count" id="vTotalInfo">۰ مورد یافت شد</span>
+        </div>
+
+        <div class="rk-pager-controls">
+            <button type="button" class="rk-page-nav-btn" id="btnFirstPage" title="صفحه اول">«</button>
+            <button type="button" class="rk-page-nav-btn" id="btnPrevPage" title="قبلی">‹</button>
+            <span class="rk-page-label" id="vCurrentPage">صفحه ۱</span>
+            <button type="button" class="rk-page-nav-btn" id="btnNextPage" title="بعدی">›</button>
+            <button type="button" class="rk-page-nav-btn" id="btnLastPage" title="صفحه آخر">»</button>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/accounting-voucher-grid.js"></script>
+<script>
+    if (window.VoucherGrid) {
+    window.VoucherGrid.init();
+    }
+</script>

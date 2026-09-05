@@ -19,6 +19,7 @@ public sealed class FinanceDbContext : ModularDbContext
     }
 
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Voucher> Vouchers { get; set; }
     public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
     public DbSet<CommercialParty> CommercialParties => Set<CommercialParty>();
     public DbSet<InvoiceReturn> InvoiceReturns => Set<InvoiceReturn>();

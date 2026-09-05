@@ -1,0 +1,548 @@
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-subtle: #eff6ff;
+
+    --surface-bg: #f8fafc;
+    --surface-card: #ffffff;
+    --border-color: #e2e8f0;
+    --border-subtle: #f1f5f9;
+    --border-hover: #cbd5e1;
+
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+
+    --debit-bg: #f0fdf4;
+    --debit-border: #86efac;
+    --debit-text: #166534;
+
+    --credit-bg: #fef2f2;
+    --credit-border: #fca5a5;
+    --credit-text: #991b1b;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.rk-voucher-form-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    background-color: var(--surface-bg);
+    font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, Tahoma, sans-serif;
+    font-size: 12px;
+    direction: rtl;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: var(--text-main);
+    position: relative;
+}
+
+/* ۱. هدر: راست‌چین کردن تب‌ها و ابزارها */
+.rk-vf-header-bar {
+    display: flex;
+    justify-content: flex-start;
+    /* راست‌چین کردن کل نوار */
+    align-items: center;
+    gap: 16px;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 12px;
+    height: 44px;
+    box-sizing: border-box;
+}
+
+.rk-vf-tabs-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rk-vf-tab {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.rk-vf-tab:hover {
+    background: var(--border-subtle);
+    color: var(--text-main);
+}
+
+.rk-vf-tab.active {
+    background: var(--primary-subtle);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.rk-vf-top-tools {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* دکمه‌ها */
+.rk-btn {
+    background: var(--surface-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 11.5px;
+}
+
+.rk-btn:hover:not(:disabled) {
+    background: var(--border-subtle);
+    border-color: var(--border-hover);
+}
+
+.rk-btn.active-bookmark {
+    background: #ffe4e6 !important;
+    border-color: #f43f5e !important;
+}
+
+.rk-btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+
+.rk-btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.rk-btn:disabled,
+.rk-btn.rk-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.rk-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--border-color);
+    margin: 0 2px;
+}
+
+/* ۲. مشخصات هدر سند */
+.rk-fieldset {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin: 6px 12px 2px 12px;
+    padding: 8px 12px;
+    background: var(--surface-card);
+    box-shadow: var(--shadow-sm);
+}
+
+.rk-legend {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 0 6px;
+}
+
+.rk-header-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px 16px;
+    align-items: center;
+}
+
+.rk-field-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rk-field-cell label {
+    width: 80px;
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+
+.rk-field-cell.span-3 {
+    grid-column: span 3;
+}
+
+.rk-field-cell.span-1 {
+    grid-column: span 1;
+}
+
+.rk-input {
+    flex: 1;
+    height: 27px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0 6px;
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--surface-card);
+    color: var(--text-main);
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+
+.rk-input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.rk-input.bg-disabled {
+    background: var(--surface-bg);
+    color: var(--text-muted);
+}
+
+.rk-input-picker {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.rk-picker-btn {
+    height: 27px;
+    border: 1px solid var(--border-color);
+    border-inline-end: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: var(--border-subtle);
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rk-picker-btn:hover {
+    background: #e2e8f0;
+    color: var(--primary);
+}
+
+.rk-input-picker .rk-input {
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.req {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+/* ۳. جدول آرتیکل‌ها و ردیف‌ها */
+.rk-matrix-scroll {
+    flex: 1;
+    overflow: auto;
+    background: var(--surface-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin: 4px 12px 0 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.rk-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.rk-matrix-table th {
+    background: #f8fafc;
+    color: var(--text-muted);
+    border-inline-start: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    height: 30px;
+    font-size: 11.5px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    text-align: center;
+}
+
+.rk-matrix-table td {
+    border-inline-start: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
+    height: 29px;
+    background: #ffffff;
+}
+
+.rk-matrix-table td input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    font-size: 12px;
+    font-family: inherit;
+    padding: 0 6px;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+.rk-matrix-table td input:focus {
+    background: #f0f7ff;
+    box-shadow: inset 0 0 0 1.5px var(--primary);
+}
+
+.rk-matrix-table tr.selected td {
+    background: #f1f5fd !important;
+}
+
+.row-index-cell {
+    background: #f8fafc;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-align: center;
+    user-select: none;
+}
+
+.rk-matrix-table tr.selected .row-index-cell {
+    background: #dbeafe;
+    color: var(--primary);
+}
+
+/* ۴. نوار ابزار پایین جدول */
+.rk-items-toolbar {
+    background: var(--surface-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 4px 8px;
+    margin: 4px 12px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.rk-items-tools {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ۵. پنل فوتر و تراز مالی */
+.rk-footer-fieldset {
+    margin: 0 12px 6px 12px;
+    padding: 6px 12px;
+    background: var(--surface-card);
+}
+
+.rk-footer-summary-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.rk-acc-hierarchy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rk-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rk-summary-row label {
+    width: 80px;
+    color: var(--text-muted);
+    text-align: left;
+    font-size: 11px;
+}
+
+.rk-summary-row .rk-input {
+    width: 155px;
+    height: 24px;
+}
+
+.rk-totals-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rk-totals-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rk-totals-labels span {
+    font-size: 11.5px;
+    font-weight: 500;
+    height: 24px;
+    line-height: 24px;
+    color: var(--text-muted);
+}
+
+.rk-total-box {
+    width: 140px;
+    border-radius: var(--radius-md);
+    padding: 4px 8px;
+    box-sizing: border-box;
+}
+
+.rk-total-box.debit-box {
+    border: 1px solid var(--debit-border);
+    background: var(--debit-bg);
+}
+
+.rk-total-box.debit-box .rk-box-title {
+    color: var(--debit-text);
+    border-bottom: 1px solid var(--debit-border);
+    font-weight: 600;
+    text-align: center;
+    font-size: 11px;
+}
+
+.rk-total-box.credit-box {
+    border: 1px solid var(--credit-border);
+    background: var(--credit-bg);
+}
+
+.rk-total-box.credit-box .rk-box-title {
+    color: var(--credit-text);
+    border-bottom: 1px solid var(--credit-border);
+    font-weight: 600;
+    text-align: center;
+    font-size: 11px;
+}
+
+.rk-box-row {
+    margin-top: 3px;
+}
+
+.rk-box-row .rk-input {
+    height: 23px;
+    width: 100%;
+}
+
+/* ۶. مودال‌ها، پیام اعلان (Toast) و تقویم پاپ‌آپ */
+.rk-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1e293b;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    font-size: 12.5px;
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rk-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.rk-toast.error {
+    background: #dc2626;
+}
+
+.rk-toast.success {
+    background: #16a34a;
+}
+
+.rk-toast.info {
+    background: #2563eb;
+}
+
+.rk-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.rk-modal {
+    background: var(--surface-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    width: 320px;
+    padding: 16px;
+}
+
+.rk-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.font-num {
+    font-variant-numeric: tabular-nums;
+}
+
+.font-bold {
+    font-weight: 600;
+}
+
+.col-center {
+    text-align: center;
+}
+
+.col-left {
+    text-align: left;
+    direction: ltr;
+}
+
+@media print {
+
+    .rk-vf-header-bar,
+    .rk-items-toolbar,
+    .rk-btn,
+    .rk-picker-btn {
+        display: none !important;
+    }
+
+    .rk-voucher-form-container {
+        height: auto;
+        overflow: visible;
+    }
+
+    .rk-matrix-scroll {
+        overflow: visible;
+        border: none;
+    }
+}
