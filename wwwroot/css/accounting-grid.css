@@ -1,331 +1,186 @@
 :root {
-    --rk-bg-main: #f8fafc;
+    --rk-bg-main: #f1f5f9;
     --rk-surface: #ffffff;
     --rk-border: #e2e8f0;
-    --rk-border-subtle: #edf2f7;
+    --rk-border-subtle: #f1f5f9;
     --rk-text-main: #0f172a;
     --rk-text-muted: #64748b;
     --rk-primary: #2563eb;
     --rk-primary-hover: #1d4ed8;
     --rk-row-hover: #f1f5f9;
     --rk-row-selected: #e0e7ff;
-    --rk-radius: 4px;
+    --rk-radius: 6px;
+    --rk-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --rk-shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+    --rk-gradient-header: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-/* کانتینر اصلی */
 .rk-erp-window {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-    background-color: var(--rk-surface);
-    font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, Tahoma, sans-serif;
-    font-size: 12px;
-    direction: rtl;
-    user-select: none;
-    box-sizing: border-box;
-    border: 1px solid var(--rk-border);
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex; flex-direction: column; height: 100%; width: 100%;
+    background: var(--rk-surface); font-family: 'Vazirmatn', Tahoma, sans-serif;
+    font-size: 12px; direction: rtl; user-select: none;
+    box-sizing: border-box; overflow: hidden;
 }
 
-/* ۱. نوار عنوان مینیمال */
+/* — نوار عنوان با گرادیانت و سایه ملایم — */
 .rk-window-header {
-    background: #ffffff;
+    background: var(--rk-gradient-header);
     border-bottom: 1px solid var(--rk-border);
-    padding: 6px 12px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 8px 16px; height: 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-.rk-header-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--rk-text-main);
-}
+.rk-header-title { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--rk-text-main); }
+.rk-collapse-btn { font-size: 10px; color: var(--rk-text-muted); cursor: pointer; transition: transform .2s; }
+.rk-collapse-btn:hover { transform: rotate(-90deg); }
 
-.rk-collapse-btn {
-    font-size: 9px;
-    color: var(--rk-text-muted);
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-/* ۲. نوار گروه‌بندی باریک و مدرن */
+/* — نوار گروه‌بندی — */
 .rk-group-drag-panel {
-    background: #f8fafc;
-    color: var(--rk-text-muted);
-    padding: 4px 12px;
-    border-bottom: 1px dashed var(--rk-border);
-    font-size: 11px;
-    text-align: center;
+    background: #f8fafc; color: var(--rk-text-muted);
+    padding: 5px 16px; border-bottom: 1px dashed var(--rk-border);
+    font-size: 11px; text-align: center; letter-spacing: .3px;
 }
 
-/* ۳. نوار ابزار اصلی (Toolbar) */
+/* — تولبار اصلی — */
 .rk-toolbar-container {
-    background: #ffffff;
+    background: var(--rk-surface);
     border-bottom: 1px solid var(--rk-border);
-    padding: 4px 8px;
-    display: flex;
-    align-items: center;
-    min-height: 34px;
+    padding: 4px 12px; display: flex; align-items: center; min-height: 38px;
 }
 
-.rk-toolbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
+.rk-toolbar-actions { display: flex; align-items: center; gap: 2px; }
+.rk-toolbar-divider { width: 1px; height: 18px; background: var(--rk-border); margin: 0 6px; }
 
-.rk-toolbar-divider {
-    width: 1px;
-    height: 16px;
-    background: var(--rk-border);
-    margin: 0 4px;
-}
-
-/* استایل دکمه‌های فلت و دقیق */
+/* — دکمه‌ها — */
 .rk-btn {
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--rk-radius);
-    padding: 4px;
-    height: 26px;
-    min-width: 26px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #475569;
-    transition: all 0.15s ease;
+    background: transparent; border: 1px solid transparent;
+    border-radius: var(--rk-radius); padding: 5px 8px;
+    height: 30px; min-width: 30px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    cursor: pointer; color: #475569;
+    font-family: inherit; font-size: 11.5px; font-weight: 500;
+    transition: all .15s ease; white-space: nowrap;
 }
 
-.rk-btn:hover:not(:disabled) {
-    background: #f1f5f9;
-    color: var(--rk-text-main);
-    border-color: #cbd5e1;
-}
+.rk-btn svg { flex-shrink: 0; }
 
-.rk-btn:active:not(:disabled) {
-    background: #e2e8f0;
-}
+.rk-btn:hover:not(:disabled) { background: #f1f5f9; color: var(--rk-text-main); border-color: #cbd5e1; }
+.rk-btn:active:not(:disabled) { background: #e2e8f0; transform: scale(.97); }
+.rk-btn:disabled, .rk-btn.rk-disabled { opacity: .35; cursor: not-allowed; }
 
-.rk-btn:disabled,
-.rk-btn.rk-disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-}
+.rk-btn-primary { background: var(--rk-primary); color: #fff !important; border-color: var(--rk-primary); }
+.rk-btn-primary:hover:not(:disabled) { background: var(--rk-primary-hover) !important; border-color: var(--rk-primary-hover); }
 
-.rk-btn-primary {
-    background: #2563eb;
-    color: #ffffff !important;
-    border-color: #1d4ed8;
-}
+.rk-btn-success { background: #16a34a; color: #fff !important; border-color: #16a34a; }
+.rk-btn-success:hover:not(:disabled) { background: #15803d !important; }
 
-.rk-btn-primary:hover:not(:disabled) {
-    background: #1d4ed8 !important;
-    border-color: #1e40af;
-}
+.rk-btn-danger { background: #dc2626; color: #fff !important; border-color: #dc2626; }
+.rk-btn-danger:hover:not(:disabled) { background: #b91c1c !important; }
 
-.rk-btn-text {
-    font-size: 11px;
-    font-weight: 500;
-    gap: 4px;
-    padding: 0 8px;
-    color: var(--rk-text-muted);
-}
-
-.rk-caret {
-    font-size: 8px;
-    margin-right: 2px;
-}
-
-/* ۴. جدول و گرید داده */
+/* — بدنه جدول — */
 .rk-grid-scroll {
-    flex: 1;
-    overflow: auto;
-    background: #ffffff;
-    position: relative;
+    flex: 1; overflow: auto; background: var(--rk-surface);
+    scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
 }
 
-.rk-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: fixed;
-}
+.rk-grid-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.rk-grid-scroll::-webkit-scrollbar-track { background: transparent; }
+.rk-grid-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
-.rk-table th,
-.rk-table td {
+.rk-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+
+.rk-table th, .rk-table td {
     border-inline-start: 1px solid var(--rk-border-subtle);
     border-bottom: 1px solid var(--rk-border);
-    padding: 4px 6px;
-    height: 26px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 5px 8px; height: 28px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-size: 11.5px;
 }
 
-/* سرستون مدرن */
+/* — سرستون مدرن — */
 .rk-header-row th {
-    background: #f8fafc;
-    color: var(--rk-text-main);
-    font-weight: 600;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 3;
-    border-top: none;
-    border-bottom: 1px solid var(--rk-border);
+    background: var(--rk-gradient-header);
+    color: var(--rk-text-main); font-weight: 700; text-align: center;
+    position: sticky; top: 0; z-index: 3;
+    border-top: none; border-bottom: 2px solid #d1d5db;
+    font-size: 11.5px; padding: 6px 8px;
 }
 
-/* سطر فیلترهای درون ستونی */
+/* — سطر فیلتر — */
 .rk-filter-row th {
-    background: #ffffff;
-    padding: 2px 4px;
-    position: sticky;
-    top: 27px;
-    z-index: 3;
-    border-bottom: 2px solid var(--rk-border);
+    background: #ffffff; padding: 3px 4px;
+    position: sticky; top: 29px; z-index: 3;
+    border-bottom: 2px solid #e5e7eb;
 }
 
-.rk-f-cell {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    height: 22px;
-    border-radius: var(--rk-radius);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.rk-f-cell:focus-within {
-    border-color: var(--rk-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-}
+.rk-f-cell { display: flex; }
 
 .rk-f-cell input {
-    flex: 1;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 11px;
-    font-family: inherit;
-    padding: 0 4px;
-    min-width: 0;
-    color: var(--rk-text-main);
+    width: 100%; height: 24px; border: 1px solid #d1d5db;
+    border-radius: 4px; padding: 0 6px; font-size: 11px;
+    font-family: inherit; text-align: center;
+    background: #f9fafb; transition: all .15s ease;
+    box-sizing: border-box;
 }
 
-.rk-f-btn {
-    border: none;
-    border-inline-end: 1px solid #e2e8f0;
-    background: transparent;
-    height: 100%;
-    width: 20px;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--rk-text-muted);
+.rk-f-cell input:focus { border-color: var(--rk-primary); background: #fff; outline: none; box-shadow: 0 0 0 2px rgba(37,99,235,.15); }
+
+/* — ردیف‌های داده — */
+.rk-table tbody tr { transition: background .12s ease; cursor: pointer; }
+.rk-table tbody tr:hover { background: var(--rk-row-hover); }
+.rk-table tbody tr.selected { background: var(--rk-row-selected); box-shadow: inset 3px 0 0 var(--rk-primary); }
+.rk-table tbody tr:nth-child(even) { background: #fafbfc; }
+.rk-table tbody tr:nth-child(even):hover { background: var(--rk-row-hover); }
+.rk-table tbody tr.selected:nth-child(even) { background: var(--rk-row-selected); }
+
+/* — سلول‌های خاص — */
+.col-center { text-align: center; }
+.col-left { text-align: left; direction: ltr; }
+.col-num { font-family: 'Vazirmatn', 'Courier New', monospace; letter-spacing: .5px; }
+
+.rk-empty-cell, .rk-error-cell {
+    text-align: center; padding: 40px 16px !important;
+    color: var(--rk-text-muted); font-size: 13px;
 }
 
-.rk-f-btn:hover {
-    background: #f1f5f9;
-    color: var(--rk-text-main);
-}
+.rk-error-cell { color: #dc2626; background: #fef2f2; }
 
-/* سطرهای جدول */
-.rk-table tbody tr {
-    transition: background-color 0.15s;
-}
+/* — وضعیت سند با رنگ — */
+.status-draft { color: #f59e0b; font-weight: 600; }
+.status-reviewed { color: #3b82f6; font-weight: 600; }
+.status-approved { color: #8b5cf6; font-weight: 600; }
+.status-permanent { color: #16a34a; font-weight: 600; }
+.status-posted { color: #059669; font-weight: 600; }
+.status-cancelled { color: #ef4444; font-weight: 600; }
 
-.rk-table tbody tr:hover {
-    background-color: var(--rk-row-hover);
-}
-
-.rk-table tbody tr.selected {
-    background-color: var(--rk-row-selected) !important;
-}
-
-.col-center {
-    text-align: center !important;
-}
-
-.col-left {
-    text-align: left !important;
-    direction: ltr;
-    font-family: Tahoma, sans-serif;
-}
-
-.col-num {
-    font-feature-settings: "tnum";
-}
-
-.rk-empty-cell {
-    text-align: center;
-    color: var(--rk-text-muted);
-    padding: 32px 0 !important;
-    background: #ffffff !important;
-}
-
-/* ۵. نوار پایین و صفحه‌بندی */
+/* — نوار پایین — */
 .rk-bottom-status-bar {
-    background: #f8fafc;
-    border-top: 1px solid var(--rk-border);
-    height: 32px;
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 16px; background: var(--rk-gradient-header);
+    border-top: 1px solid var(--rk-border); min-height: 32px;
 }
 
-.rk-bottom-tools {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
+.rk-record-count { color: var(--rk-text-muted); font-size: 11px; }
 
-.rk-pager-controls {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
+.rk-pager-controls { display: flex; align-items: center; gap: 4px; }
 
 .rk-page-nav-btn {
-    background: #ffffff;
-    border: 1px solid var(--rk-border);
-    border-radius: var(--rk-radius);
-    height: 22px;
-    width: 24px;
-    font-size: 10px;
-    color: var(--rk-text-main);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
+    background: transparent; border: 1px solid var(--rk-border);
+    border-radius: 4px; padding: 2px 10px; height: 26px;
+    cursor: pointer; color: var(--rk-text-main); font-size: 13px;
+    font-family: inherit; transition: all .12s ease;
+    display: flex; align-items: center; justify-content: center;
 }
 
-.rk-page-nav-btn:hover:not(:disabled) {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-}
+.rk-page-nav-btn:hover { background: var(--rk-row-hover); border-color: #9ca3af; }
+.rk-page-nav-btn:active { background: #e2e8f0; }
 
-.rk-page-label,
-.rk-record-count {
-    color: var(--rk-text-muted);
-    font-size: 11px;
-}
+.rk-page-label { color: var(--rk-text-muted); font-size: 11px; padding: 0 6px; min-width: 60px; text-align: center; }
 
-.rk-record-count {
-    margin-inline-end: 8px;
-    font-weight: 500;
-}
+/* — انیمیشن بارگذاری — */
+@keyframes rk-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.rk-table tbody tr { animation: rk-fade-in .2s ease both; }
+.rk-table tbody tr:nth-child(1) { animation-delay: 0s; }
+.rk-table tbody tr:nth-child(2) { animation-delay: .02s; }
+.rk-table tbody tr:nth-child(3) { animation-delay: .04s; }

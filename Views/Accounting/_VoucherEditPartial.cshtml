@@ -1,9 +1,8 @@
 <link rel="stylesheet" href="~/css/accounting-voucher-form.css" />
 
 <div class="rk-voucher-form-container">
-    <!-- ۱. نوار فوقانی: تب‌ها و نوار ابزار تماماً راست‌چین شده -->
+    <!-- ۱. نوار فوقانی با افکت شیشه‌ای -->
     <header class="rk-vf-header-bar">
-        <!-- تب‌ها -->
         <div class="rk-vf-tabs-group">
             <button type="button" class="rk-vf-tab active">اطلاعات اصلی</button>
             <button type="button" class="rk-vf-tab">یادداشت و پیوست</button>
@@ -11,71 +10,38 @@
 
         <div class="rk-sep"></div>
 
-        <!-- نوار ابزار عملیاتی راست‌چین شده -->
         <div class="rk-vf-top-tools">
-            <button type="button" class="rk-btn rk-btn-primary" id="btnSaveVoucher" title="ذخیره سند">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                    <polyline points="17 21 17 13 7 13 7 21" />
-                </svg>
+            <button type="button" class="rk-btn rk-btn-primary" id="btnSaveVoucher" title="ذخیره سند (Ctrl+S)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
                 <span>ذخیره</span>
             </button>
 
             <button type="button" class="rk-btn" id="btnSaveAndNew" title="ذخیره و سند جدید">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="12" y1="18" x2="12" y2="12" />
-                    <line x1="9" y1="15" x2="15" y2="15" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
                 <span>ذخیره و جدید</span>
             </button>
 
             <button type="button" class="rk-btn" id="btnUndo" title="بازگشت و لغو تغییرات">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="1 4 1 10 7 10" />
-                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
             </button>
 
             <div class="rk-sep"></div>
 
             <button type="button" class="rk-btn" id="btnPrint" title="چاپ سند">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 6 2 18 2 18 9" />
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                    <rect x="6" y="14" width="12" height="8" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span>چاپ</span>
             </button>
 
             <button type="button" class="rk-btn" id="btnCalculator" title="ماشین حساب">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="4" y="2" width="16" height="20" rx="2" />
-                    <line x1="8" y1="6" x2="16" y2="6" />
-                    <line x1="16" y1="14" x2="16" y2="18" />
-                    <path d="M8 10h.01" />
-                    <path d="M12 10h.01" />
-                    <path d="M16 10h.01" />
-                    <path d="M8 14h.01" />
-                    <path d="M12 14h.01" />
-                    <path d="M8 18h.01" />
-                    <path d="M12 18h.01" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
             </button>
 
             <button type="button" class="rk-btn" id="btnBookmark" title="نشانه‌گذاری سند">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2">
-                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
             </button>
 
             <button type="button" class="rk-btn" id="btnHelp" title="راهنما">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </button>
         </div>
     </header>
@@ -86,86 +52,58 @@
         <div class="rk-header-grid">
             <div class="rk-field-cell">
                 <label>شماره سند:</label>
-                <input type="text" class="rk-input bg-disabled col-center" readonly value="[جدید]" />
+                <input type="text" class="rk-input bg-disabled col-center font-num" readonly value="[جدید]" />
             </div>
             <div class="rk-field-cell">
                 <label>شماره روزانه:</label>
-                <input type="text" class="rk-input col-center font-num" id="txtDailyNo" placeholder="-" />
-            </div>
-            <div class="rk-field-cell">
-                <label>شماره فرعی:</label>
-                <input type="text" class="rk-input col-center font-num" id="txtSubNo" placeholder="-" />
+                <input type="text" class="rk-input col-center font-num" id="txtDailyNo" placeholder="خودکار" readonly />
             </div>
             <div class="rk-field-cell">
                 <label>صادر کننده:</label>
                 <input type="text" class="rk-input bg-disabled" readonly value="@ViewBag.CurrentUserName" />
             </div>
-
             <div class="rk-field-cell">
                 <label><span class="req">*</span> تاریخ سند:</label>
                 <div class="rk-input-picker">
                     <button type="button" class="rk-picker-btn" id="btnCalendarPicker" title="باز کردن تقویم">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                            <line x1="16" y1="2" x2="16" y2="6" />
-                            <line x1="8" y1="2" x2="8" y2="6" />
-                            <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     </button>
-                    <input type="text" class="rk-input col-center font-num" id="txtVoucherDate" value="1403/01/01" />
+                    <input type="text" class="rk-input col-center font-num" id="txtVoucherDate" value="1404/01/01" />
                 </div>
             </div>
             <div class="rk-field-cell">
                 <label><span class="req">*</span> نوع سند:</label>
                 <select class="rk-input" id="drpVoucherType">
-                    <option value="عمومی" selected>عمومی</option>
-                    <option value="افتتاحیه">افتتاحیه</option>
-                    <option value="بستن حسابها">بستن حسابها</option>
-                    <option value="اختتامیه">اختتامیه</option>
+                    <option value="">بارگذاری...</option>
                 </select>
             </div>
             <div class="rk-field-cell">
                 <label>شماره عطف:</label>
-                <div class="rk-input-picker">
-                    <input type="text" class="rk-input col-center font-num" id="txtRefNo" placeholder="-" />
-                </div>
+                <input type="text" class="rk-input col-center font-num" id="txtRefNo" placeholder="-" />
             </div>
-            <div class="rk-field-cell"></div>
-
-            <div class="rk-field-cell span-3">
+            <div class="rk-field-cell span-4">
                 <label>شرح اصلی:</label>
                 <input type="text" class="rk-input" id="txtMainDescription" placeholder="شرح سند حسابداری..." />
-            </div>
-            <div class="rk-field-cell span-1">
-                <label>شرح انگلیسی:</label>
-                <input type="text" class="rk-input" id="txtMainDesc2" placeholder="Secondary Description..." />
             </div>
         </div>
     </fieldset>
 
-    <!-- ۳. جدول آرتیکل‌ها با شماره ردیف در اولین ستون -->
+    <!-- ۳. جدول آرتیکل‌ها (بدون ستون وضعیت و پیگیری) -->
     <div class="rk-matrix-scroll">
         <table class="rk-matrix-table" id="tblVoucherItems">
             <thead>
                 <tr>
-                    <th style="width: 32px;">#</th>
-                    <th style="width: 65px;">وضعیت</th>
-                    <th style="width: 110px;">کد معین</th>
-                    <th style="width: 95px;">سطح ۴</th>
-                    <th style="width: 95px;">سطح ۵</th>
-                    <th style="width: 95px;">سطح ۶</th>
-                    <th style="min-width: 260px;">شرح آرتیکل</th>
-                    <th style="width: 135px;">بدهکار</th>
-                    <th style="width: 135px;">بستانکار</th>
-                    <th style="width: 100px;">شماره پیگیری</th>
-                    <th style="width: 95px;">تاریخ پیگیری</th>
-                    <th style="width: 150px;">شرح به زبان دوم</th>
+                    <th style="width:32px;">#</th>
+                    <th style="min-width:150px;">کد معین</th>
+                    <th style="width:130px;">سطح ۴ (تفصیلی)</th>
+                    <th style="width:130px;">سطح ۵</th>
+                    <th style="width:130px;">سطح ۶</th>
+                    <th style="min-width:200px;">شرح آرتیکل</th>
+                    <th style="width:140px;">بدهکار</th>
+                    <th style="width:140px;">بستانکار</th>
                 </tr>
             </thead>
-            <tbody id="tblVoucherItemsBody">
-                <!-- سطرها از طریق جاوااسکریپت به صورت یک سطر در ابتدا تولید می‌شوند -->
-            </tbody>
+            <tbody id="tblVoucherItemsBody"></tbody>
         </table>
     </div>
 
@@ -173,57 +111,41 @@
     <div class="rk-items-toolbar">
         <div class="rk-items-tools">
             <button type="button" class="rk-btn" id="btnAddRow" title="افزودن سطر جدید (Enter)">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <span>سطر جدید</span>
             </button>
             <button type="button" class="rk-btn" id="btnDeleteRow" title="حذف سطر انتخاب شده">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 <span>حذف سطر</span>
             </button>
 
             <div class="rk-sep"></div>
 
             <button type="button" class="rk-btn" id="btnCopyRow" title="کپی اطلاعات سطر">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button type="button" class="rk-btn" id="btnPasteRow" title="چسباندن اطلاعات سطر">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
             </button>
             <button type="button" class="rk-btn" id="btnCutRow" title="برش سطر">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="6" cy="6" r="3" />
-                    <circle cx="6" cy="18" r="3" />
-                    <line x1="20" y1="4" x2="8.12" y2="15.88" />
-                    <line x1="14.47" y1="14.48" x2="20" y2="20" />
-                </svg>
-            </button>
-            <button type="button" class="rk-btn" id="btnSearchRow" title="جستجو در سطرها">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/></svg>
             </button>
 
             <div class="rk-sep"></div>
 
             <button type="button" class="rk-btn" id="btnMoveUp" title="انتقال سطر به بالا">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="m18 15-6-6-6 6" />
-                </svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>
             </button>
             <button type="button" class="rk-btn" id="btnMoveDown" title="انتقال سطر به پایین">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
             </button>
 
             <div class="rk-sep"></div>
+
+            <button type="button" class="rk-btn" id="btnSearchRow" title="جستجو در سطرها">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>جستجو</span>
+            </button>
 
             <button type="button" class="rk-btn" id="btnTaxStatus" title="وضعیت مالیاتی">
                 <span>وضعیت مالیاتی</span>
@@ -238,34 +160,33 @@
             <div class="rk-acc-hierarchy">
                 <div class="rk-summary-row">
                     <label>گروه حساب:</label>
-                    <input type="text" class="rk-input bg-disabled" id="lblAccGroup" readonly placeholder="-" />
+                    <input type="text" class="rk-input bg-disabled font-num" id="lblAccGroup" readonly placeholder="-" />
                 </div>
                 <div class="rk-summary-row">
                     <label>حساب کل:</label>
-                    <input type="text" class="rk-input bg-disabled" id="lblAccGeneral" readonly placeholder="-" />
+                    <input type="text" class="rk-input bg-disabled font-num" id="lblAccGeneral" readonly placeholder="-" />
                 </div>
                 <div class="rk-summary-row">
                     <label>حساب معین:</label>
-                    <input type="text" class="rk-input bg-disabled" id="lblAccSubsidiary" readonly placeholder="-" />
+                    <input type="text" class="rk-input bg-disabled font-num" id="lblAccSubsidiary" readonly placeholder="-" />
                 </div>
             </div>
 
             <div class="rk-acc-hierarchy">
                 <div class="rk-summary-row">
                     <label>عنوان سطح ۴:</label>
-                    <input type="text" class="rk-input bg-disabled" id="lblDetail4" readonly placeholder="-" />
+                    <input type="text" class="rk-input bg-disabled font-num" id="lblDetail4" readonly placeholder="-" />
                 </div>
                 <div class="rk-summary-row">
                     <label>عنوان سطح ۵:</label>
-                    <input type="text" class="rk-input bg-disabled" id="lblDetail5" readonly placeholder="-" />
+                    <input type="text" class="rk-input bg-disabled font-num" id="lblDetail5" readonly placeholder="-" />
                 </div>
                 <div class="rk-summary-row">
                     <label>عنوان سطح ۶:</label>
-                    <input type="text" class="rk-input bg-disabled" id="lblDetail6" readonly placeholder="-" />
+                    <input type="text" class="rk-input bg-disabled font-num" id="lblDetail6" readonly placeholder="-" />
                 </div>
             </div>
 
-            <!-- باکس‌های تراز بدهکار و بستانکار -->
             <div class="rk-totals-wrapper">
                 <div class="rk-totals-labels">
                     <span>جمع کل:</span>
@@ -275,24 +196,20 @@
                 <div class="rk-total-box debit-box">
                     <div class="rk-box-title">بدهکار (ریال)</div>
                     <div class="rk-box-row">
-                        <input type="text" class="rk-input col-left font-num font-bold" id="txtTotalDebit" readonly
-                               value="0" />
+                        <input type="text" class="rk-input col-left font-num font-bold" id="txtTotalDebit" readonly value="0" />
                     </div>
                     <div class="rk-box-row">
-                        <input type="text" class="rk-input col-left font-num" id="txtRemDebit" readonly
-                               placeholder="0" />
+                        <input type="text" class="rk-input col-left font-num" id="txtRemDebit" readonly placeholder="۰" style="color:#16a34a;" />
                     </div>
                 </div>
 
                 <div class="rk-total-box credit-box">
                     <div class="rk-box-title">بستانکار (ریال)</div>
                     <div class="rk-box-row">
-                        <input type="text" class="rk-input col-left font-num font-bold" id="txtTotalCredit" readonly
-                               value="0" />
+                        <input type="text" class="rk-input col-left font-num font-bold" id="txtTotalCredit" readonly value="0" />
                     </div>
                     <div class="rk-box-row">
-                        <input type="text" class="rk-input col-left font-num" id="txtRemCredit" readonly
-                               placeholder="0" />
+                        <input type="text" class="rk-input col-left font-num" id="txtRemCredit" readonly placeholder="۰" style="color:#dc2626;" />
                     </div>
                 </div>
             </div>
@@ -301,10 +218,3 @@
 </div>
 
 <script src="~/js/accounting-voucher-form.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-    if (window.VoucherForm) {
-    window.VoucherForm.init();
-    }
-    });
-</script>
