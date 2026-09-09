@@ -43,6 +43,11 @@ public sealed class SignatureService : ISignatureService
             .FirstOrDefaultAsync(c => c.Id == contractId, ct)
             ?? throw new InvalidOperationException($"قرارداد با شناسه {contractId} یافت نشد.");
 
+        // Truncate fields to match DB column maximum lengths
+        var safeIpAddress = !string.IsNullOrEmpty(ipAddress) && ipAddress.Length > 45 ? ipAddress[..45] : ipAddress;
+        var safeUserAgent = !string.IsNullOrEmpty(userAgent) && userAgent.Length > 500 ? userAgent[..500] : userAgent;
+        var safeComment = !string.IsNullOrEmpty(comment) && comment.Length > 2000 ? comment[..2000] : comment;
+
         // Find or create the active signature request for this contract.
         var request = await _context.ContractSignatureRequests
             .Where(r => r.ContractId == contractId && r.Status == ContractSignatureStatus.InProgress)
@@ -69,6 +74,7 @@ public sealed class SignatureService : ISignatureService
                 UpdatedAt = DateTime.UtcNow
             };
             _context.ContractSignatureRequests.Add(request);
+            await _context.SaveChangesAsync(ct);
         }
 
         var signer = await _context.ContractSignatureSigners
@@ -78,6 +84,7 @@ public sealed class SignatureService : ISignatureService
         {
             signer = new ContractSignatureSigner
             {
+                SignatureRequest = request,
                 SignatureRequestId = request.Id,
                 SignerType = SignatureSignerType.Internal,
                 UserId = currentUserId,
@@ -87,23 +94,26 @@ public sealed class SignatureService : ISignatureService
                 CreatedAt = DateTime.UtcNow
             };
             _context.ContractSignatureSigners.Add(signer);
+            await _context.SaveChangesAsync(ct);
         }
 
         signer.Result = SignatureSignerResult.Signed;
         signer.SignedAt = DateTime.UtcNow;
-        signer.SignedIpAddress = ipAddress;
-        signer.SignedUserAgent = userAgent;
-        signer.Comment = comment ?? signer.Comment;
+        signer.SignedIpAddress = safeIpAddress;
+        signer.SignedUserAgent = safeUserAgent;
+        signer.Comment = safeComment ?? signer.Comment;
         signer.SignatureImageData = signatureImageData;
 
         _context.ContractSignatureAuditLogs.Add(new ContractSignatureAuditLog
         {
+            SignatureRequest = request,
             SignatureRequestId = request.Id,
+            Signer = signer,
             SignerId = signer.Id,
             EventType = "Signed",
             Description = "امضای داخلی توسط کاربر ثبت شد",
             PerformedByUserId = currentUserId,
-            IpAddress = ipAddress,
+            IpAddress = safeIpAddress,
             Metadata = JsonSerializer.Serialize(new { signatureLength = signatureImageData.Length }),
             CreatedAt = DateTime.UtcNow
         });

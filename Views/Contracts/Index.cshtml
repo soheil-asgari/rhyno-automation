@@ -1,4 +1,5 @@
 @model ContractIndexVM
+@using OfficeAutomation.Modules.InvoiceStructuring
 @{
     ViewData["Title"] = "قراردادها";
 }
@@ -114,19 +115,31 @@
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">از تاریخ شروع</label>
-                <input name="StartDateFrom" value="@Model.StartDateFrom?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
+                <div class="relative jalali-datepicker-wrapper">
+                    <input type="text" class="erp-input jalali-date-input cursor-pointer" data-jalali="StartDateFrom" placeholder="انتخاب تاریخ" value="@(Model.StartDateFrom.HasValue ? JalaliDateHelper.ToShamsiString(Model.StartDateFrom.Value) : "")" readonly />
+                    <input type="hidden" name="StartDateFrom" class="jalali-date-hidden" value="@Model.StartDateFrom?.ToString("yyyy-MM-dd")" />
+                </div>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تا تاریخ شروع</label>
-                <input name="StartDateTo" value="@Model.StartDateTo?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
+                <div class="relative jalali-datepicker-wrapper">
+                    <input type="text" class="erp-input jalali-date-input cursor-pointer" data-jalali="StartDateTo" placeholder="انتخاب تاریخ" value="@(Model.StartDateTo.HasValue ? JalaliDateHelper.ToShamsiString(Model.StartDateTo.Value) : "")" readonly />
+                    <input type="hidden" name="StartDateTo" class="jalali-date-hidden" value="@Model.StartDateTo?.ToString("yyyy-MM-dd")" />
+                </div>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">از تاریخ پایان</label>
-                <input name="EndDateFrom" value="@Model.EndDateFrom?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
+                <div class="relative jalali-datepicker-wrapper">
+                    <input type="text" class="erp-input jalali-date-input cursor-pointer" data-jalali="EndDateFrom" placeholder="انتخاب تاریخ" value="@(Model.EndDateFrom.HasValue ? JalaliDateHelper.ToShamsiString(Model.EndDateFrom.Value) : "")" readonly />
+                    <input type="hidden" name="EndDateFrom" class="jalali-date-hidden" value="@Model.EndDateFrom?.ToString("yyyy-MM-dd")" />
+                </div>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تا تاریخ پایان</label>
-                <input name="EndDateTo" value="@Model.EndDateTo?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
+                <div class="relative jalali-datepicker-wrapper">
+                    <input type="text" class="erp-input jalali-date-input cursor-pointer" data-jalali="EndDateTo" placeholder="انتخاب تاریخ" value="@(Model.EndDateTo.HasValue ? JalaliDateHelper.ToShamsiString(Model.EndDateTo.Value) : "")" readonly />
+                    <input type="hidden" name="EndDateTo" class="jalali-date-hidden" value="@Model.EndDateTo?.ToString("yyyy-MM-dd")" />
+                </div>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">حداقل مبلغ</label>
@@ -265,8 +278,8 @@
                                     }
                                     <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @paymentBadge">@paymentText</span>
                                 </td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400" data-column-id="StartDate">@item.StartDate.ToString("yyyy/MM/dd")</td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400" data-column-id="EndDate">@(item.EndDate?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400" data-column-id="StartDate">@JalaliDateHelper.ToShamsiString(item.StartDate)</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400" data-column-id="EndDate">@(item.EndDate.HasValue ? JalaliDateHelper.ToShamsiString(item.EndDate.Value) : "-")</td>
                                 <td class="px-3 py-2" data-column-id="Status">
                                     @{
                                         var statusBadge = item.Status switch
@@ -358,10 +371,12 @@
 @* CSRF token for bulk action AJAX calls — read from the meta tag placed in _Layout *@
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/persian-datepicker.min.css" />
     <link rel="stylesheet" href="~/css/contracts-index-style.css" asp-append-version="true" />
 }
 
 @section Scripts {
+    <script src="~/js/persian-date.min.js"></script>
     <script src="~/js/contracts-index-script.js" asp-append-version="true"></script>
     <script src="~/js/contracts-column-chooser.js" asp-append-version="true"></script>
 }

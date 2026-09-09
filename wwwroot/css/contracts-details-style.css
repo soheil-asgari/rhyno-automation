@@ -662,12 +662,7 @@
 }
 
 
-    flex-shrink: 0;
-    margin-top: 1px;
-    color: #ef4444;
-}
-
-/* ?? Penalty / Late Payment ???????????????????????????? */
+/* ── Penalty / Late Payment ──────────────────────────── */
 #penaltyRuleModal {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -681,6 +676,7 @@
 }
 .penalty-overdue-row td {
     background-color: rgba(251, 191, 36, 0.04);
+}
 
 /* ── Document Requirements ───────────────────────────── */
 .doc-missing-row td {
@@ -689,4 +685,83 @@
 .doc-missing-row:hover td {
     background-color: rgba(251, 191, 36, 0.1);
 }
+
+/* ── Vanilla Jalali Popup & Datepicker Component Styles ── */
+.vanilla-jalali-popup {
+    position: absolute;
+    z-index: 9999;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    width: 260px;
+    display: none;
+    font-family: Vazirmatn, Tahoma, sans-serif;
+    direction: rtl;
+}
+.dark .vanilla-jalali-popup {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.vanilla-jalali-popup .vjp-nav-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    color: #64748b;
+    padding: 2px 6px;
+    line-height: 1;
+}
+.vanilla-jalali-popup .vjp-nav-btn:hover {
+    color: #0f172a;
+}
+.dark .vanilla-jalali-popup .vjp-nav-btn:hover {
+    color: #f8fafc;
+}
+.vanilla-jalali-popup .vjp-day-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 11px;
+    color: #334155;
+    border-radius: 4px;
+    padding: 4px 0;
+    text-align: center;
+    line-height: 1;
+}
+.dark .vanilla-jalali-popup .vjp-day-btn {
+    color: #cbd5e1;
+}
+.vanilla-jalali-popup .vjp-day-btn:hover {
+    background: #f1f5f9;
+}
+.dark .vanilla-jalali-popup .vjp-day-btn:hover {
+    background: #334155;
+}
+.vanilla-jalali-popup .vjp-day-btn.is-today {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 700;
+}
+.dark .vanilla-jalali-popup .vjp-day-btn.is-today {
+    background: #0369a1;
+    color: #e0f2fe;
+}
+
+/* ── Jalali datepicker: prevent overflow clipping in modals & wrappers ── */
+.jalali-datepicker-wrapper {
+    overflow: visible !important;
+    position: relative !important;
+}
+#addPaymentModal,
+#addPaymentModal .bg-white,
+#addPaymentModal .dark\:bg-slate-900,
+#addGuaranteeModal,
+#addGuaranteeModal .bg-white,
+#addGuaranteeModal .dark\:bg-slate-900 {
+    overflow: visible !important;
 }

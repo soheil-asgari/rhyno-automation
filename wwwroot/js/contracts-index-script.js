@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Rhyno Contracts Index — Loading States & Bulk Actions
  *
  * Provides:
@@ -14,6 +14,120 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
+
+    // ── Jalali Date Picker Logic ──────────────────────────────
+    var PERSIAN_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+    var PERSIAN_WEEKDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+
+    function toPersianDigits(str) {
+        return String(str).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
+    }
+
+    function writeJalaliToHidden(input, jalali) {
+        var wrapper = input.closest('.jalali-datepicker-wrapper');
+        var hidden = wrapper ? wrapper.querySelector('input.jalali-date-hidden') : null;
+        if (hidden) {
+            if (!jalali) {
+                hidden.value = '';
+                return;
+            }
+            try {
+                var parts = jalali.trim().split('/');
+                if (parts.length === 3) {
+                    var y = parseInt(parts[0], 10);
+                    var m = parseInt(parts[1], 10);
+                    var d = parseInt(parts[2], 10);
+                    if (!isNaN(y) && !isNaN(m) && !isNaN(d) && typeof persianDate !== 'undefined') {
+                        var pd = new persianDate([y, m, d]);
+                        var g = pd.toDate();
+                        hidden.value = g.getFullYear() + '-' + String(g.getMonth() + 1).padStart(2, '0') + '-' + String(g.getDate()).padStart(2, '0');
+                    }
+                }
+            } catch (e) { }
+        }
+    }
+
+    function createDatepicker(input) {
+        var wrapper = input.closest('.jalali-datepicker-wrapper') || input.parentElement;
+        if (!wrapper) return;
+        wrapper.style.position = 'relative';
+
+        var popup = wrapper.querySelector('.vanilla-jalali-popup');
+        if (!popup) {
+            popup = document.createElement('div');
+            popup.className = 'vanilla-jalali-popup';
+            wrapper.appendChild(popup);
+        }
+
+        var viewYear = 0, viewMonth = 0;
+
+        function render() {
+            if (typeof persianDate === 'undefined') return;
+            var today = new persianDate();
+            if (!viewYear) viewYear = today.year();
+            if (!viewMonth) viewMonth = today.month();
+
+            var daysInMonth = today.daysInMonth(viewYear, viewMonth);
+            var firstWeekday = today.getFirstWeekDayOfMonth(viewYear, viewMonth);
+
+            var html = '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #f1f5f9;">';
+            html += '<button type="button" class="vjp-nav-btn" data-nav="prev">&rsaquo;</button>';
+            html += '<span style="font-size:12px;font-weight:700;color:#334155;">' + PERSIAN_MONTHS[viewMonth - 1] + ' ' + toPersianDigits(viewYear) + '</span>';
+            html += '<button type="button" class="vjp-nav-btn" data-nav="next">&lsaquo;</button>';
+            html += '</div>';
+
+            html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:4px 6px;border-bottom:1px solid #f1f5f9;">';
+            PERSIAN_WEEKDAYS.forEach(function (w) {
+                html += '<div style="text-align:center;font-size:10px;font-weight:700;color:#94a3b8;padding:2px 0;">' + w + '</div>';
+            });
+            html += '</div>';
+
+            html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:6px;">';
+            for (var i = 0; i < firstWeekday; i++) { html += '<div></div>'; }
+            for (var day = 1; day <= daysInMonth; day++) {
+                var isToday = (day === today.date() && viewMonth === today.month() && viewYear === today.year());
+                html += '<button type="button" class="vjp-day-btn' + (isToday ? ' is-today' : '') + '" data-day="' + day + '">' + toPersianDigits(day) + '</button>';
+            }
+            html += '</div>';
+
+            popup.innerHTML = html;
+
+            popup.querySelector('[data-nav="prev"]')?.addEventListener('click', function (e) {
+                e.stopPropagation(); e.preventDefault();
+                viewMonth--; if (viewMonth < 1) { viewMonth = 12; viewYear--; } render();
+            });
+            popup.querySelector('[data-nav="next"]')?.addEventListener('click', function (e) {
+                e.stopPropagation(); e.preventDefault();
+                viewMonth++; if (viewMonth > 12) { viewMonth = 1; viewYear++; } render();
+            });
+            popup.querySelectorAll('[data-day]').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation(); e.preventDefault();
+                    var day = parseInt(btn.getAttribute('data-day'), 10);
+                    var selected = new persianDate([viewYear, viewMonth, day]);
+                    var jalali = selected.format('YYYY/MM/DD');
+                    input.value = jalali;
+                    writeJalaliToHidden(input, jalali);
+                    popup.style.display = 'none';
+                });
+            });
+        }
+
+        input.addEventListener('click', function (e) {
+            e.stopPropagation();
+            document.querySelectorAll('.vanilla-jalali-popup').forEach(function (p) { if (p !== popup) p.style.display = 'none'; });
+            viewYear = 0; viewMonth = 0;
+            render();
+            popup.style.display = 'block';
+        });
+    }
+
+    document.querySelectorAll('.jalali-date-input').forEach(createDatepicker);
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.jalali-datepicker-wrapper')) {
+            document.querySelectorAll('.vanilla-jalali-popup').forEach(function (p) { p.style.display = 'none'; });
+        }
+    });
 
     // ── Filter loading overlay ──
     var filterForm = document.querySelector('[data-filter-form]');

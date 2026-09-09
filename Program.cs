@@ -69,7 +69,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "Rhyno ERP API",
         Version = "v1",
-        Description = "ط±ط§ط¨ط· ط¨ط±ظ†ط§ظ…ظ‡â€Œظ†ظˆغŒط³غŒ ع©ط§ط±ط¨ط±ط¯غŒ (API) ط¹ظ…ظˆظ…غŒ ط³غŒط³طھظ… ط¨ط±ظ†ط§ظ…ظ‡â€Œط±غŒط²غŒ ظ…ظ†ط§ط¨ط¹ ط³ط§ط²ظ…ط§ظ†غŒ ط±ط§غŒظ†ظˆ",
+        Description = "رابط برنامه‌نویسی کاربردی (API) عمومی سیستم برنامه‌ریزی منابع سازمانی راینو",
         Contact = new OpenApiContact
         {
             Name = "Rhyno Support",
@@ -81,7 +81,7 @@ builder.Services.AddSwaggerGen(options =>
     // Add API Key authentication definition
     options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        Description = "API Key ط±ط§ ط¯ط± ظ‡ط¯ط± ظˆط§ط±ط¯ ع©ظ†غŒط¯. ظ…ط«ط§ظ„: X-Api-Key: your-api-key",
+        Description = "API Key را در هدر وارد کنید. مثال: X-Api-Key: your-api-key",
         Name = "X-Api-Key",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -220,10 +220,10 @@ builder.Services.AddIdentity<User, ApplicationRole>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 
-    // طھظ†ط¸غŒظ…ط§طھ ظ…ظ‡ظ… ط¨ط±ط§غŒ ظ†ط§ظ… ع©ط§ط±ط¨ط±غŒ ط¨ظ‡ ط¬ط§غŒ ط§غŒظ…غŒظ„
+    // تنظیمات مهم برای نام کاربری به جای ایمیل
     options.User.AllowedUserNameCharacters =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ " +
-        "ط¢ط§ط¨ظ¾طھط«ط¬ع†ط­ط®ط¯ط°ط±ط²عکط³ط´طµط¶ط·ط¸ط¹ط؛ظپظ‚ع©ع¯ظ„ظ…ظ†ظˆظ‡غŒ";
+        "آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی";
 
     options.User.RequireUniqueEmail = false;
     options.SignIn.RequireConfirmedAccount = false;
@@ -466,7 +466,7 @@ if (isEfDesignTime)
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 
-// 3. طھظ†ط¸غŒظ…ط§طھ ظ…ط­غŒط· ط§ط¬ط±ط§
+// 3. تنظیمات محیط اجرا
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

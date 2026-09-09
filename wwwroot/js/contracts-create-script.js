@@ -314,6 +314,105 @@
                     });
                 }
 
+                // ── Live Currency & Tax Recalculation ───────────────────────
+                function recalculateTaxes() {
+                    var totalAmountInput = document.getElementById('TotalAmount');
+                    var taxMethodSelect = document.getElementById('TaxMethod');
+                    var taxRateInput = document.getElementById('DefaultTaxRatePercent');
+                    var totalTaxInput = document.getElementById('TotalTaxAmount');
+                    var totalInclusiveInput = document.getElementById('TotalAmountInclusiveTax');
+
+                    if (!totalAmountInput || !taxMethodSelect || !totalTaxInput || !totalInclusiveInput) return;
+
+                    var total = parseFloat(totalAmountInput.value) || 0;
+                    var method = taxMethodSelect.value || 'Exclusive';
+                    var rate = taxRateInput ? (parseFloat(taxRateInput.value) || 0) : 0;
+
+                    var taxAmount = 0;
+                    var inclusiveAmount = total;
+
+                    if (method === 'Exclusive') {
+                        taxAmount = Math.round(total * (rate / 100) * 100) / 100;
+                        inclusiveAmount = total + taxAmount;
+                    } else if (method === 'Inclusive') {
+                        inclusiveAmount = total;
+                        if (rate > 0) {
+                            taxAmount = Math.round((total - (total / (1 + (rate / 100)))) * 100) / 100;
+                        } else {
+                            taxAmount = 0;
+                        }
+                    } else { // None
+                        taxAmount = 0;
+                        inclusiveAmount = total;
+                    }
+
+                    totalTaxInput.value = taxAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                    totalInclusiveInput.value = inclusiveAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                }
+
+                function handleCurrencyChange() {
+                    var currencySelect = document.getElementById('CurrencyCode');
+                    var exchangeContainer = document.getElementById('exchangeRateContainer');
+                    var exchangeInput = document.getElementById('ExchangeRate');
+                    if (!currencySelect || !exchangeContainer) return;
+
+                    if (currencySelect.value === 'IRR') {
+                        exchangeContainer.style.display = 'none';
+                        if (exchangeInput) exchangeInput.value = '1';
+                    } else {
+                        exchangeContainer.style.display = '';
+                        if (exchangeInput && (!exchangeInput.value || parseFloat(exchangeInput.value) <= 0)) {
+                            exchangeInput.value = '1';
+                        }
+                    }
+                }
+
+                function handleTaxMethodChange() {
+                    var taxMethodSelect = document.getElementById('TaxMethod');
+                    var taxRateContainer = document.getElementById('taxRateContainer');
+                    var taxRateInput = document.getElementById('DefaultTaxRatePercent');
+                    if (!taxMethodSelect || !taxRateContainer) return;
+
+                    if (taxMethodSelect.value === 'None') {
+                        taxRateContainer.style.display = 'none';
+                        if (taxRateInput) taxRateInput.value = '0';
+                    } else {
+                        taxRateContainer.style.display = '';
+                        if (taxRateInput && (!taxRateInput.value || parseFloat(taxRateInput.value) === 0)) {
+                            taxRateInput.value = '10';
+                        }
+                    }
+                    recalculateTaxes();
+                }
+
+                var totalAmountEl = document.getElementById('TotalAmount');
+                if (totalAmountEl) {
+                    totalAmountEl.addEventListener('input', recalculateTaxes);
+                }
+
+                var taxRateEl = document.getElementById('DefaultTaxRatePercent');
+                if (taxRateEl) {
+                    taxRateEl.addEventListener('input', recalculateTaxes);
+                }
+
+                var taxMethodEl = document.getElementById('TaxMethod');
+                if (taxMethodEl) {
+                    taxMethodEl.addEventListener('change', handleTaxMethodChange);
+                }
+
+                var currencyEl = document.getElementById('CurrencyCode');
+                if (currencyEl) {
+                    currencyEl.addEventListener('change', handleCurrencyChange);
+                }
+
+                // Initial calculation and state
+                handleCurrencyChange();
+                if (taxMethodEl && taxMethodEl.value === 'None') {
+                    var trc = document.getElementById('taxRateContainer');
+                    if (trc) trc.style.display = 'none';
+                }
+                recalculateTaxes();
+
                 document.getElementById('contractCreateForm')?.addEventListener('submit', function() {
                     collectDynamicFieldValues();
                     window.syncContractEditor();

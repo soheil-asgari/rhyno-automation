@@ -45,8 +45,9 @@ public class ContractExportService : IContractExportService
             .ToListAsync(ct);
 
         using var wb = new XLWorkbook();
-        var ws = wb.Worksheets.Add("Contracts");
-        var headers = new[] { "Contract Number", "Title", "Type", "Status", "Value", "Start Date", "End Date", "Assigned To", "Created Date" };
+        var ws = wb.Worksheets.Add("قراردادها");
+        ws.RightToLeft = true;
+        var headers = new[] { "شماره قرارداد", "عنوان", "نوع قرارداد", "وضعیت", "مبلغ کل", "تاریخ شروع", "تاریخ پایان", "مسئول", "تاریخ ایجاد" };
         for (int i = 0; i < headers.Length; i++) { ws.Cell(1, i + 1).Value = headers[i]; StyleHeader(ws.Cell(1, i + 1)); }
         for (int r = 0; r < contracts.Count; r++)
         {
@@ -87,17 +88,18 @@ public class ContractExportService : IContractExportService
 
         var sb = new StringBuilder();
         sb.Append("<html><head><meta charset=\"utf-8\"><style>");
-        sb.Append("body{font-family:Tahoma,Arial,sans-serif;font-size:11px;direction:rtl;padding:20px;}");
-        sb.Append("h1{font-size:16px;color:#0f766b;margin-bottom:16px;}");
-        sb.Append("table{width:100%;border-collapse:collapse;}");
+        sb.Append("body{font-family:Tahoma,Arial,sans-serif;font-size:11px;direction:rtl;text-align:right;padding:20px;}");
+        sb.Append("h1{font-size:16px;color:#0f766b;margin-bottom:16px;text-align:right;}");
+        sb.Append("p{margin-bottom:12px;color:#64748b;text-align:right;}");
+        sb.Append("table{width:100%;border-collapse:collapse;direction:rtl;}");
         sb.Append("th{background:#0f766b;color:white;padding:6px 4px;font-size:10px;text-align:center;}");
         sb.Append("td{padding:5px 4px;border:1px solid #ddd;text-align:center;font-size:10px;}");
         sb.Append("tr:nth-child(even){background:#f9f9f9;}");
         sb.Append("</style></head><body>");
-        sb.Append("<h1>Contracts List</h1>");
-        sb.Append("<p>Generated: ").Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm")).Append("</p>");
+        sb.Append("<h1>فهرست قراردادها</h1>");
+        sb.Append("<p>تاریخ گزارش: ").Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm")).Append("</p>");
         sb.Append("<table><thead><tr>");
-        sb.Append("<th>Contract Number</th><th>Title</th><th>Type</th><th>Status</th><th>Value</th><th>Start Date</th><th>End Date</th><th>Assigned To</th>");
+        sb.Append("<th>شماره قرارداد</th><th>عنوان</th><th>نوع قرارداد</th><th>وضعیت</th><th>مبلغ کل</th><th>تاریخ شروع</th><th>تاریخ پایان</th><th>مسئول</th>");
         sb.Append("</tr></thead><tbody>");
         foreach (var c in contracts)
         {
@@ -121,6 +123,7 @@ public class ContractExportService : IContractExportService
     {
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add(reportType);
+        ws.RightToLeft = true;
         switch (reportType.ToLowerInvariant())
         {
             case "aging": await WriteAgingAsync(ws, ct); break;
@@ -138,64 +141,64 @@ public class ContractExportService : IContractExportService
 private async Task WriteAgingAsync(IXLWorksheet ws, CancellationToken ct)
     {
         var d = await _reportService.GetPaymentAgingReportAsync(ct);
-        ws.Cell(1, 1).Value = "Payment Aging"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
-        ws.Cell(3, 1).Value = "Total Overdue"; ws.Cell(3, 2).Value = d.TotalOverdue; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(4, 1).Value = "Count"; ws.Cell(4, 2).Value = d.TotalOverdueCount;
-        ws.Cell(5, 1).Value = "Average"; ws.Cell(5, 2).Value = d.AverageOverdueAmount; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(6, 1).Value = "Max Days"; ws.Cell(6, 2).Value = d.MaxDaysOverdue;
-        ws.Cell(8, 1).Value = "Bucket"; ws.Cell(8, 2).Value = "Count"; ws.Cell(8, 3).Value = "Total"; ws.Row(8).Style.Font.Bold = true;
+        ws.Cell(1, 1).Value = "گزارش کهنگی مطالبات و پرداخت‌ها"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(3, 1).Value = "مجموع معوقات"; ws.Cell(3, 2).Value = d.TotalOverdue; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(4, 1).Value = "تعداد"; ws.Cell(4, 2).Value = d.TotalOverdueCount;
+        ws.Cell(5, 1).Value = "میانگین مبلغ"; ws.Cell(5, 2).Value = d.AverageOverdueAmount; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(6, 1).Value = "حداکثر تاخیر (روز)"; ws.Cell(6, 2).Value = d.MaxDaysOverdue;
+        ws.Cell(8, 1).Value = "بازه زمانی"; ws.Cell(8, 2).Value = "تعداد"; ws.Cell(8, 3).Value = "مبلغ کل"; ws.Row(8).Style.Font.Bold = true;
         for (int i = 0; i < d.Buckets.Count; i++) { var b = d.Buckets[i]; ws.Cell(9 + i, 1).Value = b.BucketName; ws.Cell(9 + i, 2).Value = b.Count; ws.Cell(9 + i, 3).Value = b.TotalAmount; ws.Cell(9 + i, 3).Style.NumberFormat.Format = "#,##0"; }
     }
 
     private async Task WriteRevenueAsync(IXLWorksheet ws, CancellationToken ct)
     {
         var d = await _reportService.GetRevenueRecognitionScheduleAsync(ct);
-        ws.Cell(1, 1).Value = "Revenue Recognition"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
-        ws.Cell(3, 1).Value = "Recognized"; ws.Cell(3, 2).Value = d.TotalRecognized; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(4, 1).Value = "Scheduled"; ws.Cell(4, 2).Value = d.TotalScheduled; ws.Cell(4, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(5, 1).Value = "Active Value"; ws.Cell(5, 2).Value = d.TotalActiveValue; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(6, 1).Value = "Active Cnt"; ws.Cell(6, 2).Value = d.ActiveContractCount;
-        ws.Cell(8, 1).Value = "Period"; ws.Cell(8, 2).Value = "Recognized"; ws.Cell(8, 3).Value = "Scheduled"; ws.Row(8).Style.Font.Bold = true;
+        ws.Cell(1, 1).Value = "شناسایی و تحقق درآمد"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(3, 1).Value = "تحقق‌یافته"; ws.Cell(3, 2).Value = d.TotalRecognized; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(4, 1).Value = "زمان‌بندی‌شده"; ws.Cell(4, 2).Value = d.TotalScheduled; ws.Cell(4, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(5, 1).Value = "ارزش قراردادهای فعال"; ws.Cell(5, 2).Value = d.TotalActiveValue; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(6, 1).Value = "تعداد فعال"; ws.Cell(6, 2).Value = d.ActiveContractCount;
+        ws.Cell(8, 1).Value = "دوره"; ws.Cell(8, 2).Value = "تحقق‌یافته"; ws.Cell(8, 3).Value = "زمان‌بندی‌شده"; ws.Row(8).Style.Font.Bold = true;
         for (int i = 0; i < d.Periods.Count; i++) { var p = d.Periods[i]; ws.Cell(9 + i, 1).Value = p.PeriodLabel; ws.Cell(9 + i, 2).Value = p.RecognizedAmount; ws.Cell(9 + i, 2).Style.NumberFormat.Format = "#,##0"; ws.Cell(9 + i, 3).Value = p.ScheduledAmount; ws.Cell(9 + i, 3).Style.NumberFormat.Format = "#,##0"; }
     }
 
     private async Task WritePipelineAsync(IXLWorksheet ws, CancellationToken ct)
     {
         var d = await _reportService.GetContractValuePipelineAsync(ct);
-        ws.Cell(1, 1).Value = "Value Pipeline"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
-        ws.Cell(3, 1).Value = "Grand Total"; ws.Cell(3, 2).Value = d.GrandTotalValue; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(4, 1).Value = "Count"; ws.Cell(4, 2).Value = d.GrandTotalCount;
-        ws.Cell(5, 1).Value = "Average"; ws.Cell(5, 2).Value = d.AverageContractValue; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(7, 1).Value = "Status"; ws.Cell(7, 2).Value = "Count"; ws.Cell(7, 3).Value = "Value"; ws.Cell(7, 4).Value = "Share %"; ws.Row(7).Style.Font.Bold = true;
+        ws.Cell(1, 1).Value = "پایپ‌لاین ارزش قراردادها"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(3, 1).Value = "مجموع کل"; ws.Cell(3, 2).Value = d.GrandTotalValue; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(4, 1).Value = "تعداد"; ws.Cell(4, 2).Value = d.GrandTotalCount;
+        ws.Cell(5, 1).Value = "میانگین"; ws.Cell(5, 2).Value = d.AverageContractValue; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(7, 1).Value = "وضعیت"; ws.Cell(7, 2).Value = "تعداد"; ws.Cell(7, 3).Value = "ارزش"; ws.Cell(7, 4).Value = "سهم (%)"; ws.Row(7).Style.Font.Bold = true;
         for (int i = 0; i < d.Items.Count; i++) { var it = d.Items[i]; ws.Cell(8 + i, 1).Value = it.Status; ws.Cell(8 + i, 2).Value = it.Count; ws.Cell(8 + i, 3).Value = it.TotalValue; ws.Cell(8 + i, 3).Style.NumberFormat.Format = "#,##0"; ws.Cell(8 + i, 4).Value = it.PercentageOfTotal; }
     }
 private async Task WriteCalendarAsync(IXLWorksheet ws, CancellationToken ct)
     {
         var d = await _reportService.GetObligationsCalendarAsync(6, ct);
-        ws.Cell(1, 1).Value = "Obligations Calendar"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
-        ws.Cell(3, 1).Value = "Total Events"; ws.Cell(3, 2).Value = d.TotalEvents;
-        ws.Cell(4, 1).Value = "Total Amount"; ws.Cell(4, 2).Value = d.TotalAmountDue; ws.Cell(4, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(5, 1).Value = "Period"; ws.Cell(5, 2).Value = d.UpcomingMonths + "m";
-        ws.Cell(7, 1).Value = "Date"; ws.Cell(7, 2).Value = "Type"; ws.Cell(7, 3).Value = "Count"; ws.Cell(7, 4).Value = "Amount"; ws.Row(7).Style.Font.Bold = true;
+        ws.Cell(1, 1).Value = "تقویم تعهدات و سررسیدها"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(3, 1).Value = "مجموع رویدادها"; ws.Cell(3, 2).Value = d.TotalEvents;
+        ws.Cell(4, 1).Value = "مبلغ کل سررسید"; ws.Cell(4, 2).Value = d.TotalAmountDue; ws.Cell(4, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(5, 1).Value = "دوره"; ws.Cell(5, 2).Value = d.UpcomingMonths + " ماه آینده";
+        ws.Cell(7, 1).Value = "تاریخ"; ws.Cell(7, 2).Value = "نوع تعهد"; ws.Cell(7, 3).Value = "تعداد"; ws.Cell(7, 4).Value = "مبلغ"; ws.Row(7).Style.Font.Bold = true;
         for (int i = 0; i < d.Events.Count; i++) { var e = d.Events[i]; ws.Cell(8 + i, 1).Value = e.Date.ToString("yyyy-MM-dd"); ws.Cell(8 + i, 2).Value = e.ObligationTypeDisplay; ws.Cell(8 + i, 3).Value = e.Count; ws.Cell(8 + i, 4).Value = e.TotalAmount; ws.Cell(8 + i, 4).Style.NumberFormat.Format = "#,##0"; }
     }
 
     private async Task WriteExposureAsync(IXLWorksheet ws, CancellationToken ct)
     {
         var d = await _reportService.GetFinancialExposureAsync(ct);
-        ws.Cell(1, 1).Value = "Financial Exposure"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
-        ws.Cell(3, 1).Value = "Active Value"; ws.Cell(3, 2).Value = d.TotalActiveValue; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(4, 1).Value = "Active Cnt"; ws.Cell(4, 2).Value = d.ActiveContractCount;
-        ws.Cell(5, 1).Value = "At Risk"; ws.Cell(5, 2).Value = d.AtRiskValue; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(6, 1).Value = "Risk Cnt"; ws.Cell(6, 2).Value = d.AtRiskCount;
-        ws.Cell(7, 1).Value = "Pending"; ws.Cell(7, 2).Value = d.PendingApprovalValue; ws.Cell(7, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(8, 1).Value = "Pending Cnt"; ws.Cell(8, 2).Value = d.PendingApprovalCount;
-        ws.Cell(9, 1).Value = "Receivables"; ws.Cell(9, 2).Value = d.TotalOutstandingReceivables; ws.Cell(9, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(10, 1).Value = "Recognized"; ws.Cell(10, 2).Value = d.TotalRecognizedRevenue; ws.Cell(10, 2).Style.NumberFormat.Format = "#,##0";
-        ws.Cell(11, 1).Value = "Exposure Ratio"; ws.Cell(11, 2).Value = d.ExposureRatioPercent + "%";
+        ws.Cell(1, 1).Value = "تحلیل ریسک و مواجهه مالی"; ws.Cell(1, 1).Style.Font.Bold = true; ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(3, 1).Value = "ارزش قراردادهای فعال"; ws.Cell(3, 2).Value = d.TotalActiveValue; ws.Cell(3, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(4, 1).Value = "تعداد فعال"; ws.Cell(4, 2).Value = d.ActiveContractCount;
+        ws.Cell(5, 1).Value = "در معرض ریسک"; ws.Cell(5, 2).Value = d.AtRiskValue; ws.Cell(5, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(6, 1).Value = "تعداد ریسک"; ws.Cell(6, 2).Value = d.AtRiskCount;
+        ws.Cell(7, 1).Value = "در انتظار تأیید"; ws.Cell(7, 2).Value = d.PendingApprovalValue; ws.Cell(7, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(8, 1).Value = "تعداد در انتظار"; ws.Cell(8, 2).Value = d.PendingApprovalCount;
+        ws.Cell(9, 1).Value = "مطالبات معوق"; ws.Cell(9, 2).Value = d.TotalOutstandingReceivables; ws.Cell(9, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(10, 1).Value = "درآمد شناسایی‌شده"; ws.Cell(10, 2).Value = d.TotalRecognizedRevenue; ws.Cell(10, 2).Style.NumberFormat.Format = "#,##0";
+        ws.Cell(11, 1).Value = "نسبت مواجهه ریسک"; ws.Cell(11, 2).Value = d.ExposureRatioPercent + "%";
         if (d.CurrencyBreakdown.Count > 0)
         {
-            ws.Cell(13, 1).Value = "Currency"; ws.Cell(13, 2).Value = "Amount"; ws.Cell(13, 3).Value = "Cnt"; ws.Cell(13, 4).Value = "Share %"; ws.Row(13).Style.Font.Bold = true;
+            ws.Cell(13, 1).Value = "ارز"; ws.Cell(13, 2).Value = "مبلغ"; ws.Cell(13, 3).Value = "تعداد"; ws.Cell(13, 4).Value = "سهم (%)"; ws.Row(13).Style.Font.Bold = true;
             for (int i = 0; i < d.CurrencyBreakdown.Count; i++) { var c = d.CurrencyBreakdown[i]; ws.Cell(14 + i, 1).Value = c.CurrencyCode; ws.Cell(14 + i, 2).Value = c.TotalAmount; ws.Cell(14 + i, 2).Style.NumberFormat.Format = "#,##0"; ws.Cell(14 + i, 3).Value = c.ContractCount; ws.Cell(14 + i, 4).Value = c.Percentage; }
         }
     }
@@ -225,10 +228,10 @@ public async Task<byte[]> ExportReportToPdfAsync(string reportType, Cancellation
 private async Task BuildAgingHtmlAsync(StringBuilder sb, CancellationToken ct)
     {
         var d = await _reportService.GetPaymentAgingReportAsync(ct);
-        sb.Append("<h1>Payment Aging Report</h1><div class=\"kpi-grid\">");
-        AppendKpi(sb, "Total Overdue", d.TotalOverdue.ToString("N0"), "rose"); AppendKpi(sb, "Count", d.TotalOverdueCount.ToString(), "slate");
-        AppendKpi(sb, "Average", d.AverageOverdueAmount.ToString("N0"), "slate"); AppendKpi(sb, "Max Delay", d.MaxDaysOverdue + " days", "amber");
-        sb.Append("</div><table><thead><tr><th>Bucket</th><th>Count</th><th>Total</th></tr></thead><tbody>");
+        sb.Append("<h1>گزارش کهنگی مطالبات و پرداخت‌ها</h1><div class=\"kpi-grid\">");
+        AppendKpi(sb, "مجموع معوقات", d.TotalOverdue.ToString("N0"), "rose"); AppendKpi(sb, "تعداد", d.TotalOverdueCount.ToString(), "slate");
+        AppendKpi(sb, "میانگین مبلغ", d.AverageOverdueAmount.ToString("N0"), "slate"); AppendKpi(sb, "حداکثر تاخیر", d.MaxDaysOverdue + " روز", "amber");
+        sb.Append("</div><table><thead><tr><th>بازه زمانی</th><th>تعداد</th><th>مبلغ کل</th></tr></thead><tbody>");
         foreach (var b in d.Buckets) sb.AppendFormat("<tr><td>{0}</td><td>{1}</td><td>{2:N0}</td></tr>", b.BucketName, b.Count, b.TotalAmount);
         sb.Append("</tbody></table>");
     }
@@ -236,10 +239,10 @@ private async Task BuildAgingHtmlAsync(StringBuilder sb, CancellationToken ct)
     private async Task BuildRevenueHtmlAsync(StringBuilder sb, CancellationToken ct)
     {
         var d = await _reportService.GetRevenueRecognitionScheduleAsync(ct);
-        sb.Append("<h1>Revenue Recognition</h1><div class=\"kpi-grid\">");
-        AppendKpi(sb, "Recognized", d.TotalRecognized.ToString("N0"), "emerald"); AppendKpi(sb, "Scheduled", d.TotalScheduled.ToString("N0"), "sky");
-        AppendKpi(sb, "Active Value", d.TotalActiveValue.ToString("N0"), "slate"); AppendKpi(sb, "Active", d.ActiveContractCount.ToString(), "slate");
-        sb.Append("</div><table><thead><tr><th>Period</th><th>Recognized</th><th>Scheduled</th></tr></thead><tbody>");
+        sb.Append("<h1>شناسایی و تحقق درآمد</h1><div class=\"kpi-grid\">");
+        AppendKpi(sb, "تحقق‌یافته", d.TotalRecognized.ToString("N0"), "emerald"); AppendKpi(sb, "زمان‌بندی‌شده", d.TotalScheduled.ToString("N0"), "sky");
+        AppendKpi(sb, "ارزش قراردادهای فعال", d.TotalActiveValue.ToString("N0"), "slate"); AppendKpi(sb, "تعداد فعال", d.ActiveContractCount.ToString(), "slate");
+        sb.Append("</div><table><thead><tr><th>دوره</th><th>تحقق‌یافته</th><th>زمان‌بندی‌شده</th></tr></thead><tbody>");
         foreach (var p in d.Periods) sb.AppendFormat("<tr><td>{0}</td><td class=\"text-emerald\">{1:N0}</td><td class=\"text-sky\">{2:N0}</td></tr>", p.PeriodLabel, p.RecognizedAmount, p.ScheduledAmount);
         sb.Append("</tbody></table>");
     }
@@ -247,9 +250,9 @@ private async Task BuildAgingHtmlAsync(StringBuilder sb, CancellationToken ct)
     private async Task BuildPipelineHtmlAsync(StringBuilder sb, CancellationToken ct)
     {
         var d = await _reportService.GetContractValuePipelineAsync(ct);
-        sb.Append("<h1>Value Pipeline</h1><div class=\"kpi-grid\">");
-        AppendKpi(sb, "Total Value", d.GrandTotalValue.ToString("N0"), "slate"); AppendKpi(sb, "Count", d.GrandTotalCount.ToString(), "slate"); AppendKpi(sb, "Average", d.AverageContractValue.ToString("N0"), "slate");
-        sb.Append("</div><table><thead><tr><th>Status</th><th>Count</th><th>Value</th><th>Share %</th></tr></thead><tbody>");
+        sb.Append("<h1>پایپ‌لاین ارزش قراردادها</h1><div class=\"kpi-grid\">");
+        AppendKpi(sb, "مجموع کل", d.GrandTotalValue.ToString("N0"), "slate"); AppendKpi(sb, "تعداد", d.GrandTotalCount.ToString(), "slate"); AppendKpi(sb, "میانگین", d.AverageContractValue.ToString("N0"), "slate");
+        sb.Append("</div><table><thead><tr><th>وضعیت</th><th>تعداد</th><th>ارزش</th><th>سهم (%)</th></tr></thead><tbody>");
         foreach (var it in d.Items) sb.AppendFormat("<tr><td>{0}</td><td>{1}</td><td>{2:N0}</td><td>{3}%</td></tr>", it.Status, it.Count, it.TotalValue, it.PercentageOfTotal);
         sb.Append("</tbody></table>");
     }
@@ -257,9 +260,9 @@ private async Task BuildAgingHtmlAsync(StringBuilder sb, CancellationToken ct)
     private async Task BuildCalendarHtmlAsync(StringBuilder sb, CancellationToken ct)
     {
         var d = await _reportService.GetObligationsCalendarAsync(6, ct);
-        sb.Append("<h1>Obligations Calendar</h1><div class=\"kpi-grid\">");
-        AppendKpi(sb, "Events", d.TotalEvents.ToString(), "slate"); AppendKpi(sb, "Total Amount", d.TotalAmountDue.ToString("N0"), "rose"); AppendKpi(sb, "Period", d.UpcomingMonths + "m", "slate");
-        sb.Append("</div><table><thead><tr><th>Date</th><th>Type</th><th>Count</th><th>Amount</th></tr></thead><tbody>");
+        sb.Append("<h1>تقویم تعهدات و سررسیدها</h1><div class=\"kpi-grid\">");
+        AppendKpi(sb, "مجموع رویدادها", d.TotalEvents.ToString(), "slate"); AppendKpi(sb, "مبلغ کل سررسید", d.TotalAmountDue.ToString("N0"), "rose"); AppendKpi(sb, "دوره", d.UpcomingMonths + " ماه آینده", "slate");
+        sb.Append("</div><table><thead><tr><th>تاریخ</th><th>نوع تعهد</th><th>تعداد</th><th>مبلغ</th></tr></thead><tbody>");
         foreach (var e in d.Events) sb.AppendFormat("<tr><td>{0:yyyy-MM-dd}</td><td>{1}</td><td>{2}</td><td>{3:N0}</td></tr>", e.Date, e.ObligationTypeDisplay, e.Count, e.TotalAmount);
         sb.Append("</tbody></table>");
     }
@@ -267,15 +270,15 @@ private async Task BuildAgingHtmlAsync(StringBuilder sb, CancellationToken ct)
     private async Task BuildExposureHtmlAsync(StringBuilder sb, CancellationToken ct)
     {
         var d = await _reportService.GetFinancialExposureAsync(ct);
-        sb.Append("<h1>Financial Exposure</h1><div class=\"kpi-grid\">");
-        AppendKpi(sb, "Active Value", d.TotalActiveValue.ToString("N0"), "emerald"); AppendKpi(sb, "At Risk", d.AtRiskValue.ToString("N0"), "rose");
-        AppendKpi(sb, "Pending", d.PendingApprovalValue.ToString("N0"), "amber"); AppendKpi(sb, "Exposure Ratio", d.ExposureRatioPercent + "%", "slate");
+        sb.Append("<h1>تحلیل ریسک و مواجهه مالی</h1><div class=\"kpi-grid\">");
+        AppendKpi(sb, "ارزش قراردادهای فعال", d.TotalActiveValue.ToString("N0"), "emerald"); AppendKpi(sb, "در معرض ریسک", d.AtRiskValue.ToString("N0"), "rose");
+        AppendKpi(sb, "در انتظار تأیید", d.PendingApprovalValue.ToString("N0"), "amber"); AppendKpi(sb, "نسبت مواجهه ریسک", d.ExposureRatioPercent + "%", "slate");
         sb.Append("</div><div class=\"kpi-grid\">");
-        AppendKpi(sb, "Recognized Revenue", d.TotalRecognizedRevenue.ToString("N0"), "sky"); AppendKpi(sb, "Receivables", d.TotalOutstandingReceivables.ToString("N0"), "slate");
+        AppendKpi(sb, "درآمد شناسایی‌شده", d.TotalRecognizedRevenue.ToString("N0"), "sky"); AppendKpi(sb, "مطالبات معوق", d.TotalOutstandingReceivables.ToString("N0"), "slate");
         sb.Append("</div>");
         if (d.CurrencyBreakdown.Count > 0)
         {
-            sb.Append("<h2>Currency Breakdown</h2><table><thead><tr><th>Currency</th><th>Amount</th><th>Cnt</th><th>Share %</th></tr></thead><tbody>");
+            sb.Append("<h2>تفکیک ارزها</h2><table><thead><tr><th>ارز</th><th>مبلغ</th><th>تعداد</th><th>سهم (%)</th></tr></thead><tbody>");
             foreach (var c in d.CurrencyBreakdown) sb.AppendFormat("<tr><td>{0}</td><td>{1:N0}</td><td>{2}</td><td>{3}%</td></tr>", c.CurrencyCode, c.TotalAmount, c.ContractCount, c.Percentage);
             sb.Append("</tbody></table>");
         }

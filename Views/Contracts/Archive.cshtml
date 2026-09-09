@@ -1,4 +1,5 @@
 @model ContractArchiveVM
+@using OfficeAutomation.Modules.InvoiceStructuring
 @{
     ViewData["Title"] = "بایگانی قراردادها";
 }
@@ -58,11 +59,17 @@
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">از تاریخ شروع</label>
-                <input name="StartDateFrom" value="@Model.StartDateFrom?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
+                <div class="relative jalali-datepicker-wrapper">
+                    <input type="text" class="erp-input jalali-date-input cursor-pointer" data-jalali="StartDateFrom" placeholder="انتخاب تاریخ" value="@(Model.StartDateFrom.HasValue ? JalaliDateHelper.ToShamsiString(Model.StartDateFrom.Value) : "")" readonly />
+                    <input type="hidden" name="StartDateFrom" class="jalali-date-hidden" value="@Model.StartDateFrom?.ToString("yyyy-MM-dd")" />
+                </div>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تا تاریخ شروع</label>
-                <input name="StartDateTo" value="@Model.StartDateTo?.ToString("yyyy-MM-dd")" type="date" class="erp-input" />
+                <div class="relative jalali-datepicker-wrapper">
+                    <input type="text" class="erp-input jalali-date-input cursor-pointer" data-jalali="StartDateTo" placeholder="انتخاب تاریخ" value="@(Model.StartDateTo.HasValue ? JalaliDateHelper.ToShamsiString(Model.StartDateTo.Value) : "")" readonly />
+                    <input type="hidden" name="StartDateTo" class="jalali-date-hidden" value="@Model.StartDateTo?.ToString("yyyy-MM-dd")" />
+                </div>
             </div>
             <div class="flex gap-1">
                 <button class="h-7 rounded-lg bg-teal-600 px-3 text-[11px] font-black text-white shadow-sm transition hover:bg-teal-700">
@@ -132,9 +139,9 @@
                                     }
                                     <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @archivePayBadge">@archivePayText</span>
                                 </td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@item.StartDate.ToString("yyyy/MM/dd")</td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@(item.EndDate?.ToString("yyyy/MM/dd") ?? "-")</td>
-                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@item.ArchivedAt?.ToString("yyyy/MM/dd")</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@JalaliDateHelper.ToShamsiString(item.StartDate)</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@(item.EndDate.HasValue ? JalaliDateHelper.ToShamsiString(item.EndDate.Value) : "-")</td>
+                                <td class="px-3 py-2 font-mono tabular-nums text-slate-600 dark:text-slate-400">@(item.ArchivedAt.HasValue ? JalaliDateHelper.ToShamsiString(item.ArchivedAt.Value) : "-")</td>
                                 <td class="px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-400">@(item.ArchivedByUserName ?? "-")</td>
                                 <td class="px-3 py-2">
                                     @{
@@ -188,5 +195,119 @@
 </div>
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/persian-datepicker.min.css" />
     <link rel="stylesheet" href="~/css/contracts-archive-style.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/persian-date.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var PERSIAN_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+            var PERSIAN_WEEKDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+
+            function toPersianDigits(str) { return String(str).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; }); }
+
+            function writeJalaliToHidden(input, jalali) {
+                var wrapper = input.closest('.jalali-datepicker-wrapper');
+                var hidden = wrapper ? wrapper.querySelector('input.jalali-date-hidden') : null;
+                if (hidden) {
+                    if (!jalali) { hidden.value = ''; return; }
+                    try {
+                        var parts = jalali.trim().split('/');
+                        if (parts.length === 3) {
+                            var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10), d = parseInt(parts[2], 10);
+                            if (!isNaN(y) && !isNaN(m) && !isNaN(d) && typeof persianDate !== 'undefined') {
+                                var pd = new persianDate([y, m, d]);
+                                var g = pd.toDate();
+                                hidden.value = g.getFullYear() + '-' + String(g.getMonth() + 1).padStart(2, '0') + '-' + String(g.getDate()).padStart(2, '0');
+                            }
+                        }
+                    } catch (e) { }
+                }
+            }
+
+            function createDatepicker(input) {
+                var wrapper = input.closest('.jalali-datepicker-wrapper') || input.parentElement;
+                if (!wrapper) return;
+                wrapper.style.position = 'relative';
+
+                var popup = wrapper.querySelector('.vanilla-jalali-popup');
+                if (!popup) {
+                    popup = document.createElement('div');
+                    popup.className = 'vanilla-jalali-popup';
+                    wrapper.appendChild(popup);
+                }
+
+                var viewYear = 0, viewMonth = 0;
+
+                function render() {
+                    if (typeof persianDate === 'undefined') return;
+                    var today = new persianDate();
+                    if (!viewYear) viewYear = today.year();
+                    if (!viewMonth) viewMonth = today.month();
+
+                    var daysInMonth = today.daysInMonth(viewYear, viewMonth);
+                    var firstWeekday = today.getFirstWeekDayOfMonth(viewYear, viewMonth);
+
+                    var html = '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #f1f5f9;">';
+                    html += '<button type="button" class="vjp-nav-btn" data-nav="prev">&rsaquo;</button>';
+                    html += '<span style="font-size:12px;font-weight:700;color:#334155;">' + PERSIAN_MONTHS[viewMonth - 1] + ' ' + toPersianDigits(viewYear) + '</span>';
+                    html += '<button type="button" class="vjp-nav-btn" data-nav="next">&lsaquo;</button>';
+                    html += '</div>';
+
+                    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:4px 6px;border-bottom:1px solid #f1f5f9;">';
+                    PERSIAN_WEEKDAYS.forEach(function (w) {
+                        html += '<div style="text-align:center;font-size:10px;font-weight:700;color:#94a3b8;padding:2px 0;">' + w + '</div>';
+                    });
+                    html += '</div>';
+
+                    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:6px;">';
+                    for (var i = 0; i < firstWeekday; i++) { html += '<div></div>'; }
+                    for (var day = 1; day <= daysInMonth; day++) {
+                        var isToday = (day === today.date() && viewMonth === today.month() && viewYear === today.year());
+                        html += '<button type="button" class="vjp-day-btn' + (isToday ? ' is-today' : '') + '" data-day="' + day + '">' + toPersianDigits(day) + '</button>';
+                    }
+                    html += '</div>';
+
+                    popup.innerHTML = html;
+
+                    popup.querySelector('[data-nav="prev"]')?.addEventListener('click', function (e) {
+                        e.stopPropagation(); e.preventDefault();
+                        viewMonth--; if (viewMonth < 1) { viewMonth = 12; viewYear--; } render();
+                    });
+                    popup.querySelector('[data-nav="next"]')?.addEventListener('click', function (e) {
+                        e.stopPropagation(); e.preventDefault();
+                        viewMonth++; if (viewMonth > 12) { viewMonth = 1; viewYear++; } render();
+                    });
+                    popup.querySelectorAll('[data-day]').forEach(function (btn) {
+                        btn.addEventListener('click', function (e) {
+                            e.stopPropagation(); e.preventDefault();
+                            var day = parseInt(btn.getAttribute('data-day'), 10);
+                            var selected = new persianDate([viewYear, viewMonth, day]);
+                            var jalali = selected.format('YYYY/MM/DD');
+                            input.value = jalali;
+                            writeJalaliToHidden(input, jalali);
+                            popup.style.display = 'none';
+                        });
+                    });
+                }
+
+                input.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    document.querySelectorAll('.vanilla-jalali-popup').forEach(function (p) { if (p !== popup) p.style.display = 'none'; });
+                    viewYear = 0; viewMonth = 0;
+                    render();
+                    popup.style.display = 'block';
+                });
+            }
+
+            document.querySelectorAll('.jalali-date-input').forEach(createDatepicker);
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.jalali-datepicker-wrapper')) {
+                    document.querySelectorAll('.vanilla-jalali-popup').forEach(function (p) { p.style.display = 'none'; });
+                }
+            });
+        });
+    </script>
 }

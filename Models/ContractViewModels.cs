@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OfficeAutomation.Models
@@ -162,6 +162,31 @@ namespace OfficeAutomation.Models
         [Display(Name = "مبلغ کل")]
         public decimal TotalAmount { get; set; }
 
+        // ── Currency & Tax / VAT ──────────────────────────────────
+        [Required(ErrorMessage = "انتخاب نوع ارز الزامی است.")]
+        [StringLength(3)]
+        [Display(Name = "ارز")]
+        public string CurrencyCode { get; set; } = Models.CurrencyCode.IRR;
+
+        [Display(Name = "نرخ تبدیل")]
+        [Range(0.000001, 999999999, ErrorMessage = "نرخ تبدیل معتبر نیست.")]
+        public decimal ExchangeRate { get; set; } = 1m;
+
+        [Required(ErrorMessage = "روش محاسبه مالیات الزامی است.")]
+        [StringLength(20)]
+        [Display(Name = "روش محاسبه مالیات")]
+        public string TaxMethod { get; set; } = TaxCalculationMethod.Exclusive;
+
+        [Display(Name = "نرخ مالیات (%)")]
+        [Range(0, 100, ErrorMessage = "نرخ مالیات باید بین 0 تا 100 باشد.")]
+        public decimal DefaultTaxRatePercent { get; set; } = 10m;
+
+        [Display(Name = "مجموع مالیات")]
+        public decimal TotalTaxAmount { get; set; }
+
+        [Display(Name = "مبلغ نهایی (با مالیات)")]
+        public decimal TotalAmountInclusiveTax { get; set; }
+
         [Required(ErrorMessage = "تاریخ شروع الزامی است.")]
         [DataType(DataType.Date)]
         [Display(Name = "تاریخ شروع")]
@@ -212,6 +237,8 @@ namespace OfficeAutomation.Models
 
         public List<SelectListItem> StatusOptions { get; set; } = new();
         public List<SelectListItem> ContractTypeOptions { get; set; } = new();
+        public List<SelectListItem> CurrencyOptions { get; set; } = new();
+        public List<SelectListItem> TaxMethodOptions { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> TemplateOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
@@ -274,6 +301,31 @@ public string? WorkflowId { get; set; }
         [Display(Name = "مبلغ کل")]
         public decimal TotalAmount { get; set; }
 
+        // ── Currency & Tax / VAT ──────────────────────────────────
+        [Required(ErrorMessage = "انتخاب نوع ارز الزامی است.")]
+        [StringLength(3)]
+        [Display(Name = "ارز")]
+        public string CurrencyCode { get; set; } = Models.CurrencyCode.IRR;
+
+        [Display(Name = "نرخ تبدیل")]
+        [Range(0.000001, 999999999, ErrorMessage = "نرخ تبدیل معتبر نیست.")]
+        public decimal ExchangeRate { get; set; } = 1m;
+
+        [Required(ErrorMessage = "روش محاسبه مالیات الزامی است.")]
+        [StringLength(20)]
+        [Display(Name = "روش محاسبه مالیات")]
+        public string TaxMethod { get; set; } = TaxCalculationMethod.Exclusive;
+
+        [Display(Name = "نرخ مالیات (%)")]
+        [Range(0, 100, ErrorMessage = "نرخ مالیات باید بین 0 تا 100 باشد.")]
+        public decimal DefaultTaxRatePercent { get; set; } = 10m;
+
+        [Display(Name = "مجموع مالیات")]
+        public decimal TotalTaxAmount { get; set; }
+
+        [Display(Name = "مبلغ نهایی (با مالیات)")]
+        public decimal TotalAmountInclusiveTax { get; set; }
+
         [Display(Name = "مبلغ پرداخت شده")]
         public decimal PaidAmount { get; set; }
 
@@ -331,6 +383,8 @@ public string? WorkflowId { get; set; }
 
         public List<SelectListItem> StatusOptions { get; set; } = new();
         public List<SelectListItem> ContractTypeOptions { get; set; } = new();
+        public List<SelectListItem> CurrencyOptions { get; set; } = new();
+        public List<SelectListItem> TaxMethodOptions { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> TemplateOptions { get; set; } = new();
 public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
@@ -357,6 +411,12 @@ public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
         public string? TermsAndConditions { get; set; }
         public string? ContractBodyHtml { get; set; }
         public decimal TotalAmount { get; set; }
+        public string CurrencyCode { get; set; } = Models.CurrencyCode.IRR;
+        public decimal ExchangeRate { get; set; } = 1m;
+        public string TaxMethod { get; set; } = TaxCalculationMethod.Exclusive;
+        public decimal DefaultTaxRatePercent { get; set; }
+        public decimal TotalTaxAmount { get; set; }
+        public decimal TotalAmountInclusiveTax { get; set; }
         public decimal PaidAmount { get; set; }
         public decimal RemainingBalance { get; set; }
         public string? PaymentStatus { get; set; }
@@ -392,8 +452,9 @@ public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
 public List<LifecycleStepVM> LifecycleSteps { get; set; } = new();
         public List<ContractAuditLogVM> AuditLogs { get; set; } = new();
         public List<AmendmentListItemVM> Amendments { get; set; } = new();
-public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
+        public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
         public Dictionary<string, string> FieldValues { get; set; } = new();
+        public string? SignatureImageData { get; set; }
     }
 
     public class ContractPaymentVM

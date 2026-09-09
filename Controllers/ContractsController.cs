@@ -21,8 +21,9 @@ public class ContractsController : Controller
     private readonly IContractReportService _reportService;
     private readonly IContractExportService _exportService;
     private readonly IPaymentScheduleService _paymentScheduleService;
+    private readonly IAmendmentService _amendmentService;
     private readonly IWebHostEnvironment _env;
-    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, IPaymentScheduleService paymentScheduleService, ILogger<ContractsController> logger, IWebHostEnvironment env)
+    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, IPaymentScheduleService paymentScheduleService, IAmendmentService amendmentService, ILogger<ContractsController> logger, IWebHostEnvironment env)
     {
         _contractService = contractService;
         _signatureService = signatureService;
@@ -31,6 +32,7 @@ public class ContractsController : Controller
         _reportService = reportService;
         _exportService = exportService;
         _paymentScheduleService = paymentScheduleService;
+        _amendmentService = amendmentService;
         _logger = logger;
         _env = env;
     }
@@ -80,9 +82,9 @@ public class ContractsController : Controller
         }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Index
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet]
     public async Task<IActionResult> Index(ContractIndexVM filter, CancellationToken ct)
@@ -92,9 +94,9 @@ public class ContractsController : Controller
         return View(vm);
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Dashboard
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet("Contracts/Dashboard")]
     public async Task<IActionResult> Dashboard(CancellationToken ct)
@@ -150,9 +152,9 @@ public class ContractsController : Controller
         var vm = await _reportService.GetFinancialExposureAsync(ct);
         return Json(vm);
     }
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Create
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet]
     [PermissionAuthorize("Contract.Create")]
@@ -204,6 +206,8 @@ public class ContractsController : Controller
             vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
             vm.Status = model.Status; vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
             vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
+            vm.CurrencyCode = model.CurrencyCode; vm.ExchangeRate = model.ExchangeRate;
+            vm.TaxMethod = model.TaxMethod; vm.DefaultTaxRatePercent = model.DefaultTaxRatePercent;
             vm.FieldValues = model.FieldValues;
             vm.TypeFields = model.TypeFields;
             return View(vm);
@@ -212,7 +216,7 @@ public class ContractsController : Controller
         {
             var currentUser = GetCurrentUserId();
             var contract = await _contractService.CreateContractAsync(model, currentUser, ct);
-            TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط§غŒط¬ط§ط¯ ط´ط¯.";
+            TempData["SuccessMessage"] = "قرارداد با موفقیت ایجاد شد.";
             return RedirectToAction(nameof(Details), new { id = contract.Id });
         }
         catch (InvalidOperationException ex)
@@ -228,15 +232,17 @@ public class ContractsController : Controller
             vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
             vm.Status = model.Status; vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
             vm.CustomerId = model.CustomerId; vm.ContractType = model.ContractType;
+            vm.CurrencyCode = model.CurrencyCode; vm.ExchangeRate = model.ExchangeRate;
+            vm.TaxMethod = model.TaxMethod; vm.DefaultTaxRatePercent = model.DefaultTaxRatePercent;
             vm.FieldValues = model.FieldValues;
             vm.TypeFields = model.TypeFields;
             return View(vm);
         }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Edit
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet]
     [PermissionAuthorize("Contract.Edit")]
@@ -277,6 +283,8 @@ public class ContractsController : Controller
                 vm.Notes = model.Notes;
                 vm.TermsAndConditions = model.TermsAndConditions; vm.ContractBodyHtml = model.ContractBodyHtml;
                 vm.TotalAmount = model.TotalAmount; vm.PaidAmount = model.PaidAmount;
+                vm.CurrencyCode = model.CurrencyCode; vm.ExchangeRate = model.ExchangeRate;
+                vm.TaxMethod = model.TaxMethod; vm.DefaultTaxRatePercent = model.DefaultTaxRatePercent;
                 vm.StartDate = model.StartDate; vm.EndDate = model.EndDate; vm.Status = model.Status;
                 vm.SignDate = model.SignDate; vm.ExpiryNoticeDays = model.ExpiryNoticeDays;
                 vm.AssignedUserId = model.AssignedUserId; vm.TemplateId = model.TemplateId;
@@ -292,7 +300,7 @@ public class ContractsController : Controller
             var currentUserId = GetCurrentUserId();
             await _contractService.EnforceAccessAsync(model.Id, currentUserId, ct);
             await _contractService.UpdateContractAsync(model, currentUserId, ct);
-            TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ظˆغŒط±ط§غŒط´ ط´ط¯.";
+            TempData["SuccessMessage"] = "قرارداد با موفقیت ویرایش شد.";
             return RedirectToAction(nameof(Details), new { id = model.Id });
         }
         catch (KeyNotFoundException) { return NotFound(); }
@@ -308,9 +316,9 @@ public class ContractsController : Controller
         }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Details
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet]
     public async Task<IActionResult> Details(int id, CancellationToken ct)
@@ -324,9 +332,9 @@ public class ContractsController : Controller
         catch (KeyNotFoundException) { return NotFound(); }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Delete
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -342,13 +350,13 @@ public class ContractsController : Controller
 
         var deleted = await _contractService.DeleteContractAsync(id, currentUserId, ct);
         if (!deleted) return NotFound();
-        TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط­ط°ظپ ط´ط¯.";
+        TempData["SuccessMessage"] = "قرارداد با موفقیت حذف شد.";
         return RedirectToAction(nameof(Index));
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Archive
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet]
     [PermissionAuthorize("Contract.Archive")]
@@ -373,7 +381,7 @@ public class ContractsController : Controller
 
         var archived = await _contractService.ArchiveContractAsync(id, currentUserId, ct);
         if (!archived) return NotFound();
-        TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط¨ط§غŒع¯ط§ظ†غŒ ط´ط¯.";
+        TempData["SuccessMessage"] = "قرارداد با موفقیت بایگانی شد.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -391,13 +399,13 @@ public class ContractsController : Controller
 
         var unarchived = await _contractService.UnarchiveContractAsync(id, currentUserId, ct);
         if (!unarchived) return NotFound();
-        TempData["SuccessMessage"] = "ظ‚ط±ط§ط±ط¯ط§ط¯ ط§ط² ط¨ط§غŒع¯ط§ظ†غŒ ط®ط§ط±ط¬ ط´ط¯.";
+        TempData["SuccessMessage"] = "قرارداد از بایگانی خارج شد.";
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Payments
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     /// <summary>GET: /Contracts/Schedule/{contractId} — returns payment schedule partial view</summary>
     [HttpGet("Contracts/Schedule/{contractId}")]
     [PermissionAuthorize("Contract.View")]
@@ -526,7 +534,7 @@ public class ContractsController : Controller
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage));
                 _logger.LogWarning("AddPayment ModelState invalid: {Errors}", errors);
-                TempData["ErrorMessage"] = "ط§ط·ظ„ط§ط¹ط§طھ ظ¾ط±ط¯ط§ط®طھ ظ…ط¹طھط¨ط± ظ†غŒط³طھ.";
+                TempData["ErrorMessage"] = "اطلاعات پرداخت معتبر نیست.";
                 return RedirectToAction(nameof(Details), new { id = model.ContractId });
             }
         }
@@ -535,7 +543,7 @@ public class ContractsController : Controller
         {
             var currentUser = GetCurrentUserId();
             await _contractService.AddPaymentAsync(model, currentUser, ct);
-            TempData["SuccessMessage"] = "ظ¾ط±ط¯ط§ط®طھ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط«ط¨طھ ط´ط¯.";
+            TempData["SuccessMessage"] = "پرداخت با موفقیت ثبت شد.";
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
@@ -552,15 +560,15 @@ public class ContractsController : Controller
             var currentUser = GetCurrentUserId();
             var deleted = await _contractService.DeletePaymentAsync(paymentId, contractId, currentUser, ct);
             if (!deleted) return NotFound();
-            TempData["SuccessMessage"] = "ظ¾ط±ط¯ط§ط®طھ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط­ط°ظپ ط´ط¯.";
+            TempData["SuccessMessage"] = "پرداخت با موفقیت حذف شد.";
             return RedirectToAction(nameof(Details), new { id = contractId });
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Attachments
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -665,9 +673,9 @@ public class ContractsController : Controller
         }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Document Generation
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet("Contracts/GenerateDocument/{id}")]
     [PermissionAuthorize("Contract.View")]
@@ -677,16 +685,16 @@ public class ContractsController : Controller
         {
             var currentUserId = GetCurrentUserId();
             var vm = await _contractService.GetDetailsViewModelAsync(id, currentUserId, ct);
-            ViewData["Title"] = "ع†ط§ظ¾ / PDF ظ‚ط±ط§ط±ط¯ط§ط¯";
+            ViewData["Title"] = "چاپ / PDF قرارداد";
             return View("GenerateDocument", vm);
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Settings / Templates
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet]
     [PermissionAuthorize("Contract.Settings")]
@@ -715,7 +723,7 @@ public class ContractsController : Controller
         var currentUser = GetCurrentUserId();
         model.UserId = currentUser;
         await _contractService.SaveSettingsAsync(model, currentUser, ct);
-        TempData["SuccessMessage"] = "طھظ†ط¸غŒظ…ط§طھ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط°ط®غŒط±ظ‡ ط´ط¯.";
+        TempData["SuccessMessage"] = "تنظیمات با موفقیت ذخیره شد.";
         return RedirectToAction(nameof(Settings));
     }
 
@@ -734,7 +742,7 @@ public class ContractsController : Controller
         }
         var currentUser = GetCurrentUserId();
         await _contractService.SaveTemplateAsync(model, currentUser, ct);
-        TempData["SuccessMessage"] = "ظ‚ط§ظ„ط¨ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط°ط®غŒط±ظ‡ ط´ط¯.";
+        TempData["SuccessMessage"] = "قالب با موفقیت ذخیره شد.";
         return RedirectToAction(nameof(Settings));
     }
 
@@ -746,7 +754,7 @@ public class ContractsController : Controller
         var currentUserId = GetCurrentUserId();
         var deleted = await _contractService.DeleteTemplateAsync(templateId, currentUserId, ct);
         if (!deleted) return NotFound();
-        TempData["SuccessMessage"] = "ظ‚ط§ظ„ط¨ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط­ط°ظپ ط´ط¯.";
+        TempData["SuccessMessage"] = "قالب با موفقیت حذف شد.";
         return RedirectToAction(nameof(Settings));
     }
 
@@ -758,13 +766,13 @@ public class ContractsController : Controller
         var currentUserId = GetCurrentUserId();
         var set = await _contractService.SetDefaultTemplateAsync(templateId, currentUserId, ct);
         if (!set) return NotFound();
-        TempData["SuccessMessage"] = "ظ‚ط§ظ„ط¨ ظ¾غŒط´â€Œظپط±ط¶ ط¨ط§ ظ…ظˆظپظ‚غŒطھ طھظ†ط¸غŒظ… ط´ط¯.";
+        TempData["SuccessMessage"] = "قالب پیش‌فرض با موفقیت تنظیم شد.";
         return RedirectToAction(nameof(Settings));
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
     //  Template Preview (for auto-populate in Create/Edit)
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════
 
     [HttpGet("Contracts/PreviewTemplate")]
     [PermissionAuthorize("Contract.View")]
@@ -781,16 +789,16 @@ public class ContractsController : Controller
         var preview = await _contractService.PreviewTemplateAsync(id, currentUserId, ct);
         return Content(preview, "text/html", System.Text.Encoding.UTF8);
     }
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
     //  E-Signature: Internal Sign
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
 
     [HttpPost("Contracts/{contractId}/Sign")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SignContract(int contractId, [FromBody] SignContractRequest request, CancellationToken ct)
     {
         if (request == null || string.IsNullOrWhiteSpace(request.SignatureImageData))
-            return Json(new { success = false, message = "ط¯ط§ط¯ظ‡â€Œظ‡ط§غŒ ط§ظ…ط¶ط§ ط®ط§ظ„غŒ ط§ط³طھ." });
+            return Json(new { success = false, message = "داده‌های امضا خالی است." });
 
         try
         {
@@ -801,25 +809,26 @@ public class ContractsController : Controller
             var signer = await _signatureService.CaptureInternalSignatureAsync(
                 contractId, request.SignatureImageData, request.Comment, ipAddress, userAgent, userId, ct);
 
-            return Json(new { success = true, message = "ط§ظ…ط¶ط§ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط«ط¨طھ ط´ط¯.", signerId = signer.Id, signedAt = signer.SignedAt });
+            return Json(new { success = true, message = "امضا با موفقیت ثبت شد", signerId = signer.Id, signedAt = signer.SignedAt });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to sign contract {ContractId}", contractId);
-            return Json(new { success = false, message = $"ط®ط·ط§ ط¯ط± ط«ط¨طھ ط§ظ…ط¶ط§: {ex.Message}" });
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            _logger.LogError(ex, "Failed to sign contract {ContractId}: {InnerMessage}", contractId, innerMsg);
+            return Json(new { success = false, message = $"خطا در ثبت امضا: {innerMsg}" });
         }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
     //  E-Signature: Get External Sign Link
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
 
     [HttpPost("Contracts/{contractId}/GetExternalSignLink")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GetExternalSignLink(int contractId, [FromBody] GetExternalSignLinkRequest request, CancellationToken ct)
     {
         if (request == null || request.SignerId <= 0)
-            return Json(new { success = false, message = "ط´ظ†ط§ط³ظ‡ ط§ظ…ط¶ط§ع©ظ†ظ†ط¯ظ‡ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ." });
+            return Json(new { success = false, message = "شناسه امضاکننده نامعتبر است." });
 
         try
         {
@@ -829,20 +838,20 @@ public class ContractsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate external sign link for contract {ContractId}", contractId);
-            return Json(new { success = false, message = $"ط®ط·ط§ ط¯ط± طھظˆظ„غŒط¯ ظ„غŒظ†ع©: {ex.Message}" });
+            return Json(new { success = false, message = $"خطا در تولید لینک: {ex.Message}" });
         }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
     //  E-Signature: Create Signature Request
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
 
     [HttpPost("Contracts/Signature/CreateRequest/{contractId}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateSignatureRequest(int contractId, [FromBody] CreateSignatureRequestVm model, CancellationToken ct)
     {
         if (!ModelState.IsValid)
-            return Json(new { success = false, message = "ط§ط·ظ„ط§ط¹ط§طھ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ." });
+            return Json(new { success = false, message = "اطلاعات نامعتبر است." });
 
         try
         {
@@ -855,13 +864,13 @@ public class ContractsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create signature request for contract {ContractId}", contractId);
-            return Json(new { success = false, message = $"ط®ط·ط§ ط¯ط± ط§غŒط¬ط§ط¯ ط¯ط±ط®ظˆط§ط³طھ: {ex.Message}" });
+            return Json(new { success = false, message = $"خطا در ایجاد درخواست: {ex.Message}" });
         }
     }
 
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
     //  E-Signature: Get Signature Requests
-    // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+    // ═══════════════════════════════════════════════════════════════════════
 
     [HttpGet("Contracts/{contractId}/SignatureRequests")]
     public async Task<IActionResult> GetSignatureRequests(int contractId, CancellationToken ct)
@@ -883,7 +892,7 @@ public class ContractsController : Controller
                 {
                     s.Id,
                     s.UserId,
-                    UserName = s.User?.FullName ?? s.FullName ?? s.Email ?? "ظ†ط§ظ…ط´ط®طµ",
+                    UserName = s.User?.FullName ?? s.FullName ?? s.Email ?? "نامشخص",
                     s.SignerType,
                     s.Result,
                     s.SignOrder,
@@ -915,7 +924,7 @@ public class ContractsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get versions for attachment {AttachmentId}", attachmentId);
-            return Json(new { success = false, message = "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø§Ø²ÛŒØ§Ø¨ÛŒ Ù†Ø³Ø®Ù‡â€ŒÙ‡Ø§." });
+            return Json(new { success = false, message = "خطا در بازیابی نسخه‌ها." });
         }
     }
 
@@ -927,7 +936,7 @@ public class ContractsController : Controller
         {
             var userId = GetCurrentUserId();
             if (file == null || file.Length == 0)
-                return Json(new { success = false, message = "ÙØ§ÛŒÙ„ÛŒ Ø§Ù†ØªØ®Ø§Ø¨ Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª." });
+                return Json(new { success = false, message = "فایلی انتخاب نشده است." });
 
             await using var stream = file.OpenReadStream();
             var version = await _attachmentVersionService.UploadNewVersionAsync(
@@ -939,7 +948,7 @@ public class ContractsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to upload new version for attachment {AttachmentId}", attachmentId);
-            return Json(new { success = false, message = "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ Ù†Ø³Ø®Ù‡ Ø¬Ø¯ÛŒØ¯: " + ex.Message });
+            return Json(new { success = false, message = "خطا در بارگذاری نسخه جدید: " + ex.Message });
         }
     }
 
@@ -975,7 +984,7 @@ public class ContractsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to restore version {VersionId}", versionId);
-            return Json(new { success = false, message = "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø§Ø²Ú¯Ø±Ø¯Ø§Ù†ÛŒ Ù†Ø³Ø®Ù‡: " + ex.Message });
+            return Json(new { success = false, message = "خطا در بازگردانی نسخه: " + ex.Message });
         }
     }
     // ════════════════════════════════════════════════════════════
@@ -1353,6 +1362,121 @@ public class ContractsController : Controller
         {
             _logger.LogError(ex, "Failed to cleanup orphaned attachments");
             return Json(new { success = false, message = "خطا در پاکسازی: " + ex.Message });
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  Amendments Actions
+    // ════════════════════════════════════════════════════════════
+
+    [HttpPost("Contracts/CreateAmendment/{contractId}")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Edit")]
+    public async Task<IActionResult> CreateAmendment(int contractId, AmendmentCreateVM model, IFormFile? attachmentFile, CancellationToken ct)
+    {
+        model.ContractId = contractId;
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(model.Title))
+            {
+                model.Title = model.AmendmentType switch
+                {
+                    "Renewal" => "اصلاحیه تمدید زمان قرارداد",
+                    "Addendum" => "الحاقیه قرارداد",
+                    _ => "اصلاحیه قرارداد"
+                };
+            }
+
+            var amendment = await _amendmentService.CreateAmendmentAsync(model, userId, ct);
+
+            if (attachmentFile != null && attachmentFile.Length > 0)
+            {
+                using var stream = attachmentFile.OpenReadStream();
+                await _contractService.UploadAttachmentAsync(contractId, attachmentFile.FileName, stream, attachmentFile.ContentType, userId, ct);
+            }
+
+            TempData["SuccessMessage"] = "اصلاحیه با موفقیت ثبت شد.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating amendment for contract {ContractId}", contractId);
+            TempData["ErrorMessage"] = $"خطا در ثبت اصلاحیه: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Details), new { id = contractId, activeTab = "amendments" });
+    }
+
+    [HttpPost("Contracts/SubmitAmendmentForApproval/{amendmentId}")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Edit")]
+    public async Task<IActionResult> SubmitAmendmentForApproval(int amendmentId, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        try
+        {
+            var result = await _amendmentService.SubmitForApprovalAsync(amendmentId, userId, ct);
+            if (result != null)
+                TempData["SuccessMessage"] = "اصلاحیه برای تایید ارسال شد.";
+            else
+                TempData["ErrorMessage"] = "امکان ارسال اصلاحیه برای تایید وجود ندارد.";
+
+            return RedirectToAction(nameof(Details), new { id = result?.ContractId ?? 0, activeTab = "amendments" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error submitting amendment {AmendmentId} for approval", amendmentId);
+            TempData["ErrorMessage"] = $"خطا در ارسال برای تایید: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    [HttpPost("Contracts/ApplyAmendment/{amendmentId}")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Edit")]
+    public async Task<IActionResult> ApplyAmendment(int amendmentId, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        try
+        {
+            var result = await _amendmentService.ApplyAmendmentAsync(amendmentId, userId, ct);
+            if (result != null)
+                TempData["SuccessMessage"] = "اصلاحیه با موفقیت روی قرارداد اعمال شد.";
+            else
+                TempData["ErrorMessage"] = "امکان اعمال اصلاحیه وجود ندارد.";
+
+            return RedirectToAction(nameof(Details), new { id = result?.ContractId ?? 0, activeTab = "amendments" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying amendment {AmendmentId}", amendmentId);
+            TempData["ErrorMessage"] = $"خطا در اعمال اصلاحیه: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    [HttpPost("Contracts/CancelAmendment/{amendmentId}")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Edit")]
+    public async Task<IActionResult> CancelAmendment(int amendmentId, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        try
+        {
+            var result = await _amendmentService.CancelAmendmentAsync(amendmentId, userId, ct);
+            if (result != null)
+                TempData["SuccessMessage"] = "اصلاحیه لغو شد.";
+            else
+                TempData["ErrorMessage"] = "امکان لغو اصلاحیه وجود ندارد.";
+
+            return RedirectToAction(nameof(Details), new { id = result?.ContractId ?? 0, activeTab = "amendments" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling amendment {AmendmentId}", amendmentId);
+            TempData["ErrorMessage"] = $"خطا در لغو اصلاحیه: {ex.Message}";
+            return RedirectToAction(nameof(Index));
         }
     }
 }

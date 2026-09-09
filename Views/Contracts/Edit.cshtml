@@ -164,14 +164,54 @@
                 <div>
                     <label asp-for="TotalAmount" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="TotalAmount" class="erp-input" />
+                        <input asp-for="TotalAmount" class="erp-input" dir="ltr" />
                     </div>
                     <span asp-validation-for="TotalAmount" class="text-[9px] text-red-500 mt-0.5"></span>
                 </div>
                 <div>
+                    <label asp-for="CurrencyCode" class="erp-label"></label>
+                    <div class="input-wrapper">
+                        <select asp-for="CurrencyCode" class="erp-select" asp-items="Model.CurrencyOptions"></select>
+                    </div>
+                    <span asp-validation-for="CurrencyCode" class="text-[9px] text-red-500 mt-0.5"></span>
+                </div>
+                <div id="exchangeRateContainer" style="@(Model.CurrencyCode == "IRR" ? "display:none;" : "")">
+                    <label asp-for="ExchangeRate" class="erp-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="ExchangeRate" type="number" step="any" class="erp-input" dir="ltr" />
+                    </div>
+                    <span asp-validation-for="ExchangeRate" class="text-[9px] text-red-500 mt-0.5"></span>
+                </div>
+                <div>
+                    <label asp-for="TaxMethod" class="erp-label"></label>
+                    <div class="input-wrapper">
+                        <select asp-for="TaxMethod" class="erp-select" asp-items="Model.TaxMethodOptions"></select>
+                    </div>
+                    <span asp-validation-for="TaxMethod" class="text-[9px] text-red-500 mt-0.5"></span>
+                </div>
+                <div id="taxRateContainer" style="@(Model.TaxMethod == "None" ? "display:none;" : "")">
+                    <label asp-for="DefaultTaxRatePercent" class="erp-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="DefaultTaxRatePercent" type="number" step="any" class="erp-input" dir="ltr" />
+                    </div>
+                    <span asp-validation-for="DefaultTaxRatePercent" class="text-[9px] text-red-500 mt-0.5"></span>
+                </div>
+                <div>
+                    <label asp-for="TotalTaxAmount" class="erp-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="TotalTaxAmount" readonly class="erp-input bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-bold" dir="ltr" />
+                    </div>
+                </div>
+                <div>
+                    <label asp-for="TotalAmountInclusiveTax" class="erp-label"></label>
+                    <div class="input-wrapper">
+                        <input asp-for="TotalAmountInclusiveTax" readonly class="erp-input bg-slate-50 dark:bg-slate-800 text-teal-700 dark:text-teal-400 font-mono font-bold" dir="ltr" />
+                    </div>
+                </div>
+                <div>
                     <label asp-for="PaidAmount" class="erp-label"></label>
                     <div class="input-wrapper">
-                        <input asp-for="PaidAmount" class="erp-input" />
+                        <input asp-for="PaidAmount" class="erp-input" dir="ltr" />
                     </div>
                 </div>
             </div>

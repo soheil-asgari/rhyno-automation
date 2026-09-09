@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OfficeAutomation.Models;
@@ -90,6 +90,7 @@ public class ContractSignatureSigner
     public User? SentByUser { get; set; }
     [StringLength(100)] public string? CertificateThumbprint { get; set; }
     /// <summary>تصویر امضا به صورت Base64 (برای نمایش در UI)</summary>
+    [Column(TypeName = "nvarchar(max)")]
     public string? SignatureImageData { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

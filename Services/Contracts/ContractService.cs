@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
 using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
@@ -446,6 +446,12 @@ public sealed class ContractService : IContractService
             TermsAndConditions = c.TermsAndConditions,
             ContractBodyHtml = c.ContractBodyHtml,
             TotalAmount = c.TotalAmount,
+            CurrencyCode = string.IsNullOrWhiteSpace(c.CurrencyCode) ? CurrencyCode.IRR : c.CurrencyCode,
+            ExchangeRate = c.ExchangeRate > 0 ? c.ExchangeRate : 1m,
+            TaxMethod = string.IsNullOrWhiteSpace(c.TaxMethod) ? TaxCalculationMethod.Exclusive : c.TaxMethod,
+            DefaultTaxRatePercent = c.DefaultTaxRatePercent,
+            TotalTaxAmount = c.TotalTaxAmount,
+            TotalAmountInclusiveTax = c.TotalAmountInclusiveTax,
             PaidAmount = c.PaidAmount,
             RemainingBalance = c.RemainingBalance,
             PaymentStatus = c.PaymentStatus,
@@ -525,7 +531,12 @@ public sealed class ContractService : IContractService
                 CreatedAt = a.CreatedAt,
                 CreatedAtText = ToPersianDate(a.CreatedAt)
             }).ToList(),
-            TypeFields = await LoadFieldValuesAsync(c.Id, ct)
+            TypeFields = await LoadFieldValuesAsync(c.Id, ct),
+            SignatureImageData = await _context.ContractSignatureSigners
+                .Where(s => s.SignatureRequest != null && s.SignatureRequest.ContractId == c.Id && !string.IsNullOrEmpty(s.SignatureImageData))
+                .OrderByDescending(s => s.SignedAt)
+                .Select(s => s.SignatureImageData)
+                .FirstOrDefaultAsync(ct)
         };
     }
 
@@ -608,6 +619,33 @@ public sealed class ContractService : IContractService
             UserOptions = await GetUserSelectListAsync(null, ct),
             TemplateOptions = await GetTemplateSelectListAsync(currentUserId, null, ct),
             CustomerOptions = await GetCustomerSelectListAsync(null, ct),
+            CurrencyOptions = CurrencyCode.All.Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            {
+                Value = c,
+                Text = c switch
+                {
+                    CurrencyCode.IRR => "ریال ایران (IRR)",
+                    CurrencyCode.USD => "دلار آمریکا (USD)",
+                    CurrencyCode.EUR => "یورو (EUR)",
+                    CurrencyCode.GBP => "پوند انگلیس (GBP)",
+                    CurrencyCode.AED => "درهم امارات (AED)",
+                    CurrencyCode.TRY => "لیر ترکیه (TRY)",
+                    _ => c
+                },
+                Selected = c == CurrencyCode.IRR
+            }).ToList(),
+            TaxMethodOptions = TaxCalculationMethod.All.Select(t => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            {
+                Value = t,
+                Text = t switch
+                {
+                    TaxCalculationMethod.Exclusive => "افزوده به مبلغ (Exclusive)",
+                    TaxCalculationMethod.Inclusive => "شامل در مبلغ (Inclusive)",
+                    TaxCalculationMethod.None => "بدون مالیات (None)",
+                    _ => t
+                },
+                Selected = t == TaxCalculationMethod.Exclusive
+            }).ToList(),
             TypeFields = typeFields
         };
     }
@@ -647,6 +685,9 @@ public sealed class ContractService : IContractService
         if (!await IsContractNumberUniqueAsync(model.ContractNumber, null, ct))
             throw new InvalidOperationException("شماره قرارداد تکراری است.");
 
+        var (totalTax, totalInclusive, baseCurrencyAmount) = CalculateTaxAndCurrency(
+            model.TotalAmount, model.TaxMethod, model.DefaultTaxRatePercent, model.CurrencyCode, model.ExchangeRate);
+
         var contract = new Contract
         {
             ContractNumber = model.ContractNumber.Trim(),
@@ -661,6 +702,13 @@ public sealed class ContractService : IContractService
             TermsAndConditions = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.TermsAndConditions),
             ContractBodyHtml = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.ContractBodyHtml),
             TotalAmount = model.TotalAmount,
+            CurrencyCode = string.IsNullOrWhiteSpace(model.CurrencyCode) ? CurrencyCode.IRR : model.CurrencyCode,
+            ExchangeRate = model.ExchangeRate > 0 ? model.ExchangeRate : 1m,
+            TaxMethod = string.IsNullOrWhiteSpace(model.TaxMethod) ? TaxCalculationMethod.Exclusive : model.TaxMethod,
+            DefaultTaxRatePercent = model.DefaultTaxRatePercent,
+            TotalTaxAmount = totalTax,
+            TotalAmountInclusiveTax = totalInclusive,
+            BaseCurrencyAmount = baseCurrencyAmount,
             PaidAmount = 0,
             RemainingBalance = model.TotalAmount,
             PaymentStatus = PaymentStatuses.Unpaid,
@@ -692,7 +740,8 @@ public sealed class ContractService : IContractService
                 var assignedUser = !string.IsNullOrEmpty(contract.AssignedUserId)
                     ? await _userManager.FindByIdAsync(contract.AssignedUserId)
                     : null;
-                contract.ContractBodyHtml = _templateRenderer.RenderTemplate(template.HtmlContent, contract, customer, assignedUser);
+                var renderedHtml = _templateRenderer.RenderTemplate(template.HtmlContent, contract, customer, assignedUser);
+                contract.ContractBodyHtml = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(renderedHtml);
             }
         }
 
@@ -743,6 +792,12 @@ public sealed class ContractService : IContractService
             TermsAndConditions = c.TermsAndConditions,
             ContractBodyHtml = c.ContractBodyHtml,
             TotalAmount = c.TotalAmount,
+            CurrencyCode = string.IsNullOrWhiteSpace(c.CurrencyCode) ? CurrencyCode.IRR : c.CurrencyCode,
+            ExchangeRate = c.ExchangeRate > 0 ? c.ExchangeRate : 1m,
+            TaxMethod = string.IsNullOrWhiteSpace(c.TaxMethod) ? TaxCalculationMethod.Exclusive : c.TaxMethod,
+            DefaultTaxRatePercent = c.DefaultTaxRatePercent,
+            TotalTaxAmount = c.TotalTaxAmount,
+            TotalAmountInclusiveTax = c.TotalAmountInclusiveTax,
             PaidAmount = c.PaidAmount,
             RemainingBalance = c.RemainingBalance,
             PaymentStatus = c.PaymentStatus,
@@ -758,6 +813,33 @@ public sealed class ContractService : IContractService
             AutoRenewTermMonths = c.AutoRenewTermMonths,
             StatusOptions = ContractStatuses.All.Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = s, Text = s, Selected = s == c.Status }).ToList(),
             ContractTypeOptions = ContractTypes.All.Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = s, Text = s, Selected = s == c.ContractType }).ToList(),
+            CurrencyOptions = CurrencyCode.All.Select(cur => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            {
+                Value = cur,
+                Text = cur switch
+                {
+                    CurrencyCode.IRR => "ریال ایران (IRR)",
+                    CurrencyCode.USD => "دلار آمریکا (USD)",
+                    CurrencyCode.EUR => "یورو (EUR)",
+                    CurrencyCode.GBP => "پوند انگلیس (GBP)",
+                    CurrencyCode.AED => "درهم امارات (AED)",
+                    CurrencyCode.TRY => "لیر ترکیه (TRY)",
+                    _ => cur
+                },
+                Selected = cur == c.CurrencyCode
+            }).ToList(),
+            TaxMethodOptions = TaxCalculationMethod.All.Select(t => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            {
+                Value = t,
+                Text = t switch
+                {
+                    TaxCalculationMethod.Exclusive => "افزوده به مبلغ (Exclusive)",
+                    TaxCalculationMethod.Inclusive => "شامل در مبلغ (Inclusive)",
+                    TaxCalculationMethod.None => "بدون مالیات (None)",
+                    _ => t
+                },
+                Selected = t == c.TaxMethod
+            }).ToList(),
             UserOptions = await GetUserSelectListAsync(c.AssignedUserId, ct),
             TemplateOptions = await GetTemplateSelectListAsync(currentUserId, c.TemplateId, ct),
             CustomerOptions = await GetCustomerSelectListAsync(c.CustomerId, ct),
@@ -809,6 +891,18 @@ public sealed class ContractService : IContractService
         c.TermsAndConditions = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.TermsAndConditions);
         c.ContractBodyHtml = OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(model.ContractBodyHtml);
         c.TotalAmount = model.TotalAmount;
+
+        var (totalTax, totalInclusive, baseCurrencyAmount) = CalculateTaxAndCurrency(
+            model.TotalAmount, model.TaxMethod, model.DefaultTaxRatePercent, model.CurrencyCode, model.ExchangeRate);
+
+        c.CurrencyCode = string.IsNullOrWhiteSpace(model.CurrencyCode) ? CurrencyCode.IRR : model.CurrencyCode;
+        c.ExchangeRate = model.ExchangeRate > 0 ? model.ExchangeRate : 1m;
+        c.TaxMethod = string.IsNullOrWhiteSpace(model.TaxMethod) ? TaxCalculationMethod.Exclusive : model.TaxMethod;
+        c.DefaultTaxRatePercent = model.DefaultTaxRatePercent;
+        c.TotalTaxAmount = totalTax;
+        c.TotalAmountInclusiveTax = totalInclusive;
+        c.BaseCurrencyAmount = baseCurrencyAmount;
+
         c.StartDate = model.StartDate;
         c.EndDate = model.EndDate;
         c.SignDate = model.SignDate;
@@ -2536,4 +2630,39 @@ public sealed class ContractService : IContractService
             return null;
         }
     }
+
+    /// <summary>
+    /// محاسبه مبالغ مالیات، مبلغ نهایی و مبلغ به ارز پایه
+    /// </summary>
+    private static (decimal totalTax, decimal totalInclusive, decimal baseCurrencyAmount) CalculateTaxAndCurrency(
+        decimal totalAmount, string? taxMethod, decimal taxRatePercent, string? currencyCode, decimal exchangeRate)
+    {
+        var method = string.IsNullOrWhiteSpace(taxMethod) ? TaxCalculationMethod.Exclusive : taxMethod;
+        decimal taxAmount;
+        decimal inclusiveAmount;
+
+        if (string.Equals(method, TaxCalculationMethod.Exclusive, StringComparison.OrdinalIgnoreCase))
+        {
+            taxAmount = Math.Round(totalAmount * (taxRatePercent / 100m), 2);
+            inclusiveAmount = totalAmount + taxAmount;
+        }
+        else if (string.Equals(method, TaxCalculationMethod.Inclusive, StringComparison.OrdinalIgnoreCase))
+        {
+            inclusiveAmount = totalAmount;
+            taxAmount = taxRatePercent > 0
+                ? Math.Round(totalAmount - (totalAmount / (1m + taxRatePercent / 100m)), 2)
+                : 0m;
+        }
+        else // None
+        {
+            taxAmount = 0m;
+            inclusiveAmount = totalAmount;
+        }
+
+        var rate = exchangeRate > 0 ? exchangeRate : 1m;
+        var baseCurrency = Math.Round(totalAmount * rate, 2);
+
+        return (taxAmount, inclusiveAmount, baseCurrency);
+    }
 }
+

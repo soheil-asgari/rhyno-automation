@@ -1,4 +1,4 @@
-﻿@model PaymentScheduleVM
+@model PaymentScheduleVM
 @using System.Globalization
 @{
     var installments = Model.Installments;
@@ -46,7 +46,10 @@
                 </div>
                 <div>
                     <label class="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">تاریخ اولین قسط</label>
-                    <input type="text" name="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 text-[11px] jalali-input" placeholder="۱۴۰۴/۰۱/۰۱" />
+                    <div class="relative jalali-datepicker-wrapper">
+                        <input type="text" value="@ToPersianDate(Model.StartDate)" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 text-[11px] jalali-input jalali-date-input cursor-pointer" data-jalali="StartDate" placeholder="انتخاب تاریخ" readonly required />
+                        <input type="hidden" name="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="jalali-date-hidden" required />
+                    </div>
                 </div>
                 <div>
                     <label class="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">فاصله (روز)</label>
@@ -136,7 +139,10 @@
                                     <input type="text" name="Installments[@i].Description" value="@inst.Description" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-[11px]" />
                                 </td>
                                 <td class="px-2 py-1.5">
-                                    <input type="text" name="Installments[@i].DueDate" value="@inst.DueDate.ToString("yyyy-MM-dd")" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-[11px] jalali-input" placeholder="۱۴۰۴/۰۱/۰۱" />
+                                    <div class="relative jalali-datepicker-wrapper">
+                                        <input type="text" value="@ToPersianDate(inst.DueDate)" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-[11px] jalali-input jalali-date-input cursor-pointer" data-jalali="Installments[@i].DueDate" placeholder="انتخاب تاریخ" readonly required />
+                                        <input type="hidden" name="Installments[@i].DueDate" value="@inst.DueDate.ToString("yyyy-MM-dd")" class="jalali-date-hidden" required />
+                                    </div>
                                 </td>
                                 <td class="px-2 py-1.5 text-left">
                                     <input type="number" step="0.01" name="Installments[@i].Amount" value="@inst.Amount" class="w-full text-left font-mono tabular-nums rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-[11px] installment-amount-input" required />

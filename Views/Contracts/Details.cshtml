@@ -1,8 +1,8 @@
-﻿@model ContractDetailsVM
+@model ContractDetailsVM
 @using System.Globalization
 @{
     ViewData["Title"] = "جزئیات قرارداد";
-    var activeTab = ViewBag.ActiveTab ?? "overview";
+    var activeTab = (ViewBag.ActiveTab as string)?.ToLowerInvariant() ?? "overview";
 
     // Safe date validation helpers
     bool hasValidEndDate = Model.EndDate.HasValue && Model.EndDate.Value.Year > 1700;
@@ -46,19 +46,25 @@
     }
 }
 
-<div class="container-fluid py-1 space-y-2" dir="rtl">
+<div class="container-fluid py-1 space-y-3" dir="rtl">
     @if (TempData["SuccessMessage"] is string successMsg)
     {
-        <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-3.5 py-2.5 text-[11px] text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
-            <i class="bi bi-check-circle-fill text-emerald-500"></i>
-            <span>@successMsg</span>
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-4 py-3 text-xs font-medium text-emerald-700 dark:text-emerald-400 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-check-circle-fill text-emerald-500 text-base"></i>
+                <span>@successMsg</span>
+            </div>
+            <button type="button" class="text-emerald-500 hover:text-emerald-700" onclick="this.parentElement.remove()">&times;</button>
         </div>
     }
     @if (TempData["ErrorMessage"] is string errorMsg)
     {
-        <div class="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20 px-3.5 py-2.5 text-[11px] text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
-            <i class="bi bi-exclamation-circle-fill text-rose-500"></i>
-            <span>@errorMsg</span>
+        <div class="rounded-xl border border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20 px-4 py-3 text-xs font-medium text-rose-700 dark:text-rose-400 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-exclamation-circle-fill text-rose-500 text-base"></i>
+                <span>@errorMsg</span>
+            </div>
+            <button type="button" class="text-rose-500 hover:text-rose-700" onclick="this.parentElement.remove()">&times;</button>
         </div>
     }
 
@@ -70,359 +76,372 @@
     }' />
 
     @* Section Header Card *@
-    <div class="erp-card p-2.5">
+    <div class="erp-card p-3">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-xs">
-                    <i class="bi bi-file-earmark-text text-white text-xl"></i>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-xl shadow-md">
+                    <i class="bi bi-file-earmark-text"></i>
                 </div>
                 <div>
-                    <h1 class="text-[13px] font-bold text-slate-900 dark:text-white">@Model.Title</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">@Model.ContractNumber</p>
+                    <h1 class="text-base font-black text-slate-900 dark:text-white">@Model.Title</h1>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-xs font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
+                            شماره: @Model.ContractNumber
+                        </span>
+                        <span class="text-xs text-slate-400">|</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">طرف قرارداد: @(!string.IsNullOrEmpty(Model.ClientName) ? Model.ClientName : (Model.CustomerName ?? "-"))</span>
+                    </div>
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
                 @if (Model.CanEdit)
                 {
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700 no-underline">
                         <i class="bi bi-pencil ml-1"></i>ویرایش
                     </a>
                     <form asp-action="ArchiveContract" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit>
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="erp-btn text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
+                        <button type="submit" class="erp-btn text-xs text-slate-700 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-amber-950/20 dark:hover:text-amber-400 no-underline transition">
                             <i class="bi bi-archive ml-1"></i>بایگانی
                         </button>
                     </form>
-                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیتم حذف شود؟');">
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیا از حذف این قرارداد اطمینان دارید؟');">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="erp-btn text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
+                        <button type="submit" class="erp-btn text-xs text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 no-underline transition">
                             <i class="bi bi-trash ml-1"></i>حذف
                         </button>
                     </form>
                 }
-                <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
-                    <i class="bi bi-printer ml-1"></i>چاپ/PDF
+                <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="erp-btn text-xs text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                    <i class="bi bi-printer ml-1"></i>چاپ / دریافت PDF
                 </a>
-                <a asp-action="Index" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
+                <a asp-action="Index" class="erp-btn text-xs text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition">
                     <i class="bi bi-arrow-right ml-1"></i>بازگشت
                 </a>
             </div>
         </div>
     </div>
 
-    @* Modern Tabs *@
-    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden" data-contract-tabs>
-        <div class="border-b border-slate-100 dark:border-slate-800">
-            <ul class="flex flex-wrap text-[11px] font-bold" role="tablist">
+    @* Tabbed Container *@
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden" data-contract-tabs>
+        @* Tab Navigation Bar *@
+        <div class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20">
+            <ul class="flex flex-wrap text-xs font-bold" role="tablist">
                 <li role="presentation">
-                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "overview" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="overview" type="button">
-                        <i class="bi bi-speedometer2 ml-1"></i>نمای کلی
+                    <button class="tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 @(activeTab == "overview" ? "border-teal-500 text-teal-600 dark:text-teal-400 font-bold" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="overview" type="button">
+                        <i class="bi bi-speedometer2"></i>نمای کلی
                     </button>
                 </li>
                 <li role="presentation">
-                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "content" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="content" type="button">
-                        <i class="bi bi-file-text ml-1"></i>متن قرارداد
+                    <button class="tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 @(activeTab == "body" || activeTab == "content" ? "border-teal-500 text-teal-600 dark:text-teal-400 font-bold" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="body" type="button">
+                        <i class="bi bi-file-text"></i>متن قرارداد
                     </button>
                 </li>
                 <li role="presentation">
-                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "payments" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="payments" type="button">
-                        <i class="bi bi-wallet2 ml-1"></i>پرداخت‌ها
+                    <button class="tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 @(activeTab == "payments" ? "border-teal-500 text-teal-600 dark:text-teal-400 font-bold" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="payments" type="button">
+                        <i class="bi bi-wallet2"></i>پرداخت‌ها
                     </button>
                 </li>
                 <li role="presentation">
-                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "attachments" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="attachments" type="button">
-                        <i class="bi bi-paperclip ml-1"></i>ضمیمه‌ها
+                    <button class="tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 @(activeTab == "attachments" ? "border-teal-500 text-teal-600 dark:text-teal-400 font-bold" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="attachments" type="button">
+                        <i class="bi bi-paperclip"></i>ضمیمه‌ها
                     </button>
                 </li>
                 <li role="presentation">
-                    <button class="tab-btn px-4 py-2.5 border-b-2 transition @(activeTab == "activity" ? "border-teal-500 text-teal-600 dark:text-teal-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="activity" type="button">
-                        <i class="bi bi-clock-history ml-1"></i>تاریخچه فعالیت
+                    <button class="tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 @(activeTab == "amendments" ? "border-teal-500 text-teal-600 dark:text-teal-400 font-bold" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="amendments" type="button">
+                        <i class="bi bi-pencil-square"></i>اصلاحیه‌ها
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 @(activeTab == "signature" ? "border-teal-500 text-teal-600 dark:text-teal-400 font-bold" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="signature" type="button">
+                        <i class="bi bi-pen"></i>امضا
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 @(activeTab == "history" || activeTab == "activity" ? "border-teal-500 text-teal-600 dark:text-teal-400 font-bold" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300")" data-tab="history" type="button">
+                        <i class="bi bi-clock-history"></i>تاریخچه فعالیت
                     </button>
                 </li>
             </ul>
         </div>
 
-        <div class="p-3.5">
-            @* Tab 1: Overview & Metrics *@
+        @* Tab Panels Wrapper *@
+        <div class="p-4">
+            @* ── TAB 1: OVERVIEW ──────────────────────────────────────────────── *@
             <div class="tab-panel @(activeTab == "overview" ? "" : "hidden")" id="tab-overview">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    <div class="rounded-lg bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/20 dark:to-emerald-950/20 border border-teal-100 dark:border-teal-900/30 p-3">
-                        <span class="text-[9px] font-bold text-teal-600 dark:text-teal-400">مبلغ کل</span>
-                        <div class="text-sm font-black text-slate-900 dark:text-white font-mono tabular-nums mt-1">@Model.TotalAmount.ToString("N0")</div>
+                @* Financial Stats Summary Cards *@
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/20 dark:to-emerald-950/20 border border-teal-100 dark:border-teal-900/30 p-3.5 shadow-sm">
+                        <span class="text-[10px] font-bold text-teal-600 dark:text-teal-400">مبلغ کل قرارداد</span>
+                        <div class="text-base font-black text-slate-900 dark:text-white font-mono tabular-nums mt-1">@Model.TotalAmount.ToString("N0") <span class="text-[10px] font-normal text-slate-500">تومان</span></div>
                     </div>
-                    <div class="rounded-lg bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 border border-emerald-100 dark:border-emerald-900/30 p-3">
-                        <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">پرداخت شده</span>
-                        <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums mt-1">@paidAmount.ToString("N0")</div>
+                    <div class="rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 border border-emerald-100 dark:border-emerald-900/30 p-3.5 shadow-sm">
+                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">پرداخت شده</span>
+                        <div class="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums mt-1">@paidAmount.ToString("N0") <span class="text-[10px] font-normal text-slate-500">تومان</span></div>
                     </div>
-                    <div class="rounded-lg bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/20 border border-rose-100 dark:border-rose-900/30 p-3">
-                        <span class="text-[9px] font-bold text-rose-600 dark:text-rose-400">باقی مانده</span>
-                        <div class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums mt-1">@remainingAmountCalc.ToString("N0")</div>
+                    <div class="rounded-xl bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/20 border border-rose-100 dark:border-rose-900/30 p-3.5 shadow-sm">
+                        <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400">باقی‌مانده تعهد مالی</span>
+                        <div class="text-base font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums mt-1">@remainingAmountCalc.ToString("N0") <span class="text-[10px] font-normal text-slate-500">تومان</span></div>
                     </div>
-                    <div class="rounded-lg bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-amber-100 dark:border-amber-900/30 p-3">
-                        <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400">روزهای باقی‌مانده</span>
-                        <div class="text-sm font-black text-amber-600 dark:text-amber-400 font-mono tabular-nums mt-1">
+                    <div class="rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-amber-100 dark:border-amber-900/30 p-3.5 shadow-sm">
+                        <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400">روزهای باقی‌مانده از اعتبار</span>
+                        <div class="text-base font-black text-amber-600 dark:text-amber-400 font-mono tabular-nums mt-1">
                             @if (hasValidEndDate && remainingDays.HasValue)
                             {
                                 if (remainingDays.Value < 0)
                                 {
-                                    <span class="text-rose-600 dark:text-rose-400">منقضی شده (@Math.Abs(remainingDays.Value) روز پیش)</span>
+                                    <span class="text-rose-600 dark:text-rose-400">منقضی شده (@Math.Abs(remainingDays.Value) روز قبل)</span>
                                 }
                                 else if (remainingDays.Value == 0)
                                 {
-                                    <text>امروز</text>
+                                    <span>امروز پایان می‌یابد</span>
                                 }
                                 else
                                 {
-                                    <text>@remainingDays.Value روز باقی‌مانده</text>
+                                    <span>@remainingDays.Value روز</span>
                                 }
                             }
                             else
                             {
-                                <text>تاریخ پایان مشخص نشده</text>
+                                <span class="text-xs font-normal">تاریخ پایان مشخص نشده</span>
                             }
                         </div>
                     </div>
                 </div>
 
-                @* Lifecycle Status Stepper *@
+                @* Stepper Timeline *@
                 <partial name="_LifecycleStepper" model="Model" />
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                    <div>
-                        
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">مسئول:</span><span class="text-slate-700 dark:text-slate-300">@(Model.ResponsibleUserName ?? "-")</span></div>
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">قالب:</span><span class="text-slate-700 dark:text-slate-300">@(Model.TemplateName ?? "بدون قالب")</span></div>
+                @* General Info & Important Dates *@
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 tracking-wide flex items-center gap-1.5">
+                            <i class="bi bi-info-circle text-teal-500"></i>مشخصات عمومی قرارداد
+                        </h3>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 p-3.5 space-y-2 text-xs">
+                            <div class="flex justify-between items-center py-1 border-b border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500">مسئول پیگیری:</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">@(Model.ResponsibleUserName ?? "-")</span>
+                            </div>
+                            <div class="flex justify-between items-center py-1 border-b border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500">قالب قرارداد:</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">@(Model.TemplateName ?? "بدون قالب")</span>
+                            </div>
+                            <div class="flex justify-between items-center py-1 border-b border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500">نوع قرارداد:</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">@(Model.ContractType ?? "عمومی")</span>
+                            </div>
                             @if (Model.IsArchived)
                             {
-                                <div class="flex justify-between text-[11px]"><span class="text-slate-500">بایگانی‌کننده:</span><span class="text-slate-700 dark:text-slate-300">@(Model.ArchivedByUserName ?? "-")</span></div>
-                                <div class="flex justify-between text-[11px]"><span class="text-slate-500">تاریخ بایگانی:</span><span class="font-mono text-slate-700 dark:text-slate-300">@ToPersianDateNullable(Model.ArchivedAt)</span></div>
+                                <div class="flex justify-between items-center py-1 border-b border-slate-200/50 dark:border-slate-700/50">
+                                    <span class="text-slate-500">بایگانی‌کننده:</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">@(Model.ArchivedByUserName ?? "-")</span>
+                                </div>
+                                <div class="flex justify-between items-center py-1">
+                                    <span class="text-slate-500">تاریخ بایگانی:</span>
+                                    <span class="font-mono text-slate-800 dark:text-slate-200">@ToPersianDateNullable(Model.ArchivedAt)</span>
+                                </div>
                             }
                         </div>
-                    <div>
-                        <div class="space-y-2.5">
-                            <h3 class="text-[11px] font-black text-slate-800 dark:text-slate-200 tracking-wide flex items-center gap-1.5">
-                                <i class="bi bi-calendar3 text-teal-500 text-[11px]"></i>تاریخ‌های مهم
-                            </h3>
-                            <div class="rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 p-3">
-                                <div class="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">تاریخ شروع:</span>
-                                    <span class="text-[11px] font-medium text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@ToPersianDate(Model.StartDate)</span>
-                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">تاریخ پایان:</span>
-                                    <span class="text-[11px] font-medium text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@ToPersianDateNullable(Model.EndDate)</span>
-                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">تاریخ امضا:</span>
-                                    <span class="text-[11px] font-medium text-slate-800 dark:text-slate-200 font-mono tabular-nums text-left">@ToPersianDateNullable(Model.SignDate)</span>
-                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">وضعیت پرداخت:</span>
-                                    <div class="text-left">
-                                        @if (remainingAmountCalc <= 0 && totalAmount > 0) {
-                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold">تسویه شده</span>
-                                        } else if (paidAmount > 0) {
-                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-bold">پرداخت جزئی</span>
-                                        } else {
-                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 font-bold">پرداخت نشده</span>
-                                        }
-                                    </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 tracking-wide flex items-center gap-1.5">
+                            <i class="bi bi-calendar3 text-teal-500"></i>تاریخ‌ها و شرایط مالی
+                        </h3>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50 p-3.5 space-y-2 text-xs">
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                                <span class="text-slate-500">تاریخ شروع:</span>
+                                <span class="font-bold font-mono text-slate-800 dark:text-slate-200 text-left">@ToPersianDate(Model.StartDate)</span>
+
+                                <span class="text-slate-500">تاریخ پایان:</span>
+                                <span class="font-bold font-mono text-slate-800 dark:text-slate-200 text-left">@ToPersianDateNullable(Model.EndDate)</span>
+
+                                <span class="text-slate-500">تاریخ امضا:</span>
+                                <span class="font-bold font-mono text-slate-800 dark:text-slate-200 text-left">@ToPersianDateNullable(Model.SignDate)</span>
+
+                                <span class="text-slate-500">واحد ارز:</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-left">
+                                    @Model.CurrencyCode @(Model.CurrencyCode != "IRR" ? $" (نرخ: {Model.ExchangeRate:N2})" : "")
+                                </span>
+
+                                <span class="text-slate-500">وضعیت پرداخت:</span>
+                                <div class="text-left">
+                                    @if (remainingAmountCalc <= 0 && totalAmount > 0)
+                                    {
+                                        <span class="inline-block px-2.5 py-0.5 text-[10px] rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-bold">تسویه کامل</span>
+                                    }
+                                    else if (paidAmount > 0)
+                                    {
+                                        <span class="inline-block px-2.5 py-0.5 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-bold">پرداخت جزئی</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-block px-2.5 py-0.5 text-[10px] rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 font-bold">پرداخت نشده</span>
+                                    }
                                 </div>
                             </div>
                         </div>
                     </div>
-                    </div>
+                </div>
 
                 @if (totalAmount > 0)
                 {
-                    <div class="mt-2">
-                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
-                            <span>پیشرفت پرداخت (@paidAmount.ToString("N0") از @totalAmount.ToString("N0"))</span>
-                            <span class="font-bold">@paymentProgress%</span>
+                    <div class="mt-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50">
+                        <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300 font-bold mb-1.5">
+                            <span>میزان پیشرفت پرداخت مالی (@paidAmount.ToString("N0") از @totalAmount.ToString("N0") تومان)</span>
+                            <span class="font-mono text-teal-600 dark:text-teal-400">@paymentProgress%</span>
                         </div>
-                        <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                            <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: @paymentProgress%"></div>
+                        <div class="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500" style="width: @paymentProgress%"></div>
                         </div>
                     </div>
                 }
 
                 @if (!string.IsNullOrEmpty(Model.Description))
                 {
-                    <div class="mt-3">
-                        <span class="text-[10px] font-bold text-slate-500 block mb-1">توضیحات</span>
-                        <p class="text-[11px] text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 rounded-lg p-2.5">@Model.Description</p>
+                    <div class="mt-4">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center gap-1.5"><i class="bi bi-card-text text-teal-500"></i>توضیحات قرارداد</span>
+                        <p class="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 rounded-xl p-3.5 border border-slate-100 dark:border-slate-800 leading-relaxed">@Model.Description</p>
                     </div>
                 }
 
                 @if (!string.IsNullOrEmpty(Model.Notes))
                 {
-                    <div class="mt-3">
-                        <span class="text-[10px] font-bold text-slate-500 block mb-1">یادداشت‌ها</span>
-                        <p class="text-[11px] text-slate-700 dark:text-slate-300 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-lg p-2.5">@Model.Notes</p>
+                    <div class="mt-4">
+                        <span class="text-xs font-bold text-amber-700 dark:text-amber-400 block mb-1.5 flex items-center gap-1.5"><i class="bi bi-sticky text-amber-500"></i>یادداشت‌های داخلی</span>
+                        <p class="text-xs text-amber-900 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 rounded-xl p-3.5 leading-relaxed">@Model.Notes</p>
                     </div>
                 }
-            @* Dynamic Type-Specific Fields (EAV) *@
-            @if (Model.TypeFields is { Count: > 0 } && Model.TypeFields.Any(f => f.ContractType == Model.ContractType && !string.IsNullOrEmpty(f.Value)))
-            {
-                var relevantFields = Model.TypeFields.Where(f => f.ContractType == Model.ContractType && !string.IsNullOrEmpty(f.Value)).ToList();
-                var sections = relevantFields.GroupBy(f => f.SectionName ?? "سایر اطلاعات").ToList();
-
-                <div class="mt-3">
-                    <h3 class="text-[10px] font-bold text-slate-500 block mb-2">اطلاعات تخصصی قرارداد</h3>
-                    <div class="rounded-lg bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-3">
-                        @foreach (var sec in sections)
-                        {
-                            <div class="mb-2 last:mb-0">
-                                <span class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 block mb-1">@sec.Key</span>
-                                <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                                    @foreach (var field in sec)
-                                    {
-                                        <div>
-                                            <span class="text-[9px] text-slate-500">@field.DisplayName:</span>
-                                            <span class="text-[11px] font-medium text-slate-900 dark:text-white">@field.Value</span>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
             </div>
-            @* Tab 2: Document Content *@
-            <div class="tab-panel @(activeTab == "content" ? "" : "hidden")" id="tab-content">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-[11px] font-black text-slate-900 dark:text-white">متن قرارداد</h3>
-                    <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700 no-underline">
-                        <i class="bi bi-printer ml-1"></i>چاپ / Save PDF
+
+            @* ── TAB 2: CONTRACT BODY ────────────────────────────────────────── *@
+            <div class="tab-panel @(activeTab == "body" || activeTab == "content" ? "" : "hidden")" id="tab-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-file-text text-teal-600 dark:text-teal-400"></i>متن رسمی قرارداد
+                    </h3>
+                    <a asp-action="GenerateDocument" asp-route-id="@Model.Id" target="_blank" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700 no-underline">
+                        <i class="bi bi-printer ml-1"></i>چاپ / دریافت نسخه PDF
                     </a>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.ContractBodyHtml))
                 {
-                    <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white">
-                        @Html.Raw(Model.ContractBodyHtml)
+                    <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-6 bg-white dark:bg-slate-950 leading-relaxed text-xs shadow-inner">
+                        @Html.Raw(OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(Model.ContractBodyHtml))
                     </div>
                 }
                 else if (!string.IsNullOrEmpty(Model.TermsAndConditions))
                 {
-                    <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white">
-                        @Html.Raw(Model.TermsAndConditions)
+                    <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-6 bg-white dark:bg-slate-950 leading-relaxed text-xs shadow-inner">
+                        @Html.Raw(OfficeAutomation.Utilities.HtmlSanitizer.Sanitize(Model.TermsAndConditions))
                     </div>
                 }
                 else
                 {
-                    <div class="text-center py-8">
-                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
-                            <i class="bi bi-file-text text-slate-400"></i>
+                    <div class="text-center py-12 bg-slate-50/50 dark:bg-slate-950/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                        <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-3 text-slate-400 text-2xl">
+                            <i class="bi bi-file-earmark-x"></i>
                         </div>
-                        <p class="text-[11px] text-slate-400 dark:text-slate-500">متن قراردادی ثبت نشده است.</p>
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">متن قراردادی ثبت نشده است</h4>
+                        <p class="text-[11px] text-slate-400">شما می‌توانید از دکمه ویرایش برای اضافه نمودن متن یا مفاد اصلی قرارداد استفاده کنید.</p>
                     </div>
                 }
             </div>
 
-            @* Tab 3: Payments & Installments *@
+            @* ── TAB 3: PAYMENTS ─────────────────────────────────────────────── *@
             <div class="tab-panel @(activeTab == "payments" ? "" : "hidden")" id="tab-payments">
                 @if (Model.CanViewFinancials)
                 {
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-xs font-black text-slate-900 dark:text-white">پرداخت‌ها</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-wallet2 text-teal-600 dark:text-teal-400"></i>لیست پرداخت‌ها و اقساط مالی
+                        </h3>
                         @if (Model.CanEdit)
                         {
-                            <button type="button" id="btnNewPayment" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="addPaymentModal">
-                                <i class="bi bi-plus-circle ml-1"></i>پرداخت جدید
+                            <button type="button" id="btnNewPayment" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="addPaymentModal">
+                                <i class="bi bi-plus-lg ml-1"></i>ثبت پرداخت جدید
                             </button>
                         }
                     </div>
 
-                    @if (Model.TotalAmount > 0)
-                    {
-                        var paidPct = (int)(Model.PaidAmount * 100 / Model.TotalAmount);
-                        <div class="mb-3">
-                            <div class="flex justify-between text-[10px] text-slate-500 mb-1">
-                                <span>پیشرفت پرداخت (@Model.PaidAmount.ToString("N0") از @Model.TotalAmount.ToString("N0"))</span>
-                                <span class="font-bold">@paidPct%</span>
-                            </div>
-                            <div class="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: @paidPct%"></div>
-                            </div>
-                        </div>
-                    }
-<div id="paymentScheduleContainer" class="mt-3" data-contract-id="@Model.Id">
-                        <div class="schedule-skeleton space-y-2 " aria-label="در حال بارگذاری برنامه پرداخت">
-                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
-                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
-                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
-                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
-                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div>
-                        </div>
-                    </div>
-
-                    @* Guarantees / Retention Money Section *@
-                    <div id="guaranteesContainer" class="mt-3" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")" data-can-view="@(Model.CanViewFinancials ? "true" : "false")">
+                    <div id="paymentScheduleContainer" class="mt-4" data-contract-id="@Model.Id">
                         <div class="schedule-skeleton space-y-2">
                             <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
-                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
                             <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
                         </div>
                     </div>
 
-                    @* Penalty / Late Payment Section *@
-                    <div id="penaltiesContainer" class="mt-3" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")" data-can-view="@(Model.CanViewFinancials ? "true" : "false")">
+                    @* Guarantees Section *@
+                    <div id="guaranteesContainer" class="mt-4" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")" data-can-view="@(Model.CanViewFinancials ? "true" : "false")">
                         <div class="schedule-skeleton space-y-2">
                             <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
                             <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+                        </div>
+                    </div>
+
+                    @* Penalties Section *@
+                    <div id="penaltiesContainer" class="mt-4" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")" data-can-view="@(Model.CanViewFinancials ? "true" : "false")">
+                        <div class="schedule-skeleton space-y-2">
+                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
                             <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
                         </div>
                     </div>
 
                     @if (Model.Payments != null && Model.Payments.Any())
                     {
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-[11px]">
+                        <div class="overflow-x-auto mt-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <table class="w-full text-xs">
                                 <thead>
-                                    <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-                                        <th class="text-right px-3 py-2 font-bold text-slate-500">مبلغ</th>
-                                        <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ پرداخت</th>
-                                        <th class="text-right px-3 py-2 font-bold text-slate-500">سررسید</th>
-                                        <th class="text-right px-3 py-2 font-bold text-slate-500">وضعیت</th>
-                                        <th class="text-right px-3 py-2 font-bold text-slate-500">روش پرداخت</th>
-                                        <th class="text-right px-3 py-2 font-bold text-slate-500">شماره مرجع</th>
-                                        <th class="text-right px-3 py-2 font-bold text-slate-500">توضیحات</th>
+                                    <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">مبلغ (تومان)</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">تاریخ پرداخت</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">تاریخ سررسید</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">وضعیت</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">روش پرداخت</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">شماره پیگیری</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">توضیحات</th>
                                         @if (Model.CanEdit)
                                         {
-                                            <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
+                                            <th class="text-center px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">عملیات</th>
                                         }
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                     @foreach (var payment in Model.Payments)
                                     {
-                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                                            <td class="px-3 py-2 font-mono tabular-nums font-bold text-slate-800 dark:text-slate-200">@payment.Amount.ToString("N0")</td>
-                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(payment.PaymentDate)</td>
-                                            <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDateNullable(payment.DueDate)</td>
-                                            <td class="px-3 py-2">
+                                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                                            <td class="px-4 py-2.5 font-mono font-bold tabular-nums text-slate-900 dark:text-white">@payment.Amount.ToString("N0")</td>
+                                            <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-slate-400">@ToPersianDate(payment.PaymentDate)</td>
+                                            <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-slate-400">@ToPersianDateNullable(payment.DueDate)</td>
+                                            <td class="px-4 py-2.5">
                                                 @{
                                                     var payStatusBadge = payment.Status switch
                                                     {
-                                                        "Paid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                                                        "Pending" => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                                                        "Overdue" => "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+                                                        "Paid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+                                                        "Pending" => "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+                                                        "Overdue" => "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400",
                                                         _ => "bg-slate-100 text-slate-600"
                                                     };
                                                     var payStatusText = payment.Status switch
                                                     {
                                                         "Paid" => "پرداخت شده",
-                                                        "Pending" => "در انتظار",
+                                                        "Pending" => "در انتظار پرداخت",
                                                         "Overdue" => "سررسید گذشته",
                                                         _ => payment.Status
                                                     };
                                                 }
-                                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @payStatusBadge">@payStatusText</span>
+                                                <span class="inline-flex items-center rounded-md px-2.5 py-0.5 text-[10px] font-bold @payStatusBadge">@payStatusText</span>
                                             </td>
-                                            <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@(payment.PaymentMethod ?? "-")</td>
-                                            <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@(payment.ReferenceNumber ?? "-")</td>
-                                            <td class="px-3 py-2 text-slate-700 dark:text-slate-300">@(payment.Notes ?? "-")</td>
+                                            <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300">@(payment.PaymentMethod ?? "-")</td>
+                                            <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300 font-mono">@(payment.ReferenceNumber ?? "-")</td>
+                                            <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300">@(payment.Notes ?? "-")</td>
                                             @if (Model.CanEdit)
                                             {
-                                                <td class="px-3 py-2 text-center">
-                                                    <form asp-action="DeletePayment" asp-route-paymentId="@payment.Id" asp-route-contractId="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('پرداخت حذف شود؟');">
+                                                <td class="px-4 py-2.5 text-center">
+                                                    <form asp-action="DeletePayment" asp-route-paymentId="@payment.Id" asp-route-contractId="@Model.Id" method="post" class="inline" data-guard-submit onsubmit="return confirm('آیا از حذف این پرداخت اطمینان دارید؟');">
                                                         @Html.AntiForgeryToken()
-                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="حذف">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
@@ -434,116 +453,108 @@
                             </table>
                         </div>
                     }
-                    else
-                    {
-                        <div class="text-center py-6">
-                            <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
-                                <i class="bi bi-credit-card text-slate-400"></i>
-                            </div>
-                            <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ پرداختی ثبت نشده است.</p>
-                        </div>
-                    }
                 }
                 else
                 {
-                    <div class="text-center py-6">
-                        <i class="bi bi-lock text-slate-400 text-lg"></i>
-                        <p class="text-[11px] text-slate-400 mt-2">شما به اطلاعات مالی دسترسی ندارید.</p>
+                    <div class="text-center py-12 bg-slate-50/50 dark:bg-slate-950/30 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <i class="bi bi-lock text-slate-400 text-3xl block mb-2"></i>
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300">عدم دسترسی به اطلاعات مالی</h4>
+                        <p class="text-[11px] text-slate-400 mt-1">شما مجوز لازم برای مشاهده اطلاعات مالی این قرارداد را ندارید.</p>
                     </div>
                 }
             </div>
 
-            @* Tab 4: Attachments *@
+            @* ── TAB 4: ATTACHMENTS ─────────────────────────────────────────── *@
             <div class="tab-panel @(activeTab == "attachments" ? "" : "hidden")" id="tab-attachments" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-xs font-black text-slate-900 dark:text-white">ضمیمه‌ها</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-paperclip text-teal-600 dark:text-teal-400"></i>لیست ضمیمه‌ها و اسناد پیوست
+                    </h3>
                     @if (Model.CanEdit)
                     {
-                        <button type="button" id="btnUploadAttachment" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="uploadAttachmentModal">
-                            <i class="bi bi-cloud-upload ml-1"></i>بارگذاری فایل
+                        <button type="button" id="btnUploadAttachment" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700 cursor-pointer" data-modal-target="uploadAttachmentModal">
+                            <i class="bi bi-cloud-upload ml-1"></i>بارگذاری فایل جدید
                         </button>
                     }
                 </div>
 
                 @if (Model.CanEdit)
                 {
-                    @* Drag-and-Drop Upload Zone *@
-                    <div class="contract-dropzone" id="contractDropzone">
-                        <i class="bi bi-cloud-upload contract-dropzone-icon"></i>
-                        <p class="contract-dropzone-text">فایل‌ها را اینجا رها کنید یا کلیک کنید</p>
-                        <p class="contract-dropzone-sub">فایل‌های PDF, Word, Excel, تصاویر تا ۲۰ مگابایت</p>
-                        <span class="contract-dropzone-hint">چند فایل را می‌توانید همزمان انتخاب کنید</span>
+                    @* Drag-and-Drop Zone *@
+                    <div class="contract-dropzone p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-center hover:border-teal-500 transition cursor-pointer bg-slate-50/50 dark:bg-slate-950/30 mb-4" id="contractDropzone">
+                        <i class="bi bi-cloud-upload text-3xl text-teal-500 block mb-2"></i>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">فایل‌ها را کشیده و در این مکان رها کنید یا برای انتخاب کلیک کنید</p>
+                        <p class="text-[10px] text-slate-400 mt-1">پشتیبانی از فرمت‌های PDF, Word, Excel, تصاویر تا حجم ۲۰ مگابایت</p>
                         <input type="file" id="contractFileInput" class="hidden" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.tiff,.tif,.bmp,.zip,.rar,.7z,.txt" />
                     </div>
 
-                    @* Validation Error Messages Container *@
-                    <div class="contract-upload-errors" id="contractUploadErrors"></div>
-
-                    @* Upload Progress Queue *@
-                    <div class="contract-upload-queue" id="contractUploadQueue"></div>
+                    <div class="contract-upload-errors mb-3" id="contractUploadErrors"></div>
+                    <div class="contract-upload-queue space-y-2 mb-4" id="contractUploadQueue"></div>
                 }
 
-                @* Existing Attachments List *@
+                @* Attachments Table *@
                 <div id="contractAttachmentsList">
-                 @if (Model.Attachments.Any())
-{
-    <div class="overflow-x-auto">
-        <table class="w-full text-[11px]">
-            <thead>
-                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-                    <th class="text-right px-3 py-2 font-bold text-slate-500">نام فایل</th>
-                    <th class="text-right px-3 py-2 font-bold text-slate-500">نوع</th>
-                    <th class="text-right px-3 py-2 font-bold text-slate-500">حجم</th>
-                    <th class="text-right px-3 py-2 font-bold text-slate-500">بارگذاری‌کننده</th>
-                    <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ</th>
-                    <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60" id="contractAttachmentsBody">
-                @foreach (var att in Model.Attachments)
-                {
-                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition" data-attachment-id="@att.Id">
-                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">
-                            <i class="bi bi-file-earmark ml-1 text-slate-400"></i>@att.FileName
-                        </td>
-                        <td class="px-3 py-2 text-slate-600">@att.ContentType</td>
-                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
-                        <td class="px-3 py-2 text-slate-600">@(att.UploadedByUserName ?? "-")</td>
-                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(att.CreatedAt)</td>
-                        <td class="px-3 py-2 text-center">
-                            <div class="inline-flex gap-1">
-                                <button type="button" onclick="openAttachmentPreview(@att.Id, '@att.FileName.Replace("'", "\\'")', '@(att.ContentType ?? "")', @att.FileSize, '/Contracts/DownloadAttachment/@att.Id')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition cursor-pointer" title="پیش‌نمایش">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود">
-                                    <i class="bi bi-download"></i>
-                                </a>
-                                @if (Model.CanEdit)
-                                {
-                                    <button type="button" onclick="deleteAttachment(@att.Id)" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition cursor-pointer" title="حذف">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                }
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
-                else
-                {
-                    <div class="text-center py-6" id="contractAttachmentsEmpty">
-                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
-                            <i class="bi bi-paperclip text-slate-400"></i>
+                    @if (Model.Attachments != null && Model.Attachments.Any())
+                    {
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">نام فایل</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">نوع فایل</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">حجم</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">بارگذاری‌کننده</th>
+                                        <th class="text-right px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">تاریخ بارگذاری</th>
+                                        <th class="text-center px-4 py-2.5 font-bold text-slate-600 dark:text-slate-400">عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="contractAttachmentsBody">
+                                    @foreach (var att in Model.Attachments)
+                                    {
+                                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition" data-attachment-id="@att.Id">
+                                            <td class="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200">
+                                                <i class="bi bi-file-earmark-text text-teal-500 ml-1.5"></i>@att.FileName
+                                            </td>
+                                            <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">@(att.ContentType ?? "پیوست")</td>
+                                            <td class="px-4 py-2.5 font-mono tabular-nums text-slate-600 dark:text-slate-400">@(att.FileSize > 1024 ? $"{att.FileSize / 1024} KB" : $"{att.FileSize} B")</td>
+                                            <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300">@(att.UploadedByUserName ?? "-")</td>
+                                            <td class="px-4 py-2.5 font-mono tabular-nums text-slate-600 dark:text-slate-400">@ToPersianDate(att.CreatedAt)</td>
+                                            <td class="px-4 py-2.5 text-center">
+                                                <div class="inline-flex gap-1">
+                                                    <button type="button" onclick="openAttachmentPreview(@att.Id, '@att.FileName.Replace("'", "\\'")', '@(att.ContentType ?? "")', @att.FileSize, '/Contracts/DownloadAttachment/@att.Id')" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition cursor-pointer" title="پیش‌نمایش">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                    <a asp-action="DownloadAttachment" asp-route-attachmentId="@att.Id" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 no-underline transition" title="دانلود">
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                    @if (Model.CanEdit)
+                                                    {
+                                                        <button type="button" onclick="deleteAttachment(@att.Id)" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition cursor-pointer" title="حذف">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
-                        <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمیمه‌ای وجود ندارد.</p>
-                    </div>
-                }
+                    }
+                    else
+                    {
+                        <div class="text-center py-12 bg-slate-50/50 dark:bg-slate-950/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800" id="contractAttachmentsEmpty">
+                            <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-3 text-slate-400 text-2xl">
+                                <i class="bi bi-paperclip"></i>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">هیچ ضمیمه‌ای وجود ندارد</h4>
+                            <p class="text-[11px] text-slate-400">می‌توانید فایل‌های مربوط به قرارداد را در این بخش بارگذاری نمایید.</p>
+                        </div>
+                    }
+                </div>
 
-                @* Document Requirements Checklist *@
-                <div id="documentRequirementsContainer" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")">
+                @* Document Requirements Container *@
+                <div id="documentRequirementsContainer" class="mt-4" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")">
                     <div class="text-center py-6">
                         <div class="schedule-skeleton space-y-2">
                             <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mx-auto"></div>
@@ -551,70 +562,135 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            @* Tab 5.5: Amendments *@
+            @* ── TAB 5: AMENDMENTS (#tab-amendments) ──────────────────────────── *@
             <div class="tab-panel @(activeTab == "amendments" ? "" : "hidden")" id="tab-amendments">
-                <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-3">اصلاحیه‌ها / الحاقیه‌ها / تمدیدها</h3>
-                @if (Model.Amendments.Any())
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-pencil-square text-teal-600 dark:text-teal-400"></i>لیست اصلاحیه‌ها و متمم‌های قرارداد
+                        </h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            سوابق تغییرات مالی، تمدیدهای زمانی و الحاقیه‌های رسمی ثبت‌شده برای این قرارداد.
+                        </p>
+                    </div>
+                    @if (Model.CanEdit)
+                    {
+                        <button type="button" data-modal-target="amendmentModal" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer">
+                            <i class="bi bi-plus-lg"></i>ثبت اصلاحیه جدید
+                        </button>
+                    }
+                </div>
+
+                @if (Model.Amendments != null && Model.Amendments.Any())
                 {
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-[11px]">
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <table class="w-full text-xs">
                             <thead>
-                                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">#</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">نوع</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">عنوان</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">تغییر مبلغ</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">تاریخ اثر</th>
-                                    <th class="text-right px-3 py-2 font-bold text-slate-500">وضعیت</th>
-                                    <th class="text-center px-3 py-2 font-bold text-slate-500">عملیات</th>
+                                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 font-bold">
+                                    <th class="text-right px-3.5 py-3">ردیف</th>
+                                    <th class="text-right px-3.5 py-3">کد / شماره متمم</th>
+                                    <th class="text-right px-3.5 py-3">نوع اصلاحیه</th>
+                                    <th class="text-right px-3.5 py-3">تاریخ اعمال (شمسی)</th>
+                                    <th class="text-right px-3.5 py-3">تغییرات کلیدی</th>
+                                    <th class="text-right px-3.5 py-3">ثبت‌کننده</th>
+                                    <th class="text-right px-3.5 py-3">وضعیت</th>
+                                    <th class="text-center px-3.5 py-3">عملیات</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @{ var rowIdx = 1; }
                                 @foreach (var am in Model.Amendments)
                                 {
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@am.AmendmentNumber</td>
-                                        <td class="px-3 py-2"><span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400">@am.AmendmentTypeDisplay</span></td>
-                                        <td class="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">@am.Title</td>
-                                        <td class="px-3 py-2 font-mono tabular-nums @(am.AmountChange >= 0 ? "text-emerald-600" : "text-rose-600")">@(am.AmountChange >= 0 ? "+" : "")@am.AmountChange.ToString("N0")</td>
-                                        <td class="px-3 py-2 font-mono tabular-nums text-slate-600">@ToPersianDate(am.EffectiveDate)</td>
-                                        <td class="px-3 py-2">
-                                            @if (am.Status == "Draft") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">پیش‌نویس</span> }
-                                            else if (am.Status == "PendingApproval") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">در انتظار تایید</span> }
-                                            else if (am.Status == "Approved") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400">تایید شده</span> }
-                                            else if (am.Status == "Applied") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">اعمال شده</span> }
-                                            else if (am.Status == "Rejected") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400">رد شده</span> }
-                                            else if (am.Status == "Cancelled") { <span class="inline-block rounded-full px-2 py-0.5 text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">لغو شده</span> }
+                                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                                        <td class="px-3.5 py-3 font-mono font-bold text-slate-500">@(rowIdx++)</td>
+                                        <td class="px-3.5 py-3 font-mono font-bold text-slate-800 dark:text-slate-200">
+                                            AMD-@am.AmendmentNumber.ToString("D3")
                                         </td>
-                                        <td class="px-3 py-2 text-center">
-                                            <div class="inline-flex gap-1">
+                                        <td class="px-3.5 py-3">
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
+                                                @am.AmendmentTypeDisplay
+                                            </span>
+                                        </td>
+                                        <td class="px-3.5 py-3 font-mono tabular-nums text-slate-700 dark:text-slate-300">
+                                            @ToPersianDate(am.EffectiveDate)
+                                        </td>
+                                        <td class="px-3.5 py-3 text-slate-700 dark:text-slate-300">
+                                            <div class="space-y-0.5">
+                                                @if (am.AmountChange != 0)
+                                                {
+                                                    <div class="font-mono tabular-nums font-bold text-[11px] @(am.AmountChange > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")">
+                                                        تغییر مبلغ: @(am.AmountChange > 0 ? "+" : "")@am.AmountChange.ToString("N0") تومان
+                                                    </div>
+                                                }
+                                                @if (am.NewEndDate.HasValue)
+                                                {
+                                                    <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                                                        تاریخ پایان جدید: @ToPersianDateNullable(am.NewEndDate)
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(am.Title))
+                                                {
+                                                    <div class="text-[11px] text-slate-800 dark:text-slate-200 font-medium">@am.Title</div>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="px-3.5 py-3 text-slate-600 dark:text-slate-400">
+                                            @(am.CreatedByUserName ?? "-")
+                                        </td>
+                                        <td class="px-3.5 py-3">
+                                            @switch (am.Status)
+                                            {
+                                                case "Draft":
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">پیش‌نویس</span>
+                                                    break;
+                                                case "PendingApproval":
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">در انتظار تایید</span>
+                                                    break;
+                                                case "Approved":
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300">تایید شده</span>
+                                                    break;
+                                                case "Applied":
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">اعمال شده</span>
+                                                    break;
+                                                case "Rejected":
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">رد شده</span>
+                                                    break;
+                                                case "Cancelled":
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">لغو شده</span>
+                                                    break;
+                                                default:
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600">@am.Status</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td class="px-3.5 py-3 text-center">
+                                            <div class="inline-flex gap-1.5">
                                                 @if (am.CanEdit && Model.CanEdit)
                                                 {
                                                     <form asp-action="SubmitAmendmentForApproval" asp-route-amendmentId="@am.Id" method="post" class="inline">
                                                         @Html.AntiForgeryToken()
-                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition" title="ارسال به تایید">
-                                                            <i class="bi bi-send"></i>
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-sky-950/20 dark:hover:text-sky-400 transition" title="ارسال جهت تایید">
+                                                            <i class="bi bi-send ml-1"></i>ارسال تایید
                                                         </button>
                                                     </form>
                                                 }
                                                 @if (am.CanApply && Model.CanEdit)
                                                 {
-                                                    <form asp-action="ApplyAmendment" asp-route-amendmentId="@am.Id" method="post" class="inline" onsubmit="return confirm('اصلاحیه اعمال شود؟');">
+                                                    <form asp-action="ApplyAmendment" asp-route-amendmentId="@am.Id" method="post" class="inline" onsubmit="return confirm('آیا از اعمال این اصلاحیه روی قرارداد اطمینان دارید؟');">
                                                         @Html.AntiForgeryToken()
-                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-400 transition" title="اعمال">
-                                                            <i class="bi bi-check2-all"></i>
+                                                        <button type="submit" class="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 transition" title="اعمال اصلاحیه">
+                                                            <i class="bi bi-check2-all ml-1"></i>اعمال
                                                         </button>
                                                     </form>
                                                 }
                                                 @if (am.Status == "Draft" || am.Status == "PendingApproval")
                                                 {
-                                                    <form asp-action="CancelAmendment" asp-route-amendmentId="@am.Id" method="post" class="inline" onsubmit="return confirm('لغو شود؟');">
+                                                    <form asp-action="CancelAmendment" asp-route-amendmentId="@am.Id" method="post" class="inline" onsubmit="return confirm('آیا از لغو این اصلاحیه اطمینان دارید؟');">
                                                         @Html.AntiForgeryToken()
-                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="لغو">
-                                                            <i class="bi bi-x-lg"></i>
+                                                        <button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2.5 py-1 text-[10px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 transition" title="لغو اصلاحیه">
+                                                            <i class="bi bi-x-lg ml-1"></i>لغو
                                                         </button>
                                                     </form>
                                                 }
@@ -628,57 +704,130 @@
                 }
                 else
                 {
-                    <div class="text-center py-6">
-                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
-                            <i class="bi bi-pencil-square text-slate-400"></i>
+                    <div class="text-center py-12 bg-slate-50/50 dark:bg-slate-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8">
+                        <div class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 mb-3 text-2xl shadow-sm">
+                            <i class="bi bi-pencil-square"></i>
                         </div>
-                        <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ اصلاحیه‌ای برای این قرارداد وجود ندارد.</p>
-                    </div>
-                }
-                @if (Model.CanEdit)
-                {
-                    <div class="mt-3 flex justify-end">
-                        <a asp-action="CreateAmendment" asp-route-contractId="@Model.Id" class="erp-btn erp-btn-primary text-white shadow-sm transition hover:bg-teal-700 no-underline" data-modal-target="amendmentModal">
-                            <i class="bi bi-plus-lg ml-1"></i>ایجاد اصلاحیهٔ جدید
-                        </a>
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">هیچ اصلاحیه یا الحاقیه‌ای برای این قرارداد ثبت نشده است</h4>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto mb-5 leading-relaxed">
+                            در صورت نیاز به تمدید زمان قرارداد، افزایش یا کاهش مبلغ و یا تغییر در شرایط و مفاد پیمان، می‌توانید اصلاحیه جدید ثبت نمایید.
+                        </p>
+                        @if (Model.CanEdit)
+                        {
+                            <button type="button" data-modal-target="amendmentModal" class="inline-flex items-center gap-2 erp-btn erp-btn-primary text-xs px-4 py-2 shadow-md cursor-pointer">
+                                <i class="bi bi-plus-lg"></i>ثبت اصلاحیه جدید
+                            </button>
+                        }
                     </div>
                 }
             </div>
 
-            @* Tab 5: Activity Log *@
-            <div class="tab-panel @(activeTab == "activity" ? "" : "hidden")" id="tab-activity">
-                <h3 class="text-[11px] font-black text-slate-900 dark:text-white mb-3">تاریخچه فعالیت</h3>
-                @if (Model.AuditLogs.Any())
+            @* ── TAB 6: SIGNATURE (#tab-signature) ────────────────────────────── *@
+            <div class="tab-panel @(activeTab == "signature" ? "" : "hidden") space-y-4" id="tab-signature" data-contract-id="@Model.Id">
+                @if (!string.IsNullOrEmpty(Model.SignatureImageData))
                 {
-                    <div class="space-y-2">
+                    <div id="existing-signature-container" class="bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <i class="bi bi-check-circle-fill text-teal-600 dark:text-teal-400"></i>امضای دیجیتال ثبت‌شده قرارداد
+                                </h3>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    امضای الکترونیکی این قرارداد با موفقیت در سامانه ثبت گردیده است.
+                                </p>
+                            </div>
+                            <button type="button" id="btn-re-sign" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer">
+                                <i class="bi bi-pencil-square"></i>امضای مجدد / تغییر امضا
+                            </button>
+                        </div>
+                        <div class="flex justify-center p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
+                            <img src="@Model.SignatureImageData" alt="امضای قرارداد" class="max-h-48 object-contain" />
+                        </div>
+                    </div>
+                }
+
+                <div id="sig-pad-container" class="bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 @(!string.IsNullOrEmpty(Model.SignatureImageData) ? "hidden" : "")">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+                        <div>
+                            <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="bi bi-pen-fill text-teal-600 dark:text-teal-400"></i>امضای الکترونیکی قرارداد
+                            </h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                با استفاده از ماوس یا قلم در کادر زیر امضا نموده و سپس دکمه «ثبت و تایید امضا» را فشار دهید.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="sig-clear" class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300 cursor-pointer">
+                                <i class="bi bi-eraser"></i>پاک‌سازی
+                            </button>
+                            <button type="button" id="sig-contract-save" data-contract-id="@Model.Id" class="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-teal-700 cursor-pointer">
+                                <i class="bi bi-check2-circle"></i>ثبت و تایید امضا
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-hidden rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-inner">
+                        <canvas id="sig-pad" class="w-full touch-none" style="height: 220px; display: block; cursor: crosshair;"></canvas>
+                    </div>
+                </div>
+
+                @* Signature Requests List Container *@
+                <div class="mt-4 pt-2">
+                    <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                        <i class="bi bi-card-checklist text-teal-600 dark:text-teal-400"></i>وضعیت گردش امضاکنندگان
+                    </h4>
+                    <div id="signature-requests-list" class="space-y-3"></div>
+                </div>
+            </div>
+
+            @* ── TAB 7: ACTIVITY HISTORY (#tab-history) ──────────────────────── *@
+            <div class="tab-panel @(activeTab == "history" || activeTab == "activity" ? "" : "hidden")" id="tab-history">
+                <div class="mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-clock-history text-teal-600 dark:text-teal-400"></i>تاریخچه فعالیت‌ها و تغییرات
+                    </h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        مراحل ایجاد، ویرایش‌ها، بارگذاری اسناد و تغییرات وضعیت این قرارداد.
+                    </p>
+                </div>
+
+                @if (Model.AuditLogs != null && Model.AuditLogs.Any())
+                {
+                    <div class="relative pr-4 border-r-2 border-slate-200 dark:border-slate-800 space-y-6 mr-2 py-2">
                         @foreach (var log in Model.AuditLogs)
                         {
-                            <div class="flex items-start gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                                <div class="h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-                                    <i class="bi bi-person text-teal-600 dark:text-teal-400 text-xs"></i>
+                            <div class="relative flex items-start gap-3">
+                                @* Status Dot *@
+                                <div class="absolute -right-[23px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 bg-teal-500 shadow-sm"></div>
+
+                                @* Avatar / User Icon *@
+                                <div class="h-8 w-8 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                    <i class="bi bi-person"></i>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">@log.UserName</span>
-                                        <span class="text-[9px] text-slate-400">@ToPersianDate(log.CreatedAt) @log.CreatedAt.ToString("HH:mm")</span>
+
+                                @* Log Content Card *@
+                                <div class="flex-1 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">@(log.UserName ?? "کاربر سیستم")</span>
+                                        <span class="text-[10px] font-mono text-slate-400 tabular-nums">@ToPersianDate(log.CreatedAt) - @log.CreatedAt.ToString("HH:mm")</span>
                                     </div>
-                                    <p class="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                                         @switch (log.Action)
                                         {
                                             case "Created":
-                                                <span>قرارداد را ایجاد کرد</span>
+                                                <span>قرارداد را در سیستم ثبت نمود.</span>
                                                 break;
                                             case "StatusChanged":
-                                                <span>وضعیت را از <strong>@log.OldStatus</strong> به <strong>@log.NewStatus</strong> تغییر داد</span>
+                                                <span>وضعیت قرارداد را از <strong>@log.OldStatus</strong> به <strong>@log.NewStatus</strong> تغییر داد.</span>
                                                 break;
                                             case "Archived":
-                                                <span>قرارداد را بایگانی کرد</span>
+                                                <span>قرارداد را بایگانی نمود.</span>
                                                 break;
                                             case "Unarchived":
-                                                <span>قرارداد را از بایگانی خارج کرد</span>
+                                                <span>قرارداد را از حالت بایگانی خارج کرد.</span>
                                                 break;
                                             case "Edited":
-                                                <span>قرارداد را ویرایش کرد</span>
+                                                <span>اطلاعات قرارداد را ویرایش کرد.</span>
                                                 break;
                                             case "AttachmentUploaded":
                                                 <span>@log.Description</span>
@@ -687,7 +836,7 @@
                                                 <span>@log.Description</span>
                                                 break;
                                             default:
-                                                <span>@log.Action - @log.Description</span>
+                                                <span>@(string.IsNullOrEmpty(log.Description) ? log.Action : log.Description)</span>
                                                 break;
                                         }
                                     </p>
@@ -698,77 +847,89 @@
                 }
                 else
                 {
-                    <div class="text-center py-6">
-                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2">
-                            <i class="bi bi-clock-history text-slate-400"></i>
+                    <div class="text-center py-12 bg-slate-50/50 dark:bg-slate-950/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                        <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-3 text-slate-400 text-2xl">
+                            <i class="bi bi-clock-history"></i>
                         </div>
-                        <p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ فعالیتی ثبت نشده است.</p>
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">هنوز فعالیتی ثبت نشده است</h4>
+                        <p class="text-[11px] text-slate-400 max-w-sm mx-auto">
+                            تمام اقدامات سیستم اعم از تغییر وضعیت، ویرایش و ثبت اسناد در این قسمت نمایش داده می‌شود.
+                        </p>
                     </div>
                 }
             </div>
         </div>
+    </div>
 </div>
 
-@* Add Payment Modal *@
+@* ── MODALS SECTION (ALL MODALS PLACED AT VERY BOTTOM) ──────────────────────── *@
+
+@* 1. Add Payment Modal *@
 @if (Model.CanViewFinancials && Model.CanEdit)
 {
-    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4" id="addPaymentModal">
-        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-lg overflow-visible">
-            <div class="bg-gray-50 dark:bg-slate-800 px-4 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4 backdrop-blur-sm" id="addPaymentModal">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
+            <div class="bg-slate-50 dark:bg-slate-800 px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i class="bi bi-wallet2 text-teal-600 text-xs"></i>
-                    <span class="text-sm font-bold text-gray-900 dark:text-white">ثبت پرداخت جدید</span>
+                    <i class="bi bi-wallet2 text-teal-600 text-sm"></i>
+                    <span class="text-sm font-bold text-slate-900 dark:text-white">ثبت پرداخت جدید</span>
                 </div>
-                <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition cursor-pointer border-0 bg-transparent text-lg" data-close-modal>&times;</button>
+                <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer border-0 bg-transparent text-lg" data-close-modal>&times;</button>
             </div>
             <form asp-action="AddPayment" method="post" data-guard-submit>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="ContractId" value="@Model.Id" />
-                <div class="p-3 space-y-2">
+                <div class="p-5 space-y-3">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">مبلغ</label>
-                        <input name="Amount" type="number" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" required />
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">مبلغ (تومان) <span class="text-rose-500">*</span></label>
+                        <input name="Amount" type="number" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono" required />
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تاریخ پرداخت</label>
-                        <input name="PaymentDate" type="text" id="paymentDate" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input" placeholder="140X/MM/DD" autocomplete="off" required />
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">تاریخ پرداخت <span class="text-rose-500">*</span></label>
+                        <div class="relative jalali-datepicker-wrapper">
+                            <input type="text" id="paymentDate" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input jalali-date-input cursor-pointer" data-jalali="PaymentDate" placeholder="انتخاب تاریخ" readonly required />
+                            <input type="hidden" name="PaymentDate" id="paymentDateHidden" class="jalali-date-hidden" required />
+                        </div>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">تاریخ سررسید</label>
-                        <input name="DueDate" type="text" id="paymentDueDate" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input" placeholder="140X/MM/DD" autocomplete="off" />
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">تاریخ سررسید</label>
+                        <div class="relative jalali-datepicker-wrapper">
+                            <input type="text" id="paymentDueDate" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input jalali-date-input cursor-pointer" data-jalali="DueDate" placeholder="انتخاب تاریخ" readonly />
+                            <input type="hidden" name="DueDate" id="paymentDueDateHidden" class="jalali-date-hidden" />
+                        </div>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">وضعیت</label>
-                        <select name="Status" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">وضعیت پرداخت</label>
+                        <select name="Status" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                             <option value="Paid">پرداخت شده</option>
-                            <option value="Pending">در انتظار</option>
+                            <option value="Pending">در انتظار پرداخت</option>
                             <option value="Overdue">سررسید گذشته</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">روش پرداخت</label>
-                        <select name="PaymentMethod" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none">
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">روش پرداخت</label>
+                        <select name="PaymentMethod" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none">
                             <option value="">انتخاب کنید</option>
-                            <option value="Card">کارت بانکی</option>
-                            <option value="Check">چک</option>
-                            <option value="BankTransfer">انتقال بانکی</option>
+                            <option value="کارت بانکی">کارت بانکی</option>
+                            <option value="چک">چک</option>
+                            <option value="انتقال بانکی">انتقال بانکی / پایا / ساتنا</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">شماره مرجع</label>
-                        <input name="ReferenceNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" />
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">شماره مرجع / پیگیری</label>
+                        <input name="ReferenceNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono" />
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">توضیحات</label>
-                        <textarea name="Notes" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2"></textarea>
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">توضیحات</label>
+                        <textarea name="Notes" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2"></textarea>
                     </div>
                 </div>
-                <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700">
-                        <i class="bi bi-check-lg ml-1"></i>ثبت پرداخت
-                    </button>
-                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" data-close-modal>
+                <div class="flex gap-2 justify-end py-3 px-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                    <button type="button" class="erp-btn text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" data-close-modal>
                         <i class="bi bi-x-lg ml-1"></i>انصراف
+                    </button>
+                    <button type="submit" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700">
+                        <i class="bi bi-check-lg ml-1"></i>ثبت پرداخت
                     </button>
                 </div>
             </form>
@@ -776,41 +937,41 @@
     </div>
 }
 
-@* Upload Attachment Modal *@
+@* 2. Upload Attachment Modal *@
 @if (Model.CanEdit)
 {
-    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4" id="uploadAttachmentModal">
-        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
-            <div class="bg-gray-50 dark:bg-slate-800 px-4 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4 backdrop-blur-sm" id="uploadAttachmentModal">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
+            <div class="bg-slate-50 dark:bg-slate-800 px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i class="bi bi-cloud-upload text-teal-600 text-xs"></i>
-                    <span class="text-sm font-bold text-gray-900 dark:text-white">بارگذاری فایل</span>
+                    <i class="bi bi-cloud-upload text-teal-600 text-sm"></i>
+                    <span class="text-sm font-bold text-slate-900 dark:text-white">بارگذاری پیوست جدید</span>
                 </div>
-                <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition cursor-pointer border-0 bg-transparent text-lg" data-close-modal>&times;</button>
+                <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer border-0 bg-transparent text-lg" data-close-modal>&times;</button>
             </div>
             <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data" data-guard-submit>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="contractId" value="@Model.Id" />
-                <div class="p-3 space-y-2">
+                <div class="p-5 space-y-3">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">انتخاب فایل</label>
-                        <input name="file" type="file" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none file:border-0 file:bg-teal-50 file:text-teal-700 file:rounded file:px-2 file:py-0.5 file:text-[10px] file:font-bold" required />
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">انتخاب فایل <span class="text-rose-500">*</span></label>
+                        <input name="file" type="file" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none file:mr-0 file:ml-2 file:border-0 file:bg-teal-500/10 file:text-teal-600 file:rounded-lg file:px-2.5 file:py-1 file:text-[10px] file:font-bold hover:file:bg-teal-500/20 transition cursor-pointer" required />
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">عنوان</label>
-                        <input name="Title" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="عنوان فایل" />
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">عنوان فایل</label>
+                        <input name="Title" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="عنوان یا موضوع پیوست" />
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">توضیحات</label>
-                        <textarea name="Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2" placeholder="توضیحات فایل"></textarea>
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">توضیحات</label>
+                        <textarea name="Description" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none resize-y" rows="2" placeholder="توضیحات تکمیلی..."></textarea>
                     </div>
                 </div>
-                <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white shadow-sm transition hover:bg-teal-700">
-                        <i class="bi bi-cloud-upload ml-1"></i>بارگذاری
-                    </button>
-                    <button type="button" class="erp-btn text-[10px] text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" data-close-modal>
+                <div class="flex gap-2 justify-end py-3 px-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                    <button type="button" class="erp-btn text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" data-close-modal>
                         <i class="bi bi-x-lg ml-1"></i>انصراف
+                    </button>
+                    <button type="submit" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700">
+                        <i class="bi bi-cloud-upload ml-1"></i>شروع بارگذاری
                     </button>
                 </div>
             </form>
@@ -818,35 +979,60 @@
     </div>
 }
 
-@* Add Guarantee Modal *@
+@* 3. Add Guarantee Modal *@
 @if (Model.CanEdit)
 {
-    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4" id="addGuaranteeModal">
-        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
-            <div class="bg-gray-50 dark:bg-slate-800 px-4 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
-                <span class="text-sm font-bold text-gray-900 dark:text-white">ثبت ضمانت‌نامه جدید</span>
-                <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition border-0 bg-transparent text-lg" data-close-modal>&times;</button>
+    <div class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4 backdrop-blur-sm" id="addGuaranteeModal">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
+            <div class="bg-slate-50 dark:bg-slate-800 px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <span class="text-sm font-bold text-slate-900 dark:text-white">ثبت ضمانت‌نامه جدید</span>
+                <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition border-0 bg-transparent text-lg" data-close-modal>&times;</button>
             </div>
             <form action="/Contracts/@Model.Id/Guarantees/Add" method="post" class="add-guarantee-form">
                 @Html.AntiForgeryToken()
-                <div class="p-3 space-y-2">
-                    <select name="GuaranteeType" class="erp-input w-full" required><option value="">نوع ضمانت‌نامه</option><option value="BankGuarantee">ضمانت‌نامه بانکی</option><option value="RetentionMoney">کسور وجه تضمین</option><option value="ParentCompanyGuarantee">ضمانت شرکت مادر</option><option value="AdvancePaymentGuarantee">ضمانت پیش‌پرداخت</option><option value="WarrantyGuarantee">ضمانت گارانتی</option></select>
-                    <input name="GuaranteeNumber" class="erp-input w-full" placeholder="شماره ضمانت‌نامه" required />
-                    <input name="IssuingBank" class="erp-input w-full" placeholder="بانک / صادرکننده" />
-                    <input name="Amount" type="number" min="0" class="erp-input w-full" placeholder="مبلغ" required />
-                    <input name="IssuedDate" type="date" class="erp-input w-full" required />
-                    <input name="ExpiryDate" type="date" class="erp-input w-full" required />
+                <div class="p-5 space-y-3">
+                    <select name="GuaranteeType" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none" required>
+                        <option value="">نوع ضمانت‌نامه را انتخاب کنید</option>
+                        <option value="BankGuarantee">ضمانت‌نامه بانکی</option>
+                        <option value="RetentionMoney">کسور وجه تضمین</option>
+                        <option value="ParentCompanyGuarantee">ضمانت شرکت مادر</option>
+                        <option value="AdvancePaymentGuarantee">ضمانت پیش‌پرداخت</option>
+                        <option value="WarrantyGuarantee">ضمانت گارانتی</option>
+                    </select>
+                    <input name="GuaranteeNumber" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono" placeholder="شماره ضمانت‌نامه" required />
+                    <input name="IssuingBank" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="بانک یا صادرکننده" />
+                    <input name="Amount" type="number" min="0" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none font-mono" placeholder="مبلغ (تومان)" required />
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">تاریخ صدور</label>
+                        <div class="relative jalali-datepicker-wrapper">
+                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input jalali-date-input cursor-pointer" data-jalali="IssuedDate" placeholder="انتخاب تاریخ" readonly required />
+                            <input type="hidden" name="IssuedDate" class="jalali-date-hidden" required />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">تاریخ انقضا</label>
+                        <div class="relative jalali-datepicker-wrapper">
+                            <input type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none jalali-input jalali-date-input cursor-pointer" data-jalali="ExpiryDate" placeholder="انتخاب تاریخ" readonly required />
+                            <input type="hidden" name="ExpiryDate" class="jalali-date-hidden" required />
+                        </div>
+                    </div>
                 </div>
-                <div class="flex gap-2 justify-end py-2 px-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="submit" class="erp-btn erp-btn-primary text-[10px] text-white">ثبت</button>
-                    <button type="button" class="erp-btn text-[10px]" data-close-modal>انصراف</button>
+                <div class="flex gap-2 justify-end py-3 px-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                    <button type="button" class="erp-btn text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition" data-close-modal>انصراف</button>
+                    <button type="submit" class="erp-btn erp-btn-primary text-xs text-white shadow-sm transition hover:bg-teal-700">ثبت ضمانت‌نامه</button>
                 </div>
             </form>
         </div>
     </div>
 }
 
-@* ── Attachment Preview Modal ──────────────────────────────────── *@
+@* 4. Amendment Form Modal Partial *@
+@if (Model.CanEdit)
+{
+    <partial name="_AmendmentForm" model="new AmendmentCreateVM { ContractId = Model.Id }" />
+}
+
+@* 5. Attachment Preview Modal Partial *@
 <partial name="_AttachmentPreview" />
 
 @section Styles {
@@ -854,234 +1040,144 @@
 }
 
 @section Scripts {
+    <script src="~/lib/signature-pad/signature_pad.umd.min.js" asp-append-version="true"></script>
     <script src="~/js/persian-date.min.js"></script>
     <script src="~/js/contracts-details-script.js" asp-append-version="true"></script>
     <script src="~/js/contracts-attachment-upload.js" asp-append-version="true"></script>
     <script src="~/js/contracts-attachment-preview.js" asp-append-version="true"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var sched = document.getElementById('paymentScheduleContainer');
-        if (sched) initPaymentSchedule(sched);
-        var guar = document.getElementById('guaranteesContainer');
-        if (guar) initGuarantees(guar);
-        var pen = document.getElementById('penaltiesContainer');
-        if (pen) initPenalties(pen);
-    });
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var sched = document.getElementById('paymentScheduleContainer');
+            if (sched) initPaymentSchedule(sched);
+            var guar = document.getElementById('guaranteesContainer');
+            if (guar) initGuarantees(guar);
+            var pen = document.getElementById('penaltiesContainer');
+            if (pen) initPenalties(pen);
+        });
 
-    // ── Payment Schedule Lazy-Load (with empty-state + error handling) ──
-    function initPaymentSchedule(container) {
-        var id = container.getAttribute('data-contract-id'); if (!id) return;
-        function load() {
-            // 1. Show skeleton only
-            container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
-            fetch('/Contracts/Schedule/' + id)
-                .then(function (r) { return r.text(); })
-                .then(function (html) {
-                    var text = (html || '').trim();
-                    // 2. Empty / too-short response → "no data" state
-                    if (text === '' || text === '<div></div>' || text.length < 20) {
-                        container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-wallet2 text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">برنامه پرداختی ثبت نشده است.</p><button onclick="window.reloadPaymentSchedule()" class="mt-2 text-[10px] text-teal-600 hover:text-teal-700 underline">تلاش مجدد</button></div>'
-                    } else {
-                        // 3. Real data
-                        container.innerHTML = html;
-                    }
-                })
-                .catch(function () {
-                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="window.reloadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
-                });
-        }
-        var tab = document.querySelector('[data-tab="payments"]');
-        if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
-        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
-    }
-
-    // ── Guarantees Lazy-Load (with empty-state + error handling) ──
-    function initGuarantees(container) {
-        var id = container.getAttribute('data-contract-id'); if (!id) return;
-        function load() {
-            container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
-            fetch('/Contracts/' + id + '/Guarantees')
-                .then(function (r) { return r.text(); })
-                .then(function (html) {
-                    var text = (html || '').trim();
-                    if (text === '' || text === '<div></div>' || text.length < 20) {
-                        container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-shield-check text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمانت‌نامه‌ای ثبت نشده است.</p></div>';
-                    } else {
-                        container.innerHTML = html;
-                        bindGuaranteeUI();
-                    }
-                })
-                .catch(function () {
-                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری ضمانت‌نامه‌ها.</div>';
-                });
-        }
-        var tab = document.querySelector('[data-tab="payments"]');
-        if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
-        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
-    }
-
-    // ── Penalties Lazy-Load (with empty-state + error handling) ──
-    function initPenalties(container) {
-        var id = container.getAttribute('data-contract-id'); if (!id) return;
-        function load() {
-            container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
-            fetch('/Contracts/' + id + '/Penalties')
-                .then(function (r) { return r.text(); })
-                .then(function (html) {
-                    var text = (html || '').trim();
-                    if (text === '' || text === '<div></div>' || text.length < 20) {
-                        container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-exclamation-triangle text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ جریمه‌ای ثبت نشده است.</p></div>';
-                    } else {
-                        container.innerHTML = html;
-                        bindPenaltyUI();
-                    }
-                })
-                .catch(function () {
-                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری جریمه‌ها.</div>';
-                });
-        }
-        var tab = document.querySelector('[data-tab="payments"]');
-        if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
-        if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
-    }
-
-        // -- Retry helper for schedule --
-    window.reloadPaymentSchedule = function () {
-        var c = document.getElementById('paymentScheduleContainer');
-        if (c) { delete c.dataset.loaded; initPaymentSchedule(c); }
-    };
-
-    // -- Penalty UI Binding --
-    function bindPenaltyUI() {
-        document.querySelectorAll('[data-open-penalty-modal]').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var m = document.getElementById('penaltyRuleModal');
-                if (m) m.classList.remove('hidden');
-            });
-        });
-        document.querySelectorAll('[data-close-modal]').forEach(function (b) {
-            b.addEventListener('click', function () {
-                this.closest('.fixed.inset-0').classList.add('hidden');
-            });
-        });
-        document.querySelectorAll('.fixed.inset-0').forEach(function (m) {
-            m.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
-        });
-        document.querySelectorAll('.penalty-status-form').forEach(function (f) {
-            f.addEventListener('submit', function (e) {
-                e.preventDefault();
-                if (!confirm('تغییر وضعیت تایید شود؟')) return;
-                var btn = this.querySelector('button');
-                btn.disabled = true;
-                fetch(this.action, {
-                    method: 'POST',
-                    body: new FormData(this),
-                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
-                }).then(function (r) { return r.json(); }).then(function (resp) {
-                    if (resp.success) reloadPenalties();
-                    else { alert(resp.message || 'خطا'); btn.disabled = false; }
-                }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; });
-            });
-        });
-        document.getElementById('penaltyRuleForm')?.addEventListener('submit', function (e) {
-            e.preventDefault();
-            var btn = this.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            fetch(this.action, {
-                method: 'POST',
-                body: new FormData(this),
-                headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
-            }).then(function (r) { return r.json(); }).then(function (resp) {
-                if (resp.success) { document.getElementById('penaltyRuleModal').classList.add('hidden'); reloadPenalties(); }
-                else { alert(resp.message || 'خطا'); }
-                btn.disabled = false;
-            }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; });
-        });
-    }
-
-    function reloadPenalties() {
-        var c = document.getElementById('penaltiesContainer');
-        if (!c) return;
-        delete c.dataset.loaded;
-        initPenalties(c);
-    }
-
-    // -- Guarantee UI Binding --
-    function bindGuaranteeUI() {
-        document.querySelectorAll('[data-modal-target]').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var m = document.getElementById(this.getAttribute('data-modal-target'));
-                if (m) m.classList.remove('hidden');
-            });
-        });
-        document.querySelectorAll('[data-close-modal]').forEach(function (b) {
-            b.addEventListener('click', function () {
-                this.closest('.fixed.inset-0').classList.add('hidden');
-            });
-        });
-        document.querySelectorAll('.fixed.inset-0').forEach(function (m) {
-            m.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
-        });
-        document.querySelectorAll('.add-guarantee-form').forEach(function (f) {
-            f.addEventListener('submit', function (e) {
-                e.preventDefault();
-                var form = this;
-                var btn = form.querySelector('button[type="submit"]');
-                if (btn) btn.disabled = true;
-                fetch(form.action, { method: 'POST', body: new FormData(form) })
-                    .then(function (r) { return r.json(); })
-                    .then(function (resp) {
-                        if (resp.success) {
-                            form.closest('.fixed.inset-0').classList.add('hidden');
-                            form.reset();
-                            reloadGuarantees();
-                        } else { alert(resp.message || 'خطا در ثبت ضمانت‌نامه.'); }
-                        if (btn) btn.disabled = false;
+        // ── Payment Schedule Lazy-Load ──
+        function initPaymentSchedule(container) {
+            var id = container.getAttribute('data-contract-id'); if (!id) return;
+            function load() {
+                container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
+                fetch('/Contracts/Schedule/' + id)
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        var text = (html || '').trim();
+                        if (text === '' || text === '<div></div>' || text.length < 20) {
+                            container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-wallet2 text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">برنامه پرداختی ثبت نشده است.</p></div>';
+                        } else {
+                            container.innerHTML = html;
+                            if (typeof window.initJalaliPickers === 'function') {
+                                window.initJalaliPickers();
+                            }
+                        }
                     })
-                    .catch(function () { alert('خطا در ارتباط با سرور.'); if (btn) btn.disabled = false; });
-            });
-        });
-        document.querySelectorAll('.release-guarantee-form').forEach(function (f) {
-            f.addEventListener('submit', function (e) {
-                e.preventDefault();
-                if (!confirm('آزادسازی تایید شود؟')) return;
-                var btn = this.querySelector('button');
-                btn.disabled = true;
-                fetch(this.action, {
-                    method: 'POST',
-                    body: new FormData(this),
-                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
-                }).then(function (r) { return r.json(); }).then(function (resp) {
-                    if (resp.success) reloadGuarantees();
-                    else { alert(resp.message || 'خطا'); btn.disabled = false; }
-                }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; });
-            });
-        });
-        document.querySelectorAll('.delete-guarantee-form').forEach(function (f) {
-            f.addEventListener('submit', function (e) {
-                e.preventDefault();
-                if (!confirm('حذف تایید شود؟')) return;
-                fetch(this.action, {
-                    method: 'POST',
-                    body: new FormData(this),
-                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
-                }).then(function (r) { return r.json(); }).then(function (resp) {
-                    if (resp.success) reloadGuarantees();
-                    else alert(resp.message || 'خطا');
-                }).catch(function () { alert('خطا در ارتباط'); });
-            });
-        });
-    }
+                    .catch(function () {
+                        container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری برنامه پرداخت.</div>';
+                    });
+            }
+            var tab = document.querySelector('[data-tab="payments"]');
+            if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
+            if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
+        }
 
-    function reloadGuarantees() {
-        var c = document.getElementById('guaranteesContainer');
-        if (!c) return;
-        delete c.dataset.loaded;
-        initGuarantees(c);
-    }
-</script>
+        // ── Guarantees Lazy-Load ──
+        function initGuarantees(container) {
+            var id = container.getAttribute('data-contract-id'); if (!id) return;
+            function load() {
+                container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
+                fetch('/Contracts/' + id + '/Guarantees')
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        var text = (html || '').trim();
+                        if (text === '' || text === '<div></div>' || text.length < 20) {
+                            container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-shield-check text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ ضمانت‌نامه‌ای ثبت نشده است.</p></div>';
+                        } else {
+                            container.innerHTML = html;
+                            bindGuaranteeUI();
+                        }
+                    })
+                    .catch(function () {
+                        container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری ضمانت‌نامه‌ها.</div>';
+                    });
+            }
+            var tab = document.querySelector('[data-tab="payments"]');
+            if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
+            if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
+        }
+
+        // ── Penalties Lazy-Load ──
+        function initPenalties(container) {
+            var id = container.getAttribute('data-contract-id'); if (!id) return;
+            function load() {
+                container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
+                fetch('/Contracts/' + id + '/Penalties')
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        var text = (html || '').trim();
+                        if (text === '' || text === '<div></div>' || text.length < 20) {
+                            container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-exclamation-triangle text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">هیچ جریمه‌ای ثبت نشده است.</p></div>';
+                        } else {
+                            container.innerHTML = html;
+                            bindPenaltyUI();
+                        }
+                    })
+                    .catch(function () {
+                        container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری جریمه‌ها.</div>';
+                    });
+            }
+            var tab = document.querySelector('[data-tab="payments"]');
+            if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
+            if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
+        }
+
+        // Helper functions
+        window.reloadPaymentSchedule = function () {
+            var c = document.getElementById('paymentScheduleContainer');
+            if (c) { delete c.dataset.loaded; initPaymentSchedule(c); }
+        };
+
+        function bindPenaltyUI() {
+            document.querySelectorAll('[data-open-penalty-modal]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    var m = document.getElementById('penaltyRuleModal');
+                    if (m) m.classList.remove('hidden');
+                });
+            });
+            document.querySelectorAll('[data-close-modal]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    this.closest('.fixed.inset-0').classList.add('hidden');
+                });
+            });
+        }
+
+        function reloadPenalties() {
+            var c = document.getElementById('penaltiesContainer');
+            if (!c) return;
+            delete c.dataset.loaded;
+            initPenalties(c);
+        }
+
+        function bindGuaranteeUI() {
+            document.querySelectorAll('[data-modal-target]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    var m = document.getElementById(this.getAttribute('data-modal-target'));
+                    if (m) m.classList.remove('hidden');
+                });
+            });
+            document.querySelectorAll('[data-close-modal]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    this.closest('.fixed.inset-0').classList.add('hidden');
+                });
+            });
+        }
+
+        function reloadGuarantees() {
+            var c = document.getElementById('guaranteesContainer');
+            if (!c) return;
+            delete c.dataset.loaded;
+            initGuarantees(c);
+        }
+    </script>
 }
-
-
-
-

@@ -43,8 +43,22 @@ public sealed class ContractSecurityTests
         templateRenderer.Setup(t => t.RenderTemplate(It.IsAny<string>(), It.IsAny<Contract>(), It.IsAny<Customer?>(), It.IsAny<User?>()))
             .Returns((string html, Contract c, Customer? cust, User? u) => html);
         var tenantSettings = new Mock<ITenantSettingsService>();
+        var versionService = new Mock<IVersionService>();
+        var contractAccounting = new Mock<IContractAccountingService>();
+        var penaltyService = new Mock<IPaymentPenaltyService>();
+        var documentRequirementService = new Mock<IDocumentRequirementService>();
         var logger = NullLogger<ContractService>.Instance;
-        return new ContractService(context, userManager, logger, auditLogger.Object, templateRenderer.Object, tenantSettings.Object);
+        return new ContractService(
+            context,
+            userManager,
+            logger,
+            auditLogger.Object,
+            templateRenderer.Object,
+            tenantSettings.Object,
+            versionService.Object,
+            contractAccounting.Object,
+            penaltyService.Object,
+            documentRequirementService.Object);
     }
 
     private static async Task<Contract> SeedContractAsync(OfficeDbContext context, string ownerUserId, decimal amount = 1000)
@@ -190,4 +204,60 @@ public sealed class ContractSecurityTests
         Assert.NotNull(payment);
         Assert.Equal(contract.Id, payment.ContractId);
     }
-}
+
+    [Fact]
+    public async Task CreateContract_ExclusiveTax_CalculatesCorrectly()
+    {
+        using var context = CreateOfficeContext(nameof(CreateContract_ExclusiveTax_CalculatesCorrectly));
+        var userId = "user-creator";
+        var service = CreateService(context, CreateUserManager());
+
+        var model = new ContractCreateVM
+        {
+            ContractNumber = "CNT-TAX-001",
+            Title = "قرارداد تست با مالیات افزوده",
+            ClientName = "مشتری تست",
+            TotalAmount = 1000m,
+            CurrencyCode = CurrencyCode.USD,
+            ExchangeRate = 500000m,
+            TaxMethod = TaxCalculationMethod.Exclusive,
+            DefaultTaxRatePercent = 10m,
+            StartDate = DateTime.Today
+        };
+
+        var contract = await service.CreateContractAsync(model, userId, CancellationToken.None);
+
+        Assert.Equal(100m, contract.TotalTaxAmount);
+        Assert.Equal(1100m, contract.TotalAmountInclusiveTax);
+        Assert.Equal(500000000m, contract.BaseCurrencyAmount);
+        Assert.Equal(CurrencyCode.USD, contract.CurrencyCode);
+        Assert.Equal(500000m, contract.ExchangeRate);
+    }
+
+    [Fact]
+    public async Task CreateContract_InclusiveTax_CalculatesCorrectly()
+    {
+        using var context = CreateOfficeContext(nameof(CreateContract_InclusiveTax_CalculatesCorrectly));
+        var userId = "user-creator";
+        var service = CreateService(context, CreateUserManager());
+
+        var model = new ContractCreateVM
+        {
+            ContractNumber = "CNT-TAX-002",
+            Title = "قرارداد تست با مالیات گنجانده شده",
+            ClientName = "مشتری تست",
+            TotalAmount = 1100m,
+            CurrencyCode = CurrencyCode.IRR,
+            ExchangeRate = 1m,
+            TaxMethod = TaxCalculationMethod.Inclusive,
+            DefaultTaxRatePercent = 10m,
+            StartDate = DateTime.Today
+        };
+
+        var contract = await service.CreateContractAsync(model, userId, CancellationToken.None);
+
+        Assert.Equal(100m, contract.TotalTaxAmount);
+        Assert.Equal(1100m, contract.TotalAmountInclusiveTax);
+        Assert.Equal(1100m, contract.BaseCurrencyAmount);
+    }
+}

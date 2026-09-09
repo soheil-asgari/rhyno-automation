@@ -1,162 +1,278 @@
 // ── Signature Pad Integration ────────────────────────────────────
-    function initSignaturePad() {
-        var canvas = document.getElementById('sig-pad');
-        if (!canvas || typeof SignaturePad === 'undefined') return;
-
-        var pad = new SignaturePad(canvas, {
-            backgroundColor: 'rgba(255, 255, 255, 0)',
-            penColor: 'rgb(0, 0, 0)'
-        });
-
-        function resizeCanvas() {
-            var ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext('2d').scale(ratio, ratio);
-            pad.clear();
-        }
-
-        // Resize when the signature tab is shown
-        var sigTabBtn = document.querySelector('[data-tab="signature"]');
-        if (sigTabBtn) {
-            sigTabBtn.addEventListener('click', function () {
-                setTimeout(resizeCanvas, 100);
-            });
-        }
-
-        document.getElementById('sig-clear')?.addEventListener('click', function () { pad.clear(); });
-
-        document.getElementById('sig-contract-save')?.addEventListener('click', function () {
-            if (pad.isEmpty()) {
-                Swal.fire('خطا', 'لطفاً امضای خود را رسم کنید.', 'warning');
-                return;
+function getSwal() {
+    if (typeof Swal !== 'undefined') return Swal;
+    return {
+        fire: function (arg1, arg2, arg3) {
+            var title = typeof arg1 === 'object' ? (arg1.title || '') : (arg1 || '');
+            var text = typeof arg1 === 'object' ? (arg1.text || '') : (arg2 || '');
+            var isConfirm = typeof arg1 === 'object' && arg1.showCancelButton;
+            var msg = title ? (title + (text ? '\n' + text : '')) : text;
+            if (isConfirm) {
+                var ok = window.confirm(msg);
+                return Promise.resolve({ isConfirmed: ok });
+            } else {
+                window.alert(msg);
+                return Promise.resolve({ isConfirmed: true });
             }
-            var dataUrl = pad.toDataURL();
-            var contractId = this.getAttribute('data-contract-id');
-            if (!contractId) return;
+        }
+    };
+}
 
-            Swal.fire({
-                title: 'ثبت امضای قرارداد',
-                text: 'امضای شما برای این قرارداد ثبت می‌شود.',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'بله، ثبت شود',
-                cancelButtonText: 'انصراف'
-            }).then(function (result) {
-                if (!result.isConfirmed) return;
-                fetch('/Contracts/' + contractId + '/Sign', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    },
-                    body: JSON.stringify({ signatureImageData: dataUrl })
-                }).then(function (r) { return r.json(); }).then(function (resp) {
-                    if (resp.success) {
-                        Swal.fire('موفقیت', 'امضا با موفقیت ثبت شد.', 'success').then(function () { location.reload(); });
-                    } else {
-                        Swal.fire('خطا', resp.message || 'خطا در ثبت امضا.', 'error');
-                    }
-                }).catch(function () {
-                    Swal.fire('خطا', 'ارتباط با سرور برقرار نشد.', 'error');
-                });
-            });
+function initSignaturePad() {
+    var canvas = document.getElementById('sig-pad');
+    if (!canvas || typeof SignaturePad === 'undefined') return;
+
+    var pad = new SignaturePad(canvas, {
+        backgroundColor: 'rgba(255, 255, 255, 0)',
+        penColor: 'rgb(0, 0, 0)'
+    });
+
+    function resizeCanvas() {
+        var padContainer = document.getElementById('sig-pad-container');
+        if (padContainer && padContainer.classList.contains('hidden')) return;
+
+        var rect = canvas.getBoundingClientRect();
+        var width = canvas.offsetWidth || rect.width || (canvas.parentElement ? canvas.parentElement.offsetWidth : 600);
+        var height = canvas.offsetHeight || rect.height || 220;
+        if (width <= 0) width = 600;
+        if (height <= 0) height = 220;
+
+        var ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = width * ratio;
+        canvas.height = height * ratio;
+        var ctx = canvas.getContext('2d');
+        if (ctx) ctx.scale(ratio, ratio);
+        pad.clear();
+    }
+
+    // Resize when the signature tab is shown
+    var sigTabBtn = document.querySelector('[data-tab="signature"]');
+    if (sigTabBtn) {
+        sigTabBtn.addEventListener('click', function () {
+            setTimeout(resizeCanvas, 50);
+            setTimeout(resizeCanvas, 200);
         });
     }
 
-    // ── Signature Requests Tab Loader ────────────────────────────
-    function initSignatureRequestsTab() {
-        var tabBtn = document.querySelector('[data-tab="signature"]');
-        if (!tabBtn) return;
-        tabBtn.addEventListener('click', function () {
-            var container = document.getElementById('tab-signature');
-            if (!container || container.dataset.loaded) return;
-            container.dataset.loaded = 'true';
-            var contractId = container.getAttribute('data-contract-id');
-            if (!contractId) return;
-            fetch('/Contracts/' + contractId + '/SignatureRequests')
-                .then(function (r) { return r.json(); })
-                .then(function (resp) {
-                    if (!resp.success) return;
-                    renderSignatureRequests(container, resp.data);
-                });
+    window.addEventListener('resize', function () {
+        resizeCanvas();
+    });
+
+    // Re-sign button toggle
+    var reSignBtn = document.getElementById('btn-re-sign');
+    if (reSignBtn) {
+        reSignBtn.addEventListener('click', function () {
+            var existingContainer = document.getElementById('existing-signature-container');
+            var padContainer = document.getElementById('sig-pad-container');
+            if (existingContainer) existingContainer.classList.add('hidden');
+            if (padContainer) padContainer.classList.remove('hidden');
+            setTimeout(resizeCanvas, 50);
         });
     }
 
-    function renderSignatureRequests(container, requests) {
-        var html = '<div class="space-y-4">';
-        requests.forEach(function (req) {
-            html += '<div class="border border-slate-200 dark:border-slate-700 rounded-lg p-3">';
-            html += '<div class="flex items-center justify-between mb-2">';
-            html += '<span class="font-medium text-sm">' + escHtml(req.title) + '</span>';
-            html += '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700">' + req.status + '</span>';
-            html += '</div>';
-            html += '<div class="text-[11px] text-slate-500 space-y-1">';
-            html += '<div><span class="font-medium">نوع ارسال:</span> ' + req.deliveryMethod + ' | <span class="font-medium">ترتیب:</span> ' + req.signingOrder + '</div>';
-            html += '<div><span class="font-medium">تاریخ:</span> ' + new Date(req.createdAt).toLocaleDateString('fa-IR') + '</div>';
-            if (req.completedAt) html += '<div><span class="font-medium">تکمیل:</span> ' + new Date(req.completedAt).toLocaleDateString('fa-IR') + '</div>';
-            html += '<div class="mt-2"><span class="font-medium">امضاکنندگان:</span></div>';
-            html += '<ul class="list-disc list-inside">';
-            req.signers.forEach(function (s) {
-                var icon = s.result === 'Signed' ? 'bi-check-circle-fill text-green-600' : s.result === 'Declined' ? 'bi-x-circle-fill text-rose-500' : 'bi-clock text-slate-400';
-                html += '<li class="text-xs"><i class="bi ' + icon + ' ml-1"></i>' + escHtml(s.userName) + ' (' + s.signerType + ') - ' + s.result + (s.signedAt ? ' در ' + new Date(s.signedAt).toLocaleDateString('fa-IR') : '') + '</li>';
+    // Initial resize if signature tab is visible on load
+    var sigPanel = document.getElementById('tab-signature');
+    if (sigPanel && !sigPanel.classList.contains('hidden')) {
+        setTimeout(resizeCanvas, 100);
+    }
+
+    document.getElementById('sig-clear')?.addEventListener('click', function () { pad.clear(); });
+
+    document.getElementById('sig-contract-save')?.addEventListener('click', function () {
+        var swal = getSwal();
+        if (pad.isEmpty()) {
+            swal.fire('خطا', 'لطفاً امضای خود را رسم کنید.', 'warning');
+            return;
+        }
+        var dataUrl = pad.toDataURL();
+        var contractId = this.getAttribute('data-contract-id');
+        if (!contractId) return;
+
+        swal.fire({
+            title: 'ثبت امضای قرارداد',
+            text: 'امضای شما برای این قرارداد ثبت می‌شود.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'بله، ثبت شود',
+            cancelButtonText: 'انصراف'
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+            var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ||
+                        document.querySelector('meta[name="request-verification-token"]')?.getAttribute('content') || '';
+            fetch('/Contracts/' + contractId + '/Sign', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ signatureImageData: dataUrl })
+            }).then(function (r) { return r.json(); }).then(function (resp) {
+                if (resp.success) {
+                    swal.fire('موفقیت', 'امضا با موفقیت ثبت شد.', 'success').then(function () { location.reload(); });
+                } else {
+                    swal.fire('خطا', resp.message || 'خطا در ثبت امضا.', 'error');
+                }
+            }).catch(function () {
+                swal.fire('خطا', 'ارتباط با سرور برقرار نشد.', 'error');
             });
-            html += '</ul></div></div>';
         });
-        if (requests.length === 0) html += '<div class="text-center py-8 text-slate-400 text-sm">درخواست امضایی وجود ندارد.</div>';
+    });
+}
+
+// ── Signature Requests Tab Loader ────────────────────────────
+function initSignatureRequestsTab() {
+    var tabBtn = document.querySelector('[data-tab="signature"]');
+    if (!tabBtn) return;
+    tabBtn.addEventListener('click', function () {
+        var container = document.getElementById('tab-signature');
+        if (!container || container.dataset.loaded) return;
+        container.dataset.loaded = 'true';
+        var contractId = container.getAttribute('data-contract-id');
+        if (!contractId) return;
+        var targetListContainer = document.getElementById('signature-requests-list') || container;
+        fetch('/Contracts/' + contractId + '/SignatureRequests')
+            .then(function (r) { return r.json(); })
+            .then(function (resp) {
+                if (!resp.success) return;
+                renderSignatureRequests(targetListContainer, resp.data);
+            });
+    });
+}
+
+function renderSignatureRequests(container, requests) {
+    var html = '<div class="space-y-3">';
+    requests.forEach(function (req) {
+        html += '<div class="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 bg-slate-50/50 dark:bg-slate-950/40">';
+        html += '<div class="flex items-center justify-between mb-2">';
+        html += '<span class="font-bold text-xs text-slate-800 dark:text-slate-200">' + escHtml(req.title) + '</span>';
+        html += '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">' + escHtml(req.status) + '</span>';
         html += '</div>';
-        container.innerHTML = html;
-    }
+        html += '<div class="text-xs text-slate-500 space-y-1">';
+        html += '<div><span class="font-bold">روش ارسال:</span> ' + escHtml(req.deliveryMethod) + ' | <span class="font-bold">ترتیب:</span> ' + req.signingOrder + '</div>';
+        html += '<div class="font-mono"><span class="font-bold">تاریخ ایجاد:</span> ' + new Date(req.createdAt).toLocaleDateString('fa-IR') + '</div>';
+        if (req.completedAt) html += '<div class="font-mono"><span class="font-bold">تاریخ تکمیل:</span> ' + new Date(req.completedAt).toLocaleDateString('fa-IR') + '</div>';
+        html += '<div class="mt-2 font-bold text-slate-700 dark:text-slate-300">امضاکنندگان:</div>';
+        html += '<ul class="space-y-1 mt-1">';
+        req.signers.forEach(function (s) {
+            var icon = s.result === 'Signed' ? 'bi-check-circle-fill text-emerald-500' : s.result === 'Declined' ? 'bi-x-circle-fill text-rose-500' : 'bi-clock text-amber-500';
+            html += '<li class="text-xs flex items-center gap-1.5"><i class="bi ' + icon + '"></i>' + escHtml(s.userName) + ' (' + escHtml(s.signerType) + ') - ' + escHtml(s.result) + (s.signedAt ? ' در ' + new Date(s.signedAt).toLocaleDateString('fa-IR') : '') + '</li>';
+        });
+        html += '</ul></div></div>';
+    });
+    if (requests.length === 0) html += '<div class="text-center py-4 text-slate-400 text-xs">درخواست امضایی ثبت نشده است.</div>';
+    html += '</div>';
+    container.innerHTML = html;
+}
 
-    function escHtml(str) {
-        if (!str) return '';
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-    }
+function escHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    // ── Tab Switcher ──
+    // ── Tab Switcher with Strict Isolation ──
     function initTabs() {
         var container = document.querySelector('[data-contract-tabs]');
         if (!container) return;
         var buttons = container.querySelectorAll('.tab-btn');
         var panels = container.querySelectorAll('.tab-panel');
+
         function activateTab(tabId) {
-            buttons.forEach(function (btn) {
-                var isActive = btn.getAttribute('data-tab') === tabId;
-                btn.className = 'tab-btn px-4 py-2.5 border-b-2 transition ' +
-                    (isActive ? 'border-teal-500 text-teal-600 dark:text-teal-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300');
-            });
+            // Strictly hide all panels first
             panels.forEach(function (panel) {
-                panel.classList.toggle('hidden', panel.id !== 'tab-' + tabId);
+                panel.classList.add('hidden');
+            });
+
+            // Map target tab ID
+            var targetId = 'tab-' + tabId;
+            if (tabId === 'content') targetId = 'tab-body';
+            if (tabId === 'activity') targetId = 'tab-history';
+
+            var targetPanel = document.getElementById(targetId) || document.getElementById('tab-' + tabId);
+            if (targetPanel) {
+                targetPanel.classList.remove('hidden');
+            }
+
+            // Highlight active button and deactivate others
+            buttons.forEach(function (btn) {
+                var btnTab = btn.getAttribute('data-tab');
+                var isMatch = (btnTab === tabId) ||
+                              (btnTab === 'body' && tabId === 'content') ||
+                              (btnTab === 'content' && tabId === 'body') ||
+                              (btnTab === 'history' && tabId === 'activity') ||
+                              (btnTab === 'activity' && tabId === 'history');
+
+                if (isMatch) {
+                    btn.className = 'tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 border-teal-500 text-teal-600 dark:text-teal-400 font-bold';
+                } else {
+                    btn.className = 'tab-btn px-4 py-3 border-b-2 transition flex items-center gap-1.5 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300';
+                }
             });
         }
+
         buttons.forEach(function (btn) {
-            btn.addEventListener('click', function (e) { e.preventDefault(); if (btn.getAttribute('data-tab')) activateTab(btn.getAttribute('data-tab')); });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var tabId = btn.getAttribute('data-tab');
+                if (tabId) activateTab(tabId);
+            });
         });
     }
 
-    // ── Modal helpers via Tailwind hidden class ──
-    function setupModal(triggerId, modalId) {
-        var btn = document.getElementById(triggerId);
-        var modal = document.getElementById(modalId);
-        if (!btn || !modal) return;
-        btn.addEventListener('click', function (e) { e.preventDefault(); modal.classList.remove('hidden'); });
-    }
-    setupModal('btnNewPayment', 'addPaymentModal');
-    setupModal('btnUploadAttachment', 'uploadAttachmentModal');
-
-    // Close modal via data-close-modal
-    document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var modal = this.closest('.fixed.inset-0');
-            if (modal) modal.classList.add('hidden');
-        });
+    // ── Global Event Delegation for Modals via [data-modal-target] ──
+    document.addEventListener('click', function (e) {
+        var trigger = e.target.closest('[data-modal-target]');
+        if (!trigger) return;
+        e.preventDefault();
+        var targetId = trigger.getAttribute('data-modal-target');
+        var modal = document.getElementById(targetId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            if (typeof initJalaliPickers === 'function') {
+                initJalaliPickers();
+            }
+        }
     });
 
-    // ── Jalali Datepicker Engine (pure Vanilla, no jQuery) ──
+    // Close modal via [data-close-modal] buttons
+    document.addEventListener('click', function (e) {
+        var closeBtn = e.target.closest('[data-close-modal]');
+        if (closeBtn) {
+            e.preventDefault();
+            var modal = closeBtn.closest('.fixed.inset-0');
+            if (modal) modal.classList.add('hidden');
+            if (typeof closeJalaliPopups === 'function') closeJalaliPopups();
+        }
+    });
+
+    // Close modal on backdrop click
+    document.addEventListener('click', function (e) {
+        if (e.target.closest && (e.target.closest('.vanilla-jalali-popup') || e.target.closest('.jalali-datepicker-wrapper'))) {
+            return;
+        }
+        if (e.target.classList.contains('bg-black/50') && e.target.classList.contains('fixed')) {
+            document.querySelectorAll('.fixed.inset-0.z-50').forEach(function (m) {
+                m.classList.add('hidden');
+            });
+            if (typeof closeJalaliPopups === 'function') closeJalaliPopups();
+        }
+    });
+
+    // Escape key closes open modals
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.fixed.inset-0.z-50').forEach(function (el) {
+                if (!el.classList.contains('hidden')) el.classList.add('hidden');
+            });
+            if (typeof closeJalaliPopups === 'function') closeJalaliPopups();
+        }
+    });
+
+    // ── Jalali Datepicker Engine ──
     var PERSIAN_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
     var PERSIAN_WEEKDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
 
@@ -164,20 +280,55 @@ document.addEventListener('DOMContentLoaded', function () {
         return String(str).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
     }
 
-    function createDatepicker(input) {
-        var wrapper = document.createElement('div');
-        wrapper.className = 'jalali-datepicker-wrapper';
-        wrapper.style.cssText = 'position:relative;display:inline-block;width:100%';
-        input.parentNode.insertBefore(wrapper, input);
-        wrapper.appendChild(input);
+    function writeJalaliToHidden(input, jalali) {
+        var wrapper = input.closest('.jalali-datepicker-wrapper');
+        if (!wrapper) return;
+        var hidden = wrapper.querySelector('input.jalali-date-hidden');
+        if (!hidden) return;
+        if (!jalali) {
+            hidden.value = '';
+            return;
+        }
+        try {
+            var parts = jalali.trim().split('/');
+            if (parts.length === 3) {
+                var y = parseInt(parts[0], 10);
+                var m = parseInt(parts[1], 10);
+                var d = parseInt(parts[2], 10);
+                if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+                    var pd = new persianDate([y, m, d]);
+                    var g = pd.toDate();
+                    hidden.value = g.getFullYear() + '-' +
+                        String(g.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(g.getDate()).padStart(2, '0');
+                }
+            }
+        } catch (e) {
+            console.warn('writeJalaliToHidden error:', e);
+        }
+    }
 
-        var popup = document.createElement('div');
-        popup.className = 'vanilla-jalali-popup';
-        wrapper.appendChild(popup);
+    function createDatepicker(input) {
+        var wrapper = input.closest('.jalali-datepicker-wrapper');
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.className = 'jalali-datepicker-wrapper relative';
+            wrapper.style.cssText = 'position:relative;display:inline-block;width:100%';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+        } else {
+            wrapper.style.position = 'relative';
+        }
+
+        var popup = wrapper.querySelector('.vanilla-jalali-popup');
+        if (!popup) {
+            popup = document.createElement('div');
+            popup.className = 'vanilla-jalali-popup';
+            wrapper.appendChild(popup);
+        }
 
         var viewYear = 0, viewMonth = 0;
 
-        // Expose state + render on the input element so the global delegation handler can drive navigation / selection
         input._jalaliPicker = {
             get viewYear() { return viewYear; },
             set viewYear(v) { viewYear = v; },
@@ -188,8 +339,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         function render() {
             var today = new persianDate();
-            if (!viewYear) viewYear = today.year();
-            if (!viewMonth) viewMonth = today.month();
+            if (!viewYear) {
+                if (input.value && input.value.indexOf('/') !== -1) {
+                    var parts = input.value.split('/');
+                    viewYear = parseInt(parts[0], 10) || today.year();
+                    viewMonth = parseInt(parts[1], 10) || today.month();
+                } else {
+                    viewYear = today.year();
+                    viewMonth = today.month();
+                }
+            }
 
             var daysInMonth = today.daysInMonth(viewYear, viewMonth);
             var firstWeekday = today.getFirstWeekDayOfMonth(viewYear, viewMonth);
@@ -211,9 +370,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             html += '</div>';
             popup.innerHTML = html;
-
-            // Uses event delegation on popup for nav buttons — no direct onclick bindings.
-            // The global capture-phase listener (below) handles stopPropagation.
         }
 
         input.onfocus = function () {
@@ -228,40 +384,53 @@ document.addEventListener('DOMContentLoaded', function () {
             popup.style.display = 'block';
         };
 
-        document.addEventListener('click', function (e) {
-            if (!wrapper.contains(e.target)) {
-                popup.style.display = 'none';
-            }
+        input.addEventListener('change', function () {
+            writeJalaliToHidden(input, input.value);
+        });
+        input.addEventListener('input', function () {
+            writeJalaliToHidden(input, input.value);
         });
     }
 
     function initJalaliPickers() {
-        if (typeof persianDate === 'undefined') { return; }
-        document.querySelectorAll('.jalali-input').forEach(function (input) {
-            if (input.closest('.jalali-datepicker-wrapper')) return;
+        if (typeof persianDate === 'undefined') return;
+        document.querySelectorAll('.jalali-input, .jalali-date-input').forEach(function (input) {
+            var wrapper = input.closest('.jalali-datepicker-wrapper');
+            if (wrapper) {
+                var hidden = wrapper.querySelector('input.jalali-date-hidden');
+                if (hidden && hidden.value && !input.value) {
+                    try {
+                        var d = new Date(hidden.value);
+                        if (!isNaN(d.getTime())) {
+                            var jDate = new persianDate(d);
+                            input.value = jDate.format('YYYY/MM/DD');
+                        }
+                    } catch (e) {}
+                } else if (input.value && (!hidden || !hidden.value)) {
+                    writeJalaliToHidden(input, input.value);
+                }
+            }
+            if (input._jalaliPicker) return;
             createDatepicker(input);
         });
     }
+    window.initJalaliPickers = initJalaliPickers;
 
     function closeJalaliPopups() {
         document.querySelectorAll('.vanilla-jalali-popup').forEach(function (p) { p.style.display = 'none'; });
     }
+    window.closeJalaliPopups = closeJalaliPopups;
 
-    // ── Event delegation: popup nav buttons & day selection ──
-    // Uses a single listener on document (capture phase) to handle all popup interactions.
+    // Datepicker event delegation
     document.addEventListener('click', function (e) {
-        // Navigate months
         var navBtn = e.target.closest('.vjp-nav-btn');
         if (navBtn) {
             e.stopPropagation();
             var popup = navBtn.closest('.vanilla-jalali-popup');
             if (!popup) return;
             var wrapper = popup.closest('.jalali-datepicker-wrapper');
-            var input = wrapper ? wrapper.querySelector('.jalali-input') : null;
+            var input = wrapper ? wrapper.querySelector('.jalali-input, .jalali-date-input') : null;
             if (!input) return;
-            // Find this picker's state (viewYear, viewMonth are closure-scoped in createDatepicker)
-            // We re-use the fact that createDatepicker's render is called from input's onfocus/onclick.
-            // Instead, we manually update the state via the picker's stored reference.
             var picker = input._jalaliPicker;
             if (!picker) return;
             var isPrev = navBtn.getAttribute('data-nav') === 'prev';
@@ -276,274 +445,29 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Select a day
         var dayBtn = e.target.closest('.vjp-day-btn');
         if (dayBtn) {
             e.stopPropagation();
             var popup = dayBtn.closest('.vanilla-jalali-popup');
             if (!popup) return;
             var wrapper = popup.closest('.jalali-datepicker-wrapper');
-            var input = wrapper ? wrapper.querySelector('.jalali-input') : null;
+            var input = wrapper ? wrapper.querySelector('.jalali-input, .jalali-date-input') : null;
             if (!input) return;
             var picker = input._jalaliPicker;
             if (!picker) return;
             var day = parseInt(dayBtn.getAttribute('data-day'), 10);
             var selected = new persianDate([picker.viewYear, picker.viewMonth, day]);
             input.value = selected.format('YYYY/MM/DD');
-            // Dispatch input and change events so any form listeners detect the change
-            var evt = new Event('input', { bubbles: true });
-            input.dispatchEvent(evt);
-            evt = new Event('change', { bubbles: true });
-            input.dispatchEvent(evt);
+            writeJalaliToHidden(input, input.value);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
             popup.style.display = 'none';
             return;
         }
     }, true);
 
-    // ── Close modals on backdrop click (ignore datepicker clicks) ──
-    document.addEventListener('click', function (e) {
-        if (e.target.closest && (e.target.closest('.vanilla-jalali-popup') || e.target.closest('.jalali-datepicker-wrapper'))) {
-            return;
-        }
-        if (e.target.classList.contains('bg-black/50') && e.target.classList.contains('fixed')) {
-            document.querySelectorAll('.fixed.inset-0.z-50').forEach(function (m) {
-                m.classList.add('hidden');
-                closeJalaliPopups();
-            });
-        }
-    });
-
-    // Escape key to close modals
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            document.querySelectorAll('.fixed.inset-0.z-50').forEach(function (el) {
-                if (!el.classList.contains('hidden')) el.classList.add('hidden');
-            });
-            closeJalaliPopups();
-        }
-    });
-
-    // Event delegation for [data-modal-target] triggers
-    document.addEventListener('click', function (e) {
-        var trigger = e.target.closest('[data-modal-target]');
-        if (!trigger) return;
-        e.preventDefault();
-        var modal = document.getElementById(trigger.getAttribute('data-modal-target'));
-        if (modal) modal.classList.remove('hidden');
-    });
-
-    // ── Re-init jalali pickers when payment modal opens
-    var paymentModal = document.getElementById('addPaymentModal');
-    if (paymentModal) {
-        var observer = new MutationObserver(function () {
-            if (!paymentModal.classList.contains('hidden')) {
-                initJalaliPickers();
-            } else {
-                closeJalaliPopups();
-            }
-        });
-        observer.observe(paymentModal, { attributes: true, attributeFilter: ['class'] });
-    }
-
-    // ── Payment form: convert Jalali text inputs to Gregorian hidden fields ──
-    // The server model (ContractPaymentCreateVM) expects DateTime (Gregorian),
-    // so before submit we convert the Persian date strings to Gregorian and
-    // store them into hidden fields that the model binder can parse.
-    var paymentForm = document.querySelector('#addPaymentModal form');
-    if (paymentForm) {
-        // Remove name from original text inputs so they don't get posted as strings
-        var paymentInput = document.getElementById('paymentDate');
-        var dueInput = document.getElementById('paymentDueDate');
-        if (paymentInput) paymentInput.removeAttribute('name');
-        if (dueInput) dueInput.removeAttribute('name');
-
-        // Create hidden fields for Gregorian dates (that the model binder expects)
-        var paymentDateHidden = document.createElement('input');
-        paymentDateHidden.type = 'hidden';
-        paymentDateHidden.name = 'PaymentDate';
-        paymentForm.appendChild(paymentDateHidden);
-
-        var dueDateHidden = document.createElement('input');
-        dueDateHidden.type = 'hidden';
-        dueDateHidden.name = 'DueDate';
-        paymentForm.appendChild(dueDateHidden);
-
-        paymentForm.addEventListener('submit', function (e) {
-            var paymentDateInput = document.getElementById('paymentDate');
-            var dueDateInput = document.getElementById('paymentDueDate');
-
-            // Convert PaymentDate (required)
-            var paymentJalali = paymentDateInput ? paymentDateInput.value.trim() : '';
-            if (paymentJalali) {
-                try {
-                    var parts = paymentJalali.split('/');
-                    if (parts.length === 3) {
-                        var pd = new persianDate([
-                            parseInt(parts[0], 10),
-                            parseInt(parts[1], 10),
-                            parseInt(parts[2], 10)
-                        ]);
-                        var g = pd.toDate();
-                        paymentDateHidden.value = g.getFullYear() + '-' +
-                            String(g.getMonth() + 1).padStart(2, '0') + '-' +
-                            String(g.getDate()).padStart(2, '0');
-                    }
-                } catch (ex) {
-                    console.warn('PaymentDate conversion failed', ex);
-                }
-            }
-
-            // Convert DueDate (optional)
-            var dueJalali = dueDateInput ? dueDateInput.value.trim() : '';
-            if (dueJalali) {
-                try {
-                    var parts = dueJalali.split('/');
-                    if (parts.length === 3) {
-                        var pd = new persianDate([
-                            parseInt(parts[0], 10),
-                            parseInt(parts[1], 10),
-                            parseInt(parts[2], 10)
-                        ]);
-                        var g = pd.toDate();
-                        dueDateHidden.value = g.getFullYear() + '-' +
-                            String(g.getMonth() + 1).padStart(2, '0') + '-' +
-                            String(g.getDate()).padStart(2, '0');
-                    }
-                } catch (ex) {
-                    console.warn('DueDate conversion failed', ex);
-                }
-            }
-        });
-    }
-
-    // ── Payment Schedule Lazy-Load (with auto-trigger on tab click) ──
-    function loadPaymentSchedule() {
-        var container = document.getElementById('paymentScheduleContainer');
-        if (!container) return;
-        var contractId = container.getAttribute('data-contract-id');
-        if (!contractId) return;
-        // Show skeleton only if we have a valid contractId
-        container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>';
-        fetch('/Contracts/Schedule/' + contractId)
-            .then(function (r) { return r.text(); })
-            .then(function (html) {
-                container.innerHTML = html;
-                // Re-initialize Jalali datepickers on dynamically loaded content
-                if (typeof initJalaliPickers === 'function') initJalaliPickers();
-                // If the returned HTML is empty or just whitespace, show empty state
-                var text = (html || '').trim();
-                if (text === '' || text === '<div></div>' || text.length < 10) {
-                    container.innerHTML = '<div class="text-center py-6"><div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 mb-2"><i class="bi bi-wallet2 text-slate-400"></i></div><p class="text-[11px] text-slate-400 dark:text-slate-500">برنامه پرداختی ثبت نشده است.</p><button onclick="loadPaymentSchedule()" class="mt-2 text-[10px] text-teal-600 hover:text-teal-700 underline">تلاش مجدد</button></div>';
-                }
-            })
-            .catch(function () {
-                container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="loadPaymentSchedule()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
-            });
-    }
-
-    // Auto-trigger payment schedule load when Payments tab is clicked
-    var paymentsTab = document.querySelector('[data-tab="payments"]');
-    if (paymentsTab) {
-        paymentsTab.addEventListener('click', function () {
-            var container = document.getElementById('paymentScheduleContainer');
-            if (container && !container.dataset.loaded) {
-                container.dataset.loaded = '1';
-                loadPaymentSchedule();
-            }
-        });
-    }
-    // Also load if Payments tab is already active
-    if (document.getElementById('tab-payments') && !document.getElementById('tab-payments').classList.contains('hidden')) {
-        loadPaymentSchedule();
-    }
-
-    // Expose retry helper globally
-    window.reloadPaymentSchedule = function () {
-        var container = document.getElementById('paymentScheduleContainer');
-        if (container) {
-            delete container.dataset.loaded;
-            loadPaymentSchedule();
-        }
-    };
-
     initTabs();
     initSignaturePad();
-
-    // ── Document Requirements Lazy-Load ────────────────────
-    function initDocumentRequirements() {
-        var container = document.getElementById('documentRequirementsContainer');
-        if (!container) return;
-        var contractId = container.getAttribute('data-contract-id');
-        if (!contractId) return;
-
-        function loadRequirements() {
-            container.innerHTML = '<div class="text-center py-6"><div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mx-auto"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div></div>';
-            fetch('/Contracts/' + contractId + '/Requirements')
-                .then(function (r) { return r.text(); })
-                .then(function (html) {
-                    container.innerHTML = html;
-                    bindRequirementUI();
-                })
-                .catch(function () {
-                    container.innerHTML = '<div class="text-center py-4 text-[11px] text-rose-500"><i class="bi bi-exclamation-triangle ml-1"></i>خطا در بارگذاری. <button onclick="loadRequirements()" class="text-teal-600 underline mr-1">تلاش مجدد</button></div>';
-                });
-        }
-
-        function bindRequirementUI() {
-            // Seed defaults form
-            document.querySelectorAll('.seed-requirements-form').forEach(function (f) {
-                f.addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    var btn = this.querySelector('button');
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="bi bi-hourglass ml-1"></i>در حال بارگذاری...';
-                    fetch(this.action, {
-                        method: 'POST',
-                        body: new FormData(this),
-                        headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
-                    }).then(function (r) { return r.json(); }).then(function (resp) {
-                        if (resp.success) { loadRequirements(); }
-                        else { alert(resp.message || 'خطا'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-gear ml-1"></i>بارگذاری پیش‌فرض‌ها'; }
-                    }).catch(function () { alert('خطا در ارتباط'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-gear ml-1"></i>بارگذاری پیش‌فرض‌ها'; });
-                });
-            });
-
-            // Upload for requirement buttons
-            document.querySelectorAll('.upload-for-req-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var reqId = this.getAttribute('data-req-id');
-                    var reqName = this.getAttribute('data-req-name');
-                    // Trigger the main upload button with a data attribute for the requirement
-                    var uploadBtn = document.getElementById('btnUploadAttachment');
-                    if (uploadBtn) {
-                        uploadBtn.setAttribute('data-req-id', reqId);
-                    }
-                    // Open the upload modal
-                    var modal = document.getElementById('uploadAttachmentModal');
-                    if (modal) { modal.classList.remove('hidden'); }
-                });
-            });
-        }
-
-        // Load when the Attachments tab is shown
-        var attachmentsTab = document.querySelector('[data-tab="attachments"]');
-        if (attachmentsTab) {
-            attachmentsTab.addEventListener('click', function () {
-                if (!container.dataset.loaded) {
-                    container.dataset.loaded = '1';
-                    loadRequirements();
-                }
-            });
-        }
-
-        // Also load if Attachments tab is already active
-        if (document.getElementById('tab-attachments') && !document.getElementById('tab-attachments').classList.contains('hidden')) {
-            container.dataset.loaded = '1';
-            loadRequirements();
-        }
-    }
-
-    initDocumentRequirements();
     initSignatureRequestsTab();
     initJalaliPickers();
 });
