@@ -70,6 +70,8 @@ public interface ISignatureService
         string ipAddress,
         string userAgent,
         string currentUserId,
+        string? signerParty = null,
+        string? signerName = null,
         CancellationToken ct = default);
 
     Task<bool> VerifySignatureAsync(int signerId, CancellationToken ct = default);

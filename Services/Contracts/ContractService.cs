@@ -430,13 +430,30 @@ public sealed class ContractService : IContractService
             daysRemaining = 0; // No valid end date → no remaining days to display
         }
 
+        var signers = await _context.ContractSignatureSigners
+            .Where(s => s.SignatureRequest != null && s.SignatureRequest.ContractId == c.Id && !string.IsNullOrEmpty(s.SignatureImageData))
+            .OrderByDescending(s => s.SignedAt)
+            .ToListAsync(ct);
+
+        var firstPartySigner = signers.FirstOrDefault(s => s.JobTitle == "FirstParty" || (s.SignerType == SignatureSignerType.Internal && s.JobTitle != "SecondParty"));
+        var secondPartySigner = signers.FirstOrDefault(s => s.JobTitle == "SecondParty" || s.SignerType == SignatureSignerType.External);
+        var latestSigner = signers.FirstOrDefault();
+
+        string? signerPartyDisplay = null;
+        if (latestSigner != null)
+        {
+            signerPartyDisplay = latestSigner.JobTitle == "SecondParty"
+                ? $"طرف دوم (مشتری / {c.Customer?.Name ?? c.ClientName ?? "مشتری"})"
+                : "طرف اول (شرکت)";
+        }
+
         return new ContractDetailsVM
         {
             Id = c.Id,
             ContractNumber = c.ContractNumber,
             Title = c.Title,
             ContractType = c.ContractType,
-            ClientName = c.ClientName,
+            ClientName = c.ClientName ?? string.Empty,
             ClientPhone = c.ClientPhone,
             ClientAddress = c.ClientAddress,
             CustomerId = c.CustomerId,
@@ -532,17 +549,19 @@ public sealed class ContractService : IContractService
                 CreatedAtText = ToPersianDate(a.CreatedAt)
             }).ToList(),
             TypeFields = await LoadFieldValuesAsync(c.Id, ct),
-            SignatureImageData = await _context.ContractSignatureSigners
-                .Where(s => s.SignatureRequest != null && s.SignatureRequest.ContractId == c.Id && !string.IsNullOrEmpty(s.SignatureImageData))
-                .OrderByDescending(s => s.SignedAt)
-                .Select(s => s.SignatureImageData)
-                .FirstOrDefaultAsync(ct)
+            SignatureImageData = latestSigner?.SignatureImageData,
+            FirstPartySignatureImageData = firstPartySigner?.SignatureImageData,
+            SecondPartySignatureImageData = secondPartySigner?.SignatureImageData,
+            SignerParty = latestSigner?.JobTitle,
+            SignerPartyDisplay = signerPartyDisplay,
+            SignerName = latestSigner?.FullName,
+            SignedAt = latestSigner?.SignedAt,
+            SignedAtPersian = latestSigner?.SignedAt.HasValue == true ? ToPersianDate(latestSigner.SignedAt.Value) : null
         };
     }
 
     /// <summary>
     /// Builds a data-driven lifecycle stepper step list from the contract's audit log entries.
-    /// Maps StatusChanged audit log entries to lifecycle steps, recording timestamps, actors,
     /// and descriptions. Detects rejection cycles and marks them with RejectionCount.
     /// Falls back to the contract's current Status when no audit logs exist.
     /// </summary>

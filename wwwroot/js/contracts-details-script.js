@@ -78,19 +78,72 @@ function initSignaturePad() {
 
     document.getElementById('sig-clear')?.addEventListener('click', function () { pad.clear(); });
 
+    function getTrimmedSignatureDataUrl(srcCanvas) {
+        var ctx = srcCanvas.getContext('2d');
+        if (!ctx) return srcCanvas.toDataURL('image/png');
+        var width = srcCanvas.width;
+        var height = srcCanvas.height;
+        var imgData = ctx.getImageData(0, 0, width, height);
+        var data = imgData.data;
+
+        var minX = width, minY = height, maxX = 0, maxY = 0;
+        var found = false;
+
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                var alpha = data[(y * width + x) * 4 + 3];
+                if (alpha > 10) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                    found = true;
+                }
+            }
+        }
+
+        if (!found) return srcCanvas.toDataURL('image/png');
+
+        // Add small padding around the bounding box
+        var padding = 10;
+        minX = Math.max(0, minX - padding);
+        minY = Math.max(0, minY - padding);
+        maxX = Math.min(width, maxX + padding);
+        maxY = Math.min(height, maxY + padding);
+
+        var cropWidth = maxX - minX;
+        var cropHeight = maxY - minY;
+        if (cropWidth <= 0 || cropHeight <= 0) return srcCanvas.toDataURL('image/png');
+
+        var cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropWidth;
+        cropCanvas.height = cropHeight;
+        var cropCtx = cropCanvas.getContext('2d');
+        if (!cropCtx) return srcCanvas.toDataURL('image/png');
+
+        cropCtx.drawImage(srcCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        return cropCanvas.toDataURL('image/png');
+    }
+
     document.getElementById('sig-contract-save')?.addEventListener('click', function () {
         var swal = getSwal();
         if (pad.isEmpty()) {
             swal.fire('خطا', 'لطفاً امضای خود را رسم کنید.', 'warning');
             return;
         }
-        var dataUrl = pad.toDataURL();
+        var dataUrl = getTrimmedSignatureDataUrl(canvas);
         var contractId = this.getAttribute('data-contract-id');
         if (!contractId) return;
 
+        var selectedParty = document.querySelector('input[name="signerPartyChoice"]:checked')?.value || 'FirstParty';
+        var signerNameInput = document.getElementById('signerFullNameInput');
+        var signerName = signerNameInput ? signerNameInput.value.trim() : '';
+
+        var partyLabel = selectedParty === 'SecondParty' ? 'طرف دوم (مشتری)' : 'طرف اول (شرکت)';
+
         swal.fire({
             title: 'ثبت امضای قرارداد',
-            text: 'امضای شما برای این قرارداد ثبت می‌شود.',
+            text: 'امضای شما به عنوان «' + partyLabel + '» ثبت خواهد شد.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'بله، ثبت شود',
@@ -105,7 +158,11 @@ function initSignaturePad() {
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': token
                 },
-                body: JSON.stringify({ signatureImageData: dataUrl })
+                body: JSON.stringify({
+                    signatureImageData: dataUrl,
+                    signerParty: selectedParty,
+                    signerName: signerName
+                })
             }).then(function (r) { return r.json(); }).then(function (resp) {
                 if (resp.success) {
                     swal.fire('موفقیت', 'امضا با موفقیت ثبت شد.', 'success').then(function () { location.reload(); });

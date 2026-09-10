@@ -499,55 +499,93 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Payment")]
     public async Task<IActionResult> AddPayment(ContractPaymentCreateVM model, CancellationToken ct)
     {
+        var isAjax = IsAjaxRequest();
+
         // If dates arrived as Persian date strings (from hidden fields that bypass model binding),
         // parse them to Gregorian DateTime here as a safety net.
-        // The front-end JS converts before submit, but this guards against direct posts.
-        if (ModelState.IsValid == false)
+        var paymentDateRaw = HttpContext.Request.Form["PaymentDate"].FirstOrDefault();
+        var dueDateRaw = HttpContext.Request.Form["DueDate"].FirstOrDefault();
+
+        if (paymentDateRaw != null && model.PaymentDate == default)
         {
-            // Attempt to fix Persian-date strings that couldn't bind to DateTime
-            var paymentDateRaw = HttpContext.Request.Form["PaymentDate"].FirstOrDefault();
-            var dueDateRaw = HttpContext.Request.Form["DueDate"].FirstOrDefault();
+            var parsed = ToGregorianDate(paymentDateRaw);
+            if (parsed.HasValue)
+            {
+                model.PaymentDate = parsed.Value;
+                ModelState.Remove("PaymentDate");
+            }
+        }
+        if (dueDateRaw != null && model.DueDate == null)
+        {
+            var parsed = ToGregorianDate(dueDateRaw);
+            if (parsed.HasValue)
+            {
+                model.DueDate = parsed.Value;
+                ModelState.Remove("DueDate");
+            }
+        }
 
-            if (paymentDateRaw != null && model.PaymentDate == default)
+        // Strict validation: monetary amounts must be greater than zero
+        if (model.Amount <= 0)
+        {
+            ModelState.AddModelError("Amount", "مبلغ پرداخت باید بزرگتر از صفر باشد.");
+        }
+
+        // Required fields: payment date must be valid
+        if (model.PaymentDate == default || model.PaymentDate.Year < 1700)
+        {
+            ModelState.AddModelError("PaymentDate", "تاریخ پرداخت الزامی و معتبر است.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var errorDict = ModelState
+                .Where(kv => kv.Value != null && kv.Value.Errors.Count > 0)
+                .ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value!.Errors.First().ErrorMessage
+                );
+
+            _logger.LogWarning("AddPayment validation failed for contract {ContractId}: {Errors}",
+                model.ContractId, string.Join(" | ", errorDict.Values));
+
+            if (isAjax)
             {
-                var parsed = ToGregorianDate(paymentDateRaw);
-                if (parsed.HasValue)
-                {
-                    model.PaymentDate = parsed.Value;
-                    ModelState.Remove("PaymentDate");
-                }
-            }
-            if (dueDateRaw != null && model.DueDate == null)
-            {
-                var parsed = ToGregorianDate(dueDateRaw);
-                if (parsed.HasValue)
-                {
-                    model.DueDate = parsed.Value;
-                    ModelState.Remove("DueDate");
-                }
+                return Json(new { success = false, errors = errorDict });
             }
 
-            // Re-validate after patching
-            if (!ModelState.IsValid)
-            {
-                var errors = string.Join(" | ", ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage));
-                _logger.LogWarning("AddPayment ModelState invalid: {Errors}", errors);
-                TempData["ErrorMessage"] = "اطلاعات پرداخت معتبر نیست.";
-                return RedirectToAction(nameof(Details), new { id = model.ContractId });
-            }
+            TempData["ErrorMessage"] = string.Join(" | ", errorDict.Values);
+            return RedirectToAction(nameof(Details), new { id = model.ContractId, activeTab = "payments" });
         }
 
         try
         {
             var currentUser = GetCurrentUserId();
             await _contractService.AddPaymentAsync(model, currentUser, ct);
+            if (isAjax)
+            {
+                return Json(new { success = true, message = "پرداخت با موفقیت ثبت شد." });
+            }
             TempData["SuccessMessage"] = "پرداخت با موفقیت ثبت شد.";
         }
-        catch (KeyNotFoundException) { return NotFound(); }
-        catch (UnauthorizedAccessException) { return Forbid(); }
-        return RedirectToAction(nameof(Details), new { id = model.ContractId });
+        catch (KeyNotFoundException)
+        {
+            if (isAjax) return Json(new { success = false, errors = new Dictionary<string, string> { ["General"] = "قرارداد یافت نشد." } });
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            if (isAjax) return Json(new { success = false, errors = new Dictionary<string, string> { ["General"] = "عدم دسترسی مجاز." } });
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding payment for contract {ContractId}", model.ContractId);
+            if (isAjax) return Json(new { success = false, errors = new Dictionary<string, string> { ["General"] = ex.Message } });
+            TempData["ErrorMessage"] = $"خطا در ثبت پرداخت: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Details), new { id = model.ContractId, activeTab = "payments" });
     }
 
     [HttpPost]
@@ -807,9 +845,9 @@ public class ContractsController : Controller
             var userAgent = Request.Headers.UserAgent.ToString();
 
             var signer = await _signatureService.CaptureInternalSignatureAsync(
-                contractId, request.SignatureImageData, request.Comment, ipAddress, userAgent, userId, ct);
+                contractId, request.SignatureImageData, request.Comment, ipAddress, userAgent, userId, request.SignerParty, request.SignerName, ct);
 
-            return Json(new { success = true, message = "امضا با موفقیت ثبت شد", signerId = signer.Id, signedAt = signer.SignedAt });
+            return Json(new { success = true, message = "امضا با موفقیت ثبت شد", signerId = signer.Id, signedAt = signer.SignedAt, signerParty = signer.JobTitle, signerName = signer.FullName });
         }
         catch (Exception ex)
         {
@@ -1374,21 +1412,75 @@ public class ContractsController : Controller
     [PermissionAuthorize("Contract.Edit")]
     public async Task<IActionResult> CreateAmendment(int contractId, AmendmentCreateVM model, IFormFile? attachmentFile, CancellationToken ct)
     {
+        var isAjax = IsAjaxRequest();
         model.ContractId = contractId;
         var userId = GetCurrentUserId();
 
-        try
+        if (Request.Form.TryGetValue("EffectiveDate", out var effDateRaw) && !string.IsNullOrWhiteSpace(effDateRaw))
         {
-            if (string.IsNullOrWhiteSpace(model.Title))
+            var parsed = ToGregorianDate(effDateRaw);
+            if (parsed.HasValue)
             {
-                model.Title = model.AmendmentType switch
-                {
-                    "Renewal" => "اصلاحیه تمدید زمان قرارداد",
-                    "Addendum" => "الحاقیه قرارداد",
-                    _ => "اصلاحیه قرارداد"
-                };
+                model.EffectiveDate = parsed.Value;
+                ModelState.Remove("EffectiveDate");
+            }
+        }
+
+        if (Request.Form.TryGetValue("NewEndDate", out var newEndDateRaw) && !string.IsNullOrWhiteSpace(newEndDateRaw))
+        {
+            var parsed = ToGregorianDate(newEndDateRaw);
+            if (parsed.HasValue)
+            {
+                model.NewEndDate = parsed.Value;
+                ModelState.Remove("NewEndDate");
+            }
+        }
+
+        // Strict validation: Title is required
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            ModelState.AddModelError("Title", "عنوان اصلاحیه الزامی است.");
+        }
+
+        // Strict validation: EffectiveDate is required
+        if (model.EffectiveDate == default || model.EffectiveDate.Year < 1700)
+        {
+            ModelState.AddModelError("EffectiveDate", "تاریخ مؤثر اصلاحیه الزامی و معتبر است.");
+        }
+
+        // Validation for specific amendment types
+        if (model.AmendmentType == "AmountIncrease" && model.AmountChange <= 0)
+        {
+            ModelState.AddModelError("AmountChange", "برای افزایش مبلغ قرارداد، مبلغ باید بزرگتر از صفر باشد.");
+        }
+        else if (model.AmendmentType == "AmountDecrease" && model.AmountChange >= 0)
+        {
+            ModelState.AddModelError("AmountChange", "برای کاهش مبلغ قرارداد، مبلغ باید منفی باشد.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var errorDict = ModelState
+                .Where(kv => kv.Value != null && kv.Value.Errors.Count > 0)
+                .ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value!.Errors.First().ErrorMessage
+                );
+
+            _logger.LogWarning("CreateAmendment validation failed for contract {ContractId}: {Errors}",
+                contractId, string.Join(" | ", errorDict.Values));
+
+            if (isAjax)
+            {
+                return Json(new { success = false, errors = errorDict, message = string.Join(" | ", errorDict.Values) });
             }
 
+            TempData["ErrorMessage"] = string.Join(" | ", errorDict.Values);
+            return RedirectToAction(nameof(Details), new { id = contractId, activeTab = "amendments" });
+        }
+
+        try
+        {
             var amendment = await _amendmentService.CreateAmendmentAsync(model, userId, ct);
 
             if (attachmentFile != null && attachmentFile.Length > 0)
@@ -1397,11 +1489,20 @@ public class ContractsController : Controller
                 await _contractService.UploadAttachmentAsync(contractId, attachmentFile.FileName, stream, attachmentFile.ContentType, userId, ct);
             }
 
+            if (isAjax)
+            {
+                return Json(new { success = true, message = "اصلاحیه با موفقیت ثبت شد." });
+            }
+
             TempData["SuccessMessage"] = "اصلاحیه با موفقیت ثبت شد.";
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating amendment for contract {ContractId}", contractId);
+            if (isAjax)
+            {
+                return Json(new { success = false, errors = new Dictionary<string, string> { ["General"] = ex.Message }, message = $"خطا در ثبت اصلاحیه: {ex.Message}" });
+            }
             TempData["ErrorMessage"] = $"خطا در ثبت اصلاحیه: {ex.Message}";
         }
 

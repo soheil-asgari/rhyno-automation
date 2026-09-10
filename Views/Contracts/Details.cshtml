@@ -554,14 +554,7 @@
                 </div>
 
                 @* Document Requirements Container *@
-                <div id="documentRequirementsContainer" class="mt-4" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")">
-                    <div class="text-center py-6">
-                        <div class="schedule-skeleton space-y-2">
-                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mx-auto"></div>
-                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
-                        </div>
-                    </div>
-                </div>
+                <div id="documentRequirementsContainer" class="mt-4" data-contract-id="@Model.Id" data-can-edit="@(Model.CanEdit ? "true" : "false")"></div>
             </div>
 
             @* ── TAB 5: AMENDMENTS (#tab-amendments) ──────────────────────────── *@
@@ -724,24 +717,109 @@
 
             @* ── TAB 6: SIGNATURE (#tab-signature) ────────────────────────────── *@
             <div class="tab-panel @(activeTab == "signature" ? "" : "hidden") space-y-4" id="tab-signature" data-contract-id="@Model.Id">
-                @if (!string.IsNullOrEmpty(Model.SignatureImageData))
+                @if (!string.IsNullOrEmpty(Model.FirstPartySignatureImageData) || !string.IsNullOrEmpty(Model.SecondPartySignatureImageData) || !string.IsNullOrEmpty(Model.SignatureImageData))
                 {
-                    <div id="existing-signature-container" class="bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+                    <div id="existing-signature-container" class="bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
                             <div>
                                 <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                    <i class="bi bi-check-circle-fill text-teal-600 dark:text-teal-400"></i>امضای دیجیتال ثبت‌شده قرارداد
+                                    <i class="bi bi-check-circle-fill text-teal-600 dark:text-teal-400"></i>امضای الکترونیکی ثبت‌شده قرارداد
                                 </h3>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                    امضای الکترونیکی این قرارداد با موفقیت در سامانه ثبت گردیده است.
+                                    وضعیت امضاهای طرف اول (شرکت) و طرف دوم (مشتری) در این سامانه.
                                 </p>
                             </div>
-                            <button type="button" id="btn-re-sign" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer">
-                                <i class="bi bi-pencil-square"></i>امضای مجدد / تغییر امضا
+                            <button type="button" id="btn-re-sign" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer self-start sm:self-auto">
+                                <i class="bi bi-pencil-square"></i>ثبت امضای جدید / تغییر امضا
                             </button>
                         </div>
-                        <div class="flex justify-center p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
-                            <img src="@Model.SignatureImageData" alt="امضای قرارداد" class="max-h-48 object-contain" />
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @* First Party Signature Box *@
+                            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300">
+                                            <i class="bi bi-building"></i>طرف اول (شرکت)
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(Model.FirstPartySignatureImageData))
+                                        {
+                                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                <i class="bi bi-check2-circle"></i>امضا شده
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-[10px] font-bold text-amber-500 flex items-center gap-1">
+                                                <i class="bi bi-hourglass-split"></i>در انتظار امضا
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="text-xs text-slate-600 dark:text-slate-300 font-semibold mb-2">
+                                        سامانه مدیریت قراردادها راینو
+                                    </div>
+                                </div>
+                                <div class="my-3 flex justify-center items-center min-h-[140px] bg-slate-50/50 dark:bg-slate-950/30 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 p-3">
+                                    @if (!string.IsNullOrEmpty(Model.FirstPartySignatureImageData))
+                                    {
+                                        <img src="@Model.FirstPartySignatureImageData" alt="امضای طرف اول" class="max-h-36 object-contain mx-auto" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-slate-400">محل مهر و امضای طرف اول</span>
+                                    }
+                                </div>
+                                <div class="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2 flex justify-between">
+                                    <span>امضاکننده: @(Model.SignerParty == "FirstParty" ? (Model.SignerName ?? "نماینده شرکت") : "نماینده مجاز")</span>
+                                    @if (Model.SignerParty == "FirstParty" && !string.IsNullOrEmpty(Model.SignedAtPersian))
+                                    {
+                                        <span class="font-mono">@Model.SignedAtPersian</span>
+                                    }
+                                </div>
+                            </div>
+
+                            @* Second Party Signature Box *@
+                            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
+                                            <i class="bi bi-person"></i>طرف دوم (مشتری)
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(Model.SecondPartySignatureImageData))
+                                        {
+                                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                <i class="bi bi-check2-circle"></i>امضا شده
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-[10px] font-bold text-amber-500 flex items-center gap-1">
+                                                <i class="bi bi-hourglass-split"></i>در انتظار امضا
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="text-xs text-slate-600 dark:text-slate-300 font-semibold mb-2">
+                                        @(Model.CustomerName ?? Model.ClientName ?? "مشتری")
+                                    </div>
+                                </div>
+                                <div class="my-3 flex justify-center items-center min-h-[140px] bg-slate-50/50 dark:bg-slate-950/30 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 p-3">
+                                    @if (!string.IsNullOrEmpty(Model.SecondPartySignatureImageData))
+                                    {
+                                        <img src="@Model.SecondPartySignatureImageData" alt="امضای طرف دوم" class="max-h-36 object-contain mx-auto" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-slate-400">محل امضا و اثر انگشت مشتری</span>
+                                    }
+                                </div>
+                                <div class="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2 flex justify-between">
+                                    <span>امضاکننده: @(Model.SignerParty == "SecondParty" ? (Model.SignerName ?? Model.CustomerName ?? Model.ClientName ?? "مشتری") : (Model.CustomerName ?? Model.ClientName ?? "مشتری"))</span>
+                                    @if (Model.SignerParty == "SecondParty" && !string.IsNullOrEmpty(Model.SignedAtPersian))
+                                    {
+                                        <span class="font-mono">@Model.SignedAtPersian</span>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     </div>
                 }
@@ -753,7 +831,7 @@
                                 <i class="bi bi-pen-fill text-teal-600 dark:text-teal-400"></i>امضای الکترونیکی قرارداد
                             </h3>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                با استفاده از ماوس یا قلم در کادر زیر امضا نموده و سپس دکمه «ثبت و تایید امضا» را فشار دهید.
+                                طرف امضاکننده را تعیین نموده و پس از رسم امضا در کادر زیر، دکمه «ثبت و تایید امضا» را فشار دهید.
                             </p>
                         </div>
                         <div class="flex items-center gap-2">
@@ -763,6 +841,27 @@
                             <button type="button" id="sig-contract-save" data-contract-id="@Model.Id" class="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-teal-700 cursor-pointer">
                                 <i class="bi bi-check2-circle"></i>ثبت و تایید امضا
                             </button>
+                        </div>
+                    </div>
+
+                    @* Signer Party & Signer Name Selector *@
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5">طرف امضاکننده:</label>
+                            <div class="flex items-center gap-3">
+                                <label class="inline-flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                                    <input type="radio" name="signerPartyChoice" value="FirstParty" checked class="text-teal-600 focus:ring-teal-500" />
+                                    <span>طرف اول (شرکت)</span>
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                                    <input type="radio" name="signerPartyChoice" value="SecondParty" class="text-teal-600 focus:ring-teal-500" />
+                                    <span>طرف دوم (مشتری / @(Model.CustomerName ?? Model.ClientName ?? "مشتری"))</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="signerFullNameInput" class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">نام و نام‌خانوادگی امضاکننده:</label>
+                            <input type="text" id="signerFullNameInput" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none" placeholder="نام فرد امضاکننده..." value="@(Model.ResponsibleUserName ?? "نماینده مجاز شرکت")" />
                         </div>
                     </div>
 
@@ -1053,6 +1152,8 @@
             if (guar) initGuarantees(guar);
             var pen = document.getElementById('penaltiesContainer');
             if (pen) initPenalties(pen);
+            var docReq = document.getElementById('documentRequirementsContainer');
+            if (docReq) initDocumentRequirements(docReq);
         });
 
         // ── Payment Schedule Lazy-Load ──
@@ -1179,5 +1280,276 @@
             delete c.dataset.loaded;
             initGuarantees(c);
         }
+
+        // ── Document Requirements Lazy-Load ──
+        function initDocumentRequirements(container) {
+            var id = container.getAttribute('data-contract-id'); if (!id) return;
+            function load() {
+                container.innerHTML = '<div class="schedule-skeleton space-y-2"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mx-auto"></div><div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div></div>';
+                fetch('/Contracts/' + id + '/Requirements')
+                    .then(function (r) {
+                        if (!r.ok) throw new Error('Status ' + r.status);
+                        return r.text();
+                    })
+                    .then(function (html) {
+                        var text = (html || '').trim();
+                        if (text === '' || text === '<div></div>' || text.length < 15) {
+                            container.innerHTML = '';
+                        } else {
+                            container.innerHTML = html;
+                            bindRequirementsUI(container);
+                        }
+                    })
+                    .catch(function () {
+                        container.innerHTML = '';
+                    });
+            }
+            var tab = document.querySelector('[data-tab="attachments"]');
+            if (tab) tab.addEventListener('click', function () { if (!container.dataset.loaded) { container.dataset.loaded = '1'; load(); } });
+            if (document.getElementById('tab-attachments') && !document.getElementById('tab-attachments').classList.contains('hidden')) { container.dataset.loaded = '1'; load(); }
+        }
+
+        function bindRequirementsUI(container) {
+            var seedForm = container.querySelector('.seed-requirements-form');
+            if (seedForm) {
+                seedForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var formData = new FormData(seedForm);
+                    fetch(seedForm.action, {
+                        method: 'POST',
+                        body: formData
+                    }).then(function () {
+                        reloadRequirements();
+                    }).catch(function () {
+                        reloadRequirements();
+                    });
+                });
+            }
+            container.querySelectorAll('.upload-for-req-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var uploadBtn = document.getElementById('btnUploadAttachment');
+                    if (uploadBtn) {
+                        uploadBtn.click();
+                    } else {
+                        var fileInput = document.getElementById('contractFileInput');
+                        if (fileInput) fileInput.click();
+                    }
+                });
+            });
+        }
+
+        window.reloadRequirements = function () {
+            var c = document.getElementById('documentRequirementsContainer');
+            if (!c) return;
+            delete c.dataset.loaded;
+            initDocumentRequirements(c);
+        };
+
+        // ════════════════════════════════════════════════════════════
+        // Modal Form AJAX Validation Feedback Handler
+        // ════════════════════════════════════════════════════════════
+        function clearFormErrors(form) {
+            form.querySelectorAll('.field-validation-error-msg').forEach(function (el) { el.remove(); });
+            form.querySelectorAll('.border-red-500').forEach(function (el) {
+                el.classList.remove('border-red-500');
+                if (el.classList.contains('jalali-datepicker-wrapper')) {
+                    el.querySelector('input')?.classList.remove('border-red-500');
+                }
+            });
+            var genErr = form.querySelector('.form-general-error');
+            if (genErr) genErr.remove();
+        }
+
+        function applyFormFieldErrors(form, errors) {
+            clearFormErrors(form);
+            if (!errors) return;
+
+            var firstInvalidEl = null;
+
+            for (var fieldName in errors) {
+                if (!errors.hasOwnProperty(fieldName)) continue;
+                var errorMsg = errors[fieldName];
+                if (!errorMsg) continue;
+
+                if (fieldName.toLowerCase() === 'general') {
+                    var genDiv = document.createElement('div');
+                    genDiv.className = 'form-general-error p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-[11px] text-rose-600 dark:text-rose-400 mb-3';
+                    genDiv.innerHTML = '<i class="bi bi-exclamation-circle ml-1"></i>' + errorMsg;
+                    var container = form.querySelector('.space-y-3, .space-y-4, .p-5') || form;
+                    container.insertBefore(genDiv, container.firstChild);
+                    continue;
+                }
+
+                // Match input, select, textarea by name (case-insensitive)
+                var input = form.querySelector('[name="' + fieldName + '" i]');
+                if (!input) {
+                    var allInputs = form.querySelectorAll('input, select, textarea');
+                    for (var i = 0; i < allInputs.length; i++) {
+                        var n = allInputs[i].getAttribute('name') || '';
+                        if (n.toLowerCase() === fieldName.toLowerCase()) {
+                            input = allInputs[i];
+                            break;
+                        }
+                    }
+                }
+
+                if (input) {
+                    var targetBorderEl = input;
+                    var insertAfterEl = input;
+
+                    // If input is inside a jalali datepicker wrapper or input-with-icon wrapper
+                    var jalaliWrapper = input.closest('.jalali-datepicker-wrapper');
+                    if (jalaliWrapper) {
+                        var visibleInput = jalaliWrapper.querySelector('.jalali-input, .jalali-date-input');
+                        if (visibleInput) {
+                            visibleInput.classList.add('border-red-500');
+                        }
+                        insertAfterEl = jalaliWrapper;
+                    } else if (input.parentElement && input.parentElement.classList.contains('relative') && input.parentElement.querySelector('span')) {
+                        input.classList.add('border-red-500');
+                        insertAfterEl = input.parentElement;
+                    } else {
+                        input.classList.add('border-red-500');
+                    }
+
+                    var errSpan = document.createElement('div');
+                    errSpan.className = 'field-validation-error-msg text-[10px] text-rose-500 mt-1 font-medium flex items-center gap-1';
+                    errSpan.innerHTML = '<i class="bi bi-exclamation-circle"></i><span>' + errorMsg + '</span>';
+                    insertAfterEl.parentNode.insertBefore(errSpan, insertAfterEl.nextSibling);
+
+                    if (!firstInvalidEl) {
+                        firstInvalidEl = jalaliWrapper ? jalaliWrapper.querySelector('.jalali-input') : input;
+                    }
+                }
+            }
+
+            if (firstInvalidEl) {
+                firstInvalidEl.focus();
+            }
+        }
+
+        function initModalAjaxValidation(modalId, formSelector, onSuccess) {
+            var modal = document.getElementById(modalId);
+            if (!modal) return;
+            var form = modal.querySelector(formSelector || 'form');
+            if (!form) return;
+
+            // Clear errors when typing/changing inputs
+            form.addEventListener('input', function (e) {
+                var el = e.target;
+                el.classList.remove('border-red-500');
+                var jw = el.closest('.jalali-datepicker-wrapper');
+                var errNode = (jw || el.parentElement?.classList.contains('relative') ? (jw || el.parentElement) : el).nextElementSibling;
+                if (errNode && errNode.classList.contains('field-validation-error-msg')) {
+                    errNode.remove();
+                }
+            });
+
+            // Clear errors when modal closes
+            modal.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    clearFormErrors(form);
+                });
+            });
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var submitBtn = form.querySelector('button[type="submit"]');
+                var originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="inline-block animate-spin mr-1"><i class="bi bi-arrow-repeat"></i></span> در حال ثبت...';
+                }
+
+                clearFormErrors(form);
+
+                var actionUrl = form.getAttribute('action') || window.location.href;
+                var formData = new FormData(form);
+
+                fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(function (res) {
+                    return res.json().catch(function () {
+                        return { success: false, message: 'خطا در ارتباط با سرور.' };
+                    });
+                })
+                .then(function (data) {
+                    if (data && data.success) {
+                        modal.classList.add('hidden');
+                        form.reset();
+                        clearFormErrors(form);
+                        if (window.RhynoFormGuard && typeof window.RhynoFormGuard.release === 'function') {
+                            window.RhynoFormGuard.release(form);
+                        }
+                        if (typeof onSuccess === 'function') {
+                            onSuccess(data);
+                        }
+                        var msg = data.message || 'عملیات با موفقیت انجام شد.';
+                        if (window.AppUI && typeof window.AppUI.toast === 'function') {
+                            window.AppUI.toast(msg, 'success');
+                        } else if (window.Rhyno && typeof window.Rhyno.toast === 'function') {
+                            window.Rhyno.toast(msg, 'success');
+                        }
+                    } else {
+                        if (window.RhynoFormGuard && typeof window.RhynoFormGuard.release === 'function') {
+                            window.RhynoFormGuard.release(form);
+                        }
+                        if (data && data.errors && Object.keys(data.errors).length > 0) {
+                            applyFormFieldErrors(form, data.errors);
+                        } else if (data && data.message) {
+                            applyFormFieldErrors(form, { General: data.message });
+                        } else {
+                            applyFormFieldErrors(form, { General: 'اطلاعات وارد شده نامعتبر است.' });
+                        }
+                    }
+                })
+                .catch(function (err) {
+                    if (window.RhynoFormGuard && typeof window.RhynoFormGuard.release === 'function') {
+                        window.RhynoFormGuard.release(form);
+                    }
+                    applyFormFieldErrors(form, { General: 'خطا در ارسال اطلاعات: ' + (err.message || 'خطای ناشناخته') });
+                })
+                .finally(function () {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnHtml;
+                    }
+                });
+            });
+        }
+
+        // Initialize AJAX modal forms on DOM ready
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Add Payment Modal
+            initModalAjaxValidation('addPaymentModal', 'form', function (res) {
+                if (typeof window.reloadPaymentSchedule === 'function') {
+                    window.reloadPaymentSchedule();
+                }
+                setTimeout(function () {
+                    window.location.reload();
+                }, 400);
+            });
+
+            // 2. Add Guarantee Modal
+            initModalAjaxValidation('addGuaranteeModal', '.add-guarantee-form', function (res) {
+                if (typeof window.reloadGuarantees === 'function') {
+                    window.reloadGuarantees();
+                }
+            });
+
+            // 3. Amendment Modal
+            initModalAjaxValidation('amendmentModal', 'form', function (res) {
+                setTimeout(function () {
+                    window.location.reload();
+                }, 400);
+            });
+        });
     </script>
 }

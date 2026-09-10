@@ -63,10 +63,64 @@ public class ContractGuaranteesController : Controller
         var userId = GetCurrentUserId();
         model.ContractId = contractId;
 
+        if (Request.Form.TryGetValue("IssuedDate", out var issuedDateRaw) && !string.IsNullOrWhiteSpace(issuedDateRaw))
+        {
+            var parsed = ContractsController.ToGregorianDate(issuedDateRaw);
+            if (parsed.HasValue)
+            {
+                model.IssuedDate = parsed.Value;
+                ModelState.Remove("IssuedDate");
+            }
+        }
+
+        if (Request.Form.TryGetValue("ExpiryDate", out var expiryDateRaw) && !string.IsNullOrWhiteSpace(expiryDateRaw))
+        {
+            var parsed = ContractsController.ToGregorianDate(expiryDateRaw);
+            if (parsed.HasValue)
+            {
+                model.ExpiryDate = parsed.Value;
+                ModelState.Remove("ExpiryDate");
+            }
+        }
+
+        if (model.Amount <= 0)
+        {
+            ModelState.AddModelError("Amount", "مبلغ ضمانت‌نامه باید بزرگتر از صفر باشد.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.GuaranteeNumber))
+        {
+            ModelState.AddModelError("GuaranteeNumber", "شماره ضمانت‌نامه الزامی است.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.GuaranteeType))
+        {
+            ModelState.AddModelError("GuaranteeType", "نوع ضمانت‌نامه الزامی است.");
+        }
+
+        if (model.IssuedDate == default || model.IssuedDate.Year < 1700)
+        {
+            ModelState.AddModelError("IssuedDate", "تاریخ صدور ضمانت‌نامه الزامی و معتبر است.");
+        }
+
+        if (model.ExpiryDate == default || model.ExpiryDate.Year < 1700)
+        {
+            ModelState.AddModelError("ExpiryDate", "تاریخ انقضای ضمانت‌نامه الزامی و معتبر است.");
+        }
+        else if (model.IssuedDate != default && model.ExpiryDate < model.IssuedDate)
+        {
+            ModelState.AddModelError("ExpiryDate", "تاریخ انقضا نمی‌تواند قبل از تاریخ صدور باشد.");
+        }
+
         if (!ModelState.IsValid)
         {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return Json(new { success = false, message = string.Join(" | ", errors) });
+            var errorDict = ModelState
+                .Where(kv => kv.Value != null && kv.Value.Errors.Count > 0)
+                .ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value!.Errors.First().ErrorMessage
+                );
+            return Json(new { success = false, errors = errorDict, message = string.Join(" | ", errorDict.Values) });
         }
 
         try
@@ -77,7 +131,7 @@ public class ContractGuaranteesController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding guarantee for contract {ContractId}", contractId);
-            return Json(new { success = false, message = ex.Message });
+            return Json(new { success = false, errors = new Dictionary<string, string> { ["General"] = ex.Message }, message = ex.Message });
         }
     }
 
@@ -88,10 +142,64 @@ public class ContractGuaranteesController : Controller
         var userId = GetCurrentUserId();
         model.ContractId = contractId;
 
+        if (Request.Form.TryGetValue("IssuedDate", out var issuedDateRaw) && !string.IsNullOrWhiteSpace(issuedDateRaw))
+        {
+            var parsed = ContractsController.ToGregorianDate(issuedDateRaw);
+            if (parsed.HasValue)
+            {
+                model.IssuedDate = parsed.Value;
+                ModelState.Remove("IssuedDate");
+            }
+        }
+
+        if (Request.Form.TryGetValue("ExpiryDate", out var expiryDateRaw) && !string.IsNullOrWhiteSpace(expiryDateRaw))
+        {
+            var parsed = ContractsController.ToGregorianDate(expiryDateRaw);
+            if (parsed.HasValue)
+            {
+                model.ExpiryDate = parsed.Value;
+                ModelState.Remove("ExpiryDate");
+            }
+        }
+
+        if (model.Amount <= 0)
+        {
+            ModelState.AddModelError("Amount", "مبلغ ضمانت‌نامه باید بزرگتر از صفر باشد.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.GuaranteeNumber))
+        {
+            ModelState.AddModelError("GuaranteeNumber", "شماره ضمانت‌نامه الزامی است.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.GuaranteeType))
+        {
+            ModelState.AddModelError("GuaranteeType", "نوع ضمانت‌نامه الزامی است.");
+        }
+
+        if (model.IssuedDate == default || model.IssuedDate.Year < 1700)
+        {
+            ModelState.AddModelError("IssuedDate", "تاریخ صدور ضمانت‌نامه الزامی و معتبر است.");
+        }
+
+        if (model.ExpiryDate == default || model.ExpiryDate.Year < 1700)
+        {
+            ModelState.AddModelError("ExpiryDate", "تاریخ انقضای ضمانت‌نامه الزامی و معتبر است.");
+        }
+        else if (model.IssuedDate != default && model.ExpiryDate < model.IssuedDate)
+        {
+            ModelState.AddModelError("ExpiryDate", "تاریخ انقضا نمی‌تواند قبل از تاریخ صدور باشد.");
+        }
+
         if (!ModelState.IsValid)
         {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return Json(new { success = false, message = string.Join(" | ", errors) });
+            var errorDict = ModelState
+                .Where(kv => kv.Value != null && kv.Value.Errors.Count > 0)
+                .ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value!.Errors.First().ErrorMessage
+                );
+            return Json(new { success = false, errors = errorDict, message = string.Join(" | ", errorDict.Values) });
         }
 
         try
@@ -102,7 +210,7 @@ public class ContractGuaranteesController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating guarantee {Id}", model.Id);
-            return Json(new { success = false, message = ex.Message });
+            return Json(new { success = false, errors = new Dictionary<string, string> { ["General"] = ex.Message }, message = ex.Message });
         }
     }
 

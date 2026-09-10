@@ -34,6 +34,8 @@ public sealed class SignatureService : ISignatureService
         string ipAddress,
         string userAgent,
         string currentUserId,
+        string? signerParty = null,
+        string? signerName = null,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(signatureImageData))
@@ -47,6 +49,7 @@ public sealed class SignatureService : ISignatureService
         var safeIpAddress = !string.IsNullOrEmpty(ipAddress) && ipAddress.Length > 45 ? ipAddress[..45] : ipAddress;
         var safeUserAgent = !string.IsNullOrEmpty(userAgent) && userAgent.Length > 500 ? userAgent[..500] : userAgent;
         var safeComment = !string.IsNullOrEmpty(comment) && comment.Length > 2000 ? comment[..2000] : comment;
+        var normalizedParty = string.Equals(signerParty, "SecondParty", StringComparison.OrdinalIgnoreCase) ? "SecondParty" : "FirstParty";
 
         // Find or create the active signature request for this contract.
         var request = await _context.ContractSignatureRequests
@@ -78,7 +81,8 @@ public sealed class SignatureService : ISignatureService
         }
 
         var signer = await _context.ContractSignatureSigners
-            .FirstOrDefaultAsync(s => s.SignatureRequestId == request.Id && s.UserId == currentUserId, ct);
+            .FirstOrDefaultAsync(s => s.SignatureRequestId == request.Id &&
+                (s.JobTitle == normalizedParty || (s.UserId == currentUserId && string.IsNullOrEmpty(s.JobTitle))), ct);
 
         if (signer is null)
         {
@@ -86,8 +90,10 @@ public sealed class SignatureService : ISignatureService
             {
                 SignatureRequest = request,
                 SignatureRequestId = request.Id,
-                SignerType = SignatureSignerType.Internal,
+                SignerType = normalizedParty == "SecondParty" ? SignatureSignerType.External : SignatureSignerType.Internal,
                 UserId = currentUserId,
+                JobTitle = normalizedParty,
+                FullName = !string.IsNullOrWhiteSpace(signerName) ? signerName : (normalizedParty == "SecondParty" ? (contract.ClientName ?? "طرف دوم (مشتری)") : "نماینده شرکت (طرف اول)"),
                 SignOrder = request.CurrentSignerStep > 0 ? request.CurrentSignerStep : 1,
                 Result = SignatureSignerResult.Pending,
                 SignerToken = Guid.NewGuid().ToString("N"),
@@ -101,6 +107,15 @@ public sealed class SignatureService : ISignatureService
         signer.SignedAt = DateTime.UtcNow;
         signer.SignedIpAddress = safeIpAddress;
         signer.SignedUserAgent = safeUserAgent;
+        signer.JobTitle = normalizedParty;
+        if (!string.IsNullOrWhiteSpace(signerName))
+        {
+            signer.FullName = signerName;
+        }
+        else if (string.IsNullOrWhiteSpace(signer.FullName))
+        {
+            signer.FullName = normalizedParty == "SecondParty" ? (contract.ClientName ?? "طرف دوم (مشتری)") : "نماینده شرکت (طرف اول)";
+        }
         signer.Comment = safeComment ?? signer.Comment;
         signer.SignatureImageData = signatureImageData;
 
@@ -111,10 +126,10 @@ public sealed class SignatureService : ISignatureService
             Signer = signer,
             SignerId = signer.Id,
             EventType = "Signed",
-            Description = "امضای داخلی توسط کاربر ثبت شد",
+            Description = normalizedParty == "SecondParty" ? "امضای طرف دوم (مشتری) ثبت شد" : "امضای طرف اول (شرکت) ثبت شد",
             PerformedByUserId = currentUserId,
             IpAddress = safeIpAddress,
-            Metadata = JsonSerializer.Serialize(new { signatureLength = signatureImageData.Length }),
+            Metadata = JsonSerializer.Serialize(new { party = normalizedParty, signerName = signer.FullName, signatureLength = signatureImageData.Length }),
             CreatedAt = DateTime.UtcNow
         });
 

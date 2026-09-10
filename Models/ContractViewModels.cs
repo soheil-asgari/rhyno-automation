@@ -455,6 +455,13 @@ public List<LifecycleStepVM> LifecycleSteps { get; set; } = new();
         public List<ContractTypeFieldVM> TypeFields { get; set; } = new();
         public Dictionary<string, string> FieldValues { get; set; } = new();
         public string? SignatureImageData { get; set; }
+        public string? FirstPartySignatureImageData { get; set; }
+        public string? SecondPartySignatureImageData { get; set; }
+        public string? SignerParty { get; set; }
+        public string? SignerPartyDisplay { get; set; }
+        public string? SignerName { get; set; }
+        public DateTime? SignedAt { get; set; }
+        public string? SignedAtPersian { get; set; }
     }
 
     public class ContractPaymentVM
@@ -653,6 +660,12 @@ public class SignContractRequest
     /// <summary>تصویر امضا به صورت Base64</summary>
     [Required(ErrorMessage = "داده‌های امضا الزامی است.")]
     public string SignatureImageData { get; set; } = string.Empty;
+
+    /// <summary>طرف امضاکننده: FirstParty یا SecondParty</summary>
+    public string? SignerParty { get; set; }
+
+    /// <summary>نام امضاکننده</summary>
+    public string? SignerName { get; set; }
 
     /// <summary>توضیح اختیاری</summary>
     public string? Comment { get; set; }

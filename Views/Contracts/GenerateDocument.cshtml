@@ -42,6 +42,46 @@
                 box-shadow: none !important;
                 border: none !important;
             }
+            img {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                max-width: 100% !important;
+            }
+            .signature-block {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 20px !important;
+            }
+            .signature-block .sig-box {
+                min-height: 200px !important;
+                border: 1px solid #cbd5e1 !important;
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .signature-block .sig-content-area {
+                min-height: 130px !important;
+                height: 130px !important;
+            }
+            .signature-block .sig-image {
+                height: 120px !important;
+                max-height: 120px !important;
+                width: auto !important;
+                max-width: 100% !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .signature-block .sig-placeholder {
+                min-height: 120px !important;
+                border: 2px dashed #94a3b8 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
             @@page { size: A4 portrait; margin: 10mm; }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -149,19 +189,91 @@
         .terms-section h3 { font-size: 13px; color: #0d9488; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; text-align: right; }
         .terms-section p, .terms-section div { font-size: 11px; line-height: 1.8; color: #334155; text-align: right; }
         .signature-block {
-            margin-top: 32px;
-            padding-top: 16px;
+            margin-top: 36px;
+            padding-top: 20px;
             border-top: 1px solid #e2e8f0;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 32px;
+            gap: 28px;
             text-align: center;
             direction: rtl;
+            align-items: stretch;
         }
-        .signature-block .sig-box { padding: 16px 0; text-align: center; }
-        .signature-block .sig-box .title { font-weight: 700; font-size: 12px; color: #1e293b; margin-bottom: 4px; }
-        .signature-block .sig-box .sub { font-size: 10px; color: #94a3b8; }
-        .signature-block .sig-box .line { width: 60%; height: 1px; background: #cbd5e1; margin: 24px auto 4px; }
+        .signature-block .sig-box {
+            padding: 18px 16px;
+            text-align: center;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+            box-sizing: border-box;
+        }
+        .signature-block .sig-box .title {
+            font-weight: 700;
+            font-size: 13px;
+            color: #0f172a;
+            margin-bottom: 3px;
+        }
+        .signature-block .sig-box .sub {
+            font-size: 11px;
+            color: #475569;
+            margin-bottom: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .signature-block .sig-content-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 6px 0;
+            min-height: 140px;
+            height: 140px;
+        }
+        .signature-block .sig-image {
+            max-height: 135px;
+            height: 100%;
+            width: auto;
+            max-width: 95%;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .signature-block .sig-placeholder {
+            width: 100%;
+            height: 120px;
+            min-height: 120px;
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #64748b;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+        .signature-block .sig-placeholder i {
+            font-size: 20px;
+            color: #94a3b8;
+        }
+        .signature-block .sig-meta {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+            min-height: 22px;
+        }
     </style>
 </head>
 <body>
@@ -226,16 +338,68 @@
             </div>
         </div>
         <div class="signature-block">
+            @* ستون راست: مهر و امضای طرف اول (شرکت) *@
             <div class="sig-box">
-                <p class="title">طرف اول (کارفرما)</p>
-                <div class="line"></div>
-                <p class="sub">مهر و امضا</p>
+                <div>
+                    <p class="title">طرف اول (کارفرما / شرکت)</p>
+                    <p class="sub">سامانه مدیریت قراردادها راینو</p>
+                </div>
+                <div class="sig-content-area">
+                    @if (!string.IsNullOrEmpty(Model.FirstPartySignatureImageData))
+                    {
+                        <img src="@Model.FirstPartySignatureImageData" alt="مهر و امضای طرف اول" class="sig-image" />
+                    }
+                    else if (Model.SignerParty != "SecondParty" && !string.IsNullOrEmpty(Model.SignatureImageData))
+                    {
+                        <img src="@Model.SignatureImageData" alt="مهر و امضای طرف اول" class="sig-image" />
+                    }
+                    else
+                    {
+                        <div class="sig-placeholder">
+                            <i class="bi bi-pen"></i>
+                            <span>محل مهر و امضای طرف اول (شرکت)</span>
+                        </div>
+                    }
+                </div>
+                <div class="sig-meta">
+                    @(Model.SignerParty == "FirstParty" && !string.IsNullOrEmpty(Model.SignerName) ? $"امضاکننده: {Model.SignerName}" : "مهر و امضای مجاز شرکت")
+                    @if (Model.SignerParty == "FirstParty" && !string.IsNullOrEmpty(Model.SignedAtPersian))
+                    {
+                        <span> | @Model.SignedAtPersian</span>
+                    }
+                </div>
             </div>
+
+            @* ستون چپ: امضا و اثر انگشت طرف دوم (مشتری) *@
             <div class="sig-box">
-                <p class="title">طرف دوم (مجری / مشتری)</p>
-                <p class="sub" style="margin-top:4px;">نام: @(Model.CustomerName ?? Model.ClientName ?? "---")</p>
-                <div class="line"></div>
-                <p class="sub">مهر و امضا</p>
+                <div>
+                    <p class="title">طرف دوم (مجری / مشتری)</p>
+                    <p class="sub">@(Model.CustomerName ?? Model.ClientName ?? "---")</p>
+                </div>
+                <div class="sig-content-area">
+                    @if (!string.IsNullOrEmpty(Model.SecondPartySignatureImageData))
+                    {
+                        <img src="@Model.SecondPartySignatureImageData" alt="امضای طرف دوم" class="sig-image" />
+                    }
+                    else if (Model.SignerParty == "SecondParty" && !string.IsNullOrEmpty(Model.SignatureImageData))
+                    {
+                        <img src="@Model.SignatureImageData" alt="امضای طرف دوم" class="sig-image" />
+                    }
+                    else
+                    {
+                        <div class="sig-placeholder">
+                            <i class="bi bi-fingerprint"></i>
+                            <span>محل امضا و اثر انگشت طرف دوم (مشتری)</span>
+                        </div>
+                    }
+                </div>
+                <div class="sig-meta">
+                    نام: @(Model.CustomerName ?? Model.ClientName ?? "مشتری")
+                    @if (Model.SignerParty == "SecondParty" && !string.IsNullOrEmpty(Model.SignedAtPersian))
+                    {
+                        <span> | @Model.SignedAtPersian</span>
+                    }
+                </div>
             </div>
         </div>
     </div>
