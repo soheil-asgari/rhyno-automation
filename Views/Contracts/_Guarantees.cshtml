@@ -34,13 +34,13 @@
                     </td>
                     <td class="px-3 py-2 text-center"><span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-bold border @g.BadgeClass">@g.StatusDisplay</span></td>
                     @if (canEdit) {<td class="px-3 py-2 text-center"><div class="inline-flex gap-1">
-                        @if (g.CanRelease) {<form action="/Contracts/@contractId/Guarantees/Release/@g.Id" method="post" class="inline release-guarantee-form">@Html.AntiForgeryToken()<button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition" title="آزادسازی"><i class="bi bi-unlock"></i></button></form>}
+                        @if (g.CanRelease) {<form action="/Contracts/@contractId/Guarantees/Release/@g.Id" method="post" class="inline release-guarantee-form">@Html.AntiForgeryToken()<button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition" title="آزادسازی" aria-label="آزادسازی ضمانت @g.GuaranteeNumber"><i class="bi bi-unlock"></i></button></form>}
                         <button type="button" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 transition edit-guarantee-btn"
                                 data-guarantee-id="@g.Id" data-guarantee-type="@g.GuaranteeType" data-guarantee-number="@g.GuaranteeNumber"
                                 data-issuing-bank="@(g.IssuingBank ?? "")" data-amount="@g.Amount"
                                 data-issued-date="@g.IssuedDate.ToString("yyyy-MM-dd")" data-expiry-date="@g.ExpiryDate.ToString("yyyy-MM-dd")"
-                                data-retention-pct="@(g.RetentionPercentage?.ToString() ?? "")" data-release-condition="@(g.ReleaseCondition ?? "")" title="ویرایش"><i class="bi bi-pencil"></i></button>
-                        <form action="/Contracts/@contractId/Guarantees/Delete/@g.Id" method="post" class="inline delete-guarantee-form">@Html.AntiForgeryToken()<button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition" title="حذف"><i class="bi bi-trash"></i></button></form>
+                                data-retention-pct="@(g.RetentionPercentage?.ToString() ?? "")" data-release-condition="@(g.ReleaseCondition ?? "")" title="ویرایش" aria-label="ویرایش ضمانت @g.GuaranteeNumber"><i class="bi bi-pencil"></i></button>
+                        <form action="/Contracts/@contractId/Guarantees/Delete/@g.Id" method="post" class="inline delete-guarantee-form">@Html.AntiForgeryToken()<button type="submit" class="rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-2 py-1 text-[9px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition" title="حذف" aria-label="حذف ضمانت @g.GuaranteeNumber"><i class="bi bi-trash"></i></button></form>
                     </div></td>}
                 </tr>
             }

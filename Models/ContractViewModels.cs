@@ -807,6 +807,54 @@ public class AutoRenewalLogVM
     public string? CancelledByUserName { get; set; }
 }
 
+public class AutoRenewalAdminVM
+{
+    public bool SchedulerRunning { get; set; }
+    public string SchedulerName { get; set; } = "Hangfire";
+    public string RecurringCron { get; set; } = "0 4 * * *";
+    public DateTime? NextExecutionUtc { get; set; }
+    public DateTime? LastExecutionUtc { get; set; }
+    public int ActiveAutoRenewContractsCount { get; set; }
+    public int TotalRenewalsExecutedCount { get; set; }
+    public int FailedRenewalsCount { get; set; }
+    public List<UpcomingAutoRenewalVM> UpcomingRenewals { get; set; } = new();
+    public List<AutoRenewalHistoryItemVM> ExecutionHistory { get; set; } = new();
+}
+
+public class UpcomingAutoRenewalVM
+{
+    public int ContractId { get; set; }
+    public string ContractNumber { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string? CustomerName { get; set; }
+    public DateTime? EndDate { get; set; }
+    public string? EndDatePersian { get; set; }
+    public int AutoRenewDaysBeforeExpiry { get; set; }
+    public int AutoRenewTermMonths { get; set; }
+    public DateTime ScheduledCheckDate { get; set; }
+    public string ScheduledCheckDatePersian { get; set; } = string.Empty;
+    public int DaysRemaining { get; set; }
+    public string Status { get; set; } = string.Empty;
+}
+
+public class AutoRenewalHistoryItemVM
+{
+    public int Id { get; set; }
+    public int ContractId { get; set; }
+    public string ContractNumber { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public DateTime RenewedAt { get; set; }
+    public string RenewedAtPersian { get; set; } = string.Empty;
+    public DateTime? PreviousEndDate { get; set; }
+    public string? PreviousEndDatePersian { get; set; }
+    public DateTime? NewEndDate { get; set; }
+    public string? NewEndDatePersian { get; set; }
+    public int RenewalTermMonths { get; set; }
+    public string Status { get; set; } = "Success";
+    public string? Notes { get; set; }
+    public string? CancelledByUserName { get; set; }
+}
+
 /// <summary>
 /// Request model for saving column visibility preferences.
 /// </summary>

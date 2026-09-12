@@ -44,6 +44,7 @@ public sealed class OfficeDbContext : ModularDbContext
     public DbSet<ContractAttachment> ContractAttachments => Set<ContractAttachment>();
     public DbSet<ContractUserSetting> ContractUserSettings => Set<ContractUserSetting>();
     public DbSet<ContractAuditLog> ContractAuditLogs => Set<ContractAuditLog>();
+    public DbSet<ContractSequence> ContractSequences => Set<ContractSequence>();
 
     // ── Document Requirements Module ─────────────────────────────────
     public DbSet<DocumentRequirement> DocumentRequirements => Set<DocumentRequirement>();
@@ -235,6 +236,15 @@ public sealed class OfficeDbContext : ModularDbContext
         {
             entity.ToTable("ContractUserSettings");
             entity.HasIndex(s => s.UserId).IsUnique();
+        });
+
+        // ── ContractSequence Configuration ────────────────────────
+        modelBuilder.Entity<ContractSequence>(entity =>
+        {
+            entity.ToTable("ContractSequences");
+            entity.HasKey(s => s.Year);
+            entity.Property(s => s.Year).ValueGeneratedNever();
+            entity.Property(s => s.LastSequenceNumber).IsConcurrencyToken();
         });
 
         // ── ContractTaxLine Configuration ─────────────────────────

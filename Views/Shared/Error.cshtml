@@ -5,13 +5,14 @@
     var statusCode = Context.Response.StatusCode;
     var is404 = statusCode == 404;
     var is403 = statusCode == 403;
-    var is500 = statusCode >= 500 && !is403 && !is404;
+    var is429 = statusCode == 429;
+    var is500 = statusCode >= 500 && !is403 && !is404 && !is429;
 
     // Determine color scheme based on error type
-    var bgClass = is404 ? "bg-amber-50 dark:bg-amber-500/10" : is403 ? "bg-rose-50 dark:bg-rose-500/10" : "bg-rose-50 dark:bg-rose-500/10";
-    var iconClass = is404 ? "bi-question-lg text-amber-600 dark:text-amber-400" : is403 ? "bi-shield-lock text-rose-600 dark:text-rose-400" : "bi-exclamation-triangle text-rose-600 dark:text-rose-400";
-    var codeText = is404 ? "۴۰۴" : is403 ? "۴۰۳" : "۵۰۰";
-    var titleText = is404 ? "صفحه مورد نظر یافت نشد" : is403 ? "دسترسی غیرمجاز" : "خطای سرور";
+    var bgClass = is404 ? "bg-amber-50 dark:bg-amber-500/10" : is429 ? "bg-amber-50 dark:bg-amber-500/10" : is403 ? "bg-rose-50 dark:bg-rose-500/10" : "bg-rose-50 dark:bg-rose-500/10";
+    var iconClass = is404 ? "bi-question-lg text-amber-600 dark:text-amber-400" : is429 ? "bi-hourglass-split text-amber-600 dark:text-amber-400" : is403 ? "bi-shield-lock text-rose-600 dark:text-rose-400" : "bi-exclamation-triangle text-rose-600 dark:text-rose-400";
+    var codeText = is404 ? "۴۰۴" : is429 ? "۴۲۹" : is403 ? "۴۰۳" : "۵۰۰";
+    var titleText = is404 ? "صفحه مورد نظر یافت نشد" : is429 ? "تعداد درخواست‌های بیش از حد مجاز" : is403 ? "دسترسی غیرمجاز" : "خطای سرور";
 }
 
 <div class="flex min-h-[80vh] items-center justify-center px-4">
@@ -32,6 +33,10 @@
             @if (is404)
             {
                 <text>صفحه‌ای که به دنبال آن هستید وجود ندارد، حذف شده یا آدرس آن تغییر کرده است. لطفاً آدرس را بررسی کنید یا به صفحه اصلی بازگردید.</text>
+            }
+            else if (is429)
+            {
+                <text>تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کرده و پس از یک دقیقه مجدداً تلاش نمایید.</text>
             }
             else if (is403)
             {

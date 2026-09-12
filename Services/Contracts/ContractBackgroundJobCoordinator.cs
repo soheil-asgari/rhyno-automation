@@ -22,37 +22,23 @@ public sealed class ContractBackgroundJobCoordinator : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // NOTE: Recurring scheduled jobs (Auto-renewal, Expiry check, Overdue payments,
+        // Revenue recognition, and Penalty calculation) have been migrated to Hangfire
+        // with persistent SQL Server storage and distributed locks (see ContractHangfireJobs).
+        // This coordinator loop acts solely as an in-process fallback when Hangfire server
+        // is not running in the current host environment.
         await Task.Yield();
+        _logger.LogInformation("ContractBackgroundJobCoordinator initialized. Active scheduler: Hangfire.");
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var now = DateTime.UtcNow;
-                if (now.Hour == 1)
-                {
-                    using var scope = _scopeFactory.CreateScope();
-                    await RunExpiryCheckAsync(scope.ServiceProvider, now, stoppingToken);
-                    await RunOverduePaymentCheckAsync(scope.ServiceProvider, now, stoppingToken);
-                }
-                if (now.Hour == 2)
-                {
-                    using var scope = _scopeFactory.CreateScope();
-                    await RunRevenueRecognitionAsync(scope.ServiceProvider, now, stoppingToken);
-                }
-                if (now.Hour == 3)
-                {
-                    using var scope = _scopeFactory.CreateScope();
-                    await RunPenaltyCalculationAsync(scope.ServiceProvider, now, stoppingToken);
-                }
-                if (now.Hour == 4)
-                {
-                    using var scope = _scopeFactory.CreateScope();
-                    await RunAutoRenewalAsync(scope.ServiceProvider, now, stoppingToken);
-                }
+                // In-process heartbeat every 6 hours if cancellation not requested
+                await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
-            catch (Exception ex) { _logger.LogError(ex, "Error in coordinator."); }
-            await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+            catch (Exception ex) { _logger.LogError(ex, "Error in coordinator background heartbeat."); }
         }
     }
 
@@ -245,5 +231,17 @@ public sealed class ContractBackgroundJobCoordinator : BackgroundService
         var count = await contractService.ProcessAutoRenewalsAsync(ct);
         if (count > 0)
             _logger.LogInformation("Auto-renewal: {0} contracts renewed.", count);
+    }
+
+    public async Task RunExpiryCheckPublicAsync(CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        await RunExpiryCheckAsync(scope.ServiceProvider, DateTime.UtcNow, ct);
+    }
+
+    public async Task RunOverduePaymentCheckPublicAsync(CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        await RunOverduePaymentCheckAsync(scope.ServiceProvider, DateTime.UtcNow, ct);
     }
 }

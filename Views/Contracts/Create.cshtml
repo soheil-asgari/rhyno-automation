@@ -445,7 +445,12 @@
             </form>
         </div>
 
+        @section Styles {
+            <link rel="stylesheet" href="~/lib/quill/quill.snow.css" asp-append-version="true" />
+        }
+
         @section Scripts {
+            <script src="~/lib/quill/quill.js" asp-append-version="true"></script>
             <script src="~/js/persian-date.min.js"></script>
             <script src="~/js/contracts-create-script.js" asp-append-version="true"></script>
         }

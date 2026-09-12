@@ -2113,16 +2113,16 @@ public sealed class DomainServiceTests
         {
             ContractNumber = "CNT-2026-999",
             Title = "تست امضا",
-            PartyName = "مشتری تست",
-            Amount = 1000,
+            ClientName = "مشتری تست",
+            TotalAmount = 1000,
             Status = "Draft"
         };
         dbContext.Contracts.Add(contract);
         await dbContext.SaveChangesAsync();
 
-        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<SignatureService>.Instance;
+        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<OfficeAutomation.Services.Contracts.SignatureService>.Instance;
         var digSig = new DigitalSignatureService();
-        var service = new SignatureService(dbContext, digSig, logger);
+        var service = new OfficeAutomation.Services.Contracts.SignatureService(dbContext, digSig, logger);
 
         string longUserAgent = new string('A', 600);
         string longIp = new string('1', 60);

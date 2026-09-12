@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Antiforgery
 @using OfficeAutomation.Models
@@ -293,6 +293,9 @@
                                                                                 <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Archive" ? "active" : "")'
                                                                                        asp-controller="Contracts" asp-action="Archive"><i class="bi bi-archive menu-icon"></i>
                                                                                     بایگانی</a></li>
+                                                                                <li><a class='menu-item @(currentController == "Contracts" && currentAction == "AutoRenewals" ? "active" : "")'
+                                                                                       asp-controller="Contracts" asp-action="AutoRenewals"><i class="bi bi-arrow-repeat menu-icon"></i>
+                                                                                    تمدید خودکار</a></li>
                                                                                     <li><a class='menu-item @(currentController == "Contracts" && currentAction == "Settings" ? "active" : "")'
                                                                                            asp-controller="Contracts" asp-action="Settings"><i class="bi bi-gear menu-icon"></i>
                                                                                         تنظیمات</a></li>

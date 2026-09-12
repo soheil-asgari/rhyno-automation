@@ -139,67 +139,102 @@
                 // ── WYSIWYG & Template Auto-Populate ───────────────────────
                 var editor = document.getElementById('createContractEditor');
                 var textarea = document.getElementById('ContractBodyHtml');
+                var createQuill = null;
+
+                if (editor && typeof Quill !== 'undefined') {
+                    createQuill = new Quill('#createContractEditor', {
+                        theme: 'snow',
+                        modules: {
+                            toolbar: [
+                                [{ 'header': [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                [{ 'align': [] }],
+                                ['clean']
+                            ]
+                        },
+                        placeholder: 'متن قرارداد را اینجا بنویسید...'
+                    });
+
+                    if (textarea && textarea.value) {
+                        createQuill.clipboard.dangerouslyPasteHTML(textarea.value);
+                    }
+
+                    createQuill.on('text-change', function() {
+                        window.syncContractEditor();
+                    });
+                } else if (editor && textarea && textarea.value) {
+                    editor.innerHTML = textarea.value;
+                }
 
                 window.syncContractEditor = function () {
-                if (editor && textarea) textarea.value = editor.innerHTML;
+                    if (textarea) {
+                        if (createQuill) {
+                            textarea.value = createQuill.root.innerHTML;
+                        } else if (editor) {
+                            textarea.value = editor.innerHTML;
+                        }
+                    }
                 };
 
-                if (editor && textarea) {
-                if (textarea.value) editor.innerHTML = textarea.value;
-                editor.addEventListener('input', window.syncContractEditor);
+                if (editor && !createQuill) {
+                    editor.addEventListener('input', window.syncContractEditor);
                 }
-
-                document.querySelectorAll('.wysiwyg-btn[data-cmd]').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                var cmd = btn.getAttribute('data-cmd');
-                if (editor) editor.focus();
-                document.execCommand(cmd, false, null);
-                window.syncContractEditor();
-                });
-                });
 
                 var templateSelect = document.getElementById('TemplateId');
-                if (templateSelect && editor) {
-                templateSelect.addEventListener('change', function () {
-                var id = this.value;
-                if (id) {
-                fetch('/Contracts/PreviewTemplate?id=' + id + '&raw=true')
-                .then(function (r) { return r.text(); })
-                .then(function (html) {
-                if (html && (!editor.innerHTML.trim() || confirm('متن فعلی جایگزین شود؟'))) {
-                editor.innerHTML = html;
-                window.syncContractEditor();
-                }
-                });
-                }
-                });
+                if (templateSelect) {
+                    templateSelect.addEventListener('change', function () {
+                        var id = this.value;
+                        if (id) {
+                            fetch('/Contracts/PreviewTemplate?id=' + id + '&raw=true')
+                                .then(function (r) { return r.text(); })
+                                .then(function (html) {
+                                    if (html) {
+                                        if (createQuill) {
+                                            createQuill.clipboard.dangerouslyPasteHTML(html);
+                                        } else if (editor) {
+                                            editor.innerHTML = html;
+                                        }
+                                        window.syncContractEditor();
+                                    }
+                                });
+                        }
+                    });
                 }
 
                 // WYSIWYG Global Helpers
-                window.changeFontSize = function (size) { if (editor) { editor.focus(); document.execCommand('fontSize', false, size); window.syncContractEditor(); } };
+                window.changeFontSize = function (size) { if (editor) { editor.focus(); } };
                 window.insertImage = function () { document.getElementById('imageUploadInput')?.click(); };
                 window.handleImageUpload = function (e) {
-                var file = e.target.files[0];
-                if (file) {
-                var reader = new FileReader();
-                reader.onload = function (evt) {
-                if (editor) { editor.focus(); document.execCommand('insertImage', false, evt.target.result); window.syncContractEditor(); }
-                };
-                reader.readAsDataURL(file);
-                }
+                    var file = e.target.files[0];
+                    if (file) {
+                        var reader = new FileReader();
+                        reader.onload = function (evt) {
+                            if (createQuill) {
+                                var range = createQuill.getSelection(true);
+                                createQuill.insertEmbed(range ? range.index : 0, 'image', evt.target.result);
+                                window.syncContractEditor();
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
                 };
                 window.insertTable = function () {
-                var r = prompt('تعداد ردیف:', '3'), c = prompt('تعداد ستون:', '3');
-                if (r && c) {
-                var html = '<table style="width:100%;border-collapse:collapse;margin:10px 0;">';
-                for (var i = 0; i < parseInt(r, 10); i++) {
-                html += '<tr>';
-                for (var j = 0; j < parseInt(c, 10); j++) html += '<td style="border:1px solid #ddd;padding:6px;">&nbsp;</td>';
-                html += '</tr>';
-                }
-                html += '</table>';
-                if (editor) { editor.focus(); document.execCommand('insertHTML', false, html); window.syncContractEditor(); }
-                }
+                    var r = prompt('تعداد ردیف:', '3'), c = prompt('تعداد ستون:', '3');
+                    if (r && c) {
+                        var html = '<table style="width:100%;border-collapse:collapse;margin:10px 0;">';
+                        for (var i = 0; i < parseInt(r, 10); i++) {
+                            html += '<tr>';
+                            for (var j = 0; j < parseInt(c, 10); j++) html += '<td style="border:1px solid #ddd;padding:6px;">&nbsp;</td>';
+                            html += '</tr>';
+                        }
+                        html += '</table>';
+                        if (createQuill) {
+                            var range = createQuill.getSelection(true);
+                            createQuill.clipboard.dangerouslyPasteHTML(range ? range.index : 0, html);
+                            window.syncContractEditor();
+                        }
+                    }
                 };
 
                 // ── DOM Initialization ─────────────────────────────────────

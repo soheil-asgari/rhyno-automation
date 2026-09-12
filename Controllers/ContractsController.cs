@@ -1,11 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using OfficeAutomation.Models;
+using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Services.Contracts;
 using OfficeAutomation.Services.Security;
 using System.Security.Claims;
+using Hangfire;
+using OfficeAutomation.Services;
+using OfficeAutomation.Utilities;
 
 namespace OfficeAutomation.Controllers;
 
@@ -22,8 +28,9 @@ public class ContractsController : Controller
     private readonly IContractExportService _exportService;
     private readonly IPaymentScheduleService _paymentScheduleService;
     private readonly IAmendmentService _amendmentService;
+    private readonly ITemplateRenderingService _templateRenderer;
     private readonly IWebHostEnvironment _env;
-    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, IPaymentScheduleService paymentScheduleService, IAmendmentService amendmentService, ILogger<ContractsController> logger, IWebHostEnvironment env)
+    public ContractsController(IContractService contractService, ISignatureService signatureService, IAttachmentVersionService attachmentVersionService, IContractFieldValidator fieldValidator, IContractReportService reportService, IContractExportService exportService, IPaymentScheduleService paymentScheduleService, IAmendmentService amendmentService, ITemplateRenderingService templateRenderer, ILogger<ContractsController> logger, IWebHostEnvironment env)
     {
         _contractService = contractService;
         _signatureService = signatureService;
@@ -33,6 +40,7 @@ public class ContractsController : Controller
         _exportService = exportService;
         _paymentScheduleService = paymentScheduleService;
         _amendmentService = amendmentService;
+        _templateRenderer = templateRenderer;
         _logger = logger;
         _env = env;
     }
@@ -50,6 +58,23 @@ public class ContractsController : Controller
     private bool IsAjaxRequest()
     {
         return HttpContext.Request.Headers.XRequestedWith == "XMLHttpRequest";
+    }
+
+    /// <summary>
+    /// Converts Gregorian DateTime to Persian (Shamsi) date string (yyyy/MM/dd).
+    /// </summary>
+    public static string ToPersianDate(DateTime dt)
+    {
+        if (dt == DateTime.MinValue || dt.Year < 1700) return string.Empty;
+        try
+        {
+            var pc = new System.Globalization.PersianCalendar();
+            return $"{pc.GetYear(dt):0000}/{pc.GetMonth(dt):00}/{pc.GetDayOfMonth(dt):00}";
+        }
+        catch
+        {
+            return dt.ToString("yyyy/MM/dd");
+        }
     }
 
     /// <summary>
@@ -656,11 +681,12 @@ public class ContractsController : Controller
             _logger.LogError(ex, "Failed to upload attachment for contract {ContractId}", contractId);
             if (IsAjaxRequest())
                 return Json(new { success = false, message = "خطا در بارگذاری فایل: " + ex.Message });
-            TempData["ErrorMessage"] = "خطا در بارگذاری فایل.";
+            TempData["ErrorMessage"] = ex.Message;
         }
         return RedirectToAction(nameof(Details), new { id = contractId });
     }
 
+    [EnableRateLimiting("attachment-download")]
     [HttpGet("Contracts/DownloadAttachment/{attachmentId}")]
     public async Task<IActionResult> DownloadAttachment(int attachmentId, CancellationToken ct)
     {
@@ -723,8 +749,36 @@ public class ContractsController : Controller
         {
             var currentUserId = GetCurrentUserId();
             var vm = await _contractService.GetDetailsViewModelAsync(id, currentUserId, ct);
+            if (!string.IsNullOrWhiteSpace(vm.ContractBodyHtml))
+            {
+                vm.ContractBodyHtml = _templateRenderer.RenderTemplate(vm.ContractBodyHtml, vm);
+            }
+            if (!string.IsNullOrWhiteSpace(vm.TermsAndConditions))
+            {
+                vm.TermsAndConditions = _templateRenderer.RenderTemplate(vm.TermsAndConditions, vm);
+            }
+            if (!string.IsNullOrWhiteSpace(vm.Description))
+            {
+                vm.Description = _templateRenderer.RenderTemplate(vm.Description, vm);
+            }
             ViewData["Title"] = "چاپ / PDF قرارداد";
             return View("GenerateDocument", vm);
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+    }
+
+    [HttpGet("Contracts/ExportToDocx/{id}")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> ExportToDocx(int id, CancellationToken ct)
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            var docxBytes = await _exportService.ExportContractToDocxAsync(id, currentUserId, ct);
+            var contract = await _contractService.GetDetailsViewModelAsync(id, currentUserId, ct);
+            var fileName = $"Contract_{contract.ContractNumber ?? id.ToString()}.docx";
+            return File(docxBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileName);
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
@@ -990,6 +1044,7 @@ public class ContractsController : Controller
         }
     }
 
+    [EnableRateLimiting("attachment-download")]
     [HttpGet("Contracts/Attachment/Version/{versionId}/Download")]
     public async Task<IActionResult> DownloadAttachmentVersion(int versionId, CancellationToken ct)
     {
@@ -1350,6 +1405,38 @@ public class ContractsController : Controller
         return RedirectToAction(nameof(Details), new { id = contractId });
     }
 
+    /// <summary>
+    /// Admin view showing upcoming/executed auto-renewal jobs, scheduler checkpoints, and history.
+    /// </summary>
+    [HttpGet("Contracts/AutoRenewals")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> AutoRenewals(CancellationToken ct)
+    {
+        var vm = await _contractService.GetAutoRenewalAdminViewModelAsync(ct);
+        return View(vm);
+    }
+
+    /// <summary>
+    /// Manually triggers immediate auto-renewal processing via Hangfire one-off background job.
+    /// </summary>
+    [HttpPost("Contracts/TriggerAutoRenewalsNow")]
+    [ValidateAntiForgeryToken]
+    [PermissionAuthorize("Contract.Edit")]
+    public IActionResult TriggerAutoRenewalsNow()
+    {
+        try
+        {
+            var jobId = BackgroundJob.Enqueue<ContractHangfireJobs>(j => j.ProcessAutoRenewalsAsync(CancellationToken.None));
+            TempData["SuccessMessage"] = $"جاب تمدید خودکار با موفقیت در صف اجرا قرار گرفت (Job ID: {jobId}).";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enqueue immediate auto-renewal Hangfire job.");
+            TempData["ErrorMessage"] = $"خطا در ارسال جاب به صف اجرا: {ex.Message}";
+        }
+        return RedirectToAction(nameof(AutoRenewals));
+    }
+
     // ─────────────────────────────────────────────────────────────────
     //  Column Customization
     // ─────────────────────────────────────────────────────────────────
@@ -1579,5 +1666,175 @@ public class ContractsController : Controller
             TempData["ErrorMessage"] = $"خطا در لغو اصلاحیه: {ex.Message}";
             return RedirectToAction(nameof(Index));
         }
+    }
+
+    [HttpGet("Contracts/{id}/VersionSnapshots")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> GetVersionSnapshots(
+        int id,
+        [FromServices] OfficeDbContext db,
+        [FromServices] IVersionService versionService,
+        CancellationToken ct)
+    {
+        var currentUserId = GetCurrentUserId();
+        await _contractService.EnforceAccessAsync(id, currentUserId, ct);
+
+        var contract = await db.Contracts.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (contract == null) return NotFound();
+
+        var list = new List<object>();
+
+        // 1. Current live version (represented by versionId = 0)
+        var currentUpdated = contract.UpdatedAt != default ? contract.UpdatedAt : contract.CreatedAt;
+        var currentPersian = ToPersianDate(currentUpdated);
+        list.Add(new
+        {
+            id = 0,
+            label = $"نسخه جاری (زنده) - {currentPersian}",
+            type = "Current",
+            majorVersion = 0,
+            minorVersion = 0,
+            createdAt = currentUpdated,
+            createdAtPersian = currentPersian
+        });
+
+        // 2. Stored versions (amendments, edits, snapshots)
+        var versions = await versionService.GetVersionsForContractAsync(id, ct);
+        foreach (var v in versions)
+        {
+            var pDate = ToPersianDate(v.CreatedAt);
+            var descPart = !string.IsNullOrWhiteSpace(v.ChangeDescription) ? $" ({v.ChangeDescription})" : "";
+            var typeLabel = v.ChangeType switch
+            {
+                "Amendment" => "اصلاحیه",
+                "Created" => "نسخه اولیه",
+                "Edited" => "ویرایش",
+                "StatusChange" => "تغییر وضعیت",
+                _ => v.ChangeType
+            };
+
+            list.Add(new
+            {
+                id = v.Id,
+                label = $"نسخه {v.VersionLabel} [{typeLabel}] - {pDate}{descPart}",
+                type = v.ChangeType,
+                majorVersion = v.MajorVersion,
+                minorVersion = v.MinorVersion,
+                createdAt = v.CreatedAt,
+                createdAtPersian = pDate
+            });
+        }
+
+        return Json(new { success = true, data = list });
+    }
+
+    [HttpGet("Contracts/{id}/VersionContent")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> GetVersionContent(
+        int id,
+        [FromQuery] int versionId,
+        [FromServices] OfficeDbContext db,
+        [FromServices] IVersionService versionService,
+        CancellationToken ct)
+    {
+        var currentUserId = GetCurrentUserId();
+        await _contractService.EnforceAccessAsync(id, currentUserId, ct);
+
+        var contract = await db.Contracts.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (contract == null) return NotFound();
+
+        if (versionId == 0)
+        {
+            // Current live state
+            var bodyHtml = contract.ContractBodyHtml ?? string.Empty;
+            var plainText = HtmlSanitizer.StripTags(bodyHtml);
+            if (string.IsNullOrWhiteSpace(plainText) && !string.IsNullOrWhiteSpace(contract.TermsAndConditions))
+            {
+                plainText = contract.TermsAndConditions;
+            }
+
+            return Json(new
+            {
+                success = true,
+                versionId = 0,
+                versionLabel = "جاری",
+                title = contract.Title,
+                contractNumber = contract.ContractNumber,
+                totalAmount = contract.TotalAmount,
+                startDate = contract.StartDate.ToString("yyyy-MM-dd"),
+                startDatePersian = ToPersianDate(contract.StartDate),
+                endDate = contract.EndDate?.ToString("yyyy-MM-dd"),
+                endDatePersian = contract.EndDate.HasValue ? ToPersianDate(contract.EndDate.Value) : null,
+                bodyHtml = bodyHtml,
+                bodyText = plainText
+            });
+        }
+
+        // Stored snapshot
+        var v = await versionService.GetVersionByIdAsync(versionId, ct);
+        if (v == null || v.ContractId != id)
+        {
+            return Json(new { success = false, message = "نسخه مورد نظر یافت نشد." });
+        }
+
+        var snapshot = System.Text.Json.JsonSerializer.Deserialize<ContractSnapshot>(
+            v.SnapshotData,
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        ) ?? new ContractSnapshot();
+
+        var snapHtml = snapshot.ContractBodyHtml ?? string.Empty;
+        var snapText = HtmlSanitizer.StripTags(snapHtml);
+        if (string.IsNullOrWhiteSpace(snapText) && !string.IsNullOrWhiteSpace(snapshot.TermsAndConditions))
+        {
+            snapText = snapshot.TermsAndConditions;
+        }
+
+        return Json(new
+        {
+            success = true,
+            versionId = v.Id,
+            versionLabel = v.VersionLabel,
+            title = snapshot.Title,
+            contractNumber = snapshot.ContractNumber,
+            totalAmount = snapshot.TotalAmount,
+            startDate = snapshot.StartDate.ToString("yyyy-MM-dd"),
+            startDatePersian = ToPersianDate(snapshot.StartDate),
+            endDate = snapshot.EndDate?.ToString("yyyy-MM-dd"),
+            endDatePersian = snapshot.EndDate.HasValue ? ToPersianDate(snapshot.EndDate.Value) : null,
+            bodyHtml = snapHtml,
+            bodyText = snapText
+        });
+    }
+
+    [HttpGet("Contracts/GetAmendmentRedline/{amendmentId}")]
+    [PermissionAuthorize("Contract.View")]
+    public async Task<IActionResult> GetAmendmentRedline(int amendmentId, [FromServices] OfficeDbContext db, [FromServices] IContractDiffService diffService, CancellationToken ct)
+    {
+        var amendment = await db.ContractAmendments
+            .Include(a => a.Contract)
+            .FirstOrDefaultAsync(a => a.Id == amendmentId, ct);
+
+        if (amendment == null)
+            return Json(new { success = false, message = "اصلاحیه یافت نشد." });
+
+        var oldText = amendment.Contract?.ContractBodyHtml
+            ?? amendment.Contract?.TermsAndConditions
+            ?? amendment.Contract?.Description;
+
+        var newText = !string.IsNullOrWhiteSpace(amendment.Description)
+            ? amendment.Description
+            : oldText;
+
+        var diffHtml = diffService.GenerateRedlineDiff(oldText, newText);
+
+        return Json(new
+        {
+            success = true,
+            amendmentTitle = amendment.Title,
+            amendmentNumber = amendment.AmendmentNumber,
+            diffHtml = diffHtml
+        });
     }
 }

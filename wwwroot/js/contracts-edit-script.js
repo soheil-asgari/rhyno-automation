@@ -255,30 +255,48 @@
         initJalaliPickers();
         convertDatesBeforeSubmit();
 
-        // Ensure clicking a calendar icon forwards focus to its input
-        // so the Jalali datepicker opens reliably.
-        document.querySelectorAll('.jalali-datepicker-wrapper .form-icon-left').forEach(function (icon) {
-            icon.addEventListener('click', function () {
-                var input = this.closest('.jalali-datepicker-wrapper').querySelector('input.jalali-date-input');
-                if (input) input.focus();
-            });
-        });
+        // Render initial dynamic fields for selected contract type
+        var contractTypeSelect = document.getElementById('ContractType');
+        if (contractTypeSelect && contractTypeSelect.value) {
+            renderDynamicFieldsForType(contractTypeSelect.value);
+        }
     });
 })();
+
 // ── Dynamic Type-Specific Fields (EAV) ──────────────────────
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 var allTypeFields = [];
 try { var jsonEl = document.getElementById('allTypeFieldsJson'); if (jsonEl && jsonEl.value) allTypeFields = JSON.parse(jsonEl.value); } catch (e) { }
 
-var preloadedFieldValues = {};
+var activeFieldValues = {};
 try {
     var valuesEl = document.getElementById('submittedFieldValuesJson');
     if (valuesEl && valuesEl.value && valuesEl.value !== '{}') {
         var parsed = JSON.parse(valuesEl.value);
-        if (typeof parsed === 'object' && !Array.isArray(parsed)) preloadedFieldValues = parsed;
+        if (typeof parsed === 'object' && !Array.isArray(parsed)) activeFieldValues = parsed;
     }
 } catch (e) { }
 
+function updateActiveFieldValuesFromDOM() {
+    document.querySelectorAll('#dynamicFieldsContainer .dynamic-field-input').forEach(function (input) {
+        var key = input.getAttribute('data-field-key');
+        if (key) {
+            activeFieldValues[key] = input.value;
+        }
+    });
+}
+
 function renderDynamicFieldsForType(contractType) {
+    updateActiveFieldValuesFromDOM();
     var container = document.getElementById('dynamicFieldsContainer');
     if (!container) return;
     var matching = allTypeFields.filter(function (f) { return f.ContractType === contractType; });
@@ -298,23 +316,30 @@ function renderDynamicFieldsForType(contractType) {
 
     Object.keys(sections).forEach(function (sectionName) {
         var fields = sections[sectionName];
-        html += '<div class="mb-3"><h3 class="text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1.5">' + sectionName + '</h3>';
+        html += '<div class="mb-3"><h3 class="text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1.5">' + escapeHtml(sectionName) + '</h3>';
         html += '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">';
         fields.forEach(function (field) {
-            var savedValue = preloadedFieldValues[field.FieldKey] || '';
+            var savedValue = activeFieldValues[field.FieldKey] !== undefined ? activeFieldValues[field.FieldKey] : '';
             html += '<div class="dynamic-field" data-field-key="' + field.FieldKey + '">';
-            html += '<label class="erp-label">' + field.DisplayName + (field.IsRequired ? ' <span class="text-red-500">*</span>' : '') + '</label>';
+            html += '<label class="erp-label">' + escapeHtml(field.DisplayName) + (field.IsRequired ? ' <span class="text-red-500">*</span>' : '') + '</label>';
             html += '<div class="input-wrapper">';
             if (field.FieldType === 'Boolean') {
                 html += '<select class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '"><option value="">انتخاب کنید</option><option value="بله"' + (savedValue === 'بله' ? ' selected' : '') + '>بله</option><option value="خیر"' + (savedValue === 'خیر' ? ' selected' : '') + '>خیر</option></select>';
             } else if (field.FieldType === 'Select' && field.Options) {
                 html += '<select class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '"><option value="">انتخاب کنید</option>';
-                field.Options.split(',').forEach(function (o) { html += '<option value="' + o.trim() + '"' + (savedValue === o.trim() ? ' selected' : '') + '>' + o.trim() + '</option>'; });
+                field.Options.split(',').forEach(function (o) {
+                    var trimmed = o.trim();
+                    html += '<option value="' + escapeHtml(trimmed) + '"' + (savedValue === trimmed ? ' selected' : '') + '>' + escapeHtml(trimmed) + '</option>';
+                });
                 html += '</select>';
             } else if (field.FieldType === 'TextArea' || field.FieldType === 'Textarea') {
-                html += '<textarea class="erp-input dynamic-field-input w-full min-h-[52px] text-[11px]" data-field-key="' + field.FieldKey + '" placeholder="' + (field.Placeholder || '') + '" rows="2">' + savedValue + '</textarea>';
+                html += '<textarea class="erp-input dynamic-field-input w-full min-h-[52px] text-[11px]" data-field-key="' + field.FieldKey + '" placeholder="' + escapeHtml(field.Placeholder || '') + '" rows="2">' + escapeHtml(savedValue) + '</textarea>';
+            } else if (field.FieldType === 'Number' || field.FieldType === 'Decimal') {
+                html += '<input type="text" class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '" value="' + escapeHtml(savedValue) + '" placeholder="' + escapeHtml(field.Placeholder || '0') + '" dir="ltr" />';
+            } else if (field.FieldType === 'Date') {
+                html += '<input type="date" class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '" value="' + escapeHtml(savedValue) + '" />';
             } else {
-                html += '<input type="text" class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '" value="' + savedValue.replace(/"/g, '&quot;') + '" placeholder="' + (field.Placeholder || '') + '" />';
+                html += '<input type="text" class="erp-input dynamic-field-input" data-field-key="' + field.FieldKey + '" value="' + escapeHtml(savedValue) + '" placeholder="' + escapeHtml(field.Placeholder || '') + '" />';
             }
             html += '</div></div>';
         });
@@ -325,9 +350,12 @@ function renderDynamicFieldsForType(contractType) {
 }
 
 var contractTypeSelect = document.getElementById('ContractType');
-if (contractTypeSelect) contractTypeSelect.addEventListener('change', function () { renderDynamicFieldsForType(this.value); });
+if (contractTypeSelect) {
+    contractTypeSelect.addEventListener('change', function () { renderDynamicFieldsForType(this.value); });
+}
 
 function collectDynamicFieldValues() {
+    updateActiveFieldValuesFromDOM();
     // Remove any prior dynamic hidden inputs
     document.querySelectorAll('input.dynamic-field-hidden').forEach(function (h) { h.remove(); });
     // Create proper hidden inputs for ASP.NET Core Dictionary model binding
@@ -443,5 +471,12 @@ if (taxMethodEl && taxMethodEl.value === 'None') {
 }
 recalculateTaxes();
 
-document.querySelector('form[action*="Edit"]')?.addEventListener('submit', function () { collectDynamicFieldValues(); window.syncEditEditor(); });
+var editFormElement = document.getElementById('contractEditForm') || document.querySelector('form[action*="Edit"]') || document.querySelector('form');
+if (editFormElement) {
+    editFormElement.addEventListener('submit', function () {
+        collectDynamicFieldValues();
+        if (typeof window.syncEditEditor === 'function') window.syncEditEditor();
+    });
+}
+
 

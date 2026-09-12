@@ -120,6 +120,12 @@ public interface IContractService
     /// </summary>
     Task<bool> CancelAutoRenewalAsync(int contractId, string currentUserId, CancellationToken ct = default);
 
+    /// <summary>
+    /// Gets the admin dashboard view model for auto-renewal scheduled jobs,
+    /// showing upcoming renewals, execution checkpoints, and full history.
+    /// </summary>
+    Task<AutoRenewalAdminVM> GetAutoRenewalAdminViewModelAsync(CancellationToken ct = default);
+
     // ── Column Customization ───────────────────────────────────────
     /// <summary>
     /// Saves the user's column visibility preferences for the contracts list.

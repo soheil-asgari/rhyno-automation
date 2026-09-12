@@ -62,14 +62,18 @@
                 print-color-adjust: exact !important;
             }
             .signature-block .sig-content-area {
-                min-height: 130px !important;
-                height: 130px !important;
+                min-height: 140px !important;
+                height: auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
             .signature-block .sig-image {
-                height: 120px !important;
-                max-height: 120px !important;
+                height: auto !important;
+                max-height: 155px !important;
                 width: auto !important;
-                max-width: 100% !important;
+                max-width: 95% !important;
+                min-height: 90px !important;
                 object-fit: contain !important;
                 display: block !important;
                 margin: 0 auto !important;
@@ -231,12 +235,13 @@
             align-items: center;
             justify-content: center;
             margin: 6px 0;
-            min-height: 140px;
-            height: 140px;
+            min-height: 145px;
+            height: auto;
         }
         .signature-block .sig-image {
-            max-height: 135px;
-            height: 100%;
+            max-height: 155px;
+            height: auto;
+            min-height: 90px;
             width: auto;
             max-width: 95%;
             object-fit: contain;
@@ -281,6 +286,7 @@
         <div class="action-toolbar no-print">
             <button class="btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> چاپ</button>
             <button onclick="window.print()"><i class="bi bi-file-pdf"></i> ذخیره PDF</button>
+            <a href="@Url.Action("ExportToDocx", "Contracts", new { id = Model.Id })" style="background:#2b579a;color:white;border-color:#2b579a;"><i class="bi bi-file-earmark-word"></i> ذخیره DOCX</a>
             <span class="spacer"></span>
             <a href="@Url.Action("Details", "Contracts", new { id = Model.Id })"
    onclick="event.preventDefault(); if(history.length > 1) { history.back(); } else { window.location.href='@Url.Action("Details", "Contracts", new { id = Model.Id })'; }">

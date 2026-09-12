@@ -11,9 +11,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
+		<PackageReference Include="DocumentFormat.OpenXml" Version="3.2.0" />
 		<PackageReference Include="EPPlus" Version="7.6.1" />
 		<PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
 		<PackageReference Include="JsonSchema.Net" Version="9.4.0" />
+		<PackageReference Include="QuestPDF" Version="2026.8.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
 		<PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
@@ -44,17 +46,28 @@
 		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
 		<PackageReference Include="Stateless" Version="5.20.1" />
 		<PackageReference Include="Tesseract" Version="5.2.0" />
+		<PackageReference Include="Hangfire.Core" Version="1.8.17" />
+		<PackageReference Include="Hangfire.SqlServer" Version="1.8.17" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.17" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Remove="OfficeAutomation.Tests\**\*.cs" />
 		<Compile Remove="OfficeAutomation.Worker\**\*.cs" />
+		<Compile Remove="LicenseIssuer\**\*.cs" />
 		<Content Remove="OfficeAutomation.Tests\**" />
 		<Content Remove="OfficeAutomation.Worker\**" />
+		<Content Remove="LicenseIssuer\**" />
 		<None Remove="OfficeAutomation.Tests\**" />
 		<None Remove="OfficeAutomation.Worker\**" />
+		<None Remove="LicenseIssuer\**" />
 		<EmbeddedResource Remove="OfficeAutomation.Tests\**" />
 		<EmbeddedResource Remove="OfficeAutomation.Worker\**" />
+		<EmbeddedResource Remove="LicenseIssuer\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Services\Licensing\license-public.pem" />
 	</ItemGroup>
 
 	<!--

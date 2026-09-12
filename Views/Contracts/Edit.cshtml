@@ -30,7 +30,7 @@
         <link rel="stylesheet" href="~/css/contracts-form.css" asp-append-version="true" />
     }
 
-    <form asp-action="Edit" method="post">
+    <form id="contractEditForm" asp-action="Edit" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
         <div asp-validation-summary="All" class="text-danger alert alert-danger mb-3" style="font-size:0.85rem;"></div>
@@ -278,7 +278,7 @@
                 @* Rendered by JS based on selected contract type *@
             </div>
             <input type="hidden" id="allTypeFieldsJson" value='@System.Text.Json.JsonSerializer.Serialize(Model.TypeFields)' />
-            <input type="hidden" id="submittedFieldValuesJson" name="FieldValues" value='@System.Text.Json.JsonSerializer.Serialize(Model.FieldValues)' />
+            <input type="hidden" id="submittedFieldValuesJson" value='@System.Text.Json.JsonSerializer.Serialize(Model.FieldValues)' />
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2" style="margin-bottom:20px;">
                 <div>
                     <label class="erp-label">متن قرارداد (ویرایشگر بصری)</label>
@@ -320,9 +320,15 @@
     </form>
 </div>
 
-@section Scripts {
-    <script src="~/js/persian-date.min.js"></script>
+@section Styles {
+    <link rel="stylesheet" href="~/lib/quill/quill.snow.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/contracts-form.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/persian-datepicker.min.css" />
     <link rel="stylesheet" href="~/css/contracts-edit-style.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/lib/quill/quill.js" asp-append-version="true"></script>
+    <script src="~/js/persian-date.min.js"></script>
     <script src="~/js/contracts-edit-script.js" asp-append-version="true"></script>
 }

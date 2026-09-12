@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Models;
 using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Services.Auditing;
+using OfficeAutomation.Services.Security;
 using OfficeAutomation.Services.Tenancy;
+using Hangfire;
+using Hangfire.Storage;
 
 namespace OfficeAutomation.Services.Contracts;
 
@@ -19,6 +22,7 @@ public sealed class ContractService : IContractService
     private readonly IContractAccountingService _contractAccounting;
     private readonly IPaymentPenaltyService _penaltyService;
     private readonly IDocumentRequirementService _documentRequirementService;
+    private readonly ISecurityFieldMaskingService? _maskingService;
 
     public ContractService(
         OfficeDbContext context,
@@ -30,7 +34,8 @@ public sealed class ContractService : IContractService
         IVersionService versionService,
         IContractAccountingService contractAccounting,
         IPaymentPenaltyService penaltyService,
-        IDocumentRequirementService documentRequirementService)
+        IDocumentRequirementService documentRequirementService,
+        ISecurityFieldMaskingService? maskingService = null)
     {
         _context = context;
         _userManager = userManager;
@@ -42,6 +47,7 @@ public sealed class ContractService : IContractService
         _contractAccounting = contractAccounting;
         _penaltyService = penaltyService;
         _documentRequirementService = documentRequirementService;
+        _maskingService = maskingService;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -234,6 +240,12 @@ public sealed class ContractService : IContractService
     {
         try
         {
+            var sanitizedDescription = description;
+            if (!string.IsNullOrWhiteSpace(sanitizedDescription) && _maskingService != null)
+            {
+                sanitizedDescription = _maskingService.MaskSensitiveAuditText(sanitizedDescription);
+            }
+
             var auditLog = new ContractAuditLog
             {
                 ContractId = contractId,
@@ -241,7 +253,7 @@ public sealed class ContractService : IContractService
                 Action = action,
                 OldStatus = oldStatus,
                 NewStatus = newStatus,
-                Description = description,
+                Description = sanitizedDescription,
                 CreatedAt = DateTime.Now
             };
             _context.ContractAuditLogs.Add(auditLog);
@@ -1286,12 +1298,10 @@ public sealed class ContractService : IContractService
     /// and imposes a maximum size. Returns false with a reason when the upload is rejected.
     /// </summary>
     private static readonly string[] AllowedAttachmentExtensions =
-        [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".txt", ".zip"];
+        OfficeAutomation.Services.Security.FileSignatureValidator.AllowedExtensions;
 
     private static readonly string[] AllowedAttachmentMimeTypes =
-        ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-         "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-         "image/jpeg", "image/png", "image/gif", "image/webp", "text/plain", "application/zip", "application/octet-stream"];
+        OfficeAutomation.Services.Security.FileSignatureValidator.AllowedMimeTypes;
 
     private const long MaxAttachmentSizeBytes = 20 * 1024 * 1024; // 20 MB
 
@@ -1327,26 +1337,17 @@ public sealed class ContractService : IContractService
             ?? throw new KeyNotFoundException($"Contract {contractId} not found.");
 
         // Validate the upload (extension + MIME + signature + size) before writing.
-        var extension = Path.GetExtension(fileName);
-        if (IsDangerousExtension(extension) || SniffContentTypeByExtension(extension) == null)
+        var validationError = await OfficeAutomation.Services.Security.FileSignatureValidator.ValidateUploadAsync(
+            fileName, contentType, fileStream.Length, fileStream, MaxAttachmentSizeBytes, ct);
+        if (validationError != null)
         {
-            throw new InvalidOperationException("نوع فایل مجاز نیست.");
+            throw new InvalidOperationException(validationError);
         }
-
-        // Read magic bytes to confirm the file actually matches its declared type.
-        var signature = await ReadHeaderBytesAsync(fileStream, 8, ct);
-        if (!IsSignatureValid(extension, signature))
-        {
-            throw new InvalidOperationException("محتوای فایل با نوع اعلام‌شده مطابقت ندارد.");
-        }
-
-        if (fileStream.Length > MaxAttachmentSizeBytes)
-            throw new InvalidOperationException("حجم فایل بیش از حد مجاز است.");
 
         // Reset stream position so the full content is written below.
         fileStream.Position = 0;
 
-        // Server-generated file name (never trust the client filename for the physical path).
+        var extension = Path.GetExtension(fileName) ?? string.Empty;
         var safeName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
         var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "contracts", contractId.ToString());
         Directory.CreateDirectory(uploadsDir);
@@ -1463,27 +1464,7 @@ public sealed class ContractService : IContractService
     /// </summary>
     private static bool IsSignatureValid(string extension, byte[] signature)
     {
-        if (signature.Length == 0) return false;
-
-        static bool Match(byte[] data, ReadOnlySpan<byte> magic)
-        {
-            if (data.Length < magic.Length) return false;
-            for (int i = 0; i < magic.Length; i++)
-                if (data[i] != magic[i]) return false;
-            return true;
-        }
-
-        return extension.ToLowerInvariant() switch
-        {
-            ".pdf" => Match(signature, new byte[] { 0x25, 0x50, 0x44, 0x46 }),
-            ".png" => Match(signature, new byte[] { 0x89, 0x50, 0x4E, 0x47 }),
-            ".jpg" or ".jpeg" => Match(signature, new byte[] { 0xFF, 0xD8, 0xFF }),
-            ".gif" => Match(signature, new byte[] { 0x47, 0x49, 0x46, 0x38 }),
-            ".zip" => Match(signature, new byte[] { 0x50, 0x4B, 0x03, 0x04 }),
-            // Office/Text files: signature validation is best-effort.
-            ".doc" or ".docx" or ".xls" or ".xlsx" or ".webp" or ".txt" => true,
-            _ => false
-        };
+        return OfficeAutomation.Services.Security.FileSignatureValidator.IsSignatureValid(extension, signature);
     }
 
     private static async Task CopyWithLimitAsync(Stream source, Stream destination, long limit, CancellationToken ct)
@@ -2162,20 +2143,124 @@ public sealed class ContractService : IContractService
         return !await query.AnyAsync(ct);
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, SemaphoreSlim> _seqLocks = new();
+
     public async Task<string> GenerateNextContractNumberAsync(CancellationToken ct = default)
     {
-        var lastContract = await _context.Contracts.AsNoTracking()
-            .OrderByDescending(c => c.Id)
-            .FirstOrDefaultAsync(ct);
+        var pc = new System.Globalization.PersianCalendar();
+        int year = pc.GetYear(DateTime.Now);
 
-        if (lastContract == null)
-            return "CTR-1403-001";
+        int seq;
+        if (_context.Database.IsSqlServer())
+        {
+            seq = await GenerateNextContractSequenceSqlServerAsync(year, ct);
+        }
+        else
+        {
+            seq = await GenerateNextContractSequenceGenericAsync(year, ct);
+        }
 
-        var parts = lastContract.ContractNumber.Split('-');
-        if (parts.Length == 3 && int.TryParse(parts[2], out int lastNum))
-            return $"CTR-{parts[1]}-{(lastNum + 1):D3}";
+        return $"CTR-{year}-{seq:D3}";
+    }
 
-        return $"CTR-1403-001";
+    private async Task<int> GenerateNextContractSequenceSqlServerAsync(int year, CancellationToken ct)
+    {
+        // 1. Ensure the sequence record for the year exists
+        var exists = await _context.ContractSequences
+            .AsNoTracking()
+            .AnyAsync(s => s.Year == year, ct);
+
+        if (!exists)
+        {
+            var initSeq = await GetInitialSequenceForYearAsync(year, ct);
+            var now = DateTime.UtcNow;
+            await _context.Database.ExecuteSqlRawAsync(
+                @"IF NOT EXISTS (SELECT 1 FROM [ContractSequences] WHERE [Year] = {0})
+                  BEGIN
+                      INSERT INTO [ContractSequences] ([Year], [LastSequenceNumber], [UpdatedAt])
+                      VALUES ({0}, {1}, {2})
+                  END",
+                new object[] { year, initSeq, now },
+                ct);
+        }
+
+        // 2. Atomically increment and output the new sequence number
+        var seqParam = new Microsoft.Data.SqlClient.SqlParameter("@nextSeq", System.Data.SqlDbType.Int)
+        {
+            Direction = System.Data.ParameterDirection.Output
+        };
+        var yearParam = new Microsoft.Data.SqlClient.SqlParameter("@year", year);
+        var updatedParam = new Microsoft.Data.SqlClient.SqlParameter("@updatedAt", DateTime.UtcNow);
+
+        await _context.Database.ExecuteSqlRawAsync(
+            @"UPDATE [ContractSequences] WITH (UPDLOCK, ROWLOCK)
+              SET [LastSequenceNumber] = [LastSequenceNumber] + 1,
+                  @nextSeq = [LastSequenceNumber] + 1,
+                  [UpdatedAt] = @updatedAt
+              WHERE [Year] = @year",
+            new object[] { yearParam, updatedParam, seqParam },
+            ct);
+
+        if (seqParam.Value != null && seqParam.Value != DBNull.Value)
+        {
+            return (int)seqParam.Value;
+        }
+
+        return await GenerateNextContractSequenceGenericAsync(year, ct);
+    }
+
+    private async Task<int> GenerateNextContractSequenceGenericAsync(int year, CancellationToken ct)
+    {
+        var semaphore = _seqLocks.GetOrAdd(year, _ => new SemaphoreSlim(1, 1));
+        await semaphore.WaitAsync(ct);
+        try
+        {
+            var seqEntity = await _context.ContractSequences.FirstOrDefaultAsync(s => s.Year == year, ct);
+            if (seqEntity == null)
+            {
+                var initialSeq = await GetInitialSequenceForYearAsync(year, ct);
+                seqEntity = new ContractSequence
+                {
+                    Year = year,
+                    LastSequenceNumber = initialSeq + 1,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.ContractSequences.Add(seqEntity);
+            }
+            else
+            {
+                seqEntity.LastSequenceNumber++;
+                seqEntity.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync(ct);
+            return seqEntity.LastSequenceNumber;
+        }
+        finally
+        {
+            semaphore.Release();
+        }
+    }
+
+    private async Task<int> GetInitialSequenceForYearAsync(int year, CancellationToken ct)
+    {
+        var prefix = $"CTR-{year}-";
+        var existingNumbers = await _context.Contracts
+            .AsNoTracking()
+            .Where(c => c.ContractNumber.StartsWith(prefix))
+            .Select(c => c.ContractNumber)
+            .ToListAsync(ct);
+
+        int maxSeq = 0;
+        foreach (var num in existingNumbers)
+        {
+            var sub = num.Substring(prefix.Length);
+            if (int.TryParse(sub, out int parsed) && parsed > maxSeq)
+            {
+                maxSeq = parsed;
+            }
+        }
+        return maxSeq;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -2540,6 +2625,27 @@ public sealed class ContractService : IContractService
             {
                 _logger.LogError(ex, "Failed to auto-renew contract {ContractId} ({ContractNumber})",
                     contract.Id, contract.ContractNumber);
+
+                try
+                {
+                    var failLog = new AutoRenewalLog
+                    {
+                        ContractId = contract.Id,
+                        RenewedContractId = null,
+                        RenewedAt = DateTime.UtcNow,
+                        PreviousEndDate = contract.EndDate,
+                        NewEndDate = contract.EndDate,
+                        RenewalTermMonths = contract.AutoRenewTermMonths,
+                        Status = "Failed",
+                        Notes = $"خطا در تمدید خودکار: {ex.Message}",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.AutoRenewalLogs.Add(failLog);
+                }
+                catch
+                {
+                    // Suppress secondary logging exception
+                }
             }
         }
 
@@ -2595,6 +2701,126 @@ public sealed class ContractService : IContractService
             contract.Id, contract.ContractNumber, currentUserId);
 
         return true;
+    }
+
+    /// <summary>
+    /// Gets the admin dashboard view model for auto-renewal scheduled jobs,
+    /// showing upcoming renewals, execution checkpoints, and full history.
+    /// </summary>
+    public async Task<AutoRenewalAdminVM> GetAutoRenewalAdminViewModelAsync(CancellationToken ct = default)
+    {
+        var today = DateTime.Today;
+
+        // Fetch recurring job status from Hangfire JobStorage if available
+        DateTime? nextExecutionUtc = null;
+        DateTime? lastExecutionUtc = null;
+        bool schedulerRunning = false;
+
+        try
+        {
+            if (JobStorage.Current != null)
+            {
+                var conn = JobStorage.Current.GetConnection();
+                var recurringJobs = conn.GetRecurringJobs();
+                var autoRenewJob = recurringJobs.FirstOrDefault(j => j.Id == "contract-auto-renewals");
+                if (autoRenewJob != null)
+                {
+                    nextExecutionUtc = autoRenewJob.NextExecution;
+                    lastExecutionUtc = autoRenewJob.LastExecution;
+                    schedulerRunning = true;
+                }
+                else
+                {
+                    schedulerRunning = recurringJobs.Any();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to inspect Hangfire job store for auto-renewal recurring jobs.");
+        }
+
+        // Active auto-renew contracts count
+        var activeAutoRenewContractsCount = await _context.Contracts.AsNoTracking()
+            .CountAsync(c => c.IsAutoRenew && c.AutoRenewalCancelledAt == null && !c.IsArchived, ct);
+
+        // AutoRenewalLogs stats
+        var totalExecuted = await _context.AutoRenewalLogs.AsNoTracking()
+            .CountAsync(l => l.Status == "Success", ct);
+        var failedCount = await _context.AutoRenewalLogs.AsNoTracking()
+            .CountAsync(l => l.Status == "Failed", ct);
+
+        // Upcoming qualifying or approaching contracts
+        var upcomingContracts = await _context.Contracts.AsNoTracking()
+            .Where(c => c.IsAutoRenew
+                && c.AutoRenewalCancelledAt == null
+                && c.EndDate != null
+                && !c.IsArchived
+                && (c.Status == ContractStatuses.Active || c.Status == ContractStatuses.ExpiringSoon || c.Status == ContractStatuses.Expired))
+            .OrderBy(c => c.EndDate)
+            .Take(50)
+            .ToListAsync(ct);
+
+        var upcomingList = upcomingContracts.Select(c =>
+        {
+            var scheduledDate = c.EndDate!.Value.AddDays(-c.AutoRenewDaysBeforeExpiry);
+            var daysRem = (c.EndDate.Value.Date - today).Days;
+            return new UpcomingAutoRenewalVM
+            {
+                ContractId = c.Id,
+                ContractNumber = c.ContractNumber,
+                Title = c.Title,
+                CustomerName = c.ClientName,
+                EndDate = c.EndDate,
+                EndDatePersian = ToPersianDate(c.EndDate.Value),
+                AutoRenewDaysBeforeExpiry = c.AutoRenewDaysBeforeExpiry,
+                AutoRenewTermMonths = c.AutoRenewTermMonths,
+                ScheduledCheckDate = scheduledDate,
+                ScheduledCheckDatePersian = ToPersianDate(scheduledDate),
+                DaysRemaining = daysRem,
+                Status = c.Status
+            };
+        }).ToList();
+
+        // Recent history logs
+        var historyLogs = await _context.AutoRenewalLogs.AsNoTracking()
+            .Include(l => l.Contract)
+            .Include(l => l.CancelledByUser)
+            .OrderByDescending(l => l.RenewedAt)
+            .Take(100)
+            .ToListAsync(ct);
+
+        var historyList = historyLogs.Select(l => new AutoRenewalHistoryItemVM
+        {
+            Id = l.Id,
+            ContractId = l.ContractId,
+            ContractNumber = l.Contract?.ContractNumber ?? $"#{l.ContractId}",
+            Title = l.Contract?.Title ?? "قرارداد حذف شده",
+            RenewedAt = l.RenewedAt,
+            RenewedAtPersian = ToPersianDate(l.RenewedAt),
+            PreviousEndDate = l.PreviousEndDate,
+            PreviousEndDatePersian = l.PreviousEndDate.HasValue ? ToPersianDate(l.PreviousEndDate.Value) : null,
+            NewEndDate = l.NewEndDate,
+            NewEndDatePersian = l.NewEndDate.HasValue ? ToPersianDate(l.NewEndDate.Value) : null,
+            RenewalTermMonths = l.RenewalTermMonths,
+            Status = l.Status,
+            Notes = l.Notes,
+            CancelledByUserName = l.CancelledByUser?.FullName ?? l.CancelledByUser?.UserName
+        }).ToList();
+
+        return new AutoRenewalAdminVM
+        {
+            SchedulerRunning = schedulerRunning,
+            SchedulerName = "Hangfire (SQL Server Persistent Job Store)",
+            RecurringCron = "0 4 * * * (Daily at 04:00 UTC)",
+            NextExecutionUtc = nextExecutionUtc,
+            LastExecutionUtc = lastExecutionUtc,
+            ActiveAutoRenewContractsCount = activeAutoRenewContractsCount,
+            TotalRenewalsExecutedCount = totalExecuted,
+            FailedRenewalsCount = failedCount,
+            UpcomingRenewals = upcomingList,
+            ExecutionHistory = historyList
+        };
     }
 
     // ═══════════════════════════════════════════════════════════════

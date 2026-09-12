@@ -1,0 +1,315 @@
+@model OfficeAutomation.Models.AutoRenewalAdminVM
+@{
+    ViewData["Title"] = "مدیریت تمدید خودکار قراردادها";
+}
+
+<div class="container-fluid py-2 space-y-4" dir="rtl">
+    @if (TempData["SuccessMessage"] is string successMsg)
+    {
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2">
+            <i class="bi bi-check-circle-fill text-emerald-500"></i>
+            <span>@successMsg</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMsg)
+    {
+        <div class="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20 px-3.5 py-2.5 text-xs text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-2">
+            <i class="bi bi-exclamation-circle-fill text-rose-500"></i>
+            <span>@errorMsg</span>
+        </div>
+    }
+
+    @* Breadcrumb *@
+    <partial name="_Breadcrumb" model='new[] {
+        new RhynoBreadcrumbItem("خانه", "/"),
+        new RhynoBreadcrumbItem("قراردادها", "/Contracts"),
+        new RhynoBreadcrumbItem("مدیریت تمدید خودکار", null)
+    }' />
+
+    @* Header & Quick Actions *@
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1">
+        <div>
+            <h1 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-arrow-repeat text-teal-600 dark:text-teal-400"></i>
+                مدیریت زمان‌بندی و تمدید خودکار قراردادها
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                نظارت بر پردازشگر پایدار Hangfire، بررسی قراردادهای در آستانه تمدید، و تاریخچه اجرای تمدیدها
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="/hangfire" target="_blank" class="erp-btn bg-slate-800 text-white hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 transition text-xs no-underline">
+                <i class="bi bi-speedometer2 ml-1"></i>داشبورد فنی Hangfire
+            </a>
+            <form asp-action="TriggerAutoRenewalsNow" method="post" class="inline" onsubmit="return confirm('آیا از اجرای فوری عملیات بررسی و تمدید قراردادها اطمینان دارید؟');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="erp-btn bg-teal-600 hover:bg-teal-700 text-white transition text-xs">
+                    <i class="bi bi-play-fill ml-1 text-sm"></i>اجرای فوری نوبت تمدید
+                </button>
+            </form>
+            <a asp-action="Index" class="erp-btn text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 no-underline transition text-xs">
+                <i class="bi bi-arrow-right ml-1"></i>فهرست قراردادها
+            </a>
+        </div>
+    </div>
+
+    @* Scheduler Status Banner *@
+    <div class="erp-card p-4 border-r-4 @(Model.SchedulerRunning ? "border-r-teal-500 bg-teal-50/20 dark:bg-teal-950/10" : "border-r-amber-500 bg-amber-50/20")">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <div class="h-10 w-10 rounded-lg @(Model.SchedulerRunning ? "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400" : "bg-amber-100 text-amber-700") flex items-center justify-center shrink-0">
+                    <i class="bi @(Model.SchedulerRunning ? "bi-check2-circle text-xl" : "bi-exclamation-triangle text-xl")"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-slate-900 dark:text-white">وضعیت سرویس زمان‌بندی:</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(Model.SchedulerRunning ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-800")">
+                            @(Model.SchedulerRunning ? "در حال اجرا (فعال)" : "غیرفعال یا در انتظار")
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-mono">شناسه کار: contract-auto-renewals</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2 text-xs text-slate-600 dark:text-slate-300">
+                        <div>
+                            <span class="text-slate-400 text-[11px] block">فرمول زمان‌بندی (Cron):</span>
+                            <span class="font-mono font-bold text-slate-800 dark:text-slate-200">@Model.RecurringCron</span>
+                            <span class="text-[10px] text-slate-400">(هر روز ساعت ۰۴:۰۰ صبح UTC)</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[11px] block">آخرین اجرای ثبت‌شده:</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">
+                                @(Model.LastExecutionUtc.HasValue ? Model.LastExecutionUtc.Value.ToString("yyyy/MM/dd HH:mm:ss") + " UTC" : "تاکنون اجرا نشده")
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[11px] block">نوبت اجرای بعدی:</span>
+                            <span class="font-bold text-teal-700 dark:text-teal-400">
+                                @(Model.NextExecutionUtc.HasValue ? Model.NextExecutionUtc.Value.ToString("yyyy/MM/dd HH:mm:ss") + " UTC" : "نامشخص")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="shrink-0 text-left md:text-right border-t md:border-t-0 pt-2 md:pt-0 border-slate-200 dark:border-slate-800">
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">پایداری در برابر Restart:</span>
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <i class="bi bi-shield-check"></i> SQL Server Job Store فعال
+                </span>
+            </div>
+        </div>
+    </div>
+
+    @* KPI Summary Cards *@
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="erp-card p-3 flex items-center justify-between">
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">قراردادهای با تمدید خودکار فعال</p>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white mt-1">@Model.ActiveAutoRenewContractsCount</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                <i class="bi bi-arrow-repeat text-lg"></i>
+            </div>
+        </div>
+
+        <div class="erp-card p-3 flex items-center justify-between">
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">در آستانه تمدید (کاندید)</p>
+                <h3 class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">@Model.UpcomingRenewals.Count</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                <i class="bi bi-hourglass-split text-lg"></i>
+            </div>
+        </div>
+
+        <div class="erp-card p-3 flex items-center justify-between">
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">تمدیدهای موفق تا امروز</p>
+                <h3 class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">@Model.TotalRenewalsExecutedCount</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <i class="bi bi-check2-circle text-lg"></i>
+            </div>
+        </div>
+
+        <div class="erp-card p-3 flex items-center justify-between">
+            <div>
+                <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">تمدیدهای ناموفق / نیازمند بررسی</p>
+                <h3 class="text-xl font-black @(Model.FailedRenewalsCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-400") mt-1">@Model.FailedRenewalsCount</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg @(Model.FailedRenewalsCount > 0 ? "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400" : "bg-slate-50 dark:bg-slate-800 text-slate-400") flex items-center justify-center">
+                <i class="bi bi-exclamation-octagon text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    @* Table 1: Upcoming Auto-Renewals *@
+    <div class="erp-card overflow-hidden">
+        <div class="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-calendar-event text-teal-600 text-sm"></i>
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">قراردادهای واجد شرایط تمدید (نوبت‌های آتی)</h2>
+            </div>
+            <span class="text-[10px] text-slate-400">تعداد: @Model.UpcomingRenewals.Count</span>
+        </div>
+
+        @if (Model.UpcomingRenewals.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                        <tr>
+                            <th class="p-3">شماره قرارداد</th>
+                            <th class="p-3">عنوان قرارداد</th>
+                            <th class="p-3">طرف دوم / مشتری</th>
+                            <th class="p-3 text-center">پایان فعلی</th>
+                            <th class="p-3 text-center">آستانه تمدید (روز)</th>
+                            <th class="p-3 text-center">تاریخ مجاز تمدید</th>
+                            <th class="p-3 text-center">دوره تمدید</th>
+                            <th class="p-3 text-center">وضعیت آمادگی</th>
+                            <th class="p-3 text-center">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                        @foreach (var item in Model.UpcomingRenewals)
+                        {
+                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                                <td class="p-3 font-mono font-bold text-slate-900 dark:text-white">
+                                    <a asp-action="Details" asp-route-id="@item.ContractId" class="text-teal-600 dark:text-teal-400 hover:underline">
+                                        @item.ContractNumber
+                                    </a>
+                                </td>
+                                <td class="p-3 font-bold text-slate-800 dark:text-slate-200">@item.Title</td>
+                                <td class="p-3 text-slate-600 dark:text-slate-300">@(string.IsNullOrWhiteSpace(item.CustomerName) ? "-" : item.CustomerName)</td>
+                                <td class="p-3 text-center font-mono">@(item.EndDatePersian ?? (item.EndDate.HasValue ? item.EndDate.Value.ToString("yyyy/MM/dd") : "-"))</td>
+                                <td class="p-3 text-center">@item.AutoRenewDaysBeforeExpiry روز قبل</td>
+                                <td class="p-3 text-center font-mono text-slate-700 dark:text-slate-300">
+                                    @(item.ScheduledCheckDatePersian ?? item.ScheduledCheckDate.ToString("yyyy/MM/dd"))
+                                </td>
+                                <td class="p-3 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-[10px] font-bold">
+                                        @item.AutoRenewTermMonths ماه
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    @if (item.DaysRemaining <= 0)
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px] font-bold">
+                                            آماده پردازش در نوبت بعدی
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-[10px] font-bold">
+                                            @item.DaysRemaining روز مانده تا موعد
+                                        </span>
+                                    }
+                                </td>
+                                <td class="p-3 text-center">
+                                    <a asp-action="Details" asp-route-id="@item.ContractId" class="erp-btn text-[10px] px-2 py-1 text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 no-underline">
+                                        <i class="bi bi-eye ml-1"></i>مشاهده
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center text-slate-400 text-xs">
+                <i class="bi bi-inbox text-2xl block mb-1"></i>
+                قراردادی در انتظار تمدید خودکار یافت نشد.
+            </div>
+        }
+    </div>
+
+    @* Table 2: Renewal Execution History *@
+    <div class="erp-card overflow-hidden">
+        <div class="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-clock-history text-teal-600 text-sm"></i>
+                <h2 class="text-xs font-black text-slate-900 dark:text-white">سوابق اجرای تمدید خودکار (History Logs)</h2>
+            </div>
+            <span class="text-[10px] text-slate-400">آخرین ثبت‌شده‌ها: @Model.ExecutionHistory.Count</span>
+        </div>
+
+        @if (Model.ExecutionHistory.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                        <tr>
+                            <th class="p-3">زمان اجرا</th>
+                            <th class="p-3">قرارداد</th>
+                            <th class="p-3 text-center">تاریخ پایان قبلی</th>
+                            <th class="p-3 text-center">تاریخ پایان جدید</th>
+                            <th class="p-3 text-center">مدت تمدید</th>
+                            <th class="p-3 text-center">وضعیت</th>
+                            <th class="p-3">جزئیات / یادداشت</th>
+                            <th class="p-3 text-center">لغو شده توسط</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                        @foreach (var log in Model.ExecutionHistory)
+                        {
+                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                                <td class="p-3 font-mono text-slate-700 dark:text-slate-300">
+                                    @(string.IsNullOrWhiteSpace(log.RenewedAtPersian) ? log.RenewedAt.ToString("yyyy/MM/dd HH:mm") : log.RenewedAtPersian)
+                                </td>
+                                <td class="p-3 font-bold">
+                                    <a asp-action="Details" asp-route-id="@log.ContractId" class="text-teal-600 dark:text-teal-400 hover:underline">
+                                        @log.ContractNumber - @log.Title
+                                    </a>
+                                </td>
+                                <td class="p-3 text-center font-mono">
+                                    @(log.PreviousEndDatePersian ?? (log.PreviousEndDate.HasValue ? log.PreviousEndDate.Value.ToString("yyyy/MM/dd") : "-"))
+                                </td>
+                                <td class="p-3 text-center font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                                    @(log.NewEndDatePersian ?? (log.NewEndDate.HasValue ? log.NewEndDate.Value.ToString("yyyy/MM/dd") : "-"))
+                                </td>
+                                <td class="p-3 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px]">
+                                        @log.RenewalTermMonths ماه
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    @if (log.Status == "Success")
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px] font-bold">
+                                            موفق
+                                        </span>
+                                    }
+                                    else if (log.Status == "Cancelled")
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] font-bold">
+                                            لغو شده
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 text-[10px] font-bold">
+                                            @(log.Status ?? "خطا")
+                                        </span>
+                                    }
+                                </td>
+                                <td class="p-3 text-slate-600 dark:text-slate-400 max-w-xs truncate" title="@log.Notes">
+                                    @(string.IsNullOrWhiteSpace(log.Notes) ? "-" : log.Notes)
+                                </td>
+                                <td class="p-3 text-center text-slate-500 dark:text-slate-400">
+                                    @(string.IsNullOrWhiteSpace(log.CancelledByUserName) ? "-" : log.CancelledByUserName)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center text-slate-400 text-xs">
+                <i class="bi bi-clock-history text-2xl block mb-1"></i>
+                تاکنون سابقه تمدید خودکاری ثبت نشده است.
+            </div>
+        }
+    </div>
+</div>

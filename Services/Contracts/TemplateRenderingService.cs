@@ -16,6 +16,11 @@ public interface ITemplateRenderingService
     string RenderTemplate(string htmlTemplate, Contract contract, Customer? customer = null, User? assignedUser = null);
 
     /// <summary>
+    /// جایگزاری placeholders در قالب HTML با داده‌های واقعی قرارداد از ViewModel
+    /// </summary>
+    string RenderTemplate(string htmlTemplate, ContractDetailsVM vm);
+
+    /// <summary>
     /// تولید پیش‌نمایش HTML از قالب با داده‌های نمونه
     /// </summary>
     string RenderPreview(string htmlTemplate);
@@ -94,6 +99,80 @@ public sealed class TemplateRenderingService : ITemplateRenderingService
             ["{{description}}"] = Encode(contract.Description),
             ["{{terms}}"] = Encode(contract.TermsAndConditions),
             ["{{status}}"] = Encode(contract.Status)
+        };
+
+        foreach (var kvp in replacements)
+        {
+            htmlTemplate = htmlTemplate.Replace(kvp.Key, kvp.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return htmlTemplate;
+    }
+
+    public string RenderTemplate(string htmlTemplate, ContractDetailsVM vm)
+    {
+        if (string.IsNullOrWhiteSpace(htmlTemplate))
+            return string.Empty;
+
+        static string Encode(string? value) => System.Net.WebUtility.HtmlEncode(value ?? "");
+
+        string ToPersianDateStr(DateTime? dt)
+        {
+            if (!dt.HasValue || dt.Value == DateTime.MinValue) return "-";
+            try
+            {
+                var cal = new System.Globalization.PersianCalendar();
+                return $"{cal.GetYear(dt.Value):0000}/{cal.GetMonth(dt.Value):00}/{cal.GetDayOfMonth(dt.Value):00}";
+            }
+            catch { return dt.Value.ToString("yyyy/MM/dd"); }
+        }
+
+        var paidAmt = vm.PaidAmount;
+        var remBal = vm.RemainingBalance > 0 ? vm.RemainingBalance : (vm.TotalAmount - paidAmt > 0 ? vm.TotalAmount - paidAmt : 0);
+        var payStat = !string.IsNullOrEmpty(vm.PaymentStatus) ? vm.PaymentStatus : (remBal <= 0 ? "تسویه شده" : (paidAmt > 0 ? "پرداخت جزئی" : "پرداخت نشده"));
+
+        var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["{{ContractNumber}}"] = Encode(vm.ContractNumber),
+            ["{{Title}}"] = Encode(vm.Title),
+            ["{{ContractType}}"] = Encode(vm.ContractType ?? "-"),
+            ["{{Description}}"] = Encode(vm.Description),
+            ["{{CustomerName}}"] = Encode(vm.CustomerName ?? vm.ClientName),
+            ["{{CustomerCompany}}"] = Encode(vm.CustomerName ?? vm.ClientName),
+            ["{{CustomerPhone}}"] = Encode(vm.ClientPhone ?? "-"),
+            ["{{CustomerAddress}}"] = Encode(vm.ClientAddress ?? "-"),
+            ["{{SecondPartyPhone}}"] = Encode(vm.ClientPhone ?? "-"),
+            ["{{AssignedUser}}"] = Encode(vm.ResponsibleUserName ?? "-"),
+            ["{{ResponsibleUser}}"] = Encode(vm.ResponsibleUserName ?? "-"),
+            ["{{StartDate}}"] = Encode(ToPersianDateStr(vm.StartDate)),
+            ["{{EndDate}}"] = Encode(ToPersianDateStr(vm.EndDate)),
+            ["{{SignDate}}"] = Encode(ToPersianDateStr(vm.SignDate)),
+            ["{{TotalAmount}}"] = Encode(vm.TotalAmount.ToString("N0")),
+            ["{{PaidAmount}}"] = Encode(paidAmt.ToString("N0")),
+            ["{{RemainingBalance}}"] = Encode(remBal.ToString("N0")),
+            ["{{PaymentStatus}}"] = Encode(payStat),
+            ["{{Status}}"] = Encode(vm.Status),
+            ["{{Terms}}"] = Encode(vm.TermsAndConditions),
+            ["{{CompanyName}}"] = Encode(DefaultCompanyName),
+            ["{{ContractAmount}}"] = Encode(vm.TotalAmount.ToString("N0")),
+            ["{{contract_number}}"] = Encode(vm.ContractNumber),
+            ["{{contract_title}}"] = Encode(vm.Title),
+            ["{{contract_type}}"] = Encode(vm.ContractType ?? "-"),
+            ["{{customer_name}}"] = Encode(vm.CustomerName ?? vm.ClientName),
+            ["{{customer_company}}"] = Encode(vm.CustomerName ?? vm.ClientName),
+            ["{{customer_phone}}"] = Encode(vm.ClientPhone ?? "-"),
+            ["{{customer_address}}"] = Encode(vm.ClientAddress ?? "-"),
+            ["{{responsible_user}}"] = Encode(vm.ResponsibleUserName ?? "-"),
+            ["{{start_date}}"] = Encode(ToPersianDateStr(vm.StartDate)),
+            ["{{end_date}}"] = Encode(ToPersianDateStr(vm.EndDate)),
+            ["{{signing_date}}"] = Encode(ToPersianDateStr(vm.SignDate)),
+            ["{{contract_amount}}"] = Encode(vm.TotalAmount.ToString("N0")),
+            ["{{paid_amount}}"] = Encode(paidAmt.ToString("N0")),
+            ["{{remaining_balance}}"] = Encode(remBal.ToString("N0")),
+            ["{{company_name}}"] = Encode(DefaultCompanyName),
+            ["{{description}}"] = Encode(vm.Description),
+            ["{{terms}}"] = Encode(vm.TermsAndConditions),
+            ["{{status}}"] = Encode(vm.Status)
         };
 
         foreach (var kvp in replacements)

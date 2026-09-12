@@ -126,8 +126,8 @@
                                     @{
                                         var archivePayBadge = item.PaymentStatus switch
                                         {
-                                            "FullyPaid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50",
-                                            "PartiallyPaid" => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-900/50",
+                                            "FullyPaid" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40",
+                                            "PartiallyPaid" => "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800/40",
                                             _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                                         };
                                         var archivePayText = item.PaymentStatus switch
@@ -147,8 +147,8 @@
                                     @{
                                         var archiveBadge = item.Status switch
                                         {
-                                            var s when s == ContractStatuses.Archived => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-900/50",
-                                            var s when s == ContractStatuses.Active => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50",
+                                            var s when s == ContractStatuses.Archived => "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800/40",
+                                            var s when s == ContractStatuses.Active => "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40",
                                             _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                                         };
                                     }

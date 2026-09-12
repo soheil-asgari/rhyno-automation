@@ -14,11 +14,11 @@
     <div class="flex items-center justify-between mb-2">
         <div class="hidden sm:block"></div>
         <div class="flex gap-1">
-            <button type="button" class="erp-btn text-[10px] px-2 py-1" onclick="exportCurrentReport('excel')" title="Export as Excel">
-                <i class="bi bi-file-earmark-spreadsheet text-emerald-600 ml-1"></i>Excel
+            <button type="button" id="exportReportExcelBtn" class="erp-btn text-[10px] px-2 py-1" onclick="exportCurrentReport('excel')" title="Export as Excel">
+                <i class="bi bi-file-earmark-spreadsheet text-emerald-600 ml-1"></i><span>Excel</span>
             </button>
-            <button type="button" class="erp-btn text-[10px] px-2 py-1" onclick="exportCurrentReport('pdf')" title="Export as PDF">
-                <i class="bi bi-file-earmark-pdf text-rose-600 ml-1"></i>PDF
+            <button type="button" id="exportReportPdfBtn" class="erp-btn text-[10px] px-2 py-1" onclick="exportCurrentReport('pdf')" title="Export as PDF">
+                <i class="bi bi-file-earmark-pdf text-rose-600 ml-1"></i><span>PDF</span>
             </button>
         </div>
     </div>
@@ -39,6 +39,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var urls = { 'financial-exposure': '/Contracts/Reports/Data/Exposure', 'payment-aging': '/Contracts/Reports/Data/Aging', 'revenue': '/Contracts/Reports/Data/Revenue', 'pipeline': '/Contracts/Reports/Data/Pipeline', 'calendar': '/Contracts/Reports/Data/Calendar' };
+    function renderEmptyState(title, desc) {
+        return '<div class="text-center py-8">' +
+               '<div class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 mb-3">' +
+               '<i class="bi bi-file-earmark-text text-slate-400 text-lg"></i>' +
+               '</div>' +
+               '<h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">' + (title || 'داده‌ای یافت نشد') + '</h3>' +
+               '<p class="text-[11px] text-slate-400 dark:text-slate-500 mb-3">' + (desc || 'برای این گزارش اطلاعاتی ثبت نشده است.') + '</p>' +
+               '</div>';
+    }
     function loadTab(tabId) {
         var panel = document.getElementById('tab-' + tabId);
         if (!panel || panel.dataset.loaded) return;
@@ -50,14 +59,47 @@ document.addEventListener('DOMContentLoaded', function () {
         return '<div class=\"bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/40 p-2.5\"><p class=\"text-[10px] text-slate-500 dark:text-slate-400\">' + label + '</p><p class=\"text-sm font-bold ' + c + '\">' + value + '</p>' + (sub ? '<p class=\"text-[9px] text-slate-400\">' + sub + '</p>' : '') + '</div>';
     }
     function renderTab(id, d) {
-        if (id === 'financial-exposure') return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Active Value', d.totalActiveValue.toLocaleString(), d.activeContractCount + ' c', 'emerald') + kpi('At Risk', d.atRiskValue.toLocaleString(), d.atRiskCount + ' c', 'rose') + kpi('Pending', d.pendingApprovalValue.toLocaleString(), d.pendingApprovalCount + ' c', 'amber') + kpi('Exp Ratio', d.exposureRatioPercent + '%', '', 'slate') + '</div><div class=\"grid grid-cols-2 gap-2.5\">' + kpi('Recognized', d.totalRecognizedRevenue.toLocaleString(), '', 'sky') + kpi('Receivables', d.totalOutstandingReceivables.toLocaleString(), '', 'indigo') + '</div>';
-        if (id === 'payment-aging') return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Total Overdue', d.totalOverdue.toLocaleString(), '', 'rose') + kpi('Count', d.totalOverdueCount, '', 'slate') + kpi('Avg', d.averageOverdueAmount.toLocaleString(), '', 'slate') + kpi('Max', d.maxDaysOverdue + ' d', '', 'amber') + '</div>' + table(d.buckets, ['Bucket', 'Count', 'Total'], ['bucketName', 'count', 'totalAmount']);
-        if (id === 'revenue') return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Recognized', d.totalRecognized.toLocaleString(), '', 'emerald') + kpi('Scheduled', d.totalScheduled.toLocaleString(), '', 'sky') + kpi('Active Value', d.totalActiveValue.toLocaleString(), '', 'slate') + kpi('Active', d.activeContractCount, '', 'slate') + '</div>' + table(d.periods, ['Period', 'Recognized', 'Scheduled'], ['periodLabel', 'recognizedAmount', 'scheduledAmount']);
-        if (id === 'pipeline') return '<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3\">' + kpi('Total Value', d.grandTotalValue.toLocaleString(), '', 'slate') + kpi('Count', d.grandTotalCount, '', 'slate') + kpi('Avg', d.averageContractValue.toLocaleString(), '', 'slate') + '</div>' + table(d.items, ['Status', 'Count', 'Value', 'Share'], ['status', 'count', 'totalValue', 'percentageOfTotal'], ['', '', '', '%']);
-        if (id === 'calendar') return '<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3\">' + kpi('Events', d.totalEvents, '', 'slate') + kpi('Total', d.totalAmountDue.toLocaleString(), '', 'rose') + kpi('Period', d.upcomingMonths + 'm', '', 'slate') + '</div>' + table(d.events, ['Date', 'Type', 'Count', 'Amount'], ['date', 'obligationTypeDisplay', 'count', 'totalAmount']);
+        if (!d) return renderEmptyState('اطلاعاتی یافت نشد');
+        if (id === 'financial-exposure') {
+            if (!d.activeContractCount && !d.totalActiveValue && !d.atRiskCount && !d.pendingApprovalCount) {
+                return renderEmptyState('هیچ داده‌ای برای مواجهه مالی یافت نشد', 'قرارداد یا اطلاعات مالی فعالی برای تحلیل وجود ندارد.');
+            }
+            return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Active Value', (d.totalActiveValue || 0).toLocaleString(), (d.activeContractCount || 0) + ' c', 'emerald') + kpi('At Risk', (d.atRiskValue || 0).toLocaleString(), (d.atRiskCount || 0) + ' c', 'rose') + kpi('Pending', (d.pendingApprovalValue || 0).toLocaleString(), (d.pendingApprovalCount || 0) + ' c', 'amber') + kpi('Exp Ratio', (d.exposureRatioPercent || 0) + '%', '', 'slate') + '</div><div class=\"grid grid-cols-2 gap-2.5\">' + kpi('Recognized', (d.totalRecognizedRevenue || 0).toLocaleString(), '', 'sky') + kpi('Receivables', (d.totalOutstandingReceivables || 0).toLocaleString(), '', 'indigo') + '</div>';
+        }
+        if (id === 'payment-aging') {
+            var hasBuckets = d.buckets && d.buckets.some(function(b) { return (b.count || 0) > 0 || (b.totalAmount || 0) > 0; });
+            if (!d.totalOverdue && !d.totalOverdueCount && !hasBuckets) {
+                return renderEmptyState('هیچ معوقه‌ای یافت نشد', 'در حال حاضر هیچ پرداخت یا قسط معوقی برای پیری پرداخت وجود ندارد.');
+            }
+            return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Total Overdue', (d.totalOverdue || 0).toLocaleString(), '', 'rose') + kpi('Count', d.totalOverdueCount || 0, '', 'slate') + kpi('Avg', (d.averageOverdueAmount || 0).toLocaleString(), '', 'slate') + kpi('Max', (d.maxDaysOverdue || 0) + ' d', '', 'amber') + '</div>' + table(d.buckets || [], ['Bucket', 'Count', 'Total'], ['bucketName', 'count', 'totalAmount'], null, 'هیچ دسته‌بندی معوقه‌ای موجود نیست');
+        }
+        if (id === 'revenue') {
+            var hasPeriods = d.periods && d.periods.length > 0;
+            if (!d.totalActiveValue && !d.activeContractCount && !hasPeriods) {
+                return renderEmptyState('شناسایی درآمدی ثبت نشده است', 'قرارداد فعالی با برنامه درآمدی جهت نمایش وجود ندارد.');
+            }
+            return '<div class=\"grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3\">' + kpi('Recognized', (d.totalRecognized || 0).toLocaleString(), '', 'emerald') + kpi('Scheduled', (d.totalScheduled || 0).toLocaleString(), '', 'sky') + kpi('Active Value', (d.totalActiveValue || 0).toLocaleString(), '', 'slate') + kpi('Active', d.activeContractCount || 0, '', 'slate') + '</div>' + table(d.periods || [], ['Period', 'Recognized', 'Scheduled'], ['periodLabel', 'recognizedAmount', 'scheduledAmount'], null, 'هیچ دوره‌ای ثبت نشده است');
+        }
+        if (id === 'pipeline') {
+            var hasItems = d.items && d.items.length > 0;
+            if (!d.grandTotalValue && !d.grandTotalCount && !hasItems) {
+                return renderEmptyState('هیچ قراردادی در خط لوله ارزش یافت نشد', 'برای مشاهده نمودار و جدول خط لوله، ابتدا قرارداد ایجاد کنید.');
+            }
+            return '<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3\">' + kpi('Total Value', (d.grandTotalValue || 0).toLocaleString(), '', 'slate') + kpi('Count', d.grandTotalCount || 0, '', 'slate') + kpi('Avg', (d.averageContractValue || 0).toLocaleString(), '', 'slate') + '</div>' + table(d.items || [], ['Status', 'Count', 'Value', 'Share'], ['status', 'count', 'totalValue', 'percentageOfTotal'], ['', '', '', '%'], 'هیچ قراردادی یافت نشد');
+        }
+        if (id === 'calendar') {
+            var hasEvents = d.events && d.events.length > 0;
+            if (!d.totalEvents && !hasEvents) {
+                return renderEmptyState('هیچ تعهدی برای تقویم تعهدات یافت نشد', 'هیچ قسط سررسیدشده یا تمدید قراردادی در بازه زمانی انتخابی وجود ندارد.');
+            }
+            return '<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3\">' + kpi('Events', d.totalEvents || 0, '', 'slate') + kpi('Total', (d.totalAmountDue || 0).toLocaleString(), '', 'rose') + kpi('Period', (d.upcomingMonths || 0) + 'm', '', 'slate') + '</div>' + table(d.events || [], ['Date', 'Type', 'Count', 'Amount'], ['date', 'obligationTypeDisplay', 'count', 'totalAmount'], null, 'هیچ تعهدی ثبت نشده است');
+        }
         return '';
     }
-    function table(items, headers, fields, suffixes) {
+    function table(items, headers, fields, suffixes, emptyMsg) {
+        if (!items || items.length === 0) {
+            return renderEmptyState(emptyMsg || 'داده‌ای یافت نشد', 'سطری برای نمایش در جدول وجود ندارد.');
+        }
         var h = '<div class=\"overflow-x-auto\"><table class=\"w-full text-[11px]\"><thead><tr class=\"border-b border-slate-100 bg-slate-50\">';
         headers.forEach(function(hl) { h += '<th class=\"px-3 py-2 text-right font-bold text-slate-600\">' + hl + '</th>'; });
         h += '</tr></thead><tbody>';
@@ -71,7 +113,17 @@ document.addEventListener('DOMContentLoaded', function () {
     window.currentReportTab = '@activeTab';
     function exportCurrentReport(format) {
         var tab = window.currentReportTab || 'financial-exposure';
-        var btn = document.querySelector('[data-export-menu]');
+        var excelBtn = document.getElementById('exportReportExcelBtn');
+        var pdfBtn = document.getElementById('exportReportPdfBtn');
+        var targetBtn = format === 'excel' ? excelBtn : pdfBtn;
+        var originalHtml = targetBtn ? targetBtn.innerHTML : null;
+
+        if (excelBtn) { excelBtn.disabled = true; excelBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
+        if (pdfBtn) { pdfBtn.disabled = true; pdfBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
+        if (targetBtn) {
+            targetBtn.innerHTML = '<span class="rhyno-spinner" style="width:10px;height:10px;border-width:2px;display:inline-block;vertical-align:middle;margin-left:3px;"></span>در حال ساخت...';
+        }
+
         fetch('/Contracts/Reports/Export/' + tab + '?format=' + format)
             .then(function(r) { if (!r.ok) throw new Error('Export failed'); return r.blob(); })
             .then(function(blob) {
@@ -82,8 +134,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             })
-            .catch(function() { alert('Export failed. Check server logs.'); });
+            .catch(function() { alert('Export failed. Check server logs.'); })
+            .finally(function() {
+                if (excelBtn) {
+                    excelBtn.disabled = false;
+                    excelBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (format === 'excel' && originalHtml) excelBtn.innerHTML = originalHtml;
+                }
+                if (pdfBtn) {
+                    pdfBtn.disabled = false;
+                    pdfBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (format === 'pdf' && originalHtml) pdfBtn.innerHTML = originalHtml;
+                }
+            });
     }
+    window.exportCurrentReport = exportCurrentReport;
     document.querySelectorAll('.tab-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var tab = this.getAttribute('data-tab');

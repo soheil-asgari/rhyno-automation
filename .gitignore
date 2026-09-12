@@ -32,3 +32,13 @@ artifacts/verify-*/
 task.txt
 .env
 wwwroot/uploads/contracts/
+
+# Licensing & RSA keys (Private keys must never be committed)
+*.pem
+*.key
+LicenseIssuer/keys/
+LicenseIssuer/*.lic
+LicenseIssuer/*.pem
+license-private.pem
+LicenseIssuer/bin/
+LicenseIssuer/obj/

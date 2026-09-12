@@ -1,4 +1,4 @@
-﻿@model ContractSettingsVM
+@model ContractSettingsVM
 @{
     ViewData["Title"] = "تنظیمات قراردادها";
 }
@@ -277,10 +277,12 @@
     </div>
 </div>
 @section Styles {
+    <link rel="stylesheet" href="~/lib/quill/quill.snow.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/contracts-form.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/contracts-settings-style.css" asp-append-version="true" />
 }
 
 @section Scripts {
+    <script src="~/lib/quill/quill.js" asp-append-version="true"></script>
     <script src="~/js/contracts-settings-script.js" asp-append-version="true"></script>
 }

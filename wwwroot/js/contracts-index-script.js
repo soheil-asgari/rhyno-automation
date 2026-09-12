@@ -309,8 +309,16 @@ document.addEventListener('DOMContentLoaded', function () {
             var confirmed = await AppUI.confirm(confirmOpts);
             if (!confirmed) return;
 
+            // Enable loading state on bulkActionBar and disable controls
+            if (bulkActionBar) {
+                bulkActionBar.classList.add('is-loading');
+            }
+            if (bulkActionSelect) bulkActionSelect.disabled = true;
+            if (bulkActionClearBtn) bulkActionClearBtn.disabled = true;
+            if (bulkNewStatus) bulkNewStatus.disabled = true;
+            if (bulkAssignUser) bulkAssignUser.disabled = true;
             AppUI.loading(bulkActionApplyBtn, true);
-            bulkActionApplyBtn.textContent = 'در حال اجرا...';
+            bulkActionApplyBtn.innerHTML = '<span class="rhyno-spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;vertical-align:middle;margin-left:4px;"></span>در حال اجرا...';
 
             try {
                 var resp = await fetch('/Contracts/BulkAction', {
@@ -336,6 +344,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 AppUI.toast('خطا: ' + err.message, 'danger');
                 console.error('Bulk action error:', err);
             } finally {
+                if (bulkActionBar) {
+                    bulkActionBar.classList.remove('is-loading');
+                }
+                if (bulkActionSelect) bulkActionSelect.disabled = false;
+                if (bulkActionClearBtn) bulkActionClearBtn.disabled = false;
+                if (bulkNewStatus) bulkNewStatus.disabled = false;
+                if (bulkAssignUser) bulkAssignUser.disabled = false;
                 AppUI.loading(bulkActionApplyBtn, false);
                 bulkActionApplyBtn.textContent = 'اعمال';
             }
@@ -357,6 +372,32 @@ function exportContracts(format) {
     var params = new URLSearchParams(window.location.search);
     params.set('format', format);
     AppUI.loading(document.body, true);
+
+    var dropdownBtn = document.getElementById('exportContractsDropdownBtn');
+    var excelBtn = document.getElementById('exportContractsExcelBtn');
+    var pdfBtn = document.getElementById('exportContractsPdfBtn');
+    var targetBtn = format === 'excel' ? excelBtn : pdfBtn;
+
+    var originalTargetHtml = targetBtn ? targetBtn.innerHTML : null;
+    var originalDropdownHtml = dropdownBtn ? dropdownBtn.innerHTML : null;
+
+    if (dropdownBtn) {
+        dropdownBtn.disabled = true;
+        dropdownBtn.classList.add('is-loading');
+        dropdownBtn.innerHTML = '<span class="rhyno-spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;vertical-align:middle;margin-left:4px;"></span>در حال خروجی...';
+    }
+    if (excelBtn) {
+        excelBtn.disabled = true;
+        excelBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    if (pdfBtn) {
+        pdfBtn.disabled = true;
+        pdfBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    if (targetBtn) {
+        targetBtn.innerHTML = '<span class="rhyno-spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;vertical-align:middle;margin-left:4px;"></span>در حال ساخت فایل...';
+    }
+
     var ext = format === 'excel' ? 'xlsx' : format;
     fetch('/Contracts/Export/Contracts?' + params.toString())
         .then(function(r) {
@@ -387,6 +428,21 @@ function exportContracts(format) {
         })
         .finally(function() {
             AppUI.loading(document.body, false);
+            if (dropdownBtn) {
+                dropdownBtn.disabled = false;
+                dropdownBtn.classList.remove('is-loading');
+                if (originalDropdownHtml) dropdownBtn.innerHTML = originalDropdownHtml;
+            }
+            if (excelBtn) {
+                excelBtn.disabled = false;
+                excelBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (format === 'excel' && originalTargetHtml) excelBtn.innerHTML = originalTargetHtml;
+            }
+            if (pdfBtn) {
+                pdfBtn.disabled = false;
+                pdfBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (format === 'pdf' && originalTargetHtml) pdfBtn.innerHTML = originalTargetHtml;
+            }
             var menu = document.querySelector('[data-export-menu]');
             if (menu) menu.classList.add('hidden');
         });

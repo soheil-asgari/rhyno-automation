@@ -31,9 +31,22 @@ public sealed class AttachmentVersionService : IAttachmentVersionService
         var attachment = await _context.ContractAttachments
             .Include(a => a.Contract)
             .FirstOrDefaultAsync(a => a.Id == attachmentId, ct)
-            ?? throw new InvalidOperationException("Ù¾ÛŒÙˆØ³Øª ÛŒØ§ÙØª Ù†Ø´Ø¯.");
+            ?? throw new InvalidOperationException("پیوست یافت نشد.");
 
         await _contractService.EnforceAccessAsync(attachment!.ContractId, currentUserId, ct);
+
+        // Strict magic-byte, MIME, and extension validation
+        var validationError = await OfficeAutomation.Services.Security.FileSignatureValidator.ValidateUploadAsync(
+            fileName, contentType, fileSize, fileStream, ct: ct);
+        if (validationError != null)
+        {
+            throw new InvalidOperationException(validationError);
+        }
+
+        if (fileStream.CanSeek)
+        {
+            fileStream.Position = 0;
+        }
 
         var maxVersion = await _context.ContractAttachmentVersions
             .Where(v => v.AttachmentId == attachmentId)

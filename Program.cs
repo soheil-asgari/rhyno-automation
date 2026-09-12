@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.OpenApi.Models;
 using System.Globalization;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using OfficeAutomation.Data;
 using OfficeAutomation.Filters;
@@ -23,6 +24,8 @@ using OfficeAutomation.Services.Tenancy;
 using OfficeAutomation.Services.Middleware;
 using OfficeAutomation.Services.HealthChecks;
 using OfficeAutomation.Services.Contracts;
+using Hangfire;
+using Hangfire.SqlServer;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
 using OfficeAutomation.Modules.Inventory.Infrastructure.Persistence;
@@ -53,6 +56,10 @@ var isEfDesignTime = Environment.GetCommandLineArgs()
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+
+// Configure QuestPDF Community license
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 builder.Services.Configure<AiOptions>(builder.Configuration.GetSection("OpenAI"));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 builder.Services.Configure<OutboxOptions>(builder.Configuration.GetSection(OutboxOptions.SectionName));
@@ -122,6 +129,38 @@ if (!string.IsNullOrWhiteSpace(redisConnectionString))
     });
 }
 
+// ── Hangfire Background Job Scheduler ──────────────────────────────────
+var hangfireConnStr = GetPlatformConnectionString(builder.Configuration);
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(hangfireConnStr, new SqlServerStorageOptions
+    {
+        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+        QueuePollInterval = TimeSpan.FromSeconds(15),
+        UseRecommendedIsolationLevel = true,
+        DisableGlobalLocks = true,
+        PrepareSchemaIfNecessary = true
+    }));
+
+builder.Services.AddHangfireServer(options =>
+{
+    var hangfireSection = builder.Configuration.GetSection("Hangfire");
+    options.WorkerCount = hangfireSection.GetValue<int?>("WorkerCount") ?? Math.Min(Environment.ProcessorCount * 2, 4);
+    var configuredQueues = hangfireSection.GetSection("QueueNames").Get<string[]>();
+    if (configuredQueues != null && configuredQueues.Length > 0)
+    {
+        options.Queues = configuredQueues;
+    }
+    else
+    {
+        options.Queues = new[] { "default", "contracts" };
+    }
+});
+builder.Services.AddScoped<ContractHangfireJobs>();
+
 // â"€â"€ API Key Authentication â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 builder.Services.AddAuthentication()
     .AddApiKeyAuthentication(options =>
@@ -152,6 +191,7 @@ builder.Services.AddScoped<IPaymentScheduleService, PaymentScheduleService>();
         builder.Services.AddScoped<IAmendmentService, AmendmentService>();
         builder.Services.AddScoped<ISignatureService, SignatureService>();
 builder.Services.AddScoped<ITemplateRenderingService, TemplateRenderingService>();
+builder.Services.AddScoped<IContractDiffService, ContractDiffService>();
 builder.Services.AddScoped<IAttachmentVersionService, AttachmentVersionService>();
 builder.Services.AddSingleton<ITenantRegistry, TenantRegistry>();
 builder.Services.AddScoped<TenantMigrationOrchestrator>();
@@ -403,6 +443,54 @@ builder.Services.AddHealthChecks()
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        const string persianMessage = "تعداد درخواست‌های دانلود بیش از حد مجاز است. لطفاً کمی صبر کرده و پس از یک دقیقه مجدداً تلاش نمایید.";
+
+        var acceptHeader = context.HttpContext.Request.Headers["Accept"].ToString();
+        var isAjaxOrJson = string.Equals(context.HttpContext.Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase) ||
+                           acceptHeader.Contains("application/json", StringComparison.OrdinalIgnoreCase);
+
+        if (isAjaxOrJson)
+        {
+            context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+            await context.HttpContext.Response.WriteAsJsonAsync(new
+            {
+                success = false,
+                message = persianMessage,
+                error = persianMessage
+            }, cancellationToken);
+        }
+        else
+        {
+            context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
+            await context.HttpContext.Response.WriteAsync(persianMessage, cancellationToken);
+        }
+    };
+    options.AddPolicy("attachment-download", context =>
+    {
+        var tenantResolver = context.RequestServices.GetRequiredService<ITenantResolver>();
+        var tenantRegistry = context.RequestServices.GetRequiredService<ITenantRegistry>();
+        var tenant = tenantRegistry.GetTenant(tenantResolver.ResolveTenantId());
+
+        var identity = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                       ?? context.User?.Identity?.Name;
+        var isAuthenticated = context.User?.Identity?.IsAuthenticated == true;
+        var partitionKey = !isAuthenticated || string.IsNullOrWhiteSpace(identity)
+            ? $"att_dl:{tenant.TenantId}:ip:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}"
+            : $"att_dl:{tenant.TenantId}:user:{identity}";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: partitionKey,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 15,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
     options.AddPolicy("ai", context =>
     {
         var tenantResolver = context.RequestServices.GetRequiredService<ITenantResolver>();
@@ -541,7 +629,6 @@ app.Use(async (context, next) =>
         await next();
     }
 });
-app.UseRateLimiter();
 app.Use(async (context, next) =>
 {
     if (HttpMethods.IsPost(context.Request.Method) ||
@@ -589,7 +676,7 @@ app.Use(async (context, next) =>
     }
 });
 
-// 4. طھط±طھغŒط¨ ط­غŒط§طھغŒ ط§ط­ط±ط§ط² ظ‡ظˆغŒطھ
+// 4. ترتیب حیاتی احراز هویت
 app.UseAuthentication();
 app.Use(async (context, next) =>
 {
@@ -621,6 +708,7 @@ app.Use(async (context, next) =>
     await next();
     logger.LogDebug("After authorization complete {Path}", context.Request.Path);
 });
+app.UseRateLimiter();
 
 // 5. ظ†ظ‚ط´ظ‡ ظ…ط³غŒط±ظ‡ط§
 app.MapControllerRoute(
@@ -629,6 +717,15 @@ app.MapControllerRoute(
 app.MapRazorPages();
 app.MapHealthChecks("/health");
 app.MapHub<OfficeAutomation.Hubs.AutomationHub>("/automationHub");
+
+// ── Hangfire Dashboard & Recurring Jobs ────────────────────────────────
+var hangfireDashboardPath = builder.Configuration.GetValue<string>("Hangfire:DashboardPath") ?? "/hangfire";
+app.UseHangfireDashboard(hangfireDashboardPath, new DashboardOptions
+{
+    Authorization = new[] { new HangfireDashboardAuthFilter(app.Environment.IsDevelopment()) },
+    DashboardTitle = "Rhyno ERP - مدیریت پردازش‌های پس‌زمینه (Hangfire)"
+});
+ContractHangfireJobs.RegisterRecurringJobs();
 
 // --- Auto-migrate ALL database contexts on startup (fail-fast) ---
 // Each context is migrated via Database.MigrateAsync(). If any context fails,

@@ -44,18 +44,7 @@ public sealed class ApprovalService : IApprovalService
         string? oldStatus, string? newStatus, string? description = null,
         CancellationToken ct = default)
     {
-        var auditLog = new ContractAuditLog
-        {
-            ContractId = contractId,
-            UserId = userId,
-            Action = action,
-            OldStatus = oldStatus,
-            NewStatus = newStatus,
-            Description = description,
-            CreatedAt = DateTime.Now
-        };
-        _context.ContractAuditLogs.Add(auditLog);
-        await _context.SaveChangesAsync(ct);
+        await _contractService.AddAuditLogAsync(contractId, userId, action, oldStatus, newStatus, description, ct);
     }
 
     /// <summary>
