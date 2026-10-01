@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using OfficeAutomation.Services.Licensing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeAutomation.Models;
 using OfficeAutomation.Services;
@@ -10,6 +11,7 @@ namespace OfficeAutomation.Controllers;
 
 [Authorize]
 [Route("[controller]")]
+[LicenseExempt]
 public class NotificationsController : Controller
 {
     private readonly NotificationService _notificationService;

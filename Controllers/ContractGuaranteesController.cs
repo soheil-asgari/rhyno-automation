@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeAutomation.Models;
@@ -8,6 +9,7 @@ using System.Security.Claims;
 namespace OfficeAutomation.Controllers;
 
 [Authorize]
+[RequiresModule(LicensableModules.Contracts)]
 public class ContractGuaranteesController : Controller
 {
     private readonly IContractGuaranteeService _guaranteeService;

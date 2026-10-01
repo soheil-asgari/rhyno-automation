@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,7 @@ namespace OfficeAutomation.Controllers;
 /// </summary>
 [Authorize]
 [RequireAccessArea("Finance")]
+[RequiresModule(LicensableModules.Financial)]
 public class MowadiyanController : Controller
 {
     private readonly IDbContextFactory<TaxDbContext> _dbFactory;

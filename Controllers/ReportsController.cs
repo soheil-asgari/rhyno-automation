@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+using OfficeAutomation.Services.Licensing;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,8 @@ using OfficeAutomation.Services.Security;
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
-    public class ReportsController : Controller
+    [LicenseExempt]
+public class ReportsController : Controller
     {
         private readonly FinanceDbContext _context;
         private readonly OfficeDbContext _officeContext;

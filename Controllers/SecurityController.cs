@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [PermissionAuthorize("Security.Manage")]
-    public class SecurityController : Controller
+    [LicenseExempt]
+public class SecurityController : Controller
     {
         private readonly IdentityDbContext _context;
         private readonly WorkflowDbContext _workflowContext;

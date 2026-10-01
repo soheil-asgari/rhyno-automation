@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Globalization;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
@@ -15,7 +16,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [RequireAccessArea("Finance")]
-    public class FinancialController : Controller
+    [RequiresModule(LicensableModules.Financial)]
+public class FinancialController : Controller
     {
         private readonly FinanceDbContext _context;
         private readonly IInventoryService _inventoryService;

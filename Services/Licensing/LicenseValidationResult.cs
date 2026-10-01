@@ -32,5 +32,6 @@ public enum LicenseValidationFailureReason
     InvalidSignature = 3,
     Expired = 4,
     FingerprintMismatch = 5,
-    Revoked = 6
+    Revoked = 6,
+    Invalid = 7
 }

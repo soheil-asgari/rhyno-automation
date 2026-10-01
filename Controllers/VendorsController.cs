@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using OfficeAutomation.Services.Licensing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
@@ -10,7 +11,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [RequireAccessArea("Warehouse")]
-    public class VendorsController : Controller
+    [RequiresModule(LicensableModules.Warehouse)]
+public class VendorsController : Controller
     {
         private readonly FinanceDbContext _context;
         private readonly InventoryDbContext _inventoryContext;

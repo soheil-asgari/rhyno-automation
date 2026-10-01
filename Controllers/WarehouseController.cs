@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -20,7 +21,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [RequireAccessArea("Warehouse")]
-    public class WarehouseController : Controller
+    [RequiresModule(LicensableModules.Warehouse)]
+public class WarehouseController : Controller
     {
         private readonly InventoryDbContext _context;
         private readonly IdentityDbContext _identityContext;

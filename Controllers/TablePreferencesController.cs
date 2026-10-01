@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+using OfficeAutomation.Services.Licensing;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [Route("table-preferences")]
-    public class TablePreferencesController : Controller
+    [LicenseExempt]
+public class TablePreferencesController : Controller
     {
         private readonly IdentityDbContext _context;
 

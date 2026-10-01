@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ namespace OfficeAutomation.Controllers.Api;
 [ApiController]
 [Authorize]
 [Route("api/work-inbox")]
+[RequiresModule(LicensableModules.Workflow)]
 public sealed class WorkInboxApiController : ControllerBase
 {
     private readonly WorkInboxService _workInboxService;

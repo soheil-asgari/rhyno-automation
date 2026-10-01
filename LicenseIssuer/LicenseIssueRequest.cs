@@ -13,4 +13,6 @@ public sealed class LicenseIssueRequest
     public DateTime? ExpiresAtUtc { get; set; }
     public string LicenseType { get; set; } = "subscription"; // "trial", "subscription", "perpetual"
     public bool IsPerpetual { get; set; } = false;
+    public bool OnlineCheckRequired { get; set; } = true;
+    public DateTime? SupportExpiresAtUtc { get; set; }
 }

@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -17,6 +18,7 @@ namespace OfficeAutomation.Controllers;
 
 [Authorize]
 [PermissionAuthorize("Contract.View")]
+[RequiresModule(LicensableModules.Contracts)]
 public class ContractsController : Controller
 {
     private readonly IContractService _contractService;

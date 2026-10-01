@@ -1,0 +1,389 @@
+@model OfficeAutomation.Models.SettingsIndexViewModel
+@using System.Globalization
+@using OfficeAutomation.Services.Licensing
+@inject ILicenseContext LicenseContext
+@inject ILicenseUserEnforcementService LicenseUserEnforcementService
+@inject IHardwareFingerprintService HardwareFingerprintService
+
+@{
+    var isLicensed = LicenseContext.IsLicensed;
+    var lic = LicenseContext.CurrentLicense;
+    var moduleUsages = await LicenseUserEnforcementService.GetModuleUserUsagesAsync();
+    var downgradedModules = moduleUsages.Where(u => u.IsExceeded).ToList();
+
+    var serverFingerprint = Model.System.HardwareFingerprint ?? HardwareFingerprintService.GetFingerprint();
+    var serverActivationCode = Model.System.ActivationCode ?? HardwareFingerprintService.GetActivationCode();
+
+    // Helper functions for Jalali date formatting
+    string FormatJalali(DateTime? utcDate)
+    {
+        if (!utcDate.HasValue) return "-";
+        try
+        {
+            var pc = new PersianCalendar();
+            var local = utcDate.Value.ToLocalTime();
+            return $"{pc.GetYear(local):0000}/{pc.GetMonth(local):00}/{pc.GetDayOfMonth(local):00}";
+        }
+        catch
+        {
+            return utcDate.Value.ToLocalTime().ToString("yyyy/MM/dd");
+        }
+    }
+
+    // Days remaining and color warning
+    int? daysRemaining = lic?.DaysRemaining;
+    var isExpiringSoon = daysRemaining.HasValue && daysRemaining.Value <= 30;
+    var isExpired = daysRemaining.HasValue && daysRemaining.Value <= 0;
+
+    // Support contract days remaining
+    int? supportDaysRemaining = null;
+    if (lic?.SupportExpiresAtUtc.HasValue == true)
+    {
+        var diff = (lic.SupportExpiresAtUtc.Value - DateTime.UtcNow).TotalDays;
+        supportDaysRemaining = diff > 0 ? (int)Math.Ceiling(diff) : 0;
+    }
+}
+
+<div class="space-y-4">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div>
+            <h2 class="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+                <i class="bi bi-award text-teal-600 dark:text-teal-400 text-base"></i>
+                مدیریت و صدور لایسنس نرم‌افزار
+            </h2>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                مشاهده وضعیت دسترسی ماژول‌ها، فعال‌سازی لایسنس جدید و استخراج اطلاعات سخت‌افزاری سرور
+            </p>
+        </div>
+        <div>
+            @if (isLicensed)
+            {
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                    <i class="bi bi-patch-check-fill text-emerald-600 dark:text-emerald-400"></i>
+                    لایسنس معتبر و فعال (@(lic?.CustomerName))
+                </span>
+            }
+            else
+            {
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-black text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800">
+                    <i class="bi bi-lock-fill text-rose-600 dark:text-rose-400"></i>
+                    سامانه در حالت قفل (Locked)
+                </span>
+            }
+        </div>
+    </div>
+
+    <!-- Lock Warning Banner if Locked -->
+    @if (!isLicensed)
+    {
+        <div class="rounded-xl border border-rose-300 bg-rose-50/90 p-3.5 dark:border-rose-900/60 dark:bg-rose-950/30">
+            <div class="flex items-start gap-2.5">
+                <div class="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 shrink-0">
+                    <i class="bi bi-exclamation-diamond-fill text-base"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs font-black text-rose-900 dark:text-rose-200">عدم دسترسی به ماژول‌های سامانه</h3>
+                    <p class="mt-1 text-xs font-medium text-rose-800 dark:text-rose-300 leading-relaxed">
+                        @LicenseContext.LockReason
+                    </p>
+                    <p class="mt-1.5 text-[11px] text-rose-700 dark:text-rose-400">
+                        برای فعال‌سازی و راه‌اندازی سامانه، فایل لایسنس معتبر خریداری‌شده را از فرم انتهای صفحه بارگذاری نمایید.
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- 1. Current License Overview Card -->
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+            <i class="bi bi-info-circle text-teal-600 dark:text-teal-400"></i>
+            اطلاعات و مشخصات لایسنس فعلی
+        </h3>
+
+        @if (isLicensed && lic != null)
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <!-- Customer Name -->
+                <div class="p-2.5 rounded-lg border border-slate-100 bg-slate-50 dark:border-slate-800/80 dark:bg-slate-950">
+                    <span class="block text-[11px] font-bold text-slate-500 dark:text-slate-400">نام مشتری / سازمان</span>
+                    <span class="mt-1 block text-xs font-black text-slate-900 dark:text-white">@lic.CustomerName</span>
+                </div>
+
+                <!-- License Type -->
+                <div class="p-2.5 rounded-lg border border-slate-100 bg-slate-50 dark:border-slate-800/80 dark:bg-slate-950">
+                    <span class="block text-[11px] font-bold text-slate-500 dark:text-slate-400">نوع لایسنس</span>
+                    <span class="mt-1 block text-xs font-black text-slate-900 dark:text-white">
+                        @(lic.IsPerpetual ? "دائمی (Perpetual)" : lic.LicenseType)
+                    </span>
+                </div>
+
+                <!-- Expiry Date (Jalali) & Days Remaining -->
+                <div class="p-2.5 rounded-lg border @(isExpiringSoon ? "border-amber-300 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20" : "border-slate-100 bg-slate-50 dark:border-slate-800/80 dark:bg-slate-950")">
+                    <span class="block text-[11px] font-bold text-slate-500 dark:text-slate-400">تاریخ انقضای لایسنس (جلالی)</span>
+                    <div class="mt-1 flex items-center justify-between">
+                        <span class="text-xs font-black text-slate-900 dark:text-white" dir="ltr">
+                            @(lic.IsPerpetual ? "دائمی (بدون انقضا)" : FormatJalali(lic.ExpiresAtUtc))
+                        </span>
+                        @if (!lic.IsPerpetual && daysRemaining.HasValue)
+                        {
+                            <span class="rounded-full px-2 py-0.5 text-[10px] font-bold @(isExpired ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300" : (isExpiringSoon ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"))">
+                                @(isExpired ? "منقضی شده" : $"{daysRemaining.Value} روز مانده")
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Support Contract Countdown -->
+                <div class="p-2.5 rounded-lg border border-slate-100 bg-slate-50 dark:border-slate-800/80 dark:bg-slate-950">
+                    <span class="block text-[11px] font-bold text-slate-500 dark:text-slate-400">انقضای قرارداد پشتیبانی</span>
+                    <div class="mt-1 flex items-center justify-between">
+                        <span class="text-xs font-black text-slate-900 dark:text-white" dir="ltr">
+                            @(lic.SupportExpiresAtUtc.HasValue ? FormatJalali(lic.SupportExpiresAtUtc) : "فاقد قرارداد مجزا")
+                        </span>
+                        @if (lic.SupportExpiresAtUtc.HasValue && supportDaysRemaining.HasValue)
+                        {
+                            <span class="rounded-full px-2 py-0.5 text-[10px] font-bold @(supportDaysRemaining.Value <= 30 ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300")">
+                                @(supportDaysRemaining.Value <= 0 ? "پایان یافته" : $"{supportDaysRemaining.Value} روز")
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expiry Warning Alert if < 30 days -->
+            @if (isExpiringSoon && !lic.IsPerpetual)
+            {
+                <div class="mt-3 p-3 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/40 dark:text-amber-200 text-xs flex items-center gap-2 font-bold">
+                    <i class="bi bi-clock-history text-amber-600 text-sm"></i>
+                    <span>هشدار انقضای نزدیک: اعتبار زمانی لایسنس شما کمتر از ۳۰ روز دیگر (@daysRemaining روز) به پایان می‌رسد. لطفاً پیش از موعد نسبت به تمدید اقدام فرمایید.</span>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-6 text-slate-500 dark:text-slate-400 text-xs">
+                <i class="bi bi-shield-slash text-2xl text-slate-400 dark:text-slate-600 block mb-1"></i>
+                لایسنس فعالی برای نمایش جزئیات ثبت نشده است.
+            </div>
+        }
+    </div>
+
+    <!-- 2. All 7 Licensable Modules Status Card -->
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-grid-3x3-gap text-teal-600 dark:text-teal-400"></i>
+                وضعیت ماژول‌های سامانه (۷ ماژول اصلی)
+            </h3>
+            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                تعداد ماژول‌های مجاز: @(lic?.Modules?.Count ?? 0) از ۷
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+            @foreach (var moduleCode in LicensableModules.All)
+            {
+                var isModuleLicensed = isLicensed && (lic?.HasModule(moduleCode) ?? false);
+                var displayName = LicensableModules.GetDisplayName(moduleCode);
+                var maxUsersForMod = lic?.GetMaxUsersForModule(moduleCode) ?? 0;
+
+                <div class="p-2.5 rounded-lg border @(isModuleLicensed ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/60 dark:bg-emerald-950/20" : "border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-950/50 opacity-75") flex flex-col justify-between">
+                    <div class="flex items-center justify-between gap-1 mb-2">
+                        <span class="text-xs font-black @(isModuleLicensed ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400")">
+                            @displayName
+                        </span>
+                        @if (isModuleLicensed)
+                        {
+                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <i class="bi bi-check2"></i> فعال
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                                <i class="bi bi-x"></i> غیرفعال
+                            </span>
+                        }
+                    </div>
+                    <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                        سقف کاربر مجاز: <strong class="font-bold @(isModuleLicensed ? "text-slate-800 dark:text-slate-200" : "text-slate-500")">@(isModuleLicensed ? (maxUsersForMod > 0 ? maxUsersForMod.ToString() : "نامحدود") : "-")</strong>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Downgrade warning if applicable -->
+        @if (downgradedModules.Count > 0)
+        {
+            <div class="mt-3 p-3 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-200 text-xs">
+                <div class="flex items-center gap-1.5 font-black">
+                    <i class="bi bi-exclamation-triangle-fill text-amber-600 text-sm"></i>
+                    <span>هشدار تنزل لایسنس (License Downgrade Warning):</span>
+                </div>
+                <p class="mt-1 leading-relaxed text-[11px]">
+                    تعداد کاربران فعال فعلی در برخی ماژول‌ها از سقف لایسنس فراتر رفته است. دسترسی کاربران موجود مسدود نشده است، اما تعریف کاربر جدید یا تخصیص نقش مربوطه تا زمان کاهش تعداد کاربران مسدود است.
+                </p>
+                <ul class="mt-1.5 list-disc list-inside space-y-0.5 font-bold text-[11px]">
+                    @foreach (var exc in downgradedModules)
+                    {
+                        <li>@exc.ModuleDisplayName: @exc.ActiveUserCount از سقف @exc.MaxUsersAllowed کاربر (تخطی از سقف)</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <!-- Module User Limit vs Usage Widget -->
+        @if (isLicensed && moduleUsages.Any())
+        {
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div class="text-xs font-black text-slate-800 dark:text-slate-200 mb-2.5 flex items-center gap-1.5">
+                    <i class="bi bi-pie-chart-fill text-teal-600"></i>
+                    <span>مصرف مجاز کاربران بر اساس ماژول (User Count Limits vs Usage)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                    @foreach (var usage in moduleUsages)
+                    {
+                        var pct = usage.MaxUsersAllowed > 0 ? (int)Math.Min(100, Math.Round((double)usage.ActiveUserCount / usage.MaxUsersAllowed * 100)) : 0;
+                        var badgeClass = usage.IsExceeded
+                            ? "bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-900"
+                            : (usage.IsAtLimit
+                                ? "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-900"
+                                : "bg-teal-50/50 text-teal-800 dark:bg-teal-950/30 dark:text-teal-300 border-teal-200 dark:border-teal-900");
+
+                        <div class="p-2.5 rounded-lg border @badgeClass text-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between font-bold mb-1.5">
+                                <span>@usage.ModuleDisplayName</span>
+                                <span class="font-mono text-[11px]" dir="ltr">@usage.ActiveUserCount / @usage.MaxUsersAllowed</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="@(usage.IsExceeded ? "bg-rose-500" : (usage.IsAtLimit ? "bg-amber-500" : "bg-teal-600")) h-1.5 rounded-full" style="width: @pct%;"></div>
+                            </div>
+                            <div class="mt-1.5 text-[10px] text-right opacity-80">
+                                @(usage.IsExceeded ? "تخطی از سقف مجاز" : (usage.IsAtLimit ? "تکمیل سقف مجاز" : $"{usage.MaxUsersAllowed - usage.ActiveUserCount} کاربر آزاد"))
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- 3. Online Check Status Card -->
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2 mb-2">
+            <i class="bi bi-broadcast text-teal-600 dark:text-teal-400"></i>
+            وضعیت بررسی آنلاین و همگام‌سازی (Online Check Status)
+        </h3>
+        
+        @if (lic != null && lic.OnlineCheckRequired)
+        {
+            var graceDays = LicenseContext.GraceDaysRemaining;
+            var lastHb = LicenseContext.LastSuccessfulHeartbeatAt;
+            var graceStatus = LicenseContext.GraceStatus;
+
+            <div class="p-3 rounded-lg border @(graceStatus == GracePeriodStatus.WarningRed ? "border-rose-300 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/30" : (graceStatus == GracePeriodStatus.WarningAmber ? "border-amber-300 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/30" : "border-sky-200 bg-sky-50/60 dark:border-sky-900 dark:bg-sky-950/30"))">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full @(graceStatus == GracePeriodStatus.WarningRed ? "bg-rose-400" : (graceStatus == GracePeriodStatus.WarningAmber ? "bg-amber-400" : "bg-sky-400")) opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 @(graceStatus == GracePeriodStatus.WarningRed ? "bg-rose-500" : (graceStatus == GracePeriodStatus.WarningAmber ? "bg-amber-500" : "bg-sky-500"))"></span>
+                        </span>
+                        <span class="text-xs font-bold @(graceStatus == GracePeriodStatus.WarningRed ? "text-rose-900 dark:text-rose-200" : (graceStatus == GracePeriodStatus.WarningAmber ? "text-amber-900 dark:text-amber-200" : "text-sky-900 dark:text-sky-200"))">
+                            نیازمند بررسی و برقراری ارتباط دوره‌ای با سرور مرجع (Online Check Required)
+                        </span>
+                    </div>
+                    <span class="rounded-full @(graceStatus == GracePeriodStatus.WarningRed ? "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300" : (graceStatus == GracePeriodStatus.WarningAmber ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300" : "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300")) px-2.5 py-0.5 text-[10px] font-bold">
+                        @(graceDays.HasValue ? $"{graceDays.Value} روز تا انقضای مهلت اتصال" : "فعال")
+                    </span>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-600 dark:text-slate-400 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <div>آخرین پالس موفق (Heartbeat): <strong class="text-slate-800 dark:text-slate-200">@(lastHb.HasValue ? FormatJalali(lastHb) + $" ({lastHb.Value:HH:mm} UTC)" : "ثبت نشده (دوره مهلت اولیه)")</strong></div>
+                    <div>وضعیت اتصال: <strong class="text-slate-800 dark:text-slate-200">@(graceStatus == GracePeriodStatus.Normal ? "عادی (در محدوده مجاز)" : (graceStatus == GracePeriodStatus.WarningAmber ? "هشدار عدم اتصال (محدوده زرد)" : (graceStatus == GracePeriodStatus.WarningRed ? "هشدار فوری عدم اتصال (محدوده قرمز)" : "مهلت اتصال به پایان رسیده")))</strong></div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="p-3 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/30 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-wifi-off text-emerald-600 dark:text-emerald-400 text-base"></i>
+                    <div>
+                        <span class="text-xs font-black text-emerald-900 dark:text-emerald-200">Offline license — no internet connectivity required</span>
+                        <p class="text-[11px] text-emerald-800 dark:text-emerald-300 mt-0.5">لایسنس آفلاین مستقل؛ سامانه نیازی به اتصال اینترنتی و ارسال دوره‌ای گزارش ندارد.</p>
+                    </div>
+                </div>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+                    آفلاین و ایزوله
+                </span>
+            </div>
+        }
+    </div>
+
+    <!-- 4. Server Hardware Fingerprint & Activation Code Card -->
+    <div class="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 dark:border-indigo-950 dark:bg-indigo-950/20">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-cpu text-indigo-600 dark:text-indigo-400 text-lg"></i>
+                <h3 class="text-xs font-black text-slate-900 dark:text-white">کد فعال‌سازی و اثر انگشت سخت‌افزاری سرور</h3>
+            </div>
+            <span class="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">مختص این ماشین</span>
+        </div>
+        <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-400">
+            برای دریافت یا تمدید لایسنس، این کد را برای پشتیبانی ارسال کنید.
+        </p>
+
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Activation Code -->
+            <div class="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">کد فعال‌سازی سرور (Activation Code)</span>
+                    <button type="button" onclick="navigator.clipboard.writeText('@serverActivationCode'); this.innerText='کپی شد!'; setTimeout(() => this.innerText='کپی کد', 2000);" class="inline-flex items-center gap-1 rounded bg-indigo-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-indigo-700 transition">
+                        <i class="bi bi-clipboard"></i>کپی کد
+                    </button>
+                </div>
+                <div class="mt-2 select-all font-mono text-sm font-black text-indigo-700 dark:text-indigo-300 tracking-wider text-center py-1.5 bg-slate-50 dark:bg-slate-950 rounded border border-dashed border-indigo-200 dark:border-indigo-900" dir="ltr">
+                    @serverActivationCode
+                </div>
+            </div>
+
+            <!-- Hardware Fingerprint SHA-256 -->
+            <div class="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">اثر انگشت کامل (Hardware Fingerprint SHA-256)</span>
+                    <button type="button" onclick="navigator.clipboard.writeText('@serverFingerprint'); this.innerText='کپی شد!'; setTimeout(() => this.innerText='کپی هش', 2000);" class="inline-flex items-center gap-1 rounded bg-slate-700 px-2 py-1 text-[10px] font-bold text-white hover:bg-slate-800 transition">
+                        <i class="bi bi-clipboard"></i>کپی هش
+                    </button>
+                </div>
+                <div class="mt-2 select-all font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate py-2 px-2 bg-slate-50 dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800" dir="ltr" title="@serverFingerprint">
+                    @serverFingerprint
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Activate / Upload New License Form -->
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2 mb-1.5">
+            <i class="bi bi-cloud-arrow-up text-teal-600 dark:text-teal-400"></i>
+            فعال‌سازی / بارگذاری فایل لایسنس جدید
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            فایل لایسنس دریافت شده از پشتیبانی (.lic) را انتخاب کرده و دکمه فعال‌سازی را فشار دهید. فعال‌سازی به صورت آنی و بدون نیاز به راه‌اندازی مجدد سرور انجام خواهد شد.
+        </p>
+
+        <form asp-action="ActivateLicense" asp-controller="Settings" method="post" enctype="multipart/form-data" class="space-y-3">
+            @Html.AntiForgeryToken()
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="flex-1">
+                    <input type="file" name="licenseFile" accept=".lic,.txt" required class="block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 dark:file:bg-teal-950/40 dark:file:text-teal-300 cursor-pointer border border-slate-200 dark:border-slate-700 rounded-lg p-1 bg-slate-50 dark:bg-slate-950" />
+                </div>
+                <button type="submit" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-xs font-black text-white hover:bg-teal-700 transition shadow-sm">
+                    <i class="bi bi-arrow-repeat"></i>
+                    اعتبارسنجی و فعال‌سازی لایسنس
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

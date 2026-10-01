@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ using System.Text.RegularExpressions;
 namespace OfficeAutomation.Controllers;
 
 [Authorize]
+[LicenseExempt]
 public class SettingsController : Controller
 {
     private const string DefaultApplicationTitle = "Rhyno Dashboard";
@@ -42,6 +44,8 @@ public class SettingsController : Controller
     private readonly Services.Tenancy.ITenantSettingsService _tenantSettingsService;
     private readonly IUserContextService _userContextService;
     private readonly ITotpService _totpService;
+    private readonly ILicenseContext _licenseContext;
+    private readonly IHardwareFingerprintService _hardwareFingerprintService;
 
     public SettingsController(
         PlatformDbContext context,
@@ -52,7 +56,9 @@ public class SettingsController : Controller
         IAuthorizationService authorizationService,
         Services.Tenancy.ITenantSettingsService tenantSettingsService,
         IUserContextService userContextService,
-        ITotpService totpService)
+        ITotpService totpService,
+        ILicenseContext licenseContext,
+        IHardwareFingerprintService hardwareFingerprintService)
     {
         _context = context;
             _identityContext = identityContext;
@@ -63,6 +69,8 @@ public class SettingsController : Controller
         _tenantSettingsService = tenantSettingsService;
         _userContextService = userContextService;
         _totpService = totpService;
+        _licenseContext = licenseContext;
+        _hardwareFingerprintService = hardwareFingerprintService;
     }
 
     [HttpGet]
@@ -414,7 +422,9 @@ public class SettingsController : Controller
                 IsDatabaseConnected = canConnectDb,
                 ActiveEnvironment = resolvedSystem.ActiveEnvironment ?? _environment.EnvironmentName,
                 MaintenanceMode = resolvedSystem.MaintenanceMode,
-                LastUpdatedUtc = resolvedSystem.UpdatedAtUtc
+                LastUpdatedUtc = resolvedSystem.UpdatedAtUtc,
+                HardwareFingerprint = _hardwareFingerprintService.GetFingerprint(),
+                ActivationCode = _hardwareFingerprintService.GetActivationCode()
             },
             Ui = new UiPreferencesViewModel
             {
@@ -594,6 +604,72 @@ public class SettingsController : Controller
         _logger.LogWarning("2FA disabled for user {UserId}", user.Id);
         TempData["SettingsSuccess"] = "احراز هویت دو مرحله‌ای غیرفعال شد.";
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    [LicenseExempt]
+    public IActionResult License()
+    {
+        return Redirect("/Settings#license");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [LicenseExempt]
+    [PermissionAuthorize("Security.Manage")]
+    public async Task<IActionResult> ActivateLicense(IFormFile? licenseFile, CancellationToken cancellationToken)
+    {
+        if (licenseFile == null || licenseFile.Length == 0)
+        {
+            TempData["SettingsError"] = "لطفاً فایل لایسنس معتبر (.lic) را انتخاب نمایید.";
+            return Redirect("/Settings#license");
+        }
+
+        if (licenseFile.Length > 2 * 1024 * 1024) // 2 MB limit
+        {
+            TempData["SettingsError"] = "حجم فایل لایسنس بیش از حد مجاز است.";
+            return Redirect("/Settings#license");
+        }
+
+        string fileContent;
+        using (var reader = new StreamReader(licenseFile.OpenReadStream()))
+        {
+            fileContent = await reader.ReadToEndAsync(cancellationToken);
+        }
+
+        var result = await _licenseContext.ActivateLicenseAsync(fileContent, cancellationToken);
+        if (result.IsValid && result.License != null)
+        {
+            _logger.LogInformation(
+                "License successfully activated via Settings by {UserId}. Customer: {Customer}, Modules: {Modules}",
+                _userManager.GetUserId(User),
+                result.License.CustomerName,
+                string.Join(", ", result.License.Modules));
+
+            TempData["SettingsSuccess"] = $"لایسنس نرم‌افزار برای «{result.License.CustomerName}» با موفقیت فعال شد و تمامی ماژول‌های مجاز فعال شدند.";
+        }
+        else
+        {
+            var failureMessage = result.FailureReason switch
+            {
+                LicenseValidationFailureReason.FingerprintMismatch =>
+                    "کد سخت‌افزاری سرور فعلی با اثر انگشت ثبت‌شده در این فایل لایسنس مطابقت ندارد. لطفاً کد فعال‌سازی سرور را برای دریافت لایسنس ارسال فرمایید.",
+                LicenseValidationFailureReason.Expired =>
+                    "اعتبار زمانی فایل لایسنس بارگذاری‌شده به پایان رسیده است.",
+                LicenseValidationFailureReason.InvalidSignature =>
+                    "امضای دیجیتال فایل لایسنس نامعتبر است یا محتوای آن دستکاری شده است.",
+                LicenseValidationFailureReason.Revoked =>
+                    "این فایل لایسنس ابطال شده است (Revoked) و امکان فعال‌سازی آن وجود ندارد.",
+                LicenseValidationFailureReason.Malformed =>
+                    "قالب فایل لایسنس نامعتبر یا ساختار توکن مخدوش است.",
+                _ => result.ErrorMessage ?? "خطا در اعتبارسنجی و فعال‌سازی فایل لایسنس."
+            };
+
+            _logger.LogWarning("License activation failed: {Reason} - {Error}", result.FailureReason, result.ErrorMessage);
+            TempData["SettingsError"] = $"خطا در فعال‌سازی لایسنس: {failureMessage}";
+        }
+
+        return Redirect("/Settings#license");
     }
 
     public sealed class SignatureUploadModel

@@ -28,8 +28,14 @@ public sealed class LicenseTokenGenerator
             ["hardware_fingerprint"] = request.HardwareFingerprint,
             ["license_type"] = request.LicenseType,
             ["is_perpetual"] = request.IsPerpetual,
+            ["online_check_required"] = request.OnlineCheckRequired,
             ["modules"] = request.Modules
         };
+
+        if (request.SupportExpiresAtUtc.HasValue)
+        {
+            claims["support_expires_at"] = request.SupportExpiresAtUtc.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        }
 
         // Add per-module limits if provided
         if (request.ModuleUserLimits != null && request.ModuleUserLimits.Count > 0)

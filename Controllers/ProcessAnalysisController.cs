@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeAutomation.Services.Security;
@@ -7,6 +8,7 @@ namespace OfficeAutomation.Controllers;
 [Authorize]
 [PermissionAuthorize("تحلیل.مشاهده")]
 [Route("ProcessAnalysis")]
+[RequiresModule(LicensableModules.Workflow)]
 public sealed class ProcessAnalysisController : Controller
 {
     [HttpGet("")]

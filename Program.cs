@@ -430,7 +430,17 @@ builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddHostedService<DocumentRetentionBackgroundService>();
 builder.Services.AddHostedService<ScheduledReportBackgroundService>();
 builder.Services.AddHostedService<ContractBackgroundJobCoordinator>();
-
+builder.Services.Configure<OfficeAutomation.Services.Licensing.LicensingOptions>(builder.Configuration.GetSection(OfficeAutomation.Services.Licensing.LicensingOptions.SectionName));
+builder.Services.AddHttpClient("LicenseHeartbeatClient", client =>
+{
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Rhyno-LicenseHeartbeat/1.0");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddSingleton<OfficeAutomation.Services.Licensing.IHardwareFingerprintService, OfficeAutomation.Services.Licensing.HardwareFingerprintService>();
+builder.Services.AddSingleton<OfficeAutomation.Services.Licensing.ILicenseValidator, OfficeAutomation.Services.Licensing.LicenseValidator>();
+builder.Services.AddSingleton<OfficeAutomation.Services.Licensing.ILicenseContext, OfficeAutomation.Services.Licensing.LicenseContext>();
+builder.Services.AddScoped<OfficeAutomation.Services.Licensing.ILicenseUserEnforcementService, OfficeAutomation.Services.Licensing.LicenseUserEnforcementService>();
+builder.Services.AddHostedService<OfficeAutomation.Services.Licensing.LicenseHeartbeatService>();
 
 // â"€â"€ Health Checks (Advanced) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 builder.Services.AddHealthChecks()
@@ -553,6 +563,15 @@ if (isEfDesignTime)
 
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+
+// ── Startup Licensing Reflection Guard (Safety Net) ─────────────────────
+// Ensures every controller in the assembly has either [RequiresModule] or [LicenseExempt].
+if (app.Environment.IsDevelopment())
+{
+    logger.LogInformation("Verifying licensing safety net for all controllers in assembly...");
+    OfficeAutomation.Services.Licensing.LicensableModules.EnsureAllControllersAnnotated(typeof(Program).Assembly);
+    logger.LogInformation("Licensing safety net passed: all controllers have [RequiresModule] or [LicenseExempt].");
+}
 
 // 3. تنظیمات محیط اجرا
 if (!app.Environment.IsDevelopment())
@@ -708,6 +727,7 @@ app.Use(async (context, next) =>
     await next();
     logger.LogDebug("After authorization complete {Path}", context.Request.Path);
 });
+app.UseMiddleware<OfficeAutomation.Services.Licensing.LicenseEnforcementMiddleware>();
 app.UseRateLimiter();
 
 // 5. ظ†ظ‚ط´ظ‡ ظ…ط³غŒط±ظ‡ط§
@@ -786,7 +806,7 @@ else
     logger.LogInformation("Startup bootstrap skipped because Bootstrap:RunOnStartup is disabled.");
 }
 
-// â"€â"€ Bootstrap Admin User (always runs, idempotent) â"€â"€
+// --- Bootstrap Admin User (always runs, idempotent) ---
 try
 {
     using var adminScope = app.Services.CreateScope();
@@ -799,7 +819,33 @@ catch (Exception ex)
     logger.LogWarning(ex, "BootstrapAdmin: seed failed (DB may not be ready): {Message}", ex.Message);
 }
 
-// â"€â"€ Startup Route Diagnostics â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// --- Startup License Check (Graceful degradation into Locked mode) ---
+try
+{
+    var licenseContext = app.Services.GetRequiredService<OfficeAutomation.Services.Licensing.ILicenseContext>();
+    var licValidation = await licenseContext.RefreshAsync();
+    if (licValidation.IsValid && licenseContext.CurrentLicense != null)
+    {
+        logger.LogInformation(
+            "License validated successfully on startup. Customer: {Customer}, Expires: {Expiry}, Type: {Type}",
+            licenseContext.CurrentLicense.CustomerName,
+            licenseContext.CurrentLicense.ExpiresAtUtc?.ToString("yyyy-MM-dd") ?? "Perpetual",
+            licenseContext.CurrentLicense.LicenseType);
+    }
+    else
+    {
+        logger.LogWarning(
+            "Application starting in LOCKED mode. License validation reason: {Reason}. Details: {Error}",
+            licValidation.FailureReason,
+            licValidation.ErrorMessage);
+    }
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "Unexpected error validating license on startup. Operating in Locked mode.");
+}
+
+// --- Startup Route Diagnostics ---
 // Outputs all active mapped routes to the console on startup so we can verify that
 // Areas/Identity/Pages/Account/Login appears in the [REGISTERED ROUTE] logs.
 app.Lifetime.ApplicationStarted.Register(() =>

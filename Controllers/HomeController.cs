@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+using OfficeAutomation.Services.Licensing;
+using System.Diagnostics;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,8 @@ using OfficeAutomation.Models;
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
-    public class HomeController : Controller
+    [LicenseExempt]
+public class HomeController : Controller
     {
         private readonly PlatformDbContext _context;
         private readonly OfficeDbContext _officeContext;

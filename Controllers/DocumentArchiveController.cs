@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [PermissionAuthorize("Archive.View")]
-    public class DocumentArchiveController : Controller
+    [RequiresModule(LicensableModules.OfficeAutomation)]
+public class DocumentArchiveController : Controller
     {
         private readonly IWorkflowDbContext _context;
         private readonly IWebHostEnvironment _environment;

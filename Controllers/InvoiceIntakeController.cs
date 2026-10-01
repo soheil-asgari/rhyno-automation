@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,8 @@ namespace OfficeAutomation.Controllers
     /// </summary>
     [Authorize]
     [RequireAccessArea("Finance")]
-    public class InvoiceIntakeController : Controller
+    [RequiresModule(LicensableModules.Financial)]
+public class InvoiceIntakeController : Controller
     {
         private readonly InvoiceIntakeService _service;
 

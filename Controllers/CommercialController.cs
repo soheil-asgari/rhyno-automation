@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace OfficeAutomation.Controllers;
 
 [Authorize]
 [RequireAccessArea("Finance")]
+[RequiresModule(LicensableModules.Financial)]
 public class CommercialController : Controller
 {
     private readonly CommercialService _commercialService;

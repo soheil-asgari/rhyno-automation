@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using OfficeAutomation.Services.Licensing;
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [PermissionAuthorize("HR.View")]
-    public class BimehController : Controller
+    [RequiresModule(LicensableModules.Financial)]
+public class BimehController : Controller
     {
         private readonly FinanceDbContext _context;
         private readonly OfficeDbContext _officeContext;

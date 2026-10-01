@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,8 @@ namespace OfficeAutomation.Controllers
     [Route("api/admin/roles-management")]
     [Authorize]
     [PermissionAuthorize("Security.Manage")]
-    public class RolesManagementController : ControllerBase
+    [LicenseExempt]
+public class RolesManagementController : ControllerBase
     {
         private readonly IdentityDbContext _context;
         private readonly RoleManager<ApplicationRole> _roleManager;

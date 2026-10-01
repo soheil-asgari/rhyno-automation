@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+using OfficeAutomation.Services.Licensing;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,7 +20,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [Services.Security.PermissionAuthorize("Letters.Read")]
-    public class LettersController : Controller
+    [RequiresModule(LicensableModules.OfficeAutomation)]
+public class LettersController : Controller
     {
         private readonly OfficeDbContext _context;
         private readonly WorkflowDbContext _workflowContext;

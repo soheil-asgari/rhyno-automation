@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeAutomation.Filters;
@@ -10,6 +11,7 @@ namespace OfficeAutomation.Controllers;
 /// </summary>
 [Authorize]
 [RequireAccessArea("Finance")]
+[RequiresModule(LicensableModules.Financial)]
 public sealed class TaxAuditController : Controller
 {
     private readonly ITaxAuditService _audit;

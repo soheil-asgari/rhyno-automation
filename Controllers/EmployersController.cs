@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [RequireAccessArea("Warehouse")]
-    public class EmployersController : Controller
+    [RequiresModule(LicensableModules.HumanCapital)]
+public class EmployersController : Controller
     {
         private readonly FinanceDbContext _context;
 

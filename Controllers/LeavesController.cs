@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+using OfficeAutomation.Services.Licensing;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -17,7 +18,8 @@ using System.Threading.Tasks;
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
-    public class LeavesController : Controller
+    [RequiresModule(LicensableModules.HumanCapital)]
+public class LeavesController : Controller
     {
         private readonly OfficeDbContext _context;
         private readonly IdentityDbContext _identityContext;

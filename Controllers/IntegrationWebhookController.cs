@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -15,6 +16,7 @@ namespace OfficeAutomation.Controllers;
 [ApiController]
 [Route("api/v1/integration")]
 [EnableRateLimiting("api")]
+[LicenseExempt]
 public sealed class IntegrationWebhookController : ControllerBase
 {
     private readonly IDbContextFactory<TaxDbContext> _dbFactory;

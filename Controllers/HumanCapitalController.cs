@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [PermissionAuthorize("HR.View")]
-    public class HumanCapitalController : Controller
+    [RequiresModule(LicensableModules.HumanCapital)]
+public class HumanCapitalController : Controller
     {
         private readonly OfficeDbContext _context;
         private readonly IDataIsolationService _dataIsolationService;

@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [RequireAccessArea("Warehouse")]
-    public class WaybillController : Controller
+    [RequiresModule(LicensableModules.Warehouse)]
+public class WaybillController : Controller
     {
         private readonly FinanceDbContext _context;
         private static readonly string[] DefaultPaymentStatuses = ["Paid", "Pending", "Internal"];

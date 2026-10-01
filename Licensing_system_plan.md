@@ -70,7 +70,7 @@ Implement:
 Show me the JWT payload structure and confirm the private key never gets referenced anywhere inside the main OfficeAutomation project — only in the separate LicenseIssuer tool.
 ```
 
-### ☐ Task 1.2 — Build the hardware fingerprint generator
+### ☑ Task 1.2 — Build the hardware fingerprint generator (Completed)
 ```
 Implement a HardwareFingerprintService (Services/Licensing/HardwareFingerprintService.cs) inside the main app that generates a stable, unique identifier for the server it's running on, suitable for license locking. 
 
@@ -105,7 +105,7 @@ Building on LicenseValidator (Task 1.1) and HardwareFingerprintService (Task 1.2
 Show me how ILicenseContext is registered and consumed, and confirm the app doesn't crash on a missing/invalid license file — it should degrade gracefully to the locked state.
 ```
 
-### ☐ Task 2.2 — Module-level access gating
+### ☑ Task 2.2 — Module-level access gating
 ```
 Using the ILicenseContext from Task 2.1, add an authorization mechanism that restricts access to entire modules based on the license's `modules` claim:
 

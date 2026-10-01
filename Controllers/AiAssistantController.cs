@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using OfficeAutomation.Models;
 
 [Authorize]
 [EnableRateLimiting("ai")]
+[RequiresModule(LicensableModules.AiAssistant)]
 public class AiAssistantController : Controller
 {
     private readonly AiService _ai;

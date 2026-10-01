@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using OfficeAutomation.Services.Licensing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
@@ -15,7 +16,8 @@ namespace OfficeAutomation.Controllers
     [Route("api/admin/audit-logs")]
     [Authorize]
     [PermissionAuthorize("AuditLogs.Read")]
-    public class AuditLogsController : ControllerBase
+    [LicenseExempt]
+public class AuditLogsController : ControllerBase
     {
         private static readonly string[] SupportedActions = ["Create", "Update", "Delete"];
         private readonly PlatformDbContext _context;

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using OfficeAutomation.Services.Licensing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [PermissionAuthorize("Users.Manage")]
-    public class UsersController : Controller
+    [LicenseExempt]
+public class UsersController : Controller
     {
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;

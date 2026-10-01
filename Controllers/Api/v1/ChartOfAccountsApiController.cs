@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace OfficeAutomation.Controllers.Api.v1;
 [RequireAccessArea("Finance")]
 [Route("api/v1/finance/chart-of-accounts")]
 [ApiController]
+[RequiresModule(LicensableModules.Financial)]
 public sealed class ChartOfAccountsApiController : ControllerBase
 {
     private readonly FinanceDbContext _context;

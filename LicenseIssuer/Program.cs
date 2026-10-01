@@ -68,7 +68,8 @@ Commands:
 
   issue --customer-name <name> --customer-id <id> --modules <m1,m2> --max-users <n>
         --fingerprint <hash> [--type <sub|trial|perpetual>] [--days <30|365>]
-        [--perpetual] [--key <private.pem>] [--out <output.lic>]
+        [--perpetual] [--online-check <true|false>] [--support-expires <yyyy-MM-dd>]
+        [--key <private.pem>] [--out <output.lic>]
       Issue a signed license via direct CLI parameters.
 
 Examples:
@@ -178,6 +179,18 @@ Examples:
                     request.IsPerpetual = true;
                     request.LicenseType = "perpetual";
                     break;
+                case "--online-check":
+                    if (i + 1 < args.Length && bool.TryParse(args[++i], out var onlineCheck))
+                    {
+                        request.OnlineCheckRequired = onlineCheck;
+                    }
+                    break;
+                case "--support-expires":
+                    if (i + 1 < args.Length && DateTime.TryParse(args[++i], null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var supportExp))
+                    {
+                        request.SupportExpiresAtUtc = supportExp;
+                    }
+                    break;
                 case "--module-limits": // format: Contracts:20,Financial:10
                     if (i + 1 < args.Length)
                     {
@@ -242,8 +255,28 @@ Examples:
 
         if (request.Modules.Count == 0)
         {
-            request.Modules.Add("Contracts"); // default
+            request.Modules.Add(OfficeAutomation.Services.Licensing.LicensableModules.Contracts); // default
         }
+
+        // Validate all modules against LicensableModules registry
+        var invalidModules = request.Modules
+            .Where(m => !OfficeAutomation.Services.Licensing.LicensableModules.IsValid(m))
+            .ToList();
+
+        if (invalidModules.Count > 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Validation Error: Unknown module(s): {string.Join(", ", invalidModules)}");
+            Console.WriteLine($"Valid modules are: {string.Join(", ", OfficeAutomation.Services.Licensing.LicensableModules.All)}");
+            Console.ResetColor();
+            return 1;
+        }
+
+        // Normalize module names to canonical names
+        request.Modules = request.Modules
+            .Select(m => OfficeAutomation.Services.Licensing.LicensableModules.Normalize(m))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         if (!File.Exists(keyFile))
         {
@@ -272,6 +305,11 @@ Examples:
         if (request.ModuleUserLimits.Count > 0)
         {
             Console.WriteLine($"  Module Limits:    {string.Join(", ", request.ModuleUserLimits.Select(kv => $"{kv.Key}:{kv.Value}"))}");
+        }
+        Console.WriteLine($"  Online Check:     {(request.OnlineCheckRequired ? "Required" : "False (Offline-Only)")}");
+        if (request.SupportExpiresAtUtc.HasValue)
+        {
+            Console.WriteLine($"  Support Expires:  {request.SupportExpiresAtUtc.Value:yyyy-MM-dd HH:mm:ss UTC}");
         }
         Console.WriteLine($"  Fingerprint:      {request.HardwareFingerprint}");
         Console.WriteLine($"  License Type:     {request.LicenseType}");

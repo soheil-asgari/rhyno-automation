@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ namespace OfficeAutomation.Controllers;
 
 [Authorize]
 [RequireAccessArea("Finance")]
+[RequiresModule(LicensableModules.Financial)]
 public class InvoiceDashboardController : Controller
 {
     private readonly IDbContextFactory<TaxDbContext> _dbFactory;

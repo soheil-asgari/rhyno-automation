@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeAutomation.Filters;
@@ -8,6 +9,7 @@ namespace OfficeAutomation.Controllers;
 
 [Authorize]
 [RequireAccessArea("Finance")]
+[RequiresModule(LicensableModules.Financial)]
 public class AccountReviewController : Controller
 {
     private readonly IAccountReviewService _reviewService;

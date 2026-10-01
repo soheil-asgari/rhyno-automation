@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,8 @@ using OfficeAutomation.Modules.Finance.Infrastructure.Persistence;
 
 namespace OfficeAutomation.Controllers.Financial
 {
-    public class VouchersController : Controller
+    [RequiresModule(LicensableModules.Financial)]
+public class VouchersController : Controller
     {
         private readonly FinanceDbContext _context;
 

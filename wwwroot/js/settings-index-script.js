@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 '#tab-general':  '#general',
                 '#tab-security': '#security',
                 '#tab-system':   '#system',
+                '#tab-license':  '#license',
                 '#tab-ui':       '#appearance',
                 '#tab-signature':'#signature',
                 '#tab-adduser':  '#users',

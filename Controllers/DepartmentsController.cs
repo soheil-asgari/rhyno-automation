@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using OfficeAutomation.Services.Licensing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeAutomation.Modules.Identity.Infrastructure.Persistence;
@@ -6,6 +7,7 @@ using OfficeAutomation.Modules.Office.Infrastructure.Persistence;
 using OfficeAutomation.Models;
 
 [Authorize]
+[LicenseExempt]
 public class DepartmentsController : Controller
 {
     private readonly IdentityDbContext _context;

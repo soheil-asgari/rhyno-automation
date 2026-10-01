@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,8 @@ namespace OfficeAutomation.Controllers
     [Authorize]
     [PermissionAuthorize("AuditLogs.Read")]
     [Route("admin/audit-dashboard")]
-    public class AuditDashboardController : Controller
+    [LicenseExempt]
+public class AuditDashboardController : Controller
     {
         private readonly PlatformDbContext _context;
         private readonly SecurityAuditNotificationService _securityAuditNotificationService;

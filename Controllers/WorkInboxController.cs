@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
@@ -16,6 +17,7 @@ using OfficeAutomation.Services.Tenancy;
 namespace OfficeAutomation.Controllers;
 
 [Authorize]
+[RequiresModule(LicensableModules.Workflow)]
 public sealed class WorkInboxController : Controller
 {
     private readonly WorkInboxService _workInboxService;

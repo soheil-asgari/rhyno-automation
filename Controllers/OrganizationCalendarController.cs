@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using OfficeAutomation.Services.Licensing;
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [PermissionAuthorize("Calendar.View")]
-    public class OrganizationCalendarController : Controller
+    [RequiresModule(LicensableModules.HumanCapital)]
+public class OrganizationCalendarController : Controller
     {
         private readonly OfficeDbContext _context;
         private readonly FinanceDbContext _financeContext;

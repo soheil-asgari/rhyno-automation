@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ namespace OfficeAutomation.Controllers.Api.v1;
 [Route("api/v1/workflow")]
 [Authorize(AuthenticationSchemes = ApiKeyAuthenticationExtensions.AuthenticationScheme)]
 [Produces("application/json")]
+[RequiresModule(LicensableModules.Workflow)]
 public sealed class WorkflowApiController : ApiBaseController
 {
     private readonly IWorkflowDbContext _context;

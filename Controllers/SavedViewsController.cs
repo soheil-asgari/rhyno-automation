@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ namespace OfficeAutomation.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/saved-views")]
+[LicenseExempt]
 public sealed class SavedViewsController : ControllerBase
 {
     private readonly PlatformDbContext _context;

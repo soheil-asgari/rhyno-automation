@@ -10,6 +10,10 @@
     {
         <div class="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-3 text-xs font-bold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"><i class="bi bi-check2-circle text-sm"></i><span>@message</span></div>
     }
+    @if (TempData["SettingsError"] is string errorMessage)
+    {
+        <div class="flex items-center gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-3 text-xs font-bold text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"><i class="bi bi-exclamation-triangle-fill text-sm"></i><span>@errorMessage</span></div>
+    }
     <div asp-validation-summary="ModelOnly" class="empty:hidden flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-3 text-xs text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"></div>
 
     <div class="flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
@@ -29,6 +33,7 @@
             <button type="button" data-target="#appearance" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-window-stack pointer-events-none"></i>ظاهر</button>
             @if (Model.CanManageSecurity)
             {
+                <button type="button" data-target="#license" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-award pointer-events-none"></i>لایسنس</button>
                 <button type="button" data-target="#signature" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-pen-fill pointer-events-none"></i>امضا</button>
                 <button type="button" data-target="#users" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-person-plus pointer-events-none"></i>کاربران</button>
                 <button type="button" data-target="#branding" class="tab-btn inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 pb-2 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"><i class="bi bi-brush pointer-events-none"></i>هویت بصری</button>
@@ -57,6 +62,9 @@
 
             @if (Model.CanManageSecurity)
             {
+                <div id="license" class="tab-pane hidden">
+                    <partial name="_LicenseSettings" model="Model" />
+                </div>
                 <div id="branding" class="tab-pane hidden">
                     <partial name="_BrandingSettings" model="Model" />
                 </div>

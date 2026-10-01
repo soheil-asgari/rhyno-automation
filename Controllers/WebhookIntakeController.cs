@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace OfficeAutomation.Controllers;
 [ApiController]
 [Route("api/v1/intake")]
 [EnableRateLimiting("api")]
+[LicenseExempt]
 public sealed class WebhookIntakeController : ControllerBase
 {
     private readonly InvoiceIntakeService _intakeService;

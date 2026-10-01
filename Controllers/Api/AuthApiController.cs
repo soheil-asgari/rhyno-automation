@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -9,6 +10,7 @@ namespace OfficeAutomation.Controllers.Api;
 [ApiController]
 [Route("api/auth")]
 [IgnoreAntiforgeryToken]
+[LicenseExempt]
 public sealed class AuthApiController : ControllerBase
 {
     private readonly SignInManager<User> _signInManager;

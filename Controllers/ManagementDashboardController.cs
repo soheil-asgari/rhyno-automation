@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -23,7 +24,8 @@ namespace OfficeAutomation.Controllers
 {
     [Authorize]
     [PermissionAuthorize("SystemSettings.Manage")]
-    public class ManagementDashboardController : Controller
+    [LicenseExempt]
+public class ManagementDashboardController : Controller
     {
         private readonly AiService _aiService;
         private readonly PlatformDbContext _context;

@@ -5,9 +5,12 @@
 @using OfficeAutomation.Services
 @using OfficeAutomation.Services.Security
 @using OfficeAutomation.Services.Tenancy
+@using OfficeAutomation.Services.Licensing
 @inject IUserContextService UserContextService
 @inject IAntiforgery Antiforgery
 @inject ITenantSettingsService TenantSettingsService
+@inject ILicenseContext LicenseContext
+@inject ILicenseUserEnforcementService LicenseUserEnforcementService
 @{
     var antiforgeryTokens = Antiforgery.GetAndStoreTokens(Context);
 
@@ -23,12 +26,15 @@
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
 
-    var userCanAccessFinance = userContext.CanAccessFinance;
-    var userCanAccessWarehouse = userContext.CanAccessWarehouse;
-    var userCanAccessHumanCapital = userContext.CanAccessHumanCapital;
+    var userCanAccessFinance = userContext.CanAccessFinance && LicenseContext.IsModuleEnabled(LicensableModules.Financial);
+    var userCanAccessWarehouse = userContext.CanAccessWarehouse && LicenseContext.IsModuleEnabled(LicensableModules.Warehouse);
+    var userCanAccessHumanCapital = userContext.CanAccessHumanCapital && LicenseContext.IsModuleEnabled(LicensableModules.HumanCapital);
     var userCanAccessSystemSettings = userContext.CanAccessSystemSettings;
-    var userCanAccessProcessAnalytics = userContext.CanAccessProcessAnalytics;
-    var userCanAccessContracts = userContext.CanAccessContracts;
+    var userCanAccessProcessAnalytics = userContext.CanAccessProcessAnalytics && LicenseContext.IsModuleEnabled(LicensableModules.Workflow);
+    var userCanAccessContracts = userContext.CanAccessContracts && LicenseContext.IsModuleEnabled(LicensableModules.Contracts);
+    var userCanAccessWorkflow = LicenseContext.IsModuleEnabled(LicensableModules.Workflow);
+    var userCanAccessOfficeAutomation = LicenseContext.IsModuleEnabled(LicensableModules.OfficeAutomation);
+    var userCanAccessAiAssistant = LicenseContext.IsModuleEnabled(LicensableModules.AiAssistant);
 
     var headerNotifications = userContext.Notifications;
     var headerNotificationCount = headerNotifications.Count;
@@ -167,6 +173,68 @@
             </div>
         </header>
 
+        @if (LicenseContext.IsLocked)
+        {
+            <div class="w-full bg-rose-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between border-b border-rose-700 z-50 animate-pulse" role="alert" style="z-index: 9999; flex-shrink: 0;">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill text-yellow-300 text-base"></i>
+                    <span class="text-xs md:text-sm font-black">
+                        وضعیت سیستم: قفل (Locked) — @LicenseContext.LockReason
+                    </span>
+                </div>
+                <a href="/Settings#system" class="inline-flex items-center gap-1 bg-white text-rose-700 px-3 py-1 rounded text-xs font-bold hover:bg-rose-50 transition shadow-sm no-underline">
+                    <i class="bi bi-key-fill"></i> فعال‌سازی لایسنس
+                </a>
+            </div>
+        }
+        else if (userContext.CanAccessSystemSettings || userRoleLabel == "مدیر سیستم")
+        {
+            if (LicenseContext.GraceStatus == GracePeriodStatus.WarningRed)
+            {
+                <div class="w-full bg-rose-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between border-b border-rose-700 z-50" role="alert" style="z-index: 9998; flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-shield-exclamation text-yellow-300 text-lg"></i>
+                        <span class="text-xs md:text-sm font-black">
+                            @LicenseContext.GraceWarningBanner
+                        </span>
+                    </div>
+                    <a href="/Settings#license" class="inline-flex items-center gap-1 bg-white text-rose-700 px-3 py-1 rounded text-xs font-bold hover:bg-rose-50 transition shadow-sm no-underline shrink-0">
+                        <i class="bi bi-arrow-repeat"></i> بررسی وضعیت لایسنس
+                    </a>
+                </div>
+            }
+            else if (LicenseContext.GraceStatus == GracePeriodStatus.WarningAmber)
+            {
+                <div class="w-full bg-amber-500 text-slate-950 px-4 py-2 shadow-md flex items-center justify-between border-b border-amber-600 z-50" role="alert" style="z-index: 9998; flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-wifi-off text-slate-900 text-base"></i>
+                        <span class="text-xs md:text-sm font-black">
+                            @LicenseContext.GraceWarningBanner
+                        </span>
+                    </div>
+                    <a href="/Settings#license" class="inline-flex items-center gap-1 bg-white text-amber-900 px-3 py-1 rounded text-xs font-bold hover:bg-amber-50 transition shadow-sm no-underline shrink-0">
+                        <i class="bi bi-arrow-repeat"></i> بررسی وضعیت لایسنس
+                    </a>
+                </div>
+            }
+
+            var exceededModules = await LicenseUserEnforcementService.GetDowngradedExceededModulesAsync();
+            if (exceededModules.Count > 0)
+            {
+                <div class="w-full bg-amber-500 text-slate-950 px-4 py-2 shadow-md flex items-center justify-between border-b border-amber-600 z-50" role="alert" style="z-index: 9998; flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill text-slate-900 text-base"></i>
+                        <span class="text-xs md:text-sm font-black">
+                            هشدار سقف کاربران (تنزل لایسنس): تعداد کاربران فعال در @string.Join("، ", exceededModules.Select(m => $"{m.ModuleDisplayName} ({m.ActiveUserCount} از {m.MaxUsersAllowed})")) از سقف لایسنس فراتر رفته است. افزودن کاربر جدید تا کاهش تعداد کاربران مسدود است.
+                        </span>
+                    </div>
+                    <a href="/Settings#system" class="inline-flex items-center gap-1 bg-white text-amber-900 px-3 py-1 rounded text-xs font-bold hover:bg-amber-50 transition shadow-sm no-underline shrink-0">
+                        <i class="bi bi-eye"></i> مشاهده وضعیت
+                    </a>
+                </div>
+            }
+        }
+
         <!-- ═══════════════════════════════════════════════════
     ۲. APP BODY — Sidebar + Main Content
     ═══════════════════════════════════════════════════════ -->
@@ -215,12 +283,15 @@
                                         <i class="bi bi-speedometer2 menu-icon"></i> میز کار
                                     </a>
                                 </li> *@
-                                <li>
-                                    <a class='menu-item @(currentController == "WorkInbox" ? "active" : "")'
-                                       asp-controller="WorkInbox" asp-action="Index" data-nav-id="workinbox-index">
-                                        <i class="bi bi-inboxes menu-icon"></i> کارتابل
-                                    </a>
-                                </li>
+                                @if (userCanAccessWorkflow)
+                                {
+                                    <li>
+                                        <a class='menu-item @(currentController == "WorkInbox" ? "active" : "")'
+                                           asp-controller="WorkInbox" asp-action="Index" data-nav-id="workinbox-index">
+                                            <i class="bi bi-inboxes menu-icon"></i> کارتابل
+                                        </a>
+                                    </li>
+                                }
                                 @if (userCanAccessFinance)
                                 {
                                     <li>
@@ -264,9 +335,12 @@
                                                             <li><a class='menu-item @(currentController == "Leaves" ? "active" : "")'
                                                                    asp-controller="Leaves" asp-action="Index"><i
                                                                 class="bi bi-calendar2-week menu-icon"></i> مرخصی‌ها</a></li>
-                                                                <li><a class='menu-item @(currentController == "Letters" ? "active" : "")'
-                                                                       asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i>
-                                                                    نامه‌ها</a></li>
+                                                                @if (userCanAccessOfficeAutomation)
+                                                                {
+                                                                    <li><a class='menu-item @(currentController == "Letters" ? "active" : "")'
+                                                                           asp-controller="Letters" asp-action="Index"><i class="bi bi-envelope menu-icon"></i>
+                                                                        نامه‌ها</a></li>
+                                                                }
                                                                 </ul>
                                                             </div>
                                                         }
@@ -533,9 +607,12 @@
                                                                                                                                                                                                                                         <li><a class='menu-item @(currentController == "Security" && currentAction == "WorkflowBuilder" ? "active" : "")'
                                                                                                                                                                                                                                                asp-controller="Security" asp-action="WorkflowBuilder"><i
                                                                                                                                                                                                                                             class="bi bi-diagram-3 menu-icon"></i> طراح گردش کار</a></li>
-                                                                                                                                                                                                                                            <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")'
-                                                                                                                                                                                                                                                   asp-controller="DocumentArchive" asp-action="Index"><i
-                                                                                                                                                                                                                                                class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
+                                                                                                                                                                                                                                            @if (userCanAccessOfficeAutomation)
+                                                                                                                                                                                                                                            {
+                                                                                                                                                                                                                                                <li><a class='menu-item @(currentController == "DocumentArchive" ? "active" : "")'
+                                                                                                                                                                                                                                                       asp-controller="DocumentArchive" asp-action="Index"><i
+                                                                                                                                                                                                                                                    class="bi bi-archive menu-icon"></i> بایگانی اسناد</a></li>
+                                                                                                                                                                                                                                            }
                                                                                                                                                                                                                                                 <li><a class='menu-item @(currentController == "AuditDashboard" ? "active" : "")'
                                                                                                                                                                                                                                                        asp-controller="AuditDashboard" asp-action="Index"><i
                                                                                                                                                                                                                                                     class="bi bi-activity menu-icon"></i> ممیزی</a></li>
@@ -654,7 +731,7 @@
                                                                                                                                                                                                                                         setInterval(refreshBadge, 60000);
                                                                                                                                                                                                                                         })();
                                                                                                                                                                                                                                     </script>
-                                                                                                                                                                                                                                    @if (User?.Identity?.IsAuthenticated == true)
+                                                                                                                                                                                                                                    @if (User?.Identity?.IsAuthenticated == true && userCanAccessAiAssistant)
                                                                                                                                                                                                                                     {
                                                                                                                                                                                                                                         @await Html.PartialAsync("_TaxAiAssistantWidget")
                                                                                                                                                                                                                                     }

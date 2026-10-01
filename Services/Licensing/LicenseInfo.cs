@@ -62,6 +62,21 @@ public sealed class LicenseInfo
     [JsonPropertyName("is_perpetual")]
     public bool IsPerpetual { get; init; }
 
+    /// <summary>
+    /// When false, the app must NEVER attempt a heartbeat call to any license server,
+    /// and must never show connectivity warnings or lock the app due to unreachable servers.
+    /// Default is true.
+    /// </summary>
+    [JsonPropertyName("online_check_required")]
+    public bool OnlineCheckRequired { get; init; } = true;
+
+    /// <summary>
+    /// Client's support/maintenance contract end date (UTC), distinct from technical license expiry.
+    /// Informational only, NOT used for enforcement/locking.
+    /// </summary>
+    [JsonPropertyName("support_expires_at")]
+    public DateTime? SupportExpiresAtUtc { get; init; }
+
     /// <summary>Number of remaining valid days. Null if perpetual; 0 if expired.</summary>
     public int? DaysRemaining
     {
@@ -81,7 +96,11 @@ public sealed class LicenseInfo
     public bool HasModule(string moduleName)
     {
         if (string.IsNullOrWhiteSpace(moduleName)) return false;
-        return Modules.Any(m => string.Equals(m, moduleName, StringComparison.OrdinalIgnoreCase));
+        var normalizedQuery = LicensableModules.Normalize(moduleName);
+
+        return Modules.Any(m =>
+            string.Equals(m, moduleName, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(LicensableModules.Normalize(m), normalizedQuery, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -91,6 +110,15 @@ public sealed class LicenseInfo
     {
         if (ModuleUserLimits.TryGetValue(moduleName, out var limit))
             return limit;
+
+        var normalized = LicensableModules.Normalize(moduleName);
+        foreach (var (k, v) in ModuleUserLimits)
+        {
+            if (string.Equals(LicensableModules.Normalize(k), normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                return v;
+            }
+        }
 
         return MaxUsers;
     }

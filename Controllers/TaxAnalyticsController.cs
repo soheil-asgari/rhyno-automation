@@ -1,3 +1,4 @@
+using OfficeAutomation.Services.Licensing;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace OfficeAutomation.Controllers;
 [Authorize]
 [RequireAccessArea("Finance")]
 [Route("[controller]")]
+[RequiresModule(LicensableModules.Financial)]
 public sealed class TaxAnalyticsController : Controller
 {
     private readonly ITaxInsightsService _insights;

@@ -14,10 +14,16 @@ namespace OfficeAutomation.Services.Licensing;
 public interface ILicenseValidator
 {
     /// <summary>
-    /// Validates the license JWT token signature, structure, and expiration.
-    /// Does not perform hardware fingerprint matching (handled in subsequent task).
+    /// Synchronously validates the license JWT token signature, structure, and expiration.
+    /// Does not perform hardware fingerprint matching unless explicitly provided.
     /// </summary>
     LicenseValidationResult Validate(string? licenseToken);
+
+    /// <summary>
+    /// Asynchronously validates the license file content, checking JWT signature,
+    /// expiration date against current UTC time, and comparing against the current server's hardware fingerprint.
+    /// </summary>
+    Task<LicenseValidationResult> ValidateAsync(string? licenseFileContent, CancellationToken cancellationToken = default);
 }
 
 public sealed class LicenseValidator : ILicenseValidator
@@ -28,19 +34,22 @@ public sealed class LicenseValidator : ILicenseValidator
 
     private readonly ILogger<LicenseValidator> _logger;
     private readonly RsaSecurityKey _publicSecurityKey;
+    private readonly IHardwareFingerprintService? _fingerprintService;
 
-    public LicenseValidator(ILogger<LicenseValidator> logger)
+    public LicenseValidator(ILogger<LicenseValidator> logger, IHardwareFingerprintService? fingerprintService = null)
     {
         _logger = logger;
+        _fingerprintService = fingerprintService;
         _publicSecurityKey = LoadEmbeddedPublicKey();
     }
 
     /// <summary>
-    /// Constructor overload allowing injection of a specific RSA public key (useful for tests).
+    /// Constructor overload allowing injection of a specific RSA public key and optional hardware fingerprint service (useful for tests).
     /// </summary>
-    public LicenseValidator(RSA rsaPublicKey, ILogger<LicenseValidator> logger)
+    public LicenseValidator(RSA rsaPublicKey, ILogger<LicenseValidator> logger, IHardwareFingerprintService? fingerprintService = null)
     {
         _logger = logger;
+        _fingerprintService = fingerprintService;
         _publicSecurityKey = new RsaSecurityKey(rsaPublicKey);
     }
 
@@ -165,6 +174,26 @@ public sealed class LicenseValidator : ILicenseValidator
             if (!isPerpetual && string.Equals(licenseType, "perpetual", StringComparison.OrdinalIgnoreCase))
             {
                 isPerpetual = true;
+            }
+
+            // Parse online_check_required: boolean, JsonElement, or string fallback (default true)
+            bool onlineCheckRequired = true;
+            if (jwtToken.Payload.TryGetValue("online_check_required", out var rawOnlineCheck))
+            {
+                if (rawOnlineCheck is bool bOnline)
+                    onlineCheckRequired = bOnline;
+                else if (rawOnlineCheck is JsonElement elem && (elem.ValueKind == JsonValueKind.True || elem.ValueKind == JsonValueKind.False))
+                    onlineCheckRequired = elem.GetBoolean();
+                else if (rawOnlineCheck != null && bool.TryParse(rawOnlineCheck.ToString(), out var parsedBool))
+                    onlineCheckRequired = parsedBool;
+            }
+            else
+            {
+                var onlineCheckStr = principal.FindFirst("online_check_required")?.Value;
+                if (!string.IsNullOrWhiteSpace(onlineCheckStr) && bool.TryParse(onlineCheckStr, out var parsedBool))
+                {
+                    onlineCheckRequired = parsedBool;
+                }
             }
 
             // Modules claim
@@ -330,6 +359,41 @@ public sealed class LicenseValidator : ILicenseValidator
                 return LicenseValidationResult.Failure(LicenseValidationFailureReason.Expired, $"License expired on {expiresAt.Value:yyyy-MM-dd HH:mm:ss} UTC.");
             }
 
+            // Parse support_expires_at (nullable UTC timestamp)
+            DateTime? supportExpiresAt = null;
+            if (jwtToken.Payload.TryGetValue("support_expires_at", out var rawSupportExpires))
+            {
+                if (rawSupportExpires is DateTime dt)
+                {
+                    supportExpiresAt = dt.ToUniversalTime();
+                }
+                else if (rawSupportExpires is JsonElement elem && elem.ValueKind == JsonValueKind.String && DateTime.TryParse(elem.GetString(), null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsedDt))
+                {
+                    supportExpiresAt = parsedDt;
+                }
+                else if (rawSupportExpires != null && DateTime.TryParse(rawSupportExpires.ToString(), null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsedDt2))
+                {
+                    supportExpiresAt = parsedDt2;
+                }
+            }
+            else
+            {
+                var supportExpiresStr = principal.FindFirst("support_expires_at")?.Value;
+                if (!string.IsNullOrWhiteSpace(supportExpiresStr) && DateTime.TryParse(supportExpiresStr, null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsedDt))
+                {
+                    supportExpiresAt = parsedDt;
+                }
+            }
+
+            // Status / Revocation Check
+            var status = principal.FindFirst("status")?.Value
+                ?? (jwtToken.Payload.TryGetValue("status", out var rawStatus) ? rawStatus?.ToString() : null);
+            if (string.Equals(status, "revoked", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("License has been revoked.");
+                return LicenseValidationResult.Failure(LicenseValidationFailureReason.Revoked, "لایسنس نرم‌افزار توسط سرور مرجع ابطال شده است (Revoked).");
+            }
+
             var info = new LicenseInfo
             {
                 LicenseId = licId,
@@ -342,7 +406,9 @@ public sealed class LicenseValidator : ILicenseValidator
                 IssuedAtUtc = issuedAt,
                 ExpiresAtUtc = expiresAt,
                 LicenseType = licenseType,
-                IsPerpetual = isPerpetual
+                IsPerpetual = isPerpetual,
+                OnlineCheckRequired = onlineCheckRequired,
+                SupportExpiresAtUtc = supportExpiresAt
             };
 
             return LicenseValidationResult.Success(info);
@@ -352,6 +418,55 @@ public sealed class LicenseValidator : ILicenseValidator
             _logger.LogError(ex, "Failed extracting claims from license.");
             return LicenseValidationResult.Failure(LicenseValidationFailureReason.Malformed, $"Error reading claims: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Asynchronously validates the license content, including hardware fingerprint comparison against the current server.
+    /// </summary>
+    public Task<LicenseValidationResult> ValidateAsync(string? licenseFileContent, CancellationToken cancellationToken = default)
+    {
+        // 1. Signature, structure, and expiry validation via Validate()
+        var baseResult = Validate(licenseFileContent);
+        if (!baseResult.IsValid || baseResult.License == null)
+        {
+            return Task.FromResult(baseResult);
+        }
+
+        // 2. Hardware Fingerprint Validation
+        if (_fingerprintService != null)
+        {
+            try
+            {
+                var currentFingerprint = _fingerprintService.GetFingerprint();
+                var licenseFingerprint = baseResult.License.HardwareFingerprint;
+
+                if (string.IsNullOrWhiteSpace(licenseFingerprint))
+                {
+                    _logger.LogWarning("License does not contain a hardware fingerprint claim.");
+                    return Task.FromResult(LicenseValidationResult.Failure(
+                        LicenseValidationFailureReason.FingerprintMismatch,
+                        "Hardware fingerprint is missing in the license file."));
+                }
+
+                if (!string.Equals(currentFingerprint.Trim(), licenseFingerprint.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("Hardware fingerprint mismatch. Current: {Current}, License: {License}",
+                        currentFingerprint, licenseFingerprint);
+                    return Task.FromResult(LicenseValidationResult.Failure(
+                        LicenseValidationFailureReason.FingerprintMismatch,
+                        $"Hardware fingerprint mismatch. Expected server fingerprint '{currentFingerprint}', but license was issued for '{licenseFingerprint}'."));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error computing server hardware fingerprint during license validation.");
+                return Task.FromResult(LicenseValidationResult.Failure(
+                    LicenseValidationFailureReason.FingerprintMismatch,
+                    $"Failed to compute server hardware fingerprint: {ex.Message}"));
+            }
+        }
+
+        return Task.FromResult(baseResult);
     }
 
     private static RsaSecurityKey LoadEmbeddedPublicKey()

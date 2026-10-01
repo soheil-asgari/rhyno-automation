@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+using OfficeAutomation.Services.Licensing;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,8 @@ using OfficeAutomation.Services.Security;
 namespace OfficeAutomation.Controllers
 {
     [Authorize]
-    public class SearchController : Controller
+    [LicenseExempt]
+public class SearchController : Controller
     {
         private readonly PlatformDbContext _context;
         private readonly OfficeDbContext _officeContext;

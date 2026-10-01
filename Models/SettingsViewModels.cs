@@ -97,6 +97,12 @@ namespace OfficeAutomation.Models
 
         [Display(Name = "آخرین بروزرسانی")]
         public DateTime? LastUpdatedUtc { get; set; }
+
+        [Display(Name = "اثر انگشت سخت‌افزاری سرور")]
+        public string? HardwareFingerprint { get; set; }
+
+        [Display(Name = "کد فعال‌سازی لایسنس سرور")]
+        public string? ActivationCode { get; set; }
     }
 
     public class UiPreferencesViewModel
