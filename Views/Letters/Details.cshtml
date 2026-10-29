@@ -23,14 +23,20 @@
         ? $"{pc.GetYear(Model.ReadDate.Value)}/{pc.GetMonth(Model.ReadDate.Value):D2}/{pc.GetDayOfMonth(Model.ReadDate.Value):D2} {Model.ReadDate.Value:HH:mm}"
         : "هنوز خوانده نشده";
 
-    // Status badge classes
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "؟";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}" : parts[0].Substring(0, 1);
+    }
+
     string StatusBadgeCss(string status) => OfficeAutomation.Models.WorkflowStatus.Normalize(status) switch
     {
-        "Approved" or "Completed" => "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/50",
-        "Rejected" => "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 border-rose-200/60 dark:border-rose-800/50",
-        "PendingApproval" or "PendingManager" or "NeedsRevision" or "Returned" => "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border-amber-200/60 dark:border-amber-800/50",
-        "Sent" => "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-800/50",
-        _ => "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-400 border-slate-200/60 dark:border-slate-700/50"
+        "Approved" or "Completed" => "completed",
+        "Rejected" => "rejected",
+        "PendingApproval" or "PendingManager" or "NeedsRevision" or "Returned" => "in-progress",
+        "Sent" => "approved",
+        _ => "read"
     };
 
     var timeline = new[]
@@ -38,82 +44,99 @@
         new { Title = "ایجاد شد", State = "created", Active = true, Description = $"نامه توسط {senderName} ثبت شد." },
         new { Title = "در مسیر", State = "routing", Active = Model.CurrentWorkflowStep > 0 || Model.IsWorkflowCompleted, Description = Model.IsWorkflowCompleted ? "فرآیند به پایان رسیده است." : $"مرحله فعلی: {Model.CurrentWorkflowStep}" },
         new { Title = "خوانده شد", State = "read", Active = Model.IsRead, Description = readDateText },
-        new { Title = "تایید نهایی", State = "approved", Active = Model.IsWorkflowCompleted, Description = Model.IsWorkflowCompleted ? "Workflow تکمیل شده است." : "در انتظار اقدام مرحله بعد." }
+        new { Title = "تایید نهایی", State = "approved", Active = Model.IsWorkflowCompleted, Description = Model.IsWorkflowCompleted ? "گردش کار تکمیل شده است." : "در انتظار اقدام مرحله بعد." }
     };
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/letters-index.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/letters-details-style.css" asp-append-version="true" />
 }
 
-<div class="w-full flex-1 flex flex-col gap-4 p-2.5 md:p-4" dir="rtl">
+<div class="w-full flex-1 flex flex-col gap-4 p-2.5 md:p-4 letters-details-shell" dir="rtl">
     @Html.AntiForgeryToken()
 
-    <!-- ═══ Page Header ═══ -->
-    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/30 dark:border-indigo-800/30">
-                <i class="bi bi-envelope-paper"></i>
+    <!-- ═══════ PAGE HEADER ═══════ -->
+    <div class="lts-page-header">
+        <div class="flex flex-wrap items-center gap-3 justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-600 dark:text-indigo-400 text-xl" style="backdrop-filter:blur(4px);">
+                    <i class="bi bi-envelope-paper"></i>
+                </div>
+                <div>
+                    <h1 style="margin:0;font-weight:700;color:var(--lts-text-primary);font-size:1.25rem;">نامه شماره @Model.Id.ToString("0000")</h1>
+                    <p style="margin:0;font-size:0.75rem;color:var(--lts-text-muted)">
+                        <span class="tabular-nums">@shamsiDateTime</span>
+                        <span style="margin-inline:0.375rem;">•</span>
+                        <span>@senderName</span>
+                        <span style="margin-inline:0.5rem;">
+                            <span class="lts-status-chip @StatusBadgeCss(Model.WorkflowStatus)"><span class="dot"></span>@OfficeAutomation.Models.WorkflowStatus.Label(Model.WorkflowStatus)</span>
+                        </span>
+                    </p>
+                </div>
             </div>
-            <div>
-                <h1 class="m-0 text-sm md:text-base font-black text-slate-900 dark:text-white tracking-tight">نامه شماره @Model.Id.ToString("0000")</h1>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-                    <span>@shamsiDateTime</span>
-                    <span class="text-slate-300 dark:text-slate-600">•</span>
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border @StatusBadgeCss(Model.WorkflowStatus)">
-                        @WorkflowStatus.Label(Model.WorkflowStatus)
-                    </span>
-                </p>
+            <div class="flex items-center gap-2">
+                <a asp-action="Create" asp-route-replyToId="@Model.Id" class="lts-btn-primary" style="background:var(--lts-success);box-shadow:0 2px 8px rgba(16,185,129,0.25);">
+                    <i class="bi bi-reply-fill"></i>
+                    <span>پاسخ</span>
+                </a>
+                <button type="button" onclick="window.print()" class="lts-btn-primary" style="background:var(--lts-surface-raised);color:var(--lts-text-secondary);border:1px solid var(--lts-border-color);box-shadow:none;">
+                    <i class="bi bi-printer"></i>
+                    <span>چاپ</span>
+                </button>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="lts-btn-primary" style="background:var(--lts-surface-raised);color:var(--lts-text-secondary);border:1px solid var(--lts-border-color);box-shadow:none;">
+                    <i class="bi bi-pencil"></i>
+                    <span>ویرایش</span>
+                </a>
+                <a asp-action="Index" class="lts-btn-primary" style="background:var(--lts-surface-raised);color:var(--lts-text-secondary);border:1px solid var(--lts-border-color);box-shadow:none;">
+                    <i class="bi bi-arrow-right"></i>
+                    <span>بازگشت</span>
+                </a>
             </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <a asp-action="Create" asp-route-replyToId="@Model.Id" class="flex items-center gap-1.5 px-3.5 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-xl text-xs font-bold transition shadow-sm no-underline">
-                <i class="bi bi-reply-fill"></i>
-                <span class="hidden sm:inline">پاسخ به نامه</span>
-            </a>
-            <button type="button" onclick="window.print()" class="flex items-center gap-1.5 px-3.5 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
-                <i class="bi bi-printer"></i>
-                <span class="hidden sm:inline">چاپ</span>
-            </button>
-            <a asp-action="Index" class="flex items-center gap-1.5 px-3.5 h-9 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition shadow-sm no-underline">
-                <i class="bi bi-arrow-right text-sm"></i>
-                <span class="hidden sm:inline">بازگشت</span>
-            </a>
-        </div>
-    </header>
+    </div>
 
-    <!-- ═══ Body: Paper + Sidebar ═══ -->
+    <!-- ═══════ TWO-COLUMN: Paper + Sidebar ═══════ -->
     <div class="flex flex-col xl:flex-row gap-4 items-start">
+
         <!-- ═══ Letter Paper ═══ -->
-        <main class="letter-paper w-full xl:flex-1 min-h-[600px] p-6 md:p-10 xl:p-12 flex flex-col gap-6 relative" style="font-family: IRANSans, Tahoma, sans-serif;">
+        <main class="w-full xl:flex-1 min-h-[560px] p-6 md:p-10 xl:p-12 flex flex-col gap-6 relative letter-paper" style="font-family:IRANSans,Tahoma,sans-serif;">
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.025] text-[140px] font-black tracking-[0.3em]">راینو</div>
+
             <!-- Header meta -->
-            <header class="flex justify-between items-start gap-4 border-b border-slate-200/70 pb-4">
-                <div class="letter-meta text-[11px] text-slate-500 flex flex-col gap-1 font-mono tabular-nums leading-relaxed">
-                    <div><strong class="text-slate-700">شماره:</strong> @Model.Id.ToString("0000")</div>
-                    <div><strong class="text-slate-700">تاریخ:</strong> @shamsiDate</div>
-                    <div><strong class="text-slate-700">وضعیت:</strong> @WorkflowStatus.Label(Model.WorkflowStatus)</div>
+            <header class="relative flex justify-between items-start gap-4 border-b-2 border-slate-200/80 pb-4">
+                <div class="text-[11px] text-slate-500 flex flex-col gap-1.5 font-mono tabular-nums leading-relaxed">
+                    <div class="flex items-center gap-1.5"><strong class="text-slate-700">شماره:</strong> @Model.Id.ToString("0000")</div>
+                    <div class="flex items-center gap-1.5"><strong class="text-slate-700">تاریخ:</strong> @shamsiDate</div>
+                    <div class="flex items-center gap-1.5"><strong class="text-slate-700">وضعیت:</strong> @OfficeAutomation.Models.WorkflowStatus.Label(Model.WorkflowStatus)</div>
                 </div>
                 <div class="text-center flex-1">
                     <h5 class="m-0 text-sm font-black text-slate-800">بسمه تعالی</h5>
                     <h4 class="text-[11px] font-bold text-slate-600 mt-1.5">پورتال سازمانی راینو</h4>
                 </div>
-                <img src="/images/logo.png" class="w-14 h-14 md:w-16 md:h-16 object-contain" alt="لوگو سازمان" onerror="this.style.display='none'">
+                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center text-indigo-600 font-black text-sm">ر</div>
             </header>
 
             <!-- Letter body -->
-            <article class="flex-1 flex flex-col gap-5 text-right">
-                <h5 class="letter-receiver text-[13px] font-black text-slate-800 m-0">@receiverPrefix @(Model.Receiver?.FullName ?? "....................")</h5>
-                <h6 class="letter-title text-[13px] font-bold text-slate-700 m-0">موضوع: @Model.Title</h6>
+            <article class="relative flex-1 flex flex-col gap-5 text-right">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:var(--lts-accent-soft);color:var(--lts-accent);font-size:0.75rem;font-weight:700;">@Initials(Model.Receiver?.FullName)</div>
+                    <h5 class="text-[13px] font-black text-slate-800 m-0">@receiverPrefix @(Model.Receiver?.FullName ?? "....................")</h5>
+                </div>
+                <h6 class="text-[13px] font-bold text-slate-700 m-0 flex items-center gap-2">
+                    <span class="inline-block w-1.5 h-4 rounded-full" style="background:var(--lts-accent)"></span>
+                    موضوع: @Model.Title
+                </h6>
                 <div class="letter-body-content text-slate-800 mt-1">
                     @Html.Raw(HtmlSanitizer.Sanitize(Model.Body))
                 </div>
             </article>
 
             <!-- Signature -->
-            <footer class="flex justify-end border-t border-slate-100 pt-5 mt-4">
-                <div class="letter-signature w-48 flex flex-col gap-1 text-center">
+            <footer class="relative flex justify-end border-t-2 border-slate-100 pt-4 mt-4">
+                <div class="w-48 flex flex-col gap-1 text-center">
                     <p class="text-xs text-slate-600 m-0">با احترام</p>
-                    <p class="text-xs font-black text-slate-900 m-0 mt-1">@senderName</p>
+                    <p class="text-sm font-black text-slate-900 m-0 mt-1">@senderName</p>
                     <p class="text-[10px] text-slate-400 m-0">@senderJob</p>
                     @if (!string.IsNullOrEmpty(Model.Sender?.SignaturePath))
                     {
@@ -125,70 +148,71 @@
 
         <!-- ═══ Sidebar ═══ -->
         <aside class="w-full xl:w-[340px] flex flex-col gap-4 print:hidden">
-            <!-- Summary -->
-            <section class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-3">
-                <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-1.5">
-                    <i class="bi bi-info-circle"></i>
+
+            <!-- Summary card -->
+            <section class="rounded-2xl p-4" style="background:var(--lts-surface);border:1px solid var(--lts-border-color);box-shadow:var(--lts-shadow-sm);">
+                <h3 class="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <i class="bi bi-info-circle" style="color:var(--lts-accent)"></i>
                     خلاصه وضعیت
                 </h3>
-                <div class="flex flex-col gap-2.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                    <div class="flex justify-between items-center">
-                        <span class="text-slate-500 dark:text-slate-400">خوانده شده</span>
-                        <span class="inline-flex items-center gap-1.5">
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center p-2 rounded-xl" style="background:var(--lts-surface-raised);border:1px solid var(--lts-border-color);">
+                        <span class="text-[0.6875rem] text-slate-400"><i class="bi bi-eye"></i> خوانده شده</span>
+                        <span>
                             @if (Model.IsRead)
                             {
-                                <i class="bi bi-check2-circle text-emerald-500"></i>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">بله</span>
+                                <i class="bi bi-check2-circle" style="color:var(--lts-success)"></i>
+                                <span style="color:var(--lts-success);font-weight:600;">بله</span>
                             }
                             else
                             {
-                                <i class="bi bi-circle text-slate-300 dark:text-slate-600"></i>
-                                <span class="text-rose-500 dark:text-rose-400 font-bold">خیر</span>
+                                <i class="bi bi-circle" style="color:var(--lts-text-muted)"></i>
+                                <span style="color:var(--lts-danger);font-weight:600;">خیر</span>
                             }
                         </span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-slate-500 dark:text-slate-400">مرحله گردش</span>
-                        <span class="font-bold">@(Model.IsWorkflowCompleted ? "تکمیل شده" : $"مرحله {Model.CurrentWorkflowStep}")</span>
+                    <div class="flex justify-between items-center p-2 rounded-xl" style="background:var(--lts-surface-raised);border:1px solid var(--lts-border-color);">
+                        <span class="text-[0.6875rem] text-slate-400"><i class="bi bi-arrow-repeat"></i> مرحله گردش</span>
+                        <span class="text-xs font-semibold">@(Model.IsWorkflowCompleted ? "تکمیل شده" : $"مرحله {Model.CurrentWorkflowStep}")</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-slate-500 dark:text-slate-400">گیرنده فعلی</span>
-                        <span class="font-bold">@(Model.Receiver?.FullName ?? "نامشخص")</span>
+                    <div class="flex justify-between items-center p-2 rounded-xl" style="background:var(--lts-surface-raised);border:1px solid var(--lts-border-color);">
+                        <span class="text-[0.6875rem] text-slate-400">گیرنده فعلی</span>
+                        <span class="text-xs font-semibold max-w-[140px] truncate">@(Model.Receiver?.FullName ?? "نامشخص")</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-slate-500 dark:text-slate-400">گیرنده نهایی</span>
-                        <span class="font-bold">@(Model.FinalReceiver?.FullName ?? "نامشخص")</span>
+                    <div class="flex justify-between items-center p-2 rounded-xl" style="background:var(--lts-surface-raised);border:1px solid var(--lts-border-color);">
+                        <span class="text-[0.6875rem] text-slate-400">گیرنده نهایی</span>
+                        <span class="text-xs font-semibold max-w-[140px] truncate">@(Model.FinalReceiver?.FullName ?? "نامشخص")</span>
                     </div>
                     @if (Model.ReadDate.HasValue)
                     {
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500 dark:text-slate-400">زمان مطالعه</span>
-                            <span class="font-bold font-mono text-[10px]">@readDateText</span>
+                        <div class="flex justify-between items-center p-2 rounded-xl" style="background:var(--lts-surface-raised);border:1px solid var(--lts-border-color);">
+                            <span class="text-[0.6875rem] text-slate-400">زمان مطالعه</span>
+                            <span class="text-[0.6875rem] font-semibold font-mono">@readDateText</span>
                         </div>
                     }
                 </div>
             </section>
 
             <!-- Timeline -->
-            <section class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-3">
-                <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-1.5">
-                    <i class="bi bi-arrow-repeat"></i>
+            <section class="rounded-2xl p-4" style="background:var(--lts-surface);border:1px solid var(--lts-border-color);box-shadow:var(--lts-shadow-sm);">
+                <h3 class="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <i class="bi bi-diagram-3" style="color:var(--lts-accent)"></i>
                     گردش نامه
                 </h3>
-                <div class="flex flex-col gap-3.5">
+                <div class="flex flex-col gap-2">
                     @foreach (var step in timeline)
                     {
-                        <div class="flex gap-3 items-start">
+                        <div class="flex gap-2 items-start">
                             <div class="flex flex-col items-center self-stretch">
-                                <div class="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 @(step.Active ? "bg-teal-500 dark:bg-teal-400 ring-4 ring-teal-500/20" : "bg-slate-200 dark:bg-slate-700")"></div>
+                                <div class="w-3 h-3 rounded-full mt-1 flex-shrink-0 @(step.Active ? "bg-indigo-500 border-2 border-indigo-200 dark:border-indigo-800" : "bg-slate-200 dark:bg-slate-700")"></div>
                                 @if (step != timeline.Last())
                                 {
-                                    <div class="w-px flex-1 @(step.Active ? "bg-teal-200 dark:bg-teal-900/50" : "bg-slate-200 dark:bg-slate-800") my-0.5"></div>
+                                    <div class="w-px flex-1 @(step.Active ? "bg-indigo-200 dark:bg-indigo-800" : "bg-slate-100 dark:bg-slate-800")"></div>
                                 }
                             </div>
-                            <div class="flex-1 flex flex-col gap-0.5 text-xs">
-                                <strong class="font-bold text-slate-800 dark:text-white">@step.Title</strong>
-                                <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">@step.Description</p>
+                            <div class="flex-1 flex flex-col gap-0.5">
+                                <strong class="text-xs font-semibold" style="color:var(--lts-text-primary);">@step.Title</strong>
+                                <p class="text-[0.6875rem] text-slate-400 m-0">@step.Description</p>
                             </div>
                         </div>
                     }
@@ -198,32 +222,36 @@
             <!-- Decision History -->
             @if (workflowDecisions.Count > 0)
             {
-                <section class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-3">
-                    <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-1.5">
-                        <i class="bi bi-clock-history"></i>
+                <section class="rounded-2xl p-4" style="background:var(--lts-surface);border:1px solid var(--lts-border-color);box-shadow:var(--lts-shadow-sm);">
+                    <h3 class="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <i class="bi bi-clock-history" style="color:var(--lts-warning)"></i>
                         تاریخچه تصمیم‌ها
                     </h3>
-                    <div class="flex flex-col gap-3">
+                    <div class="flex flex-col gap-1.5">
                         @foreach (var decision in workflowDecisions.Take(5))
                         {
-                            <div class="flex gap-3 items-start">
-                                <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 @StatusBadgeCss(decision.Decision) ring-2 ring-slate-100 dark:ring-slate-800"></div>
-                                <div class="flex-1 flex flex-col gap-1 text-xs min-w-0">
+                            <div class="flex gap-2 items-start p-2 rounded-xl" style="background:var(--lts-surface-raised);border:1px solid var(--lts-border-color);">
+                                <div class="flex-1 flex flex-col gap-0.5 min-w-0">
                                     <div class="flex items-center justify-between gap-2 flex-wrap">
-                                        <strong class="font-bold text-slate-800 dark:text-white">@WorkflowStatus.Label(decision.Decision)</strong>
-                                        <span class="text-[9px] text-slate-400 font-mono">@decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</span>
+                                        <strong class="text-xs font-semibold">
+                                            <span class="lts-status-chip @StatusBadgeCss(decision.Decision)"><span class="dot"></span>@OfficeAutomation.Models.WorkflowStatus.Label(decision.Decision)</span>
+                                        </strong>
+                                        <span class="text-[0.625rem] text-slate-400 font-mono">@decision.DecidedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</span>
                                     </div>
-                                    <span class="text-[10px] text-slate-500 dark:text-slate-400">@((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId)</span>
+                                    <span class="text-[0.6875rem] text-slate-400 flex items-center gap-1">
+                                        <i class="bi bi-person" style="font-size:0.5625rem;"></i>
+                                        @((decision.DecidedByUser?.FullName) ?? decision.DecidedByUserId)
+                                    </span>
                                     @if (!string.IsNullOrWhiteSpace(decision.Comment))
                                     {
-                                        <p class="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed m-0 p-2 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800/80">@decision.Comment</p>
+                                        <p class="text-[0.6875rem] text-slate-500 m-0 mt-0.5 p-1.5 rounded-lg" style="background:var(--lts-surface);border:1px solid var(--lts-border-color);">@decision.Comment</p>
                                     }
                                 </div>
                             </div>
                         }
                         @if (workflowDecisions.Count > 5)
                         {
-                            <button type="button" onclick="document.getElementById('workflowDetailPanel')?.scrollIntoView({ behavior: 'smooth' })" class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition bg-transparent border-0 cursor-pointer">
+                            <button type="button" class="text-[0.6875rem] font-semibold text-indigo-600 dark:text-indigo-400 bg-transparent border-none cursor-pointer hover:underline">
                                 مشاهده همه @workflowDecisions.Count تصمیم...
                             </button>
                         }
@@ -232,48 +260,40 @@
             }
 
             <!-- AI Reply Panel -->
-            <section class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
-                <div class="flex items-center gap-2 text-teal-600 dark:text-teal-400">
-                    <i class="bi bi-stars"></i>
-                    <span class="text-xs font-bold">پاسخ با دستیار هوش مصنوعی</span>
+            <section class="lts-ai-panel">
+                <div class="lts-ai-panel-header" style="cursor:default;">
+                    <i class="bi bi-stars" style="color:var(--ai-teal);font-size:1.125rem;"></i>
+                    <h5>پاسخ با دستیار هوش مصنوعی</h5>
+                    <span class="lts-ai-badge">AI</span>
                 </div>
-                <div class="flex flex-col gap-2.5">
-                    <input id="aiReplyIntent" class="h-9 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:focus:border-teal-400 dark:focus:ring-teal-500/20" value="این نامه از نظر من تایید است" placeholder="نظر خود را بنویسید..." />
-                    <button id="btnGenerateLetterReply" type="button" class="h-9 w-full flex items-center justify-center gap-1.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white text-xs font-bold transition shadow-sm" data-letter-id="@Model.Id">
+                <div class="lts-ai-panel-body flex flex-col gap-2.5">
+                    <input id="aiReplyIntent" class="lts-filter-input" value="این نامه از نظر من تایید است" placeholder="نظر خود را بنویسید..." />
+                    <button id="btnGenerateLetterReply" type="button" class="lts-btn-primary" style="width:100%;background:linear-gradient(135deg, #14b8a6, #0d9488);box-shadow:0 2px 8px rgba(20,184,166,0.25);" data-letter-id="@Model.Id">
                         <i class="bi bi-magic"></i>
                         <span>تولید پاسخ</span>
                     </button>
-                    <textarea id="aiLetterReplyResult" class="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:focus:border-teal-400 dark:focus:ring-teal-500/20" rows="3" placeholder="متن پیشنهادی هوش مصنوعی اینجا نمایش داده می‌شود."></textarea>
+                    <textarea id="aiLetterReplyResult" class="lts-filter-input" rows="3" placeholder="متن پیشنهادی هوش مصنوعی اینجا نمایش داده می‌شود." style="height:auto;min-height:56px;padding:0.5rem;resize:vertical;"></textarea>
                 </div>
-                <div class="flex flex-col gap-2.5 border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <small class="text-[10px] text-slate-500 leading-normal">ارسال نهایی باید بعد از بازبینی کاربر انجام شود.</small>
+                <div class="flex items-center gap-2 p-3 border-t" style="border-color:var(--lts-border-color);">
+                    <i class="bi bi-shield-check" style="color:var(--lts-success);font-size:0.75rem;"></i>
+                    <span class="text-[0.6875rem] text-slate-400 flex-1">ارسال نهایی باید بعد از بازبینی کاربر انجام شود.</span>
                     @if (canApprove)
                     {
-                        <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="m-0">
+                        <form asp-action="Approve" asp-route-id="@Model.Id" method="post" style="margin:0;">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="w-full flex items-center justify-center gap-1.5 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                            <button type="submit" class="lts-btn-primary" style="background:var(--lts-success);">
                                 <i class="bi bi-check2-circle"></i>
-                                <span>تایید و ارجاع نامه</span>
+                                <span>تایید و ارجاع</span>
                             </button>
                         </form>
                     }
                 </div>
             </section>
+
         </aside>
     </div>
-
-    <!-- ═══ Full Workflow Detail Panel ═══ -->
-    @if (workflowDetail != null)
-    {
-        <div id="workflowDetailPanel" class="print:hidden">
-            <partial name="_WorkflowDetailPanel" model="workflowDetail" />
-        </div>
-    }
 </div>
 
 @section Scripts {
-    <script id="lettersUsersData" type="application/json">@Html.Raw(ViewBag.UsersData ?? "[]")</script>
-    <script src="~/js/letters-details-script.js" asp-append-version="true"></script>
-    <script src="~/js/letter-form.js"></script>
-    <script src="~/js/letters-ai.js"></script>
+    <script src="~/js/letters-ai.js" asp-append-version="true"></script>
 }

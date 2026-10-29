@@ -2,279 +2,548 @@
 @{
     ViewData["Title"] = "کارتابل نامه‌ها";
     var pc = new System.Globalization.PersianCalendar();
+    var fa = new System.Globalization.CultureInfo("fa-IR");
     var list = Model?.ToList() ?? new List<OfficeAutomation.Models.Letter>();
     var currentUserId = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var unreadCount = list.Count(item => !item.IsRead && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId));
     var sentCount = list.Count(item => item.SenderId == currentUserId);
     var inboxCount = list.Count(item => (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId));
+    var draftCount = list.Count(item => OfficeAutomation.Models.WorkflowStatus.Normalize(item.WorkflowStatus) == "Draft");
+    var approvedCount = list.Count(item => item.IsWorkflowCompleted);
+    var allStatuses = list.Select(item => item.WorkflowStatus).Distinct().OrderBy(item => item).ToList();
+    var now = DateTime.Now;
+
+    string Fa(int n) => n.ToString("N0", fa);
+
+    string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "؟";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}" : parts[0].Substring(0, 1);
+    }
+
+    string AvatarColor(string? name, int index)
+    {
+        var palettes = new[]
+        {
+            "background:linear-gradient(135deg,#4f46e5,#7c3aed);",
+            "background:linear-gradient(135deg,#0ea5e9,#2563eb);",
+            "background:linear-gradient(135deg,#10b981,#059669);",
+            "background:linear-gradient(135deg,#f59e0b,#ea580c);",
+            "background:linear-gradient(135deg,#ec4899,#db2777);",
+            "background:linear-gradient(135deg,#64748b,#334155);",
+            "background:linear-gradient(135deg,#8b5cf6,#6d28d9);",
+            "background:linear-gradient(135deg,#14b8a6,#0d9488);"
+        };
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            var hash = 0;
+            foreach (var c in name) hash = (hash * 31 + c) & 0x7fffffff;
+            return palettes[hash % palettes.Length];
+        }
+        return palettes[Math.Abs(index) % palettes.Length];
+    }
+
+    string RelativeDate(DateTime dt)
+    {
+        var diff = now - dt;
+        if (diff.TotalMinutes < 1) return "همین الان";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} دقیقه پیش";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} ساعت پیش";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} روز پیش";
+        return $"{pc.GetYear(dt)}/{pc.GetMonth(dt):D2}/{pc.GetDayOfMonth(dt):D2}";
+    }
+
+    string StatusCssClass(string status) => OfficeAutomation.Models.WorkflowStatus.Normalize(status) switch
+    {
+        "Draft" => "draft",
+        "Sent" => "sent",
+        "PendingApproval" or "PendingManager" or "NeedsRevision" or "Returned" => "pending",
+        "Approved" or "Completed" => "completed",
+        "Rejected" => "rejected",
+        "Archived" or "Canceled" or "Paused" or "Hold" => "archived",
+        _ => "read"
+    };
+
+    bool IsUrgent(string? status) => OfficeAutomation.Models.WorkflowStatus.Normalize(status) == "PendingApproval";
+
+    string BodySnippet(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body)) return "بدون متن";
+        var plain = OfficeAutomation.Utilities.HtmlSanitizer.StripTags(body);
+        plain = System.Text.RegularExpressions.Regex.Replace(plain, @"\s+", " ").Trim();
+        return plain.Length > 96 ? plain.Substring(0, 96) + "…" : plain;
+    }
 }
 
-<div class="w-full flex-1 flex flex-col gap-5 p-3 md:p-4" dir="rtl">
+<div class="letters-index-shell" dir="rtl">
     @Html.AntiForgeryToken()
 
-    <!-- Header Card -->
-    <header class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
+    <!-- ═══════════ ۱. HEADER + QUICK ACTION BAR ═══════════ -->
+    <header class="lts-header">
         <div class="flex items-center gap-3">
-            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-lg border border-indigo-200/30 dark:border-indigo-800/30">
-                <i class="bi bi-stack"></i>
-            </div>
-            <div>
-                <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">کارتابل نامه‌ها</h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">مدیریت و پیگیری هوشمند مکاتبات اداری</p>
+            <span class="lts-brand-mark"><i class="bi bi-envelope-paper"></i></span>
+            <div class="leading-tight">
+                <h1 class="flex items-center gap-2.5 text-[17px] font-bold text-slate-800 dark:text-slate-100">
+                    کارتابل نامه‌ها
+                    <span class="lts-badge-live">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>@Fa(unreadCount) خوانده‌نشده</span>
+                    </span>
+                </h1>
+                <p class="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span>مدیریت، گردش و پیگیری مکاتبات اداری</span>
+                    <span class="inline-block w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                    <span>به‌روزرسانی: @RelativeDate(now)</span>
+                </p>
             </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <div class="relative min-w-[240px]">
-                <i class="bi bi-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input id="lettersSearch" type="text" placeholder="جستجوی شماره، عنوان یا فرستنده..." class="h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/60 pr-10 pl-3 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20" />
+
+        <div class="lts-header-actions">
+            <div class="lts-search-wrap">
+                <i class="bi bi-search lts-search-icon"></i>
+                <input id="lettersSearch" type="text" placeholder="جستجوی شماره، موضوع، فرستنده یا گیرنده..." class="lts-search-input" autocomplete="off" />
+                <kbd class="lts-search-kbd">Ctrl K</kbd>
+                <button type="button" id="lettersSearchClear" class="lts-search-clear" title="پاک کردن جستجو" hidden><i class="bi bi-x-lg"></i></button>
             </div>
-            <a asp-action="Create" class="flex items-center gap-1.5 px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm shadow-indigo-500/20 no-underline">
-                <i class="bi bi-plus-circle-fill"></i>
-                <span>ایجاد نامه جدید</span>
+            <button type="button" id="lettersRefreshBtn" class="lts-icon-btn" title="بازخوانی">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <a asp-action="Create" class="lts-btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>نامه جدید</span>
             </a>
         </div>
     </header>
 
-    <!-- Quick Filters Row -->
-    <div class="flex flex-wrap gap-2 items-center">
-        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3.5 py-2 border border-slate-200/80 dark:border-slate-700/60 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all hover:border-indigo-200 hover:bg-indigo-50/50 dark:hover:border-indigo-500/20 dark:hover:bg-indigo-500/5 active" data-letter-filter="all">
-            <i class="bi bi-folder2-open"></i> همه (@list.Count)
+    <!-- ═══════════ ۲. KPI METRIC STRIP (uniform) ═══════════ -->
+    <section class="lts-metrics" aria-label="شاخص‌های کارتابل">
+        <button type="button" class="lts-metric active" data-letter-filter="all" title="نمایش همه نامه‌ها">
+            <span class="lts-metric-icon bg-indigo-500/10 text-indigo-600 dark:bg-indigo-400/10 dark:text-indigo-400"><i class="bi bi-stack"></i></span>
+            <span class="lts-metric-body">
+                <span class="lts-metric-label">کل نامه‌ها</span>
+                <span class="lts-metric-value" data-count-to="@list.Count">@Fa(list.Count)</span>
+            </span>
+            <span class="lts-metric-chip text-emerald-600 dark:text-emerald-400" title="تکمیل‌شده"><i class="bi bi-check-circle-fill"></i> @Fa(approvedCount)</span>
         </button>
-        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3.5 py-2 border border-slate-200/80 dark:border-slate-700/60 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all hover:border-indigo-200 hover:bg-indigo-50/50 dark:hover:border-indigo-500/20 dark:hover:bg-indigo-500/5" data-letter-filter="unread">
-            <i class="bi bi-envelope-open"></i> خوانده‌نشده (@unreadCount)
+        <button type="button" class="lts-metric" data-letter-filter="unread" title="فیلتر خوانده‌نشده">
+            <span class="lts-metric-icon bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"><i class="bi bi-envelope-exclamation"></i></span>
+            <span class="lts-metric-body">
+                <span class="lts-metric-label">خوانده‌نشده</span>
+                <span class="lts-metric-value" data-count-to="@unreadCount">@Fa(unreadCount)</span>
+            </span>
+            <span class="lts-metric-chip @(unreadCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400")">
+                @if (unreadCount > 0)
+                {
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span><span>نیاز به اقدام</span>
+                }
+                else
+                {
+                    <span><i class="bi bi-check-circle-fill"></i> همه خوانده شد</span>
+                }
+            </span>
         </button>
-        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3.5 py-2 border border-slate-200/80 dark:border-slate-700/60 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all hover:border-indigo-200 hover:bg-indigo-50/50 dark:hover:border-indigo-500/20 dark:hover:bg-indigo-500/5" data-letter-filter="sent">
-            <i class="bi bi-send"></i> ارسالی (@sentCount)
+        <button type="button" class="lts-metric" data-letter-filter="sent" title="فیلتر نامه‌های ارسالی">
+            <span class="lts-metric-icon bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400"><i class="bi bi-send-check"></i></span>
+            <span class="lts-metric-body">
+                <span class="lts-metric-label">نامه‌های ارسالی</span>
+                <span class="lts-metric-value" data-count-to="@sentCount">@Fa(sentCount)</span>
+            </span>
+            <span class="lts-metric-chip text-slate-400">@(sentCount > 0 ? "خروجی شما" : "—")</span>
         </button>
-        <button type="button" class="letter-filter-btn flex items-center gap-1.5 px-3.5 py-2 border border-slate-200/80 dark:border-slate-700/60 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all hover:border-indigo-200 hover:bg-indigo-50/50 dark:hover:border-indigo-500/20 dark:hover:bg-indigo-500/5" data-letter-filter="received">
-            <i class="bi bi-inbox"></i> دریافتی (@inboxCount)
+        <button type="button" class="lts-metric" data-letter-filter="received" title="فیلتر نامه‌های دریافتی">
+            <span class="lts-metric-icon bg-sky-500/10 text-sky-600 dark:bg-sky-400/10 dark:text-sky-400"><i class="bi bi-inboxes"></i></span>
+            <span class="lts-metric-body">
+                <span class="lts-metric-label">نامه‌های دریافتی</span>
+                <span class="lts-metric-value" data-count-to="@inboxCount">@Fa(inboxCount)</span>
+            </span>
+            <span class="lts-metric-chip text-slate-400">@(inboxCount > 0 ? "در کارتابل شما" : "—")</span>
         </button>
-        <button type="button" id="clearLetterFilters" class="mr-auto flex items-center gap-1.5 px-3.5 py-2 border border-rose-200/60 dark:border-rose-800/40 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition">
-            <i class="bi bi-x-circle"></i> پاک کردن فیلترها
-        </button>
-    </div>
+    </section>
 
-    <!-- Numeric Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button type="button" class="letters-stat-card active flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" data-letter-filter="all">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">کل نامه‌ها</span>
-            <span class="text-2xl font-black text-slate-800 dark:text-white mt-1">@list.Count</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">نمایش همه مکاتبات</span>
-        </button>
-        <button type="button" class="letters-stat-card flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" data-letter-filter="unread">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">خوانده‌نشده</span>
-            <span class="text-2xl font-black text-amber-600 mt-1">@unreadCount</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">اقدام فوری مورد نیاز</span>
-        </button>
-        <button type="button" class="letters-stat-card flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" data-letter-filter="sent">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">نامه‌های ارسالی</span>
-            <span class="text-2xl font-black text-emerald-600 mt-1">@sentCount</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">مکاتبات صادر شده توسط من</span>
-        </button>
-        <button type="button" class="letters-stat-card flex flex-col items-start gap-1 p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" data-letter-filter="received">
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">نامه‌های دریافتی</span>
-            <span class="text-2xl font-black text-sky-600 mt-1">@inboxCount</span>
-            <span class="text-[9px] text-slate-400 mt-0.5">ارجاعات و نامه‌های وارده</span>
-        </button>
-    </div>
+    <!-- ═══════════ ۳. UNIFIED MAIN SURFACE (Filter + AI + Table) ═══════════ -->
+    <section class="lts-main-surface">
 
-    <!-- Shortcut Controls -->
-    <div class="flex flex-wrap gap-2 items-center">
-        <button type="button" class="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200/80 dark:border-slate-700/60 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm" data-open-palette>
-            <i class="bi bi-command"></i> جستجوی سریع
-        </button>
-        <button type="button" id="btnOpenShortcutsDrawer" data-open-shortcuts class="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200/80 dark:border-slate-700/60 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm">
-            <i class="bi bi-lightning"></i> راهنمای میانبر
-        </button>
-    </div>
+        <!-- Single-line filter toolbar -->
+        <div class="lts-filter-toolbar">
+            <div class="lts-seg" role="tablist" aria-label="فیلتر وضعیت">
+                <button type="button" class="lts-seg-btn active" data-letter-filter="all" role="tab">همه <span class="lts-seg-count">@Fa(list.Count)</span></button>
+                <button type="button" class="lts-seg-btn" data-letter-filter="received" role="tab">دریافتی <span class="lts-seg-count">@Fa(inboxCount)</span></button>
+                <button type="button" class="lts-seg-btn" data-letter-filter="sent" role="tab">ارسالی <span class="lts-seg-count">@Fa(sentCount)</span></button>
+                <button type="button" class="lts-seg-btn" data-letter-filter="draft" role="tab">پیش‌نویس <span class="lts-seg-count">@Fa(draftCount)</span></button>
+                <button type="button" class="lts-seg-btn" data-letter-filter="unread" role="tab">خوانده‌نشده <span class="lts-seg-count">@Fa(unreadCount)</span></button>
+            </div>
 
-    <!-- Saved Filters Panel -->
-    @{ 
-        ViewData["SavedFiltersTitle"] = "فیلترهای ذخیره‌شده"; 
-        ViewData["SavedFiltersSubtitle"] = "فیلترها را ذخیره کن تا بعداً سریع برگردی."; 
-        ViewData["SavedFiltersSaveButtonId"] = "lettersSaveFilter"; 
-        ViewData["SavedFiltersClearButtonId"] = "lettersClearSaved"; 
-        ViewData["SavedFiltersContainerId"] = "lettersSavedFilters"; 
-    }
-    <partial name="_SavedFiltersPanel" />
+            <div class="lts-toolbar-filters">
+                <div class="lts-dropdown" data-dropdown="sender">
+                    <button type="button" class="lts-dropdown-btn" data-dropdown-trigger>
+                        <i class="bi bi-person-up"></i>
+                        <span class="lts-dropdown-label">فرستنده</span>
+                        <span class="lts-dropdown-value" data-dropdown-value>همه</span>
+                        <i class="bi bi-chevron-down text-[9px] opacity-60"></i>
+                    </button>
+                    <div class="lts-dropdown-menu" data-dropdown-menu>
+                        <button type="button" class="lts-dropdown-opt active" data-value="">همه فرستنده‌ها</button>
+                        @foreach (var sender in list.Where(item => item.Sender != null).Select(item => item.Sender!.FullName).Distinct().OrderBy(item => item))
+                        {
+                            <button type="button" class="lts-dropdown-opt" data-value="@sender">@sender</button>
+                        }
+                    </div>
+                    <select id="letterSenderFilter" class="lts-hidden-select" tabindex="-1" aria-hidden="true">
+                        <option value="">همه فرستنده‌ها</option>
+                        @foreach (var sender in list.Where(item => item.Sender != null).Select(item => item.Sender!.FullName).Distinct().OrderBy(item => item))
+                        {
+                            <option value="@sender">@sender</option>
+                        }
+                    </select>
+                </div>
 
-    <!-- Advanced Filters Panel -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
-        <select id="letterSenderFilter" class="h-9 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20">
-            <option value="">همه فرستنده‌ها</option>
-            @foreach (var sender in list.Where(item => item.Sender != null).Select(item => item.Sender!.FullName).Distinct().OrderBy(item => item))
-            {
-                <option value="@sender">@sender</option>
-            }
-        </select>
-        <select id="letterReceiverFilter" class="h-9 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20">
-            <option value="">همه گیرنده‌ها</option>
-            @foreach (var receiver in list.Where(item => item.Receiver != null).Select(item => item.Receiver!.FullName).Distinct().OrderBy(item => item))
-            {
-                <option value="@receiver">@receiver</option>
-            }
-        </select>
-        <select id="letterStatusFilter" class="h-9 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20">
-            <option value="">همه وضعیت‌ها</option>
-            @foreach (var status in list.Select(item => item.WorkflowStatus).Distinct().OrderBy(item => item))
-            {
-                <option value="@status">@OfficeAutomation.Models.WorkflowStatus.Label(status)</option>
-            }
-        </select>
-        <input id="letterDateFrom" type="date" class="h-9 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20" />
-        <input id="letterDateTo" type="date" class="h-9 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20" />
-    </div>
+                <div class="lts-dropdown" data-dropdown="receiver">
+                    <button type="button" class="lts-dropdown-btn" data-dropdown-trigger>
+                        <i class="bi bi-person-down"></i>
+                        <span class="lts-dropdown-label">گیرنده</span>
+                        <span class="lts-dropdown-value" data-dropdown-value>همه</span>
+                        <i class="bi bi-chevron-down text-[9px] opacity-60"></i>
+                    </button>
+                    <div class="lts-dropdown-menu" data-dropdown-menu>
+                        <button type="button" class="lts-dropdown-opt active" data-value="">همه گیرنده‌ها</button>
+                        @foreach (var receiver in list.Where(item => item.Receiver != null).Select(item => item.Receiver!.FullName).Distinct().OrderBy(item => item))
+                        {
+                            <button type="button" class="lts-dropdown-opt" data-value="@receiver">@receiver</button>
+                        }
+                    </div>
+                    <select id="letterReceiverFilter" class="lts-hidden-select" tabindex="-1" aria-hidden="true">
+                        <option value="">همه گیرنده‌ها</option>
+                        @foreach (var receiver in list.Where(item => item.Receiver != null).Select(item => item.Receiver!.FullName).Distinct().OrderBy(item => item))
+                        {
+                            <option value="@receiver">@receiver</option>
+                        }
+                    </select>
+                </div>
 
-    <!-- AI Smart Summary Block -->
-    <div class="flex flex-col gap-4 p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
-        <div class="flex items-center gap-2">
-            <i class="bi bi-stars text-indigo-600 dark:text-indigo-400"></i>
-            <div>
-                <h5 class="m-0 text-sm font-bold text-slate-900 dark:text-white">خلاصه هوشمند نامه‌ها</h5>
-                <p class="m-0 text-[11px] text-slate-500 dark:text-slate-400">خلاصه نامه‌های دریافتی، خوانده‌نشده، ارسالی یا گردش یک نامه مشخص را با هوش مصنوعی ببینید.</p>
+                <div class="lts-dropdown" data-dropdown="status">
+                    <button type="button" class="lts-dropdown-btn" data-dropdown-trigger>
+                        <i class="bi bi-diagram-3"></i>
+                        <span class="lts-dropdown-label">وضعیت</span>
+                        <span class="lts-dropdown-value" data-dropdown-value>همه</span>
+                        <i class="bi bi-chevron-down text-[9px] opacity-60"></i>
+                    </button>
+                    <div class="lts-dropdown-menu" data-dropdown-menu>
+                        <button type="button" class="lts-dropdown-opt active" data-value="">همه وضعیت‌ها</button>
+                        @foreach (var status in allStatuses)
+                        {
+                            <button type="button" class="lts-dropdown-opt" data-value="@status">@OfficeAutomation.Models.WorkflowStatus.Label(status)</button>
+                        }
+                    </div>
+                    <select id="letterStatusFilter" class="lts-hidden-select" tabindex="-1" aria-hidden="true">
+                        <option value="">همه وضعیت‌ها</option>
+                        @foreach (var status in allStatuses)
+                        {
+                            <option value="@status">@OfficeAutomation.Models.WorkflowStatus.Label(status)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="lts-dropdown" data-dropdown="date">
+                    <button type="button" class="lts-dropdown-btn" data-dropdown-trigger>
+                        <i class="bi bi-calendar3"></i>
+                        <span class="lts-dropdown-label">تاریخ</span>
+                        <span class="lts-dropdown-value" data-dropdown-value>همه</span>
+                        <i class="bi bi-chevron-down text-[9px] opacity-60"></i>
+                    </button>
+                    <div class="lts-dropdown-menu lts-date-menu" data-dropdown-menu>
+                        <div class="lts-date-presets">
+                            <button type="button" class="lts-dropdown-opt" data-preset="today">امروز</button>
+                            <button type="button" class="lts-dropdown-opt" data-preset="7days">۷ روز اخیر</button>
+                            <button type="button" class="lts-dropdown-opt" data-preset="month">این ماه</button>
+                            <button type="button" class="lts-dropdown-opt" data-preset="clear">همه زمان‌ها</button>
+                        </div>
+                        <div class="lts-date-custom">
+                            <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">بازه دلخواه</label>
+                            <div class="flex items-center gap-1.5">
+                                <input id="letterDateFrom" type="date" class="lts-date-input" placeholder="از تاریخ" />
+                                <span class="text-[10px] text-slate-400">—</span>
+                                <input id="letterDateTo" type="date" class="lts-date-input" placeholder="تا تاریخ" />
+                            </div>
+                            <button type="button" class="lts-date-apply" id="dateRangeApply">اعمال بازه</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="lts-icon-btn lts-icon-btn-sm" id="lettersSaveFilter" title="ذخیره فیلتر فعلی">
+                    <i class="bi bi-bookmark-plus"></i>
+                </button>
+                <button type="button" class="lts-icon-btn lts-icon-btn-sm" id="densityToggle" title="تغییر تراکم جدول">
+                    <i class="bi bi-justify"></i>
+                </button>
+                <button type="button" class="lts-icon-btn lts-icon-btn-sm" id="exportBtn" title="خروجی CSV">
+                    <i class="bi bi-download"></i>
+                </button>
             </div>
         </div>
-        <div class="flex flex-col md:flex-row gap-3">
-            <select id="letterSummaryMode" class="h-9 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20 md:w-64">
-                <option value="week">خلاصه نامه‌های دریافتی هفته اخیر</option>
-                <option value="unread">خلاصه نامه‌های خوانده‌نشده</option>
-                <option value="sent">خلاصه نامه‌های ارسالی من</option>
-                <option value="selected">خلاصه و گردش نامه انتخاب‌شده</option>
-            </select>
-            <select id="letterSummaryId" class="h-9 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20 flex-1">
-                <option value="">انتخاب موضوع نامه...</option>
-                @foreach (var item in list.OrderByDescending(item => item.SentDate))
-                {
-                    <option value="@item.Id">@item.Title</option>
-                }
-            </select>
-            <button id="btnSummarizeLetters" type="button" class="h-9 flex items-center justify-center gap-1.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm shadow-indigo-500/20">
-                <i class="bi bi-card-text"></i>
-                <span>نمایش خلاصه</span>
+
+        <!-- Active filter micro-chips (only when active) -->
+        <div class="lts-active-filters" id="activeFilterBadges" hidden>
+            <div class="flex flex-wrap items-center gap-1.5" id="activeFilterBadgeList"></div>
+            <button type="button" id="clearLetterFilters" class="lts-clear-filters">
+                <i class="bi bi-x-circle"></i>
+                <span>پاک کردن فیلترها</span>
             </button>
         </div>
-        <div id="letterSummaryResult" class="p-4 rounded-xl border border-slate-100/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 leading-7 min-h-[50px] whitespace-pre-wrap">
-            یک گزینه را انتخاب کنید و دکمه نمایش خلاصه را بزنید.
-        </div>
-    </div>
 
-    <!-- Data Table Card -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-        <div class="overflow-x-auto w-full">
-            <table class="w-full text-xs text-right border-collapse text-slate-700 dark:text-slate-300" id="lettersTable">
-                <thead class="sticky top-0 z-10 bg-slate-50/80 dark:bg-slate-800/60 backdrop-blur-sm border-b border-slate-100 dark:border-slate-800/60">
+        <div id="lettersSavedFilters" class="lts-saved-filters-popover" role="listbox"></div>
+
+        <!-- Slim collapsible AI banner -->
+        <div class="lts-ai-banner" id="letterAiPanel">
+            <div class="lts-ai-trigger" data-ai-trigger>
+                <span class="lts-ai-spark"><i class="bi bi-stars"></i></span>
+                <span class="lts-ai-title">خلاصه هوشمند:</span>
+                <span class="lts-ai-chips" id="aiSuggestionChips">
+                    <button type="button" class="lts-ai-chip" data-suggest="unread"><i class="bi bi-exclamation-octagon-fill"></i> نامه‌های فوری</button>
+                    <button type="button" class="lts-ai-chip" data-suggest="pending"><i class="bi bi-lightning-charge-fill"></i> نیاز به اقدام</button>
+                    <button type="button" class="lts-ai-chip" data-suggest="today"><i class="bi bi-calendar-day-fill"></i> نامه‌های امروز</button>
+                </span>
+                <button type="button" class="lts-ai-collapse" id="aiDrawerToggle" title="باز و بسته کردن" aria-label="باز و بسته کردن خلاصه هوشمند">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </div>
+            <div class="lts-ai-body" id="aiDrawerBody">
+                <div class="lts-ai-hint" id="letterSummaryResult">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">یکی از پیشنهادهای بالا را انتخاب کنید تا خلاصه‌ای مدیریتی از نامه‌های شما تولید شود.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table toolbar -->
+        <div class="lts-table-toolbar">
+            <div class="flex items-center gap-2.5">
+                <input type="checkbox" id="selectAllLetters" class="lts-check" title="انتخاب همه" />
+                <h2 class="text-xs font-bold text-slate-800 dark:text-slate-100">فهرست نامه‌ها</h2>
+                <span class="lts-table-info" id="tableInfo">@Fa(list.Count) نامه در کارتابل شما</span>
+            </div>
+            <button type="button" class="lts-bulk-btn" id="bulkArchiveBtn" disabled title="بایگانی انتخاب‌شده‌ها">
+                <i class="bi bi-archive"></i><span id="bulkCountLabel">بایگانی</span>
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="lts-table-scroll">
+            <table class="lts-table" id="lettersTable">
+                <thead>
                     <tr>
-                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">موضوع نامه</th>
-                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">فرستنده</th>
-                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">گیرنده</th>
-                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center">تاریخ ارسال</th>
-                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center">وضعیت گردش</th>
-                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center">وضعیت</th>
-                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-center w-1">عملیات</th>
+                        <th class="lts-col-check text-center"><span class="sr-only">انتخاب</span></th>
+                        <th class="lts-col-priority text-center">اولویت</th>
+                        <th class="lts-col-code">شماره</th>
+                        <th class="lts-col-subject">موضوع و متن</th>
+                        <th class="lts-col-people">فرستنده / گیرنده</th>
+                        <th class="lts-col-date text-center">تاریخ</th>
+                        <th class="lts-col-status text-center">گردش</th>
+                        <th class="lts-col-status text-center">وضعیت</th>
+                        <th class="lts-col-actions text-center">عملیات</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60" id="lettersBody">
-                    @foreach (var item in list)
+                <tbody id="lettersBody">
+                    @if (list.Count == 0)
                     {
-                        var shamsiDate = $"{pc.GetYear(item.SentDate)}/{pc.GetMonth(item.SentDate):D2}/{pc.GetDayOfMonth(item.SentDate):D2}";
-                        var isUnread = !item.IsRead && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId);
-                        var isSentByCurrentUser = item.SenderId == currentUserId;
-                        var isReceivedByCurrentUser = item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId;
-
-                        <tr class="letter-row-card hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors" 
-                            data-letter-id="@item.Id" 
-                            data-unread="@(isUnread ? "1" : "0")" 
-                            data-sent="@(isSentByCurrentUser ? "1" : "0")" 
-                            data-received="@(isReceivedByCurrentUser ? "1" : "0")" 
-                            data-sent-at="@item.SentDate.ToString("o")" 
-                            data-sender="@item.Sender?.FullName" 
-                            data-receiver="@item.Receiver?.FullName" 
-                            data-status="@item.WorkflowStatus">
-                            
-                            <!-- Title / Subject -->
-                            <td class="px-4 py-3.5 font-medium text-slate-900 dark:text-white min-w-[220px]">
-                                <a href="@Url.Action("Details", new { id = item.Id })" class="hover:text-indigo-600 dark:hover:text-indigo-400 font-bold transition no-underline">
-                                    @item.Title
-                                </a>
-                            </td>
-                            
-                            <!-- Sender -->
-                            <td class="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">@item.Sender?.FullName</td>
-                            
-                            <!-- Receiver -->
-                            <td class="px-4 py-3.5 text-slate-600 dark:text-slate-400">@item.Receiver?.FullName</td>
-                            
-                            <!-- Sent Date -->
-                            <td class="px-4 py-3.5 text-center font-mono text-slate-500">@shamsiDate</td>
-                            
-                            <!-- Workflow Step -->
-                            <td class="px-4 py-3.5 text-center">
-                                @if (item.IsWorkflowCompleted)
-                                {
-                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
-                                        <span class="status-dot status-dot-pulse bg-emerald-500"></span>تایید نهایی
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40">
-                                        <span class="status-dot status-dot-pulse bg-amber-500"></span>در گردش - مرحله @item.CurrentWorkflowStep
-                                    </span>
-                                }
-                            </td>
-                            
-                            <!-- Read Status -->
-                            <td class="px-4 py-3.5 text-center">
-                                @if (isUnread)
-                                {
-                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40">
-                                        <span class="status-dot status-dot-pulse bg-rose-500"></span>خوانده‌نشده
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700/40">
-                                        <span class="status-dot bg-slate-400"></span>خوانده‌شده
-                                    </span>
-                                }
-                            </td>
-                            
-                            <!-- Minimal Actions -->
-                            <td class="px-4 py-3.5 text-center w-1">
-                                <div class="flex items-center justify-center gap-1">
-                                    <a href="@Url.Action("Details", new { id = item.Id })" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 transition-colors" title="مشاهده">
-                                        <i class="bi bi-eye text-sm"></i>
-                                    </a>
-                                    <button type="button" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 transition-colors pin-letter" data-letter-id="@item.Id" title="ذخیره در علاقه‌مندی">
-                                        <i class="bi bi-bookmark-plus text-sm"></i>
-                                    </button>
-                                    @if (!item.IsWorkflowCompleted && item.ReceiverId == currentUserId)
-                                    {
-                                        <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="inline">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="p-1.5 text-slate-400 hover:text-emerald-600 dark:text-slate-500 dark:hover:text-emerald-400 transition-colors" title="تایید و ارجاع مرحله بعد">
-                                                <i class="bi bi-check2-circle text-sm"></i>
-                                            </button>
-                                        </form>
-                                    }
-                                    <button type="button" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 transition-colors print" title="چاپ">
-                                        <i class="bi bi-printer text-sm"></i>
-                                    </button>
-                                    <a href="@Url.Action("Create", new { replyToId = item.Id })" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 transition-colors" title="پاسخ">
-                                        <i class="bi bi-reply-fill text-sm"></i>
-                                    </a>
+                        <tr>
+                            <td colspan="9">
+                                <div class="lts-empty-state">
+                                    <div class="lts-empty-illust">
+                                        <svg width="56" height="56" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="8" y="14" width="56" height="42" rx="8" stroke="#c7d2fe" stroke-width="2" fill="#eef2ff"/>
+                                            <rect x="8" y="14" width="56" height="42" rx="8" stroke="#818cf8" stroke-width="1.5" fill="none"/>
+                                            <path d="M8 20L36 38L64 20" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="58" cy="18" r="7" fill="#f59e0b"/>
+                                            <path d="M55.5 18L57.5 20L61 16.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </div>
+                                    <h3>کارتابل شما خالی است</h3>
+                                    <p>اولین نامه اداری خود را بنویسید یا از دستیار هوش مصنوعی کمک بگیرید.</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <a asp-action="Create" class="lts-btn-primary">
+                                            <i class="bi bi-plus-lg"></i>
+                                            <span>ایجاد اولین نامه</span>
+                                        </a>
+                                        <a href="/docs/UserGuide.md" class="lts-btn-ghost">
+                                            <i class="bi bi-book"></i>
+                                            <span>راهنمای شروع</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
                     }
+                    else
+                    {
+                        @foreach (var item in list)
+                        {
+                            var idx = list.IndexOf(item);
+                            var shamsiDate = $"{pc.GetYear(item.SentDate)}/{pc.GetMonth(item.SentDate):D2}/{pc.GetDayOfMonth(item.SentDate):D2}";
+                            var isUnread = !item.IsRead && (item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId);
+                            var isSentByCurrentUser = item.SenderId == currentUserId;
+                            var isReceivedByCurrentUser = item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId;
+                            var relDate = RelativeDate(item.SentDate);
+                            var statusCss = StatusCssClass(item.WorkflowStatus);
+                            var statusLabel = OfficeAutomation.Models.WorkflowStatus.Label(item.WorkflowStatus);
+                            var senderAvatar = AvatarColor(item.Sender?.FullName, idx);
+                            var receiverAvatar = AvatarColor(item.Receiver?.FullName, idx + 50);
+                            var showUrgent = IsUrgent(item.WorkflowStatus);
+                            var normalizedStatus = OfficeAutomation.Models.WorkflowStatus.Normalize(item.WorkflowStatus);
+
+                            <tr class="lts-row group @(isUnread ? "unread-row" : "")"
+                                data-letter-id="@item.Id"
+                                data-unread="@(isUnread ? "1" : "0")"
+                                data-sent="@(isSentByCurrentUser ? "1" : "0")"
+                                data-received="@(isReceivedByCurrentUser ? "1" : "0")"
+                                data-sent-at="@item.SentDate.ToString("o")"
+                                data-sender="@item.Sender?.FullName"
+                                data-receiver="@item.Receiver?.FullName"
+                                data-status="@item.WorkflowStatus"
+                                data-normalized-status="@normalizedStatus">
+
+                                <td class="lts-col-check text-center">
+                                    <input type="checkbox" class="lts-check letter-check" data-id="@item.Id" title="انتخاب نامه @item.Id" />
+                                </td>
+
+                                <td class="lts-col-priority text-center">
+                                    @if (showUrgent)
+                                    {
+                                        <span class="lts-flag-urgent" title="فوری"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                                    }
+                                    else if (normalizedStatus == "NeedsRevision" || normalizedStatus == "Returned")
+                                    {
+                                        <span class="lts-flag-revision" title="نیاز به اصلاح"><i class="bi bi-arrow-repeat"></i></span>
+                                    }
+                                    else if (item.IsWorkflowCompleted)
+                                    {
+                                        <span class="lts-flag-done" title="تکمیل شده"><i class="bi bi-check-circle-fill"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="lts-flag-none" title="عادی"><i class="bi bi-dash-lg"></i></span>
+                                    }
+                                </td>
+
+                                <td class="lts-col-code">
+                                    <span class="lts-ref-code" title="شماره نامه">@item.Id.ToString("0000")</span>
+                                </td>
+
+                                <td class="lts-col-subject">
+                                    <div class="flex items-start gap-2">
+                                        @if (isUnread)
+                                        {
+                                            <span class="lts-unread-pip" title="خوانده‌نشده"></span>
+                                        }
+                                        <div class="min-w-0">
+                                            <a href="@Url.Action("Details", new { id = item.Id })" class="lts-subject-link @(isUnread ? "unread-title" : "")">
+                                                @item.Title
+                                            </a>
+                                            <p class="lts-subject-snippet">@BodySnippet(item.Body)</p>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="lts-col-people">
+                                    <div class="lts-people">
+                                        <div class="lts-person">
+                                            <span class="lts-mini-avatar" style="@senderAvatar">@Initials(item.Sender?.FullName)</span>
+                                            <span class="min-w-0">
+                                                <span class="block text-[11px] font-semibold text-slate-800 dark:text-slate-100 truncate">@item.Sender?.FullName</span>
+                                                <span class="block text-[9px] text-slate-400 truncate">@(item.Sender?.JobTitle ?? "—")</span>
+                                            </span>
+                                        </div>
+                                        <span class="lts-flow-arrow"><i class="bi bi-arrow-left"></i></span>
+                                        <div class="lts-person">
+                                            <span class="lts-mini-avatar" style="@receiverAvatar">@Initials(item.Receiver?.FullName)</span>
+                                            <span class="min-w-0">
+                                                <span class="block text-[11px] font-semibold text-slate-800 dark:text-slate-100 truncate">@item.Receiver?.FullName</span>
+                                                <span class="block text-[9px] text-slate-400 truncate">@(item.Receiver?.JobTitle ?? "—")</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="lts-col-date text-center">
+                                    <div class="lts-date-cell">
+                                        <span class="lts-date-main" title="@shamsiDate ساعت @item.SentDate.ToString("HH:mm")">@relDate</span>
+                                        <span class="lts-date-sub">@shamsiDate</span>
+                                    </div>
+                                </td>
+
+                                <td class="lts-col-status text-center">
+                                    @if (item.IsWorkflowCompleted)
+                                    {
+                                        <span class="lts-chip completed"><span class="dot"></span>تکمیل</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="inline-flex flex-col items-center gap-0.5">
+                                            <span class="lts-chip in-progress"><span class="dot"></span>مرحله @item.CurrentWorkflowStep</span>
+                                            <span class="lts-step-track"><span class="lts-step-fill" style="width:@(Math.Min(100, item.CurrentWorkflowStep * 20))%"></span></span>
+                                        </div>
+                                    }
+                                </td>
+
+                                <td class="lts-col-status text-center">
+                                    <span class="lts-chip @statusCss"><span class="dot"></span>@statusLabel</span>
+                                </td>
+
+                                <td class="lts-col-actions text-center">
+                                    <div class="lts-actions opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                        <a href="@Url.Action("Details", new { id = item.Id })" class="lts-action-btn" title="مشاهده سریع"><i class="bi bi-eye"></i></a>
+                                        <a href="@Url.Action("Create", new { replyToId = item.Id })" class="lts-action-btn" title="ارجاع / پاسخ"><i class="bi bi-reply-fill"></i></a>
+                                        <button type="button" class="lts-action-btn pin-letter" data-letter-id="@item.Id" title="برچسب‌گذاری"><i class="bi bi-bookmark-plus"></i></button>
+                                        <form asp-action="DeleteConfirmed" asp-route-id="@item.Id" method="post" class="inline m-0 archive-form" data-confirm="این نامه بایگانی (حذف) شود؟">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="lts-action-btn lts-action-btn-danger" title="بایگانی"><i class="bi bi-archive"></i></button>
+                                        </form>
+                                        <div class="lts-more-menu">
+                                            <button type="button" class="lts-action-btn more" title="عملیات بیشتر" aria-label="عملیات بیشتر"><i class="bi bi-three-dots"></i></button>
+                                            <div class="lts-more-dropdown">
+                                                <a href="@Url.Action("Edit", new { id = item.Id })"><i class="bi bi-pencil"></i> ویرایش</a>
+                                                <a href="@Url.Action("Delete", new { id = item.Id })"><i class="bi bi-trash3"></i> حذف</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
                 </tbody>
             </table>
         </div>
-    </div>
+
+        <!-- Filtered empty state host -->
+        <div id="lettersEmptyState" class="letters-empty d-none"></div>
+
+        <!-- Sticky pagination bar -->
+        <div class="lts-pagination-bar" id="paginationBar">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400" id="pageInfo">نمایش ۱ تا ۰ از ۰ نامه</span>
+            <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>تعداد در هر صفحه</span>
+                    <select id="pageSizeSelect" class="lts-page-size-select">
+                        <option value="10">۱۰</option>
+                        <option value="25" selected>۲۵</option>
+                        <option value="50">۵۰</option>
+                        <option value="100">۱۰۰</option>
+                    </select>
+                </label>
+                <div class="flex items-center gap-1" id="pagerControls">
+                    <button type="button" class="lts-page-btn" id="pagePrev" title="قبلی"><i class="bi bi-chevron-right"></i></button>
+                    <div class="flex items-center gap-1" id="pageNumbers"></div>
+                    <button type="button" class="lts-page-btn" id="pageNext" title="بعدی"><i class="bi bi-chevron-left"></i></button>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 
+<div id="lettersSavedFiltersContainer" style="display:none;" data-saved-filters-title="فیلترهای ذخیره‌شده" data-saved-filters-subtitle="فیلترها را ذخیره کن تا بعداً سریع برگردی."></div>
+<div id="lettersClearSaved" style="display:none;"></div>
+
 @section Styles {
-    <link rel="stylesheet" href="~/css/letters-index-style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/letters-index.css" asp-append-version="true" />
 }
 
 @section Scripts {

@@ -46,6 +46,78 @@ public class LettersController : Controller
             _workflowDetailService = workflowDetailService;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DemoSeed()
+        {
+            if (!Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")?.Equals("Development", StringComparison.OrdinalIgnoreCase) ?? true)
+                return NotFound();
+
+            var currentUserId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(currentUserId)) return Unauthorized();
+
+            var users = await _context.Users.AsNoTracking().ToListAsync();
+            if (users.Count < 2) return Content("حداقل ۲ کاربر در سیستم نیاز است.", "text/plain");
+
+            var rng = new Random(42);
+            var statuses = new[] { "Draft", "Sent", "PendingApproval", "Approved", "Rejected", "Completed", "NeedsRevision" };
+            var subjects = new[]
+            {
+                "درخواست تمدید قرارداد پیمانکاری", "گزارش پیشرفت پروژه فاز ۲", "دعوت به جلسه هیئت مدیره",
+                "استعلام قیمت تجهیزات آزمایشگاهی", "پیشنهاد همکاری راهبردی", "ابلاغ سیاست‌های جدید اداری",
+                "درخواست مرخصی فوق‌العاده", "گزارش نهایی حسابرسی سالانه", "نامه معرفی نماینده جدید",
+                "درخواست خرید سرور و تجهیزات شبکه", "گزارش تخلف اداری کارکنان", "صورتجلسه کمیته فنی",
+                "ابلاغیه تغییر ساختار سازمانی", "درخواست برگزاری دوره آموزشی", "گزارش عملکرد سه‌ماهه سوم",
+                "پاسخ به استعلام مناقصه", "دستور پرداخت مطالبات پیمانکار", "گزارش نهایی پروژه عمرانی"
+            };
+            var firstNames = new[] { "رضا", "احمد", "سارا", "مریم", "امیرحسین", "زهرا", "محمد", "فاطمه", "علی", "نرگس", "حسین", "الهه", "مهدی", "سعید", "حمید", "لیلا", "مجید", "ندا" };
+            var lastNames = new[] { "محمدی", "احمدی", "حسینی", "رضایی", "موسوی", "جعفری", "کاظمی", "صادقی", "نوروزی", "کریمی", "واعظی", "شفیعی", "قاسمی", "همدانی", "باقری", "نعمتی", "شفاهی", "ملکی" };
+
+            var existingLetters = await _context.Letters.CountAsync();
+            if (existingLetters > 5)
+            {
+                return Content("دیتای نمایشی قبلاً اضافه شده است.", "text/plain");
+            }
+
+            var createdLetters = new List<Letter>();
+            for (int i = 0; i < 18; i++)
+            {
+                var sender = users[rng.Next(users.Count)];
+                User receiver;
+                do { receiver = users[rng.Next(users.Count)]; } while (receiver.Id == sender.Id);
+
+                var daysAgo = rng.Next(1, 60);
+                var hours = rng.Next(7, 18);
+                var minutes = rng.Next(0, 59);
+                var sentDate = DateTime.Now.AddDays(-daysAgo).Date.AddHours(hours).AddMinutes(minutes);
+
+                var status = statuses[rng.Next(statuses.Length)];
+                var isCompleted = status == "Approved" || status == "Completed";
+                var isRead = status != "Draft" && rng.Next(0, 3) > 0;
+
+                var letter = new Letter
+                {
+                    Title = subjects[i % subjects.Length],
+                    Body = $"<p>با سلام و احترام،</p><p>به استحضار می‌رساند پیرو موضوع «{subjects[i % subjects.Length]}» موارد زیر به شرح ذیل به اطلاع می‌رسد. خواهشمند است دستورات لازم را در این خصوص صادر فرمایید.</p><p>با تقدیم احترام</p>",
+                    SenderId = sender.Id,
+                    ReceiverId = receiver.Id,
+                    FinalReceiverId = receiver.Id,
+                    SentDate = sentDate,
+                    IsRead = isRead,
+                    ReadDate = isRead ? sentDate.AddHours(2) : null,
+                    WorkflowStatus = status,
+                    CurrentWorkflowStep = isCompleted ? 5 : rng.Next(1, 4),
+                    IsWorkflowCompleted = isCompleted,
+                    DocumentType = "Letter"
+                };
+                createdLetters.Add(letter);
+            }
+
+            _context.Letters.AddRange(createdLetters);
+            await _context.SaveChangesAsync();
+
+            return Content($"✅ {createdLetters.Count} نامه آزمایشی با موفقیت اضافه شد.", "text/html");
+        }
+
         // GET: Letters
         public async Task<IActionResult> Index()
         {
@@ -488,6 +560,33 @@ public class LettersController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Services.Security.PermissionAuthorize("Letters.Delete")]
+        public async Task<IActionResult> BulkArchive([FromBody] BulkArchiveRequest request)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Unauthorized();
+            }
+
+            if (request?.Ids == null || request.Ids.Count == 0)
+            {
+                return BadRequest(new { message = "هيچ نامه‌اي انتخاب نشده است." });
+            }
+
+            var letters = await _context.Letters
+                .Where(item => request.Ids.Contains(item.Id) &&
+                               (item.SenderId == currentUserId || item.ReceiverId == currentUserId || item.FinalReceiverId == currentUserId))
+                .ToListAsync();
+
+            _context.Letters.RemoveRange(letters);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { archived = letters.Count });
+        }
+
         private bool LetterExists(int id)
         {
             return _context.Letters.Any(e => e.Id == id);
@@ -518,6 +617,11 @@ public class LettersController : Controller
         {
             public string? Mode { get; set; }
             public int? LetterId { get; set; }
+        }
+
+        public sealed class BulkArchiveRequest
+        {
+            public List<int> Ids { get; set; } = new();
         }
 
         public sealed class LetterReplyRequest

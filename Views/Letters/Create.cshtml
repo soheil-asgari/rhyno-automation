@@ -2,7 +2,7 @@
 @{
     var isTabContent = Context.Request.Query.ContainsKey("_tab");
     Layout = isTabContent ? "_TabLayout" : "_Layout";
-    ViewData["Title"] = "ارسال نامه جدید";
+    ViewData["Title"] = "نگارش نامه اداری جدید";
 
     var pc = new System.Globalization.PersianCalendar();
     var now = DateTime.Now;
@@ -14,132 +14,214 @@
 
 <script src="~/lib/ckeditor/ckeditor.js" asp-append-version="true"></script>
 
-<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
-    <!-- Header/Toolbar Card -->
-    <header class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col gap-4">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div class="flex-1 flex flex-col sm:flex-row items-center gap-3">
-                <!-- Receiver Select -->
-                <div class="relative min-w-[240px] w-full sm:w-auto">
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"><i class="bi bi-person"></i></span>
-                    <select id="receiverSelect" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 pr-9 pl-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" asp-items="ViewBag.ReceiverId">
-                        <option value="">انتخاب گیرنده یا واحد...</option>
-                    </select>
-                </div>
-                <!-- Subject Input -->
-                <input type="text" id="subjectInput" class="h-9 flex-1 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 font-bold" value="@replySubject" placeholder="موضوع نامه..." />
-            </div>
+<div class="letters-create-shell" dir="rtl">
+    @Html.AntiForgeryToken()
 
-            <!-- Actions Toolbar -->
-            <div class="flex items-center justify-end gap-2.5">
-                <span id="draftStatus" class="text-[10px] font-bold text-slate-400">پیش‌نویس ذخیره نشده</span>
-                <button class="flex items-center gap-1.5 px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent" id="btnPreviewLetter" type="button">
-                    <i class="bi bi-eye"></i>
-                    <span>پیش‌نمایش</span>
-                </button>
-                <button class="flex items-center gap-1.5 px-4 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm" id="btnSendLetter" type="button">
-                    <i class="bi bi-send"></i>
-                    <span>ارسال نهایی</span>
-                </button>
+    <!-- ═══════════ ۱. ENTERPRISE ACTION HEADER ═══════════ -->
+    <header class="lts-create-header">
+        <div class="flex items-center gap-3">
+            <span class="lts-brand-mark"><i class="bi bi-pencil-square"></i></span>
+            <div class="leading-tight">
+                <h1 class="lts-create-title">نگارش نامه اداری جدید</h1>
+                <p class="lts-create-subtitle mt-0.5 flex items-center gap-1.5">
+                    <span id="draftStatus" class="lts-save-status saving" style="display:none;">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        <span>پیش‌نویس خودکار ذخیره شد</span>
+                    </span>
+                    <span class="text-slate-300 dark:text-slate-600">•</span>
+                    <span>۱۴۰۵/۰۸/۰۵</span>
+                </p>
             </div>
         </div>
 
-        <!-- Reply alert info -->
-        @if (isReplyMode)
-        {
-            <div class="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-955/10 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs font-semibold shadow-sm">
-                <i class="bi bi-reply-fill text-sm"></i>
-                <span>حالت پاسخ به نامه فعال است.</span>
-            </div>
-        }
-
-        <!-- AI Assistant Panel -->
-        <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl flex flex-col gap-3">
-            <div class="flex items-center gap-2 text-teal-600 dark:text-teal-400">
-                <i class="bi bi-stars"></i>
-                <span class="text-xs font-bold">نگارش نامه با دستیار هوش مصنوعی</span>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <input id="aiLetterInstruction" type="text" class="h-9 flex-1 rounded-lg border border-slate-200 bg-white dark:bg-slate-900 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" placeholder="مثلاً: یک نامه رسمی برای درخواست تأیید خرید تجهیزات بنویس..." />
-                <button id="btnDraftWithAi" type="button" class="h-9 flex items-center justify-center gap-1.5 px-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold transition bg-transparent">
-                    <i class="bi bi-magic text-teal-600 dark:text-teal-400"></i>
-                    <span>تولید متن</span>
-                </button>
-            </div>
-            <div id="aiLetterStatus" class="text-[10px] text-slate-400"></div>
+        <div class="flex items-center gap-2">
+            <a asp-action="Index" class="lts-btn-ghost">
+                <i class="bi bi-arrow-right"></i>
+                <span>بازگشت</span>
+            </a>
+            <button class="lts-btn-secondary" id="btnPreviewLetter" type="button">
+                <i class="bi bi-eye"></i>
+                <span>پیش‌نمایش و چاپ</span>
+            </button>
+            <button class="lts-btn-secondary" id="btnSaveDraft" type="button">
+                <i class="bi bi-save"></i>
+                <span>ذخیره پیش‌نویس</span>
+            </button>
+            <button class="lts-btn-primary" id="btnSendLetter" type="button">
+                <i class="bi bi-send-fill"></i>
+                <span>ارسال نهایی / صدور نامه</span>
+            </button>
         </div>
     </header>
 
-    <!-- Physical Paper Replica Wrapper -->
-    <div class="flex items-center justify-center py-6 bg-slate-100 dark:bg-slate-950/40 rounded-2xl border border-slate-200 dark:border-slate-800/80">
-        <div id="paper" class="w-full max-w-[800px] min-h-[1100px] p-12 bg-white text-slate-900 shadow-lg rounded-md relative flex flex-col gap-8" style="font-family: IRANSans, Tahoma, sans-serif;">
-            
-            <!-- Letter Header block -->
-            <div class="flex justify-between items-center border-b border-slate-200 pb-4">
-                <div class="text-[11px] text-slate-500 font-mono flex flex-col gap-1 text-right">
-                    <div>تاریخ: <span class="tabular-nums">@persianDate</span></div>
-                    <div>شماره: <span class="tabular-nums">RH-@now.Ticks.ToString().Substring(12)</span></div>
-                    <div>پیوست: ندارد</div>
-                </div>
-                <div class="text-center">
-                    <h5 class="m-0 text-sm font-black text-slate-800">بسمه تعالی</h5>
-                    <div class="text-xs font-bold text-slate-700 mt-2">شرکت فنی مهندسی راینو</div>
-                </div>
-                <img src="/images/logo.png" class="w-16 h-16 object-contain" alt="لوگو" onerror="this.style.display='none'">
-            </div>
+    @if (isReplyMode)
+    {
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+            <i class="bi bi-reply-fill"></i>
+            <span>حالت پاسخ به نامه فعال است — گیرنده به‌صورت خودکار تنظیم شده.</span>
+        </div>
+    }
 
-            <!-- Letter Live Summary widgets -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1">
-                    <span class="text-[10px] text-slate-500">گیرنده</span>
-                    <strong id="previewReceiver" class="text-xs text-slate-800">انتخاب نشده</strong>
-                </div>
-                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1">
-                    <span class="text-[10px] text-slate-500">موضوع</span>
-                    <strong id="previewSubject" class="text-xs text-slate-800">-</strong>
-                </div>
-                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1">
-                    <span class="text-[10px] text-slate-500">وضعیت</span>
-                    <strong id="previewStatus" class="text-xs text-slate-800">پیش‌نویس</strong>
-                </div>
-            </div>
+    <!-- ═══════════ ۲. SPLIT CANVAS + INSPECTOR ═══════════ -->
+    <div class="lts-compose-grid">
 
-            <!-- Receiver Salutation -->
-            <div class="flex flex-col gap-2 mt-2">
-                <div class="text-xs font-black text-slate-800">
-                    <span id="gender-prefix">جناب آقای / سرکار خانم</span>
-                    <span id="display-receiver" class="border-b border-dashed border-slate-300 pb-0.5 px-2">....................</span>
-                </div>
-                <div class="text-xs font-black text-slate-800">
-                    موضوع: <span id="display-subject" class="border-b border-dashed border-slate-300 pb-0.5 px-2">....................</span>
-                </div>
-            </div>
+        <!-- ═══ MAIN AREA: OFFICIAL LETTER CANVAS (65%) ═══ -->
+        <div class="lts-paper-panel">
+            <div class="lts-letter-paper" id="paper">
 
-            <!-- CKEditor text processor area -->
-            <div id="editor-container" class="flex-1 mt-4 text-sm text-slate-800 leading-8 text-right min-h-[400px]">
-                <div id="editor">
-                    <p>با سلام و احترام،</p>
-                    <p>به استحضار می‌رساند...</p>
+                <!-- Letterhead -->
+                <div class="lts-letter-head">
+                    <div class="lts-letter-meta">
+                        <span><i class="bi bi-calendar3"></i>تاریخ: <b id="letterDate">@persianDate</b></span>
+                        <span><i class="bi bi-hash"></i>شماره: <b>پیش‌نویس</b></span>
+                        <span><i class="bi bi-paperclip"></i>پیوست: <b>ندارد</b></span>
+                    </div>
+                    <div class="lts-letter-org">
+                        <div class="lts-letter-bismillah">بسمه تعالی</div>
+                        <div class="lts-letter-orgname">شرکت فنی مهندسی راینو</div>
+                    </div>
+                    <div class="lts-letter-logo">ر</div>
                 </div>
-            </div>
 
-            <!-- Signature block -->
-            <div class="flex justify-end mt-8 border-t border-slate-100 pt-4">
-                <div class="w-48 flex flex-col gap-1 text-center">
-                    <p class="text-xs font-bold text-slate-700 m-0">با تقدیم احترام</p>
-                    <p class="text-xs font-black text-slate-900 m-0">@ViewBag.SenderFullName</p>
-                    <p class="text-[10px] text-slate-400 m-0">@ViewBag.SenderRole</p>
-                    @if (ViewBag.UserSignature != null)
-                    {
-                        <img src="@ViewBag.UserSignature" class="w-32 h-16 object-contain mx-auto mt-2" alt="امضا">
-                    }
+                <!-- Addressing & subject (formal, no pills) -->
+                <div class="lts-letter-address">
+                    <div class="addr-row">
+                        <b>به:</b>
+                        <span id="gender-prefix" class="font-bold">جناب آقای / سرکار خانم</span>
+                        <span id="display-receiver" class="lts-addr-dash">....................</span>
+                    </div>
+                    <div class="addr-row">
+                        <b>از:</b>
+                        <span class="font-bold">@ViewBag.SenderFullName</span>
+                        <span class="text-[10px] text-slate-400">@ViewBag.SenderRole</span>
+                    </div>
+                    <div class="addr-row">
+                        <b>موضوع:</b>
+                        <span id="display-subject" class="lts-addr-dash">....................</span>
+                    </div>
+                </div>
+
+                <!-- Editor workspace -->
+                <div class="lts-letter-editor" id="editor-container">
+                    <div id="editor" class="leading-relaxed font-normal text-sm text-slate-800 dark:text-slate-200">
+                        <p>با سلام و احترام،</p>
+                        <p>به استحضار می‌رساند...</p>
+                    </div>
+                </div>
+
+                <!-- Sign-off footer -->
+                <div class="lts-letter-sign">
+                    <div class="lts-sign-block">
+                        <p class="m-0 text-[11px] font-bold text-slate-500">با تقدیم احترام</p>
+                        <p class="lts-sign-name mt-1 mb-0">@ViewBag.SenderFullName</p>
+                        <p class="lts-sign-role m-0">@ViewBag.SenderRole</p>
+                        @if (ViewBag.UserSignature != null)
+                        {
+                            <img src="@ViewBag.UserSignature" class="lts-sign-image" alt="امضا">
+                        }
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- ═══ SIDEBAR: SETTINGS + AI (35%) ═══ -->
+        <aside class="lts-inspector">
+
+            <!-- کارت ۱: مشخصات نامه -->
+            <div class="lts-inspector-card">
+                <div class="lts-inspector-head" data-accordion-toggle>
+                    <i class="bi bi-info-circle text-indigo-500"></i>
+                    <h3>مشخصات نامه</h3>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="lts-inspector-body">
+                    <div class="lts-field">
+                        <label for="receiverSelect"><i class="bi bi-person-down"></i> گیرنده</label>
+                        <select id="receiverSelect" class="lts-select" asp-items="ViewBag.ReceiverId">
+                            <option value="">انتخاب گیرنده...</option>
+                        </select>
+                    </div>
+                    <div class="lts-field">
+                        <label for="subjectInput"><i class="bi bi-type"></i> موضوع نامه</label>
+                        <input type="text" id="subjectInput" class="lts-input" value="@replySubject" placeholder="موضوع نامه اداری..." />
+                    </div>
+
+                    <div class="lts-field">
+                        <label><i class="bi bi-bell"></i> نوع و اولویت نامه</label>
+                        <div class="lts-picker" id="priorityPicker">
+                            <button type="button" class="lts-picker-opt active" data-priority="Normal"><i class="bi bi-circle"></i> عادی</button>
+                            <button type="button" class="lts-picker-opt" data-priority="Urgent"><i class="bi bi-exclamation-circle"></i> فوری</button>
+                            <button type="button" class="lts-picker-opt" data-priority="Immediate"><i class="bi bi-lightning-charge"></i> آنی</button>
+                        </div>
+                    </div>
+
+                    <div class="lts-field">
+                        <label><i class="bi bi-shield-lock"></i> طبقه‌بندی محرمانگی</label>
+                        <div class="lts-picker" id="classificationPicker">
+                            <button type="button" class="lts-picker-opt active" data-classification="Normal"><i class="bi bi-unlock"></i> عادی</button>
+                            <button type="button" class="lts-picker-opt" data-classification="Confidential"><i class="bi bi-lock"></i> محرمانه</button>
+                            <button type="button" class="lts-picker-opt" data-classification="Secret"><i class="bi bi-lock-fill"></i> سری</button>
+                        </div>
+                    </div>
+
+                    <div class="lts-field">
+                        <label><i class="bi bi-paperclip"></i> پیوست‌ها</label>
+                        <div class="lts-upload-zone" id="attachmentZone">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <p>فایل را اینجا رها کنید یا کلیک کنید</p>
+                            <small>حداکثر ۵ مگابایت • PDF, DOCX, JPG, PNG</small>
+                        </div>
+                        <input type="file" id="attachmentInput" class="hidden" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                        <div class="lts-cc-list" id="attachmentList"></div>
+                    </div>
+
+                    <div class="lts-field">
+                        <label><i class="bi bi-people"></i> رونوشت‌ها (CC)</label>
+                        <div class="lts-cc-row">
+                            <select id="ccSelect" class="lts-select" asp-items="ViewBag.ReceiverId">
+                                <option value="">انتخاب واحد / فرد...</option>
+                            </select>
+                            <button type="button" class="lts-cc-add" id="ccAddBtn" title="افزودن رونوشت"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                        <div class="lts-cc-list" id="ccList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- کارت ۲: دستیار هوش مصنوعی -->
+            <div class="lts-inspector-card lts-ai-card">
+                <div class="lts-inspector-head" data-accordion-toggle>
+                    <span class="lts-ai-spark"><i class="bi bi-stars"></i></span>
+                    <h3>دستیار هوش مصنوعی</h3>
+                    <span class="lts-ai-badge">AI</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="lts-inspector-body">
+                    <div class="lts-field">
+                        <label for="aiLetterInstruction"><i class="bi bi-chat-square-text"></i> راهنمای نگارش</label>
+                        <textarea id="aiLetterInstruction" class="lts-textarea lts-ai-prompt" placeholder="مثلاً: نامه‌ای رسمی جهت درخواست مرخصی یا تأیید صورت‌وضعیت بنویس..."></textarea>
+                    </div>
+                    <div class="lts-ai-actions">
+                        <button type="button" class="lts-ai-action active" data-ai-action="draft"><i class="bi bi-magic"></i> پیشنهاد متن رسمی</button>
+                        <button type="button" class="lts-ai-action" data-ai-action="tone"><i class="bi bi-spellcheck"></i> بهبود لحن اداری</button>
+                        <button type="button" class="lts-ai-action" data-ai-action="summary"><i class="bi bi-text-paragraph"></i> خلاصه‌سازی</button>
+                    </div>
+                    <div class="lts-field">
+                        <label><i class="bi bi-file-earmark-text"></i> خروجی هوش مصنوعی</label>
+                        <div class="lts-ai-output" id="aiLetterOutput">متن پیشنهادی پس از تولید در اینجا نمایش داده می‌شود.</div>
+                    </div>
+                    <button type="button" class="lts-ai-insert" id="btnInsertAiText" disabled>
+                        <i class="bi bi-box-arrow-in-down"></i>
+                        <span>درج مستقیم در نامه</span>
+                    </button>
+                    <div id="aiLetterStatus" class="text-[0.625rem] text-slate-400"></div>
+                </div>
+            </div>
+        </aside>
     </div>
 </div>
 
-<!-- Preview Modal -->
+<!-- ═══════════ PREVIEW MODAL ═══════════ -->
 <div id="letterPreviewModal" class="fixed inset-0 bg-slate-950/80 z-[2000] p-6 overflow-auto flex items-center justify-center hidden" aria-hidden="true">
     <div class="w-full max-w-[900px] bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl flex flex-col gap-4">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -152,6 +234,11 @@
         <div id="letterPreviewBody" class="max-h-[60vh] overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-xl p-4 bg-slate-50 dark:bg-slate-950/40"></div>
     </div>
 </div>
+
+<!-- Hidden preview-sync spans (JS compatibility) -->
+<span id="previewReceiver" class="hidden"></span>
+<span id="previewSubject" class="hidden"></span>
+<span id="previewStatus" class="hidden"></span>
 
 <!-- Hidden action form -->
 <form id="finalForm" asp-action="Create" method="post" class="hidden">
@@ -169,6 +256,13 @@
         defaultSubject = replySubject,
         defaultReceiverId = replyReceiverId
     }))</script>
-<script src="~/js/letters-create-script.js" asp-append-version="true"></script>
-<script src="~/js/letter.js" asp-append-version="true"></script>
-<script src="~/js/letters-ai.js" asp-append-version="true"></script>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/letters-index.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/letters-create-script.js" asp-append-version="true"></script>
+    <script src="~/js/letter.js" asp-append-version="true"></script>
+    <script src="~/js/letters-ai.js" asp-append-version="true"></script>
+}

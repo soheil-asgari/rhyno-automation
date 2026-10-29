@@ -3,84 +3,117 @@
     ViewData["Title"] = "ویرایش نامه";
 }
 
-<div class="w-full flex-1 flex flex-col gap-6 p-4 md:p-6" dir="rtl">
-    <!-- Header Card -->
-    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-        <div>
-            <h1 class="m-0 text-lg font-black text-slate-900 dark:text-white tracking-tight">ویرایش نامه</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">اطلاعات اصلی نامه را اصلاح و ذخیره کنید.</p>
+<div class="w-full flex-1 flex flex-col gap-4 p-2.5 md:p-4 letters-edit-shell" dir="rtl">
+    <!-- ═══════ PAGE HEADER ═══════ -->
+    <div class="lts-page-header">
+        <div class="flex flex-wrap items-center gap-3 justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-600 dark:text-indigo-400 text-xl" style="backdrop-filter:blur(4px);">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h1 style="margin:0;font-weight:700;color:var(--lts-text-primary);font-size:1.25rem;">ویرایش نامه</h1>
+                    <p style="margin:0;font-size:0.75rem;color:var(--lts-text-muted)">اطلاعات اصلی نامه را اصلاح و ذخیره کنید.</p>
+                </div>
+            </div>
+            <a asp-action="Index" class="lts-btn-primary" style="background:var(--lts-surface-raised);color:var(--lts-text-secondary);border:1px solid var(--lts-border-color);box-shadow:none;">
+                <i class="bi bi-arrow-right"></i>
+                <span>بازگشت</span>
+            </a>
         </div>
-        <a asp-action="Index" class="flex items-center justify-center px-3 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm bg-transparent no-underline">
-            <span>بازگشت</span>
-        </a>
-    </header>
+    </div>
 
-    <!-- Form Card -->
-    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-        <form asp-action="Edit" method="post" class="flex flex-col gap-6">
+    <!-- ═══════ FORM CARD ═══════ -->
+    <div class="rounded-2xl p-5 md:p-6" style="background:var(--lts-surface);border:1px solid var(--lts-border-color);box-shadow:var(--lts-shadow-sm);">
+        <form asp-action="Edit" method="post" class="flex flex-col gap-5">
             @Html.AntiForgeryToken()
             @if (!ViewData.ModelState.IsValid)
             {
-                <div asp-validation-summary="ModelOnly" class="p-3 bg-rose-50 dark:bg-rose-950/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-semibold leading-relaxed"></div>
+                <div asp-validation-summary="ModelOnly" class="rounded-xl p-3 flex items-start gap-2" style="background:var(--lts-danger-soft);color:var(--lts-danger);border:1px solid var(--lts-danger-soft);font-size:0.75rem;">
+                    <i class="bi bi-exclamation-triangle-fill" style="margin-top:0.125rem;"></i>
+                    <span style="flex:1;"></span>
+                </div>
             }
             <input type="hidden" asp-for="Id" />
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- Title -->
-                <div class="flex flex-col gap-1.5 md:col-span-2">
-                    <label asp-for="Title" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="Title" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 font-bold" />
-                    <span asp-validation-for="Title" class="text-xs text-rose-500 mt-1 block"></span>
+                <div class="flex flex-col gap-1.5" style="grid-column:span 2;">
+                    <label asp-for="Title" class="lts-filter-label">
+                        <i class="bi bi-type" style="color:var(--lts-accent)"></i>
+                        <span>@Html.DisplayNameFor(m => m.Title)</span>
+                    </label>
+                    <input asp-for="Title" class="lts-filter-input" style="height:44px;" />
+                    <span asp-validation-for="Title" class="text-[0.6875rem]" style="color:var(--lts-danger);"></span>
                 </div>
 
                 <!-- Sent Date -->
                 <div class="flex flex-col gap-1.5">
-                    <label asp-for="SentDate" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="SentDate" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums" />
-                    <span asp-validation-for="SentDate" class="text-xs text-rose-500 mt-1 block"></span>
+                    <label asp-for="SentDate" class="lts-filter-label">
+                        <i class="bi bi-calendar3" style="color:var(--lts-info)"></i>
+                        <span>@Html.DisplayNameFor(m => m.SentDate)</span>
+                    </label>
+                    <input asp-for="SentDate" class="lts-filter-input" style="height:44px;font-family:var(--lts-font-mono);font-variant-numeric:tabular-nums;text-align:start;" />
+                    <span asp-validation-for="SentDate" class="text-[0.6875rem]" style="color:var(--lts-danger);"></span>
                 </div>
 
                 <!-- Read Date -->
                 <div class="flex flex-col gap-1.5">
-                    <label asp-for="ReadDate" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <input asp-for="ReadDate" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800 text-left font-mono tabular-nums" />
-                    <span asp-validation-for="ReadDate" class="text-xs text-rose-500 mt-1 block"></span>
+                    <label asp-for="ReadDate" class="lts-filter-label">
+                        <i class="bi bi-eye" style="color:var(--lts-success)"></i>
+                        <span>@Html.DisplayNameFor(m => m.ReadDate)</span>
+                    </label>
+                    <input asp-for="ReadDate" class="lts-filter-input" style="height:44px;font-family:var(--lts-font-mono);text-align:start;" />
+                    <span asp-validation-for="ReadDate" class="text-[0.6875rem]" style="color:var(--lts-danger);"></span>
                 </div>
 
                 <!-- Sender -->
                 <div class="flex flex-col gap-1.5">
-                    <label asp-for="SenderId" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <select asp-for="SenderId" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" asp-items="ViewBag.SenderId"></select>
-                    <span asp-validation-for="SenderId" class="text-xs text-rose-500 mt-1 block"></span>
+                    <label asp-for="SenderId" class="lts-filter-label">
+                        <i class="bi bi-person-up" style="color:var(--lts-accent)"></i>
+                        <span>@Html.DisplayNameFor(m => m.SenderId)</span>
+                    </label>
+                    <select asp-for="SenderId" class="lts-filter-select" style="height:44px;" asp-items="ViewBag.SenderId"></select>
+                    <span asp-validation-for="SenderId" class="text-[0.6875rem]" style="color:var(--lts-danger);"></span>
                 </div>
 
                 <!-- Receiver -->
                 <div class="flex flex-col gap-1.5">
-                    <label asp-for="ReceiverId" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <select asp-for="ReceiverId" class="h-9 w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-950 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" asp-items="ViewBag.ReceiverId"></select>
-                    <span asp-validation-for="ReceiverId" class="text-xs text-rose-500 mt-1 block"></span>
+                    <label asp-for="ReceiverId" class="lts-filter-label">
+                        <i class="bi bi-person-down" style="color:var(--lts-success)"></i>
+                        <span>@Html.DisplayNameFor(m => m.ReceiverId)</span>
+                    </label>
+                    <select asp-for="ReceiverId" class="lts-filter-select" style="height:44px;" asp-items="ViewBag.ReceiverId"></select>
+                    <span asp-validation-for="ReceiverId" class="text-[0.6875rem]" style="color:var(--lts-danger);"></span>
                 </div>
 
                 <!-- Is Read -->
-                <div class="flex items-center gap-2 h-9 mt-4">
-                    <input asp-for="IsRead" type="checkbox" class="w-4 h-4 text-teal-600 border-slate-300 dark:border-slate-700 rounded focus:ring-teal-500 focus:ring-2 bg-transparent" />
-                    <label asp-for="IsRead" class="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"></label>
+                <div class="flex items-center gap-2.5 h-11 px-3 rounded-xl" style="border:1px solid var(--lts-border-color);background:var(--lts-surface-raised);">
+                    <input asp-for="IsRead" type="checkbox" style="width:17px;height:17px;border-radius:5px;accent-color:var(--lts-accent);" />
+                    <label asp-for="IsRead" class="lts-filter-label m-0 cursor-pointer">
+                        <span>خوانده شده</span>
+                    </label>
                 </div>
 
-                <!-- Body / Letter text area -->
-                <div class="flex flex-col gap-1.5 md:col-span-2">
-                    <label asp-for="Body" class="text-xs font-bold text-slate-700 dark:text-slate-300"></label>
-                    <textarea asp-for="Body" class="w-full rounded-lg border border-slate-200 bg-white dark:bg-slate-905 p-3 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 dark:border-slate-800" rows="8"></textarea>
-                    <span asp-validation-for="Body" class="text-xs text-rose-500 mt-1 block"></span>
+                <!-- Body -->
+                <div class="flex flex-col gap-1.5" style="grid-column:span 2;">
+                    <label asp-for="Body" class="lts-filter-label">
+                        <i class="bi bi-file-earmark-text" style="color:var(--lts-accent)"></i>
+                        <span>@Html.DisplayNameFor(m => m.Body)</span>
+                    </label>
+                    <textarea asp-for="Body" class="lts-filter-input" rows="8" style="height:auto;min-height:140px;padding:0.75rem;line-height:1.7;resize:vertical;"></textarea>
+                    <span asp-validation-for="Body" class="text-[0.6875rem]" style="color:var(--lts-danger);"></span>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                <a asp-action="Index" class="flex items-center justify-center px-4 h-9 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition shadow-sm no-underline">
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-3 pt-4" style="border-top:1px solid var(--lts-border-color);">
+                <a asp-action="Index" class="lts-btn-primary" style="background:var(--lts-surface-raised);color:var(--lts-text-secondary);border:1px solid var(--lts-border-color);box-shadow:none;">
+                    <i class="bi bi-x-lg"></i>
                     <span>انصراف</span>
                 </a>
-                <button type="submit" class="flex items-center gap-1.5 px-5 h-9 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                <button type="submit" class="lts-btn-primary">
+                    <i class="bi bi-check2-circle"></i>
                     <span>ذخیره تغییرات</span>
                 </button>
             </div>
@@ -88,5 +121,6 @@
     </div>
 </div>
 
-@section Scripts {
+@section Styles {
+    <link rel="stylesheet" href="~/css/letters-index.css" asp-append-version="true" />
 }
